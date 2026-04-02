@@ -49,17 +49,16 @@ function isPermissionPrompt(eventData) {
  * @returns {object|null} { title, message, showDialog } or null to skip notification
  */
 function getNotificationContent(eventData) {
-    // Skip permission prompts - user already sees them in terminal
-    // This prevents notification spam when Claude asks for command approval
-    if (isPermissionPrompt(eventData)) {
-        return null;
-    }
-
     const eventName = eventData.hook_event_name || eventData.type || '';
     const toolName = eventData.tool_name || '';
     const agentType = eventData.agent_type || '';
     const projectName = getProjectName(eventData.cwd);
     const prefix = projectName ? `[${projectName}] ` : '';
+
+    // Permission prompts: notify user to return and approve/deny
+    if (isPermissionPrompt(eventData)) {
+        return { title: `${prefix}Claude Needs Permission`, message: 'Claude is asking for tool permission — please check and approve', showDialog: true };
+    }
 
     // PostToolUse: AskUserQuestion tool triggers notification for user to check and answer
     if (toolName === 'AskUserQuestion') {

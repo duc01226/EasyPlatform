@@ -68,7 +68,7 @@ Analyze the skills catalog and activate the skills that are needed for the task 
 1. If the user provides a screenshots or videos, use `ai-multimodal` skill to describe as detailed as possible the issue, make sure developers can predict the root causes easily based on the description.
 2. Use `debugger` subagent to find the root cause of the issues and report back to main agent.
    2.5. Write root cause analysis to `.ai/workspace/analysis/{issue-name}.analysis.md`. Re-read before implementing fix.
-3. Activate `debug` skills and `problem-solving` skills to tackle the issues.
+3. Activate `debug-investigate` skills and `problem-solving` skills to tackle the issues.
 4. **🛑 Present root cause + proposed fix → `AskUserQuestion` → wait for user approval.**
 5. Start implementing the fix based the reports and solutions.
 6. Use `tester` agent to test the fix and make sure it works, then report back to main agent.

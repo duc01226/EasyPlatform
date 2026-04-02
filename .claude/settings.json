@@ -31,7 +31,7 @@
                         "type": "command"
                     }
                 ],
-                "matcher": "idle_prompt|AskUserPrompt"
+                "matcher": "idle_prompt|AskUserPrompt|permission_prompt"
             }
         ],
         "PostToolUse": [
@@ -172,6 +172,15 @@
                     }
                 ],
                 "matcher": "Skill"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-task-guard.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "TaskUpdate"
             },
             {
                 "hooks": [

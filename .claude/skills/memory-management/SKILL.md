@@ -191,7 +191,9 @@ mcp__memory__add_observations([
 mcp__memory__search_nodes({ query: 'validation pattern' });
 
 // Open specific entities
-mcp__memory__open_nodes({ names: ['EmployeeValidationPattern', 'ServiceAModule'] });
+mcp__memory__open_nodes({
+    names: ['EmployeeValidationPattern', 'ServiceAModule']
+});
 
 // Read entire graph
 mcp__memory__read_graph();
@@ -455,7 +457,7 @@ All long-running workflows should follow this pattern:
 | `/compact`               | Manually trigger context compaction |
 | `/watzup`                | Generate progress summary           |
 | `feature-implementation` | Uses task analysis notes pattern    |
-| `debug`                  | Uses investigation logs             |
+| `debug-investigate`      | Uses investigation logs             |
 | `feature-investigation`  | Uses analysis report pattern        |
 
 ### Memory Decision Matrix

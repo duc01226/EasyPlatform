@@ -55,7 +55,7 @@ Fast codebase search to locate files needed for a task. Token-efficient, paralle
 - Mapping file landscape before investigation or implementation
 - Finding all files related to an entity, feature, or keyword
 
-**NOT for**: Deep code analysis (use `feature-investigation`), debugging (use `debug`), or implementation (use `feature-implementation`).
+**NOT for**: Deep code analysis (use `feature-investigation`), debugging (use `debug-investigate`), or implementation (use `feature-implementation`).
 
 > **UI Work Detected?** If the task involves updating UI, fixing UI, or finding a component from a screenshot/image, activate `visual-component-finder` skill FIRST before scouting. It uses a pre-built component index for fast visual-to-code matching.
 

@@ -52,7 +52,7 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 
 **Project Examples:**
 
-- `debug` - Systematic debugging (any language)
+- `debug-investigate` - Systematic debugging (any language)
 - `documentation` - Doc enhancement
 - `code-review` - Interactive code review
 
@@ -122,7 +122,7 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 
 | Issue                          | Example                         | Fix                                 |
 | ------------------------------ | ------------------------------- | ----------------------------------- |
-| Redundant suffix               | `debugging-skill`               | `debug`                             |
+| Redundant suffix               | `debugging-skill`               | `debug-investigate`                 |
 | Mixed case                     | `DebugHelper`                   | `debug-helper`                      |
 | Underscores                    | `task_runner`                   | `task-runner`                       |
 | Overly specific                | `angular-19-nx-component`       | `frontend-design`                   |

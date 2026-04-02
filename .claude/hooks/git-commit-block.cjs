@@ -16,10 +16,11 @@
 
 const fs = require('fs');
 const path = require('path');
+const { COMMIT_SKILL_MARKER_PATH } = require('./lib/ck-paths.cjs');
 
 // Marker file created by /commit skill to bypass this hook
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const COMMIT_SKILL_MARKER = path.join(PROJECT_DIR, '.claude', '.commit-skill-active');
+const COMMIT_SKILL_MARKER = COMMIT_SKILL_MARKER_PATH;
 
 // Git commands that require explicit user request.
 // Patterns use lookbehind to match only at command boundaries (start of line, after &&, ||, ;)

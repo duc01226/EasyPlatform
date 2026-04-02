@@ -68,7 +68,7 @@ Use this skill when:
 
 ## Disambiguation
 
-- For quick bug triage and systematic debugging, use `debug` instead
+- For quick bug triage and systematic debugging, use `debug-investigate` instead
 - This skill focuses on upfront planning and research before implementation
 
 ## Core Responsibilities & Rules

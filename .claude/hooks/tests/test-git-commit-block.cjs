@@ -18,8 +18,8 @@ const HOOKS_DIR = path.resolve(__dirname, '..');
 const HOOK_FILE = 'git-commit-block.cjs';
 // PROJECT_DIR = the repo root (two levels up from hooks/tests/)
 const PROJECT_DIR = path.resolve(HOOKS_DIR, '..', '..');
-// Marker path must match hook: CLAUDE_PROJECT_DIR/.claude/.commit-skill-active
-const MARKER_FILE = path.join(PROJECT_DIR, '.claude', '.commit-skill-active');
+// Marker path must match hook: CLAUDE_PROJECT_DIR/tmp/.claude/.commit-skill-active
+const MARKER_FILE = path.join(PROJECT_DIR, 'tmp', '.claude', '.commit-skill-active');
 
 let passed = 0;
 let failed = 0;

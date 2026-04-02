@@ -424,7 +424,7 @@ python .claude/scripts/code_graph batch-query <f1> <f2> --json
 ## Related Skills
 
 - `feature` - Implementing new features (code changes)
-- `debug` - Debugging and fixing issues
+- `debug-investigate` - Debugging and fixing issues
 - `scout` - Quick codebase discovery (run before investigation)
 - `graph-query` - Natural language graph queries for code relationships
 

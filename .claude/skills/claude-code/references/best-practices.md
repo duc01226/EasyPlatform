@@ -29,22 +29,28 @@ project/
 Document custom extensions:
 
 **README.md:**
+
 ```markdown
 ## Claude Code Setup
 
 ### Custom Commands
+
 - `/test-all`: Run full test suite
 - `/deploy`: Deploy to staging
 
 ### Skills
+
 - `api-testing`: REST API testing utilities
 
 ### MCP Servers
+
 - `postgres`: Database access
 - `github`: Repository integration
 
 ### Environment Variables
+
 Copy `.claude/.env.example` to `.claude/.env` and fill in:
+
 - GITHUB_TOKEN
 - DATABASE_URL
 ```
@@ -52,6 +58,7 @@ Copy `.claude/.env.example` to `.claude/.env` and fill in:
 ### Team Sharing
 
 **What to commit:**
+
 - `.claude/settings.json`
 - `.claude/skills/`
 - `.claude/hooks.json`
@@ -59,12 +66,14 @@ Copy `.claude/.env.example` to `.claude/.env` and fill in:
 - `.claude/.env.example`
 
 **What NOT to commit:**
+
 - `.claude/.env` (contains secrets)
 - `.claude/memory/` (optional)
 - `.claude/cache/`
 - API keys or tokens
 
 **.gitignore:**
+
 ```
 .claude/.env
 .claude/memory/
@@ -77,6 +86,7 @@ Copy `.claude/.env.example` to `.claude/.env` and fill in:
 ### API Key Management
 
 **Never commit API keys:**
+
 ```bash
 # Use environment variables
 export ANTHROPIC_API_KEY=sk-ant-xxxxx
@@ -86,6 +96,7 @@ echo 'ANTHROPIC_API_KEY=sk-ant-xxxxx' > .claude/.env
 ```
 
 **Rotate keys regularly:**
+
 ```bash
 # Generate new key
 # Update in all environments
@@ -93,6 +104,7 @@ echo 'ANTHROPIC_API_KEY=sk-ant-xxxxx' > .claude/.env
 ```
 
 **Use workspace keys:**
+
 ```bash
 # For team projects, use workspace API keys
 # Easier to manage and rotate
@@ -105,12 +117,12 @@ Enable sandboxing in production:
 
 ```json
 {
-  "sandboxing": {
-    "enabled": true,
-    "allowedPaths": ["/workspace"],
-    "networkAccess": "restricted",
-    "allowedDomains": ["api.company.com"]
-  }
+    "sandboxing": {
+        "enabled": true,
+        "allowedPaths": ["/workspace"],
+        "networkAccess": "restricted",
+        "allowedDomains": ["api.company.com"]
+    }
 }
 ```
 
@@ -156,6 +168,7 @@ claude plugin install gh:anthropics/official-plugin
 Choose appropriate model for task:
 
 **Sonnet** - Balanced (default for all tasks):
+
 ```bash
 claude "fix typo in README"
 claude "implement user authentication"
@@ -163,6 +176,7 @@ claude "review this PR"
 ```
 
 **Opus** - Complex reasoning and architecture:
+
 ```bash
 claude --model opus "architect microservices system"
 claude --model opus "optimize algorithm performance"
@@ -188,6 +202,7 @@ const response = await client.messages.create({
 ```
 
 **Benefits:**
+
 - 90% cost reduction on cached tokens
 - Faster responses
 - Better for iterative development
@@ -238,13 +253,16 @@ Create consistent slash commands:
 
 ```markdown
 # .claude/skills/test/SKILL.md
+
 Run test suite with coverage report.
 
 Options:
+
 - {{suite}}: Specific test suite (optional)
 ```
 
 **Usage:**
+
 ```bash
 /test
 /test unit
@@ -275,15 +293,16 @@ tar -czf team-plugin.tar.gz .
 Use project settings for consistency:
 
 **.claude/settings.json:**
+
 ```json
 {
-  "model": "sonnet",
-  "maxTokens": 8192,
-  "outputStyle": "technical-writer",
-  "thinking": {
-    "enabled": true,
-    "budget": 10000
-  }
+    "model": "sonnet",
+    "maxTokens": 8192,
+    "outputStyle": "technical-writer",
+    "thinking": {
+        "enabled": true,
+        "budget": 10000
+    }
 }
 ```
 
@@ -293,14 +312,15 @@ Use project memory for shared context:
 
 ```json
 {
-  "memory": {
-    "enabled": true,
-    "location": "project"
-  }
+    "memory": {
+        "enabled": true,
+        "location": "project"
+    }
 }
 ```
 
 **Benefits:**
+
 - Shared project knowledge
 - Consistent behavior across team
 - Reduced onboarding time
@@ -342,6 +362,7 @@ claude analytics export --format csv > usage.csv
 ### Cost Optimization
 
 **Use Sonnet as the default for all tasks:**
+
 ```bash
 # Default (Sonnet)
 claude "fix typo in README"
@@ -351,16 +372,18 @@ claude --model opus "architect microservices system"
 ```
 
 **Enable caching:**
+
 ```json
 {
-  "caching": {
-    "enabled": true,
-    "ttl": 300
-  }
+    "caching": {
+        "enabled": true,
+        "ttl": 300
+    }
 }
 ```
 
 **Batch operations:**
+
 ```bash
 # Instead of multiple requests
 claude "fix file1.js"
@@ -372,6 +395,7 @@ claude "fix all files: file1.js file2.js file3.js"
 ```
 
 **Track per-project costs:**
+
 ```bash
 # Tag projects
 claude --project my-project "implement feature"
@@ -408,7 +432,7 @@ claude /git-cp
 
 ```bash
 # 1. Debug
-claude /debug "login button not working"
+claude /debug-investigate "login button not working"
 
 # 2. Fix
 claude /fix-fast "fix login button issue"

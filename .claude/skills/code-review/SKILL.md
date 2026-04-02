@@ -415,7 +415,7 @@ Verify. Question. Then implement. Evidence. Then claim.
 ## Related
 
 - `code-simplifier`
-- `debug`
+- `debug-investigate`
 - `refactoring`
 
 ---

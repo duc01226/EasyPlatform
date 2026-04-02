@@ -80,11 +80,9 @@ GoogleService-Info.plist
 .gemini/*
 
 # -----------------------------------------------------------------------------
-# Session State (ephemeral flag files)
+# Session State (ephemeral flag files — now stored in tmp/.claude/)
 # -----------------------------------------------------------------------------
-.init-dismissed
-.scan-stale
-.scan-stale-dismissed
+# (Moved to PROJECT_ROOT/tmp/.claude/ — no longer written here)
 
 # -----------------------------------------------------------------------------
 # OS Files

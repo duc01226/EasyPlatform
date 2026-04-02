@@ -38,7 +38,7 @@ allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate, Bash
 - Use anti-hallucination protocols: validate assumptions, chain evidence, anchor to original question
 - Re-read original question every 10 operations to prevent context drift
 
-> **Skill Variant:** READ-ONLY exploration - no code changes. For implementing features, use `feature-implementation`. For debugging, use `debug`.
+> **Skill Variant:** READ-ONLY exploration - no code changes. For implementing features, use `feature-implementation`. For debugging, use `debug-investigate`.
 
 # Feature Investigation & Logic Exploration
 
@@ -561,7 +561,7 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 ## See Also
 
 - `feature-implementation` - For implementing new features (code changes)
-- `debug` - For debugging and fixing issues
+- `debug-investigate` - For debugging and fixing issues
 - `planning` - For creating implementation plans
 - `graph-query` - Natural language graph queries for code relationships
 

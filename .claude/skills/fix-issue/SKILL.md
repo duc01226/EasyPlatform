@@ -57,7 +57,7 @@ description: '[Implementation] Debug and fix GitHub issues with systematic inves
 
 > **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause analysis, MUST present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
 
-Activate `debug` skill and follow its workflow.
+Activate `debug-investigate` skill and follow its workflow.
 
 **IMPORTANT**: Always use external memory at `.ai/workspace/analysis/issue-[number].analysis.md` for structured analysis. **Re-read ENTIRE analysis file before proposing any fix** — this prevents knowledge loss.
 

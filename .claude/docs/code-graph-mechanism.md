@@ -55,7 +55,7 @@ The Code Review Graph builds a **persistent knowledge graph** of your codebase u
 │    Outputs: status message to Claude's context                     │
 │                                                                    │
 │  PreToolUse(Skill) → graph-context-injector.cjs                    │
-│    When: /code-review, /review-changes, /scout, /debug, etc.       │
+│    When: /code-review, /review-changes, /scout, /debug-investigate, etc.       │
 │    Runs: graph-blast-radius → injects summary into Claude's context      │
 │                                                                    │
 │  PostToolUse(Edit) → graph-auto-update.cjs                         │
@@ -583,7 +583,7 @@ sequenceDiagram
 | Workflow          | Steps Where Graph Activates                                             | What Graph Provides                                                |
 | ----------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | **feature**       | /scout, /cook (auto-update), /code-review, /review-changes, /sre-review | Structural overview, incremental tracking, blast radius for review |
-| **bugfix**        | /scout, /debug, /fix (auto-update), /code-review                        | Dependency tracing for root cause, impact assessment of fix        |
+| **bugfix**        | /scout, /debug-investigate, /fix (auto-update), /code-review            | Dependency tracing for root cause, impact assessment of fix        |
 | **refactor**      | /scout, /code (auto-update), /code-review, /sre-review                  | Ensures refactoring doesn't break callers/dependents               |
 | **hotfix**        | /scout, /fix (auto-update), /review-changes, /sre-review                | Fast blast radius to verify minimal production impact              |
 | **investigation** | /scout, /feature-investigation                                          | Structural map for understanding code relationships                |

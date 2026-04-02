@@ -12,39 +12,13 @@
  */
 
 const fs = require('fs');
-const { loadState, markStepComplete, getCurrentStepInfo, initWorkflow, clearState } = require('./lib/workflow-state.cjs');
+const { loadState, markStepComplete, getCurrentStepInfo, initWorkflow, clearState, mapSkillToStepId } = require('./lib/workflow-state.cjs');
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
 const { buildWorkflowInstructions } = require('./workflow-router.cjs');
 
 // Get session ID from environment
 function getSessionId() {
     return process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID || 'default';
-}
-
-/**
- * Map skill name to workflow step ID
- * @param {string} skillName - Name of the executed skill
- * @param {Object} config - Workflow config
- * @returns {string|null} Step ID or null
- */
-function mapSkillToStepId(skillName, config) {
-    if (!config?.commandMapping) return null;
-
-    const normalizedSkill = skillName.toLowerCase().trim();
-
-    for (const [stepId, mapping] of Object.entries(config.commandMapping)) {
-        const claudeCmd = mapping.claude || `/${stepId}`;
-        // Extract skill name from command (e.g., "/plan" -> "plan", "/code-review" -> "code-review")
-        const cmdParts = claudeCmd.replace(/^\//, '').split(/[/:]/);
-
-        const cmdSkill = cmdParts[0].toLowerCase();
-
-        if (normalizedSkill === cmdSkill || normalizedSkill === stepId.toLowerCase()) {
-            return stepId;
-        }
-    }
-
-    return null;
 }
 
 async function main() {

@@ -33,7 +33,7 @@ const STATE_FILE_PREFIX = 'todo-state-';
  * @returns {string} Path to todo state file
  */
 function getTodoStatePath(sessionId) {
-  return path.join(TODO_DIR, `${STATE_FILE_PREFIX}${sessionId}.json`);
+    return path.join(TODO_DIR, `${STATE_FILE_PREFIX}${sessionId}.json`);
 }
 
 /**
@@ -41,16 +41,17 @@ function getTodoStatePath(sessionId) {
  * @returns {Object} Default empty todo state
  */
 function getDefaultState() {
-  return {
-    hasTodos: false,           // Whether TaskCreate has been called
-    pendingCount: 0,           // Count of pending todos
-    completedCount: 0,         // Count of completed todos
-    inProgressCount: 0,        // Count of in-progress todos
-    lastTodos: [],             // Last 10 todos for recovery (actual content)
-    lastUpdated: null,         // ISO timestamp of last update
-    bypasses: [],              // Record of enforcement bypasses
-    metadata: {}               // Additional data
-  };
+    return {
+        hasTodos: false, // Whether TaskCreate has been called
+        pendingCount: 0, // Count of pending todos
+        completedCount: 0, // Count of completed todos
+        inProgressCount: 0, // Count of in-progress todos
+        lastTodos: [], // Last 60 todos for recovery (actual content)
+        taskSubjects: {}, // Map of {taskId: subject} for workflow guard
+        lastUpdated: null, // ISO timestamp of last update
+        bypasses: [], // Record of enforcement bypasses
+        metadata: {} // Additional data
+    };
 }
 
 /**
@@ -59,16 +60,16 @@ function getDefaultState() {
  * @returns {Object} Todo state or default
  */
 function getTodoState(sessionId) {
-  if (!sessionId) return getDefaultState();
+    if (!sessionId) return getDefaultState();
 
-  const statePath = getTodoStatePath(sessionId);
-  try {
-    if (!fs.existsSync(statePath)) return getDefaultState();
-    const data = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-    return { ...getDefaultState(), ...data };
-  } catch (e) {
-    return getDefaultState();
-  }
+    const statePath = getTodoStatePath(sessionId);
+    try {
+        if (!fs.existsSync(statePath)) return getDefaultState();
+        const data = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+        return { ...getDefaultState(), ...data };
+    } catch (e) {
+        return getDefaultState();
+    }
 }
 
 /**
@@ -80,24 +81,28 @@ function getTodoState(sessionId) {
  * @returns {boolean} Success status
  */
 function setTodoState(sessionId, state) {
-  if (!sessionId) return false;
+    if (!sessionId) return false;
 
-  ensureDir(TODO_DIR);
-  const statePath = getTodoStatePath(sessionId);
-  const tmpFile = statePath + '.' + Math.random().toString(36).slice(2);
+    ensureDir(TODO_DIR);
+    const statePath = getTodoStatePath(sessionId);
+    const tmpFile = statePath + '.' + Math.random().toString(36).slice(2);
 
-  try {
-    const stateToSave = {
-      ...state,
-      lastUpdated: new Date().toISOString()
-    };
-    fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
-    fs.renameSync(tmpFile, statePath);
-    return true;
-  } catch (e) {
-    try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore */ }
-    return false;
-  }
+    try {
+        const stateToSave = {
+            ...state,
+            lastUpdated: new Date().toISOString()
+        };
+        fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
+        fs.renameSync(tmpFile, statePath);
+        return true;
+    } catch (e) {
+        try {
+            fs.unlinkSync(tmpFile);
+        } catch (_) {
+            /* ignore */
+        }
+        return false;
+    }
 }
 
 /**
@@ -108,25 +113,36 @@ function setTodoState(sessionId, state) {
  * @returns {boolean} Success status
  */
 function markTodosCalled(sessionId, counts = {}, todos = null) {
-  const state = getTodoState(sessionId);
+    const state = getTodoState(sessionId);
 
-  state.hasTodos = true;
-  state.pendingCount = counts.pending || 0;
-  state.completedCount = counts.completed || 0;
-  state.inProgressCount = counts.inProgress || 0;
+    state.hasTodos = true;
+    state.pendingCount = counts.pending || 0;
+    state.completedCount = counts.completed || 0;
+    state.inProgressCount = counts.inProgress || 0;
 
-  // Store last 10 todos for recovery (non-completed ones prioritized)
-  if (todos && Array.isArray(todos)) {
-    const nonCompleted = todos.filter(t => t.status !== 'completed');
-    const completed = todos.filter(t => t.status === 'completed');
-    state.lastTodos = [...nonCompleted, ...completed].slice(0, 10).map(t => ({
-      content: t.content,
-      status: t.status,
-      activeForm: t.activeForm
-    }));
-  }
+    // Store last 60 todos for recovery (non-completed ones prioritized)
+    if (todos && Array.isArray(todos)) {
+        const nonCompleted = todos.filter(t => t.status !== 'completed');
+        const completed = todos.filter(t => t.status === 'completed');
+        state.lastTodos = [...nonCompleted, ...completed].slice(0, 60).map(t => ({
+            content: t.content,
+            status: t.status,
+            activeForm: t.activeForm
+        }));
+    }
 
-  return setTodoState(sessionId, state);
+    return setTodoState(sessionId, state);
+}
+
+/**
+ * Get task subject by taskId from the taskSubjects map.
+ * @param {string} sessionId - Session identifier
+ * @param {string} taskId - Task ID
+ * @returns {string|null} Task subject or null if not found
+ */
+function getTaskSubject(sessionId, taskId) {
+    const state = getTodoState(sessionId);
+    return (state.taskSubjects && state.taskSubjects[taskId]) || null;
 }
 
 /**
@@ -135,8 +151,8 @@ function markTodosCalled(sessionId, counts = {}, todos = null) {
  * @returns {boolean} True if todos exist
  */
 function hasTodos(sessionId) {
-  const state = getTodoState(sessionId);
-  return state.hasTodos;
+    const state = getTodoState(sessionId);
+    return state.hasTodos;
 }
 
 /**
@@ -148,19 +164,19 @@ function hasTodos(sessionId) {
  * @returns {boolean} Success status
  */
 function recordBypass(sessionId, bypass) {
-  const state = getTodoState(sessionId);
+    const state = getTodoState(sessionId);
 
-  state.bypasses.push({
-    ...bypass,
-    timestamp: new Date().toISOString()
-  });
+    state.bypasses.push({
+        ...bypass,
+        timestamp: new Date().toISOString()
+    });
 
-  // Keep only last 20 bypasses
-  if (state.bypasses.length > 20) {
-    state.bypasses = state.bypasses.slice(-20);
-  }
+    // Keep only last 20 bypasses
+    if (state.bypasses.length > 20) {
+        state.bypasses = state.bypasses.slice(-20);
+    }
 
-  return setTodoState(sessionId, state);
+    return setTodoState(sessionId, state);
 }
 
 /**
@@ -169,17 +185,17 @@ function recordBypass(sessionId, bypass) {
  * @returns {boolean} Success status
  */
 function clearTodoState(sessionId) {
-  if (!sessionId) return false;
+    if (!sessionId) return false;
 
-  const statePath = getTodoStatePath(sessionId);
-  try {
-    if (fs.existsSync(statePath)) {
-      fs.unlinkSync(statePath);
+    const statePath = getTodoStatePath(sessionId);
+    try {
+        if (fs.existsSync(statePath)) {
+            fs.unlinkSync(statePath);
+        }
+        return true;
+    } catch (e) {
+        return false;
     }
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
 
 /**
@@ -189,14 +205,14 @@ function clearTodoState(sessionId) {
  * @returns {Object} State for preservation
  */
 function getStateForCheckpoint(sessionId) {
-  const state = getTodoState(sessionId);
-  return {
-    hasTodos: state.hasTodos,
-    pendingCount: state.pendingCount,
-    completedCount: state.completedCount,
-    inProgressCount: state.inProgressCount,
-    lastTodos: state.lastTodos || []
-  };
+    const state = getTodoState(sessionId);
+    return {
+        hasTodos: state.hasTodos,
+        pendingCount: state.pendingCount,
+        completedCount: state.completedCount,
+        inProgressCount: state.inProgressCount,
+        lastTodos: state.lastTodos || []
+    };
 }
 
 /**
@@ -206,15 +222,15 @@ function getStateForCheckpoint(sessionId) {
  * @returns {boolean} Success status
  */
 function restoreFromCheckpoint(sessionId, checkpoint) {
-  const state = getTodoState(sessionId);
+    const state = getTodoState(sessionId);
 
-  state.hasTodos = checkpoint.hasTodos || false;
-  state.pendingCount = checkpoint.pendingCount || 0;
-  state.completedCount = checkpoint.completedCount || 0;
-  state.inProgressCount = checkpoint.inProgressCount || 0;
-  state.lastTodos = checkpoint.lastTodos || [];
+    state.hasTodos = checkpoint.hasTodos || false;
+    state.pendingCount = checkpoint.pendingCount || 0;
+    state.completedCount = checkpoint.completedCount || 0;
+    state.inProgressCount = checkpoint.inProgressCount || 0;
+    state.lastTodos = checkpoint.lastTodos || [];
 
-  return setTodoState(sessionId, state);
+    return setTodoState(sessionId, state);
 }
 
 /**
@@ -225,24 +241,24 @@ function restoreFromCheckpoint(sessionId, checkpoint) {
  * @returns {boolean} Success status
  */
 function inheritForSubagent(parentSessionId, childSessionId) {
-  const parentState = getTodoState(parentSessionId);
+    const parentState = getTodoState(parentSessionId);
 
-  // Only inherit if parent has todos
-  if (!parentState.hasTodos) return false;
+    // Only inherit if parent has todos
+    if (!parentState.hasTodos) return false;
 
-  const childState = {
-    ...getDefaultState(),
-    hasTodos: parentState.hasTodos,
-    pendingCount: parentState.pendingCount,
-    completedCount: parentState.completedCount,
-    inProgressCount: parentState.inProgressCount,
-    metadata: {
-      inheritedFrom: parentSessionId,
-      inheritedAt: new Date().toISOString()
-    }
-  };
+    const childState = {
+        ...getDefaultState(),
+        hasTodos: parentState.hasTodos,
+        pendingCount: parentState.pendingCount,
+        completedCount: parentState.completedCount,
+        inProgressCount: parentState.inProgressCount,
+        metadata: {
+            inheritedFrom: parentSessionId,
+            inheritedAt: new Date().toISOString()
+        }
+    };
 
-  return setTodoState(childSessionId, childState);
+    return setTodoState(childSessionId, childState);
 }
 
 /**
@@ -251,51 +267,54 @@ function inheritForSubagent(parentSessionId, childSessionId) {
  * @returns {Object|null} Summary with hasTodos, taskCount, pendingCount, summaryTodos
  */
 function getTodoStateForSubagent() {
-  const sessionId = process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID;
-  if (!sessionId) return null;
+    const sessionId = process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID;
+    if (!sessionId) return null;
 
-  const state = getTodoState(sessionId);
-  if (!state.hasTodos) return null;
+    const state = getTodoState(sessionId);
+    if (!state.hasTodos) return null;
 
-  const taskCount = state.pendingCount + state.completedCount + state.inProgressCount;
-  const summaryTodos = (state.lastTodos || [])
-    .filter(t => t.status !== 'completed')
-    .map(t => {
-      const icon = t.status === 'in_progress' ? '[>>]' : '[ ]';
-      return `${icon} ${t.content}`;
-    });
+    const taskCount = state.pendingCount + state.completedCount + state.inProgressCount;
+    const summaryTodos = (state.lastTodos || [])
+        .filter(t => t.status !== 'completed')
+        .map(t => {
+            const icon = t.status === 'in_progress' ? '[>>]' : '[ ]';
+            return `${icon} ${t.content}`;
+        });
 
-  return {
-    hasTodos: true,
-    taskCount,
-    pendingCount: state.pendingCount,
-    summaryTodos
-  };
+    return {
+        hasTodos: true,
+        taskCount,
+        pendingCount: state.pendingCount,
+        summaryTodos
+    };
 }
 
 module.exports = {
-  // Directory
-  TODO_DIR,
+    // Directory
+    TODO_DIR,
 
-  // Path helpers
-  getTodoStatePath,
-  getDefaultState,
+    // Path helpers
+    getTodoStatePath,
+    getDefaultState,
 
-  // State operations
-  getTodoState,
-  setTodoState,
-  markTodosCalled,
-  hasTodos,
-  clearTodoState,
+    // State operations
+    getTodoState,
+    setTodoState,
+    markTodosCalled,
+    hasTodos,
+    clearTodoState,
 
-  // Bypass tracking
-  recordBypass,
+    // Bypass tracking
+    recordBypass,
 
-  // Checkpoint/restore
-  getStateForCheckpoint,
-  restoreFromCheckpoint,
+    // Checkpoint/restore
+    getStateForCheckpoint,
+    restoreFromCheckpoint,
 
-  // Subagent support
-  inheritForSubagent,
-  getTodoStateForSubagent
+    // Task subject lookup
+    getTaskSubject,
+
+    // Subagent support
+    inheritForSubagent,
+    getTodoStateForSubagent
 };

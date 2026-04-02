@@ -18,10 +18,10 @@
  * });
  */
 
-'use strict';
+"use strict";
 
-const { parseStdinSync, parseHookEvent } = require('./stdin-parser.cjs');
-const { debug, debugError } = require('./debug-log.cjs');
+const { parseStdinSync, parseHookEvent } = require("./stdin-parser.cjs");
+const { debug, debugError } = require("./debug-log.cjs");
 
 // Default timeout for async hooks (15 seconds)
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -34,7 +34,10 @@ const DEFAULT_TIMEOUT_MS = 15000;
  */
 function timeoutPromise(ms, name) {
   return new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(`Hook ${name} timed out after ${ms}ms`)), ms);
+    setTimeout(
+      () => reject(new Error(`Hook ${name} timed out after ${ms}ms`)),
+      ms,
+    );
   });
 }
 
@@ -56,29 +59,32 @@ async function runHook(name, handler, options = {}) {
     errorExitCode = 0,
     parseEvent = true,
     outputResult = false,
-    timeout = DEFAULT_TIMEOUT_MS
+    timeout = DEFAULT_TIMEOUT_MS,
   } = options;
 
   try {
-    const input = parseEvent ? parseHookEvent({ context: name }) : parseStdinSync({ context: name });
+    const input = parseEvent
+      ? parseHookEvent({ context: name })
+      : parseStdinSync({ context: name });
 
-    debug(name, 'Starting hook execution');
+    debug(name, "Starting hook execution");
 
     // Execute handler with timeout protection
     const handlerPromise = Promise.resolve(handler(input));
-    const result = timeout > 0
-      ? await Promise.race([handlerPromise, timeoutPromise(timeout, name)])
-      : await handlerPromise;
+    const result =
+      timeout > 0
+        ? await Promise.race([handlerPromise, timeoutPromise(timeout, name)])
+        : await handlerPromise;
 
     if (outputResult && result !== undefined) {
-      if (typeof result === 'string') {
+      if (typeof result === "string") {
         process.stdout.write(result);
       } else if (result !== null) {
         process.stdout.write(JSON.stringify(result));
       }
     }
 
-    debug(name, 'Hook completed successfully');
+    debug(name, "Hook completed successfully");
     process.exit(exitCode);
   } catch (error) {
     debugError(name, error);
@@ -98,25 +104,27 @@ function runHookSync(name, handler, options = {}) {
     exitCode = 0,
     errorExitCode = 0,
     parseEvent = true,
-    outputResult = false
+    outputResult = false,
   } = options;
 
   try {
-    const input = parseEvent ? parseHookEvent({ context: name }) : parseStdinSync({ context: name });
+    const input = parseEvent
+      ? parseHookEvent({ context: name })
+      : parseStdinSync({ context: name });
 
-    debug(name, 'Starting hook execution (sync)');
+    debug(name, "Starting hook execution (sync)");
 
     const result = handler(input);
 
     if (outputResult && result !== undefined) {
-      if (typeof result === 'string') {
+      if (typeof result === "string") {
         process.stdout.write(result);
       } else if (result !== null) {
         process.stdout.write(JSON.stringify(result));
       }
     }
 
-    debug(name, 'Hook completed successfully');
+    debug(name, "Hook completed successfully");
     process.exit(exitCode);
   } catch (error) {
     debugError(name, error);
@@ -137,26 +145,29 @@ async function runBlockingHook(name, validator, options = {}) {
   const { parseEvent = true, timeout = DEFAULT_TIMEOUT_MS } = options;
 
   try {
-    const input = parseEvent ? parseHookEvent({ context: name }) : parseStdinSync({ context: name });
+    const input = parseEvent
+      ? parseHookEvent({ context: name })
+      : parseStdinSync({ context: name });
 
-    debug(name, 'Running blocking hook validation');
+    debug(name, "Running blocking hook validation");
 
     // Execute validator with timeout protection
     const validatorPromise = Promise.resolve(validator(input));
-    const result = timeout > 0
-      ? await Promise.race([validatorPromise, timeoutPromise(timeout, name)])
-      : await validatorPromise;
+    const result =
+      timeout > 0
+        ? await Promise.race([validatorPromise, timeoutPromise(timeout, name)])
+        : await validatorPromise;
 
     if (result && result.allowed === false) {
-      // Output rejection message for Claude to see
+      // Output rejection message to stderr — Claude Code displays stderr from exit-2 hooks
       if (result.message) {
-        process.stdout.write(result.message);
+        process.stderr.write(result.message);
       }
-      debug(name, 'Hook blocked execution');
+      debug(name, "Hook blocked execution");
       process.exit(2); // Exit code 2 = block the action
     }
 
-    debug(name, 'Hook allowed execution');
+    debug(name, "Hook allowed execution");
     process.exit(0);
   } catch (error) {
     debugError(name, error);
@@ -167,5 +178,5 @@ async function runBlockingHook(name, validator, options = {}) {
 module.exports = {
   runHook,
   runHookSync,
-  runBlockingHook
+  runBlockingHook,
 };

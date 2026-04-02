@@ -825,7 +825,7 @@ sequenceDiagram
 
     Ask->>Skill: /workflow-start bugfix
 
-    Skill->>Todo: Create tasks for ALL steps:<br/>1. [Bugfix] /scout<br/>2. [Bugfix] /investigate<br/>3. [Bugfix] /debug<br/>4. [Bugfix] /plan<br/>...17 steps total
+    Skill->>Todo: Create tasks for ALL steps:<br/>1. [Bugfix] /scout<br/>2. [Bugfix] /investigate<br/>3. [Bugfix] /debug-investigate<br/>4. [Bugfix] /plan<br/>...17 steps total
 
     loop Each workflow step
         Todo->>Skill: Mark step in_progress
@@ -1100,7 +1100,7 @@ flowchart TB
 │                                                                   │
 │  TOOLS:                                                           │
 │  1. /sequential-thinking skill — Structured multi-step analysis  │
-│  2. /debug skill — Systematic root cause investigation           │
+│  2. /debug-investigate skill — Systematic root cause investigation           │
 │  3. Sequential-thinking MCP server — External reasoning tool     │
 │                                                                   │
 │  WHEN ACTIVATED:                                                  │
@@ -1597,11 +1597,11 @@ feature-with-integration-test:
 4. Builds 3-way comparison:
 
 ```
-| TC ID     | Feature Doc? | test-specs/? | Test Code? | Action         |
-|-----------|-------------|-------------|----------|----------------|
-| TC-GM-001 | ✅          | ✅          | ✅       | None           |
-| TC-GM-025 | ✅          | ❌          | ✅       | Add to dashboard|
-| TC-GM-030 | ❌          | ✅          | ❌       | Add to feat doc|
+| TC ID     | Feature Doc? | test-specs/? | Test Code? | Action           |
+| --------- | ------------ | ------------ | ---------- | ---------------- |
+| TC-GM-001 | ✅            | ✅            | ✅          | None             |
+| TC-GM-025 | ✅            | ❌            | ✅          | Add to dashboard |
+| TC-GM-030 | ❌            | ✅            | ❌          | Add to feat doc  |
 ```
 
 5. Reconciles: writes missing TCs to whichever system lacks them
@@ -2484,7 +2484,7 @@ This section maps **established prompt engineering techniques** to specific fram
 │     Step 4: Rank by evidence strength                            │
 │     Step 5: Test highest-ranked                                  │
 │                                                                   │
-│  3. /debug SKILL — Forces hypothesis-driven debugging:           │
+│  3. /debug-investigate SKILL — Forces hypothesis-driven debugging:           │
 │     "Never assume first hypothesis → verify with traces"         │
 │                                                                   │
 │  4. /prove-fix SKILL — Proof chain for every change:             │
@@ -2635,17 +2635,17 @@ This section maps **established prompt engineering techniques** to specific fram
 
 #### Summary: Prompt Engineering Techniques → Framework Mapping
 
-| Prompt Engineering Technique  | Framework Implementation                                                 |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| **Role prompting**            | Workflow preActions, agent definitions, hook-injected personas           |
-| **Chain-of-thought**          | Workflow step sequences, /sequential-thinking, /debug, /prove-fix        |
-| **Few-shot examples**         | Context injection hooks, search-before-code, reference doc scans         |
-| **Structured output**         | Confidence declarations, risk matrices, TC format, plan templates        |
-| **Negative prompting**        | Forbidden phrases, anti-pattern lists, NEVER rules, lessons system       |
-| **Iterative refinement**      | Multi-pass review (cook→simplify→review→code-review→sre→security)        |
-| **Task decomposition**        | Workflows decompose "implement feature" into 15+ discrete steps          |
-| **Retrieval-augmented gen.**  | Context hooks inject project-specific docs at decision points            |
-| **Self-consistency checking** | /prove-fix requires proof traces; /plan-validate asks critical questions |
+| Prompt Engineering Technique  | Framework Implementation                                                      |
+| ----------------------------- | ----------------------------------------------------------------------------- |
+| **Role prompting**            | Workflow preActions, agent definitions, hook-injected personas                |
+| **Chain-of-thought**          | Workflow step sequences, /sequential-thinking, /debug-investigate, /prove-fix |
+| **Few-shot examples**         | Context injection hooks, search-before-code, reference doc scans              |
+| **Structured output**         | Confidence declarations, risk matrices, TC format, plan templates             |
+| **Negative prompting**        | Forbidden phrases, anti-pattern lists, NEVER rules, lessons system            |
+| **Iterative refinement**      | Multi-pass review (cook→simplify→review→code-review→sre→security)             |
+| **Task decomposition**        | Workflows decompose "implement feature" into 15+ discrete steps               |
+| **Retrieval-augmented gen.**  | Context hooks inject project-specific docs at decision points                 |
+| **Self-consistency checking** | /prove-fix requires proof traces; /plan-validate asks critical questions      |
 
 ---
 
@@ -2967,7 +2967,7 @@ sequenceDiagram
     end
 
     rect rgb(255, 248, 240)
-        Note over WF,DB: /debug + /fix steps
+        Note over WF,DB: /debug-investigate + /fix steps
         WF->>WF: Claude edits auth.py
         WF->>GH: auto-update fires
         GH->>DB: Re-parse auth.py + dependents
@@ -3212,7 +3212,7 @@ flowchart TB
 | **Prompt engineering quality**                 | 202 skills with YAML frontmatter + behavior protocols      | Skills    |
 | **Confirm workflow before acting**             | workflow-router.cjs → AskUserQuestion → confirm            | Workflows |
 | **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation    | Skills    |
-| **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug skill                  | Skills    |
+| **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill      | Skills    |
 | **Code proof tracing prevents hallucination**  | evidence-based-reasoning-protocol + /prove-fix             | Skills    |
 | **Search before create**                       | search-before-code.cjs blocks edits without evidence       | Hooks     |
 | **State survives context compaction**          | Swap engine + todo-tracker + compact-recovery              | State     |

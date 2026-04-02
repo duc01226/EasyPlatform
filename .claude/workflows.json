@@ -22,8 +22,8 @@
             "copilot": "/cook"
         },
         "debug": {
-            "claude": "/debug",
-            "copilot": "/debug"
+            "claude": "/debug-investigate",
+            "copilot": "/debug-investigate"
         },
         "dependency": {
             "claude": "/dependency",
@@ -288,7 +288,7 @@
             "sequence": [
                 "scout",
                 "investigate",
-                "debug",
+                "debug-investigate",
                 "plan",
                 "plan-review",
                 "plan-validate",

@@ -55,13 +55,13 @@
 | Task                 | Command               | Skill                   |
 | -------------------- | --------------------- | ----------------------- |
 | Implement a feature  | `/cook`               | `feature`               |
-| Fix a bug            | `/fix`                | `debug`                 |
+| Fix a bug            | `/fix`                | `debug-investigate`     |
 | Create a PR          | `/git/pr`             | `commit`                |
 | Understand code      | `/scout`              | `feature-investigation` |
 | Plan implementation  | `/plan`               | `planning`              |
 | Run tests            | `/test`               | `test-spec`             |
 | Review code          | `/review`             | `code-review`           |
-| Debug issues         | `/debug`              | `debug`                 |
+| Debug issues         | `/debug-investigate`  | `debug-investigate`     |
 | Create user story    | `/story`              | `business-analyst`      |
 | Prioritize backlog   | `/prioritize`         | `product-owner`         |
 | Create test cases    | `/test-spec`          | `test-spec`             |

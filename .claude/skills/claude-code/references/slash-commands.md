@@ -5,6 +5,7 @@ Comprehensive catalog of Claude Code slash commands for development workflows.
 ## What Are Slash Commands?
 
 Slash commands are user-defined operations that:
+
 - Start with `/` (e.g., `/cook`, `/test`)
 - Expand to full prompts when executed
 - Accept arguments
@@ -14,6 +15,7 @@ Slash commands are user-defined operations that:
 ## Development Commands
 
 ### /cook [task]
+
 Implement features step by step.
 
 ```bash
@@ -24,6 +26,7 @@ Implement features step by step.
 **When to use**: Feature implementation with iterative development
 
 ### /plan [task]
+
 Research, analyze, and create implementation plans.
 
 ```bash
@@ -33,7 +36,8 @@ Research, analyze, and create implementation plans.
 
 **When to use**: Before starting complex implementations
 
-### /debug [issue]
+### /debug-investigate [issue]
+
 Debug technical issues and provide solutions.
 
 ```bash
@@ -44,6 +48,7 @@ Debug technical issues and provide solutions.
 **When to use**: Investigating and diagnosing problems
 
 ### /test
+
 Run test suite.
 
 ```bash
@@ -53,6 +58,7 @@ Run test suite.
 **When to use**: Validate implementations, check for regressions
 
 ### /refactor [target]
+
 Improve code quality.
 
 ```bash
@@ -65,6 +71,7 @@ Improve code quality.
 ## Fix Commands
 
 ### /fix:fast [issue]
+
 Quick fixes for small issues.
 
 ```bash
@@ -75,6 +82,7 @@ Quick fixes for small issues.
 **When to use**: Simple, straightforward fixes
 
 ### /fix:hard [issue]
+
 Complex issues requiring planning and subagents.
 
 ```bash
@@ -85,6 +93,7 @@ Complex issues requiring planning and subagents.
 **When to use**: Complex bugs requiring deep investigation
 
 ### /fix:types
+
 Fix TypeScript type errors.
 
 ```bash
@@ -94,6 +103,7 @@ Fix TypeScript type errors.
 **When to use**: TypeScript compilation errors
 
 ### /fix:test [issue]
+
 Fix test failures.
 
 ```bash
@@ -104,6 +114,7 @@ Fix test failures.
 **When to use**: Test suite failures
 
 ### /fix:ui [issue]
+
 Fix UI issues.
 
 ```bash
@@ -114,6 +125,7 @@ Fix UI issues.
 **When to use**: Visual or interaction issues
 
 ### /fix:ci [url]
+
 Analyze GitHub Actions logs and fix CI/CD issues.
 
 ```bash
@@ -123,6 +135,7 @@ Analyze GitHub Actions logs and fix CI/CD issues.
 **When to use**: Build or deployment failures
 
 ### /fix:logs [issue]
+
 Analyze logs and fix issues.
 
 ```bash
@@ -134,6 +147,7 @@ Analyze logs and fix issues.
 ## Documentation Commands
 
 ### /docs:init
+
 Create initial documentation structure.
 
 ```bash
@@ -143,6 +157,7 @@ Create initial documentation structure.
 **When to use**: New projects needing documentation
 
 ### /docs:update
+
 Update existing documentation based on code changes.
 
 ```bash
@@ -152,6 +167,7 @@ Update existing documentation based on code changes.
 **When to use**: After significant code changes
 
 ### /docs:summarize
+
 Summarize codebase and create overview.
 
 ```bash
@@ -163,6 +179,7 @@ Summarize codebase and create overview.
 ## Git Commands
 
 ### /git:cm
+
 Stage all files and create commit.
 
 ```bash
@@ -172,6 +189,7 @@ Stage all files and create commit.
 **When to use**: Commit changes with automatic message
 
 ### /git:cp
+
 Stage, commit, and push all code in current branch.
 
 ```bash
@@ -181,6 +199,7 @@ Stage, commit, and push all code in current branch.
 **When to use**: Commit and push in one command
 
 ### /git:pr [branch] [from-branch]
+
 Create pull request.
 
 ```bash
@@ -193,6 +212,7 @@ Create pull request.
 ## Planning Commands
 
 ### /plan:two [task]
+
 Create implementation plan with 2 alternative approaches.
 
 ```bash
@@ -202,6 +222,7 @@ Create implementation plan with 2 alternative approaches.
 **When to use**: Need to evaluate multiple approaches
 
 ### /plan:ci [url]
+
 Analyze GitHub Actions logs and create fix plan.
 
 ```bash
@@ -211,6 +232,7 @@ Analyze GitHub Actions logs and create fix plan.
 **When to use**: CI/CD failure analysis
 
 ### /plan:cro [issue]
+
 Create conversion rate optimization plan.
 
 ```bash
@@ -222,6 +244,7 @@ Create conversion rate optimization plan.
 ## Content Commands
 
 ### /content:fast [request]
+
 Quick copy writing.
 
 ```bash
@@ -231,6 +254,7 @@ Quick copy writing.
 **When to use**: Fast content generation
 
 ### /content:good [request]
+
 High-quality, conversion-focused copy.
 
 ```bash
@@ -240,6 +264,7 @@ High-quality, conversion-focused copy.
 **When to use**: Marketing copy requiring polish
 
 ### /content:enhance [issue]
+
 Enhance existing content.
 
 ```bash
@@ -249,6 +274,7 @@ Enhance existing content.
 **When to use**: Improving existing copy
 
 ### /content:cro [issue]
+
 Conversion rate optimization for content.
 
 ```bash
@@ -260,6 +286,7 @@ Conversion rate optimization for content.
 ## Design Commands
 
 ### /design:fast [task]
+
 Quick design implementation.
 
 ```bash
@@ -269,6 +296,7 @@ Quick design implementation.
 **When to use**: Rapid prototyping
 
 ### /design:good [task]
+
 High-quality, polished design.
 
 ```bash
@@ -278,6 +306,7 @@ High-quality, polished design.
 **When to use**: Production-ready designs
 
 ### /design:3d [task]
+
 Create 3D designs with Three.js.
 
 ```bash
@@ -287,6 +316,7 @@ Create 3D designs with Three.js.
 **When to use**: 3D visualization needs
 
 ### /design:screenshot [path]
+
 Create design based on screenshot.
 
 ```bash
@@ -296,6 +326,7 @@ Create design based on screenshot.
 **When to use**: Recreating designs from images
 
 ### /design:video [path]
+
 Create design based on video.
 
 ```bash
@@ -307,6 +338,7 @@ Create design based on video.
 ## Deployment Commands
 
 ### /deploy
+
 Deploy using deployment tool.
 
 ```bash
@@ -316,6 +348,7 @@ Deploy using deployment tool.
 **When to use**: Production deployments
 
 ### /deploy-check
+
 Check deployment readiness.
 
 ```bash
@@ -327,6 +360,7 @@ Check deployment readiness.
 ## Integration Commands
 
 ### /payment-integration [tasks]
+
 Implement payment integrations (SePay, Polar, etc.).
 
 ```bash
@@ -338,6 +372,7 @@ Implement payment integrations (SePay, Polar, etc.).
 ## Other Commands
 
 ### /brainstorm [question]
+
 Brainstorm features and ideas.
 
 ```bash
@@ -347,6 +382,7 @@ Brainstorm features and ideas.
 **When to use**: Ideation and exploration
 
 ### /ask [question]
+
 Answer technical and architectural questions.
 
 ```bash
@@ -356,6 +392,7 @@ Answer technical and architectural questions.
 **When to use**: Technical guidance
 
 ### /scout [prompt] [scale]
+
 Scout directories to respond to requests.
 
 ```bash
@@ -365,6 +402,7 @@ Scout directories to respond to requests.
 **When to use**: Code exploration
 
 ### /watzup
+
 Review recent changes and wrap up work.
 
 ```bash
@@ -374,6 +412,7 @@ Review recent changes and wrap up work.
 **When to use**: End of session summary
 
 ### /bootstrap [requirements]
+
 Bootstrap new project step by step.
 
 ```bash
@@ -383,6 +422,7 @@ Bootstrap new project step by step.
 **When to use**: New project setup
 
 ### /bootstrap:auto [requirements]
+
 Bootstrap new project automatically.
 
 ```bash
@@ -392,6 +432,7 @@ Bootstrap new project automatically.
 **When to use**: Automated project setup
 
 ### /journal
+
 Write journal entries for development log.
 
 ```bash
@@ -401,6 +442,7 @@ Write journal entries for development log.
 **When to use**: Development documentation
 
 ### /review:codebase [prompt]
+
 Scan and analyze codebase.
 
 ```bash
@@ -410,6 +452,7 @@ Scan and analyze codebase.
 **When to use**: Codebase analysis
 
 ### /skill:create [prompt]
+
 Create new agent skill.
 
 ```bash
@@ -421,6 +464,7 @@ Create new agent skill.
 ## Creating Custom Slash Commands
 
 ### Skill File Structure
+
 ```
 .claude/skills/
 └── my-skill/
@@ -428,12 +472,14 @@ Create new agent skill.
 ```
 
 ### Example Skill File
+
 ```markdown
 # File: .claude/skills/my-skill/SKILL.md
 
 Create comprehensive test suite for {{feature}}.
 
 Include:
+
 - Unit tests
 - Integration tests
 - Edge cases
@@ -441,6 +487,7 @@ Include:
 ```
 
 ### Usage
+
 ```bash
 /my-command authentication
 # Expands to: "Create comprehensive test suite for authentication..."
@@ -456,19 +503,23 @@ Include:
 ## Command Arguments
 
 ### Single Argument
+
 ```bash
 /cook implement user auth
 # Argument: "implement user auth"
 ```
 
 ### Multiple Arguments
+
 ```bash
 /git:pr feature-branch main
 # Arguments: "feature-branch", "main"
 ```
 
 ### Optional Arguments
+
 Some commands work with or without arguments:
+
 ```bash
 /test              # Run all tests
 /test user.test.js # Run specific test

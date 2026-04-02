@@ -305,7 +305,7 @@ Skills are often activated alongside commands:
 | Command         | Primary Skills Activated           |
 | --------------- | ---------------------------------- |
 | `/cook`         | `feature`, `planning`, `test-spec` |
-| `/fix`          | `debug`                            |
+| `/fix`          | `debug-investigate`                |
 | `/plan`         | `planning`, `plan-analysis`        |
 | `/review`       | `code-review`                      |
 | `/scout`        | `scout`, `feature-investigation`   |

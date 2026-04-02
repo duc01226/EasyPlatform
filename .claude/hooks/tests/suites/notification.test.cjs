@@ -7,12 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { runHook, getHookPath } = require('../lib/hook-runner.cjs');
-const {
-  assertTrue,
-  assertFalse,
-  assertEqual,
-  assertContains
-} = require('../lib/assertions.cjs');
+const { assertTrue, assertFalse, assertEqual, assertContains } = require('../lib/assertions.cjs');
 
 // ============================================================================
 // Test Configuration
@@ -32,48 +27,48 @@ const ENV_LOADER_LIB = path.join(HOOKS_DIR, 'notifications', 'lib', 'env-loader.
 // ============================================================================
 
 const fileExistenceTests = [
-  {
-    name: '[notification] notify.cjs router exists',
-    fn: () => {
-      assertTrue(fs.existsSync(NOTIFY_SCRIPT), `Router not found: ${NOTIFY_SCRIPT}`);
+    {
+        name: '[notification] notify.cjs router exists',
+        fn: () => {
+            assertTrue(fs.existsSync(NOTIFY_SCRIPT), `Router not found: ${NOTIFY_SCRIPT}`);
+        }
+    },
+    {
+        name: '[notification] discord.cjs provider exists',
+        fn: () => {
+            assertTrue(fs.existsSync(DISCORD_PROVIDER), `Provider not found: ${DISCORD_PROVIDER}`);
+        }
+    },
+    {
+        name: '[notification] telegram.cjs provider exists',
+        fn: () => {
+            assertTrue(fs.existsSync(TELEGRAM_PROVIDER), `Provider not found: ${TELEGRAM_PROVIDER}`);
+        }
+    },
+    {
+        name: '[notification] slack.cjs provider exists',
+        fn: () => {
+            assertTrue(fs.existsSync(SLACK_PROVIDER), `Provider not found: ${SLACK_PROVIDER}`);
+        }
+    },
+    {
+        name: '[notification] sender.cjs lib exists',
+        fn: () => {
+            assertTrue(fs.existsSync(SENDER_LIB), `Lib not found: ${SENDER_LIB}`);
+        }
+    },
+    {
+        name: '[notification] env-loader.cjs lib exists',
+        fn: () => {
+            assertTrue(fs.existsSync(ENV_LOADER_LIB), `Lib not found: ${ENV_LOADER_LIB}`);
+        }
+    },
+    {
+        name: '[notification] desktop.cjs provider exists',
+        fn: () => {
+            assertTrue(fs.existsSync(DESKTOP_PROVIDER), `Provider not found: ${DESKTOP_PROVIDER}`);
+        }
     }
-  },
-  {
-    name: '[notification] discord.cjs provider exists',
-    fn: () => {
-      assertTrue(fs.existsSync(DISCORD_PROVIDER), `Provider not found: ${DISCORD_PROVIDER}`);
-    }
-  },
-  {
-    name: '[notification] telegram.cjs provider exists',
-    fn: () => {
-      assertTrue(fs.existsSync(TELEGRAM_PROVIDER), `Provider not found: ${TELEGRAM_PROVIDER}`);
-    }
-  },
-  {
-    name: '[notification] slack.cjs provider exists',
-    fn: () => {
-      assertTrue(fs.existsSync(SLACK_PROVIDER), `Provider not found: ${SLACK_PROVIDER}`);
-    }
-  },
-  {
-    name: '[notification] sender.cjs lib exists',
-    fn: () => {
-      assertTrue(fs.existsSync(SENDER_LIB), `Lib not found: ${SENDER_LIB}`);
-    }
-  },
-  {
-    name: '[notification] env-loader.cjs lib exists',
-    fn: () => {
-      assertTrue(fs.existsSync(ENV_LOADER_LIB), `Lib not found: ${ENV_LOADER_LIB}`);
-    }
-  },
-  {
-    name: '[notification] desktop.cjs provider exists',
-    fn: () => {
-      assertTrue(fs.existsSync(DESKTOP_PROVIDER), `Provider not found: ${DESKTOP_PROVIDER}`);
-    }
-  }
 ];
 
 // ============================================================================
@@ -81,42 +76,42 @@ const fileExistenceTests = [
 // ============================================================================
 
 const providerModuleTests = [
-  {
-    name: '[notification] discord provider has required exports',
-    fn: () => {
-      const provider = require(DISCORD_PROVIDER);
-      assertTrue(typeof provider.name === 'string', 'discord.name must be string');
-      assertTrue(typeof provider.isEnabled === 'function', 'discord.isEnabled must be function');
-      assertTrue(typeof provider.send === 'function', 'discord.send must be function');
+    {
+        name: '[notification] discord provider has required exports',
+        fn: () => {
+            const provider = require(DISCORD_PROVIDER);
+            assertTrue(typeof provider.name === 'string', 'discord.name must be string');
+            assertTrue(typeof provider.isEnabled === 'function', 'discord.isEnabled must be function');
+            assertTrue(typeof provider.send === 'function', 'discord.send must be function');
+        }
+    },
+    {
+        name: '[notification] telegram provider has required exports',
+        fn: () => {
+            const provider = require(TELEGRAM_PROVIDER);
+            assertTrue(typeof provider.name === 'string', 'telegram.name must be string');
+            assertTrue(typeof provider.isEnabled === 'function', 'telegram.isEnabled must be function');
+            assertTrue(typeof provider.send === 'function', 'telegram.send must be function');
+        }
+    },
+    {
+        name: '[notification] slack provider has required exports',
+        fn: () => {
+            const provider = require(SLACK_PROVIDER);
+            assertTrue(typeof provider.name === 'string', 'slack.name must be string');
+            assertTrue(typeof provider.isEnabled === 'function', 'slack.isEnabled must be function');
+            assertTrue(typeof provider.send === 'function', 'slack.send must be function');
+        }
+    },
+    {
+        name: '[notification] desktop provider has required exports',
+        fn: () => {
+            const provider = require(DESKTOP_PROVIDER);
+            assertTrue(typeof provider.name === 'string', 'desktop.name must be string');
+            assertTrue(typeof provider.isEnabled === 'function', 'desktop.isEnabled must be function');
+            assertTrue(typeof provider.send === 'function', 'desktop.send must be function');
+        }
     }
-  },
-  {
-    name: '[notification] telegram provider has required exports',
-    fn: () => {
-      const provider = require(TELEGRAM_PROVIDER);
-      assertTrue(typeof provider.name === 'string', 'telegram.name must be string');
-      assertTrue(typeof provider.isEnabled === 'function', 'telegram.isEnabled must be function');
-      assertTrue(typeof provider.send === 'function', 'telegram.send must be function');
-    }
-  },
-  {
-    name: '[notification] slack provider has required exports',
-    fn: () => {
-      const provider = require(SLACK_PROVIDER);
-      assertTrue(typeof provider.name === 'string', 'slack.name must be string');
-      assertTrue(typeof provider.isEnabled === 'function', 'slack.isEnabled must be function');
-      assertTrue(typeof provider.send === 'function', 'slack.send must be function');
-    }
-  },
-  {
-    name: '[notification] desktop provider has required exports',
-    fn: () => {
-      const provider = require(DESKTOP_PROVIDER);
-      assertTrue(typeof provider.name === 'string', 'desktop.name must be string');
-      assertTrue(typeof provider.isEnabled === 'function', 'desktop.isEnabled must be function');
-      assertTrue(typeof provider.send === 'function', 'desktop.send must be function');
-    }
-  }
 ];
 
 // ============================================================================
@@ -124,96 +119,81 @@ const providerModuleTests = [
 // ============================================================================
 
 const providerEnablementTests = [
-  {
-    name: '[notification] discord isEnabled false without DISCORD_WEBHOOK_URL',
-    fn: () => {
-      // Clear cache to get fresh module
-      delete require.cache[require.resolve(DISCORD_PROVIDER)];
-      const provider = require(DISCORD_PROVIDER);
-      assertFalse(provider.isEnabled({}), 'Should be disabled without URL');
+    {
+        name: '[notification] discord isEnabled false without DISCORD_WEBHOOK_URL',
+        fn: () => {
+            // Clear cache to get fresh module
+            delete require.cache[require.resolve(DISCORD_PROVIDER)];
+            const provider = require(DISCORD_PROVIDER);
+            assertFalse(provider.isEnabled({}), 'Should be disabled without URL');
+        }
+    },
+    {
+        name: '[notification] discord isEnabled true with DISCORD_WEBHOOK_URL',
+        fn: () => {
+            delete require.cache[require.resolve(DISCORD_PROVIDER)];
+            const provider = require(DISCORD_PROVIDER);
+            assertTrue(provider.isEnabled({ DISCORD_WEBHOOK_URL: 'https://discord.com/api/webhooks/test' }), 'Should be enabled with URL');
+        }
+    },
+    {
+        name: '[notification] telegram isEnabled false without both tokens',
+        fn: () => {
+            delete require.cache[require.resolve(TELEGRAM_PROVIDER)];
+            const provider = require(TELEGRAM_PROVIDER);
+            assertFalse(provider.isEnabled({}), 'Should be disabled without tokens');
+            assertFalse(provider.isEnabled({ TELEGRAM_BOT_TOKEN: 'token' }), 'Should be disabled with only token');
+            assertFalse(provider.isEnabled({ TELEGRAM_CHAT_ID: 'chat' }), 'Should be disabled with only chat');
+        }
+    },
+    {
+        name: '[notification] telegram isEnabled true with both tokens',
+        fn: () => {
+            delete require.cache[require.resolve(TELEGRAM_PROVIDER)];
+            const provider = require(TELEGRAM_PROVIDER);
+            assertTrue(provider.isEnabled({ TELEGRAM_BOT_TOKEN: 'token', TELEGRAM_CHAT_ID: 'chat' }), 'Should be enabled with both tokens');
+        }
+    },
+    {
+        name: '[notification] slack isEnabled false without SLACK_WEBHOOK_URL',
+        fn: () => {
+            delete require.cache[require.resolve(SLACK_PROVIDER)];
+            const provider = require(SLACK_PROVIDER);
+            assertFalse(provider.isEnabled({}), 'Should be disabled without URL');
+        }
+    },
+    {
+        name: '[notification] slack isEnabled true with SLACK_WEBHOOK_URL',
+        fn: () => {
+            delete require.cache[require.resolve(SLACK_PROVIDER)];
+            const provider = require(SLACK_PROVIDER);
+            assertTrue(provider.isEnabled({ SLACK_WEBHOOK_URL: 'https://hooks.slack.com/test' }), 'Should be enabled with URL');
+        }
+    },
+    {
+        name: '[notification] desktop isEnabled true by default (no env)',
+        fn: () => {
+            delete require.cache[require.resolve(DESKTOP_PROVIDER)];
+            const provider = require(DESKTOP_PROVIDER);
+            assertTrue(provider.isEnabled({}), 'Should be enabled by default');
+        }
+    },
+    {
+        name: '[notification] desktop isEnabled true with explicit true',
+        fn: () => {
+            delete require.cache[require.resolve(DESKTOP_PROVIDER)];
+            const provider = require(DESKTOP_PROVIDER);
+            assertTrue(provider.isEnabled({ ENABLE_DESKTOP_NOTIFICATIONS: 'true' }), 'Should be enabled with explicit true');
+        }
+    },
+    {
+        name: '[notification] desktop isEnabled false with explicit false',
+        fn: () => {
+            delete require.cache[require.resolve(DESKTOP_PROVIDER)];
+            const provider = require(DESKTOP_PROVIDER);
+            assertFalse(provider.isEnabled({ ENABLE_DESKTOP_NOTIFICATIONS: 'false' }), 'Should be disabled with explicit false');
+        }
     }
-  },
-  {
-    name: '[notification] discord isEnabled true with DISCORD_WEBHOOK_URL',
-    fn: () => {
-      delete require.cache[require.resolve(DISCORD_PROVIDER)];
-      const provider = require(DISCORD_PROVIDER);
-      assertTrue(
-        provider.isEnabled({ DISCORD_WEBHOOK_URL: 'https://discord.com/api/webhooks/test' }),
-        'Should be enabled with URL'
-      );
-    }
-  },
-  {
-    name: '[notification] telegram isEnabled false without both tokens',
-    fn: () => {
-      delete require.cache[require.resolve(TELEGRAM_PROVIDER)];
-      const provider = require(TELEGRAM_PROVIDER);
-      assertFalse(provider.isEnabled({}), 'Should be disabled without tokens');
-      assertFalse(provider.isEnabled({ TELEGRAM_BOT_TOKEN: 'token' }), 'Should be disabled with only token');
-      assertFalse(provider.isEnabled({ TELEGRAM_CHAT_ID: 'chat' }), 'Should be disabled with only chat');
-    }
-  },
-  {
-    name: '[notification] telegram isEnabled true with both tokens',
-    fn: () => {
-      delete require.cache[require.resolve(TELEGRAM_PROVIDER)];
-      const provider = require(TELEGRAM_PROVIDER);
-      assertTrue(
-        provider.isEnabled({ TELEGRAM_BOT_TOKEN: 'token', TELEGRAM_CHAT_ID: 'chat' }),
-        'Should be enabled with both tokens'
-      );
-    }
-  },
-  {
-    name: '[notification] slack isEnabled false without SLACK_WEBHOOK_URL',
-    fn: () => {
-      delete require.cache[require.resolve(SLACK_PROVIDER)];
-      const provider = require(SLACK_PROVIDER);
-      assertFalse(provider.isEnabled({}), 'Should be disabled without URL');
-    }
-  },
-  {
-    name: '[notification] slack isEnabled true with SLACK_WEBHOOK_URL',
-    fn: () => {
-      delete require.cache[require.resolve(SLACK_PROVIDER)];
-      const provider = require(SLACK_PROVIDER);
-      assertTrue(
-        provider.isEnabled({ SLACK_WEBHOOK_URL: 'https://hooks.slack.com/test' }),
-        'Should be enabled with URL'
-      );
-    }
-  },
-  {
-    name: '[notification] desktop isEnabled true by default (no env)',
-    fn: () => {
-      delete require.cache[require.resolve(DESKTOP_PROVIDER)];
-      const provider = require(DESKTOP_PROVIDER);
-      assertTrue(provider.isEnabled({}), 'Should be enabled by default');
-    }
-  },
-  {
-    name: '[notification] desktop isEnabled true with explicit true',
-    fn: () => {
-      delete require.cache[require.resolve(DESKTOP_PROVIDER)];
-      const provider = require(DESKTOP_PROVIDER);
-      assertTrue(
-        provider.isEnabled({ ENABLE_DESKTOP_NOTIFICATIONS: 'true' }),
-        'Should be enabled with explicit true'
-      );
-    }
-  },
-  {
-    name: '[notification] desktop isEnabled false with explicit false',
-    fn: () => {
-      delete require.cache[require.resolve(DESKTOP_PROVIDER)];
-      const provider = require(DESKTOP_PROVIDER);
-      assertFalse(
-        provider.isEnabled({ ENABLE_DESKTOP_NOTIFICATIONS: 'false' }),
-        'Should be disabled with explicit false'
-      );
-    }
-  }
 ];
 
 // ============================================================================
@@ -224,97 +204,96 @@ const providerEnablementTests = [
 const testEnv = { ...process.env, ENABLE_DESKTOP_NOTIFICATIONS: 'false' };
 
 const routerExecutionTests = [
-  {
-    name: '[notification] router exits with code 0 on empty input',
-    fn: async () => {
-      const result = await runHook(NOTIFY_SCRIPT, undefined, { timeout: 5000, env: testEnv });
-      assertEqual(result.code, 0, 'Should exit cleanly on empty input');
+    {
+        name: '[notification] router exits with code 0 on empty input',
+        fn: async () => {
+            const result = await runHook(NOTIFY_SCRIPT, undefined, { timeout: 5000, env: testEnv });
+            assertEqual(result.code, 0, 'Should exit cleanly on empty input');
+        }
+    },
+    {
+        name: '[notification] router exits with code 0 on valid JSON without providers',
+        fn: async () => {
+            const input = { hook_event_name: 'Stop', cwd: '/test', session_id: 'test123' };
+            const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+            assertEqual(result.code, 0, 'Should exit cleanly on valid JSON');
+        }
+    },
+    {
+        name: '[notification] router handles Stop event without error',
+        fn: async () => {
+            const input = { hook_event_name: 'Stop', cwd: '/test/project', session_id: 'abc123def456' };
+            const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+            assertEqual(result.code, 0, 'Should handle Stop event');
+        }
+    },
+    {
+        name: '[notification] router skips SubagentStop event (not in whitelist)',
+        fn: async () => {
+            // WHITELIST: Only Stop and idle_prompt are allowed - SubagentStop is blocked
+            const input = { hook_event_name: 'SubagentStop', cwd: '/test', session_id: 'test', agent_type: 'scout' };
+            const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+            assertEqual(result.code, 0, 'Should exit cleanly');
+            assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
+            assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
+        }
+    },
+    {
+        name: '[notification] router skips AskUserPrompt event (not in whitelist)',
+        fn: async () => {
+            // WHITELIST: Only Stop and idle_prompt are allowed - AskUserPrompt is blocked
+            const input = { hook_event_name: 'AskUserPrompt', cwd: '/test', session_id: 'test123' };
+            const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+            assertEqual(result.code, 0, 'Should exit cleanly');
+            assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
+            assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
+        }
+    },
+    {
+        name: '[notification] router skips unknown event (not in whitelist)',
+        fn: async () => {
+            // WHITELIST: Only Stop and idle_prompt are allowed - UnknownEvent is blocked
+            const input = { hook_event_name: 'UnknownEvent', cwd: '/test', session_id: 'test' };
+            const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+            assertEqual(result.code, 0, 'Should exit cleanly');
+            assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
+            assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
+        }
+    },
+    {
+        name: '[notification] router allows permission_prompt notifications',
+        fn: async () => {
+            const input = {
+                hook_event_name: 'Notification',
+                notification_type: 'permission_prompt',
+                cwd: '/test',
+                session_id: 'perm-test-' + Date.now(),
+                message: 'Claude needs permission to use Bash'
+            };
+            const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+            assertEqual(result.code, 0, 'Should exit cleanly');
+            // permission_prompt should NOT be skipped - should pass whitelist
+            assertFalse(result.stderr.includes('not in whitelist'), 'permission_prompt should pass whitelist');
+        }
+    },
+    {
+        name: '[notification] router allows idle_prompt notifications',
+        fn: async () => {
+            const input = {
+                hook_event_name: 'Notification',
+                notification_type: 'idle_prompt',
+                cwd: '/test',
+                session_id: 'idle-test-' + Date.now(), // Unique session to avoid throttle
+                message: 'Claude is waiting for input'
+            };
+            const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+            assertEqual(result.code, 0, 'Should exit cleanly');
+            // idle_prompt should NOT be skipped - notifications should be sent (but throttled after first)
+            // Check that it didn't get blocked by subagent or command approval filters
+            assertFalse(result.stderr.includes('subagent context'), 'idle_prompt should not be blocked as subagent');
+            assertFalse(result.stderr.includes('command approval'), 'idle_prompt should not be blocked as command approval');
+        }
     }
-  },
-  {
-    name: '[notification] router exits with code 0 on valid JSON without providers',
-    fn: async () => {
-      const input = { hook_event_name: 'Stop', cwd: '/test', session_id: 'test123' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
-      assertEqual(result.code, 0, 'Should exit cleanly on valid JSON');
-    }
-  },
-  {
-    name: '[notification] router handles Stop event without error',
-    fn: async () => {
-      const input = { hook_event_name: 'Stop', cwd: '/test/project', session_id: 'abc123def456' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
-      assertEqual(result.code, 0, 'Should handle Stop event');
-    }
-  },
-  {
-    name: '[notification] router skips SubagentStop event (not in whitelist)',
-    fn: async () => {
-      // WHITELIST: Only Stop and idle_prompt are allowed - SubagentStop is blocked
-      const input = { hook_event_name: 'SubagentStop', cwd: '/test', session_id: 'test', agent_type: 'scout' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
-      assertEqual(result.code, 0, 'Should exit cleanly');
-      assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
-      assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
-    }
-  },
-  {
-    name: '[notification] router skips AskUserPrompt event (not in whitelist)',
-    fn: async () => {
-      // WHITELIST: Only Stop and idle_prompt are allowed - AskUserPrompt is blocked
-      const input = { hook_event_name: 'AskUserPrompt', cwd: '/test', session_id: 'test123' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
-      assertEqual(result.code, 0, 'Should exit cleanly');
-      assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
-      assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
-    }
-  },
-  {
-    name: '[notification] router skips unknown event (not in whitelist)',
-    fn: async () => {
-      // WHITELIST: Only Stop and idle_prompt are allowed - UnknownEvent is blocked
-      const input = { hook_event_name: 'UnknownEvent', cwd: '/test', session_id: 'test' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
-      assertEqual(result.code, 0, 'Should exit cleanly');
-      assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
-      assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
-    }
-  },
-  {
-    name: '[notification] router skips permission_prompt notifications (not in whitelist)',
-    fn: async () => {
-      const input = {
-        hook_event_name: 'Notification',
-        notification_type: 'permission_prompt',
-        cwd: '/test',
-        session_id: 'test123',
-        message: 'Claude needs permission to use Bash'
-      };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
-      assertEqual(result.code, 0, 'Should exit cleanly');
-      assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
-      // WHITELIST approach: only Stop and idle_prompt are allowed
-      assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist in skip message');
-    }
-  },
-  {
-    name: '[notification] router allows idle_prompt notifications',
-    fn: async () => {
-      const input = {
-        hook_event_name: 'Notification',
-        notification_type: 'idle_prompt',
-        cwd: '/test',
-        session_id: 'idle-test-' + Date.now(),  // Unique session to avoid throttle
-        message: 'Claude is waiting for input'
-      };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
-      assertEqual(result.code, 0, 'Should exit cleanly');
-      // idle_prompt should NOT be skipped - notifications should be sent (but throttled after first)
-      // Check that it didn't get blocked by subagent or command approval filters
-      assertFalse(result.stderr.includes('subagent context'), 'idle_prompt should not be blocked as subagent');
-      assertFalse(result.stderr.includes('command approval'), 'idle_prompt should not be blocked as command approval');
-    }
-  }
 ];
 
 // ============================================================================
@@ -322,39 +301,39 @@ const routerExecutionTests = [
 // ============================================================================
 
 const libTests = [
-  {
-    name: '[notification] sender module exports required functions',
-    fn: () => {
-      const sender = require(SENDER_LIB);
-      assertTrue(typeof sender.send === 'function', 'sender.send must be function');
-      assertTrue(typeof sender.isThrottled === 'function', 'sender.isThrottled must be function');
+    {
+        name: '[notification] sender module exports required functions',
+        fn: () => {
+            const sender = require(SENDER_LIB);
+            assertTrue(typeof sender.send === 'function', 'sender.send must be function');
+            assertTrue(typeof sender.isThrottled === 'function', 'sender.isThrottled must be function');
+        }
+    },
+    {
+        name: '[notification] isThrottled returns false for unknown provider',
+        fn: () => {
+            delete require.cache[require.resolve(SENDER_LIB)];
+            const sender = require(SENDER_LIB);
+            const result = sender.isThrottled('unknown-provider-' + Date.now());
+            assertFalse(result, 'Unknown provider should not be throttled');
+        }
+    },
+    {
+        name: '[notification] env-loader exports loadEnv function',
+        fn: () => {
+            const envLoader = require(ENV_LOADER_LIB);
+            assertTrue(typeof envLoader.loadEnv === 'function', 'loadEnv must be function');
+        }
+    },
+    {
+        name: '[notification] loadEnv returns object',
+        fn: () => {
+            delete require.cache[require.resolve(ENV_LOADER_LIB)];
+            const envLoader = require(ENV_LOADER_LIB);
+            const result = envLoader.loadEnv(process.cwd());
+            assertTrue(typeof result === 'object' && result !== null, 'loadEnv must return object');
+        }
     }
-  },
-  {
-    name: '[notification] isThrottled returns false for unknown provider',
-    fn: () => {
-      delete require.cache[require.resolve(SENDER_LIB)];
-      const sender = require(SENDER_LIB);
-      const result = sender.isThrottled('unknown-provider-' + Date.now());
-      assertFalse(result, 'Unknown provider should not be throttled');
-    }
-  },
-  {
-    name: '[notification] env-loader exports loadEnv function',
-    fn: () => {
-      const envLoader = require(ENV_LOADER_LIB);
-      assertTrue(typeof envLoader.loadEnv === 'function', 'loadEnv must be function');
-    }
-  },
-  {
-    name: '[notification] loadEnv returns object',
-    fn: () => {
-      delete require.cache[require.resolve(ENV_LOADER_LIB)];
-      const envLoader = require(ENV_LOADER_LIB);
-      const result = envLoader.loadEnv(process.cwd());
-      assertTrue(typeof result === 'object' && result !== null, 'loadEnv must return object');
-    }
-  }
 ];
 
 // ============================================================================
@@ -362,27 +341,27 @@ const libTests = [
 // ============================================================================
 
 const eventConfigTests = [
-  {
-    name: '[notification] discord Stop event has green color',
-    fn: () => {
-      const content = fs.readFileSync(DISCORD_PROVIDER, 'utf8');
-      assertContains(content, '5763719', 'Stop should have green color (5763719)');
+    {
+        name: '[notification] discord Stop event has green color',
+        fn: () => {
+            const content = fs.readFileSync(DISCORD_PROVIDER, 'utf8');
+            assertContains(content, '5763719', 'Stop should have green color (5763719)');
+        }
+    },
+    {
+        name: '[notification] discord SubagentStop event has blue color',
+        fn: () => {
+            const content = fs.readFileSync(DISCORD_PROVIDER, 'utf8');
+            assertContains(content, '3447003', 'SubagentStop should have blue color (3447003)');
+        }
+    },
+    {
+        name: '[notification] discord AskUserPrompt event has yellow color',
+        fn: () => {
+            const content = fs.readFileSync(DISCORD_PROVIDER, 'utf8');
+            assertContains(content, '15844367', 'AskUserPrompt should have yellow color (15844367)');
+        }
     }
-  },
-  {
-    name: '[notification] discord SubagentStop event has blue color',
-    fn: () => {
-      const content = fs.readFileSync(DISCORD_PROVIDER, 'utf8');
-      assertContains(content, '3447003', 'SubagentStop should have blue color (3447003)');
-    }
-  },
-  {
-    name: '[notification] discord AskUserPrompt event has yellow color',
-    fn: () => {
-      const content = fs.readFileSync(DISCORD_PROVIDER, 'utf8');
-      assertContains(content, '15844367', 'AskUserPrompt should have yellow color (15844367)');
-    }
-  }
 ];
 
 // ============================================================================
@@ -390,89 +369,94 @@ const eventConfigTests = [
 // ============================================================================
 
 const desktopBehaviorTests = [
-  {
-    name: '[notification] desktop provider has notifyWindows function',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'function notifyWindows', 'Should have notifyWindows function');
+    {
+        name: '[notification] desktop provider has notifyWindows function',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            assertContains(content, 'function notifyWindows', 'Should have notifyWindows function');
+        }
+    },
+    {
+        name: '[notification] desktop provider has notifyMacOS function',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            assertContains(content, 'function notifyMacOS', 'Should have notifyMacOS function');
+        }
+    },
+    {
+        name: '[notification] desktop provider has notifyLinux function',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            assertContains(content, 'function notifyLinux', 'Should have notifyLinux function');
+        }
+    },
+    {
+        name: '[notification] desktop provider has sendNotification function',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            assertContains(content, 'function sendNotification', 'Should have sendNotification function');
+        }
+    },
+    {
+        name: '[notification] desktop Stop event triggers dialog',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            // Check that Stop event triggers showDialog=true
+            assertContains(content, "hookType === 'Stop'", 'Should check for Stop event');
+            assertContains(content, 'showDialog', 'Should have showDialog flag for dialog events');
+        }
+    },
+    {
+        name: '[notification] desktop idle_prompt event triggers dialog',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            // Check that idle_prompt event triggers dialog (AskUserPrompt is blocked at router level)
+            assertContains(content, "notificationType === 'idle_prompt'", 'Should check for idle_prompt notification type');
+        }
+    },
+    {
+        name: '[notification] desktop SubagentStop event triggers toast (not dialog)',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            // The showDialog condition should only include Stop and AskUserPrompt, not SubagentStop
+            // Check that the dialog condition doesn't include SubagentStop
+            const dialogConditionMatch = content.match(/showDialog\s*=\s*hookType\s*===\s*'Stop'[^;]+/);
+            assertTrue(dialogConditionMatch !== null, 'Should have showDialog condition for Stop');
+            assertFalse(dialogConditionMatch[0].includes('SubagentStop'), 'SubagentStop should not be in showDialog condition');
+        }
+    },
+    {
+        name: '[notification] desktop Windows uses PowerShell script',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            // Windows uses external PowerShell script for notifications
+            assertContains(content, 'notify-windows.ps1', 'Should reference Windows PowerShell script');
+            assertContains(content, '-WindowStyle Hidden', 'Should hide PowerShell window');
+        }
+    },
+    {
+        name: '[notification] desktop macOS dialog uses osascript',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            assertContains(content, 'osascript', 'Should use osascript for macOS');
+            assertContains(content, 'display dialog', 'Should use display dialog for macOS');
+        }
+    },
+    {
+        name: '[notification] desktop Linux dialog uses zenity',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            assertContains(content, 'zenity', 'Should use zenity for Linux');
+        }
+    },
+    {
+        name: '[notification] desktop permission_prompt event triggers dialog',
+        fn: () => {
+            const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
+            assertContains(content, 'permission_prompt', 'Should have permission_prompt in TITLES');
+            assertContains(content, "notificationType === 'permission_prompt'", 'Should include permission_prompt in showDialog condition');
+        }
     }
-  },
-  {
-    name: '[notification] desktop provider has notifyMacOS function',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'function notifyMacOS', 'Should have notifyMacOS function');
-    }
-  },
-  {
-    name: '[notification] desktop provider has notifyLinux function',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'function notifyLinux', 'Should have notifyLinux function');
-    }
-  },
-  {
-    name: '[notification] desktop provider has sendNotification function',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'function sendNotification', 'Should have sendNotification function');
-    }
-  },
-  {
-    name: '[notification] desktop Stop event triggers dialog',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      // Check that Stop event triggers showDialog=true
-      assertContains(content, "hookType === 'Stop'", 'Should check for Stop event');
-      assertContains(content, 'showDialog', 'Should have showDialog flag for dialog events');
-    }
-  },
-  {
-    name: '[notification] desktop idle_prompt event triggers dialog',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      // Check that idle_prompt event triggers dialog (AskUserPrompt is blocked at router level)
-      assertContains(content, "notificationType === 'idle_prompt'", 'Should check for idle_prompt notification type');
-    }
-  },
-  {
-    name: '[notification] desktop SubagentStop event triggers toast (not dialog)',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      // The showDialog condition should only include Stop and AskUserPrompt, not SubagentStop
-      // Check that the dialog condition doesn't include SubagentStop
-      const dialogConditionMatch = content.match(/showDialog\s*=\s*hookType\s*===\s*'Stop'[^;]+/);
-      assertTrue(dialogConditionMatch !== null, 'Should have showDialog condition for Stop');
-      assertFalse(
-        dialogConditionMatch[0].includes('SubagentStop'),
-        'SubagentStop should not be in showDialog condition'
-      );
-    }
-  },
-  {
-    name: '[notification] desktop Windows uses PowerShell script',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      // Windows uses external PowerShell script for notifications
-      assertContains(content, 'notify-windows.ps1', 'Should reference Windows PowerShell script');
-      assertContains(content, '-WindowStyle Hidden', 'Should hide PowerShell window');
-    }
-  },
-  {
-    name: '[notification] desktop macOS dialog uses osascript',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'osascript', 'Should use osascript for macOS');
-      assertContains(content, 'display dialog', 'Should use display dialog for macOS');
-    }
-  },
-  {
-    name: '[notification] desktop Linux dialog uses zenity',
-    fn: () => {
-      const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'zenity', 'Should use zenity for Linux');
-    }
-  }
 ];
 
 // ============================================================================
@@ -480,27 +464,37 @@ const desktopBehaviorTests = [
 // ============================================================================
 
 const settingsTests = [
-  {
-    name: '[notification] settings.json has Notification hook configured',
-    fn: () => {
-      const settingsPath = path.join(HOOKS_DIR, '..', 'settings.json');
-      assertTrue(fs.existsSync(settingsPath), 'settings.json must exist');
+    {
+        name: '[notification] settings.json has Notification hook configured',
+        fn: () => {
+            const settingsPath = path.join(HOOKS_DIR, '..', 'settings.json');
+            assertTrue(fs.existsSync(settingsPath), 'settings.json must exist');
 
-      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-      assertTrue(settings.hooks && settings.hooks.Notification, 'Notification hook must be configured');
-    }
-  },
-  {
-    name: '[notification] Notification hook points to notify.cjs',
-    fn: () => {
-      const settingsPath = path.join(HOOKS_DIR, '..', 'settings.json');
-      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-      const notifHook = settings.hooks?.Notification?.[0]?.hooks?.[0];
-      const command = notifHook?.command || '';
+            const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+            assertTrue(settings.hooks && settings.hooks.Notification, 'Notification hook must be configured');
+        }
+    },
+    {
+        name: '[notification] Notification hook points to notify.cjs',
+        fn: () => {
+            const settingsPath = path.join(HOOKS_DIR, '..', 'settings.json');
+            const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+            const notifHook = settings.hooks?.Notification?.[0]?.hooks?.[0];
+            const command = notifHook?.command || '';
 
-      assertContains(command, 'notifications/notify.cjs', 'Hook should point to notify.cjs');
+            assertContains(command, 'notifications/notify.cjs', 'Hook should point to notify.cjs');
+        }
+    },
+    {
+        name: '[notification] Notification hook matcher includes permission_prompt',
+        fn: () => {
+            const settingsPath = path.join(HOOKS_DIR, '..', 'settings.json');
+            const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+            const matcher = settings.hooks?.Notification?.[0]?.matcher || '';
+
+            assertContains(matcher, 'permission_prompt', 'Matcher should include permission_prompt');
+        }
     }
-  }
 ];
 
 // ============================================================================
@@ -508,15 +502,15 @@ const settingsTests = [
 // ============================================================================
 
 module.exports = {
-  name: 'Notification System Tests',
-  tests: [
-    ...fileExistenceTests,
-    ...providerModuleTests,
-    ...providerEnablementTests,
-    ...routerExecutionTests,
-    ...libTests,
-    ...eventConfigTests,
-    ...desktopBehaviorTests,
-    ...settingsTests
-  ]
+    name: 'Notification System Tests',
+    tests: [
+        ...fileExistenceTests,
+        ...providerModuleTests,
+        ...providerEnablementTests,
+        ...routerExecutionTests,
+        ...libTests,
+        ...eventConfigTests,
+        ...desktopBehaviorTests,
+        ...settingsTests
+    ]
 };

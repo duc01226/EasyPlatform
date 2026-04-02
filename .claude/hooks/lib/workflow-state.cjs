@@ -25,7 +25,7 @@ const WORKFLOW_DIR = path.join(CK_TMP_DIR, 'workflow');
  * @returns {string} Path to workflow state file
  */
 function getWorkflowPath(sessionId) {
-  return path.join(WORKFLOW_DIR, `${sessionId}.json`);
+    return path.join(WORKFLOW_DIR, `${sessionId}.json`);
 }
 
 /**
@@ -33,17 +33,17 @@ function getWorkflowPath(sessionId) {
  * @returns {Object} Default empty workflow state
  */
 function getDefaultState() {
-  return {
-    workflowType: null,       // See workflows.json for all workflow types
-    workflowSteps: [],        // Array of step names in order
-    currentStepIndex: -1,     // Index of current step (-1 = not started)
-    completedSteps: [],       // Array of completed step names
-    activePlan: null,         // Path to active plan file
-    todos: [],                // Snapshot of TaskCreate items
-    startedAt: null,          // ISO timestamp when workflow started
-    lastUpdatedAt: null,      // ISO timestamp of last update
-    metadata: {}              // Additional workflow-specific data
-  };
+    return {
+        workflowType: null, // See workflows.json for all workflow types
+        workflowSteps: [], // Array of step names in order
+        currentStepIndex: -1, // Index of current step (-1 = not started)
+        completedSteps: [], // Array of completed step names
+        activePlan: null, // Path to active plan file
+        todos: [], // Snapshot of TaskCreate items
+        startedAt: null, // ISO timestamp when workflow started
+        lastUpdatedAt: null, // ISO timestamp of last update
+        metadata: {} // Additional workflow-specific data
+    };
 }
 
 /**
@@ -52,16 +52,16 @@ function getDefaultState() {
  * @returns {Object} Workflow state or default empty state
  */
 function loadState(sessionId) {
-  if (!sessionId) return getDefaultState();
+    if (!sessionId) return getDefaultState();
 
-  const statePath = getWorkflowPath(sessionId);
-  try {
-    if (!fs.existsSync(statePath)) return getDefaultState();
-    const data = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-    return { ...getDefaultState(), ...data };
-  } catch (e) {
-    return getDefaultState();
-  }
+    const statePath = getWorkflowPath(sessionId);
+    try {
+        if (!fs.existsSync(statePath)) return getDefaultState();
+        const data = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+        return { ...getDefaultState(), ...data };
+    } catch (e) {
+        return getDefaultState();
+    }
 }
 
 /**
@@ -73,24 +73,28 @@ function loadState(sessionId) {
  * @returns {boolean} Success status
  */
 function saveState(sessionId, state) {
-  if (!sessionId) return false;
+    if (!sessionId) return false;
 
-  ensureDir(WORKFLOW_DIR);
-  const statePath = getWorkflowPath(sessionId);
-  const tmpFile = statePath + '.' + Math.random().toString(36).slice(2);
+    ensureDir(WORKFLOW_DIR);
+    const statePath = getWorkflowPath(sessionId);
+    const tmpFile = statePath + '.' + Math.random().toString(36).slice(2);
 
-  try {
-    const stateToSave = {
-      ...state,
-      lastUpdatedAt: new Date().toISOString()
-    };
-    fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
-    fs.renameSync(tmpFile, statePath);
-    return true;
-  } catch (e) {
-    try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore */ }
-    return false;
-  }
+    try {
+        const stateToSave = {
+            ...state,
+            lastUpdatedAt: new Date().toISOString()
+        };
+        fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
+        fs.renameSync(tmpFile, statePath);
+        return true;
+    } catch (e) {
+        try {
+            fs.unlinkSync(tmpFile);
+        } catch (_) {
+            /* ignore */
+        }
+        return false;
+    }
 }
 
 /**
@@ -104,18 +108,18 @@ function saveState(sessionId, state) {
  * @returns {Object} Initialized workflow state
  */
 function initWorkflow(sessionId, options) {
-  const state = {
-    ...getDefaultState(),
-    workflowType: options.workflowType,
-    workflowSteps: options.workflowSteps || [],
-    currentStepIndex: 0,
-    activePlan: options.activePlan || null,
-    startedAt: new Date().toISOString(),
-    metadata: options.metadata || {}
-  };
+    const state = {
+        ...getDefaultState(),
+        workflowType: options.workflowType,
+        workflowSteps: options.workflowSteps || [],
+        currentStepIndex: 0,
+        activePlan: options.activePlan || null,
+        startedAt: new Date().toISOString(),
+        metadata: options.metadata || {}
+    };
 
-  saveState(sessionId, state);
-  return state;
+    saveState(sessionId, state);
+    return state;
 }
 
 /**
@@ -125,20 +129,20 @@ function initWorkflow(sessionId, options) {
  * @returns {Object} Updated workflow state
  */
 function markStepComplete(sessionId, stepName) {
-  const state = loadState(sessionId);
+    const state = loadState(sessionId);
 
-  if (!state.completedSteps.includes(stepName)) {
-    state.completedSteps.push(stepName);
-  }
+    if (!state.completedSteps.includes(stepName)) {
+        state.completedSteps.push(stepName);
+    }
 
-  // Advance to next step if current step matches
-  const currentStep = state.workflowSteps[state.currentStepIndex];
-  if (currentStep === stepName && state.currentStepIndex < state.workflowSteps.length) {
-    state.currentStepIndex++;
-  }
+    // Advance to next step if current step matches
+    const currentStep = state.workflowSteps[state.currentStepIndex];
+    if (currentStep === stepName && state.currentStepIndex < state.workflowSteps.length) {
+        state.currentStepIndex++;
+    }
 
-  saveState(sessionId, state);
-  return state;
+    saveState(sessionId, state);
+    return state;
 }
 
 /**
@@ -147,19 +151,19 @@ function markStepComplete(sessionId, stepName) {
  * @returns {Object} Current step info
  */
 function getCurrentStepInfo(sessionId) {
-  const state = loadState(sessionId);
+    const state = loadState(sessionId);
 
-  return {
-    workflowType: state.workflowType,
-    currentStep: state.workflowSteps[state.currentStepIndex] || null,
-    currentStepIndex: state.currentStepIndex,
-    totalSteps: state.workflowSteps.length,
-    completedSteps: state.completedSteps,
-    remainingSteps: state.workflowSteps.slice(state.currentStepIndex + 1),
-    activePlan: state.activePlan,
-    isComplete: state.currentStepIndex >= state.workflowSteps.length - 1 &&
-                state.completedSteps.includes(state.workflowSteps[state.workflowSteps.length - 1])
-  };
+    return {
+        workflowType: state.workflowType,
+        currentStep: state.workflowSteps[state.currentStepIndex] || null,
+        currentStepIndex: state.currentStepIndex,
+        totalSteps: state.workflowSteps.length,
+        completedSteps: state.completedSteps,
+        remainingSteps: state.workflowSteps.slice(state.currentStepIndex + 1),
+        activePlan: state.activePlan,
+        isComplete:
+            state.currentStepIndex >= state.workflowSteps.length - 1 && state.completedSteps.includes(state.workflowSteps[state.workflowSteps.length - 1])
+    };
 }
 
 /**
@@ -169,9 +173,9 @@ function getCurrentStepInfo(sessionId) {
  * @returns {boolean} Success status
  */
 function updateTodos(sessionId, todos) {
-  const state = loadState(sessionId);
-  state.todos = todos || [];
-  return saveState(sessionId, state);
+    const state = loadState(sessionId);
+    state.todos = todos || [];
+    return saveState(sessionId, state);
 }
 
 /**
@@ -180,17 +184,17 @@ function updateTodos(sessionId, todos) {
  * @returns {boolean} Success status
  */
 function clearState(sessionId) {
-  if (!sessionId) return false;
+    if (!sessionId) return false;
 
-  const statePath = getWorkflowPath(sessionId);
-  try {
-    if (fs.existsSync(statePath)) {
-      fs.unlinkSync(statePath);
+    const statePath = getWorkflowPath(sessionId);
+    try {
+        if (fs.existsSync(statePath)) {
+            fs.unlinkSync(statePath);
+        }
+        return true;
+    } catch (e) {
+        return false;
     }
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
 
 /**
@@ -199,8 +203,8 @@ function clearState(sessionId) {
  * @returns {boolean} True if workflow is active
  */
 function hasActiveWorkflow(sessionId) {
-  const state = loadState(sessionId);
-  return state.workflowType !== null && state.workflowSteps.length > 0;
+    const state = loadState(sessionId);
+    return state.workflowType !== null && state.workflowSteps.length > 0;
 }
 
 /**
@@ -216,13 +220,13 @@ const STALE_TIMEOUT_MS = 30 * 60 * 1000;
  * @returns {boolean} True if workflow is stale
  */
 function isWorkflowStale(sessionId, timeoutMs) {
-  const state = loadState(sessionId);
-  if (!state.workflowType || !state.lastUpdatedAt) return false;
+    const state = loadState(sessionId);
+    if (!state.workflowType || !state.lastUpdatedAt) return false;
 
-  const timeout = timeoutMs || STALE_TIMEOUT_MS;
-  const lastUpdate = new Date(state.lastUpdatedAt).getTime();
-  const elapsed = Date.now() - lastUpdate;
-  return elapsed > timeout;
+    const timeout = timeoutMs || STALE_TIMEOUT_MS;
+    const lastUpdate = new Date(state.lastUpdatedAt).getTime();
+    const elapsed = Date.now() - lastUpdate;
+    return elapsed > timeout;
 }
 
 /**
@@ -231,55 +235,78 @@ function isWorkflowStale(sessionId, timeoutMs) {
  * @returns {string|null} Recovery context or null if no active workflow
  */
 function getRecoveryContext(sessionId) {
-  const state = loadState(sessionId);
+    const state = loadState(sessionId);
 
-  if (!state.workflowType) return null;
+    if (!state.workflowType) return null;
 
-  const info = getCurrentStepInfo(sessionId);
-  const lines = [
-    `## Workflow Recovery Context`,
-    ``,
-    `**Active Workflow:** ${state.workflowType}`,
-    `**Current Step:** ${info.currentStep || 'None'} (${info.currentStepIndex + 1}/${info.totalSteps})`,
-  ];
+    const info = getCurrentStepInfo(sessionId);
+    const lines = [
+        `## Workflow Recovery Context`,
+        ``,
+        `**Active Workflow:** ${state.workflowType}`,
+        `**Current Step:** ${info.currentStep || 'None'} (${info.currentStepIndex + 1}/${info.totalSteps})`
+    ];
 
-  if (state.activePlan) {
-    lines.push(`**Active Plan:** ${state.activePlan}`);
-  }
+    if (state.activePlan) {
+        lines.push(`**Active Plan:** ${state.activePlan}`);
+    }
 
-  if (info.completedSteps.length > 0) {
-    lines.push(`**Completed:** ${info.completedSteps.join(', ')}`);
-  }
+    if (info.completedSteps.length > 0) {
+        lines.push(`**Completed:** ${info.completedSteps.join(', ')}`);
+    }
 
-  if (info.remainingSteps.length > 0) {
-    lines.push(`**Remaining:** ${info.remainingSteps.join(' → ')}`);
-  }
+    if (info.remainingSteps.length > 0) {
+        lines.push(`**Remaining:** ${info.remainingSteps.join(' → ')}`);
+    }
 
-  if (state.todos.length > 0) {
-    lines.push(``, `**Pending Todos:**`);
-    state.todos
-      .filter(t => t.status !== 'completed')
-      .forEach(t => lines.push(`- [ ] ${t.content}`));
-  }
+    if (state.todos.length > 0) {
+        lines.push(``, `**Pending Todos:**`);
+        state.todos.filter(t => t.status !== 'completed').forEach(t => lines.push(`- [ ] ${t.content}`));
+    }
 
-  lines.push(``, `**Action Required:** Continue from "${info.currentStep}" step.`);
+    lines.push(``, `**Action Required:** Continue from "${info.currentStep}" step.`);
 
-  return lines.join('\n');
+    return lines.join('\n');
+}
+
+/**
+ * Map a skill name to a workflow step ID using the workflow config's commandMapping.
+ * @param {string} skillName - Name of the executed skill
+ * @param {Object} config - Workflow config (must have commandMapping)
+ * @returns {string|null} Step ID or null
+ */
+function mapSkillToStepId(skillName, config) {
+    if (!config?.commandMapping) return null;
+
+    const normalizedSkill = skillName.toLowerCase().trim();
+
+    for (const [stepId, mapping] of Object.entries(config.commandMapping)) {
+        const claudeCmd = mapping.claude || `/${stepId}`;
+        const cmdParts = claudeCmd.replace(/^\//, '').split(/[/:]/);
+        const cmdSkill = cmdParts[0].toLowerCase();
+
+        if (normalizedSkill === cmdSkill || normalizedSkill === stepId.toLowerCase()) {
+            return stepId;
+        }
+    }
+
+    return null;
 }
 
 module.exports = {
-  WORKFLOW_DIR,
-  STALE_TIMEOUT_MS,
-  getWorkflowPath,
-  getDefaultState,
-  loadState,
-  saveState,
-  initWorkflow,
-  markStepComplete,
-  getCurrentStepInfo,
-  updateTodos,
-  clearState,
-  hasActiveWorkflow,
-  isWorkflowStale,
-  getRecoveryContext
+    WORKFLOW_DIR,
+    STALE_TIMEOUT_MS,
+    getWorkflowPath,
+    getDefaultState,
+    loadState,
+    saveState,
+    initWorkflow,
+    markStepComplete,
+    getCurrentStepInfo,
+    updateTodos,
+    clearState,
+    hasActiveWorkflow,
+    isWorkflowStale,
+    getRecoveryContext,
+    mapSkillToStepId
 };

@@ -10,4 +10,4 @@ description: '[Workflow] Trigger Bug Fix workflow — systematic debugging with 
 
 Activate the `bugfix` workflow. Run `/workflow-start bugfix` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /debug → /plan → /plan-review → /plan-validate → /why-review → /fix → /prove-fix → /tdd-spec → /tdd-spec-review → /test-specs-docs → /workflow-review-changes → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /debug-investigate → /plan → /plan-review → /plan-validate → /why-review → /fix → /prove-fix → /tdd-spec → /tdd-spec-review → /test-specs-docs → /workflow-review-changes → /changelog → /test → /docs-update → /watzup → /workflow-end

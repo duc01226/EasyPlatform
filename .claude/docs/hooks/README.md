@@ -87,6 +87,7 @@ Lessons are managed via `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 | `edit-enforcement.cjs`         | PreToolUse:`Edit\|Write\|MultiEdit\|NotebookEdit` | Track edits, plan warnings at 4/8 files, block without TaskCreate   |
 | `skill-enforcement.cjs`        | PreToolUse:`Skill`                                | Block implementation skills without TaskCreate                      |
 | `todo-tracker.cjs`             | PostToolUse:`TaskCreate\|TaskUpdate`              | Persist todo state to disk for cross-compaction recovery            |
+| `workflow-task-guard.cjs`      | PreToolUse:`TaskUpdate`                           | Block completing workflow tasks without Skill invocation            |
 
 ### Safety & Privacy
 
@@ -301,19 +302,21 @@ Hooks are registered in `settings.json` under `hooks.{EventName}[].hooks[]`. Eac
 
 ## Testing
 
-527 tests across 7 suites, all passing:
+614 tests across 8 suites, all passing:
 
 | Suite               | Tests | File                                  |
 | ------------------- | ----- | ------------------------------------- |
 | Hook behavior tests | 300   | `tests/test-all-hooks.cjs`            |
 | Core lib tests      | 10    | `tests/test-lib-modules.cjs`          |
-| Extended lib tests  | 122   | `tests/test-lib-modules-extended.cjs` |
+| Extended lib tests  | 145   | `tests/test-lib-modules-extended.cjs` |
 | Swap engine tests   | 50    | `tests/test-swap-engine.cjs`          |
 | Context tracker     | 23    | `tests/test-context-tracker.cjs`      |
 | Init reference docs | 5     | `tests/test-init-reference-docs.cjs`  |
 | Shared utilities    | 17    | `tests/test-shared-utilities.cjs`     |
+| Workflow task guard | 13    | `tests/test-workflow-task-guard.cjs`  |
+| Git commit block    | 56    | `tests/test-git-commit-block.cjs`     |
 
-Run all: `node .claude/hooks/tests/test-all-hooks.cjs && node .claude/hooks/tests/test-lib-modules.cjs && node .claude/hooks/tests/test-lib-modules-extended.cjs && node .claude/hooks/tests/test-swap-engine.cjs && node .claude/hooks/tests/test-context-tracker.cjs && node .claude/hooks/tests/test-init-reference-docs.cjs && node .claude/hooks/tests/test-shared-utilities.cjs`
+Run all: `node .claude/hooks/tests/test-all-hooks.cjs && node .claude/hooks/tests/test-lib-modules.cjs && node .claude/hooks/tests/test-lib-modules-extended.cjs && node .claude/hooks/tests/test-swap-engine.cjs && node .claude/hooks/tests/test-context-tracker.cjs && node .claude/hooks/tests/test-init-reference-docs.cjs && node .claude/hooks/tests/test-shared-utilities.cjs && node .claude/hooks/tests/test-workflow-task-guard.cjs && node .claude/hooks/tests/test-git-commit-block.cjs`
 
 ---
 

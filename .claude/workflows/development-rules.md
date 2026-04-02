@@ -14,7 +14,7 @@
 - Use `docs-seeker` skill for fetching latest documentation of libraries/packages via Context7 MCP
 - Use `gh` bash command to interact with Github features if needed
 - Use `ai-multimodal` skill for describing, generating, or editing images, videos, documents, etc. if needed
-- Use `sequential-thinking` skill and `debug` skills for sequential thinking, analyzing code, debugging, etc. if needed
+- Use `sequential-thinking` skill and `debug-investigate` skills for sequential thinking, analyzing code, debugging, etc. if needed
 - **[IMPORTANT]** Follow the codebase structure and code standards in `./docs` during implementation.
 - **[IMPORTANT]** Do not just simulate the implementation or mocking them, always implement the real code.
 - **[CRITICAL] Class Responsibility Rule:**
