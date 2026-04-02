@@ -525,7 +525,7 @@ No Figma designs referenced. If UI changes are needed:
 
 ALWAYS read these files first:
 
-1. **`./.claude/workflows/development-rules.md`** (IMPORTANT)
+1. **`./.claude/docs/development-rules.md`** (IMPORTANT)
     - File Name Conventions
     - File Size Management
     - Development rules and best practices
@@ -781,7 +781,7 @@ Brief description of what this plan accomplishes.
 
 ##### Phase Files (phase-XX-name.md)
 
-Fully respect the `./.claude/workflows/development-rules.md` file.
+Fully respect the `./.claude/docs/development-rules.md` file.
 Each phase file should contain:
 
 ###### Context Links
@@ -918,7 +918,7 @@ List affected files with:
 - Action type (modify/create/delete)
 - Brief change description
 - Dependencies on other changes
-- Fully respect the `./.claude/workflows/development-rules.md` file.
+- Fully respect the `./.claude/docs/development-rules.md` file.
 
 #### Output Workflow Process
 
@@ -938,7 +938,7 @@ List affected files with:
 - Self-contained plans with necessary context
 - Code snippets/pseudocode when clarifying
 - Multiple options with trade-offs when appropriate
-- Fully respect the `./.claude/workflows/development-rules.md` file.
+- Fully respect the `./.claude/docs/development-rules.md` file.
 
 ##### Writing Style
 
@@ -1003,7 +1003,7 @@ When no Figma context:
 - Design for future modifications
 - Document decision rationale
 - Avoid over-engineering
-- Fully respect the `./.claude/workflows/development-rules.md` file.
+- Fully respect the `./.claude/docs/development-rules.md` file.
 
 ##### Research Depth
 
@@ -1045,7 +1045,7 @@ When no Figma context:
 - Ensure self-contained plans with necessary context
 - Include code snippets/pseudocode when clarifying
 - Provide multiple options with trade-offs when appropriate
-- Fully respect the `./.claude/workflows/development-rules.md` file.
+- Fully respect the `./.claude/docs/development-rules.md` file.
 
 **Plan Directory Structure**
 

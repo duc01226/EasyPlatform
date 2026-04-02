@@ -62,7 +62,7 @@ Sync Claude Code knowledge to GitHub Copilot instructions. Two-tier output: proj
 Trigger this skill when:
 
 - **Workflows added/modified** — After editing `.claude/workflows.json`
-- **Development rules changed** — After editing `.claude/workflows/development-rules.md`
+- **Development rules changed** — After editing `.claude/docs/development-rules.md`
 - **Project-reference docs updated** — After modifying files in `docs/project-reference/`
 - **Registry entries changed** — After editing `docs/copilot-registry.json`
 - **Regular maintenance** — Quarterly sync to ensure Copilot parity
@@ -205,7 +205,7 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 
 - **Script:** `.claude/scripts/sync-copilot-workflows.cjs`
 - **Registry:** `docs/copilot-registry.json`
-- **Sources:** `.claude/workflows.json`, `.claude/workflows/development-rules.md`
+- **Sources:** `.claude/workflows.json`, `.claude/docs/development-rules.md`
 - **Main output:** `.github/copilot-instructions.md`
 - **Instruction files:** `.github/instructions/*.instructions.md`
 

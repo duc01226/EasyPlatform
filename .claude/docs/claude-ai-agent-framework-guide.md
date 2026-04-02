@@ -3249,12 +3249,12 @@ flowchart TB
 
 ```
 .claude/
-├── settings.json ──────── Hook registration (9 events, 34 hooks)
+├── settings.json ──────── Hook registration (9 events, 44 hooks)
 ├── .ck.json ──────────── Hook-specific config
 ├── .ckignore ─────────── Scout block patterns
 ├── workflows.json ─────── 48 workflow definitions
-├── workflows/ ──────────── Workflow rules (development-rules.md, etc.)
-├── hooks/ ─────────────── 34 hooks + 25 lib modules + 527 tests
+├── workflows/ ──────────── Workflow definitions (primary-workflow.md, etc.)
+├── hooks/ ─────────────── 44 hooks + 27 lib modules
 │   ├── session-init.cjs
 │   ├── workflow-router.cjs
 │   ├── prompt-context-assembler.cjs
@@ -3267,9 +3267,9 @@ flowchart TB
 │   │   ├── todo-state.cjs
 │   │   └── ...
 │   └── tests/ ────────── Test suites
-├── skills/ ────────────── 202 skill directories
+├── skills/ ────────────── 255 skill directories
 │   ├── {skill-name}/SKILL.md
-│   ├── shared/ ───────── 25 shared protocols + references (module-codes.md)
+│   ├── shared/ ───────── 30 shared protocols + references (module-codes.md)
 │   └── _templates/ ───── Skill scaffolding
 ├── agents/ ────────────── 28 agent definitions
 ├── docs/ ─────────────── Framework documentation (co-located)

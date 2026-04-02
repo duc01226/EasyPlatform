@@ -31,7 +31,8 @@ const {
 // DEDUPLICATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const { DEV_RULES: DEV_RULES_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+const { PROJECT_STRUCTURE: PROJECT_STRUCTURE_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+const { readAndInjectDoc } = require('./lib/context-injector-base.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -122,19 +123,6 @@ function wasRecentlyInjected(transcriptPath) {
             .split('\n')
             .slice(-DEDUP_LINES.DEV_RULES_MODULARIZATION)
             .some(line => line.includes('[IMPORTANT] Consider Modularization'));
-    } catch (e) {
-        return false;
-    }
-}
-
-function wasDevRulesRecentlyInjected(transcriptPath) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
-        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        return transcript
-            .split('\n')
-            .slice(-DEDUP_LINES.DEV_RULES)
-            .some(line => line.includes(DEV_RULES_MARKER));
     } catch (e) {
         return false;
     }
@@ -283,7 +271,6 @@ async function main() {
                 includeProject: false,
                 includeAssertions: false
             });
-            const devRulesPath = resolveWorkflowPath('development-rules.md');
             const catalogScript = resolveScriptPath('generate_catalogs.py');
             const skillsVenv = resolveSkillsVenv();
             const { reportsPath, gitBranch, planLine, namePattern, validationMode, validationMin, validationMax } = buildPlanContext(sessionId, config);
@@ -306,19 +293,8 @@ async function main() {
 
             console.log(output.join('\n'));
 
-            // INJECT DEV RULES FILE CONTENT (own dedup window — independent of main block)
-            if (devRulesPath && !wasDevRulesRecentlyInjected(payload.transcript_path)) {
-                const fullPath = path.resolve(process.cwd(), devRulesPath);
-                if (fs.existsSync(fullPath)) {
-                    const rulesContent = fs.readFileSync(fullPath, 'utf-8');
-                    console.log('\n---\n');
-                    console.log(`## ${DEV_RULES_MARKER}\n`);
-                    console.log(`**Source:** \`${devRulesPath}\`\n`);
-                    console.log('---\n');
-                    console.log(rulesContent);
-                    console.log('\n---\n');
-                }
-            }
+            // DEV RULES: Moved to dev-rules-injector.cjs (PreToolUse: Edit|Write|MultiEdit|Skill)
+            // Now only injected when AI is about to code or review, not on every prompt.
         }
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -329,6 +305,24 @@ async function main() {
 
         const lessons = injectLessons(payload.transcript_path);
         if (lessons) console.log(lessons);
+
+        // Project structure reference — inject once per session, re-injects after compaction
+        try {
+            let projStructRecentlyInjected = false;
+            if (payload.transcript_path && fs.existsSync(payload.transcript_path)) {
+                projStructRecentlyInjected = fs
+                    .readFileSync(payload.transcript_path, 'utf-8')
+                    .split('\n')
+                    .slice(-DEDUP_LINES.PROJECT_STRUCTURE)
+                    .some(l => l.includes(PROJECT_STRUCTURE_MARKER));
+            }
+            if (!projStructRecentlyInjected) {
+                const projStructContent = readAndInjectDoc('docs/project-reference/project-structure-reference.md');
+                if (projStructContent) console.log(projStructContent);
+            }
+        } catch {
+            /* non-blocking */
+        }
 
         const aiMistake = injectAiMistakePrevention(payload.transcript_path, true);
         if (aiMistake) console.log(aiMistake);

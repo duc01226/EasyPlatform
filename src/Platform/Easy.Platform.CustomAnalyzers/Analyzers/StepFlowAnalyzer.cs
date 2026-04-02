@@ -31,8 +31,11 @@ public sealed class StepFlowAnalyzer : DiagnosticAnalyzer
             MissingBlankLineId,
             new DiagnosticDescriptor(
                 MissingBlankLineId,
-                "Missing blank line between dependent statements",
-                "A blank line is required when a statement depends on a previous step's output",
+                "Missing blank line between dependent steps",
+                "This statement uses output from the previous statement — insert a blank line to mark a new step. "
+                + "Code Step Rule: blank line = step boundary, no blank line = independent/parallel work in the same step. "
+                + "If this creates too many steps, either: (1) extract a function to encapsulate sub-steps, or (2) use chaining (.Then/.Pipe/.Select) to keep sub-steps visually nested. "
+                + "Review the WHOLE method holistically — restructure all steps, not just this line.",
                 CustomAnalyzersConst.Categories.CodeFlow,
                 DiagnosticSeverity.Warning,
                 true)
@@ -41,8 +44,11 @@ public sealed class StepFlowAnalyzer : DiagnosticAnalyzer
             UnexpectedBlankLineId,
             new DiagnosticDescriptor(
                 UnexpectedBlankLineId,
-                "Unexpected blank line within a step",
-                "Blank line is unnecessary as no dependency crosses this boundary",
+                "Unnecessary blank line — statements are independent (same step)",
+                "These statements don't depend on each other — remove the blank line to group them as one step. "
+                + "Code Step Rule: no blank line = parallel/independent work in the same step. "
+                + "If these ARE logically different tasks with internal sub-steps, extract each into its own function then call them on adjacent lines (same step). "
+                + "Do NOT flatten unrelated sub-tasks with blank lines between them — either group as one step or extract functions.",
                 CustomAnalyzersConst.Categories.CodeFlow,
                 DiagnosticSeverity.Warning,
                 true)
@@ -52,7 +58,11 @@ public sealed class StepFlowAnalyzer : DiagnosticAnalyzer
             new DiagnosticDescriptor(
                 MissingPrevOutputsId,
                 "Step must consume all previous outputs",
-                "This step must consume all outputs from the previous step: {0}",
+                "This step does not use all outputs from the previous step: {0}. "
+                + "Code Step Rule: every step MUST consume ALL outputs from its predecessor. "
+                + "Fix options: (1) merge into the previous step (remove blank line) if they are independent, "
+                + "(2) restructure so this step actually uses {0}, or "
+                + "(3) extract a function that consumes {0} internally and returns what this step needs.",
                 CustomAnalyzersConst.Categories.CodeFlow,
                 DiagnosticSeverity.Warning,
                 true)

@@ -1006,7 +1006,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
         // ═══════════════════════════════════════════════════════════════════
         // Problem: DeepClone uses JSON serialization which creates NEW instances of all navigation
         // properties (Employee, RequestType, etc.). When the handler runs in the SAME DbContext scope
-        // (MustWaitHandlerExecutionFinishedImmediately or ForceCurrentInstanceHandleInCurrentThreadAndScope),
+        // (NeedRunHandlerInSameCurrentActiveUow or ForceCurrentInstanceHandleInCurrentThreadAndScope),
         // these deserialized navigation property instances conflict with entities already tracked by the
         // DbContext (EF Core's "another instance with the same key" error).
         //

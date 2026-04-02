@@ -16,7 +16,7 @@ const PROVIDER_PREFIXES = ['TELEGRAM', 'DISCORD', 'SLACK'];
 
 // Whitelist: only these events trigger notifications (everything else is skipped)
 // Stop = task complete, idle_prompt = Claude waiting for input
-const EVENT_WHITELIST = ['Stop', 'idle_prompt', 'permission_prompt'];
+const EVENT_WHITELIST = ['Stop', 'idle_prompt', 'AskUserPrompt', 'permission_prompt'];
 
 /**
  * Get the effective event type from input

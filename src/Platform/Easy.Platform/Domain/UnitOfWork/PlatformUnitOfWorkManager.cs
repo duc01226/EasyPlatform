@@ -171,7 +171,7 @@ public interface IPlatformUnitOfWorkManager : IDisposable
         {
             await taskFn();
 
-            // When handler runs in parent's scope (MustWaitHandlerExecutionFinishedImmediately),
+            // When handler runs in parent's scope (NeedRunHandlerInSameCurrentActiveUow),
             // skip SaveChanges — the parent UoW owner controls commit timing.
             if (!suppressSaveChangesWhenExistingActiveUow)
                 await currentActiveUow.SaveChangesAsync();

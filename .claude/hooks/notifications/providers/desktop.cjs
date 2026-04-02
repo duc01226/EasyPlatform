@@ -197,8 +197,9 @@ module.exports = {
         const hookType = input.hook_event_name || 'default';
         const notificationType = input.notification_type;
 
-        // Stop/idle_prompt/permission_prompt: show blocking dialog so user won't miss it
-        const showDialog = hookType === 'Stop' || notificationType === 'idle_prompt' || notificationType === 'permission_prompt';
+        // Stop/idle_prompt/AskUserPrompt/permission_prompt: show blocking dialog so user won't miss it
+        const showDialog =
+            hookType === 'Stop' || notificationType === 'idle_prompt' || notificationType === 'AskUserPrompt' || notificationType === 'permission_prompt';
 
         return sendNotification(title, message, showDialog);
     }

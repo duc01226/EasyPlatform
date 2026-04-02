@@ -1,12 +1,13 @@
 {
     "alwaysThinkingEnabled": true,
-    "effortLevel": "high",
     "attribution": {
         "commit": "Generated with [Claude Code](https://claude.com/claude-code)",
         "pr": "Generated with [Claude Code](https://claude.com/claude-code)"
     },
     "cleanupPeriodDays": 30,
-    "enabledMcpjsonServers": ["context7", "memory", "sequential-thinking"],
+    "effortLevel": "high",
+    "enableAllProjectMcpServers": true,
+    "enabledMcpjsonServers": ["context7", "memory", "sequential-thinking", "github"],
     "enabledPlugins": {
         "code-review@claude-plugins-official": false,
         "code-simplifier@claude-plugins-official": false,
@@ -203,6 +204,15 @@
             {
                 "hooks": [
                     {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dev-rules-injector.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Skill"
+            },
+            {
+                "hooks": [
+                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mindset-injector.cjs",
                         "type": "command"
                     }
@@ -245,6 +255,10 @@
                     },
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mindset-injector.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dev-rules-injector.cjs",
                         "type": "command"
                     }
                 ],
@@ -426,6 +440,7 @@
     },
     "includeCoAuthoredBy": false,
     "permissions": {
+        "allow": ["Edit(.claude/**)"],
         "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)"],
         "defaultMode": "bypassPermissions",
         "deny": [

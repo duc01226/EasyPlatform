@@ -15,13 +15,16 @@
  *   STYLING_CONTEXT     → scss-styling-context
  *   LESSON_LEARNED      → prompt-context-assembler (via lib/prompt-injections)
  *   CODE_REVIEW_RULES   → code-review-rules-injector
- *   DEV_RULES           → prompt-context-assembler
+ *   DEV_RULES           → dev-rules-injector (PreToolUse: Edit|Write|MultiEdit|Skill)
  *   KNOWLEDGE_CONTEXT   → knowledge-context
  *   E2E_CONTEXT         → code-patterns-injector
  *   LESSONS             → prompt-context-assembler (via lib/prompt-injections), lessons-injector (PreToolUse)
  *   CRITICAL_THINKING   → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   AI_MISTAKE_PREVENTION → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   WORKFLOW_CATALOG    → workflow-router
+ *   INTEGRATION_TEST_CONTEXT → code-patterns-injector
+ *   FEATURE_DOCS_CONTEXT     → code-patterns-injector
+ *   PROJECT_STRUCTURE    → prompt-context-assembler
  *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
  *
  * DEDUP_LINES — dynamically calculated transcript line counts for each marker.
@@ -114,9 +117,29 @@ const CONTENT_SOURCES = {
         extraLines: 20, // config summary lines added by hook
         fallback: 200
     },
+    INTEGRATION_TEST_CONTEXT: {
+        type: 'file',
+        files: ['docs/project-reference/integration-test-reference.md'],
+        multiplier: 1.5,
+        extraLines: 15,
+        fallback: 200
+    },
+    FEATURE_DOCS_CONTEXT: {
+        type: 'file',
+        files: ['docs/project-reference/feature-docs-reference.md', 'docs/project-reference/docs-index-reference.md'],
+        multiplier: 1.5,
+        extraLines: 10,
+        fallback: 200
+    },
+    PROJECT_STRUCTURE: {
+        type: 'file',
+        files: ['docs/project-reference/project-structure-reference.md'],
+        multiplier: 2,
+        fallback: 400
+    },
     DEV_RULES: {
         type: 'file',
-        files: ['.claude/workflows/development-rules.md'],
+        files: ['.claude/docs/development-rules.md'],
         multiplier: 2,
         extraLines: 90, // buildReminder() template lines
         fallback: 300
@@ -124,7 +147,7 @@ const CONTENT_SOURCES = {
     DEV_RULES_MODULARIZATION: {
         // Subset marker within DEV_RULES injection — window covers the full output
         type: 'file',
-        files: ['.claude/workflows/development-rules.md'],
+        files: ['.claude/docs/development-rules.md'],
         multiplier: 1.5,
         extraLines: 90,
         fallback: 200
@@ -274,6 +297,15 @@ module.exports = {
 
     /** Marker for E2E testing context injection */
     E2E_CONTEXT: '## E2E Testing Context Detected',
+
+    /** Marker for integration test context injection */
+    INTEGRATION_TEST_CONTEXT: '## Integration Test Context Detected',
+
+    /** Marker for feature docs context injection */
+    FEATURE_DOCS_CONTEXT: '## Feature Docs Context Detected',
+
+    /** Marker for project structure injection */
+    PROJECT_STRUCTURE: '## [Injected: Project Structure Reference]',
 
     /** Marker for lessons injection */
     LESSONS: '## Learned Lessons',

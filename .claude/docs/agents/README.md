@@ -148,29 +148,30 @@ Task({
 
 ### When to Use Each Agent
 
-| Scenario                      | Agent                 | Why                                              |
-| ----------------------------- | --------------------- | ------------------------------------------------ |
-| Find files by pattern         | `scout`               | Fast file discovery with pattern matching        |
-| Understand codebase structure | `Explore`             | Comprehensive exploration with context           |
-| Research new technology       | `researcher`          | Web search + documentation synthesis             |
-| Plan feature implementation   | `planner`             | Creates structured implementation plans          |
-| Evaluate architecture options | `planner`             | Creates structured plans with trade-off analysis |
-| Design system architecture    | `architect`           | ADR creation, Opus model                         |
-| Greenfield project inception  | `solution-architect`  | Tech stack, DDD, project structure (Opus)        |
-| Plan E2E test structure       | `e2e-runner`          | Playwright patterns, BEM selectors               |
-| Implement from plan           | `fullstack-developer` | Executes implementation phases                   |
-| Debug failing tests           | `debugger`            | Systematic issue investigation                   |
-| Run and analyze tests         | `tester`              | Test execution and coverage analysis             |
-| Review code quality           | `code-reviewer`       | Security, performance, best practices            |
-| Clean up code                 | `code-simplifier`     | Refactor for clarity and maintainability         |
-| Commit changes                | `git-manager`         | Conventional commits with proper messages        |
-| Update documentation          | `docs-manager`        | Technical docs maintenance                       |
-| Track project status          | `project-manager`     | Progress reports and task consolidation          |
-| Refine requirements           | `business-analyst`    | GIVEN/WHEN/THEN format, BDD patterns             |
-| Prioritize backlog            | `product-owner`       | MoSCoW, effort/value matrix                      |
-| Create test plan              | `test-spec`           | Test coverage, case generation                   |
-| Quality checkpoint            | `qc-specialist`       | Audit trails, compliance checks                  |
-| Design specification          | `ui-ux-designer`      | Figma integration, design tokens                 |
+| Scenario                      | Agent                 | Why                                               |
+| ----------------------------- | --------------------- | ------------------------------------------------- |
+| Find files by pattern         | `scout`               | Fast file discovery with pattern matching         |
+| Understand codebase structure | `Explore`             | Comprehensive exploration with context            |
+| Research new technology       | `researcher`          | Web search + documentation synthesis              |
+| Plan feature implementation   | `planner`             | Creates structured implementation plans           |
+| Evaluate architecture options | `planner`             | Creates structured plans with trade-off analysis  |
+| Design system architecture    | `architect`           | ADR creation, Opus model                          |
+| Greenfield project inception  | `solution-architect`  | Tech stack, DDD, project structure (Opus)         |
+| Plan E2E test structure       | `e2e-runner`          | Playwright patterns, BEM selectors                |
+| Implement from plan           | `fullstack-developer` | Executes implementation phases                    |
+| Debug failing tests           | `debugger`            | Systematic issue investigation                    |
+| Run and analyze tests         | `tester`              | Test execution and coverage analysis              |
+| Review code quality           | `code-reviewer`       | Security, performance, best practices             |
+| Clean up code                 | `code-simplifier`     | Refactor for clarity and maintainability          |
+| Commit changes                | `git-manager`         | Conventional commits with proper messages         |
+| Update documentation          | `docs-manager`        | Technical docs maintenance                        |
+| Track project status          | `project-manager`     | Progress reports and task consolidation           |
+| Refine requirements           | `business-analyst`    | GIVEN/WHEN/THEN format, BDD patterns              |
+| Prioritize backlog            | `product-owner`       | MoSCoW, effort/value matrix                       |
+| Create test plan              | `tester`              | Test coverage, case generation                    |
+| Synthesize knowledge          | `knowledge-worker`    | Web research, structured reports, course material |
+| Quality checkpoint            | `qc-specialist`       | Audit trails, compliance checks                   |
+| Design specification          | `ui-ux-designer`      | Figma integration, design tokens                  |
 
 ### When NOT to Use Agents
 
@@ -200,7 +201,7 @@ ID: [agent_id] | CWD: [working_directory]
 - Paths: plans/ | docs/
 
 ## Rules
-- **MUST READ:** .claude/workflows/development-rules.md before implementation
+- **MUST READ:** .claude/docs/development-rules.md before implementation
 - Reports → [reports_path]
 - YAGNI / KISS / DRY
 - Class Responsibility: Logic in LOWEST layer
