@@ -260,6 +260,10 @@
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dev-rules-injector.cjs",
                         "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-review-rules-injector.cjs",
+                        "type": "command"
                     }
                 ],
                 "matcher": "Edit|Write|MultiEdit"

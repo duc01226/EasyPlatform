@@ -177,6 +177,10 @@
             "claude": "/workflow-end",
             "copilot": "/workflow-end"
         },
+        "workflow-review-changes": {
+            "claude": "/workflow-review-changes",
+            "copilot": "/workflow-review-changes"
+        },
         "web-research": {
             "claude": "/web-research",
             "copilot": "/web-research"

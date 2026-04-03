@@ -59,7 +59,8 @@ const SKIP_PATTERNS = [
     /\.angular\//,
     /\.cache\//,
     /\.output\//,
-    /\.vercel\//
+    /\.vercel\//,
+    /[/\\]\.claude[/\\]/
 ];
 
 const PRETTIER_CONFIG_FILES = [

@@ -21,6 +21,7 @@
 const fs = require('fs');
 const path = require('path');
 const { injectCriticalContext, injectAiMistakePrevention, injectLessons } = require('./lib/prompt-injections.cjs');
+const { TOP_DEDUP_LINES } = require('./lib/dedup-constants.cjs');
 
 // Skills that benefit from mindset reminders before execution
 const MINDSET_SKILLS = new Set([
@@ -104,6 +105,56 @@ function main() {
 
         const aiMistake = injectAiMistakePrevention(transcriptPath);
         if (aiMistake) console.log(aiMistake);
+
+        // Golden Rules from CLAUDE.md — re-inject on Edit|Write|MultiEdit to maintain
+        // attention after long planning/investigation phases. Generic: extracts dynamically.
+        if (!isSkill) {
+            try {
+                const goldenMarker = '[Golden Rules Reminder]';
+                // Top+bottom dedup — skip if recently injected or still at top of context
+                const goldenAlreadyInjected = (() => {
+                    try {
+                        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
+                        const lines = fs.readFileSync(transcriptPath, 'utf-8').split('\n');
+                        return lines.slice(-100).some(l => l.includes(goldenMarker)) || lines.slice(0, TOP_DEDUP_LINES).some(l => l.includes(goldenMarker));
+                    } catch {
+                        return false;
+                    }
+                })();
+
+                if (!goldenAlreadyInjected) {
+                    const claudeMdPath = path.resolve(process.env.CLAUDE_PROJECT_DIR || '.', 'CLAUDE.md');
+                    if (fs.existsSync(claudeMdPath)) {
+                        const content = fs.readFileSync(claudeMdPath, 'utf-8');
+                        const goldenMatch = content.match(/\*\*Golden Rules[^*]*\*\*:?\s*\n((?:[\s\S]*?))\n\n/);
+                        if (goldenMatch) {
+                            const rulesLines = goldenMatch[1].trim().split('\n');
+                            let trimmed;
+                            if (rulesLines.length > 50) {
+                                trimmed = [...rulesLines.slice(0, 25), '...', ...rulesLines.slice(-25)].join('\n');
+                            } else {
+                                trimmed = rulesLines.join('\n');
+                            }
+                            console.log(`\n## ${goldenMarker}\n\n${trimmed}`);
+                        }
+                    }
+                }
+            } catch {
+                /* silent */
+            }
+
+            // Graph gate compact — remind to trace before editing
+            try {
+                const graphDbPath = path.join(process.env.CLAUDE_PROJECT_DIR || '.', '.code-graph', 'graph.db');
+                if (fs.existsSync(graphDbPath)) {
+                    console.log(
+                        `\n**[GRAPH-GATE]** Run graph trace on key files before editing: \`python .claude/scripts/code_graph trace <file> --direction both --json\``
+                    );
+                }
+            } catch {
+                /* silent */
+            }
+        }
 
         // Inject lessons on Skill only (Edit|Write|MultiEdit handled by lessons-injector.cjs)
         if (isSkill) {

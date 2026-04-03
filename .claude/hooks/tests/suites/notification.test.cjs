@@ -239,14 +239,13 @@ const routerExecutionTests = [
         }
     },
     {
-        name: '[notification] router skips AskUserPrompt event (not in whitelist)',
+        name: '[notification] router allows AskUserPrompt event (in whitelist)',
         fn: async () => {
-            // WHITELIST: Only Stop and idle_prompt are allowed - AskUserPrompt is blocked
-            const input = { hook_event_name: 'AskUserPrompt', cwd: '/test', session_id: 'test123' };
+            // WHITELIST: Stop, idle_prompt, AskUserPrompt, permission_prompt are allowed
+            const input = { hook_event_name: 'AskUserPrompt', cwd: '/test', session_id: 'ask-test-' + Date.now() };
             const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
             assertEqual(result.code, 0, 'Should exit cleanly');
-            assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
-            assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
+            assertFalse(result.stderr.includes('Skipped') && result.stderr.includes('not in whitelist'), 'AskUserPrompt should pass whitelist');
         }
     },
     {

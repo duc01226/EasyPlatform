@@ -298,8 +298,12 @@ const DEDUP_LINES = computeDedupLines();
 // EXPORTS
 // =============================================================================
 
+/** Number of leading transcript lines to check for primacy dedup (top-of-context) */
+const TOP_DEDUP_LINES = 50;
+
 module.exports = {
     DEDUP_LINES,
+    TOP_DEDUP_LINES,
     // Expose internals for testing
     computeDedupLines,
     CONTENT_SOURCES,

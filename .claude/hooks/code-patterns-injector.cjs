@@ -347,9 +347,9 @@ function main() {
         // Check dedup for code patterns
         if (wasRecentlyInjected(payload.transcript_path || '', DEDUP_MARKER, DEDUP_LINES.CODE_PATTERNS)) process.exit(0);
 
-        // Read and output patterns
+        // Read and output patterns — prepend dedup marker so transcript dedup works
         const content = readPatternFiles(backend, frontend);
-        if (content) console.log(content);
+        if (content) console.log(`${DEDUP_MARKER}\n\n${content}`);
 
         process.exit(0);
     } catch {

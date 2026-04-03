@@ -25,18 +25,16 @@ const { loadConfig } = require('./lib/ck-config-utils.cjs');
 // ═══════════════════════════════════════════════════════════════════════════
 
 const { CODE_REVIEW_RULES: INJECTION_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+const { wasMarkerRecentlyInjected } = require('./lib/prompt-injections.cjs');
 
-function wasRecentlyInjected(transcriptPath) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
-        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        return transcript
-            .split('\n')
-            .slice(-DEDUP_LINES.CODE_REVIEW_RULES)
-            .some(line => line.includes(INJECTION_MARKER));
-    } catch (e) {
-        return false;
-    }
+/**
+ * Trim content to top N + bottom N lines if it exceeds maxLines.
+ * Preserves primacy+recency of the content while bounding token cost.
+ */
+function trimContent(content, maxLines = 50, headLines = 25, tailLines = 25) {
+    const lines = content.split('\n');
+    if (lines.length <= maxLines) return content;
+    return [...lines.slice(0, headLines), '...', ...lines.slice(-tailLines)].join('\n');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -49,52 +47,46 @@ async function main() {
         if (!stdin) process.exit(0);
 
         const payload = JSON.parse(stdin);
+        const toolName = payload.tool_name || '';
 
-        // Extract skill name from tool input
-        const toolInput = payload.tool_input || {};
-        const skillName = (toolInput.skill || '').toLowerCase();
+        // Determine trigger: Skill (review skills) or Edit|Write|MultiEdit (code editing)
+        const isSkill = toolName === 'Skill';
+        const isEdit = ['Edit', 'Write', 'MultiEdit'].includes(toolName);
+        if (!isSkill && !isEdit) process.exit(0);
 
-        // Early exit if not a Skill tool call
-        if (!skillName) process.exit(0);
-
-        // Load configuration
+        // Load config once
         const config = loadConfig({ includeProject: false, includeAssertions: false });
         const reviewConfig = config.codeReview || {};
-
-        // Check if enabled
         if (reviewConfig.enabled === false) process.exit(0);
 
-        // Check if this skill should trigger injection
-        const targetSkills = reviewConfig.injectOnSkills || ['code-review', 'review', 'review:codebase', 'review-changes', 'code-reviewer'];
-        const shouldInject =
-            targetSkills.some(target => skillName.includes(target.toLowerCase()) || target.toLowerCase().includes(skillName)) ||
-            // Wildcard: catch future *-review skills automatically
-            skillName.endsWith('-review');
+        if (isSkill) {
+            // Skill trigger: only inject for review-related skills
+            const skillName = (payload.tool_input?.skill || '').toLowerCase();
+            if (!skillName) process.exit(0);
 
-        if (!shouldInject) process.exit(0);
+            const targetSkills = reviewConfig.injectOnSkills || ['code-review', 'review', 'review:codebase', 'review-changes', 'code-reviewer'];
+            const shouldInject =
+                targetSkills.some(target => skillName.includes(target.toLowerCase()) || target.toLowerCase().includes(skillName)) ||
+                skillName.endsWith('-review');
+            if (!shouldInject) process.exit(0);
+        }
 
-        // Check deduplication
-        if (wasRecentlyInjected(payload.transcript_path)) process.exit(0);
-
-        // Resolve rules file path
+        // Check deduplication (top+bottom)
+        if (wasMarkerRecentlyInjected(payload.transcript_path, INJECTION_MARKER, DEDUP_LINES.CODE_REVIEW_RULES)) process.exit(0);
         const rulesPath = reviewConfig.rulesPath || 'docs/project-reference/code-review-rules.md';
         const fullPath = path.resolve(process.cwd(), rulesPath);
 
-        if (!fs.existsSync(fullPath)) {
-            console.log(`\n⚠️ **Code Review Rules Warning:** Rules file not found at \`${rulesPath}\``);
-            console.log(`Create the file or update \`codeReview.rulesPath\` in \`.claude/.ck.json\`\n`);
-            process.exit(0);
-        }
+        if (!fs.existsSync(fullPath)) process.exit(0);
 
-        // Read and inject rules
+        // Read and inject rules — trim to top25+bottom25 if >50 lines
         const rules = fs.readFileSync(fullPath, 'utf-8');
+        const trimmedRules = trimContent(rules);
 
         console.log(`\n## ${INJECTION_MARKER}\n`);
-        console.log(`**Source:** \`${rulesPath}\` | **Skill:** \`${skillName}\`\n`);
+        console.log(`**Source:** \`${rulesPath}\`\n`);
         console.log(`---\n`);
-        console.log(rules);
+        console.log(trimmedRules);
         console.log(`\n---\n`);
-        console.log(`**IMPORTANT:** Apply these project-specific rules during your review.\n`);
 
         process.exit(0);
     } catch (error) {

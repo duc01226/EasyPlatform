@@ -5,7 +5,7 @@
  * Consumers:
  *   injectLessons            → prompt-context-assembler (UserPromptSubmit), lessons-injector (PreToolUse)
  *   injectCriticalContext    → prompt-context-assembler (UserPromptSubmit), mindset-injector (PreToolUse)
- *   injectAiMistakePrevention → prompt-context-assembler (UserPromptSubmit), mindset-injector (PreToolUse)
+ *   injectAiMistakePrevention → mindset-injector (PreToolUse), subagent-init (Agent)
  *   injectWorkflowProtocol   → prompt-context-assembler (UserPromptSubmit)
  *   injectLessonReminder     → prompt-context-assembler (UserPromptSubmit)
  */
@@ -18,7 +18,8 @@ const {
     WORKFLOW_PROTOCOL: WORKFLOW_PROTOCOL_MARKER,
     CRITICAL_THINKING: CRITICAL_THINKING_MARKER,
     AI_MISTAKE_PREVENTION: AI_MISTAKE_PREVENTION_MARKER,
-    DEDUP_LINES
+    DEDUP_LINES,
+    TOP_DEDUP_LINES
 } = require('./dedup-constants.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
@@ -35,30 +36,42 @@ function injectLessons(transcriptPath, skipDedup = false) {
     const content = fs.readFileSync(LESSONS_PATH, 'utf-8').trim();
     if (!content.split('\n').some(l => l.trim().startsWith('- ['))) return null;
 
-    if (!skipDedup && transcriptPath && fs.existsSync(transcriptPath)) {
-        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        const lastLines = transcript.split('\n').slice(-DEDUP_LINES.LESSONS).join('\n');
-        if (lastLines.includes(LESSONS_MARKER)) return null;
+    if (!skipDedup && wasMarkerRecentlyInjected(transcriptPath, LESSONS_MARKER, DEDUP_LINES.LESSONS)) {
+        return null;
     }
 
     return `## Learned Lessons\n\n${content}`;
 }
 
 /**
- * Helper: check if a marker was recently injected in the transcript.
+ * Helper: check if a marker exists in the transcript — bottom (recency) OR top (primacy).
+ *
+ * Bottom check: marker in last N lines → still in AI recency window → skip re-injection.
+ * Top check: marker in first M lines → still in AI primacy window → skip re-injection.
+ *
+ * This prevents duplicate injection when content is at the top of context (from earlier
+ * prompts) but has scrolled past the bottom dedup window due to tool call output.
+ * After compaction, both top and bottom are reset → correctly triggers re-injection.
+ *
  * @param {string} transcriptPath - Path to transcript file
  * @param {string} marker - Dedup marker string to search for
- * @param {number} lines - Number of trailing lines to check
+ * @param {number} bottomLines - Number of trailing lines to check (recency)
+ * @param {number} [topLines=50] - Number of leading lines to check (primacy)
  * @returns {boolean}
  */
-function wasMarkerRecentlyInjected(transcriptPath, marker, lines) {
+function wasMarkerRecentlyInjected(transcriptPath, marker, bottomLines, topLines = TOP_DEDUP_LINES) {
     try {
         if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
         const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        return transcript
-            .split('\n')
-            .slice(-lines)
-            .some(l => l.includes(marker));
+        const allLines = transcript.split('\n');
+
+        // Bottom check (recency) — marker still in recent output
+        if (allLines.slice(-bottomLines).some(l => l.includes(marker))) return true;
+
+        // Top check (primacy) — marker still at top of context from earlier injection
+        if (allLines.slice(0, topLines).some(l => l.includes(marker))) return true;
+
+        return false;
     } catch {
         return false;
     }
@@ -75,10 +88,9 @@ function injectCriticalContext(transcriptPath, skipDedup = false) {
         return null;
     }
 
-    return [
-        `**${CRITICAL_THINKING_MARKER} CRITICAL THINKING and PROOF protocol (IMPORTANT MANDATORY MUST): Be skeptical, critical thinking. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**`,
-        ``
-    ].join('\n');
+    return [`**${CRITICAL_THINKING_MARKER}** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.`, ``].join(
+        '\n'
+    );
 }
 
 /**
@@ -124,32 +136,14 @@ function injectAiMistakePrevention(transcriptPath, skipDedup = false) {
  * @returns {string|null} Reminder text or null if recently injected
  */
 function injectLessonReminder(transcriptPath) {
-    if (transcriptPath && fs.existsSync(transcriptPath)) {
-        try {
-            const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-            if (
-                transcript
-                    .split('\n')
-                    .slice(-DEDUP_LINES.LESSON_LEARNED)
-                    .some(line => line.includes(LESSON_LEARNED_MARKER))
-            )
-                return null;
-        } catch {
-            return null;
-        }
+    if (wasMarkerRecentlyInjected(transcriptPath, LESSON_LEARNED_MARKER, DEDUP_LINES.LESSON_LEARNED)) {
+        return null;
     }
 
     return [
-        `## ${LESSON_LEARNED_MARKER} Task Planning & Continuous Improvement`,
+        `## ${LESSON_LEARNED_MARKER} [BLOCKING] Task Planning & Continuous Improvement — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.`,
         ``,
-        `**MANDATORY IMPORTANT MUST** break work into small todo tasks using \`TaskCreate\` BEFORE starting.`,
-        `**MANDATORY IMPORTANT MUST** add a **final todo task** at the end of every task list:`,
-        ``,
-        `> **"Analyze AI mistakes & lessons learned"** — Review the session for AI errors ` +
-            `(wrong assumptions, missed patterns, hallucinated APIs, over-engineering, ` +
-            `missed reuse opportunities). If any lesson is found, ask the user:`,
-        `> *"Found [N] lesson(s) learned. Lesson(s) guide prompt must be analyzed the root cause and to have a generic for AI lesson that can be used in any projects, not just this specific project. Use \`/learn\` to remember for future sessions?"*`,
-        `> Wait for user confirmation before invoking \`/learn\`.`,
+        `Break work into small tasks (\`TaskCreate\`) before starting. Add final task: "Analyze AI mistakes & lessons learned" — if lessons found, ask user to run \`/learn\`.`,
         ``
     ].join('\n');
 }
@@ -162,48 +156,26 @@ function injectLessonReminder(transcriptPath) {
  * @returns {string|null} Protocol text or null if recently injected
  */
 function injectWorkflowProtocol(transcriptPath, confirmationMode) {
-    if (transcriptPath && fs.existsSync(transcriptPath)) {
-        try {
-            const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-            if (
-                transcript
-                    .split('\n')
-                    .slice(-DEDUP_LINES.WORKFLOW_PROTOCOL)
-                    .some(line => line.includes(WORKFLOW_PROTOCOL_MARKER))
-            )
-                return null;
-        } catch {
-            return null;
-        }
+    if (wasMarkerRecentlyInjected(transcriptPath, WORKFLOW_PROTOCOL_MARKER, DEDUP_LINES.WORKFLOW_PROTOCOL)) {
+        return null;
     }
 
     if (confirmationMode === 'never') {
-        return `## ${WORKFLOW_PROTOCOL_MARKER} Workflow Execution Protocol (MUST FOLLOW. DO NOT IGNORE OR SKIP)
+        return `## ${WORKFLOW_PROTOCOL_MARKER} [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**WORKFLOW DETECTION - CRITICAL IMPORTANT MANDATORY MUST FOLLOW: Detect the nearest matching workflow and auto-execute it directly without asking the user.**
-
-1. **DETECT:** Match prompt against the auto-injected workflow catalog
-2. **ACTIVATE:** Call \`/workflow-start <workflowId>\` immediately (no confirmation needed)
-3. **CREATE TASKS:** Use \`TaskCreate\` for ALL workflow steps BEFORE doing anything else
-4. **EXECUTE:** Follow each step in sequence; mark \`in_progress\` before, \`completed\` after
-
-> Task breakdown: create workflow-level TODOs FIRST ("[Workflow] /scout", etc.), then implementation subtasks within each step. Never skip to implementation before creating workflow tasks.
-**WORKFLOW DETECTION is the most important. Do not skip in any scenario.**`;
+1. **DETECT:** Match prompt against the workflow catalog
+2. **ACTIVATE:** Call \`/workflow-start <workflowId>\` immediately
+3. **CREATE TASKS:** \`TaskCreate\` for ALL workflow steps
+4. **EXECUTE:** Follow each step in sequence`;
     }
 
-    return `## ${WORKFLOW_PROTOCOL_MARKER} Workflow Execution Protocol (MUST FOLLOW. DO NOT IGNORE OR SKIP)
+    return `## ${WORKFLOW_PROTOCOL_MARKER} [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**WORKFLOW DETECTION - CRITICAL IMPORTANT MANDATORY MUST FOLLOW: First action after workflow detection MUST be asking user via \`AskUserQuestion\` to confirm workflow activation.**
-**MUST AskUserQuestion for WORKFLOW DETECTION event if the user prompt is simple or straight forward.**
-
-1. **DETECT:** Match prompt against the auto-injected workflow catalog
-2. **ASK:** ALWAYS use \`AskUserQuestion\` to present: "Activate [Workflow] (Recommended)" vs "Execute directly"
+1. **DETECT:** Match prompt against the workflow catalog
+2. **ASK:** Use \`AskUserQuestion\`: "Activate [Workflow] (Recommended)" vs "Execute directly"
 3. **ACTIVATE (if confirmed):** Call \`/workflow-start <workflowId>\`
-4. **CREATE TASKS:** Use \`TaskCreate\` for ALL workflow steps BEFORE doing anything else
-5. **EXECUTE:** Follow each step in sequence; mark \`in_progress\` before, \`completed\` after
-
-> Task breakdown: create workflow-level TODOs FIRST ("[Workflow] /scout", etc.), then implementation subtasks within each step. Never skip to implementation before creating workflow tasks.
-**WORKFLOW DETECTION is the most important. Do not skip in any scenario.**`;
+4. **CREATE TASKS:** \`TaskCreate\` for ALL workflow steps
+5. **EXECUTE:** Follow each step in sequence`;
 }
 
 module.exports = {
@@ -211,5 +183,6 @@ module.exports = {
     injectCriticalContext,
     injectAiMistakePrevention,
     injectWorkflowProtocol,
-    injectLessonReminder
+    injectLessonReminder,
+    wasMarkerRecentlyInjected
 };

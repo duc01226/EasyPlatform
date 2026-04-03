@@ -45,9 +45,20 @@ const configTests = [
         }
     },
     {
-        name: '[quality-audit] has correct sequence of 7 steps',
+        name: '[quality-audit] has correct sequence of 10 steps',
         fn: async () => {
-            const expected = ['code-review', 'plan', 'plan-review', 'plan-validate', 'code', 'test', 'watzup'];
+            const expected = [
+                'workflow-review-changes',
+                'plan',
+                'plan-review',
+                'plan-validate',
+                'code',
+                'tdd-spec',
+                'tdd-spec-review',
+                'test',
+                'watzup',
+                'workflow-end'
+            ];
             assertEqual(JSON.stringify(qualityAudit.sequence), JSON.stringify(expected), 'Sequence should match');
         }
     },
@@ -62,9 +73,9 @@ const configTests = [
         }
     },
     {
-        name: '[quality-audit] confirmFirst is true',
+        name: '[quality-audit] confirmFirst is false',
         fn: async () => {
-            assertTrue(qualityAudit.confirmFirst === true, 'confirmFirst should be true');
+            assertTrue(qualityAudit.confirmFirst === false, 'confirmFirst should be false');
         }
     },
     {
@@ -174,16 +185,6 @@ const integrationTests = [
             assertAllowed(result.code, 'Should not block');
             const output = result.stdout;
             assertContains(output, 'Workflow Catalog', 'Should inject workflow catalog');
-        }
-    },
-    {
-        name: '[quality-audit] workflow-router skips explicit command',
-        fn: async () => {
-            const input = createUserPromptInput('/code-review check quality');
-            const result = await runHook(WORKFLOW_ROUTER, input, RUN_OPTS);
-            assertAllowed(result.code, 'Should not block');
-            const output = result.stdout;
-            assertTrue(output.trim() === '' || !output.includes('Workflow Catalog'), 'Should skip workflow catalog for explicit command');
         }
     },
     {

@@ -8,7 +8,7 @@
  * - Edit/Write trigger with backend (.cs) and frontend (.ts/.html) paths
  * - E2E test file detection (config-driven + fallback globs)
  * - MultiEdit support (edits array format)
- * - Dedup via transcript marker within 300 lines (code) / 400 lines (E2E)
+ * - Dedup via transcript marker within DEDUP_LINES window (code / E2E)
  * - Skip behavior for non-code files, non-Edit tools, and out-of-scope paths
  * - Graceful failure on empty/malformed input
  */
@@ -21,7 +21,7 @@ const { createTempDir, cleanupTempDir, createMockFile } = require('../lib/test-u
 
 // Hook under test
 const HOOK_PATH = getHookPath('code-patterns-injector.cjs');
-const { CODE_PATTERNS: MARKER, E2E_CONTEXT: E2E_MARKER } = require('../../lib/dedup-constants.cjs');
+const { CODE_PATTERNS: MARKER, E2E_CONTEXT: E2E_MARKER, DEDUP_LINES } = require('../../lib/dedup-constants.cjs');
 const { generateTestFixtures } = require('../../lib/test-fixture-generator.cjs');
 
 // Project root (4 levels up from suites/)
@@ -175,7 +175,7 @@ const triggerTests = [
 
 const dedupTests = [
     {
-        name: '[code-patterns-injector] skips when marker in recent transcript (within 300 lines)',
+        name: '[code-patterns-injector] skips when marker in recent transcript (within dedup window)',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
@@ -193,18 +193,18 @@ const dedupTests = [
         }
     },
     {
-        name: '[code-patterns-injector] injects when marker beyond 300 lines ago',
+        name: '[code-patterns-injector] injects when marker beyond dedup window',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                // Marker at top, then 400+ lines of content (marker will be outside last 300 lines)
-                const lines = [MARKER].concat(Array(400).fill('other content'));
+                // Marker at top, then enough lines so marker is outside the dedup window
+                const lines = [MARKER].concat(Array(DEDUP_LINES.CODE_PATTERNS + 100).fill('other content'));
                 const transcriptPath = createMockFile(tmpDir, 'transcript.jsonl', lines.join('\n'));
 
                 const input = { tool_name: 'Edit', tool_input: { file_path: `${f.backendBase}/Save.cs` }, transcript_path: transcriptPath };
                 const result = await runHook(HOOK_PATH, input, RUN_OPTS);
                 assertAllowed(result.code);
-                assertContains(result.stdout, MARKER, 'Should inject when marker is beyond 300 lines');
+                assertContains(result.stdout, MARKER, 'Should inject when marker is beyond dedup window');
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -269,7 +269,7 @@ const e2eTests = [
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, E2E_MARKER, 'Should contain E2E marker');
-            assertContains(result.stdout, 'MUST READ', 'Should contain MUST READ directive');
+            assertContains(result.stdout, 'E2E Testing Configuration:', 'Should contain E2E testing configuration');
             assertNotContains(result.stdout, MARKER, 'Should NOT contain code patterns marker');
         }
     },
@@ -319,7 +319,7 @@ const e2eTests = [
         }
     },
     {
-        name: '[code-patterns-injector] E2E dedup uses separate marker and 400-line window',
+        name: '[code-patterns-injector] E2E dedup uses separate marker and dedup window',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
@@ -337,11 +337,11 @@ const e2eTests = [
         }
     },
     {
-        name: '[code-patterns-injector] E2E re-injects when E2E marker beyond 400 lines',
+        name: '[code-patterns-injector] E2E re-injects when E2E marker beyond dedup window',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                const lines = [E2E_MARKER].concat(Array(500).fill('other content'));
+                const lines = [E2E_MARKER].concat(Array(DEDUP_LINES.E2E_CONTEXT + 100).fill('other content'));
                 const transcriptPath = createMockFile(tmpDir, 'transcript.jsonl', lines.join('\n'));
 
                 const input = { tool_name: 'Edit', tool_input: { file_path: f.e2eBddCs }, transcript_path: transcriptPath };

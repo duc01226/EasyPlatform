@@ -26,6 +26,7 @@ const path = require('path');
 const os = require('os');
 const { loadConfig } = require('./lib/ck-config-utils.cjs');
 const { DEV_RULES: DEV_RULES_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+const { wasMarkerRecentlyInjected } = require('./lib/prompt-injections.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
@@ -92,16 +93,7 @@ function resolveDevRulesPath() {
 }
 
 function wasRecentlyInjected(transcriptPath) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
-        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        return transcript
-            .split('\n')
-            .slice(-DEDUP_LINES.DEV_RULES)
-            .some(line => line.includes(DEV_RULES_MARKER));
-    } catch {
-        return false;
-    }
+    return wasMarkerRecentlyInjected(transcriptPath, DEV_RULES_MARKER, DEDUP_LINES.DEV_RULES);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
