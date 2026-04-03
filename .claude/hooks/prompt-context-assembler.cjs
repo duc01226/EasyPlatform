@@ -31,7 +31,13 @@ const {
 // DEDUPLICATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const { PROJECT_STRUCTURE: PROJECT_STRUCTURE_MARKER, CLAUDE_MD: CLAUDE_MD_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+const {
+    PROJECT_STRUCTURE: PROJECT_STRUCTURE_MARKER,
+    CLAUDE_MD: CLAUDE_MD_MARKER,
+    PROJECT_CONFIG_SUMMARY: PROJECT_CONFIG_SUMMARY_MARKER,
+    DEDUP_LINES
+} = require('./lib/dedup-constants.cjs');
+const { generateProjectSummary } = require('./lib/project-config-loader.cjs');
 const { readAndInjectDoc } = require('./lib/context-injector-base.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -349,6 +355,25 @@ async function main() {
                         console.log(tldrMatch[1].trim());
                         console.log('');
                     }
+                }
+            }
+        } catch {
+            /* non-blocking */
+        }
+
+        // Project config summary — compact structural map (modules, stack, context groups)
+        // Injected after CLAUDE.md so AI has the structural overview for planning decisions.
+        try {
+            let configSummaryRecentlyInjected = false;
+            if (transcriptLines) {
+                configSummaryRecentlyInjected = transcriptLines.slice(-DEDUP_LINES.PROJECT_CONFIG_SUMMARY).some(l => l.includes(PROJECT_CONFIG_SUMMARY_MARKER));
+            }
+            if (!configSummaryRecentlyInjected) {
+                const summary = generateProjectSummary();
+                if (summary) {
+                    console.log(`\n${PROJECT_CONFIG_SUMMARY_MARKER}\n`);
+                    console.log(summary);
+                    console.log('');
                 }
             }
         } catch {

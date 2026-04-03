@@ -341,6 +341,32 @@ async function testPostCompactRecovery() {
     }
 }
 
+async function testGraphSessionInit() {
+    logSection('SessionStart: graph-session-init.cjs (config guard)');
+
+    // Test 1: Config NOT populated → silent exit (no graph messages)
+    {
+        const tmpDir = createTempDir();
+        try {
+            const docsDir = path.join(tmpDir, 'docs');
+            fs.mkdirSync(docsDir, { recursive: true });
+            fs.writeFileSync(path.join(docsDir, 'project-config.json'), JSON.stringify({ project: { name: '' }, modules: [] }));
+            const result = await runHook('graph-session-init.cjs', { source: 'startup' }, { env: { CLAUDE_PROJECT_DIR: tmpDir }, timeout: 15000 });
+            logResult('Exits 0 when config not populated', result.code === 0);
+            logResult('No graph output when config not populated', !result.stdout.includes('graph') && !result.stdout.includes('code-graph'));
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
+    }
+
+    // Test 2: Config populated → produces graph-related output
+    {
+        const result = await runHook('graph-session-init.cjs', { source: 'startup' }, { timeout: 15000 });
+        logResult('Exits 0 when config populated', result.code === 0);
+        logResult('Produces graph output when config populated', result.stdout.includes('code-graph') || result.stdout.includes('graph'));
+    }
+}
+
 async function testProjectConfigInit() {
     logSection('SessionStart: session-init-docs.cjs (config init)');
 
@@ -829,6 +855,98 @@ async function testInitPromptGate() {
     {
         const result = await runHook('init-prompt-gate.cjs', 'not-json');
         logResult('Malformed input: fail-open exit 0', result.code === 0);
+    }
+
+    // ── Graph Gate: Config Guard Tests ──
+    logSubsection('Graph Gate — Config Guard');
+
+    // Test 10: Config populated + no graph.db + no dismiss → exit 2 (graph gate blocks)
+    {
+        const tmpDir = createTempDir();
+        try {
+            const docsDir = path.join(tmpDir, 'docs');
+            const srcDir = path.join(tmpDir, 'src');
+            fs.mkdirSync(docsDir, { recursive: true });
+            fs.mkdirSync(srcDir, { recursive: true }); // hasProjectContent needs a content dir
+            fs.writeFileSync(
+                path.join(docsDir, 'project-config.json'),
+                JSON.stringify({
+                    project: { name: 'TestProject' },
+                    modules: [{ name: 'mod', kind: 'library', pathRegex: 'src/' }]
+                })
+            );
+            // No .code-graph/graph.db, no dismiss flag
+            const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
+            logResult('Graph gate blocks when config populated + no graph.db', result.code === 2);
+            logResult('Graph block message mentions /graph-build', result.stderr.includes('/graph-build'));
+            logResult('Graph block message mentions skip graph', result.stderr.includes('skip graph'));
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
+    }
+
+    // Test 11: Config NOT populated + no graph.db → exit 2 for config (NOT graph)
+    {
+        const tmpDir = createTempDir();
+        try {
+            const docsDir = path.join(tmpDir, 'docs');
+            const srcDir = path.join(tmpDir, 'src');
+            fs.mkdirSync(docsDir, { recursive: true });
+            fs.mkdirSync(srcDir, { recursive: true });
+            fs.writeFileSync(path.join(docsDir, 'project-config.json'), JSON.stringify({ project: { name: '' }, modules: [] }));
+            const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
+            logResult('Config gate blocks before graph gate', result.code === 2);
+            logResult('Block message is config (not graph)', result.stderr.includes('/project-config') && !result.stderr.includes('/graph-build'));
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
+    }
+
+    // Test 12: Config populated + graph.db exists → exit 0 (both gates pass)
+    {
+        const tmpDir = createTempDir();
+        try {
+            const docsDir = path.join(tmpDir, 'docs');
+            const srcDir = path.join(tmpDir, 'src');
+            const graphDir = path.join(tmpDir, '.code-graph');
+            fs.mkdirSync(docsDir, { recursive: true });
+            fs.mkdirSync(srcDir, { recursive: true });
+            fs.mkdirSync(graphDir, { recursive: true });
+            fs.writeFileSync(
+                path.join(docsDir, 'project-config.json'),
+                JSON.stringify({
+                    project: { name: 'TestProject' },
+                    modules: [{ name: 'mod', kind: 'library', pathRegex: 'src/' }]
+                })
+            );
+            fs.writeFileSync(path.join(graphDir, 'graph.db'), 'fake-db');
+            const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
+            logResult('Both gates pass when config + graph.db exist', result.code === 0);
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
+    }
+
+    // Test 13: "skip graph" dismiss → exit 0
+    {
+        const tmpDir = createTempDir();
+        try {
+            const docsDir = path.join(tmpDir, 'docs');
+            const srcDir = path.join(tmpDir, 'src');
+            fs.mkdirSync(docsDir, { recursive: true });
+            fs.mkdirSync(srcDir, { recursive: true });
+            fs.writeFileSync(
+                path.join(docsDir, 'project-config.json'),
+                JSON.stringify({
+                    project: { name: 'TestProject' },
+                    modules: [{ name: 'mod', kind: 'library', pathRegex: 'src/' }]
+                })
+            );
+            const result = await runHook('init-prompt-gate.cjs', { prompt: 'skip graph' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
+            logResult('Skip graph dismiss exits 0', result.code === 0);
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
     }
 }
 
@@ -2159,8 +2277,9 @@ async function runAllTests() {
     cleanupAllTestDirs();
 
     // Session Lifecycle
-    if (!FILTER || 'session'.includes(FILTER)) {
+    if (!FILTER || 'session'.includes(FILTER) || 'graph'.includes(FILTER)) {
         await testSessionInit();
+        await testGraphSessionInit();
         await testPostCompactRecovery();
         await testProjectConfigInit();
         await testSessionEnd();

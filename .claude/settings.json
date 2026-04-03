@@ -440,7 +440,7 @@
     },
     "includeCoAuthoredBy": false,
     "permissions": {
-        "allow": ["Edit(.claude/**)"],
+        "allow": ["Edit(.claude/**)", "Bash(tmp/**)", "Edit(tmp/**)", "Read(tmp/**)", "Write(tmp/**)", "Glob(tmp/**)"],
         "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)"],
         "defaultMode": "bypassPermissions",
         "deny": [

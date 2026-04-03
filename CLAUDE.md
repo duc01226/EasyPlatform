@@ -217,6 +217,13 @@ dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 cd src/Frontend && npm install
 cd src/Frontend && npm start
 
+# Testing
+dotnet test src/Backend/PlatformExampleApp.Test/                # Unit tests
+dotnet test src/Backend/PlatformExampleApp.IntegrationTests/    # Integration tests
+dotnet test src/Backend/PlatformExampleApp.Test.BDD/            # BDD tests
+cd src/Frontend && npm test                                     # Frontend unit tests
+cd src/Frontend/e2e && npx playwright test                      # E2E tests
+
 # Docker (Example App)
 # See start-dev-platform-example-app*.cmd scripts in src/
 
@@ -230,29 +237,13 @@ node .claude/hooks/tests/test-lib-modules-extended.cjs
 
 <!-- SECTION:integration-testing -->
 
-## Integration Testing
-
-Subcutaneous CQRS tests through real DI (no HTTP), against live infrastructure. Reference: `src/Backend/PlatformExampleApp.Tests.Integration/`. Platform base: `src/Platform/Easy.Platform.AutomationTest/IntegrationTests/`.
-
-**Setup:** Create fixture extending `PlatformServiceIntegrationTestFixture<T>`, base class extending `PlatformServiceIntegrationTestWithAssertions<T>` with `ResolveRepository<TEntity>` override, test classes with `[Collection]` attribute.
-
-**Key APIs:** `ExecuteCommandAsync`, `ExecuteQueryAsync`, `AssertEntityExistsAsync<T>`, `AssertEntityMatchesAsync<T>`, `AssertEntityDeletedAsync<T>`, `IntegrationTestHelper.UniqueName()`, `TestUserContextFactory.Create*()`
+See [integration-test-reference.md](docs/project-reference/integration-test-reference.md) for integration test patterns and setup.
 
 <!-- /SECTION:integration-testing -->
 
 <!-- SECTION:e2e-testing -->
 
-## E2E Testing
-
-Playwright-based E2E tests. Config: `src/Frontend/e2e/playwright.config.ts`. Tests: `src/Frontend/e2e/tests/`. Page objects: `src/Frontend/e2e/page-objects/`.
-
-```bash
-cd src/Frontend/e2e && npx playwright test           # Run all
-cd src/Frontend/e2e && npx playwright test --headed   # Headed mode
-cd src/Frontend/e2e && npx playwright test --ui       # Interactive UI
-```
-
-See [e2e-test-reference.md](docs/project-reference/e2e-test-reference.md) for patterns, page objects, and configuration (content auto-injected by hook).
+E2E testing framework(s): xunit, playwright, jest
 
 <!-- /SECTION:e2e-testing -->
 
@@ -261,18 +252,6 @@ See [e2e-test-reference.md](docs/project-reference/e2e-test-reference.md) for pa
 Start order: **Infrastructure → Backend API → Frontend**. Docker compose files in `src/`.
 
 <!-- SECTION:infra-ports -->
-
-### Infrastructure Ports
-
-| Service       | Port                               | Credentials         |
-| ------------- | ---------------------------------- | ------------------- |
-| MongoDB       | 127.0.0.1:27017                    | root / rootPassXXX  |
-| Elasticsearch | 127.0.0.1:9200                     | (no auth)           |
-| RabbitMQ      | 127.0.0.1:5672 (AMQP), :15672 (UI) | guest / guest       |
-| Redis         | 127.0.0.1:6379                     | —                   |
-| PostgreSQL    | 127.0.0.1:54320                    | postgres / postgres |
-| SQL Server    | 127.0.0.1:14330 (optional)         | sa / 123456Abc      |
-
 <!-- /SECTION:infra-ports -->
 
 ### Quick Start
@@ -370,69 +349,29 @@ python .claude/scripts/code_graph search <keyword> --kind Function --json       
 
 <!-- SECTION:skill-activation -->
 
-## Automatic Skill Activation (MANDATORY)
-
 When working in specific areas, these skills MUST be automatically activated BEFORE any file creation or modification:
 
-### Path-Based Skill Activation
-
-| Path Pattern                     | Skill              | Pre-Read Files       |
-| -------------------------------- | ------------------ | -------------------- |
-| `src/Frontend/**/*.component.ts` | `frontend-angular` | Component base class |
-| `src/Frontend/**/*.store.ts`     | `frontend-angular` | Store patterns       |
-| `docs/design-system/**`          | `ui-ux-designer`   | Design tokens file   |
-
-### Activation Protocol
-
-Before creating or modifying files matching these patterns, Claude MUST:
-
-1. **Activate the skill** - Use `/skill-name` or Skill tool
-2. **Read reference files** - Template + existing example in same folder
-3. **Follow skill workflow** - Apply all skill-specific rules
+| Path Pattern      | Skill / Auto-Context | Pre-Read Files                                          |
+| ----------------- | -------------------- | ------------------------------------------------------- |
+| `src/Backend/**`  | _(auto-context)_     | `docs/project-reference/backend-patterns-reference.md`  |
+| `src/Frontend/**` | _(auto-context)_     | `docs/project-reference/frontend-patterns-reference.md` |
 
 <!-- /SECTION:skill-activation -->
 
 <!-- SECTION:doc-index -->
 
-## Documentation Index
-
-> **Claude Code Docs Hub** — 245 skills, 41 hooks, 28 agents, 48 workflows. Quick decision trees for common tasks. See [`.claude/docs/README.md`](.claude/docs/README.md) for full navigation hub, document sizes, and core pattern references.
-
-### Project & Operations (`docs/`)
-
-All `docs/` files below are content auto-injected by hook — do NOT create inline summaries for these.
-
-| Document / Directory                                                      | Purpose                          | When to Use                    |
-| ------------------------------------------------------------------------- | -------------------------------- | ------------------------------ |
-| [getting-started.md](docs/getting-started.md)                             | Dev environment setup            | Onboarding, first-time setup   |
-| [code-review-rules.md](docs/project-reference/code-review-rules.md)       | Code review standards            | PR reviews, quality audits     |
-| [lessons.md](docs/project-reference/lessons.md)                           | Learned lessons (auto-injected)  | Avoiding repeated mistakes     |
-| [design-system/](docs/project-reference/design-system/README.md)          | Design tokens, BEM, style guides | UI/UX work, styling, theming   |
-| [templates/](docs/templates/)                                             | Doc templates: ADR, changelog    | Creating new documentation     |
-| [test-specs/](docs/test-specs/README.md)                                  | Test specs, integration tests    | Test planning, coverage gaps   |
-| [docs-index-reference.md](docs/project-reference/docs-index-reference.md) | Doc tree, counts, lookup table   | Finding docs, doc inventory    |
-| [release-notes/](docs/release-notes/)                                     | Release changelogs               | Release prep, changelog review |
+```
+docs/project-reference/  (11 files)
+```
 
 <!-- /SECTION:doc-index -->
 
 <!-- SECTION:doc-lookup -->
 
-### Doc Lookup Guide
-
-| If user prompt mentions...                               | → Read first                                              |
-| -------------------------------------------------------- | --------------------------------------------------------- |
-| TextSnippet, example app, reference implementation       | `src/Backend/PlatformExampleApp.TextSnippet.Application/` |
-| Integration tests, subcutaneous testing, test base class | `src/Backend/PlatformExampleApp.Tests.Integration/`       |
-| Platform framework, CQRS, entities, validation           | `src/Platform/Easy.Platform/`                             |
-| Frontend patterns, Angular, stores, forms                | `src/Frontend/libs/platform-core/`                        |
-| Backend patterns, CQRS, entities, validation             | `docs/project-reference/backend-patterns-reference.md`    |
-| Frontend patterns, Angular, stores, forms                | `docs/project-reference/frontend-patterns-reference.md`   |
-| UI design, styling, BEM, design tokens, themes           | `docs/project-reference/design-system/`                   |
-| Test specs, test coverage                                | `docs/test-specs/`                                        |
-| Documentation inventory, doc tree, file counts           | `docs/project-reference/docs-index-reference.md`          |
-| Hooks, skills, agents, Claude Code config                | `.claude/docs/` subdirectories                            |
-
-**Additional Resources:** [README.md](README.md), [EasyPlatform.README.md](EasyPlatform.README.md)
+| If user prompt mentions...            | Read first                                              |
+| ------------------------------------- | ------------------------------------------------------- |
+| Backend patterns, CQRS, validation    | `docs/project-reference/backend-patterns-reference.md`  |
+| Frontend patterns, components, stores | `docs/project-reference/frontend-patterns-reference.md` |
 
 <!-- /SECTION:doc-lookup -->
 

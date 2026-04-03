@@ -269,6 +269,9 @@ function isGraphDismissRequest(prompt) {
  * @returns {void} Calls process.exit() if gate triggers; returns if graph exists
  */
 function handleGraphGate(userPrompt) {
+    // Only block on graph when project config is properly initialized
+    if (!isConfigPopulated()) return;
+
     // Graph already built → pass through
     if (fs.existsSync(GRAPH_DB_PATH)) return;
 

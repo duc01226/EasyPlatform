@@ -1,325 +1,91 @@
-<!-- Last scanned: 2026-03-15 -->
+<!-- Last scanned: 2026-04-03 -->
+<!-- CRITICAL: SCSS variables in platform-core, Material Design 3 theming, BEM class convention on ALL template elements -->
 
-# Design System Reference
+# Design System
 
-<!-- This file is referenced by Claude skills and agents for project-specific context. -->
-<!-- Canonical source of truth: docs/design-system/README.md (detailed guide with Known Discrepancies). -->
+**Stack:** Angular + Angular Material (MD3) + SCSS variables + BEM classes. No Storybook. No Figma token export.
 
-## Quick Summary
+**MUST** use platform-core SCSS variables for ALL spacing, color, typography, shadow, and radius values.
+**MUST** apply BEM classes (`block__element--modifier`) to every template element.
+**MUST** extend app-level base components, NEVER platform-core directly.
 
-**Goal:** Single reference for all design tokens, mixins, components, and theming conventions used across Easy.Platform frontend apps.
+## Design Token Sources
 
-**Token Categories:** Colors (primary/neutral/semantic), Spacing (rem-based scale), Typography (sizes/weights), Shadows/Radii/Transitions, Breakpoints (rem-based responsive), Z-Index (layered scale)
+| Category      | File                                                      | Convention                                                   |
+| ------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
+| Spacing       | `libs/platform-core/src/styles/_platform-variables.scss`  | `$space-{1..12}` (4px increments)                            |
+| Colors        | `libs/platform-core/src/styles/_platform-variables.scss`  | `$color-{primary\|neutral\|success\|warning\|error}-{shade}` |
+| Typography    | `libs/platform-core/src/styles/_platform-variables.scss`  | `$font-size-{xs..3xl}`, `$font-weight-{normal..bold}`        |
+| Shadows       | `libs/platform-core/src/styles/_platform-variables.scss`  | `$shadow-{xs\|sm\|md}`                                       |
+| Radii         | `libs/platform-core/src/styles/_platform-variables.scss`  | `$radius-{sm\|md\|lg\|full}`                                 |
+| Transitions   | `libs/platform-core/src/styles/_platform-variables.scss`  | `$transition-{fast\|base}`                                   |
+| Breakpoints   | `libs/platform-core/src/styles/_platform-variables.scss`  | `$platform-media-breakpoint-{xs..gt-xl}`                     |
+| Z-Index       | `libs/platform-core/src/styles/_platform-variables.scss`  | `$platform-z-index-level-{1..4\|max}`                        |
+| App overrides | `apps/playground-text-snippet/src/styles/_variables.scss` | `$app-{container-max-width\|sidebar-width\|page-padding}`    |
 
-**Key Rules:**
+## Color Palette
 
-- All styling uses SCSS token variables -- no raw hex values, no CSS custom properties
-- BEM naming: `.block__element.--modifier` on all template elements
-- Two-layer token architecture: Platform tokens (framework) -> App tokens (overrides) -> Components consume via `_index.scss`
-- Angular Material Design 3 (M3) theming with azure/blue palettes, light + dark mode
-- `rem`-based units for spacing, typography, and breakpoints (`calculateRem()` for px conversion)
-
----
-
-## Design System Overview
-
-| Aspect                | Value                                                    |
-| --------------------- | -------------------------------------------------------- |
-| **Framework**         | Angular 19, Standalone Components                        |
-| **UI Library**        | Angular Material Design 3 (M3)                           |
-| **Styling**           | SCSS with token-based architecture (no CSS custom props) |
-| **Theming**           | M3 azure/blue palettes, light + dark mode                |
-| **Naming**            | BEM: `.block__element.--modifier`                        |
-| **Selector Prefixes** | `app-`, `platform-example-`, `platform-`                 |
-| **Units**             | `rem`-based spacing and typography                       |
-
-### Token Architecture (two-layer)
-
-```
-Platform Tokens (framework core)
-  libs/platform-core/src/styles/_platform-variables.scss
-  libs/platform-core/src/styles/_platform-mixins.scss
-  libs/platform-core/src/styles/_platform-functions.scss
-  libs/platform-core/src/styles/_platform-placeholders.scss
-      |
-      v  (@forward)
-App Tokens (app-level overrides)
-  apps/playground-text-snippet/src/styles/_variables.scss
-  apps/playground-text-snippet/src/styles/_mixins.scss
-      |
-      v  (aggregated in)
-  apps/playground-text-snippet/src/styles/_index.scss
-      |
-      v  (consumed by)
-  apps/playground-text-snippet/src/styles.scss  (global entry)
-```
-
-Components import from the app `_index.scss` which re-exports both layers.
-
----
-
-## App Documentation Map
-
-| Working On         | Design System Doc                         | Path Pattern                                  |
-| ------------------ | ----------------------------------------- | --------------------------------------------- |
-| TextSnippet app    | `docs/design-system/WebV2DesignSystem.md` | `src/Frontend/apps/playground-text-snippet/*` |
-| Platform core libs | `docs/design-system/WebV2DesignSystem.md` | `src/Frontend/libs/platform-core/*`           |
-| Any frontend lib   | `docs/design-system/WebV2DesignSystem.md` | `src/Frontend/libs/*`                         |
-
-**WebV1ModernStyleGuide.md** -- currently unused; no legacy frontend apps exist. Retained for future migration reference.
-
-### Quick Detection
-
-- SCSS variables `$color-primary-*`, `$space-*` --> Platform tokens (WebV2)
-- Angular Material M3 theme --> `default-theme.scss`
-- Standalone Angular components --> WebV2
-
----
-
-## Design Tokens
-
-### Colors
-
-**Primary** (blue scale) -- source: `_platform-variables.scss`
-
-| Token                | Value     | Usage                    |
+| Token                | Hex       | Usage                    |
 | -------------------- | --------- | ------------------------ |
-| `$color-primary-50`  | `#eff6ff` | Light primary background |
-| `$color-primary-100` | `#dbeafe` | Hover states             |
-| `$color-primary-200` | `#bfdbfe` | Selected states          |
 | `$color-primary-600` | `#2563eb` | Primary actions, links   |
-| `$color-primary-700` | `#1d4ed8` | Hover on primary         |
+| `$color-primary-700` | `#1d4ed8` | Primary hover            |
+| `$color-neutral-50`  | `#f9fafb` | Page background          |
+| `$color-neutral-900` | `#111827` | Body text                |
+| `$color-success`     | `#22c55e` | Success states           |
+| `$color-warning`     | `#f59e0b` | Warning states           |
+| `$color-error`       | `#ef4444` | Error states, validation |
 
-**Neutral** (gray scale)
+## Material Design 3 Theming
 
-| Token                | Value     | Usage                          |
-| -------------------- | --------- | ------------------------------ |
-| `$color-neutral-50`  | `#f9fafb` | Page background, table headers |
-| `$color-neutral-100` | `#f3f4f6` | Row dividers                   |
-| `$color-neutral-200` | `#e5e7eb` | Borders                        |
-| `$color-neutral-300` | `#d1d5db` | Disabled icons                 |
-| `$color-neutral-400` | `#9ca3af` | Placeholder text               |
-| `$color-neutral-500` | `#6b7280` | Muted/secondary text           |
-| `$color-neutral-600` | `#4b5563` | Table headers                  |
-| `$color-neutral-700` | `#374151` | Headings                       |
-| `$color-neutral-900` | `#111827` | Primary body text              |
+Theme defined in `apps/playground-text-snippet/src/styles/themes/default-theme.scss`:
 
-**Semantic**
+```scss
+// default-theme.scss:8-20
+html {
+    @include mat.theme(
+        (
+            color: (
+                primary: mat.$azure-palette,
+                tertiary: mat.$blue-palette,
+                theme-type: light
+            ),
+            typography: Roboto,
+            density: 0
+        )
+    );
+}
+```
 
-| Token            | Value     | Light Variant                    | Dark Variant                    |
-| ---------------- | --------- | -------------------------------- | ------------------------------- |
-| `$color-success` | `#22c55e` | `$color-success-light` `#dcfce7` | `$color-success-dark` `#166534` |
-| `$color-warning` | `#f59e0b` | `$color-warning-light` `#fef3c7` | `$color-warning-dark` `#92400e` |
-| `$color-error`   | `#ef4444` | `$color-error-light` `#fee2e2`   | `$color-error-dark` `#991b1b`   |
+Dark mode via `prefers-color-scheme: dark` media query with same palette, `theme-type: dark`.
 
-### Spacing Scale
+## App-to-Documentation Map
 
-| Token       | Value     | Pixels |
-| ----------- | --------- | ------ |
-| `$space-1`  | `0.25rem` | 4px    |
-| `$space-2`  | `0.5rem`  | 8px    |
-| `$space-3`  | `0.75rem` | 12px   |
-| `$space-4`  | `1rem`    | 16px   |
-| `$space-5`  | `1.25rem` | 20px   |
-| `$space-6`  | `1.5rem`  | 24px   |
-| `$space-8`  | `2rem`    | 32px   |
-| `$space-10` | `2.5rem`  | 40px   |
-| `$space-12` | `3rem`    | 48px   |
+| App                       | Design Tokens                                                                                | Theme                                       | Component Library                        |
+| ------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
+| `playground-text-snippet` | `libs/platform-core/src/styles/_platform-variables.scss` + `apps/.../styles/_variables.scss` | `apps/.../styles/themes/default-theme.scss` | `libs/platform-core/src/lib/components/` |
 
-### Typography
+## Component Library
 
-| Token               | Value                                    | Pixels |
-| ------------------- | ---------------------------------------- | ------ |
-| `$font-family-base` | `'Roboto', 'Helvetica Neue', sans-serif` | --     |
-| `$font-size-xs`     | `0.75rem`                                | 12px   |
-| `$font-size-sm`     | `0.875rem`                               | 14px   |
-| `$font-size-base`   | `1rem`                                   | 16px   |
-| `$font-size-md`     | `1.125rem`                               | 18px   |
-| `$font-size-lg`     | `1.25rem`                                | 20px   |
-| `$font-size-xl`     | `1.5rem`                                 | 24px   |
-| `$font-size-2xl`    | `1.875rem`                               | 30px   |
-| `$font-size-3xl`    | `2.25rem`                                | 36px   |
+| Component                                | Path                                                                      | Purpose                            |
+| ---------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------- |
+| `PlatformLoadingErrorIndicatorComponent` | `libs/platform-core/src/lib/components/platform-loading-error-indicator/` | Loading spinner + error display    |
+| `PlatformDirective`                      | `libs/platform-core/src/lib/directives/abstracts/platform.directive.ts`   | Base directive with reactive state |
+| `PlatformSwipeToScrollDirective`         | `libs/platform-core/src/lib/directives/swipe-to-scroll.directive.ts`      | Touch swipe scrolling              |
+| `PlatformDisabledControlDirective`       | `libs/platform-core/src/lib/directives/disabled-control.directive.ts`     | Reactive form disable control      |
+| `PlatformHighlightSearchTextPipe`        | `libs/platform-core/src/lib/pipes/platform-highlight-search-text.pipe.ts` | Search text highlighting           |
+| `LogTimesDisplayPipe`                    | `libs/platform-core/src/lib/pipes/log-times-display.pipe.ts`              | Timestamp formatting               |
 
-| Weight Token            | Value |
-| ----------------------- | ----- |
-| `$font-weight-normal`   | 400   |
-| `$font-weight-medium`   | 500   |
-| `$font-weight-semibold` | 600   |
-| `$font-weight-bold`     | 700   |
+## SCSS Import Chain
 
-### Shadows, Radii, Transitions
+```
+styles.scss → styles/_index.scss
+  → _variables.scss (forwards platform-variables + app overrides)
+  → _mixins.scss (forwards platform-mixins + app mixins)
+  → _material-core.scss (@include mat.core)
+  → themes/default-theme.scss
+  → components/_index.scss → mat-spinner.scss
+```
 
-| Token              | Value                                                   |
-| ------------------ | ------------------------------------------------------- |
-| `$shadow-xs`       | `0 1px 2px rgba(0,0,0,0.05)`                            |
-| `$shadow-sm`       | `0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)` |
-| `$shadow-md`       | `0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)` |
-| `$radius-sm`       | `0.25rem` (4px)                                         |
-| `$radius-md`       | `0.375rem` (6px)                                        |
-| `$radius-lg`       | `0.5rem` (8px)                                          |
-| `$radius-full`     | `9999px`                                                |
-| `$transition-fast` | `150ms ease`                                            |
-| `$transition-base` | `200ms ease`                                            |
-
-### Breakpoints (rem-based via `calculateRem()`)
-
-| Token                              | Direction | Approx px |
-| ---------------------------------- | --------- | --------- |
-| `$platform-media-breakpoint-xs`    | max-width | 576px     |
-| `$platform-media-breakpoint-gt-xs` | min-width | 576px     |
-| `$platform-media-breakpoint-sm`    | max-width | 768px     |
-| `$platform-media-breakpoint-gt-sm` | min-width | 768px     |
-| `$platform-media-breakpoint-md`    | max-width | 992px     |
-| `$platform-media-breakpoint-gt-md` | min-width | 992px     |
-| `$platform-media-breakpoint-lg`    | max-width | 1200px    |
-| `$platform-media-breakpoint-gt-lg` | min-width | 1200px    |
-| `$platform-media-breakpoint-xl`    | max-width | 1424px    |
-| `$platform-media-breakpoint-gt-xl` | min-width | 1424px    |
-
-### Z-Index Scale
-
-| Token                         | Value |
-| ----------------------------- | ----- |
-| `$platform-z-index-level-1`   | 100   |
-| `$platform-z-index-level-2`   | 200   |
-| `$platform-z-index-level-3`   | 300   |
-| `$platform-z-index-level-4`   | 400   |
-| `$platform-z-index-level-max` | 99999 |
-
----
-
-## Mixin Inventory
-
-### Platform Mixins (`libs/platform-core/src/styles/_platform-mixins.scss`)
-
-| Mixin               | Signature                          | Purpose                                |
-| ------------------- | ---------------------------------- | -------------------------------------- |
-| `flex-center`       | `@include flex-center`             | Center content on both axes            |
-| `flex-start`        | `@include flex-start`              | Left-aligned flex row                  |
-| `flex-between`      | `@include flex-between`            | Space-between flex row                 |
-| `stack`             | `@include stack($gap: $space-4)`   | Vertical column layout with gap        |
-| `cluster`           | `@include cluster($gap: $space-4)` | Horizontal wrapping layout with gap    |
-| `card-elevated`     | `@include card-elevated`           | White card with border-radius + shadow |
-| `badge-base`        | `@include badge-base`              | Inline badge with padding/font         |
-| `error-banner`      | `@include error-banner`            | Red left-border alert banner           |
-| `warning-banner`    | `@include warning-banner`          | Yellow left-border alert banner        |
-| `flex-layout-media` | `@include flex-layout-media('md')` | Responsive breakpoint media queries    |
-| `truncate-text`     | `@include truncate-text`           | Ellipsis overflow on text              |
-
-### App Mixins (`apps/playground-text-snippet/src/styles/_mixins.scss`)
-
-| Mixin                | Signature                     | Purpose                                          |
-| -------------------- | ----------------------------- | ------------------------------------------------ |
-| `app-page-container` | `@include app-page-container` | Full page column layout with max-width           |
-| `app-empty-state`    | `@include app-empty-state`    | Centered empty state with icon/title/description |
-| `app-data-table`     | `@include app-data-table`     | Styled data table (headers, rows, hover)         |
-| `app-form-section`   | `@include app-form-section`   | Card-elevated form panel                         |
-| `app-form-row`       | `@include app-form-row`       | Responsive flex row for form fields              |
-| `app-form-field`     | `@include app-form-field`     | Flexible form field with min-width               |
-
-### Utility Function (`_platform-variables.scss`)
-
-| Function       | Signature             | Purpose                               |
-| -------------- | --------------------- | ------------------------------------- |
-| `calculateRem` | `calculateRem($size)` | Converts px to rem based on 16px root |
-
----
-
-## Theme Configuration
-
-Angular Material Design 3 theme at `apps/playground-text-snippet/src/styles/themes/default-theme.scss`:
-
-- **Primary palette:** `mat.$azure-palette`
-- **Tertiary palette:** `mat.$blue-palette`
-- **Theme type:** light (default), dark (via `prefers-color-scheme: dark`)
-- **Typography:** Roboto
-- **Density:** 0
-- **Material core:** imported via `_material-core.scss` (`@include mat.core`)
-- **Alternative theme:** `deeppurple-amber-theme.scss` available
-
-### Global Styles (`styles.scss`)
-
-- Box-sizing: `border-box` on all elements
-- Root font size: `$app-root-font-size` (16px)
-- Body background: `$color-neutral-50`, text: `$color-neutral-900`
-- Link color: `$color-primary-600`, hover: `$color-primary-700`
-- Utility classes: `.text-muted`, `.text-primary`, `.text-success`, `.text-warning`, `.text-error`, `.bg-surface`, `.bg-surface-variant`, `.rounded-md`, `.rounded-lg`, `.shadow-sm`, `.shadow-md`
-
-### App-Specific Tokens (`_variables.scss`)
-
-| Token                      | Value                  | Purpose                  |
-| -------------------------- | ---------------------- | ------------------------ |
-| `$app-container-max-width` | `calculateRem(1400px)` | Main container max-width |
-| `$app-sidebar-width`       | `calculateRem(280px)`  | Sidebar width            |
-| `$app-content-max-width`   | `calculateRem(1000px)` | Content area max-width   |
-| `$app-page-padding`        | `1.5rem` (24px)        | Page padding             |
-| `$app-section-gap`         | `2rem` (32px)          | Section gap              |
-| `$app-card-padding`        | `1.25rem` (20px)       | Card padding             |
-
----
-
-## Component Inventory
-
-### Platform Core (`src/Frontend/libs/platform-core/`)
-
-| Component / Directive         | Selector                           | Category  |
-| ----------------------------- | ---------------------------------- | --------- |
-| PlatformLoadingErrorIndicator | `platform-loading-error-indicator` | Feedback  |
-| PlatformComponent (abstract)  | -- (base class)                    | Base      |
-| SwipeToScrollDirective        | `[platformSwipeToScroll]`          | Directive |
-| DisabledControlDirective      | `[platformDisabledControl]`        | Directive |
-
-### App Components (`src/Frontend/apps/playground-text-snippet/`)
-
-| Component         | Selector                                   | Category   |
-| ----------------- | ------------------------------------------ | ---------- |
-| AppComponent      | `platform-example-web-root`                | Shell      |
-| TextSnippetDetail | `platform-example-web-text-snippet-detail` | Feature    |
-| TaskList          | `app-task-list`                            | Feature    |
-| TaskDetail        | `app-task-detail`                          | Feature    |
-| NavLoadingTest    | `app-nav-loading-test`                     | Navigation |
-
-### Shared Libraries
-
-| Library                                  | Component Count | Notes                                          |
-| ---------------------------------------- | --------------- | ---------------------------------------------- |
-| `libs/platform-components/`              | 0               | Reserved for reusable platform UI components   |
-| `libs/apps-shared-components/`           | 0               | Reserved for cross-app shared components       |
-| `libs/apps-domains-components/`          | 0               | Reserved for domain-specific shared components |
-| `libs/apps-domains/text-snippet-domain/` | 0 (services)    | Domain models, APIs, repositories (no UI)      |
-
-### Global Component Overrides (`styles/components/`)
-
-| File               | Purpose                                 |
-| ------------------ | --------------------------------------- |
-| `mat-spinner.scss` | Custom Angular Material spinner styling |
-
----
-
-## Icon & Asset Library
-
-No custom icon sets or asset libraries detected. The project uses Angular Material's built-in icon system via `mat-icon`.
-
----
-
-## Known Discrepancies (from `docs/design-system/README.md`)
-
-`WebV2DesignSystem.md` contains references from a prior project that do not match the current codebase:
-
-| Documented in WebV2                                         | Actual in Code                                                             |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `@use 'shared-mixin' as *;` import                          | No `shared-mixin` file; use `_index.scss` which re-exports platform tokens |
-| CSS variables: `--bg-pri-cl`, `--text-pri-cl`               | SCSS variables: `$color-neutral-50`, `$color-neutral-900`, etc.            |
-| Mixins: `flex()`, `flex-col()`, `flex-row()`, `text-base()` | Mixins: `flex-center`, `stack()`, `cluster()`, `truncate-text`             |
-
-Use this README and `docs/design-system/README.md` as source of truth for token/mixin names.
-
----
-
-## Closing Reminders
-
-- **MUST** use SCSS token variables (`$color-*`, `$space-*`, `$font-*`) for all styling -- never hard-code hex values, pixel sizes, or raw numbers
-- **MUST** apply BEM naming (`.block__element.--modifier`) on every template element -- no unnamed or generic classes
-- **MUST** import tokens through the app `_index.scss` layer, not directly from `_platform-variables.scss` -- the two-layer architecture ensures app overrides apply
-- **MUST** use platform/app mixins (`flex-center`, `stack`, `app-page-container`, etc.) instead of writing custom flex/layout CSS
-- **MUST** verify token names against this reference before use -- WebV2DesignSystem.md contains stale names from a prior project (see Known Discrepancies)
+**MUST** use `@use 'variables' as *` and `@use 'mixins' as *` at top of component SCSS files.
+**MUST** use platform-core tokens via SCSS variables, NEVER hardcode hex colors, px spacing, or font sizes.
+**MUST** apply BEM classes to ALL template elements -- block name = component name in kebab-case.

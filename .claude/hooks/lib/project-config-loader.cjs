@@ -233,6 +233,118 @@ function isKnowledgePath(filePath) {
     return KNOWLEDGE_PATH_RE.test(filePath.replace(/\\/g, '/'));
 }
 
+/**
+ * Generate a compact project structure summary from project-config.json.
+ * 100% data-driven — no hardcoded project knowledge. Returns empty string
+ * if config is not populated.
+ * @param {object} [config] - Parsed config. If omitted, loads from disk.
+ * @returns {string} Multi-line summary (~30-60 lines depending on config richness)
+ */
+function generateProjectSummary(config) {
+    if (config === undefined) config = loadProjectConfig();
+    if (!config || !isConfigPopulated(config)) return '';
+
+    const lines = [];
+    const p = config.project || {};
+
+    // --- Project header ---
+    lines.push(`**${p.name || 'Project'}**${p.description ? ` — ${p.description}` : ''}`);
+    const meta = [];
+    if (p.languages?.length) meta.push(`Languages: ${p.languages.join(', ')}`);
+    if (p.packageManagers?.length) meta.push(`PM: ${p.packageManagers.join(', ')}`);
+    if (p.monorepoTool) meta.push(`Monorepo: ${p.monorepoTool}`);
+    if (meta.length) lines.push(meta.join(' | '));
+
+    // --- Modules by kind ---
+    const modules = config.modules || [];
+    if (modules.length > 0) {
+        const byKind = {};
+        for (const m of modules) {
+            const k = m.kind || 'other';
+            if (!byKind[k]) byKind[k] = [];
+            byKind[k].push(m.name);
+        }
+        lines.push('');
+        lines.push(`**Modules (${modules.length}):**`);
+        for (const [kind, names] of Object.entries(byKind)) {
+            if (names.length <= 5) {
+                lines.push(`  ${kind}: ${names.join(', ')}`);
+            } else {
+                lines.push(`  ${kind} (${names.length}): ${names.slice(0, 4).join(', ')}, ... +${names.length - 4} more`);
+            }
+        }
+    }
+
+    // --- Framework ---
+    const fw = config.framework;
+    if (fw?.name) {
+        lines.push('');
+        lines.push(`**Framework:** ${fw.name}`);
+        if (fw.searchPatternKeywords?.length) {
+            lines.push(
+                `  Key patterns: ${fw.searchPatternKeywords.slice(0, 8).join(', ')}${fw.searchPatternKeywords.length > 8 ? ` (+${fw.searchPatternKeywords.length - 8})` : ''}`
+            );
+        }
+    }
+
+    // --- Context groups ---
+    const groups = config.contextGroups || [];
+    if (groups.length > 0) {
+        lines.push('');
+        lines.push('**Context Groups:**');
+        for (const g of groups) {
+            const parts = [g.name];
+            if (g.fileExtensions?.length) parts.push(`[${g.fileExtensions.join(', ')}]`);
+            if (g.patternsDoc) parts.push(`→ ${g.patternsDoc}`);
+            lines.push(`  ${parts.join(' ')}`);
+            if (g.rules?.length) {
+                for (const r of g.rules.slice(0, 3)) {
+                    lines.push(`    - ${r}`);
+                }
+                if (g.rules.length > 3) lines.push(`    - ... +${g.rules.length - 3} more rules`);
+            }
+        }
+    }
+
+    // --- Databases + Messaging + API (one-liner each) ---
+    const infoParts = [];
+    const db = config.databases;
+    if (db) {
+        if (db.primary) {
+            const alts = db.alternatives?.length ? ` (+ ${db.alternatives.join(', ')})` : '';
+            infoParts.push(`DB: ${db.primary}${alts}`);
+        } else {
+            const keys = Object.keys(db).filter(k => k !== 'note');
+            if (keys.length) infoParts.push(`DB: ${keys.join(', ')}`);
+        }
+    }
+    const msg = config.messaging;
+    if (msg?.broker) infoParts.push(`Bus: ${msg.broker}`);
+    const api = config.api;
+    if (api?.style) infoParts.push(`API: ${api.style}${api.authPattern ? ` + ${api.authPattern}` : ''}`);
+    if (infoParts.length) {
+        lines.push('');
+        lines.push(`**Stack:** ${infoParts.join(' | ')}`);
+    }
+
+    // --- Testing ---
+    const test = config.testing;
+    if (test?.frameworks?.length) {
+        lines.push(`**Testing:** ${test.frameworks.join(', ')}${test.guideDoc ? ` → ${test.guideDoc}` : ''}`);
+    }
+
+    // --- Infrastructure ---
+    const infra = config.infrastructure;
+    if (infra) {
+        const parts = [];
+        if (infra.containerization) parts.push(infra.containerization);
+        if (infra.orchestration) parts.push(infra.orchestration);
+        if (parts.length) lines.push(`**Infra:** ${parts.join(' + ')}`);
+    }
+
+    return lines.join('\n');
+}
+
 module.exports = {
     loadProjectConfig,
     buildRegexMap,
@@ -243,5 +355,6 @@ module.exports = {
     resolveSection,
     getAllFileExtensions,
     isConfigPopulated,
-    isKnowledgePath
+    isKnowledgePath,
+    generateProjectSummary
 };

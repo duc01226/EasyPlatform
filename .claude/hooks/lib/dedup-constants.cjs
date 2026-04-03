@@ -26,6 +26,7 @@
  *   FEATURE_DOCS_CONTEXT     → code-patterns-injector
  *   PROJECT_STRUCTURE    → prompt-context-assembler
  *   CLAUDE_MD            → prompt-context-assembler
+ *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler
  *   DESIGN_SYSTEM        → design-system-context
  *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
  *
@@ -85,6 +86,22 @@ function countWorkflowCatalogLines() {
 }
 
 /**
+ * Count output lines of generateProjectSummary().
+ * Lazily requires project-config-loader to avoid circular dependency at module load.
+ * @returns {number} Actual line count of generated summary
+ */
+function countProjectConfigSummaryLines() {
+    try {
+        const { generateProjectSummary } = require('./project-config-loader.cjs');
+        const summary = generateProjectSummary();
+        if (!summary) return 0;
+        return summary.split('\n').length;
+    } catch {
+        return 0;
+    }
+}
+
+/**
  * Content source definitions for dynamic dedup calculation.
  *
  * Types:
@@ -92,44 +109,42 @@ function countWorkflowCatalogLines() {
  *   'fixed'    — Constant value. Used for template injections and behavioral windows.
  *
  * Multiplier rationale:
- *   - Large injections (>200 lines): 1.5× — re-injection cost is high, so we
- *     want a tight window to avoid unnecessary re-reads of the transcript.
- *   - Medium injections (50-200 lines): 2× — balanced trade-off.
- *   - Small injections (<50 lines): 3-5× — re-injection is cheap, but the
- *     marker can get pushed out of view quickly by other injections.
+ *   Default 3× for most injections — ensures content stays visible in the
+ *   AI attention window across long sessions. Exceptions:
+ *   - PROJECT_STRUCTURE, DEV_RULES, WORKFLOW_CATALOG use 2× (larger content, less drift-sensitive).
  */
 const CONTENT_SOURCES = {
     CODE_PATTERNS: {
         type: 'file',
         files: ['docs/project-reference/backend-patterns-reference.md', 'docs/project-reference/frontend-patterns-reference.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         fallback: 1800
     },
     CODE_REVIEW_RULES: {
         type: 'file',
         files: ['docs/project-reference/code-review-rules.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 10, // header/footer added by hook
         fallback: 1000
     },
     E2E_CONTEXT: {
         type: 'file',
         files: ['docs/project-reference/e2e-test-reference.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 20, // config summary lines added by hook
         fallback: 200
     },
     INTEGRATION_TEST_CONTEXT: {
         type: 'file',
         files: ['docs/project-reference/integration-test-reference.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 15,
         fallback: 200
     },
     FEATURE_DOCS_CONTEXT: {
         type: 'file',
         files: ['docs/project-reference/feature-docs-reference.md', 'docs/project-reference/docs-index-reference.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 10,
         fallback: 200
     },
@@ -156,7 +171,7 @@ const CONTENT_SOURCES = {
         // Subset marker within DEV_RULES injection — window covers the full output
         type: 'file',
         files: ['.claude/docs/development-rules.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 90,
         fallback: 200
     },
@@ -177,21 +192,21 @@ const CONTENT_SOURCES = {
     BACKEND_CONTEXT: {
         type: 'file',
         files: ['docs/project-reference/domain-entities-reference.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 30, // service guidance, context header, rules
         fallback: 200
     },
     FRONTEND_CONTEXT: {
         type: 'file',
         files: ['docs/project-reference/domain-entities-reference.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 30,
         fallback: 200
     },
     STYLING_CONTEXT: {
         type: 'file',
         files: ['docs/project-reference/scss-styling-guide.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 10,
         fallback: 200
     },
@@ -199,18 +214,25 @@ const CONTENT_SOURCES = {
     DESIGN_SYSTEM: {
         type: 'file',
         files: ['docs/project-reference/design-system/README.md'],
-        multiplier: 1.5,
+        multiplier: 3,
         extraLines: 10,
         fallback: 200
     },
     LESSON_LEARNED: { type: 'fixed', value: 100 },
     WORKFLOW_PROTOCOL: { type: 'fixed', value: 100 },
-    CRITICAL_THINKING: { type: 'fixed', value: 80 },
-    AI_MISTAKE_PREVENTION: { type: 'fixed', value: 80 },
+    CRITICAL_THINKING: { type: 'fixed', value: 100 },
+    AI_MISTAKE_PREVENTION: { type: 'fixed', value: 100 },
+    // Project config summary — dynamically generated, dedup scales with actual output
+    PROJECT_CONFIG_SUMMARY: {
+        type: 'computed',
+        compute: countProjectConfigSummaryLines,
+        multiplier: 3,
+        fallback: 150
+    },
     // Behavioral windows — not content dedup, fixed values
     SEARCH_WINDOW: { type: 'fixed', value: 100 },
-    SEARCH_SKIP_OVERRIDE: { type: 'fixed', value: 50 },
-    GRAPH_GREP_SUGGESTER: { type: 'fixed', value: 80 }
+    SEARCH_SKIP_OVERRIDE: { type: 'fixed', value: 100 },
+    GRAPH_GREP_SUGGESTER: { type: 'fixed', value: 100 }
 };
 
 /**
@@ -269,32 +291,6 @@ function computeDedupLines() {
  *
  * Fallback: if files don't exist (contentLines=0), uses source.fallback.
  * Floor: result is always >= MIN_FLOOR (50).
- *
- * Example output for this project (values will differ per project):
- *   {
- *     CODE_PATTERNS: ~2700,           // file lines × 1.5
- *     CODE_REVIEW_RULES: ~1500,       // file lines × 1.5
- *     E2E_CONTEXT: ~900,              // file lines × 1.5
- *     INTEGRATION_TEST_CONTEXT: ~200, // file lines × 1.5
- *     FEATURE_DOCS_CONTEXT: ~200,     // file lines × 1.5
- *     PROJECT_STRUCTURE: ~400,        // file lines × 2
- *     CLAUDE_MD: ~900,                // file lines × 3
- *     DEV_RULES: ~340,                // file lines × 2
- *     DEV_RULES_MODULARIZATION: ~250, // file lines × 1.5
- *     LESSONS: ~50,                   // file lines × 3
- *     WORKFLOW_CATALOG: ~250,         // computed lines × 2
- *     BACKEND_CONTEXT: ~200,          // file lines × 1.5
- *     FRONTEND_CONTEXT: ~200,         // file lines × 1.5
- *     STYLING_CONTEXT: ~200,          // file lines × 1.5
- *     DESIGN_SYSTEM: ~200,            // file lines × 1.5
- *     KNOWLEDGE_CONTEXT: 100,         // fixed
- *     LESSON_LEARNED: 100,            // fixed
- *     CRITICAL_THINKING: 80,          // fixed
- *     AI_MISTAKE_PREVENTION: 80,      // fixed
- *     SEARCH_WINDOW: 100,             // fixed (behavioral)
- *     SEARCH_SKIP_OVERRIDE: 50,       // fixed (behavioral)
- *     GRAPH_GREP_SUGGESTER: 80        // fixed (behavioral)
- *   }
  */
 const DEDUP_LINES = computeDedupLines();
 
@@ -310,6 +306,7 @@ module.exports = {
     MIN_FLOOR,
     countFileLines,
     countWorkflowCatalogLines,
+    countProjectConfigSummaryLines,
 
     /** Marker for code pattern injection */
     CODE_PATTERNS: '## Code Patterns',
@@ -349,6 +346,9 @@ module.exports = {
 
     /** Marker for CLAUDE.md re-injection */
     CLAUDE_MD: '## [Re-Injected: CLAUDE.md Key Rules]',
+
+    /** Marker for project config summary injection */
+    PROJECT_CONFIG_SUMMARY: '## [Injected: Project Config Summary]',
 
     /** Marker for lessons injection */
     LESSONS: '## Learned Lessons',

@@ -12,10 +12,14 @@
 
 const { runHook } = require('./lib/hook-runner.cjs');
 const { isGraphAvailable, invokeGraph, ensurePythonDeps } = require('./lib/graph-utils.cjs');
+const { isConfigPopulated } = require('./lib/project-config-loader.cjs');
 
 runHook(
     'graph-session-init',
     async () => {
+        // Config not initialized — skip graph guidance (config gate takes priority)
+        if (!isConfigPopulated()) return;
+
         let status = isGraphAvailable();
 
         // Auto-install: if Python exists but deps missing, create venv and install

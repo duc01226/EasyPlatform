@@ -1,239 +1,147 @@
-<!-- Last scanned: 2026-03-15 -->
+<!-- Last scanned: 2026-04-03 -->
 
 # Feature Docs Reference
 
-> Business feature index for PlatformExampleApp (TextSnippet). Auto-populated by `/scan-feature-docs`.
-
-## Quick Summary
-
-**Goal:** Centralized index of all business features, domain entities, CQRS operations, event handlers, API controllers, frontend components, and integration tests in PlatformExampleApp.
-
-**Doc Structure:**
-
-| Section                | Contains                                                       |
-| ---------------------- | -------------------------------------------------------------- |
-| App-to-Service Mapping | Frontend app to backend service + domain lib + doc directory   |
-| Feature Index          | Entities, Commands, Queries, Controllers, Events, Jobs, Bus    |
-| Frontend Components    | Angular components + domain library files                      |
-| DTOs                   | Data transfer objects with entity mappings                     |
-| Integration Tests      | Test files with coverage area and paths                        |
-| Persistence Providers  | MongoDB, PostgreSQL, multi-DB demo projects                    |
-| Directory Structure    | Backend + frontend folder layout                               |
-| Templates              | Feature doc templates (detailed, AI companion, ADR, changelog) |
-| Conventions            | Naming patterns for commands, queries, handlers, tests         |
-| Coverage Gaps          | Missing docs and test coverage                                 |
-
-**When to use:**
-
-- Before implementing a new feature -- check what already exists
-- When writing feature docs -- find the correct template and naming convention
-- When investigating CQRS patterns -- locate commands, queries, and event handlers
-- When adding integration tests -- find existing test patterns and coverage gaps
-
----
+**MUST use 26-section template for all feature docs. MUST include `file:line` evidence for every test case. MUST place docs in `docs/business-features/{Module}/detailed-features/`.**
 
 ## App-to-Service Mapping
 
-| Frontend App              | Backend Service                              | Domain Library        | Doc Directory                         |
-| ------------------------- | -------------------------------------------- | --------------------- | ------------------------------------- |
-| `playground-text-snippet` | `PlatformExampleApp.TextSnippet.Application` | `text-snippet-domain` | `docs/business-features/TextSnippet/` |
+| Frontend App              | Backend Service Layers                                                                                             | Domain Lib            | Doc Directory                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------- | ------------------------------------- |
+| `playground-text-snippet` | TextSnippet.Api, .Application, .Domain, .Infrastructure, .Persistence, .Persistence.Mongo, .Persistence.PostgreSql | `text-snippet-domain` | `docs/business-features/TextSnippet/` |
 
-**Single-service project.** PlatformExampleApp is a reference implementation with one service (TextSnippet). The Platform framework lives under `src/Platform/` and is not a business feature.
+### Backend Layer Paths
 
-## Feature Index
+| Layer               | Path Pattern                                                    | Contains                                                              |
+| ------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| API                 | `src/Backend/PlatformExampleApp.TextSnippet.Api/Controllers/`   | Controllers (TextSnippetController, TaskItemController)               |
+| Application         | `src/Backend/PlatformExampleApp.TextSnippet.Application/`       | UseCaseCommands/, UseCaseQueries/, UseCaseEvents/, Dtos/, MessageBus/ |
+| Domain              | `src/Backend/PlatformExampleApp.TextSnippet.Domain/`            | Entities/, Repositories/, Services/, ValueObjects/, Events/           |
+| Infrastructure      | `src/Backend/PlatformExampleApp.TextSnippet.Infrastructure/`    | External service integrations                                         |
+| Persistence (EF)    | `src/Backend/PlatformExampleApp.TextSnippet.Persistence/`       | EF Core (SQL Server/PostgreSQL)                                       |
+| Persistence (Mongo) | `src/Backend/PlatformExampleApp.TextSnippet.Persistence.Mongo/` | MongoDB persistence                                                   |
+| Shared              | `src/Backend/PlatformExampleApp.Shared/`                        | Cross-service DTOs, message contracts                                 |
+| Identity            | `src/Backend/PlatformExampleApp.Ids/`                           | Authentication/authorization                                          |
 
-### TextSnippet Module
+### Frontend Layer Paths
 
-Core CRUD and demo features for text snippets with categories, task items, and platform pattern demonstrations.
+| Layer               | Path                                                          |
+| ------------------- | ------------------------------------------------------------- |
+| App                 | `src/Frontend/apps/playground-text-snippet/src/app/`          |
+| Domain Lib          | `src/Frontend/libs/apps-domains/text-snippet-domain/src/lib/` |
+| Domain Components   | `src/Frontend/libs/apps-domains-components/`                  |
+| Shared Components   | `src/Frontend/libs/apps-shared-components/`                   |
+| Platform Core       | `src/Frontend/libs/platform-core/`                            |
+| Platform Components | `src/Frontend/libs/platform-components/`                      |
 
-#### Domain Entities
+## Feature Doc Structure
 
-| Entity                | Path                                                     | Description                                                    |
-| --------------------- | -------------------------------------------------------- | -------------------------------------------------------------- |
-| `TextSnippetEntity`   | `src/Backend/.../Domain/Entities/TextSnippetEntity.cs`   | Primary entity -- text snippet with title, full text, category |
-| `TextSnippetCategory` | `src/Backend/.../Domain/Entities/TextSnippetCategory.cs` | Hierarchical categories (self-referential ParentCategory)      |
-| `TaskItemEntity`      | `src/Backend/.../Domain/Entities/TaskItemEntity.cs`      | Task/todo items with status tracking                           |
-| `MultiDbDemoEntity`   | `src/Backend/.../Domain/Entities/MultiDbDemoEntity.cs`   | Demo entity for multi-database scenarios                       |
-| `User`                | `src/Backend/.../Domain/Entities/User.cs`                | User entity                                                    |
-
-#### Commands (Write Operations)
-
-| Command                                    | Path                                                         | Description                               |
-| ------------------------------------------ | ------------------------------------------------------------ | ----------------------------------------- |
-| `SaveSnippetTextCommand`                   | `UseCaseCommands/SaveSnippetTextCommand.cs`                  | Create or update a text snippet           |
-| `CreateTextSnippetWithCurrentUserCommand`  | `UseCaseCommands/CreateTextSnippetWithCurrentUserCommand.cs` | Create snippet using current user context |
-| `SaveSnippetCategoryCommand`               | `UseCaseCommands/Category/SaveSnippetCategoryCommand.cs`     | Create or update a snippet category       |
-| `BulkUpdateSnippetStatusCommand`           | `UseCaseCommands/Snippet/BulkUpdateSnippetStatusCommand.cs`  | Bulk status update for snippets           |
-| `CloneSnippetCommand`                      | `UseCaseCommands/Snippet/CloneSnippetCommand.cs`             | Clone an existing snippet                 |
-| `SaveTaskItemCommand`                      | `UseCaseCommands/TaskItem/SaveTaskItemCommand.cs`            | Create or update a task item              |
-| `DemoScheduleBackgroundJobManuallyCommand` | `UseCaseCommands/OtherDemos/...`                             | Demo: manually schedule a background job  |
-| `DemoSendFreeFormatEventBusMessageCommand` | `UseCaseCommands/OtherDemos/...`                             | Demo: send free-format event bus message  |
-| `DemoUseCreateOrUpdateManyCommand`         | `UseCaseCommands/OtherDemos/...`                             | Demo: batch create/update pattern         |
-| `DemoUseDemoDomainServiceCommand`          | `UseCaseCommands/OtherDemos/...`                             | Demo: domain service usage                |
-
-#### Queries (Read Operations)
-
-| Query                         | Path                                                | Description                         |
-| ----------------------------- | --------------------------------------------------- | ----------------------------------- |
-| `SearchSnippetTextQuery`      | `UseCaseQueries/SearchSnippetTextQuery.cs`          | Search/filter snippets with caching |
-| `GetMyTextSnippetsQuery`      | `UseCaseQueries/GetMyTextSnippetsQuery.cs`          | Get current user's snippets         |
-| `GetTaskListQuery`            | `UseCaseQueries/TaskItem/GetTaskListQuery.cs`       | Paginated task list with filtering  |
-| `GetTaskStatisticsQuery`      | `UseCaseQueries/TaskItem/GetTaskStatisticsQuery.cs` | Task aggregate statistics           |
-| `TestGetAllDataAsStreamQuery` | `UseCaseQueries/TestGetAllDataAsStreamQuery.cs`     | Demo: IAsyncEnumerable streaming    |
-
-#### API Controllers
-
-| Controller              | Route             | Endpoints                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Description                                |
-| ----------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `TextSnippetController` | `api/TextSnippet` | `GET search`, `POST save`, `GET demoScheduleBackgroundJobManuallyCommand`, `GET DemoUseDemoDomainServiceCommand`, `POST demoSendFreeFormatEventBusMessageCommand`, `GET testHandleInternalException`, `GET testGetAllDataAsIAsyncEnumerableStream`, `GET testGetAllDataAsIEnumerableStream`, `GET testGetAllDataAsIEnumerableFromAsyncEnumerableStream`, `POST testSaveUsingDirectDbContext`, `GET DemoUseCreateOrUpdateMany`, `GET TestIAsyncEnumerable`, `GET testNavigationLoading`, `GET testReverseNavigationLoading` | Primary snippet CRUD + demo/test endpoints |
-| `TaskItemController`    | `api/TaskItem`    | `GET list`, `GET stats`, `POST save`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Task item CRUD + statistics                |
-
-#### Event Handlers (Side Effects)
-
-| Handler                                                                   | Path                            | Trigger                                   |
-| ------------------------------------------------------------------------- | ------------------------------- | ----------------------------------------- |
-| `ClearCacheOnSaveSnippetTextEntityEventHandler`                           | `UseCaseEvents/ClearCaches/...` | Snippet saved -- clears search cache      |
-| `DemoBulkEntitiesEventHandler`                                            | `UseCaseEvents/...`             | Demo: bulk entity operations              |
-| `DemoDoSomeDomainEntityLogicActionOnSaveSnippetTextEntityEventHandler`    | `UseCaseEvents/...`             | Demo: domain logic on snippet save        |
-| `DemoUsingPropertyValueUpdatedDomainEventOnSnippetTextEntityEventHandler` | `UseCaseEvents/...`             | Demo: property change domain event        |
-| `SendNotificationOnPublishSnippetEventHandler`                            | `UseCaseEvents/Snippet/...`     | Snippet published -- sends notification   |
-| `UpdateCategoryStatsOnSnippetChangeEventHandler`                          | `UseCaseEvents/Snippet/...`     | Snippet changed -- updates category stats |
-
-#### Background Jobs
-
-| Job                                                             | Path                | Description                    |
-| --------------------------------------------------------------- | ------------------- | ------------------------------ |
-| `DemoBatchScrollingBackgroundJobExecutor`                       | `BackgroundJob/...` | Demo: batch scrolling pattern  |
-| `DemoPagedBackgroundJobExecutor`                                | `BackgroundJob/...` | Demo: paged processing pattern |
-| `DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecutor` | `BackgroundJob/...` | Demo: manually scheduled job   |
-| `TestRecurringBackgroundJobExecutor`                            | `BackgroundJob/...` | Demo: recurring job pattern    |
-
-#### Message Bus Consumers
-
-| Consumer                                                        | Type                | Description                                              |
-| --------------------------------------------------------------- | ------------------- | -------------------------------------------------------- |
-| `SaveSnippetTextCommandEventBusMessageConsumer`                 | Command Event       | Reacts to SaveSnippetText command events                 |
-| `TransferSnippetTextToMultiDbDemoEntityNameDomainEventConsumer` | Domain Event        | Cross-DB demo: transfers snippet text to multi-db entity |
-| `SnippetTextEntityEventBusConsumer`                             | Entity Event        | Reacts to snippet entity changes                         |
-| `DemoSendFreeFormatEventBusMessageCommandEventBusConsumer`      | Free Format         | Demo: free-format message handling                       |
-| `DemoSomethingHappenedEventBusMessageConsumer`                  | Free Format Event   | Demo: event-style free-format message                    |
-| `DemoAskDoSomethingRequestBusMessageConsumer`                   | Free Format Request | Demo: request/reply free-format message                  |
-
-#### Frontend Components
-
-| Component                 | Path                                                                          | Description                |
-| ------------------------- | ----------------------------------------------------------------------------- | -------------------------- |
-| `app-text-snippet-detail` | `apps/playground-text-snippet/.../shared/components/app-text-snippet-detail/` | Snippet detail/edit view   |
-| `task-detail`             | `apps/playground-text-snippet/.../shared/components/task-detail/`             | Task item detail/edit view |
-| `task-list`               | `apps/playground-text-snippet/.../shared/components/task-list/`               | Task list with store       |
-| `nav-loading-test`        | `apps/playground-text-snippet/.../shared/components/nav-loading-test/`        | Navigation loading demo    |
-
-#### Frontend Domain Library
-
-| File                         | Path                                                          | Description             |
-| ---------------------------- | ------------------------------------------------------------- | ----------------------- |
-| `text-snippet.api.ts`        | `libs/apps-domains/text-snippet-domain/src/lib/apis/`         | TextSnippet API service |
-| `task-item.api.ts`           | `libs/apps-domains/text-snippet-domain/src/lib/apis/`         | TaskItem API service    |
-| `text-snippet.data-model.ts` | `libs/apps-domains/text-snippet-domain/src/lib/data-models/`  | TextSnippet data model  |
-| `task-item.data-model.ts`    | `libs/apps-domains/text-snippet-domain/src/lib/data-models/`  | TaskItem data model     |
-| `text-snippet.repository.ts` | `libs/apps-domains/text-snippet-domain/src/lib/repositories/` | TextSnippet repository  |
-
-#### DTOs
-
-| DTO                            | Path                                                    | Maps To                     |
-| ------------------------------ | ------------------------------------------------------- | --------------------------- |
-| `TextSnippetEntityDto`         | `Application/Dtos/EntityDtos/TextSnippetEntityDto.cs`   | `TextSnippetEntity`         |
-| `TextSnippetCategoryDto`       | `Application/Dtos/EntityDtos/TextSnippetCategoryDto.cs` | `TextSnippetCategory`       |
-| `TaskItemEntityDto`            | `Application/Dtos/EntityDtos/TaskItemEntityDto.cs`      | `TaskItemEntity`            |
-| `ExampleAddressValueObjectDto` | `Application/Dtos/ExampleAddressValueObjectDto.cs`      | `ExampleAddressValueObject` |
-
-## Integration Tests
-
-| Test File                                       | Covers                | Path                                                  |
-| ----------------------------------------------- | --------------------- | ----------------------------------------------------- |
-| `SaveSnippetTextCommandIntegrationTests.cs`     | Snippet CRUD          | `PlatformExampleApp.IntegrationTests/TextSnippets/`   |
-| `SearchSnippetTextQueryIntegrationTests.cs`     | Snippet search/filter | `PlatformExampleApp.IntegrationTests/TextSnippets/`   |
-| `SaveSnippetCategoryCommandIntegrationTests.cs` | Category CRUD         | `PlatformExampleApp.IntegrationTests/Categories/`     |
-| `MessageBusIntegrationTests.cs`                 | Event bus messaging   | `PlatformExampleApp.IntegrationTests/MessageBus/`     |
-| `BatchScrollingJobIntegrationTests.cs`          | Batch scrolling job   | `PlatformExampleApp.IntegrationTests/BackgroundJobs/` |
-| `PagedJobIntegrationTests.cs`                   | Paged job             | `PlatformExampleApp.IntegrationTests/BackgroundJobs/` |
-| `SimpleRecurringJobIntegrationTests.cs`         | Recurring job         | `PlatformExampleApp.IntegrationTests/BackgroundJobs/` |
-
-## Persistence Providers
-
-| Provider          | Project                                                        | Description                     |
-| ----------------- | -------------------------------------------------------------- | ------------------------------- |
-| MongoDB           | `PlatformExampleApp.TextSnippet.Persistence.Mongo`             | Primary MongoDB persistence     |
-| PostgreSQL        | `PlatformExampleApp.TextSnippet.Persistence.PostgreSql`        | EF Core PostgreSQL persistence  |
-| MongoDB (MultiDb) | `PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo` | Multi-database demo persistence |
-
-## Directory Structure
+### Required File Layout
 
 ```
-src/Backend/
-|-- PlatformExampleApp.TextSnippet.Api/          API layer (controllers)
-|-- PlatformExampleApp.TextSnippet.Application/  Application layer (CQRS handlers)
-|   |-- UseCaseCommands/                         Write operations
-|   |-- UseCaseQueries/                          Read operations
-|   |-- UseCaseEvents/                           Side-effect handlers
-|   |-- BackgroundJob/                           Scheduled/background jobs
-|   |-- MessageBus/                              Event bus consumers/producers
-|   |-- Dtos/                                    Data transfer objects
-|   |-- Caching/                                 Cache key providers
-|   +-- Persistence/                             DB context interfaces
-|-- PlatformExampleApp.TextSnippet.Domain/       Domain layer (entities, repos)
-|-- PlatformExampleApp.TextSnippet.Infrastructure/ Infrastructure layer
-|-- PlatformExampleApp.TextSnippet.Persistence/   Base persistence
-|-- PlatformExampleApp.TextSnippet.Persistence.Mongo/ MongoDB implementation
-|-- PlatformExampleApp.TextSnippet.Persistence.PostgreSql/ PostgreSQL implementation
-|-- PlatformExampleApp.IntegrationTests/          Integration tests
-|-- PlatformExampleApp.Test/                      E2E/functional tests
-+-- PlatformExampleApp.Test.BDD/                  BDD tests
-
-src/Frontend/
-|-- apps/playground-text-snippet/                 Example Angular app
-|   +-- src/app/shared/components/                UI components
-|-- libs/apps-domains/text-snippet-domain/        Domain library
-|   |-- src/lib/apis/                             API service classes
-|   |-- src/lib/data-models/                      Frontend data models
-|   +-- src/lib/repositories/                     Repository pattern
-+-- libs/platform-core/                           Framework core (shared)
+docs/business-features/{Module}/
+  README.md                          # Module overview
+  INDEX.md                           # Navigation hub
+  API-REFERENCE.md                   # Endpoint documentation
+  TROUBLESHOOTING.md                 # Issue resolution guide
+  detailed-features/
+    README.{FeatureName}.md          # Full doc (26 sections, 1000+ lines)
+    README.{FeatureName}.ai.md       # AI companion (max 300 lines)
 ```
+
+### Mandatory 26-Section Order
+
+| #   | Section                    | Audience               |
+| --- | -------------------------- | ---------------------- |
+| 1   | Executive Summary          | PO, BA                 |
+| 2   | Business Value             | PO, BA                 |
+| 3   | Business Requirements      | PO, BA                 |
+| 4   | Business Rules             | BA, Dev                |
+| 5   | Process Flows              | BA, Dev, Architect     |
+| 6   | Design Reference           | BA, UX, Dev            |
+| 7   | System Design              | Dev, Architect         |
+| 8   | Architecture               | Dev, Architect         |
+| 9   | Domain Model               | Dev, Architect         |
+| 10  | API Reference              | Dev, Architect         |
+| 11  | Frontend Components        | Dev                    |
+| 12  | Backend Controllers        | Dev                    |
+| 13  | Cross-Service Integration  | Dev, Architect         |
+| 14  | Security Architecture      | Dev, Architect         |
+| 15  | Performance Considerations | Dev, Architect, DevOps |
+| 16  | Implementation Guide       | Dev                    |
+| 17  | Test Specifications        | QA                     |
+| 18  | Test Data Requirements     | QA                     |
+| 19  | Edge Cases Catalog         | QA, Dev                |
+| 20  | Regression Impact          | QA                     |
+| 21  | Troubleshooting            | Dev, QA, DevOps        |
+| 22  | Operational Runbook        | DevOps                 |
+| 23  | Roadmap and Dependencies   | PO, BA                 |
+| 24  | Related Documentation      | All                    |
+| 25  | Glossary                   | PO, BA                 |
+| 26  | Version History            | All                    |
 
 ## Templates
 
-| Template                 | Path                                               | Purpose                                   |
-| ------------------------ | -------------------------------------------------- | ----------------------------------------- |
-| Detailed Feature Doc     | `docs/templates/detailed-feature-docs-template.md` | 26-section business feature documentation |
-| Feature Doc AI Companion | `docs/templates/feature-docs-ai-template.md`       | AI-companion summary (300-500 lines)      |
-| ADR                      | `docs/templates/adr-template.md`                   | Architecture Decision Record              |
-| Changelog Entry          | `docs/templates/changelog-entry-template.md`       | Keep a Changelog format entry             |
+| Template              | Path                                               | Purpose                                  |
+| --------------------- | -------------------------------------------------- | ---------------------------------------- |
+| Detailed Feature Docs | `docs/templates/detailed-feature-docs-template.md` | 26-section master template (1050 lines)  |
+| AI Companion          | `docs/templates/feature-docs-ai-template.md`       | Code-focused AI context file (249 lines) |
+| ADR                   | `docs/templates/adr-template.md`                   | Architecture Decision Records            |
+| Changelog Entry       | `docs/templates/changelog-entry-template.md`       | Keep a Changelog format                  |
+
+### AI Companion Sections
+
+Quick Reference, Domain Model, API Contracts, Validation Rules, Service Boundaries, Critical Paths, Test Focus Areas, Usage Notes. MUST be under 300 lines (standard) or 500 lines (extended). MUST link back to full doc. MUST include `Last synced:` timestamp.
 
 ## Conventions
 
-- **Backend path prefix:** `src/Backend/PlatformExampleApp.TextSnippet.`
-- **Frontend app:** `src/Frontend/apps/playground-text-snippet/`
-- **Frontend domain lib:** `src/Frontend/libs/apps-domains/text-snippet-domain/`
-- **Feature doc location:** `docs/business-features/{Module}/detailed-features/`
-- **CQRS naming:** `{Verb}{Entity}{Command|Query}` (e.g., `SaveSnippetTextCommand`, `SearchSnippetTextQuery`)
-- **Event handler naming:** `{Action}On{Trigger}EventHandler` (e.g., `ClearCacheOnSaveSnippetTextEntityEventHandler`)
-- **Integration test naming:** `{Command|Query}IntegrationTests` in matching subdirectory
+### Numbering Codes
+
+| Artifact               | Format               | Example          |
+| ---------------------- | -------------------- | ---------------- |
+| Functional Requirement | `FR-{MOD}-NN`        | `FR-TS-01`       |
+| User Story             | `US-{MOD}-NN`        | `US-TS-01`       |
+| Test Case              | `TC-{MOD}-NNN`       | `TC-TS-001`      |
+| Business Rule          | `BR-{MOD}-NN`        | `BR-TS-01`       |
+| Test Case Priority     | `[P0]`-`[P3]` suffix | `TC-TS-001 [P0]` |
+
+### Evidence Rules
+
+- MUST use `{RelativeFilePath}:{LineNumber}` or `{RelativeFilePath}:{StartLine}-{EndLine}`
+- NEVER use template placeholders (`{FilePath}`, `{LineRange}`) in final docs
+- NEVER use vague references ("Based on CQRS pattern")
+- Every TC-{MOD}-XXX MUST include `IntegrationTest:` field pointing to test file and method
+- Missing integration test MUST set `Status: Untested`
+- Integration test code MUST have `[Trait("TestSpec", "TC-{MOD}-XXX")]` attribute
+
+### Section Impact Mapping (Updates)
+
+| Change Type            | Impacted Sections                                         |
+| ---------------------- | --------------------------------------------------------- |
+| New entity property    | 3 (Requirements), 9 (Domain Model), 10 (API Reference)    |
+| New API endpoint       | 10 (API Reference), 12 (Controllers), 14 (Security)       |
+| New frontend component | 11 (Frontend Components)                                  |
+| New filter/query       | 3 (Requirements), 10 (API Reference)                      |
+| Any new functionality  | **17, 18, 19, 20 (Test sections) -- MANDATORY**           |
+| Any change at all      | **1 (Executive Summary), 26 (Version History) -- ALWAYS** |
+
+### Stakeholder Navigation
+
+MUST include role-based quick navigation table at top of every feature doc:
+
+| Role                | Start Section         | Key Sections                                       |
+| ------------------- | --------------------- | -------------------------------------------------- |
+| Product Owner       | Executive Summary     | Business Value, Success Metrics, Roadmap           |
+| Business Analyst    | Business Requirements | Business Rules, Process Flows, Acceptance Criteria |
+| Developer           | Architecture          | Domain Model, API Reference, Implementation Guide  |
+| Technical Architect | System Design         | Cross-Service Integration, Performance, Security   |
+| QA/QC               | Test Specifications   | Test Data, Edge Cases, Regression                  |
+| DevOps/Support      | Troubleshooting       | Operational Runbook                                |
 
 ## Coverage Gaps
 
-| Area                              | Status                | Notes                                                                                                              |
-| --------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| TextSnippet detailed feature docs | Not created           | `docs/business-features/TextSnippet/detailed-features/` does not exist. Run `/feature-docs TextSnippet` to create. |
-| TaskItem feature docs             | Not created           | TaskItem has full CRUD but no standalone feature doc.                                                              |
-| E2E test coverage for TaskItem    | Unknown               | No TaskItem-specific integration tests found in `PlatformExampleApp.IntegrationTests/`.                            |
-| BDD test coverage                 | Present but unaudited | `PlatformExampleApp.Test.BDD/Features/` exists but not cross-referenced.                                           |
+- No feature docs exist yet in `docs/business-features/` (directory structure defined but pending)
+- TextSnippet module listed as `Status: Pending` in business-features index
+- `docs/templates/`, `docs/business-features/`, `docs/test-specs/`, `docs/release-notes/` are tracked in git but deleted from working tree
 
----
-
-## Closing Reminders
-
-- **This file is auto-populated** by `/scan-feature-docs` -- manual edits will be overwritten on next scan
-- **Check Coverage Gaps** before creating new features -- existing gaps should be addressed first
-- **Follow naming conventions** for all new commands, queries, event handlers, and tests (see Conventions section)
-- **Feature docs go in** `docs/business-features/{Module}/detailed-features/` using the 26-section template
-- **All side effects** belong in `UseCaseEvents/` handlers, never in command handlers
+**MUST use 26-section template. MUST include `file:line` evidence for every test case. MUST update Sections 1 and 26 on any change. MUST update Sections 17-20 for any new functionality.**
