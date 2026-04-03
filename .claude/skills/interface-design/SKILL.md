@@ -433,7 +433,7 @@ For more detail on specific topics:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/web-design-guidelines (Recommended)"** — Review UI for accessibility and best practices
 - **"/workflow-review-changes"** — Review all changes before commit

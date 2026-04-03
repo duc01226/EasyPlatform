@@ -156,10 +156,12 @@ function injectLessonReminder(transcriptPath) {
 
 /**
  * Return workflow execution protocol text (detection + task breakdown guidance).
+ * Content varies by confirmationMode: "always" asks user, "never" auto-executes.
  * @param {string} transcriptPath - Path to transcript for dedup check
+ * @param {string} confirmationMode - "always" | "never"
  * @returns {string|null} Protocol text or null if recently injected
  */
-function injectWorkflowProtocol(transcriptPath) {
+function injectWorkflowProtocol(transcriptPath, confirmationMode) {
     if (transcriptPath && fs.existsSync(transcriptPath)) {
         try {
             const transcript = fs.readFileSync(transcriptPath, 'utf-8');
@@ -173,6 +175,20 @@ function injectWorkflowProtocol(transcriptPath) {
         } catch {
             return null;
         }
+    }
+
+    if (confirmationMode === 'never') {
+        return `## ${WORKFLOW_PROTOCOL_MARKER} Workflow Execution Protocol (MUST FOLLOW. DO NOT IGNORE OR SKIP)
+
+**WORKFLOW DETECTION - CRITICAL IMPORTANT MANDATORY MUST FOLLOW: Detect the nearest matching workflow and auto-execute it directly without asking the user.**
+
+1. **DETECT:** Match prompt against the auto-injected workflow catalog
+2. **ACTIVATE:** Call \`/workflow-start <workflowId>\` immediately (no confirmation needed)
+3. **CREATE TASKS:** Use \`TaskCreate\` for ALL workflow steps BEFORE doing anything else
+4. **EXECUTE:** Follow each step in sequence; mark \`in_progress\` before, \`completed\` after
+
+> Task breakdown: create workflow-level TODOs FIRST ("[Workflow] /scout", etc.), then implementation subtasks within each step. Never skip to implementation before creating workflow tasks.
+**WORKFLOW DETECTION is the most important. Do not skip in any scenario.**`;
     }
 
     return `## ${WORKFLOW_PROTOCOL_MARKER} Workflow Execution Protocol (MUST FOLLOW. DO NOT IGNORE OR SKIP)

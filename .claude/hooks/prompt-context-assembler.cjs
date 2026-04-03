@@ -380,21 +380,24 @@ async function main() {
             /* non-blocking */
         }
 
-        const aiMistake = injectAiMistakePrevention(payload.transcript_path, true);
-        if (aiMistake) console.log(aiMistake);
-
-        // Skip workflow protocol injection when user has disabled/bypassed confirmation mode.
-        // "off"   → workflow catalog isn't injected at all, no need for protocol reminder
-        // "never" → quickMode is forced globally, confirmation reminder is misleading
+        // ═══════════════════════════════════════════════════════════════════════════
+        // WORKFLOW PROTOCOL — injected BEFORE AI Mistake Prevention for primacy.
+        // "always" → ask user via AskUserQuestion before activating
+        // "never"  → auto-execute workflow directly (no confirmation)
+        // "off"    → skip entirely (no workflow detection)
+        // ═══════════════════════════════════════════════════════════════════════════
         const wfConfig = loadConfig({
             includeProject: false,
             includeAssertions: false
         });
         const confirmationMode = wfConfig.workflow?.confirmationMode || 'always';
-        if (confirmationMode === 'always') {
-            const workflowProtocol = injectWorkflowProtocol(payload.transcript_path);
+        if (confirmationMode !== 'off') {
+            const workflowProtocol = injectWorkflowProtocol(payload.transcript_path, confirmationMode);
             if (workflowProtocol) console.log(workflowProtocol);
         }
+
+        const aiMistake = injectAiMistakePrevention(payload.transcript_path, true);
+        if (aiMistake) console.log(aiMistake);
 
         // ═══════════════════════════════════════════════════════════════════════════
         // GRAPH PROTOCOL REMINDER — TWO TIERS:
@@ -440,6 +443,22 @@ async function main() {
 
         const reminder = injectLessonReminder(payload.transcript_path);
         if (reminder) console.log(reminder);
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // TIER 2: Compact workflow mandatory reminder (ALWAYS injected, NO dedup)
+        // Bottom bookend — mirrors the graph-gate pattern for maximum recency.
+        // Fires for both "always" and "never" modes with mode-appropriate content.
+        // ~30 tokens per injection.
+        // ═══════════════════════════════════════════════════════════════════════════
+        if (confirmationMode === 'always') {
+            console.log(
+                `**[MANDATORY-WORKFLOW-GATE] MUST detect nearest workflow from catalog and ask user via \`AskUserQuestion\` BEFORE any tool call or response. Skipping workflow detection is FORBIDDEN.**`
+            );
+        } else if (confirmationMode === 'never') {
+            console.log(
+                `**[MANDATORY-WORKFLOW-GATE] MUST detect nearest workflow from catalog and auto-execute it directly (no confirmation). Skipping workflow detection is FORBIDDEN.**`
+            );
+        }
 
         // ═══════════════════════════════════════════════════════════════════════════
         // TIER 2: Compact graph mandatory reminder (ALWAYS injected, NO dedup)

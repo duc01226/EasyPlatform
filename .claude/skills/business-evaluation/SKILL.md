@@ -125,7 +125,7 @@ Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/domain-analysis (Recommended)"** — Analyze domain model from business evaluation
 - **"/plan"** — If ready to plan implementation

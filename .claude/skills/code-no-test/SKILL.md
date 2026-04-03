@@ -201,6 +201,17 @@ Mark Step 5 complete in TaskCreate.
 
 ---
 
+## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (code implemented, no tests). This ensures review, testing, and docs steps aren't skipped.
+- **"/code-simplifier"** — Simplify implementation
+- **"/workflow-review-changes"** — Review changes before commit
+- **"Skip, continue manually"** — user decides
+
+> If already inside a workflow, skip — the workflow handles sequencing.
+
 ## Closing Reminders
 
 - **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting

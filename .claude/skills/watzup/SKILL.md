@@ -98,7 +98,7 @@ After the doc staleness check, review the entire session for AI mistakes and les
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/workflow-end (Recommended)"** — Complete and close the active workflow
 - **"/commit"** — Commit changes if not using workflow

@@ -156,7 +156,7 @@ Report:
 
 ## Workflow Recommendation
 
-> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `e2e-from-changes` workflow** (Recommended) — scout → e2e-test → test → watzup
 > 2. **Execute `/e2e-test` directly** — run this skill standalone

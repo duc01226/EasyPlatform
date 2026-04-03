@@ -26,7 +26,7 @@ const CK_TMP_DIR = path.join(os.tmpdir(), 'ck');
 
 // Project-scoped runtime data (ephemeral flags, markers — NOT in .claude/ to keep it portable)
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const PROJECT_TMP_DIR = path.join(PROJECT_DIR, 'tmp', '.claude');
+const PROJECT_TMP_DIR = path.join(PROJECT_DIR, 'tmp', 'claude-temp');
 
 // Project-scoped runtime file paths (dismiss flags, markers, warnings)
 const INIT_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.init-dismissed');
@@ -117,7 +117,7 @@ function getSessionStatePath(sessionId) {
 }
 
 /**
- * Ensure the project-scoped tmp/.claude/ directory exists.
+ * Ensure the project-scoped tmp/claude-temp/ directory exists.
  * Call before writing any project-scoped runtime file.
  */
 function ensureProjectTmpDir() {

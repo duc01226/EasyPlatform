@@ -209,7 +209,7 @@ After user confirms, update report with final decisions and mark as `status: con
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/architecture-design (Recommended)"** — Design solution architecture with chosen tech stack
 - **"/plan"** — If architecture already decided

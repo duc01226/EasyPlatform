@@ -16,16 +16,19 @@ description: '[Documentation] Orchestrate all reference doc scans in parallel. R
 **Workflow:**
 
 1. **Check Prerequisites** — Verify project has content (not empty)
-2. **Launch Parallel Scans** — All 10 skills simultaneously
+2. **Launch Parallel Scans** — All 11 skills simultaneously
 3. **Collect Results** — Read scan output from reference docs
 4. **Clear Staleness Flag** — Remove `.claude/.scan-stale` so the gate unblocks
-5. **Summarize** — Report what was refreshed
+5. **Build Knowledge Graph** — Run `/graph-build` to update structural graph
+6. **Enhance Docs** — Run `/prompt-enhance` on all 11 scanned docs
+7. **Summarize** — Report what was refreshed
 
 **Key Rules:**
 
-- All 10 scans run in PARALLEL for speed
+- All 11 scans run in PARALLEL for speed
 - Does NOT modify code — only populates docs/project-reference/
 - Clears `.claude/.scan-stale` flag after completion
+- `/prompt-enhance` ensures AI attention anchoring on all generated docs
 
 ## When to Use
 
@@ -41,7 +44,7 @@ description: '[Documentation] Orchestrate all reference doc scans in parallel. R
 
 ## Execution
 
-Launch all 10 scan skills in parallel:
+Launch all 11 scan skills in parallel:
 
 | #   | Skill                     | Target Doc                       |
 | --- | ------------------------- | -------------------------------- |
@@ -83,16 +86,39 @@ The knowledge graph uses `project-config.json` (populated by scans) for API conn
 python .claude/scripts/code_graph build --json
 ```
 
+## Post-Scan: Enhance Generated Docs (MANDATORY)
+
+After graph build, **MUST create tasks to run `/prompt-enhance` on all scanned docs.** Reference docs are injected into AI context — attention anchoring (top/bottom summaries, inline READ summaries, token density) directly improves AI output quality.
+
+**TaskCreate one task per doc, parallel OK:**
+
+| #   | Target File                                             |
+| --- | ------------------------------------------------------- |
+| 1   | `docs/project-reference/project-structure-reference.md` |
+| 2   | `docs/project-reference/backend-patterns-reference.md`  |
+| 3   | `docs/project-reference/frontend-patterns-reference.md` |
+| 4   | `docs/project-reference/integration-test-reference.md`  |
+| 5   | `docs/project-reference/feature-docs-reference.md`      |
+| 6   | `docs/project-reference/code-review-rules.md`           |
+| 7   | `docs/project-reference/scss-styling-guide.md`          |
+| 8   | `docs/project-reference/design-system/README.md`        |
+| 9   | `docs/project-reference/e2e-test-reference.md`          |
+| 10  | `docs/project-reference/domain-entities-reference.md`   |
+| 11  | `docs/project-reference/docs-index-reference.md`        |
+
+Run via: `/prompt-enhance docs/project-reference/{filename}`
+
 ## Summary Output
 
 After all scans complete, report:
 
 "Scan All Complete:
 
-- {X}/10 scans succeeded
+- {X}/11 scans succeeded
 - Reference docs refreshed in docs/project-reference/
 - Staleness gate cleared
-- Next: Run /graph-build to build code knowledge graph"
+- Prompt-enhanced {Y}/11 docs
+- Knowledge graph rebuilt via /graph-build"
 
 ---
 

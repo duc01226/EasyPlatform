@@ -281,7 +281,7 @@ Use naming pattern: `plans/reports/scout-{date}-{slug}.md`
 
 ## Workflow Recommendation
 
-> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `investigation` workflow** (Recommended) — scout → investigate
 > 2. **Execute `/scout` directly** — run this skill standalone
@@ -290,7 +290,7 @@ Use naming pattern: `plans/reports/scout-{date}-{slug}.md`
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/investigate (Recommended)"** — Deep-dive into discovered files to understand logic and relationships
 - **"/plan"** — If scouted files are sufficient to start planning implementation

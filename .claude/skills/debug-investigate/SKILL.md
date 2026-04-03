@@ -138,18 +138,19 @@ If you're thinking:
 
 ## Workflow Recommendation
 
-> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → fix → prove-fix → review → test
 > 2. **Execute `/debug` directly** — run this skill standalone
 
 ---
 
-## Next Steps
+## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/fix (Recommended)"** — Apply fix based on debug findings
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (debug complete, root cause identified). This ensures fix, verification, review, and testing steps aren't skipped.
+- **"/fix"** — Apply fix based on debug findings
 - **"/plan"** — If fix requires planning
 - **"Skip, continue manually"** — user decides
 

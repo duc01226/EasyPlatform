@@ -34,19 +34,19 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 
 ### Session Lifecycle
 
-| Hook                           | Event                          | Matcher                           | Purpose                                                                       |
-| ------------------------------ | ------------------------------ | --------------------------------- | ----------------------------------------------------------------------------- |
-| `session-init.cjs`             | SessionStart                   | `startup\|resume\|clear\|compact` | Initialize session: detect project, write env vars                            |
-| `post-compact-recovery.cjs`    | SessionStart                   | `resume\|compact`                 | Restore workflow state, todos, and swap inventory after compaction            |
-| `session-resume.cjs`           | SessionStart                   | `resume`                          | Inject pending-tasks warning from prev session, restore todos from checkpoint |
-| `npm-auto-install.cjs`         | SessionStart                   | `startup`                         | Auto-install missing npm packages from root `package.json`                    |
-| `session-init-docs.cjs`        | SessionStart                   | `startup`                         | Config skeleton + reference doc placeholder creation                          |
-| `workflow-router.cjs`          | SessionStart, UserPromptSubmit | `startup`, `*`                    | Detect intent, inject matching workflow from 45-workflow catalog              |
-| `prompt-context-assembler.cjs` | SessionStart, UserPromptSubmit | `startup`, `*`                    | Assemble session context, lessons, and lesson-learned reminder                |
-| `graph-session-init.cjs`       | SessionStart                   | `startup`                         | Check Python/tree-sitter/graph.db, inject status guidance                     |
-| `session-end.cjs`              | SessionEnd                     | `clear\|exit\|compact`            | Write pending-tasks warning, cleanup temp/swap files, delete markers          |
-| `notify-waiting.js`            | SessionEnd, Stop, Notification | various                           | System notification when Claude is waiting for input                          |
-| `subagent-init.cjs`            | SubagentStart                  | `*`                               | Inject project context, rules, and workflow state into subagent sessions      |
+| Hook                           | Event                          | Matcher                           | Purpose                                                                                   |
+| ------------------------------ | ------------------------------ | --------------------------------- | ----------------------------------------------------------------------------------------- |
+| `session-init.cjs`             | SessionStart                   | `startup\|resume\|clear\|compact` | Initialize session: detect project, write env vars                                        |
+| `post-compact-recovery.cjs`    | SessionStart                   | `resume\|compact`                 | Restore workflow state, todos, and swap inventory after compaction                        |
+| `session-resume.cjs`           | SessionStart                   | `resume`                          | Inject pending-tasks warning from prev session, restore todos from checkpoint             |
+| `npm-auto-install.cjs`         | SessionStart                   | `startup`                         | Auto-install missing npm packages from root `package.json`                                |
+| `session-init-docs.cjs`        | SessionStart                   | `startup`                         | Config skeleton + reference doc placeholder creation                                      |
+| `workflow-router.cjs`          | SessionStart, UserPromptSubmit | `startup`, `*`                    | Detect intent, inject matching workflow from 45-workflow catalog                          |
+| `prompt-context-assembler.cjs` | SessionStart, UserPromptSubmit | `startup`, `*`                    | Assemble session context, lessons, and lesson-learned reminder                            |
+| `graph-session-init.cjs`       | SessionStart                   | `startup`                         | Check Python/tree-sitter/graph.db, inject status guidance (skips if config not populated) |
+| `session-end.cjs`              | SessionEnd                     | `clear\|exit\|compact`            | Write pending-tasks warning, cleanup temp/swap files, delete markers                      |
+| `notify-waiting.js`            | SessionEnd, Stop, Notification | various                           | System notification when Claude is waiting for input                                      |
+| `subagent-init.cjs`            | SubagentStart                  | `*`                               | Inject project context, rules, and workflow state into subagent sessions                  |
 
 ### Context Injection (PreToolUse)
 
@@ -203,11 +203,11 @@ SESSION START (8 hooks)                         DURING SESSION
 
 ### Configuration
 
-| Module                       | Purpose                                   |
-| ---------------------------- | ----------------------------------------- |
-| `project-config-loader.cjs`  | Load and validate project configuration   |
-| `project-config-schema.cjs`  | Project config JSON schema definition     |
-| `test-fixture-generator.cjs` | Generate test fixture data for hook tests |
+| Module                       | Purpose                                                           |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `project-config-loader.cjs`  | Load and validate project configuration, generate project summary |
+| `project-config-schema.cjs`  | Project config JSON schema definition                             |
+| `test-fixture-generator.cjs` | Generate test fixture data for hook tests                         |
 
 ### General Utilities
 

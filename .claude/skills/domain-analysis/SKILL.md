@@ -277,7 +277,7 @@ Report must be **<=200 lines**. Use tables over prose.
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/tech-stack-research (Recommended)"** — Research tech stack based on domain model
 - **"/plan"** — If tech stack already decided

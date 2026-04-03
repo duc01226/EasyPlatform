@@ -754,7 +754,7 @@ async function testInitPromptGate() {
                 }
             );
             logResult('Dismiss: skip init exits 0', result.code === 0);
-            const flagExists = fs.existsSync(path.join(tmpDir, 'tmp', '.claude', '.init-dismissed'));
+            const flagExists = fs.existsSync(path.join(tmpDir, 'tmp', 'claude-temp', '.init-dismissed'));
             logResult('Dismiss: flag file created', flagExists);
         } finally {
             cleanupTempDir(tmpDir);
@@ -776,8 +776,8 @@ async function testInitPromptGate() {
                     modules: []
                 })
             );
-            // Write a fresh dismiss flag (now in tmp/.claude/)
-            const tmpClaudeDir = path.join(tmpDir, 'tmp', '.claude');
+            // Write a fresh dismiss flag (now in tmp/claude-temp/)
+            const tmpClaudeDir = path.join(tmpDir, 'tmp', 'claude-temp');
             fs.mkdirSync(tmpClaudeDir, { recursive: true });
             fs.writeFileSync(path.join(tmpClaudeDir, '.init-dismissed'), new Date().toISOString());
             const result = await runHook(
@@ -808,8 +808,8 @@ async function testInitPromptGate() {
                     modules: []
                 })
             );
-            // Write a dismiss flag and backdate it to 2 days ago (now in tmp/.claude/)
-            const tmpClaudeDir2 = path.join(tmpDir, 'tmp', '.claude');
+            // Write a dismiss flag and backdate it to 2 days ago (now in tmp/claude-temp/)
+            const tmpClaudeDir2 = path.join(tmpDir, 'tmp', 'claude-temp');
             fs.mkdirSync(tmpClaudeDir2, { recursive: true });
             const flagPath = path.join(tmpClaudeDir2, '.init-dismissed');
             fs.writeFileSync(flagPath, 'old');

@@ -80,9 +80,9 @@ GoogleService-Info.plist
 .gemini/*
 
 # -----------------------------------------------------------------------------
-# Session State (ephemeral flag files — now stored in tmp/.claude/)
+# Session State (ephemeral flag files — now stored in tmp/claude-temp/)
 # -----------------------------------------------------------------------------
-# (Moved to PROJECT_ROOT/tmp/.claude/ — no longer written here)
+# (Moved to PROJECT_ROOT/tmp/claude-temp/ — no longer written here)
 
 # -----------------------------------------------------------------------------
 # OS Files

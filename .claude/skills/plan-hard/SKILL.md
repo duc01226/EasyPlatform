@@ -220,11 +220,12 @@ After plan creation, offer validation interview to confirm decisions before impl
 >
 > If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — the workflow sequence handles `/review-changes` at the appropriate step.
 
-## Next Steps
+## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/plan-review (Recommended)"** — Validate plan before implementation
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
+- **"/plan-review"** — Validate plan before implementation
 - **"/plan-validate"** — Interview user to confirm plan decisions
 - **"Skip, continue manually"** — user decides
 

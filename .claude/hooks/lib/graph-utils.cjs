@@ -14,7 +14,7 @@ const { debug, debugError } = require('./debug-log.cjs');
 const TAG = 'graph-utils';
 const DEBOUNCE_MS = 3000;
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const VENV_DIR = path.join(PROJECT_DIR, 'tmp', '.claude', '.venv');
+const VENV_DIR = path.join(PROJECT_DIR, 'tmp', 'claude-temp', '.venv');
 const REQUIREMENTS_FILE = path.join(PROJECT_DIR, '.claude', 'scripts', 'code_graph', 'requirements.txt');
 const DEPS_IMPORT_CHECK = 'import tree_sitter; import tree_sitter_language_pack; import networkx';
 
@@ -164,7 +164,7 @@ function ensurePythonDeps() {
 
     // 3. Create venv if it doesn't exist
     if (!isVenvValid()) {
-        // Ensure parent directory exists (tmp/.claude/)
+        // Ensure parent directory exists (tmp/claude-temp/)
         const venvParent = path.dirname(VENV_DIR);
         if (!fs.existsSync(venvParent)) {
             fs.mkdirSync(venvParent, { recursive: true });

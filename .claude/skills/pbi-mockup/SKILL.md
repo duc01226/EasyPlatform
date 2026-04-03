@@ -302,7 +302,7 @@ Before completing:
 
 ## Workflow Recommendation
 
-> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `idea-to-pbi` workflow** (Recommended) — includes mockup as final step
 > 2. **Execute `/pbi-mockup` directly** — run this skill standalone on an existing PBI
@@ -311,7 +311,7 @@ Before completing:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/prioritize (Recommended)"** — Prioritize the PBI in the backlog
 - **"/design-spec"** — Create detailed design specification from mockup

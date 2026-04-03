@@ -258,7 +258,7 @@ Run ALL verification checklists from the production readiness protocol:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/cook (Recommended)"** — Begin implementing feature stories on top of the scaffolding
 - **"/workflow-review-changes"** — Review scaffolding code before proceeding

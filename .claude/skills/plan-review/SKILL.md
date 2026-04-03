@@ -265,11 +265,12 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
 
 ---
 
-## Skill Interconnection (MANDATORY — ask user)
+## Skill Interconnection (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/plan-validate (Recommended)"** — Interview user to confirm plan assumptions
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan reviewed). This ensures validation, implementation, testing, and docs steps aren't skipped.
+- **"/plan-validate"** — Interview user to confirm plan assumptions
 - **"/cook" or "/code"** — If plan is approved and ready for implementation
 - **"Skip, continue manually"** — user decides
 

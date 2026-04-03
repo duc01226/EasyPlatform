@@ -123,7 +123,7 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/dor-gate (Recommended)"** — If APPROVE: validate DoR before grooming
 - **"/refine"** — If REQUEST_REVISION: BA drafters revise, then re-run `/pbi-challenge`

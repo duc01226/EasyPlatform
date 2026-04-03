@@ -145,6 +145,17 @@ description: '[Implementation] Analyze & fix issues with parallel fullstack-deve
 
 ---
 
+## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (fixes applied). This ensures prove-fix, review, testing, and docs steps aren't skipped.
+- **"/prove-fix"** — Prove fix correctness with code traces
+- **"/test"** — Run tests to verify fixes
+- **"Skip, continue manually"** — user decides
+
+> If already inside a workflow, skip — the workflow handles sequencing.
+
 ## Closing Reminders
 
 - **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting

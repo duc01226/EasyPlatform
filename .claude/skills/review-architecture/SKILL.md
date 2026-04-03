@@ -414,7 +414,7 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/code-simplifier" (Recommended)** — Simplify and refine code
 - **"/code-review"** — Deep code quality review

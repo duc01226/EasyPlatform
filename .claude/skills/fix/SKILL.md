@@ -171,18 +171,19 @@ Before and after fixing, use graph trace to understand blast radius:
 
 ## Workflow Recommendation
 
-> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → plan-review → plan-validate → fix → prove-fix → review → test
 > 2. **Execute `/fix` directly** — still requires `/plan → /plan-review → /plan-validate` before fixing (enforced by Plan Before Fix gate above)
 
 ---
 
-## Next Steps
+## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/prove-fix (Recommended)"** — Prove fix correctness with code traces
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (fix applied). This ensures prove-fix, review, testing, and docs steps aren't skipped.
+- **"/prove-fix"** — Prove fix correctness with code traces
 - **"/test"** — Run tests to verify fix
 - **"Skip, continue manually"** — user decides
 

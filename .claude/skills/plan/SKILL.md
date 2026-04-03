@@ -137,7 +137,7 @@ Check the `## Plan Context` section in the injected context:
 
 ## Workflow Recommendation
 
-> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `pre-development` workflow** (Recommended) — quality-gate → plan → plan-review → plan-validate
 > 2. **Execute `/plan` directly** — run this skill standalone
@@ -154,6 +154,17 @@ After creating all phase files, run the **recursive decomposition loop** from `p
 2. For each FAILING phase → create task to decompose it into a sub-plan (with its own /plan → /plan-review → /plan-validate → fix cycle)
 3. Re-score new phases. Repeat until ALL leaf phases pass (max depth: 3)
 4. **Self-question:** "For each phase, can I start coding RIGHT NOW? If any needs 'figuring out' → sub-plan it."
+
+## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
+- **"/plan-review"** — Auto-review plan for validity and best practices
+- **"/plan-validate"** — Interview user to confirm plan decisions
+- **"Skip, continue manually"** — user decides
+
+> If already inside a workflow, skip — the workflow handles sequencing.
 
 ## Closing Reminders
 

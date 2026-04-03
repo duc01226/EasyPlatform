@@ -117,7 +117,7 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/plan (Recommended)"** — Create implementation plan with validated test specs
 - **"/tdd-spec"** — Re-generate specs if FAIL verdict

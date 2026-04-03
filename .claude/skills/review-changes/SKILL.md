@@ -462,7 +462,7 @@ Parallel categorized review ensures thorough coverage with holistic synthesis.
 
 ## Workflow Recommendation
 
-> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `review-changes` workflow** (Recommended) — review-changes → review-architecture → code-simplifier → code-review → performance → plan → plan-validate → cook → watzup
 > 2. **Execute `/review-changes` directly** — run this skill standalone
@@ -486,7 +486,7 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/code-review (Recommended)"** — Deeper code quality review
 - **"/watzup"** — Wrap up session and review all changes

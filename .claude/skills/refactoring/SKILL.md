@@ -283,7 +283,7 @@ When graph DB is available, BEFORE refactoring, trace to verify all consumers:
 
 ## Workflow Recommendation
 
-> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `refactor` workflow** (Recommended) — scout → investigate → plan → code → review → sre-review → test → docs
 > 2. **Execute `/refactoring` directly** — run this skill standalone

@@ -167,6 +167,17 @@ After creating all phase files, run the **recursive decomposition loop** from `p
 3. Re-score new phases. Repeat until ALL leaf phases pass (max depth: 3)
 4. **Self-question:** "For each phase, can I start coding RIGHT NOW? If any needs 'figuring out' → sub-plan it."
 
+## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+
+> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
+- **"/plan-review"** — Auto-review plan for validity and best practices
+- **"/plan-validate"** — Interview user to confirm plan decisions
+- **"Skip, continue manually"** — user decides
+
+> If already inside a workflow, skip — the workflow handles sequencing.
+
 ## Closing Reminders
 
 - **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting

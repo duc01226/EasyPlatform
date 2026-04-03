@@ -138,7 +138,7 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/cook (Recommended)"** — Begin implementation after design rationale is validated
 - **"/code"** — If implementing a simpler change

@@ -606,7 +606,7 @@ For domain PBIs: detect module (ref: `.claude/skills/shared/module-detection-key
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/story (Recommended)"** — Break PBI into implementable user stories
 - **"/pbi-mockup"** — Generate HTML mockup report from PBI

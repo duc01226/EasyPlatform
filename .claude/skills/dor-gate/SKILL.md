@@ -86,7 +86,7 @@ description: '[Code Quality] Validate PBI against Definition of Ready before gro
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/handoff (Recommended)"** — If PASS: hand off to grooming presentation
 - **"/refine"** — If FAIL: revise PBI
