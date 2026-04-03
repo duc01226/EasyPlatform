@@ -249,7 +249,7 @@ $ARGUMENTS
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
 
 - **"/watzup (Recommended)"** — Wrap up session and check for remaining doc staleness
-- **"/review-changes"** — Review all changes before commit
+- **"/workflow-review-changes"** — Review all changes before commit
 - **"Skip, continue manually"** — user decides
 
 ## Closing Reminders

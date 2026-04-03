@@ -241,6 +241,7 @@ Reusable content blocks in `.claude/skills/shared/` extracted from multiple skil
 | `ba-team-decision-model-protocol.md`        | BA team 2/3 vote model, technical veto, disagree-and-commit, role scope boundaries                   | 3 skills (pbi-challenge, dor-gate) + business-analyst agent            |
 | `refinement-dor-checklist-protocol.md`      | Definition of Ready checklist (7 items), validation rules, failure modes, gate output template       | 3 skills (pbi-challenge, dor-gate, refine-review) + ba-refinement hook |
 | `plan-quality-protocol.md`                  | Test spec integration in plans (TC mapping, evidence rules) + attention anchoring for long workflows | 15 skills (plan*, cook*, review-changes, code-review, iterative-phase) |
+| `output-quality-principles.md`              | 10 rules for AI-optimized reference doc generation (no inventories, no TOCs, density targets)        | 17 skills (15 scan/doc skills + prompt-enhance + claude-md-init)       |
 
 See [shared/README.md](../../skills/shared/README.md) for full consumer lists and contribution guidelines.
 

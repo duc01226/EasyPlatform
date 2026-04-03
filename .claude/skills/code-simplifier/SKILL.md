@@ -233,7 +233,7 @@ When graph DB is available, BEFORE simplifying code, trace to understand what de
 
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
 
-- **"/review-changes (Recommended)"** — Review all changes before commit
+- **"/workflow-review-changes (Recommended)"** — Review all changes before commit
 - **"/code-review"** — Full code review
 - **"Skip, continue manually"** — user decides
 

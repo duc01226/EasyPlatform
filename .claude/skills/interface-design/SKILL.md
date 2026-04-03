@@ -436,7 +436,7 @@ For more detail on specific topics:
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
 
 - **"/web-design-guidelines (Recommended)"** — Review UI for accessibility and best practices
-- **"/review-changes"** — Review all changes before commit
+- **"/workflow-review-changes"** — Review all changes before commit
 - **"Skip, continue manually"** — user decides
 
 ---

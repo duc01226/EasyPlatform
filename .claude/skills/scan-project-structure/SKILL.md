@@ -11,6 +11,9 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 > **Scan & Update Reference Doc** — Read existing doc first, scan codebase for current state, diff against doc content, update only changed sections, preserve manual annotations.
 > MUST READ `.claude/skills/shared/scan-and-update-reference-doc-protocol.md` for full protocol and checklists.
 
+> **Output Quality** — Reference docs are injected into AI context. No inventories/counts, no TOCs, no directory trees, no checkboxes. Rules > descriptions. 1 example per pattern. Tables > prose. Primacy-recency anchoring (critical rules in first AND last 5 lines).
+> MUST READ `.claude/skills/shared/output-quality-principles.md` for full 10-rule protocol.
+
 ## Quick Summary
 
 **Goal:** Scan the project codebase and populate `docs/project-reference/project-structure-reference.md` with accurate service architecture, API ports, directory tree, tech stack, and module codes.

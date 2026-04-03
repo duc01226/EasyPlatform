@@ -11,6 +11,9 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 > **Scan & Update Reference Doc** — Read existing doc first, scan codebase for current state, diff against doc content, update only changed sections, preserve manual annotations.
 > MUST READ `.claude/skills/shared/scan-and-update-reference-doc-protocol.md` for full protocol and checklists.
 
+> **Output Quality** — Reference docs are injected into AI context. No inventories/counts, no TOCs, no directory trees, no checkboxes. Rules > descriptions. 1 example per pattern. Tables > prose. Primacy-recency anchoring (critical rules in first AND last 5 lines).
+> MUST READ `.claude/skills/shared/output-quality-principles.md` for full 10-rule protocol.
+
 ## Quick Summary
 
 **Goal:** Scan backend codebase and populate `docs/project-reference/backend-patterns-reference.md` with actual repository patterns, CQRS command/query structures, validation patterns, entity conventions, event handlers, and migration approaches. (content auto-injected by hook — check for [Injected: ...] header before reading)

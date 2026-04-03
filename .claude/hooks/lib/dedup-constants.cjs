@@ -25,6 +25,8 @@
  *   INTEGRATION_TEST_CONTEXT → code-patterns-injector
  *   FEATURE_DOCS_CONTEXT     → code-patterns-injector
  *   PROJECT_STRUCTURE    → prompt-context-assembler
+ *   CLAUDE_MD            → prompt-context-assembler
+ *   DESIGN_SYSTEM        → design-system-context
  *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
  *
  * DEDUP_LINES — dynamically calculated transcript line counts for each marker.
@@ -137,6 +139,12 @@ const CONTENT_SOURCES = {
         multiplier: 2,
         fallback: 400
     },
+    CLAUDE_MD: {
+        type: 'file',
+        files: ['CLAUDE.md'],
+        multiplier: 3, // critical — re-inject sooner to prevent context drift
+        fallback: 900
+    },
     DEV_RULES: {
         type: 'file',
         files: ['.claude/docs/development-rules.md'],
@@ -164,12 +172,37 @@ const CONTENT_SOURCES = {
         multiplier: 2,
         fallback: 200
     },
-    // Template-based injections — fixed generous values, no drift risk
-    BACKEND_CONTEXT: { type: 'fixed', value: 100 },
-    FRONTEND_CONTEXT: { type: 'fixed', value: 100 },
-    STYLING_CONTEXT: { type: 'fixed', value: 150 },
+    // Context injections that include file content via readAndInjectDoc()
+    // BACKEND/FRONTEND inject domain-entities (full content) + service guidance
+    BACKEND_CONTEXT: {
+        type: 'file',
+        files: ['docs/project-reference/domain-entities-reference.md'],
+        multiplier: 1.5,
+        extraLines: 30, // service guidance, context header, rules
+        fallback: 200
+    },
+    FRONTEND_CONTEXT: {
+        type: 'file',
+        files: ['docs/project-reference/domain-entities-reference.md'],
+        multiplier: 1.5,
+        extraLines: 30,
+        fallback: 200
+    },
+    STYLING_CONTEXT: {
+        type: 'file',
+        files: ['docs/project-reference/scss-styling-guide.md'],
+        multiplier: 1.5,
+        extraLines: 10,
+        fallback: 200
+    },
     KNOWLEDGE_CONTEXT: { type: 'fixed', value: 100 },
-    DESIGN_SYSTEM: { type: 'fixed', value: 100 },
+    DESIGN_SYSTEM: {
+        type: 'file',
+        files: ['docs/project-reference/design-system/README.md'],
+        multiplier: 1.5,
+        extraLines: 10,
+        fallback: 200
+    },
     LESSON_LEARNED: { type: 'fixed', value: 100 },
     WORKFLOW_PROTOCOL: { type: 'fixed', value: 100 },
     CRITICAL_THINKING: { type: 'fixed', value: 80 },
@@ -239,21 +272,28 @@ function computeDedupLines() {
  *
  * Example output for this project (values will differ per project):
  *   {
- *     CODE_PATTERNS: ~2700,         // file lines × 1.5
- *     CODE_REVIEW_RULES: ~1500,     // file lines × 1.5
- *     E2E_CONTEXT: ~900,            // file lines × 1.5
- *     DEV_RULES: ~340,              // file lines × 2
+ *     CODE_PATTERNS: ~2700,           // file lines × 1.5
+ *     CODE_REVIEW_RULES: ~1500,       // file lines × 1.5
+ *     E2E_CONTEXT: ~900,              // file lines × 1.5
+ *     INTEGRATION_TEST_CONTEXT: ~200, // file lines × 1.5
+ *     FEATURE_DOCS_CONTEXT: ~200,     // file lines × 1.5
+ *     PROJECT_STRUCTURE: ~400,        // file lines × 2
+ *     CLAUDE_MD: ~900,                // file lines × 3
+ *     DEV_RULES: ~340,                // file lines × 2
  *     DEV_RULES_MODULARIZATION: ~250, // file lines × 1.5
- *     LESSONS: ~50,                 // file lines × 3
- *     WORKFLOW_CATALOG: ~250,       // computed lines × 2
- *     BACKEND_CONTEXT: 100,         // fixed
- *     FRONTEND_CONTEXT: 100,        // fixed
- *     STYLING_CONTEXT: 150,         // fixed
- *     KNOWLEDGE_CONTEXT: 100,       // fixed
- *     DESIGN_SYSTEM: 100,           // fixed
- *     LESSON_LEARNED: 150,          // fixed
- *     SEARCH_WINDOW: 100,           // fixed (behavioral)
- *     SEARCH_SKIP_OVERRIDE: 50      // fixed (behavioral)
+ *     LESSONS: ~50,                   // file lines × 3
+ *     WORKFLOW_CATALOG: ~250,         // computed lines × 2
+ *     BACKEND_CONTEXT: ~200,          // file lines × 1.5
+ *     FRONTEND_CONTEXT: ~200,         // file lines × 1.5
+ *     STYLING_CONTEXT: ~200,          // file lines × 1.5
+ *     DESIGN_SYSTEM: ~200,            // file lines × 1.5
+ *     KNOWLEDGE_CONTEXT: 100,         // fixed
+ *     LESSON_LEARNED: 100,            // fixed
+ *     CRITICAL_THINKING: 80,          // fixed
+ *     AI_MISTAKE_PREVENTION: 80,      // fixed
+ *     SEARCH_WINDOW: 100,             // fixed (behavioral)
+ *     SEARCH_SKIP_OVERRIDE: 50,       // fixed (behavioral)
+ *     GRAPH_GREP_SUGGESTER: 80        // fixed (behavioral)
  *   }
  */
 const DEDUP_LINES = computeDedupLines();
@@ -306,6 +346,9 @@ module.exports = {
 
     /** Marker for project structure injection */
     PROJECT_STRUCTURE: '## [Injected: Project Structure Reference]',
+
+    /** Marker for CLAUDE.md re-injection */
+    CLAUDE_MD: '## [Re-Injected: CLAUDE.md Key Rules]',
 
     /** Marker for lessons injection */
     LESSONS: '## Learned Lessons',

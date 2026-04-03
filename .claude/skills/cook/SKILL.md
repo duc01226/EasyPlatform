@@ -250,7 +250,7 @@ When graph DB is available, BEFORE writing code, trace to understand the blast r
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
 
 - **"/code-simplifier (Recommended)"** — Simplify and clean up implementation
-- **"/review-changes"** — Review changes before commit
+- **"/workflow-review-changes"** — Review changes before commit
 - **"Skip, continue manually"** — user decides
 
 ## Standalone Review Gate (Non-Workflow Only)

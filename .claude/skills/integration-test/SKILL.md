@@ -598,7 +598,7 @@ When test code and spec disagree, determine which is correct:
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
 
 - **"/test (Recommended)"** — Run full test suite to verify integration tests pass
-- **"/review-changes"** — Review all changes before committing
+- **"/workflow-review-changes"** — Review all changes before committing
 - **"Skip, continue manually"** — user decides
 
 ## Closing Reminders

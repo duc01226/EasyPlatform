@@ -6,6 +6,9 @@ description: '[Documentation] Initialize, update, or refactor CLAUDE.md from pro
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
+> **Output Quality** — Reference docs are injected into AI context. No inventories/counts, no TOCs, no directory trees, no checkboxes. Rules > descriptions. 1 example per pattern. Tables > prose. Primacy-recency anchoring (critical rules in first AND last 5 lines).
+> MUST READ `.claude/skills/shared/output-quality-principles.md` for full 10-rule protocol.
+
 ## Quick Summary
 
 **Goal:** Automate CLAUDE.md lifecycle — generate from project-config.json + template, incrementally update marked sections, or refactor for token efficiency.

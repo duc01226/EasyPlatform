@@ -278,7 +278,7 @@ Based on mode, suggest via `AskUserQuestion`:
 
 ```
 1. "/integration-test — Generate integration tests (Recommended)"
-2. "/review-changes — Review all changes"
+2. "/workflow-review-changes — Review all changes"
 3. "Done for now"
 ```
 

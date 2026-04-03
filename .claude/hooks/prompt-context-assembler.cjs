@@ -31,7 +31,7 @@ const {
 // DEDUPLICATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const { PROJECT_STRUCTURE: PROJECT_STRUCTURE_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+const { PROJECT_STRUCTURE: PROJECT_STRUCTURE_MARKER, CLAUDE_MD: CLAUDE_MD_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
 const { readAndInjectDoc } = require('./lib/context-injector-base.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -306,19 +306,50 @@ async function main() {
         const lessons = injectLessons(payload.transcript_path);
         if (lessons) console.log(lessons);
 
+        // Cache transcript lines once — avoids re-reading the same file for each dedup check
+        let transcriptLines = null;
+        try {
+            if (payload.transcript_path && fs.existsSync(payload.transcript_path)) {
+                transcriptLines = fs.readFileSync(payload.transcript_path, 'utf-8').split('\n');
+            }
+        } catch {
+            /* non-blocking */
+        }
+
         // Project structure reference — inject once per session, re-injects after compaction
         try {
             let projStructRecentlyInjected = false;
-            if (payload.transcript_path && fs.existsSync(payload.transcript_path)) {
-                projStructRecentlyInjected = fs
-                    .readFileSync(payload.transcript_path, 'utf-8')
-                    .split('\n')
-                    .slice(-DEDUP_LINES.PROJECT_STRUCTURE)
-                    .some(l => l.includes(PROJECT_STRUCTURE_MARKER));
+            if (transcriptLines) {
+                projStructRecentlyInjected = transcriptLines.slice(-DEDUP_LINES.PROJECT_STRUCTURE).some(l => l.includes(PROJECT_STRUCTURE_MARKER));
             }
             if (!projStructRecentlyInjected) {
                 const projStructContent = readAndInjectDoc('docs/project-reference/project-structure-reference.md');
                 if (projStructContent) console.log(projStructContent);
+            }
+        } catch {
+            /* non-blocking */
+        }
+
+        // CLAUDE.md key rules re-injection — prevents context drift in long sessions
+        // CLAUDE.md is loaded once at session start but drifts to weak attention zone.
+        // Re-inject key rules (not full file) when marker scrolls out of dedup window.
+        try {
+            let claudeMdRecentlyInjected = false;
+            if (transcriptLines) {
+                claudeMdRecentlyInjected = transcriptLines.slice(-DEDUP_LINES.CLAUDE_MD).some(l => l.includes(CLAUDE_MD_MARKER));
+            }
+            if (!claudeMdRecentlyInjected) {
+                const claudeMdPath = path.resolve(process.env.CLAUDE_PROJECT_DIR || '.', 'CLAUDE.md');
+                if (fs.existsSync(claudeMdPath)) {
+                    const content = fs.readFileSync(claudeMdPath, 'utf-8');
+                    // Extract TL;DR section (key rules) — not the full file
+                    const tldrMatch = content.match(/## TL;DR[^\n]*\n([\s\S]*?)(?=\n## [A-Z])/);
+                    if (tldrMatch) {
+                        console.log(`\n${CLAUDE_MD_MARKER}\n`);
+                        console.log(tldrMatch[1].trim());
+                        console.log('');
+                    }
+                }
             }
         } catch {
             /* non-blocking */
@@ -351,16 +382,8 @@ async function main() {
             if (fs.existsSync(graphDbPath)) {
                 const graphMarker = '[graph] Knowledge graph active';
                 let graphRecentlyInjected = false;
-                try {
-                    if (payload.transcript_path && fs.existsSync(payload.transcript_path)) {
-                        graphRecentlyInjected = fs
-                            .readFileSync(payload.transcript_path, 'utf-8')
-                            .split('\n')
-                            .slice(-50)
-                            .some(l => l.includes(graphMarker));
-                    }
-                } catch {
-                    /* ignore */
+                if (transcriptLines) {
+                    graphRecentlyInjected = transcriptLines.slice(-50).some(l => l.includes(graphMarker));
                 }
 
                 // Tier 1: Full reference (deduped — only when not recently injected)

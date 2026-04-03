@@ -329,7 +329,7 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
 
 - **"/code-simplifier (Recommended)"** — Clean up fix implementation
-- **"/review-changes"** — Review all changes before commit
+- **"/workflow-review-changes"** — Review all changes before commit
 - **"Skip, continue manually"** — user decides
 
 ## Closing Reminders

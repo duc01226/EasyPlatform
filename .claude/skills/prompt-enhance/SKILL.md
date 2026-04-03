@@ -1,6 +1,6 @@
 ---
 name: prompt-enhance
-version: 1.0.0
+version: 2.0.0
 description: '[Skill Management] Enhance any prompt/doc/skill file with AI attention anchoring — summary at top+bottom, inline summaries for READ references, progressive disclosure structure. Use for prompt engineering, skill refactoring, doc optimization.'
 ---
 
@@ -19,12 +19,13 @@ description: '[Skill Management] Enhance any prompt/doc/skill file with AI atten
 
 **Key Rules:**
 
-- AI attention is strongest at TOP and BOTTOM of prompt, weakest in middle
+- AI attention is strongest at TOP and BOTTOM of prompt, weakest in middle (Stanford "lost-in-the-middle" research)
 - Every READ instruction MUST include an inline summary of the referenced file's key rules
 - Top section = concise summary + key rules. Bottom section = closing reminders echoing top rules
-- Middle section = detailed steps. Accept intentional duplication between top and bottom.
-- **Prompt quality > token count** — but verbose/repetitive prompts degrade quality too. Optimize for clarity-per-token.
+- Middle section = detailed steps. Accept intentional duplication between top and bottom
+- **Prompt quality > token count** — but verbose prompts degrade quality too. Optimize for clarity-per-token
 - Never remove **meaningful** content — but DO tighten prose, merge redundant sections, and cut filler
+- MUST READ `.claude/skills/shared/output-quality-principles.md` for the 10-rule output quality protocol
 
 ---
 
@@ -37,7 +38,49 @@ If no file specified, ask via `AskUserQuestion`.
 
 ---
 
-## The 3 Transformations
+## Context Engineering Principles (Research-Backed)
+
+These principles are sourced from Anthropic's official prompt engineering guide, Stanford's "lost-in-the-middle" research, and 2025-2026 LLM context optimization studies. Apply when evaluating or enhancing any prompt.
+
+### 1. Primacy-Recency Effect (Position Sensitivity)
+
+LLM performance drops 15-47% for information placed in the middle of long contexts (Stanford). AI attention peaks at first/last 10% of text. **Action:** Place 3 most critical rules in both first 5 lines AND last 5 lines of every prompt. Queries at end improve quality by up to 30% (Anthropic).
+
+### 2. High-Signal Density
+
+Anthropic: _"Identify the smallest collection of high-signal tokens that maximize the probability of the desired outcome."_ **Action:** Every line should change AI behavior. If removing a line doesn't change output → cut it. Target: ≥8 rules (MUST/NEVER/ALWAYS) per 100 lines.
+
+### 3. Context Rot
+
+LLM performance degrades as context length grows — even when all content is relevant. Prompt compression (5-20x) maintains or improves accuracy while saving 70-94% tokens. **Action:** Compress aggressively. Shorter, denser prompts outperform longer, diluted ones.
+
+### 4. Structured > Prose
+
+Tables, bullet lists, and XML/markdown structure parse faster than paragraphs for AI. Constrained formats reduce error rates compared to free-text. **Action:** Convert narrative explanations to tables/bullets. Use markdown headers for semantic sections.
+
+### 5. RCCF Framework
+
+Modern LLMs (2025+) already know how to reason. What they need: **R**ole (personality), **C**ontext (grounding), **C**onstraints (guardrails), **F**ormat (structure). Constraints and format matter more than verbose instructions.
+
+### 6. Checkbox Avoidance
+
+Checkbox `[ ]` syntax triggers mechanical compliance — AI ticks boxes without reasoning. Bullet rules force reading and evaluation. **Action:** Replace `- [ ] Check X` with `- MUST verify X`.
+
+### 7. Example Economy
+
+3-5 examples optimal for few-shot; diminishing returns after. Multiple examples of the same pattern waste tokens. **Action:** 1 best example per pattern. Use BAD→GOOD pairs (2-3 lines each) for anti-patterns.
+
+### 8. Deferred Tool Loading
+
+Claude Code delays loading tool definitions when they exceed 10% of context window. **Action:** Keep injected docs well under 10% of context budget. If a doc exceeds ~3,000 lines, it's too large for injection — split or compress.
+
+### 9. Rule Density Verification
+
+Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization count. Compression should preserve or increase density, never decrease it. **Action:** Count before and after every optimization pass.
+
+---
+
+## The 4 Transformations
 
 ### Transformation 1: Inline Summaries for READ References
 
@@ -185,9 +228,11 @@ For each `.claude/` protocol reference:
 
 - **MUST** read target file completely before any changes
 - **MUST** read each referenced protocol file to write accurate inline summaries — never guess content
-- **MUST** keep all original content — only restructure, never delete instructions
+- **MUST** apply primacy-recency anchoring — 3 critical rules in first 5 AND last 5 lines of every enhanced file
+- **MUST** verify rule density: count MUST/NEVER/ALWAYS before and after — post ≥ pre
 - **MUST** add inline summaries only for `.claude/` protocol files, not project-specific `docs/` files
+- **MUST** keep all meaningful content — only restructure/compress, never delete rules or code examples
 - **MUST** verify no YAML frontmatter corruption after changes
   **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `file.md` before starting
+- **MUST** READ `.claude/skills/shared/output-quality-principles.md` before starting
 - **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting

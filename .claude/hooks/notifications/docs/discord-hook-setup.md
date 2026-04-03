@@ -105,7 +105,7 @@ Add `.env` to `.gitignore` to prevent committing webhook URLs:
 ### 4. Make Script Executable
 
 ```bash
-chmod +x .claude/hooks/send-discord.sh
+chmod +x .claude/hooks/notifications/send-discord.sh
 ```
 
 ### 5. Verify Setup
@@ -451,7 +451,7 @@ fi
 
 ## Reference
 
-**Script Location:** `.claude/hooks/send-discord.sh`
+**Script Location:** `.claude/hooks/notifications/send-discord.sh`
 
 **Configuration File:** `.env` (project root)
 

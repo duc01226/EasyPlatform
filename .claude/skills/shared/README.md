@@ -4,14 +4,15 @@ Reusable content blocks extracted from multiple skills to eliminate duplication.
 
 ## Modules
 
-| File                                   | Purpose                                                                                                                     | Words | Consumer Skills                                          | Status     |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------- | ---------- |
-| `evidence-based-reasoning-protocol.md` | Consolidated evidence-based reasoning: core rules, confidence levels, validation chain, risk matrix, code removal checklist | ~740  | All code-modifying and analysis skills (50)              | **Active** |
-| `understand-code-first-protocol.md`    | Read-before-write protocol, assumption validation, external memory                                                          | ~350  | All code-modifying skills (34+)                          | **Active** |
-| `design-system-check.md`               | Mandatory design system doc locations and key files to read before frontend work                                            | 145   | frontend-design, web-design-guidelines                   | **Active** |
-| `module-detection-keywords.md`         | Module keyword lists for automatic context loading                                                                          | 127   | idea, product-owner, refine, story (4)                   | **Active** |
-| `references/module-codes.md`           | Single source of truth for TC ID formats, service codes, feature codes                                                      | ~200  | test-spec, test-specs-docs, integration-test (3)         | **Active** |
-| `iterative-phase-quality-protocol.md`  | Task decomposition, complexity assessment, per-phase quality cycle (plan→implement→review→fix→verify)                       | ~250  | plan, plan-hard, plan-fast, planning, cook, tdd-spec (6) | **Active** |
+| File                                   | Purpose                                                                                                                     | Words | Consumer Skills                                           | Status     |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------- | ---------- |
+| `evidence-based-reasoning-protocol.md` | Consolidated evidence-based reasoning: core rules, confidence levels, validation chain, risk matrix, code removal checklist | ~740  | All code-modifying and analysis skills (50)               | **Active** |
+| `understand-code-first-protocol.md`    | Read-before-write protocol, assumption validation, external memory                                                          | ~350  | All code-modifying skills (34+)                           | **Active** |
+| `design-system-check.md`               | Mandatory design system doc locations and key files to read before frontend work                                            | 145   | frontend-design, web-design-guidelines                    | **Active** |
+| `module-detection-keywords.md`         | Module keyword lists for automatic context loading                                                                          | 127   | idea, product-owner, refine, story (4)                    | **Active** |
+| `references/module-codes.md`           | Single source of truth for TC ID formats, service codes, feature codes                                                      | ~200  | test-spec, test-specs-docs, integration-test (3)          | **Active** |
+| `iterative-phase-quality-protocol.md`  | Task decomposition, complexity assessment, per-phase quality cycle (plan→implement→review→fix→verify)                       | ~250  | plan, plan-hard, plan-fast, planning, cook, tdd-spec (6)  | **Active** |
+| `output-quality-principles.md`         | 10 rules for AI-optimized reference doc generation (no inventories, no TOCs, rules>descriptions, density targets)           | ~350  | 15 scan/doc skills + prompt-enhance + claude-md-init (17) | **Active** |
 
 ## Guidelines for Adding New Shared Modules
 

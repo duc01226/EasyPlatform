@@ -190,7 +190,7 @@ Do not skip steps. Do not proceed if validation fails. Do not assume approval wi
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
 
 - **"/code-simplifier (Recommended)"** — Simplify implementation
-- **"/review-changes"** — Review changes before commit
+- **"/workflow-review-changes"** — Review changes before commit
 - **"Skip, continue manually"** — user decides
 
 ## Standalone Review Gate (Non-Workflow Only)

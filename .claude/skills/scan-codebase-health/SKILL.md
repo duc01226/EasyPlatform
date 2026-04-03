@@ -6,6 +6,9 @@ description: '[Documentation] Detect codebase health issues: unused exports, doc
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
+> **Output Quality** — Reference docs are injected into AI context. No inventories/counts, no TOCs, no directory trees, no checkboxes. Rules > descriptions. 1 example per pattern. Tables > prose. Primacy-recency anchoring (critical rules in first AND last 5 lines).
+> MUST READ `.claude/skills/shared/output-quality-principles.md` for full 10-rule protocol.
+
 ## Quick Summary
 
 **Goal:** Detect structural rot in AI-assisted codebases — dead code, count-drift, orphan files, stale configs. Works on any project via `docs/project-config.json`.
