@@ -6,7 +6,7 @@
 
 1. **No inventories/counts** — Don't list "there are N entities/components/services." AI can `grep | wc -l`. Counts go stale instantly and waste tokens confirming greppable facts.
 
-2. **No directory trees** — AI can `glob`/`ls`. Replace trees with 1-line path conventions: `apps/{app}/ → libs/platform-core/ → libs/bravo-domain/{domain}/`
+2. **No directory trees** — AI can `glob`/`ls`. Replace trees with 1-line path conventions: `apps/{app}/ → libs/{framework-core}/ → libs/{domain}/{module}/`
 
 3. **No TOCs / table of contents** — AI reads linearly in injection context. TOC wastes 10-20 lines navigating content AI will read top-to-bottom anyway.
 

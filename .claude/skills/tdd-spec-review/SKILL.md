@@ -12,10 +12,28 @@ description: '[Code Quality] Review test specifications for coverage, completene
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Double Round-Trip Review** — Every review executes TWO full rounds: Round 1 builds understanding (normal review), Round 2 leverages accumulated context to catch what Round 1 missed. Round 2 is MANDATORY — never skip, never combine into single pass.
-> MUST READ `.claude/skills/shared/double-round-trip-review-protocol.md` for full protocol and checklists.
-> **Graph Impact Analysis** — Use `trace --direction downstream` on changed files to find all impacted consumers, bus message handlers, event subscribers. Verify each needs updating.
-> MUST READ `.claude/skills/shared/graph-impact-analysis-protocol.md` for full protocol and checklists.
+<!-- SYNC:double-round-trip-review -->
+
+> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+>
+> **Round 1:** Normal review building understanding. Read all files, note issues.
+> **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
+>
+> - Cross-cutting concerns missed in Round 1
+> - Interaction bugs between changed files
+> - Convention drift (new code vs existing patterns)
+> - Missing pieces (what should exist but doesn't)
+>
+> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
+> **Report must include `## Round 2 Findings` section.**
+
+<!-- /SYNC:double-round-trip-review -->
+
+<!-- SYNC:graph-impact-analysis -->
+
+> **Graph Impact Analysis** — When `.code-graph/graph.db` exists, run `blast-radius --json` to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use `trace --direction downstream` for deep chains on high-impact files.
+
+<!-- /SYNC:graph-impact-analysis -->
 
 - `docs/test-specs/` — Test specifications by module (cross-reference during review to verify TC completeness and avoid duplicates)
 
@@ -131,5 +149,10 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
 **MANDATORY IMPORTANT MUST** READ the following files before starting:
 
-- **MUST** READ `.claude/skills/shared/double-round-trip-review-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/graph-impact-analysis-protocol.md` before starting
+<!-- SYNC:double-round-trip-review:reminder -->
+
+- **MUST** execute TWO independent review rounds. Report must include `## Round 2 Findings`.
+    <!-- /SYNC:double-round-trip-review:reminder -->
+    <!-- SYNC:graph-impact-analysis:reminder -->
+- **MUST** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
+    <!-- /SYNC:graph-impact-analysis:reminder -->

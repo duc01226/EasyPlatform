@@ -6,19 +6,57 @@ description: '[Implementation] Implement a feature [step by step]'
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 - `docs/test-specs/` — Test specifications by module (read existing TCs; generate/update test specs via `/tdd-spec` after implementation)
 
-> **Plan Quality** — Every plan phase MUST include `## Test Specifications` section with TC-{FEAT}-{NNN} format. Verify TC satisfaction per phase before marking complete. Plans must include `story_points` and `effort` in frontmatter.
-> MUST READ `.claude/skills/shared/plan-quality-protocol.md` for full protocol and checklists.
+<!-- SYNC:plan-quality -->
+
+> **Plan Quality** — Every plan phase MUST include test specifications.
+>
+> 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
+> 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
+> 3. TC IDs follow `TC-{FEATURE}-{NNN}` format — reference by ID, never embed full content
+> 4. Before any new workflow step: call `TaskList` and re-read the phase file
+> 5. On context compaction: call `TaskList` FIRST — never create duplicate tasks
+> 6. Verify TC satisfaction per phase before marking complete (evidence must be `file:line`, not TBD)
+>
+> **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/tdd-spec` fills after.
+
+<!-- /SYNC:plan-quality -->
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **Rationalization Prevention** — AI consistently skips steps via: "too simple for a plan", "I'll test after", "already searched", "code is self-explanatory". These are EVASIONS — not valid reasons. Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to "save time".
-> MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` for full protocol and checklists.
+<!-- SYNC:rationalization-prevention -->
+
+> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
+>
+> | Evasion                      | Rebuttal                                                      |
+> | ---------------------------- | ------------------------------------------------------------- |
+> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
+> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
+> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
+> | "Just do it"                 | Still need TaskCreate. Skip depth, never skip tracking.       |
+> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
+> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
+> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
+
+<!-- /SYNC:rationalization-prevention -->
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
@@ -44,8 +82,19 @@ description: '[Implementation] Implement a feature [step by step]'
 
 > When this task involves frontend or UI changes,
 
-> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
-> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
@@ -60,11 +109,21 @@ of perceived simplicity. "Simple" features have hidden complexity.
 ## Pre-Implementation Granularity Gate (MANDATORY)
 
 <HARD-GATE>
-Per `.claude/skills/shared/plan-granularity-protocol.md` — before implementing ANY phase:
-1. Verify every step names specific files (not generic "implement X")
-2. Verify no step uses planning verbs: "research", "determine", "figure out", "decide", "evaluate", "explore"
-3. Verify each step ≤30 min, phase total ≤5 files and ≤3h
-4. Verify no unresolved decisions or TBDs in approach
+
+<!-- SYNC:plan-granularity -->
+
+> **Plan Granularity** — Every phase must pass 5-point check before implementation:
+>
+> 1. Lists exact file paths to modify (not generic "implement X")
+> 2. No planning verbs (research, investigate, analyze, determine, figure out)
+> 3. Steps ≤30min each, phase total ≤3h
+> 4. ≤5 files per phase
+> 5. No open decisions or TBDs in approach
+>
+> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
+> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
+
+<!-- /SYNC:plan-granularity -->
 
 If ANY check fails → STOP. Ask user: "Phase needs more detail before implementation. Refine with /plan? [Y/n]"
 DO NOT implement a phase that contains planning verbs, unnamed files, or unresolved decisions.
@@ -73,8 +132,22 @@ DO NOT implement a phase that contains planning verbs, unnamed files, or unresol
 ## Per-Phase Quality Cycle (MANDATORY)
 
 <HARD-GATE>
-> **Iterative Phase Quality** — Assess complexity BEFORE planning (signals: >5 files +2, cross-service +3, new pattern +2). Score ≥6 → MUST decompose into phases. Each phase: plan → implement → review → fix → verify. No phase >5 files or >3h effort. DO NOT start next phase until current passes VERIFY.
-> MUST READ `.claude/skills/shared/iterative-phase-quality-protocol.md` for full protocol and checklists.
+<!-- SYNC:iterative-phase-quality -->
+
+> **Iterative Phase Quality** — Score complexity BEFORE planning.
+>
+> **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
+> **Score >=6 →** MUST decompose into phases. Each phase:
+>
+> - ≤5 files modified
+> - ≤3h effort
+> - Follows cycle: plan → implement → review → fix → verify
+> - Do NOT start Phase N+1 until Phase N passes VERIFY
+>
+> **Phase success = all TCs pass + code-reviewer agent approves + no CRITICAL findings.**
+
+<!-- /SYNC:iterative-phase-quality -->
+
 Each plan phase = one quality cycle (plan→implement→review→fix→verify).
 DO NOT start next phase until current phase passes VERIFY.
 After each phase: re-assess remaining phases for scope changes.
@@ -93,18 +166,12 @@ After implementing each phase, before marking it complete:
 
 ## Greenfield Mode
 
-> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+> **Auto-detected** when no code directories (`src/`, `app/`, `lib/`, `packages/`) or manifests (`package.json`/`*.sln`/`go.mod`) exist.
 
-**When greenfield is detected:**
-
-1. If an **approved plan exists** in `plans/`: scaffold project structure from the plan
-2. If **no approved plan**: redirect to `/plan` first — "No approved plan found. Run /plan first to create a greenfield project plan."
-3. Generate: folder layout, starter files, build config, CI skeleton, CLAUDE.md
-4. Skip codebase pattern search (no patterns exist yet)
-5. Use plan's tech stack decisions to generate project scaffold
-6. After scaffolding, run `/project-config` to populate project configuration
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+1. **Approved plan exists** in `plans/` → scaffold from plan
+2. **No plan** → redirect: "Run /plan first to create a greenfield project plan."
+3. Generate folder layout, starter files, build config, CI skeleton, CLAUDE.md
+4. Skip codebase pattern search. After scaffolding, run `/project-config`.
 
 ## Variant Decision Guide
 
@@ -125,11 +192,10 @@ Think harder to plan & start working on these tasks:
 
 ## Your Approach
 
-1. **Question Everything**: Use `AskUserQuestion` tool to fully understand the request, constraints, and true objectives. Don't assume — clarify until certain.
-2. **Brutal Honesty**: Provide frank feedback. If something is unrealistic or over-engineered, say so directly. Prevent costly mistakes.
-3. **Explore Alternatives**: Consider multiple approaches. Present 2-3 viable solutions with clear pros/cons.
-4. **Challenge Assumptions**: Question the initial approach. Often the best solution differs from what was originally envisioned.
-5. **Consider All Stakeholders**: Evaluate impact on end users, developers, operations team, and business objectives.
+- MUST use `AskUserQuestion` to clarify — NEVER assume requirements
+- MUST be brutally honest — flag unrealistic/over-engineered approaches directly
+- MUST present 2-3 alternatives with pros/cons for non-trivial decisions
+- MUST challenge initial approach — the best solution often differs from first instinct
 
 ---
 
@@ -139,30 +205,22 @@ Think harder to plan & start working on these tasks:
 
 ### Research
 
-- Use multiple `researcher` subagents in parallel to explore the request, validate ideas, and find best solutions.
-- Keep research reports concise (≤150 lines) with citations.
-- Use `/scout-ext` (preferred) or `/scout` (fallback) to search the codebase.
-- **External Memory**: Write all research findings to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
+- Parallel `researcher` subagents. Reports <=150 lines with citations.
+- `/scout-ext` (preferred) or `/scout` (fallback) for codebase search.
+- MUST write findings to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
 
 ### Plan
 
-- Use `planner` subagent to create an implementation plan using progressive disclosure structure.
-- Create directory using plan naming pattern, save overview at `plan.md` (under 80 lines).
-- For each phase: `phase-XX-name.md` with Context, Overview (date/priority/status), Key Insights, Requirements, Architecture, Related Code Files, Implementation Steps, Todo List, Success Criteria, Risk Assessment, Security Considerations, Next Steps.
+- `planner` subagent with progressive disclosure: `plan.md` (<=80 lines) + `phase-XX-name.md` per phase.
+- Each phase: Context, Overview, Requirements, Architecture, Related Files, Steps, TCs, Success Criteria, Risks, Next Steps.
 
 ### Implementation
 
-- Use `/code` slash command to implement the plan step by step.
-- Use `ui-ux-designer` subagent for frontend work per `./docs/design-guidelines.md`.
-- For product UIs (dashboards, admin panels, SaaS apps), activate `/interface-design` for craft-driven design guidance.
-- For marketing pages, landing pages, creative UIs, or screenshot replication, activate `/frontend-design` for distinctive design with bold aesthetics.
-- Run type checking and compile to verify no syntax errors.
+- `/code` to implement step by step. `/interface-design` for product UIs. `/frontend-design` for marketing/creative UIs.
+- `ui-ux-designer` subagent for frontend per `./docs/design-guidelines.md`.
+- MUST run type checking and compile after each change.
 
-**Subagent Context Discipline:**
-
-- **Provide full task text** — paste task content into subagent prompt; don't make subagent read plan file
-- **"Ask questions before starting"** — subagent should surface uncertainties before implementing
-- **Self-review before reporting** — subagent checks completeness, quality, YAGNI before returning results
+**Subagent Discipline:** Paste full task text (NEVER make subagent read plan file). Require "ask questions before starting". Require self-review before reporting.
 
 ### Batch Checkpoint (Large Plans)
 
@@ -182,57 +240,77 @@ mistakes compound through later tasks.
 
 ### Testing
 
-- Write real tests covering happy path, edge cases, and error cases.
-- Use `tester` subagent to run tests. If failures: use `debugger` subagent to find root cause, fix, re-run.
-- Repeat until all tests pass. Do not use fake data, mocks, or temporary solutions just to pass the build.
+- Real tests: happy path, edge cases, error cases. NEVER fake data/mocks just to pass build.
+- `tester` subagent → failures → `debugger` subagent → fix → repeat until green.
 
 ### Code Review
 
-- **Two-stage review** (see `.claude/skills/shared/two-stage-task-review-protocol.md`):
-    1. First: dispatch `spec-compliance-reviewer` to verify implementation matches spec
-    2. Only after spec passes: dispatch `code-reviewer` for quality review
-- If critical issues: fix and re-run `tester`.
-- Repeat until all tests pass and code is reviewed.
-- Report summary to user and ask for approval.
+<!-- SYNC:two-stage-task-review -->
 
-### Project Management & Documentation
+> **Two-Stage Task Review** — Both stages MUST complete before marking task done.
+>
+> **Stage 1: Self-review** — Immediately after implementation:
+>
+> - Requirements met? No regressions? Code quality acceptable?
+>
+> **Stage 2: Cross-review** — Via `code-reviewer` subagent:
+>
+> - Catches blind spots, convention drift, missed edge cases
+>
+> **NEVER skip Stage 2.** Self-review alone misses 40%+ of issues.
 
-**If user approves:** Use `project-manager` and `docs-manager` subagents in parallel to update progress and documentation.
-**If user rejects:** Ask user to explain issues, fix, and repeat.
+<!-- /SYNC:two-stage-task-review -->
 
-### Onboarding
+(1) `spec-compliance-reviewer` first, (2) `code-reviewer` after spec passes.
 
-- Instruct user on getting started (API keys, env vars, config) if needed.
-- Help configure step by step, one question at a time.
+- Critical issues → fix → re-run `tester`. Report summary to user for approval.
 
-### Final Report
+### PM, Docs & Final Report
 
-- Summary of changes with next steps.
-- Ask user if they want to commit and push via `git-manager` subagent.
+- **Approved:** Parallel `project-manager` + `docs-manager` subagents. **Rejected:** Ask issues, fix, repeat.
+- Final: summary of changes + next steps. Ask about commit/push via `git-manager`.
 
-## Red Flags — STOP (Implementation-Specific)
+## Red Flags — STOP
 
-If you're thinking:
+| Evasion thought                     | Correct action                                         |
+| ----------------------------------- | ------------------------------------------------------ |
+| "Too simple for a plan"             | Plan anyway. Hidden complexity.                        |
+| "I already know how"                | Check codebase patterns first. NEVER assume.           |
+| "Code first, test later"            | Write test first. Or verify after EACH change.         |
+| "Plan is close enough"              | Follow exactly or raise concerns. Drift compounds.     |
+| "Commit after everything"           | Commit after each task. Frequent commits prevent loss. |
+| "This refactor will improve things" | Only refactor what's in scope. YAGNI.                  |
+| "Review is obvious, skip it"        | NEVER skip. Reviews catch what authors miss.           |
 
-- "This is too simple to need a plan" — Simple tasks have hidden complexity. Plan anyway.
-- "I already know how to do this" — Check codebase patterns first. Your assumptions may be wrong.
-- "Let me just code it, then test" — TDD. Write the test first. Or at minimum, verify after each change.
-- "The plan is close enough, I'll adapt" — Follow the plan exactly or raise concerns. Drift compounds.
-- "I'll commit after I finish everything" — Commit after each task. Frequent commits prevent loss.
-- "This refactor will make it better" — Only refactor what's in scope. YAGNI.
-- "I can skip the review, it's obvious" — Reviews catch what authors miss. Never skip.
+<!-- SYNC:graph-assisted-investigation -->
 
-> **Graph-Assisted Investigation** — When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files.
-> MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full protocol and checklists.
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
 > After implementing, run `python .claude/scripts/code_graph connections <file> --json` on modified files to verify no related files need updates.
 
 ### Graph-Trace Before Implementation
 
-When graph DB is available, BEFORE writing code, trace to understand the blast radius:
+MUST run BEFORE writing code when graph.db exists:
 
-- `python .claude/scripts/code_graph trace <file-to-modify> --direction both --json` — see what calls this code AND what it triggers
-- `python .claude/scripts/code_graph trace <file-to-modify> --direction downstream --json` — see all downstream consumers that may need updating
-- This prevents breaking implicit dependencies (bus message consumers, event handlers) that aren't visible in the file itself
+- `python .claude/scripts/code_graph trace <file-to-modify> --direction both --json` — callers + triggers
+- `python .claude/scripts/code_graph trace <file-to-modify> --direction downstream --json` — all downstream consumers
+- Prevents breaking implicit dependencies (bus consumers, event handlers) invisible in the file itself.
 
 ---
 
@@ -267,9 +345,26 @@ When graph DB is available, BEFORE writing code, trace to understand the blast r
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
 **MANDATORY IMPORTANT MUST** READ the following files before starting:
 
-- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/plan-quality-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/rationalization-prevention-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/ui-system-context.md` before starting
-- **MUST** READ `.claude/skills/shared/iterative-phase-quality-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting
+<!-- SYNC:plan-granularity:reminder -->
+
+- **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
+<!-- /SYNC:plan-granularity:reminder -->
+  <!-- SYNC:understand-code-first:reminder -->
+
+- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:plan-quality:reminder -->
+- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+      <!-- /SYNC:plan-quality:reminder -->
+      <!-- SYNC:rationalization-prevention:reminder -->
+- **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+      <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- SYNC:ui-system-context:reminder -->
+- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+      <!-- /SYNC:ui-system-context:reminder -->
+      <!-- SYNC:iterative-phase-quality:reminder -->
+- **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+      <!-- /SYNC:iterative-phase-quality:reminder -->
+      <!-- SYNC:graph-assisted-investigation:reminder -->
+- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->

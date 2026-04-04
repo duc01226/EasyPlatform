@@ -6,24 +6,79 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
-> **Rationalization Prevention** — AI consistently skips steps via: "too simple for a plan", "I'll test after", "already searched", "code is self-explanatory". These are EVASIONS — not valid reasons. Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to "save time".
-> MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` for full protocol and checklists.
-> **Estimation Framework** — SP scale: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large, high risk) → 13(epic, SHOULD split) → 21(MUST split). MUST provide `story_points` and `complexity` estimate after investigation.
-> MUST READ `.claude/skills/shared/estimation-framework.md` for full protocol and checklists.
+<!-- SYNC:rationalization-prevention -->
+
+> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
+>
+> | Evasion                      | Rebuttal                                                      |
+> | ---------------------------- | ------------------------------------------------------------- |
+> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
+> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
+> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
+> | "Just do it"                 | Still need TaskCreate. Skip depth, never skip tracking.       |
+> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
+> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
+> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
+
+<!-- /SYNC:rationalization-prevention -->
+<!-- SYNC:estimation-framework -->
+
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+
+<!-- /SYNC:estimation-framework -->
 
 - `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
-> **Plan Quality** — Every plan phase MUST include `## Test Specifications` section with TC-{FEAT}-{NNN} format. Verify TC satisfaction per phase before marking complete. Plans must include `story_points` and `effort` in frontmatter.
-> MUST READ `.claude/skills/shared/plan-quality-protocol.md` for full protocol and checklists.
+<!-- SYNC:plan-quality -->
 
-> **Iterative Phase Quality** — Assess complexity BEFORE planning (signals: >5 files +2, cross-service +3, new pattern +2). Score ≥6 → MUST decompose into phases. Each phase: plan → implement → review → fix → verify. No phase >5 files or >3h effort. DO NOT start next phase until current passes VERIFY.
-> MUST READ `.claude/skills/shared/iterative-phase-quality-protocol.md` for full protocol and checklists.
-> Before routing, assess complexity score. Score ≥3 → plan MUST produce multiple phases with per-phase quality cycles.
+> **Plan Quality** — Every plan phase MUST include test specifications.
+>
+> 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
+> 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
+> 3. TC IDs follow `TC-{FEATURE}-{NNN}` format — reference by ID, never embed full content
+> 4. Before any new workflow step: call `TaskList` and re-read the phase file
+> 5. On context compaction: call `TaskList` FIRST — never create duplicate tasks
+> 6. Verify TC satisfaction per phase before marking complete (evidence must be `file:line`, not TBD)
+>
+> **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/tdd-spec` fills after.
+
+<!-- /SYNC:plan-quality -->
+
+<!-- SYNC:iterative-phase-quality -->
+
+> **Iterative Phase Quality** — Score complexity BEFORE planning.
+>
+> **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
+> **Score >=6 →** MUST decompose into phases. Each phase:
+>
+> - ≤5 files modified
+> - ≤3h effort
+> - Follows cycle: plan → implement → review → fix → verify
+> - Do NOT start Phase N+1 until Phase N passes VERIFY
+>
+> **Phase success = all TCs pass + code-reviewer agent approves + no CRITICAL findings.**
+
+<!-- /SYNC:iterative-phase-quality -->
+
+> Before routing, assess complexity score. Score >=3 → plan MUST produce multiple phases with per-phase quality cycles.
 
 ## Quick Summary
 
@@ -108,9 +163,10 @@ Check the `## Plan Context` section in the injected context:
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
-- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these three final tasks:
+    1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
+    2. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## Important Notes
 
@@ -146,9 +202,22 @@ Check the `## Plan Context` section in the injected context:
 
 ## Post-Plan Granularity Self-Check (MANDATORY)
 
-> Per `.claude/skills/shared/plan-granularity-protocol.md`
+<!-- SYNC:plan-granularity -->
 
-After creating all phase files, run the **recursive decomposition loop** from `plan-granularity-protocol.md`:
+> **Plan Granularity** — Every phase must pass 5-point check before implementation:
+>
+> 1. Lists exact file paths to modify (not generic "implement X")
+> 2. No planning verbs (research, investigate, analyze, determine, figure out)
+> 3. Steps ≤30min each, phase total ≤3h
+> 4. ≤5 files per phase
+> 5. No open decisions or TBDs in approach
+>
+> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
+> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
+
+<!-- /SYNC:plan-granularity -->
+
+After creating all phase files, run the **recursive decomposition loop**:
 
 1. Score each phase against the 5-point criteria (file paths, no planning verbs, ≤30min steps, ≤5 files, no open decisions)
 2. For each FAILING phase → create task to decompose it into a sub-plan (with its own /plan → /plan-review → /plan-validate → fix cycle)
@@ -173,11 +242,21 @@ After creating all phase files, run the **recursive decomposition loop** from `p
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** include Test Specifications section and story_points in plan frontmatter
-- **MUST** verify all phases pass granularity check per `plan-granularity-protocol.md`
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/rationalization-prevention-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting
-- **MUST** READ `.claude/skills/shared/plan-quality-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/iterative-phase-quality-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/plan-granularity-protocol.md` before starting
+      <!-- SYNC:plan-granularity:reminder -->
+- **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
+      <!-- /SYNC:plan-granularity:reminder -->
+    <!-- SYNC:understand-code-first:reminder -->
+- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:rationalization-prevention:reminder -->
+- **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+      <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
+- **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
+      <!-- /SYNC:estimation-framework:reminder -->
+      <!-- SYNC:plan-quality:reminder -->
+- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+      <!-- /SYNC:plan-quality:reminder -->
+      <!-- SYNC:iterative-phase-quality:reminder -->
+- **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+    <!-- /SYNC:iterative-phase-quality:reminder -->

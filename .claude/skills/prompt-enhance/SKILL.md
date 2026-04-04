@@ -25,7 +25,20 @@ description: '[Skill Management] Enhance any prompt/doc/skill file with AI atten
 - Middle section = detailed steps. Accept intentional duplication between top and bottom
 - **Prompt quality > token count** — but verbose prompts degrade quality too. Optimize for clarity-per-token
 - Never remove **meaningful** content — but DO tighten prose, merge redundant sections, and cut filler
-- MUST READ `.claude/skills/shared/output-quality-principles.md` for the 10-rule output quality protocol
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
 
 ---
 
@@ -113,6 +126,12 @@ Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization co
 - `.claude/` protocol files → YES, always add inline summary (content is stable, belongs to the framework)
 - `docs/project-reference/` files → NO inline summary (content varies per project, auto-injected by hooks)
 - For project-reference docs, add: `(content auto-injected by hook — check for [Injected: ...] header before reading)`
+
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
 
 ### Transformation 2: Top Summary Section
 
@@ -234,5 +253,10 @@ For each `.claude/` protocol reference:
 - **MUST** keep all meaningful content — only restructure/compress, never delete rules or code examples
 - **MUST** verify no YAML frontmatter corruption after changes
   **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/output-quality-principles.md` before starting
-- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+    <!-- SYNC:output-quality-principles:reminder -->
+- **MUST** follow output quality principles: token efficiency, lead with answer, no trailing summaries
+    <!-- /SYNC:output-quality-principles:reminder -->
+    <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **MUST** READ `CLAUDE.md` before starting

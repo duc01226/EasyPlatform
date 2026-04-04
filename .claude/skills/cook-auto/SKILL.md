@@ -7,20 +7,71 @@ disable-model-invocation: false
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 - `docs/test-specs/` — Test specifications by module (read existing TCs; generate/update test specs via `/tdd-spec` after implementation)
 
-> **Plan Quality** — Every plan phase MUST include `## Test Specifications` section with TC-{FEAT}-{NNN} format. Verify TC satisfaction per phase before marking complete. Plans must include `story_points` and `effort` in frontmatter.
-> MUST READ `.claude/skills/shared/plan-quality-protocol.md` for full protocol and checklists.
+<!-- SYNC:plan-quality -->
 
-> **Rationalization Prevention** — AI consistently skips steps via: "too simple for a plan", "I'll test after", "already searched", "code is self-explanatory". These are EVASIONS — not valid reasons. Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to "save time".
-> MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` for full protocol and checklists.
+> **Plan Quality** — Every plan phase MUST include test specifications.
+>
+> 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
+> 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
+> 3. TC IDs follow `TC-{FEATURE}-{NNN}` format — reference by ID, never embed full content
+> 4. Before any new workflow step: call `TaskList` and re-read the phase file
+> 5. On context compaction: call `TaskList` FIRST — never create duplicate tasks
+> 6. Verify TC satisfaction per phase before marking complete (evidence must be `file:line`, not TBD)
+>
+> **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/tdd-spec` fills after.
 
-> **Red Flag STOP Conditions** — STOP current approach when: 3+ fix attempts on same issue (root cause not identified), each fix reveals NEW problems (upstream root cause), fix requires 5+ files for "simple" change (wrong abstraction layer), using "should work"/"probably fixed" without verification evidence. After 3 failed attempts, report all outcomes and ask user before attempt #4.
-> MUST READ `.claude/skills/shared/red-flag-stop-conditions-protocol.md` for full protocol and checklists.
+<!-- /SYNC:plan-quality -->
+
+<!-- SYNC:rationalization-prevention -->
+
+> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
+>
+> | Evasion                      | Rebuttal                                                      |
+> | ---------------------------- | ------------------------------------------------------------- |
+> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
+> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
+> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
+> | "Just do it"                 | Still need TaskCreate. Skip depth, never skip tracking.       |
+> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
+> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
+> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
+
+<!-- /SYNC:rationalization-prevention -->
+
+<!-- SYNC:red-flag-stop-conditions -->
+
+> **Red Flag Stop Conditions** — STOP and escalate to user via AskUserQuestion when:
+>
+> 1. Confidence drops below 60% on any critical decision
+> 2. Changes would affect >20 files (blast radius too large)
+> 3. Cross-service boundary is being crossed
+> 4. Security-sensitive code (auth, crypto, PII handling)
+> 5. Breaking change detected (interface, API contract, DB schema)
+> 6. Test coverage would decrease after changes
+> 7. Approach requires technology/pattern not in the project
+>
+> **NEVER proceed past a red flag without explicit user approval.**
+
+<!-- /SYNC:red-flag-stop-conditions -->
 
 > **Skill Variant:** Variant of `/cook` — autonomous execution without user confirmation.
 
@@ -76,8 +127,16 @@ disable-model-invocation: false
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** validate decisions with user via `AskUserQuestion` — never auto-decide
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/plan-quality-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/rationalization-prevention-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/red-flag-stop-conditions-protocol.md` before starting
+**MANDATORY IMPORTANT MUST** READ the following files before starting:
+    <!-- SYNC:understand-code-first:reminder -->
+- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:plan-quality:reminder -->
+- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+      <!-- /SYNC:plan-quality:reminder -->
+      <!-- SYNC:rationalization-prevention:reminder -->
+- **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+      <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- SYNC:red-flag-stop-conditions:reminder -->
+- **MUST** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
+    <!-- /SYNC:red-flag-stop-conditions:reminder -->

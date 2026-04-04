@@ -8,11 +8,33 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 **Prerequisites:** **MUST READ** before executing:
 
-> **Scan & Update Reference Doc** — Read existing doc first, scan codebase for current state, diff against doc content, update only changed sections, preserve manual annotations.
-> MUST READ `.claude/skills/shared/scan-and-update-reference-doc-protocol.md` for full protocol and checklists.
+<!-- SYNC:scan-and-update-reference-doc -->
 
-> **Output Quality** — Reference docs are injected into AI context. No inventories/counts, no TOCs, no directory trees, no checkboxes. Rules > descriptions. 1 example per pattern. Tables > prose. Primacy-recency anchoring (critical rules in first AND last 5 lines).
-> MUST READ `.claude/skills/shared/output-quality-principles.md` for full 10-rule protocol.
+> **Scan & Update Reference Doc** — Surgical updates only, never full rewrite.
+>
+> 1. **Read existing doc** first — understand current structure and manual annotations
+> 2. **Detect mode:** Placeholder (only headings, no content) → Init mode. Has content → Sync mode.
+> 3. **Scan codebase** for current state (grep/glob for patterns, counts, file paths)
+> 4. **Diff** findings vs doc content — identify stale sections only
+> 5. **Update ONLY** sections where code diverged from doc. Preserve manual annotations.
+> 6. **Update metadata** (date, counts, version) in frontmatter or header
+> 7. **NEVER** rewrite entire doc. NEVER remove sections without evidence they're obsolete.
+
+<!-- /SYNC:scan-and-update-reference-doc -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
 
 ## Quick Summary
 
@@ -136,5 +158,9 @@ Spot-check 3 file counts:
 - **MUST** search codebase for 3+ similar patterns before creating new code
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/scan-and-update-reference-doc-protocol.md` before starting
+    <!-- SYNC:scan-and-update-reference-doc:reminder -->
+- **MUST** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+    <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+    <!-- SYNC:output-quality-principles:reminder -->
+- **MUST** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
+    <!-- /SYNC:output-quality-principles:reminder -->

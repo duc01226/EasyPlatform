@@ -14,8 +14,13 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
->     > **Graph Impact Analysis** — Use `trace --direction downstream` on changed files to find all impacted consumers, bus message handlers, event subscribers. Verify each needs updating.
->     > MUST READ `.claude/skills/shared/graph-impact-analysis-protocol.md` for full protocol and checklists.
+>
+> <!-- SYNC:graph-impact-analysis -->
+>
+> > **Graph Impact Analysis** — When `.code-graph/graph.db` exists, run `blast-radius --json` to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use `trace --direction downstream` for deep chains on high-impact files.
+>
+> <!-- /SYNC:graph-impact-analysis -->
+>
 > - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 > - `docs/test-specs/` — Test specifications by module (read existing TCs before generating new to avoid duplicates and maintain TC ID continuity)
 >
@@ -40,10 +45,23 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 **Key Rules:**
 
-- **⚠️ MUST READ** `.claude/skills/shared/references/module-codes.md` for TC ID formats and module codes
-- > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
-  > MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
-  > before executing
+- **⚠️ MUST READ** `references/module-codes.md` (relative to skill shared dir) for TC ID formats and module codes
+  <!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
+
 - **⚠️ INVESTIGATE FIRST** — NEVER generate test specs without completing Phase 0 (Business & Code Investigation). You must understand the business logic and code paths before writing any test case.
 - **⚠️ ALWAYS PLAN TASKS** — Use `TaskCreate` to break work into granular todo items BEFORE starting. Must include a final review task.
 - Every test case must have `Evidence: {FilePath}:{LineNumber}`
@@ -362,6 +380,11 @@ Before completing test artifacts:
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/graph-impact-analysis-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/references/module-codes.md` before starting
-- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+    <!-- SYNC:graph-impact-analysis:reminder -->
+- **MUST** run graph impact analysis on changed files when `.code-graph/graph.db` exists. Compute stale file gap.
+    <!-- /SYNC:graph-impact-analysis:reminder -->
+- **MUST** READ `shared/references/module-codes.md` for TC ID formats and module codes
+    <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **MUST** READ `CLAUDE.md` before starting

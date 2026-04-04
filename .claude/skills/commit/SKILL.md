@@ -3,7 +3,7 @@ name: commit
 version: 2.0.0
 description: "[Git] Stage changes and create git commits with conventional commit messages. Use when asked to "commit", "stage and commit", "save changes", or after completing implementation tasks. Alias for /git/cm."
 
-allowed-tools: Bash, Read, Glob, Grep
+allowed-tools: Bash, Read, Glob, Grep, Skill
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
@@ -74,6 +74,20 @@ git add .
 # Or stage specific files
 git add <file-path>
 ```
+
+### Step 2.5: Docs-Update Triage
+
+Before committing, check if staged files impact documentation:
+
+1. Run `git diff --name-only --cached` to list staged files
+2. Check if any staged file matches doc-impact patterns:
+    - `src/Services/**` → may impact `docs/business-features/`
+    - `.claude/skills/**` → may impact `.claude/docs/skills/`
+    - `.claude/hooks/**` → may impact `.claude/docs/hooks/`
+    - `.claude/workflows.json` → may impact `CLAUDE.md` workflow table
+    - `src/WebV2/**` → may impact frontend pattern docs
+3. If matches found: invoke `/docs-update` skill, then re-stage any doc changes with `git add`
+4. If no matches: skip (log "No doc-impacting files staged")
 
 ### Step 3: Generate Commit Message
 

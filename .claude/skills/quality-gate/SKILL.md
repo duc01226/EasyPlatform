@@ -6,13 +6,29 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
-> **Graph Impact Analysis** — Use `trace --direction downstream` on changed files to find all impacted consumers, bus message handlers, event subscribers. Verify each needs updating.
-> MUST READ `.claude/skills/shared/graph-impact-analysis-protocol.md` for full protocol and checklists.
+<!-- SYNC:graph-impact-analysis -->
+
+> **Graph Impact Analysis** — When `.code-graph/graph.db` exists, run `blast-radius --json` to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use `trace --direction downstream` for deep chains on high-impact files.
+
+<!-- /SYNC:graph-impact-analysis -->
 
 ## Quick Summary
 
@@ -36,8 +52,19 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 
 > When this task involves frontend or UI changes,
 
-> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
-> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
@@ -51,7 +78,7 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 - [ ] Dependencies identified and available
 - [ ] Design specs available (if UI work)
 - [ ] No blocking questions unresolved
-- [ ] Story points assigned (Fibonacci 1-21, see `.claude/skills/shared/estimation-framework.md`)
+- [ ] Story points assigned (Fibonacci 1-21: 1=trivial, 2=small, 3=medium, 5=large, 8=very large, 13=epic SHOULD split, 21=MUST split)
 
 ### Pre-QA Gate
 
@@ -124,6 +151,12 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/graph-impact-analysis-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/ui-system-context.md` before starting
+      <!-- SYNC:understand-code-first:reminder -->
+- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:graph-impact-analysis:reminder -->
+- **MUST** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
+      <!-- /SYNC:graph-impact-analysis:reminder -->
+      <!-- SYNC:ui-system-context:reminder -->
+- **MUST** read frontend-patterns-reference, scss-styling-guide, and design-system/README before any UI work.
+      <!-- /SYNC:ui-system-context:reminder -->

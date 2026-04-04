@@ -1,73 +1,90 @@
 ---
 name: skill-optimize
-version: 1.0.0
-description: '[Skill Management] Optimize an existing agent skill'
+version: 2.0.0
+description: '[Skill Management] Optimize an existing agent skill for token efficiency, attention anchoring, and SYNC protocol compliance. Triggers on: optimize skill, improve skill, refactor skill, skill too long.'
 disable-model-invocation: false
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
 
 ## Quick Summary
 
-**Goal:** Optimize an existing skill for token efficiency, clarity, and effectiveness.
+**Goal:** Optimize an existing skill for token efficiency, AI attention anchoring, and SYNC protocol compliance.
 
 **Workflow:**
 
-1. **Analyze** — Review skill structure, line count, progressive disclosure
-2. **Optimize** — Reduce SKILL.md size, move details to references, improve clarity
-3. **Validate** — Verify skill still works correctly after optimization
+1. **Analyze** — Review structure, line count, SYNC tags, attention anchoring
+2. **Check SYNC compliance** — Verify protocols are inlined (not file references), tags balanced
+3. **Optimize** — Apply prompt-enhance principles, move details to references, improve clarity
+4. **Enhance** — Call `/prompt-enhance` on the optimized SKILL.md
+5. **Validate** — Verify skill still works correctly after optimization
 
 **Key Rules:**
 
-- Delegates to `skill-creator` for optimization patterns
-- SKILL.md target: under 100 lines with progressive disclosure
-- Reference files also under 100 lines each
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-Think harder.
-Use `skill-creator` and `claude-code` skills.
-Use `docs-seeker` skills to search for documentation if needed.
+- SKILL.md under 500 lines; reference files under 100 lines each
+- Shared protocols MUST be inlined via `<!-- SYNC:tag -->` blocks, NEVER `MUST READ shared/` references
+- MUST call `/prompt-enhance` as final quality pass
+- Attention structure: SYNC blocks at top, Quick Summary, detailed steps, Closing Reminders with `:reminder` blocks at bottom
 
 ## Arguments
 
 SKILL: $1 (default: `*`)
 PROMPT: $2 (default: empty)
 
-## Your mission
+## Your Mission
 
-Optimize an existing skill in `.claude/skills/${SKILL}` directory.
+Optimize skill at `.claude/skills/${SKILL}` directory.
 
 **Mode detection:**
 
 - If arguments contain "auto" or "trust me": Skip plan approval, implement directly.
 - Otherwise: Propose plan first, ask user to review before implementing.
 
-## Additional instructions
-
 <additional-instructions>$PROMPT</additional-instructions>
 
-## Output Requirements
+## Optimization Checklist
 
-An output implementation plan must also follow the progressive disclosure structure:
+### 1. Structure Check
 
-- Always keep in mind that `SKILL.md` and reference files should be token consumption efficient, so that **progressive disclosure** can be leveraged at best.
-- `SKILL.md` is always short and concise, straight to the point, treat it as a quick reference guide.
-- Create a directory using naming pattern from `## Naming` section.
-- Save the overview access point at `plan.md`, keep it generic, under 80 lines, and list each phase with status/progress and links.
-- For each phase, add `phase-XX-phase-name.md` files containing sections (Context links, Overview with date/priority/statuses, Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps).
+- [ ] Has `## Quick Summary` (Goal/Workflow/Key Rules) within first 30 lines
+- [ ] Has `## Closing Reminders` at bottom with `:reminder` SYNC blocks
+- [ ] SYNC protocol blocks at top (primacy zone)
+- [ ] Critical rules appear in BOTH top and bottom sections (primacy-recency)
 
-**IMPORTANT:**
+### 2. SYNC Protocol Check
 
-- Skills are not documentation, they are practical instructions for Claude Code to use the tools, packages, plugins or APIs to achieve the tasks.
-- Each skill teaches Claude how to perform a specific development task, not what a tool does.
-- Claude Code can activate multiple skills automatically to achieve the user's request.
+- [ ] No `MUST READ .claude/skills/shared/` file references — convert to SYNC inline blocks
+- [ ] All SYNC tags balanced (every open has matching close)
+- [ ] Content matches canonical source: `.claude/skills/shared/sync-inline-versions.md`
+- [ ] `:reminder` blocks present at bottom for each protocol
+
+### 3. Token Efficiency Check
+
+- [ ] SKILL.md under 500 lines (target: under 300)
+- [ ] No filler phrases, redundant explanations, or TOCs
+- [ ] Tables/bullets over prose paragraphs
+- [ ] Examples are minimal (1 per pattern, not verbose)
+
+### 4. Final Enhancement
+
+- [ ] Call `/prompt-enhance` on the finished SKILL.md
+- [ ] Verify no content loss (diff check)
+- [ ] Rule density maintained or improved (count MUST/NEVER/ALWAYS before and after)
 
 ---
 
 ## Closing Reminders
 
 - **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **MUST** inline shared protocols via `<!-- SYNC:tag -->` — NEVER use file references
+- **MUST** call `/prompt-enhance` on optimized skill as final quality pass
+- **MUST** verify SYNC tag balance and content matches canonical source
+    <!-- SYNC:shared-protocol-duplication-policy:reminder -->
+- **MUST** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
+    <!-- /SYNC:shared-protocol-duplication-policy:reminder -->

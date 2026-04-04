@@ -8,8 +8,21 @@ description: '[Implementation] Start coding & testing an existing plan'
 
 **Prerequisites:** **MUST READ** before executing:
 
-> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
 
 - `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
 - `docs/project-reference/scss-styling-guide.md` — Styling/BEM guide (read when task involves frontend/UI)
@@ -52,11 +65,21 @@ description: '[Implementation] Start coding & testing an existing plan'
 ## Pre-Implementation Granularity Gate (MANDATORY)
 
 <HARD-GATE>
-Per `.claude/skills/shared/plan-granularity-protocol.md` — before implementing ANY phase:
-1. Verify every step names specific files (not generic "implement X")
-2. Verify no step uses planning verbs: "research", "determine", "figure out", "decide", "evaluate", "explore"
-3. Verify each step ≤30 min, phase total ≤5 files and ≤3h
-4. Verify no unresolved decisions or TBDs in approach
+
+<!-- SYNC:plan-granularity -->
+
+> **Plan Granularity** — Every phase must pass 5-point check before implementation:
+>
+> 1. Lists exact file paths to modify (not generic "implement X")
+> 2. No planning verbs (research, investigate, analyze, determine, figure out)
+> 3. Steps ≤30min each, phase total ≤3h
+> 4. ≤5 files per phase
+> 5. No open decisions or TBDs in approach
+>
+> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
+> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
+
+<!-- /SYNC:plan-granularity -->
 
 If ANY check fails → STOP. Ask user: "Phase needs more detail before implementation. Refine with /plan? [Y/n]"
 DO NOT implement a phase that contains planning verbs, unnamed files, or unresolved decisions.
@@ -207,5 +230,12 @@ Do not skip steps. Do not proceed if validation fails. Do not assume approval wi
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
 **MANDATORY IMPORTANT MUST** READ the following files before starting:
 
-- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+<!-- SYNC:plan-granularity:reminder -->
+
+- **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
+<!-- /SYNC:plan-granularity:reminder -->
+  <!-- SYNC:understand-code-first:reminder -->
+
+- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
 - **MUST** READ `CLAUDE.md` before starting

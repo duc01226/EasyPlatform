@@ -8,11 +8,17 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 **Prerequisites:** **MUST READ** before executing:
 
-> **Scan & Update Reference Doc** — Read existing doc first, scan codebase for current state, diff against doc content, update only changed sections, preserve manual annotations.
-> MUST READ `.claude/skills/shared/scan-and-update-reference-doc-protocol.md` for full protocol and checklists.
+<!-- SYNC:scan-and-update-reference-doc -->
 
-> **Output Quality** — Reference docs are injected into AI context. No inventories/counts, no TOCs, no directory trees, no checkboxes. Rules > descriptions. 1 example per pattern. Tables > prose. Primacy-recency anchoring (critical rules in first AND last 5 lines).
-> MUST READ `.claude/skills/shared/output-quality-principles.md` for full 10-rule protocol.
+> **Scan & Update Reference Doc** — When updating reference docs: (1) Read existing doc first. (2) Scan codebase for current state (grep/glob). (3) Diff findings vs doc content. (4) Update ONLY sections where code diverged from doc. (5) Preserve manual annotations. (6) Update metadata (date, counts). NEVER rewrite entire doc — surgical updates only.
+
+<!-- /SYNC:scan-and-update-reference-doc -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — 10 rules for reference docs: (1) No inventories/counts, (2) No directory trees, (3) No TOCs, (4) Rules over descriptions, (5) 1 example per pattern, (6) Tables over prose, (7) Primacy-recency anchoring (critical rules in first+last 5 lines), (8) No checkbox checklists — use "MUST verify X", (9) Min density: 8 MUST/NEVER/ALWAYS per 100 lines, (10) Verify base class names and code examples preserved.
+
+<!-- /SYNC:output-quality-principles -->
 
 ## Quick Summary
 
@@ -123,5 +129,7 @@ Read the report. Build these sections:
 - **MUST** search codebase for 3+ similar patterns before creating new code
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/scan-and-update-reference-doc-protocol.md` before starting
+  **MANDATORY IMPORTANT MUST** READ the following before starting:
+    <!-- SYNC:scan-and-update-reference-doc:reminder -->
+- **MUST** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+      <!-- /SYNC:scan-and-update-reference-doc:reminder -->

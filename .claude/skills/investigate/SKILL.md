@@ -9,10 +9,40 @@ allowed-tools: Read, Grep, Glob, Bash, Task, WebFetch, WebSearch, TodoWrite
 
 **Prerequisites:** **MUST READ** before executing:
 
-> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
-> **Graph-Assisted Investigation** — When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files.
-> MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full protocol and checklists.
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
@@ -43,51 +73,31 @@ allowed-tools: Read, Grep, Glob, Bash, Task, WebFetch, WebSearch, TodoWrite
 - Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`
 - For UI investigation, activate `visual-component-finder` skill FIRST
 
-> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+<!-- SYNC:root-cause-debugging -->
 
-# Feature Investigation
+> **Root Cause Debugging** — Systematic approach, never guess-and-check.
+>
+> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
+> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
+> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
+> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
+> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
+> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
+>
+> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
 
-READ-ONLY exploration skill for understanding existing features. No code changes.
+<!-- /SYNC:root-cause-debugging -->
 
 ## Investigation Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+**Be skeptical. Every claim needs `file:line` traced proof. Confidence >80% to act.**
 
-- Do NOT assume code works as named — verify by reading actual implementations
-- Every finding must include `file:line` evidence (grep results, read confirmations)
-- If you cannot prove a claim with a code trace, mark it as "inferred" with low confidence
-- Question assumptions: "Does this actually do what I think?" → read the implementation, not just the signature
-- Challenge completeness: "Is this all?" → grep for related usages, consumers, and cross-service references
-- Verify relationships: "Does A really call B?" → trace the actual call path with evidence
-- No "looks like it works" without proof — state what you verified and how
+- NEVER assume code works as named — MUST verify by reading actual implementations
+- MUST include `file:line` evidence for every finding; unproven claims MUST be marked "inferred" with low confidence
+- ALWAYS grep for related usages, consumers, and cross-service references — NEVER assume completeness
+- ALWAYS trace actual call paths with evidence — NEVER rely on signatures alone
 
-## Summary
-
-**Goal:** READ-ONLY exploration of existing features and logic — understand how code works without making changes.
-
-| Step | Action          | Key Notes                                                                      |
-| ---- | --------------- | ------------------------------------------------------------------------------ |
-| 1    | Discovery       | Search codebase for related files (Entities > Commands > Events > Controllers) |
-| 2    | Knowledge Graph | Read and document purpose, symbols, dependencies per file                      |
-| 3    | Flow Mapping    | Trace entry points through pipeline to exit points                             |
-| 4    | Analysis        | Extract business rules, validation, authorization, error handling              |
-| 5    | Synthesis       | Write executive summary with key files and flow diagrams                       |
-| 6    | Present         | Deliver findings, offer deeper dives on subtopics                              |
-
-**Key Principles:**
-
-- Strictly READ-ONLY — no code changes allowed
-- MUST read evidence-based-reasoning-protocol.md and knowledge-graph-template.md before starting
-- Evidence-based: validate every assumption with actual code references
-
-> **UI/Frontend Investigation?** If investigating a UI component from a screenshot, image, or visual reference, activate `visual-component-finder` skill FIRST. It uses a pre-built component index (`docs/component-index.json`) to match visuals to Angular components with >=85% confidence before deeper investigation.
-
-## Mode Selection
-
-| Mode            | Use When                                     | Workflow                                           |
-| --------------- | -------------------------------------------- | -------------------------------------------------- |
-| **Interactive** | User available, exploratory question         | Real-time collaboration, iterative tracing         |
-| **Autonomous**  | Deep analysis, complex cross-service tracing | Structured 4-phase workflow with analysis artifact |
+> **UI Investigation?** Activate `visual-component-finder` skill FIRST for screenshot/visual-based investigation. Uses `docs/component-index.json` to match visuals to Angular components with >=85% confidence.
 
 ## Workflow
 
@@ -115,10 +125,9 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 
 **IMPORTANT: You MUST read these files before starting. Do NOT skip.**
 
-- > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
-  > MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
-  > — Assumption validation, evidence chains, context anchoring
-- **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure
+- <!-- SYNC:knowledge-graph-template -->
+    > **Knowledge Graph Template** — For each analyzed file, document: filePath, type (Entity/Command/Query/EventHandler/Controller/Consumer/Component/Store/Service), architecturalPattern, content summary, symbols, dependencies, businessContext, referenceFiles, relevanceScore (1-10), evidenceLevel (verified/inferred), frameworkAbstractions, serviceContext. Investigation fields: entryPoints, outputPoints, dataTransformations, errorScenarios. Consumer/bus fields: messageBusMessage, messageBusProducers, crossServiceIntegration. Frontend fields: componentHierarchy, stateManagementStores, dataBindingPatterns, validationStrategies.
+      <!-- /SYNC:knowledge-graph-template -->
 
 **If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files first.
 
@@ -126,445 +135,124 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 
 ### Discovery Search Patterns
 
-#### File Discovery by Feature Name
+Grep `{FeatureName}` combined with: `EventHandler`, `BackgroundJob`, `Consumer`, `Service`, `Component`.
 
-```regex
-.*EventHandler.*{FeatureName}|{FeatureName}.*EventHandler
-.*BackgroundJob.*{FeatureName}|{FeatureName}.*BackgroundJob
-.*Consumer.*{FeatureName}|{FeatureName}.*Consumer
-.*Service.*{FeatureName}|{FeatureName}.*Service
-.*Component.*{FeatureName}|{FeatureName}.*Component
-```
-
-#### Priority Order for Analysis
-
-1. **Domain Entities** - Core business objects
-2. **Commands/Queries** - CQRS entry points (`UseCaseCommands/`, `UseCaseQueries/`)
-3. **Event Handlers** - Side effects (`UseCaseEvents/`, `*EventHandler.cs`)
-4. **Controllers** - API endpoints (`Controllers/`, `*Controller.cs`)
-5. **Consumers** - Cross-service (`*Consumer.cs`, `*BusMessage.cs`)
-6. **Background Jobs** - Scheduled processing (`*BackgroundJob*.cs`, `*Job.cs`)
-7. **Components/Stores** - Frontend (`*.component.ts`, `*.store.ts`)
-8. **Services/Helpers** - Supporting logic (`*Service.cs`, `*Helper.cs`)
+**Priority order:** (1) Entities → (2) Commands/Queries (`UseCaseCommands/`) → (3) Event Handlers (`UseCaseEvents/`) → (4) Controllers → (5) Consumers (`*BusMessage.cs`) → (6) Background Jobs → (7) Components/Stores → (8) Services/Helpers
 
 ### Dependency Tracing
 
-#### Backend
+**Backend:** method callers (grep `*.cs`), service injectors (grep interface in constructors), entity events (`EntityEvent<Name>`), cross-service (`*BusMessage` across services), repository usage (`IRepository<Name>`).
 
-| Looking for                    | Search pattern                                                           |
-| ------------------------------ | ------------------------------------------------------------------------ |
-| Who calls this method          | Grep method name across `*.cs`                                           |
-| Who injects this service       | Grep interface name in constructors                                      |
-| What events this entity raises | Grep `EntityEvent<EntityName>` (search for: project entity event class)  |
-| Cross-service consumers        | Grep `*BusMessage` type across all services                              |
-| Repository usage               | Grep `IRepository<EntityName>` or project queryable repository interface |
-
-#### Frontend
-
-| Looking for              | Search pattern                                                    |
-| ------------------------ | ----------------------------------------------------------------- |
-| Who uses this component  | Grep selector `app-component-name` in `*.html`                    |
-| Who imports this service | Grep service class name in `*.ts`                                 |
-| Store effects chain      | Trace `effectSimple` -> API call -> `tapResponse` -> state update |
-| Route entry              | Grep component name in `*routing*.ts`                             |
+**Frontend:** component users (grep selector in `*.html`), service importers (grep class in `*.ts`), store chains (`effectSimple` -> API -> `tapResponse` -> state), routes (grep component in `*routing*.ts`).
 
 ### Data Flow Mapping
 
-Document flow as text diagram:
+Document as: `[Entry] → [Validation] → [Processing] → [Persistence] → [Side Effects]`
 
-```text
-[Entry Point] --> [Step 1: Validation] --> [Step 2: Processing] --> [Step 3: Persistence]
-                                                  |
-                                                  v
-                                          [Side Effect: Event]
-```
-
-#### Flow Documentation Checklist
-
-1. **Entry Points** - API endpoint, UI action, scheduled job, message bus
-2. **Processing Pipeline** - Step-by-step through handlers
-3. **Data Transformations** - How data changes at each step
-4. **Persistence Points** - Where data is saved/loaded
-5. **Exit Points** - Responses, events, side effects
-6. **Cross-Service Flows** - Message bus boundaries
+**MUST trace:** (1) Entry points, (2) Processing pipeline, (3) Data transformations, (4) Persistence points, (5) Exit points/responses, (6) Cross-service message bus boundaries.
 
 ### Common Investigation Scenarios
 
-#### "How does feature X work?"
+| Question Type               | Steps                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| "How does X work?"          | Entry points → command/query handlers → entity changes → side effects                   |
+| "Where is logic for Y?"     | Keywords in commands/queries/entities → event handlers → helpers → frontend stores      |
+| "What happens when Z?"      | Identify trigger → trace handler chain → document side effects + error handling         |
+| "Why does A behave like B?" | Find code path → identify decision points → check config/feature flags → document rules |
 
-1. Find entry points (API, UI, job)
-2. Trace through command/query handlers
-3. Document entity changes
-4. Map side effects (events, notifications)
+### Project Pattern Recognition
 
-#### "Where is the logic for Y?"
+**Backend** (see `backend-patterns-reference.md`): CQRS commands/queries, entity event handlers, message bus consumers, repository extensions, validation fluent API, authorization attributes.
 
-1. Search keywords in commands, queries, entities
-2. Check event handlers for side effect logic
-3. Look in helper/service classes
-4. Check frontend stores and components
-
-#### "What happens when Z occurs?"
-
-1. Identify trigger (user action, event, schedule)
-2. Trace the handler chain
-3. Document all side effects
-4. Map error handling
-
-#### "Why does A behave like B?"
-
-1. Find the relevant code path
-2. Identify decision points
-3. Check configuration/feature flags
-4. Document business rules
-
-### Project Pattern Recognition (see docs/project-reference/backend-patterns-reference.md and docs/project-reference/frontend-patterns-reference.md)
-
-#### Backend Patterns
-
-- CQRS command / query base classes - CQRS entry points
-- Entity event application handler - Side effects
-- Message bus consumer base class - Cross-service consumers
-- Project queryable root repository - Data access
-- Project validation fluent API - Validation logic
-- Project authorization attributes - Authorization
-
-#### Frontend Patterns
-
-- Project store component base (search for: store component base class) - State management components
-- Project store base (search for: store base class) - Store implementations
-- `effectSimple` / `tapResponse` - Effect handling
-- `observerLoadingErrorState` - Loading/error states
-- API services extending project API service base class
+**Frontend** (see `frontend-patterns-reference.md`): store component base, store base, `effectSimple`/`tapResponse`, `observerLoadingErrorState`, API service base class.
 
 ## Evidence Collection
 
-### Analysis File Setup
+**MANDATORY:** Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`. MUST re-read ENTIRE file before presenting findings. Structure: Metadata (original question) → Progress → File List → Knowledge Graph (per-file entries per SYNC:knowledge-graph-template) → Data Flow → Findings.
 
-**MANDATORY (all modes):** Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`. Re-read ENTIRE file before presenting findings in Step 6. This prevents knowledge loss during long investigations.
+**Rule:** After every 10 files, MUST update progress and re-check alignment with original question.
 
-Analysis file structure:
+### Analysis Phases
 
-```markdown
-## Metadata
+**Phase 2 — Comprehensive Analysis:** (1) Happy path, (2) Error paths, (3) Edge cases, (4) Authorization checks, (5) Validation per layer. Extract: core business rules, state transitions, side effects.
 
-> Original question: [user's exact question]
+**Phase 3 — Synthesis:** Executive summary (1-para answer, top 5-10 key files, patterns used) + step-by-step walkthrough with `file:line` references + flow diagrams.
 
-## Investigation Question
+### Output Format
 
-[Clearly stated investigation goal]
+MUST include: (1) Direct answer (1-2 paragraphs), (2) Step-by-step "How It Works" with `file:line` refs, (3) Key Files table, (4) Data Flow diagram, (5) "Want to Know More?" subtopics.
 
-## Progress
+### Guidelines
 
-- **Phase**: 1
-- **Items Processed**: 0 / [total]
-- **Current Focus**: [original question]
-
-## File List
-
-[All discovered files, grouped by priority]
-
-## Knowledge Graph
-
-[Per-file analysis entries - see template below]
-
-## Data Flow
-
-[Flow diagrams and pipeline documentation]
-
-## Findings
-
-[Populated in Phase 2+]
-```
-
-### Per-File Analysis Entry
-
-For each file, document in `## Knowledge Graph`:
-
-#### Core Fields
-
-- `filePath`: Full path
-- `type`: Component classification (Entity, Command, Handler, Controller, Component, Store, etc.)
-- `architecturalPattern`: Design pattern used
-- `content`: Purpose and logic summary
-- `symbols`: Key classes, interfaces, methods
-- `dependencies`: Imports/injections
-- `relevanceScore`: 1-10 (to investigation question)
-- `evidenceLevel`: "verified" or "inferred"
-
-#### Investigation-Specific Fields
-
-- `entryPoints`: How this code is triggered/called
-- `outputPoints`: What this code produces/returns
-- `dataTransformations`: How data is modified
-- `conditionalLogic`: Key decision points and branches
-- `errorScenarios`: What can go wrong, error handling
-- `externalDependencies`: External services, APIs, databases
-
-#### Cross-Service Fields (if applicable)
-
-- `messageBusMessage`: Message type consumed/produced
-- `messageBusProducers`: Who sends this message
-- `crossServiceIntegration`: Cross-service data flow
-
-**Rule:** After every 10 files, update progress and re-check alignment with original question.
-
-### Structured Findings Format
-
-#### Phase 2: Comprehensive Analysis
-
-##### Workflow Analysis
-
-1. **Happy Path** - Normal successful execution flow
-2. **Error Paths** - How errors are handled at each stage
-3. **Edge Cases** - Special conditions
-4. **Authorization** - Permission checks
-5. **Validation** - Input validation at each layer
-
-##### Business Logic Extraction
-
-1. **Core Business Rules** - What rules govern this feature
-2. **State Transitions** - Entity state changes
-3. **Side Effects** - Notifications, events, external calls
-
-#### Phase 3: Synthesis
-
-##### Executive Summary
-
-- One-paragraph answer to user's question
-- Top 5-10 key files
-- Key patterns used
-
-##### Detailed Explanation
-
-- Step-by-step walkthrough with `file:line` references
-- Architectural decisions explained
-
-##### Diagrams
-
-```text
-+-----------+     +-----------+     +-----------+
-| Component |---->|  Command  |---->|  Handler  |
-+-----------+     +-----------+     +-----------+
-                                          |
-                                          v
-                                    +-----------+
-                                    |Repository |
-                                    +-----------+
-```
-
-## Output Format
-
-```markdown
-## Answer
-
-[Direct answer in 1-2 paragraphs]
-
-## How It Works
-
-### 1. [Step] - [Explanation with `file:line` reference]
-
-### 2. [Step] - [Explanation with `file:line` reference]
-
-## Key Files
-
-| File | Purpose |
-| ---- | ------- |
-
-## Data Flow
-
-[Text diagram: Entry -> Processing -> Persistence -> Side Effects]
-
-## Want to Know More?
-
-- [Subtopic 1]
-- [Subtopic 2]
-```
-
-## Guidelines
-
-- **Evidence-based**: Every claim needs code evidence. Mark unverified claims as "inferred".
-- **Question-focused**: Tie all findings back to the original question.
-- **Read-only**: Never suggest changes unless explicitly asked.
-- **Layered explanation**: Start simple, offer deeper detail on request.
+- **Evidence-based**: Every claim needs code evidence. MUST mark unverified as "inferred".
+- **Question-focused**: ALWAYS tie findings back to original question.
+- **Read-only**: NEVER suggest changes unless explicitly asked.
+- **Layered**: Start simple, offer deeper detail on request.
 
 ### Graph Intelligence (MANDATORY when graph.db exists)
 
-> See `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full orchestration guidance.
-> See `.claude/skills/shared/graph-intelligence-queries.md` for CLI command reference.
+> See `.claude/skills/shared/graph-assisted-investigation-protocol.md` and `graph-intelligence-queries.md` for full reference.
 
-### Grep-First Discovery (When Query is Semantic)
-
-When the user's prompt describes a behavior or flow (not a specific file), use Grep/Glob/Search FIRST to discover entry point files:
-
-1. Grep for key terms from the user's query (class names, commands, handlers, endpoints)
-2. Use discovered files as input to graph `connections`, `batch-query`, or `trace` commands
-3. Use `trace --direction both` on middle files (controllers, commands) to see full upstream + downstream flow
-4. The `trace` command follows ALL edge types including implicit connections (MESSAGE_BUS, TRIGGERS_EVENT)
-
-**Orchestrate grep ↔ graph ↔ glob dynamically.** After grep/glob finds entry files, use graph to expand the dependency network. Then grep again to verify content in discovered files.
+**MUST orchestrate grep -> graph -> grep dynamically:** (1) Grep key terms to find entry files, (2) Use `connections`/`batch-query`/`trace --direction both` to expand dependency network, (3) Grep again to verify content. The `trace` command follows ALL edge types including MESSAGE_BUS and TRIGGERS_EVENT.
 
 ```bash
-# Full picture of a key file
-python .claude/scripts/code_graph connections <file> --json
-
-# Find all callers of a function
+python .claude/scripts/code_graph connections <file> --json     # Full picture
 python .claude/scripts/code_graph query callers_of <name> --json
-
-# Find all importers of a module
 python .claude/scripts/code_graph query importers_of <file> --json
-
-# Find tests covering a function
 python .claude/scripts/code_graph query tests_for <name> --json
-
-# Batch query multiple files at once
 python .claude/scripts/code_graph batch-query <f1> <f2> --json
 ```
 
 ## Related Skills
 
-- `feature` - Implementing new features (code changes)
-- `debug-investigate` - Debugging and fixing issues
-- `scout` - Quick codebase discovery (run before investigation)
-- `graph-query` - Natural language graph queries for code relationships
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+`scout` (pre-discovery) | `feature` (implementation) | `debug-investigate` (debugging) | `graph-query` (natural language queries)
 
 ---
 
 ## Investigation & Recommendation Protocol
 
-> Moved from CLAUDE.md. This protocol applies when recommending code changes (removal, refactoring, replacement) — not just feature investigation. It ensures evidence-based architectural decisions and prevents mistakes like the Npgsql IDbContextFactory incident.
+Applies when recommending code changes (removal, refactoring, replacement). MUST complete full validation chain.
 
-**📚 Reference:** See `.claude/skills/shared/evidence-based-reasoning-protocol.md` for comprehensive evidence-based reasoning protocols with verification commands and forbidden phrases. See `.claude/docs/anti-hallucination-patterns.md` for bad vs good response examples.
+### Validation Chain (NEVER skip steps)
 
-### Golden Rule: Evidence Before Conclusion
+**NEVER recommend code changes without completing ALL steps:**
 
-**NEVER recommend code changes (removal, refactoring, replacement) without completing this validation chain:**
+1. Interface/API identified → 2. ALL implementations found → 3. ALL registrations traced → 4. ALL usage sites verified → 5. Cross-service impact (ALL services) → 6. Impact assessment → 7. Confidence declaration → **ONLY THEN** output recommendation.
 
-```
-1. Interface/API identified
-   ↓
-2. ALL implementations found (Grep: "class.*:.*IInterfaceName")
-   ↓
-3. ALL registrations traced (Grep: "AddScoped.*IInterfaceName|AddSingleton.*IInterfaceName")
-   ↓
-4. ALL usage sites verified (Grep: "IInterfaceName" in context of injection/calls)
-   ↓
-5. Cross-service impact: Check ALL project services (ServiceB, ServiceA, ServiceC, ServiceD)
-   ↓
-6. Impact assessment: What breaks if removed?
-   ↓
-7. Confidence declaration: X% confident based on [evidence list]
-   ↓
-ONLY THEN → Output recommendation
-```
-
-**If ANY step incomplete → STOP and gather more evidence OR state "Insufficient evidence to recommend removal"**
-
-### Mistake Patterns & Prevention
-
-| Mistake Pattern                | Prevention Rule                                | Grep Pattern                                 |
-| ------------------------------ | ---------------------------------------------- | -------------------------------------------- |
-| **"This is unused"**           | Require proof of zero references               | `grep -r "TargetName" --include="*.cs"`      |
-| **"Remove this registration"** | Trace interface → impl → ALL call sites        | `grep "IInterfaceName" -A 5 -B 5`            |
-| **"Replace X with Y"**         | Impact analysis: what depends on X?            | `grep "using.*X\|: X\|<X>" --include="*.cs"` |
-| **"This can be simplified"**   | Verify edge cases preserved                    | Check tests, usage contexts                  |
-| **"Dual registration"**        | Compare services: ServiceA vs ServiceB pattern | Cross-service comparison required            |
+**If ANY step incomplete → STOP.** State "Insufficient evidence to recommend."
 
 ### Breaking Change Risk Matrix
 
-Before recommending ANY architectural change, assess risk level:
+| Risk       | Criteria                                                      | Required Evidence                                              |
+| ---------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
+| **HIGH**   | Removing registrations, deleting classes, changing interfaces | Full usage trace + impact + cross-service check (all services) |
+| **MEDIUM** | Refactoring methods, changing signatures                      | Usage trace + test verification + cross-service check          |
+| **LOW**    | Renaming variables, formatting, comments                      | Code review only                                               |
 
-| Risk Level | Criteria                                                      | Required Evidence                                                               |
-| ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| **HIGH**   | Removing registrations, deleting classes, changing interfaces | Full usage trace + impact analysis + cross-service check (all project services) |
-| **MEDIUM** | Refactoring methods, changing signatures, updating patterns   | Usage trace + test verification + cross-service check (all project services)    |
-| **LOW**    | Renaming variables, formatting, adding comments               | Code review only                                                                |
+### Removal Checklist (ALL MUST pass)
 
-**For HIGH/MEDIUM risk changes:** Require explicit confidence declaration with evidence summary before proceeding.
+- [ ] No static references (`grep -r "ClassName" --include="*.cs"` = 0)
+- [ ] No string literals / dynamic invocations (reflection, factory, message bus)
+- [ ] No DI registrations (`services.Add*<ClassName>`)
+- [ ] No config references (appsettings, env vars)
+- [ ] No test dependencies
+- [ ] Cross-service impact checked (ALL microservices)
+
+**Incomplete checklist → state:** `Confidence: <90% — did not verify [missing items]`
 
 ### Evidence Hierarchy
 
-1. **Code Evidence (Primary)** — Actual usage in codebase (Grep results, Read file confirmations)
-2. **Test Evidence** — Unit/integration tests covering the code path
-3. **Documentation** — Comments, docs explaining purpose
-4. **Inference** — Logical deduction (LOWEST priority, must be validated)
+(1) Code evidence (grep/read) → (2) Test evidence → (3) Documentation → (4) Inference. Recommendations based on inference alone are FORBIDDEN — MUST upgrade to code evidence.
 
-**Rule:** Recommendations based on inference alone are FORBIDDEN. Always upgrade to code evidence.
+### Confidence Levels
 
-### Validation Checklist for Code Removal
-
-Before recommending removal of ANY code element, verify ALL of these:
-
-- [ ] **No static references** — `grep -r "ClassName" --include="*.cs"` returns 0 results
-- [ ] **No string literals** — `grep -r "\"ClassName\"|'ClassName'"` returns 0 results
-- [ ] **No dynamic invocations** — Check reflection, factory patterns, message bus registrations
-- [ ] **No DI container registrations** — Search `services.Add*<ClassName>` patterns
-- [ ] **No configuration references** — Check appsettings.json, environment variables
-- [ ] **No test dependencies** — Check test projects for usage
-- [ ] **Cross-service impact** — Search ALL project's microservices (ServiceB, ServiceA, ServiceC, ServiceD)
-
-**Confidence Declaration:** If checklist not 100% complete, state: "Confidence: <90% — did not verify [missing items]"
-
-### Interface → Implementation → Usage Trace Protocol
-
-For any interface-based recommendation:
-
-```bash
-# Step 1: Find ALL implementations
-grep -r "class.*:.*ITargetInterface" --include="*.cs"
-
-# Step 2: Find ALL registrations
-grep -r "AddScoped\|AddSingleton\|AddTransient.*ITargetInterface" --include="*.cs"
-
-# Step 3: Find ALL injection points
-grep -r "ITargetInterface" --include="*.cs" -A 5 -B 5
-
-# Step 4: Find ALL usage in found implementations
-# Read each file from Step 3, trace method calls
-
-# Step 5: Cross-service check (MANDATORY - all project services)
-for svc in ServiceB ServiceA ServiceC Accounts ServiceD; do
-    grep -r "ITargetInterface" "services directory/$svc" --include="*.cs"
-done
-
-# ONLY if ALL steps show zero usage → recommend removal
-```
-
-### Comparison Pattern (Service vs Service)
-
-When investigating service-specific implementations:
-
-1. **Find working reference service** — Identify service where feature works correctly
-2. **Compare implementations** — Side-by-side file comparison
-3. **Identify differences** — List what's different between working vs non-working
-4. **Verify each difference** — Understand WHY each difference exists
-5. **Recommend changes** — Based on proven working pattern, not assumptions
-
-### Confidence Levels (Required for Architectural Recommendations)
-
-Every recommendation for code removal/refactoring MUST include confidence level:
-
-- **95-100%** — Full trace completed, all checklist items verified, all project services checked
-- **80-94%** — Main usage paths verified, some edge cases unverified
-- **60-79%** — Implementation found, usage partially traced
-- **<60%** — Insufficient evidence → DO NOT RECOMMEND, gather more evidence first
+**95-100%** full trace + all services | **80-94%** main paths verified | **60-79%** partially traced | **<60% DO NOT RECOMMEND**
 
 **Format:** `Confidence: 85% — Verified main usage in ServiceC, did not check ServiceA/ServiceB`
 
-### When to Activate This Protocol
+### Service Comparison Pattern
 
-Trigger the full validation chain for:
-
-- Any recommendation to remove registrations, classes, interfaces
-- Architectural changes affecting multiple services
-- "This seems unused" observations
-- Cross-service dependency analysis
-- Breaking change impact assessment
+Find working reference → compare implementations → identify differences → verify WHY each difference exists → recommend based on proven pattern, NEVER assumptions.
 
 ---
 
@@ -574,8 +262,16 @@ Trigger the full validation chain for:
 - **MUST** search codebase for 3+ similar patterns before creating new code
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/knowledge-graph-template.md` before starting
+- **MANDATORY IMPORTANT MUST** READ the following files before starting:
+    <!-- SYNC:understand-code-first:reminder -->
+- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:graph-assisted-investigation:reminder -->
+- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+      <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:knowledge-graph-template:reminder -->
+- **MUST** document per-file: type, pattern, symbols, dependencies, relevanceScore, evidenceLevel.
+    <!-- /SYNC:knowledge-graph-template:reminder -->

@@ -57,6 +57,12 @@
 - Use `code-reviewer` agent to review code after every implementation
 - **DO NOT** create new enhanced files — update existing files directly
 
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first (canonical source), then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
+
 ## Code Step Rule (Universal — All Languages)
 
 **[CRITICAL]** Code is a tree of steps. Formatting MUST reveal the tree structure.

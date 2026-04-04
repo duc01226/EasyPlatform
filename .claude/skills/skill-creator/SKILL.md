@@ -1,35 +1,42 @@
 ---
 name: skill-creator
-version: 1.1.0
-description: "[Skill Management] Guide for creating effective skills, adding skill references, skill scripts or optimizing existing skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, frameworks, libraries or plugins usage, or API and tool integrations. Formerly also known as "skill-share"."
+version: 2.0.0
+description: "[Skill Management] Guide for creating effective skills, adding skill references, skill scripts or optimizing existing skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, frameworks, libraries or plugins usage, or API and tool integrations. Formerly also known as 'skill-share'."
 
 allowed-tools: NONE
 license: Complete terms in LICENSE.txt
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
 
 ## Quick Summary
 
-**Goal:** Guide creation of effective Claude Code skills with proper structure, progressive disclosure, and bundled resources.
+**Goal:** Guide creation of effective Claude Code skills with proper structure, progressive disclosure, SYNC protocol compliance, and AI attention anchoring.
 
 **Workflow:**
 
 1. **Understand** — Gather concrete usage examples and trigger scenarios
 2. **Plan** — Identify reusable scripts, references, and assets needed
 3. **Initialize** — Run `init_skill.py` to scaffold skill directory
-4. **Edit** — Write SKILL.md (<100 lines) + reference files (<100 lines each)
-5. **Package** — Validate and zip with `package_skill.py`
-6. **Iterate** — Test on real tasks, refine based on performance
+4. **Edit** — Write SKILL.md (<500 lines) + reference files (<100 lines each)
+5. **Add SYNC Blocks** — Inline relevant protocol checklists from `sync-inline-versions.md`
+6. **Enhance** — Call `/prompt-enhance` on the SKILL.md for attention anchoring
+7. **Package** — Validate and zip with `package_skill.py`
+8. **Iterate** — Test on real tasks, refine based on performance
 
 **Key Rules:**
 
-- SKILL.md must be under 100 lines; use references/ for details
-- Referenced markdown files also under 100 lines (progressive disclosure)
+- SKILL.md under 500 lines; reference files under 100 lines each (progressive disclosure)
+- Shared protocols MUST be inlined via `<!-- SYNC:tag -->` blocks, NEVER file references
+- MUST call `/prompt-enhance` on new/updated skills as final quality pass
+- Attention structure: SYNC blocks at top, Quick Summary, detailed steps, Closing Reminders with `:reminder` blocks at bottom
 - Skills are practical instructions, not documentation
-- Scripts must have tests and respect .env loading order
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Skill Creator
 
@@ -257,6 +264,28 @@ To complete SKILL.md, answer the following questions:
 2. When should the skill be used?
 3. In practice, how should Claude use the skill? All reusable skill contents developed above should be referenced so that Claude knows how to use them.
 
+### Step 4b: Add SYNC Protocol Blocks
+
+If the skill needs shared protocol enforcement (most skills do), inline them via SYNC tags:
+
+1. Read `.claude/skills/shared/sync-inline-versions.md` — canonical source for all protocol checklists
+2. Identify which protocols the skill needs. Common ones:
+    - `understand-code-first` — for any skill that reads/modifies code
+    - `evidence-based-reasoning` — for investigation/review/planning skills
+    - `output-quality-principles` — for skills that produce reports/docs
+    - `graph-assisted-investigation` — for skills that analyze code relationships
+3. Copy the checklist between `<!-- SYNC:tag -->` open/close tags at the TOP of the skill (after frontmatter)
+4. Add 1-line `:reminder` versions at the BOTTOM inside Closing Reminders
+5. NEVER use `MUST READ .claude/skills/shared/` file references — always inline
+
+### Step 4c: Run `/prompt-enhance`
+
+Call `/prompt-enhance` on the finished SKILL.md to verify and apply AI attention anchoring:
+
+- Primacy-recency: critical rules at top AND bottom
+- Inline summaries for any remaining READ references
+- Token optimization pass
+
 ### Step 5: Packaging a Skill
 
 Once the skill is ready, it should be packaged into a distributable zip file that gets shared with the user. The packaging process automatically validates the skill first to ensure it meets all requirements:
@@ -306,6 +335,10 @@ After testing the skill, users may request improvements. Often this happens righ
 ## Closing Reminders
 
 - **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **MUST** inline shared protocols via `<!-- SYNC:tag -->` blocks — NEVER use `MUST READ shared/` file references
+- **MUST** call `/prompt-enhance` on new/updated skills as final attention-anchoring quality pass
+- **MUST** include `## Quick Summary` within first 30 lines of every SKILL.md
+- **MUST** add Closing Reminders with `:reminder` SYNC blocks at bottom of every skill
+    <!-- SYNC:shared-protocol-duplication-policy:reminder -->
+- **MUST** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
+    <!-- /SYNC:shared-protocol-duplication-policy:reminder -->

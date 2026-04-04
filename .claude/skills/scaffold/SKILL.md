@@ -6,11 +6,34 @@ description: '[Architecture] Scaffold project architecture with OOP/SOLID base c
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
-> **Prerequisites:** > **Scaffold Production Readiness** — Production scaffold checklist: health endpoints, structured logging, graceful shutdown, config validation, CI pipeline, Dockerfile, env separation. Verify each item exists before marking scaffold complete.
-> MUST READ `.claude/skills/shared/scaffold-production-readiness-protocol.md` for full protocol and checklists.
-> before executing — defines production readiness requirements for all 4 concern areas.
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:scaffold-production-readiness -->
+
+> **Scaffold Production Readiness** — Every scaffolded project MUST include 4 foundations:
+>
+> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates
+> 2. **Error Handling Foundation** — HTTP error interception, classification, user notification patterns
+> 3. **Loading State Management** — request counter tracking, loading indicators, skip tokens
+> 4. **Docker Development Environment** — compose profiles, multi-stage Dockerfile, health checks
+>
+> Present 2-3 options per concern via AskUserQuestion. Verify each checklist before marking scaffold complete.
+
+<!-- /SYNC:scaffold-production-readiness -->
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
@@ -173,8 +196,7 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 ## Production Readiness Scaffolding (MANDATORY)
 
-> **Scaffold Production Readiness** — Production scaffold checklist: health endpoints, structured logging, graceful shutdown, config validation, CI pipeline, Dockerfile, env separation. Verify each item exists before marking scaffold complete.
-> MUST READ `.claude/skills/shared/scaffold-production-readiness-protocol.md` for full protocol and checklists.
+> **Scaffold Production Readiness** — See `<!-- SYNC:scaffold-production-readiness -->` block above for full inline protocol.
 
 Every scaffolded project MUST include these 4 foundations. AI must detect the tech stack from the plan/architecture report and present 2-3 options per concern via `AskUserQuestion`.
 
@@ -271,5 +293,10 @@ Run ALL verification checklists from the production readiness protocol:
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
 **MANDATORY IMPORTANT MUST** READ the following files before starting:
 
-- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/scaffold-production-readiness-protocol.md` before starting
+  <!-- SYNC:understand-code-first:reminder -->
+
+- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:scaffold-production-readiness:reminder -->
+- **MUST** verify all 4 production readiness foundations (quality tooling, error handling, loading state, Docker) before marking scaffold complete.
+      <!-- /SYNC:scaffold-production-readiness:reminder -->

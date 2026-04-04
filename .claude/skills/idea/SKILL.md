@@ -268,7 +268,11 @@ When a project module is detected, include this section in the idea artifact:
 
 ## UI Sketch Output Format
 
-> **MUST READ:** `.claude/skills/shared/ui-wireframe-protocol.md`
+<!-- SYNC:ui-wireframe -->
+
+> **UI Wireframe** — Process visual design input (Figma URLs, screenshots, wireframes) via appropriate tool BEFORE creating wireframes. Use box-drawing ASCII characters for spatial layout. Classify every component into exactly ONE tier: Common (cross-app reusable) / Domain-Shared (cross-domain) / Page (single-page). Duplicate UI code = wrong tier. Search existing component libraries before creating new (>=80% match = reuse). Detail level varies by skill (idea=rough, story=full decomposition).
+
+<!-- /SYNC:ui-wireframe -->
 
 When the idea involves UI changes, include this section in the idea artifact:
 

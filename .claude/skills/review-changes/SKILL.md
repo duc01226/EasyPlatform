@@ -7,16 +7,78 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 **Prerequisites:** **MUST READ** before executing:
 
-> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
-> **Design Patterns Quality** — Priority checks: (1) DRY via OOP — same-suffix classes MUST share base class, 3+ similar patterns → extract. (2) Right Responsibility — logic in LOWEST layer (Entity > Service > Component). (3) SOLID principles.
-> MUST READ `.claude/skills/shared/design-patterns-quality-checklist.md` for full protocol and checklists.
-> **Logic & Intention Review** — Verify WHAT the code does matches WHY it was changed. Every changed line must serve stated purpose. Trace at least one happy path + one error path. Clean code can be wrong code.
-> MUST READ `.claude/skills/shared/logic-and-intention-review-protocol.md` for full protocol and checklists.
-> **Bug Detection** — Systematically hunt for potential bugs: null safety, boundary conditions (off-by-one, empty collections), error handling (silent failures, swallowed exceptions), resource leaks, concurrency issues (missing await, race conditions). Check categories 1-4 for EVERY review.
-> MUST READ `.claude/skills/shared/bug-detection-protocol.md` for full protocol and checklists.
-> **Test Spec Verification** — Cross-reference changes against TC-{FEAT}-{NNN} test specifications. Flag untested code paths, new functions without TCs, stale evidence in existing TCs. If no specs exist, recommend /tdd-spec.
-> MUST READ `.claude/skills/shared/test-spec-verification-protocol.md` for full protocol and checklists.
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:design-patterns-quality -->
+
+> **Design Patterns Quality** — Priority checks for every code change:
+>
+> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+> 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
+> 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
+> 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
+> 5. **YAGNI gate:** NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
+>
+> **Anti-patterns to flag:** God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
+
+<!-- /SYNC:design-patterns-quality -->
+
+<!-- SYNC:logic-and-intention-review -->
+
+> **Logic & Intention Review** — Verify WHAT code does matches WHY it was changed.
+>
+> 1. **Change Intention Check:** Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
+> 2. **Happy Path Trace:** Walk through one complete success scenario through changed code
+> 3. **Error Path Trace:** Walk through one failure/edge case scenario through changed code
+> 4. **Acceptance Mapping:** If plan context available, map every acceptance criterion to a code change
+>
+> **NEVER mark review PASS without completing both traces (happy + error path).**
+
+<!-- /SYNC:logic-and-intention-review -->
+
+<!-- SYNC:bug-detection -->
+
+> **Bug Detection** — MUST check categories 1-4 for EVERY review. Never skip.
+>
+> 1. **Null Safety:** Can params/returns be null? Are they guarded? Optional chaining gaps? `.find()` returns checked?
+> 2. **Boundary Conditions:** Off-by-one (`<` vs `<=`)? Empty collections handled? Zero/negative values? Max limits?
+> 3. **Error Handling:** Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
+> 4. **Resource Management:** Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
+> 5. **Concurrency (if async):** Missing `await`? Race conditions on shared state? Stale closures? Retry storms?
+> 6. **Stack-Specific:** JS: `===` vs `==`, `typeof null`. C#: `async void`, missing `using`, LINQ deferred execution.
+>
+> **Classify:** CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO
+
+<!-- /SYNC:bug-detection -->
+
+<!-- SYNC:test-spec-verification -->
+
+> **Test Spec Verification** — Map changed code to test specifications.
+>
+> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
+> 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC")
+> 3. New functions/endpoints/handlers → flag for test spec creation
+> 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
+> 5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+> 6. If no specs exist → log gap and recommend `/tdd-spec`
+>
+> **NEVER skip test mapping.** Untested code paths are the #1 source of production bugs.
+
+<!-- /SYNC:test-spec-verification -->
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
@@ -90,8 +152,26 @@ Target: All uncommitted changes (staged and unstaged) in the current working dir
 **Proof Required** — Every claim backed by `file:line` evidence or grep results. Speculation is forbidden.
 **Doc Staleness** — Cross-reference changed files against related docs (feature docs, test specs, READMEs). Flag any doc that is stale or missing updates to reflect current code changes.
 
-> **Graph-Assisted Investigation** — When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files.
-> MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full protocol and checklists.
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
 > Run `python .claude/scripts/code_graph batch-query <f1> <f2> --json` on changed files for test coverage and caller impact.
 
 ## Blast Radius Pre-Analysis (MANDATORY FIRST STEP)
@@ -122,6 +202,7 @@ Before starting, call TaskCreate with:
 - [ ] `[Review Phase 2] Review file-by-file and update report` - pending
 - [ ] `[Review Phase 3] Re-read report for holistic assessment` - pending
 - [ ] `[Review Phase 4] Generate final review findings` - pending
+- [ ] `[Review Phase 5] Run /docs-update if staleness detected` - pending
       Update todo status as each phase completes. This ensures review is tracked.
 
 > **Note:** If Phase 1 reveals 20+ changed files, replace Phase 2-4 tasks with Systematic Review Protocol tasks:
@@ -244,6 +325,16 @@ Update report with final sections:
 - [ ] Documentation Staleness (list stale docs with what changed, or "No doc updates needed")
 - [ ] Positive Observations
 - [ ] Suggested commit message (based on changes)
+
+## Phase 5: Docs-Update Triage (CONDITIONAL)
+
+If the Documentation Staleness Check in Phase 4 identified stale docs:
+
+1. Invoke `/docs-update` skill to update impacted documentation
+2. If `/docs-update` produces changes, include them in the review summary
+3. If no staleness detected in Phase 4, skip: "No doc updates needed — staleness check was clean"
+
+> **Note:** This step runs the docs-update triage (Phase 0) which fast-exits when no docs are impacted. Overhead is minimal for non-doc-impacting changes.
 
 ## Readability Checklist (MUST evaluate)
 
@@ -509,9 +600,22 @@ If `architectureRules` is not present in project-config.json, skip this check si
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
 **MANDATORY IMPORTANT MUST** READ the following files before starting:
 
-- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/design-patterns-quality-checklist.md` before starting
-- **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/logic-and-intention-review-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/bug-detection-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/test-spec-verification-protocol.md` before starting
+  <!-- SYNC:understand-code-first:reminder -->
+
+- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:design-patterns-quality:reminder -->
+- **MUST** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
+      <!-- /SYNC:design-patterns-quality:reminder -->
+      <!-- SYNC:graph-assisted-investigation:reminder -->
+- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+      <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- SYNC:logic-and-intention-review:reminder -->
+- **MUST** verify WHAT code does matches WHY it changed. Trace happy + error paths.
+      <!-- /SYNC:logic-and-intention-review:reminder -->
+      <!-- SYNC:bug-detection:reminder -->
+- **MUST** check null safety, boundaries, error handling, resource management for every review.
+      <!-- /SYNC:bug-detection:reminder -->
+      <!-- SYNC:test-spec-verification:reminder -->
+- **MUST** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
+      <!-- /SYNC:test-spec-verification:reminder -->

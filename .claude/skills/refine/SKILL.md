@@ -34,8 +34,19 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
 
 > When this task involves frontend or UI changes,
 
-> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
-> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
@@ -46,12 +57,34 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
 - Use project domain-specific vocabulary when available
 - MUST include `story_points` and `complexity` in PBI output (see `.claude/skills/shared/estimation-framework.md`)
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
-- > **Scaffold Production Readiness** — Production scaffold checklist: health endpoints, structured logging, graceful shutdown, config validation, CI pipeline, Dockerfile, env separation. Verify each item exists before marking scaffold complete.
-  > MUST READ `.claude/skills/shared/scaffold-production-readiness-protocol.md` for full protocol and checklists.
-  > — for Production Readiness Concerns table in PBI output
-- > **Cross-Cutting Quality** — Check: error handling consistency, logging standards, security headers, input validation, rate limiting, CORS config, health checks across all services.
-  > MUST READ `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` for full protocol and checklists.
-  > — for Authorization, Seed Data, Data Migration concerns in PBI output
+- <!-- SYNC:scaffold-production-readiness -->
+
+    > **Scaffold Production Readiness** — Every scaffolded project MUST include 4 foundations:
+    >
+    > 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates
+    > 2. **Error Handling Foundation** — HTTP error interception, classification, user notification patterns
+    > 3. **Loading State Management** — request counter tracking, loading indicators, skip tokens
+    > 4. **Docker Development Environment** — compose profiles, multi-stage Dockerfile, health checks
+    >
+    > Present 2-3 options per concern via AskUserQuestion. Verify each checklist before marking scaffold complete.
+
+    <!-- /SYNC:scaffold-production-readiness -->
+
+    — for Production Readiness Concerns table in PBI output
+
+- <!-- SYNC:cross-cutting-quality -->
+
+    > **Cross-Cutting Quality** — Check across all changed files:
+    >
+    > 1. **Error handling consistency** — same error patterns across related files
+    > 2. **Logging** — structured logging with correlation IDs for traceability
+    > 3. **Security** — no hardcoded secrets, input validation at boundaries, auth checks present
+    > 4. **Performance** — no N+1 queries, unnecessary allocations, or blocking calls in async paths
+    > 5. **Observability** — health checks, metrics, tracing spans for new endpoints
+
+    <!-- /SYNC:cross-cutting-quality -->
+
+    — for Authorization, Seed Data, Data Migration concerns in PBI output
 
 ## Greenfield Mode
 
@@ -286,9 +319,11 @@ Document in PBI under `## Testability Assessment`.
 
 ## Phase 6: Prioritization & Estimation
 
-> > **Estimation Framework** — SP scale: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large, high risk) → 13(epic, SHOULD split) → 21(MUST split). MUST provide `story_points` and `complexity` estimate after investigation.
-> > MUST READ `.claude/skills/shared/estimation-framework.md` for full protocol and checklists.
-> > for story point scale and complexity definitions.
+<!-- SYNC:estimation-framework -->
+
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+
+<!-- /SYNC:estimation-framework -->
 
 Apply RICE score or MoSCoW for priority. Estimate using **Story Points (Modified Fibonacci 1-21)** for complexity measurement.
 
@@ -508,11 +543,15 @@ Then error "{message}"
 
 ## UI Layout
 
-> **MUST READ:** `.claude/skills/shared/ui-wireframe-protocol.md`
+<!-- SYNC:ui-wireframe -->
+
+> **UI Wireframe** — For UI artifacts: include ASCII wireframe (box-drawing chars), component tree with EXISTING/NEW classification and tier (common | domain-shared | page/app), interaction flow (user action → system response → UI update), states table (default/loading/empty/error), and responsive breakpoint behavior. Process Figma URLs or screenshots BEFORE wireframing. Search existing component libs before proposing new components. Backend-only changes: `N/A — Backend-only change. No UI affected.`
+
+<!-- /SYNC:ui-wireframe -->
 
 ### Wireframe
 
-{ASCII wireframe using box-drawing characters — see ui-wireframe-protocol.md}
+{ASCII wireframe using box-drawing characters}
 
 **Layout:** {description with approximate proportions/dimensions}
 
@@ -620,7 +659,16 @@ For domain PBIs: detect module (ref: `.claude/skills/shared/module-detection-key
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
 **MANDATORY IMPORTANT MUST** READ the following files before starting:
 
-- **MUST** READ `.claude/skills/shared/ui-system-context.md` before starting
-- **MUST** READ `.claude/skills/shared/scaffold-production-readiness-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` before starting
-- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting
+<!-- SYNC:ui-system-context:reminder -->
+
+- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+      <!-- /SYNC:ui-system-context:reminder -->
+    <!-- SYNC:scaffold-production-readiness:reminder -->
+- **MUST** verify 4 production-readiness foundations (code quality, error handling, loading state, Docker) for scaffold PBIs.
+    <!-- /SYNC:scaffold-production-readiness:reminder -->
+    <!-- SYNC:cross-cutting-quality:reminder -->
+- **MUST** check error handling, logging, security, performance, and observability across changed files.
+    <!-- /SYNC:cross-cutting-quality:reminder -->
+    <!-- SYNC:estimation-framework:reminder -->
+- **MUST** estimate story points using Modified Fibonacci (1-21). SP >8 MUST split, >5 SHOULD split.
+    <!-- /SYNC:estimation-framework:reminder -->

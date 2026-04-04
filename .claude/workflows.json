@@ -278,7 +278,7 @@
             "preActions": {
                 "injectContext": "Role: QC Specialist\nRELEASE PREPARATION PROTOCOL:\n1. SRE review for production readiness (service-layer/API changes)\n2. Run pre-release quality gate  --  check:\n   - Open PRs awaiting merge\n   - Failing tests or builds\n   - Code review completeness\n   - CHANGELOG.md up-to-date\n   - No known critical/major bugs\n3. Generate status report with pass/fail per criterion\n4. Output: PASS (clear to release) or FAIL with blocking items listed"
             },
-            "sequence": ["sre-review", "quality-gate", "status", "workflow-end"],
+            "sequence": ["sre-review", "quality-gate", "status", "docs-update", "workflow-end"],
             "whenNotToUse": "Rollbacks, hotfixes, release notes writing, release branch operations",
             "whenToUse": "User wants to verify release readiness, run pre-release quality gate, or check if ready to deploy/ship"
         },
@@ -524,6 +524,7 @@
                 "plan-validate",
                 "cook",
                 "workflow-review-changes",
+                "docs-update",
                 "watzup",
                 "workflow-end"
             ],
@@ -546,6 +547,7 @@
                 "plan-validate",
                 "cook",
                 "workflow-review",
+                "docs-update",
                 "watzup",
                 "workflow-end"
             ],
@@ -559,7 +561,7 @@
             "preActions": {
                 "injectContext": "TEST EXECUTION:\n- Run relevant test suites for the current context\n- Report results with pass/fail counts and failure details\n- For failing tests, include file:line and error message\n- Suggest fixes for failures when root cause is clear"
             },
-            "sequence": ["test", "workflow-end"],
+            "sequence": ["test", "docs-update", "workflow-end"],
             "whenNotToUse": "Test specification creation (use pbi-to-tests), test case generation from PBI",
             "whenToUse": "User wants to write tests, run test suites, check test coverage, or execute tests"
         },
@@ -571,7 +573,7 @@
                 "readFiles": [".claude/skills/e2e-test/SKILL.md"],
                 "injectContext": "E2E FROM RECORDING PROTOCOL:\n1. Validate recording file exists (JSON format)\n2. Identify target app and feature from user context\n3. Run convert-recording.ts to generate initial test file\n4. Load test specifications from feature docs Section 17\n5. Map TC-XXX-XXX test cases to recording steps\n6. Enhance generated code with BEM selectors\n7. Add screenshot assertions at key states\n8. Generate Page Object if complex flow\n9. Run test to verify it passes\n10. Report generated files and any manual steps needed"
             },
-            "sequence": ["scout", "e2e-test", "test", "watzup", "workflow-end"],
+            "sequence": ["scout", "e2e-test", "test", "docs-update", "watzup", "workflow-end"],
             "whenNotToUse": "Updating existing tests, writing tests from scratch, running existing tests",
             "whenToUse": "User has a Chrome DevTools recording JSON and wants to generate a Playwright E2E test file"
         },
@@ -583,7 +585,7 @@
                 "readFiles": [".claude/skills/e2e-test/SKILL.md"],
                 "injectContext": "E2E UPDATE UI PROTOCOL:\n1. Identify visual changes from git diff (SCSS, HTML, TS)\n2. Map changed files to affected page objects\n3. Find E2E specs using those page objects\n4. Run affected tests to generate new screenshots\n5. Update screenshot baselines with --update-snapshots\n6. Visual review: diff old vs new baselines\n7. Confirm changes are intentional with user\n8. Report updated files and visual changes"
             },
-            "sequence": ["scout", "e2e-test", "test", "watzup", "workflow-end"],
+            "sequence": ["scout", "e2e-test", "test", "docs-update", "watzup", "workflow-end"],
             "whenNotToUse": "Generating new tests, fixing test logic, non-visual changes",
             "whenToUse": "User made UI changes and needs to update E2E screenshot baselines"
         },
@@ -595,7 +597,7 @@
                 "readFiles": [".claude/skills/e2e-test/SKILL.md"],
                 "injectContext": "E2E FROM CHANGES PROTOCOL:\n1. Detect change type from git diff:\n   - Test spec changes in feature docs -> Generate new test cases\n   - Code changes -> Update existing test assertions\n   - API changes -> Update test data and API mocks\n2. Load affected test specifications (TC-XXX-XXX)\n3. Update or generate test implementations\n4. Ensure traceability: each TC has corresponding test\n5. Run tests to verify changes work\n6. Report updated test coverage"
             },
-            "sequence": ["scout", "e2e-test", "test", "watzup", "workflow-end"],
+            "sequence": ["scout", "e2e-test", "test", "docs-update", "watzup", "workflow-end"],
             "whenNotToUse": "New recordings (use e2e-from-recording), visual-only changes (use e2e-update-ui)",
             "whenToUse": "User updated test specifications or source code and needs to sync E2E tests"
         },
@@ -677,7 +679,7 @@
                 "readFiles": ["docs/project-reference/design-system/README.md"],
                 "injectContext": "Role: UX Designer\nDESIGN WORKFLOW:\n1. Read requirements/PBI\n2. Create design spec with component inventory, states, tokens, accessibility\n3. DESIGN IMPLEMENTATION GATE (pick ONE, skip the other):\n   - Product UIs (dashboards, admin panels, SaaS apps, data interfaces) → /interface-design (skip frontend-design)\n   - Marketing pages, landing pages, creative UIs, screenshot replication → /frontend-design (skip interface-design)\n   Mark the skipped step as completed immediately.\n4. Review with code-review agent"
             },
-            "sequence": ["design-spec", "interface-design", "frontend-design", "workflow-review-changes", "workflow-end"],
+            "sequence": ["design-spec", "interface-design", "frontend-design", "workflow-review-changes", "docs-update", "workflow-end"],
             "whenNotToUse": "Implementing an existing design in code",
             "whenToUse": "User wants to create a UI/UX design spec, mockup, wireframe, or component specification, design a product interface (dashboard, admin panel, SaaS app), build a landing page, create a marketing page, replicate a screenshot/design, or build a creative/distinctive frontend interface"
         },
@@ -713,6 +715,7 @@
                 "test-specs-docs",
                 "workflow-review-changes",
                 "test",
+                "docs-update",
                 "watzup",
                 "workflow-end"
             ],
@@ -735,6 +738,7 @@
                 "tdd-spec",
                 "tdd-spec-review",
                 "test",
+                "docs-update",
                 "watzup",
                 "workflow-end"
             ],
@@ -758,6 +762,7 @@
                 "workflow-review-changes",
                 "sre-review",
                 "test",
+                "docs-update",
                 "watzup",
                 "workflow-end"
             ],
@@ -771,7 +776,19 @@
             "preActions": {
                 "injectContext": "Role: Dependency Manager\nPACKAGE UPGRADE PROTOCOL:\n1. Scout: Identify current versions, check for breaking changes\n2. Investigate: Read changelogs, migration guides for target versions\n3. Plan: List all packages to upgrade, identify breaking changes\n4. Implement: Upgrade packages one at a time or in compatible groups\n5. Test: Run full test suite after each upgrade group\n6. Review: Check for deprecated API usage\n\nGUARDRAILS:\n- One major version bump at a time\n- Read changelog for EVERY package upgraded\n- Run tests after each upgrade, not just at the end\n- Check peer dependency compatibility\n- Keep lockfile changes in separate commit"
             },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "code", "test", "workflow-review-changes", "watzup", "workflow-end"],
+            "sequence": [
+                "scout",
+                "investigate",
+                "plan",
+                "plan-review",
+                "plan-validate",
+                "code",
+                "test",
+                "workflow-review-changes",
+                "docs-update",
+                "watzup",
+                "workflow-end"
+            ],
             "whenNotToUse": "Adding new packages (use feature), removing packages (use refactor)",
             "whenToUse": "User wants to upgrade packages, update dependencies, npm update, NuGet upgrade, version bump"
         },
@@ -795,6 +812,7 @@
                 "test",
                 "workflow-review-changes",
                 "sre-review",
+                "docs-update",
                 "watzup",
                 "workflow-end"
             ],
@@ -933,6 +951,7 @@
                 "test",
                 "workflow-review-changes",
                 "sre-review",
+                "docs-update",
                 "watzup",
                 "workflow-end"
             ],
@@ -1069,7 +1088,16 @@
             "preActions": {
                 "injectContext": "TEST SPEC UPDATE WORKFLOW:\nUse after code changes, bug fixes, or PR reviews to keep test specs in sync.\n1. Review what changed (git diff or PR diff)\n2. Update test specs in feature doc Section 17 using /tdd-spec update mode\n3. Sync dashboard (docs/test-specs/) via /test-specs-docs\n4. Generate/update integration tests for changed TCs\n5. Run tests to verify\n\nKey: /tdd-spec uses UPDATE mode — diffs existing TCs against current code, adds regression TCs for bugfixes."
             },
-            "sequence": ["workflow-review-changes", "tdd-spec", "tdd-spec-review", "test-specs-docs", "integration-test", "test", "workflow-end"],
+            "sequence": [
+                "workflow-review-changes",
+                "tdd-spec",
+                "tdd-spec-review",
+                "test-specs-docs",
+                "integration-test",
+                "test",
+                "docs-update",
+                "workflow-end"
+            ],
             "whenNotToUse": "New feature implementation (use tdd-feature), no code changes yet, idea refinement",
             "whenToUse": "After fixing a bug update test specs, after code changes update test specs, after PR review update test specs, sync test specs after changes, update test documentation after implementation"
         },
@@ -1080,7 +1108,7 @@
             "preActions": {
                 "injectContext": "TEST-TO-INTEGRATION WORKFLOW:\nGenerate integration tests from existing test specifications.\n1. Scout: Find the relevant test spec documents and existing test files\n2. Integration Test: Generate test files from TCs in feature doc Section 17\n   - Each test gets test spec annotation linking to TC-{FEATURE}-{NNN}\n   - Tests use real DI, no mocks (subcutaneous testing pattern)\n3. Test: Build and run the generated tests\n4. Verify: Check bidirectional traceability (every TC has a test, every test has a TC)"
             },
-            "sequence": ["scout", "integration-test", "test", "watzup", "workflow-end"],
+            "sequence": ["scout", "integration-test", "test", "docs-update", "watzup", "workflow-end"],
             "whenNotToUse": "No test specs exist yet (use tdd-spec first), test planning phase, documentation-only",
             "whenToUse": "Generate integration tests from test specs, create tests from feature docs, implement test cases from specifications, test specs to code"
         },
@@ -1091,7 +1119,7 @@
             "preActions": {
                 "injectContext": "TEST VERIFICATION WORKFLOW:\nComprehensive test quality verification covering 4 concerns:\n1. Scout: Find all integration test files and related specs\n2. Integration Test (review mode): Audit test quality — flaky patterns, missing polling for async assertions, non-unique test data, best practice violations\n3. Integration Test (verify mode): Check bidirectional traceability — every test has a TC in feature docs, every TC has a matching test, no orphans\n4. Test: Run tests to identify actual failures\n5. Integration Test (diagnose mode): For any failures — determine root cause: test bug vs code bug vs infrastructure issue\n6. Review: Summarize findings and recommended fixes\n\nKEY FLAKY PATTERNS TO DETECT:\n- DB assertions without WaitUntilAsync/polling after async event handlers\n- Hardcoded delays instead of condition-based polling\n- Non-unique test data causing cross-test interference\n- Race conditions from shared mutable state\n\nMISMATCH RESOLUTION:\n- Test passes but spec says different behavior → update spec\n- Test fails but spec describes expected behavior → update test\n- Test exists without spec → create spec from test\n- Spec exists without test → generate test from spec"
             },
-            "sequence": ["scout", "integration-test", "test", "integration-test", "watzup", "workflow-end"],
+            "sequence": ["scout", "integration-test", "test", "integration-test", "docs-update", "watzup", "workflow-end"],
             "whenNotToUse": "Writing new tests (use test-to-integration), creating test specs (use tdd-spec), new feature implementation",
             "whenToUse": "Review test quality, fix flaky tests, diagnose test failures, verify test traceability, test audit, test health check, integration test review, why tests fail, tests not matching specs"
         },

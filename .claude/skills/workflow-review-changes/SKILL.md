@@ -8,27 +8,28 @@ description: '[Workflow] Trigger Review Current Changes workflow — review, fix
 
 Activate the `review-changes` workflow. Run `/workflow-start review-changes` with the user's prompt as context.
 
-**Steps:** /review-changes → /review-architecture → /code-simplifier → /code-review → /performance → /plan → /plan-validate → /cook → **/workflow-review-changes** (recursive) → /watzup → /workflow-end
+**Steps:** /review-changes → /review-architecture → /code-simplifier → /code-review → /performance → /plan → /plan-validate → /cook → **/workflow-review-changes** (recursive) → /docs-update → /watzup → /workflow-end
 
 ---
 
 ## Mandatory Task Creation (ZERO TOLERANCE)
 
-When this workflow starts, create EXACTLY these 11 tasks in order (source: `workflows.json` → `review-changes.sequence`):
+When this workflow starts, create EXACTLY these 12 tasks in order (source: `workflows.json` → `review-changes.sequence`):
 
-| #   | Task Subject                                                       | Conditional?                   |
-| --- | ------------------------------------------------------------------ | ------------------------------ |
-| 1   | `[Workflow] /review-changes — Review all uncommitted changes`      | No                             |
-| 2   | `[Workflow] /review-architecture — Architecture compliance review` | No                             |
-| 3   | `[Workflow] /code-simplifier — Simplify and refine code`           | No                             |
-| 4   | `[Workflow] /code-review — Comprehensive code review`              | No                             |
-| 5   | `[Workflow] /performance — Performance analysis`                   | No                             |
-| 6   | `[Workflow] /plan — Consolidate review findings into fix plan`     | Yes — skip if all reviews PASS |
-| 7   | `[Workflow] /plan-validate — Critical questions on fix plan`       | Yes — skip if all reviews PASS |
-| 8   | `[Workflow] /cook — Implement fixes from plan`                     | Yes — skip if all reviews PASS |
-| 9   | `[Workflow] /workflow-review-changes — Recursive re-review`        | Yes — skip if all reviews PASS |
-| 10  | `[Workflow] /watzup — Wrap up and summarize`                       | No                             |
-| 11  | `[Workflow] /workflow-end — End workflow`                          | No                             |
+| #   | Task Subject                                                       | Conditional?                                     |
+| --- | ------------------------------------------------------------------ | ------------------------------------------------ |
+| 1   | `[Workflow] /review-changes — Review all uncommitted changes`      | No                                               |
+| 2   | `[Workflow] /review-architecture — Architecture compliance review` | No                                               |
+| 3   | `[Workflow] /code-simplifier — Simplify and refine code`           | No                                               |
+| 4   | `[Workflow] /code-review — Comprehensive code review`              | No                                               |
+| 5   | `[Workflow] /performance — Performance analysis`                   | No                                               |
+| 6   | `[Workflow] /plan — Consolidate review findings into fix plan`     | Yes — skip if all reviews PASS                   |
+| 7   | `[Workflow] /plan-validate — Critical questions on fix plan`       | Yes — skip if all reviews PASS                   |
+| 8   | `[Workflow] /cook — Implement fixes from plan`                     | Yes — skip if all reviews PASS                   |
+| 9   | `[Workflow] /workflow-review-changes — Recursive re-review`        | Yes — skip if all reviews PASS                   |
+| 10  | `[Workflow] /docs-update — Update impacted documentation`          | Yes — skip if all reviews PASS with no staleness |
+| 11  | `[Workflow] /watzup — Wrap up and summarize`                       | No                                               |
+| 12  | `[Workflow] /workflow-end — End workflow`                          | No                                               |
 
 **NEVER** consolidate, rename, or omit any step. If reviews PASS, mark conditional tasks as `completed` with note "Skipped — all reviews passed".
 

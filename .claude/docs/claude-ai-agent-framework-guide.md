@@ -535,16 +535,21 @@ mindmap
 
 ### 5.3 Shared Protocols — The Foundation
 
-Five shared modules enforce universal behavior across all 202 skills:
+25 shared protocol modules enforce universal behavior across all skills. Protocols are **inlined** into each skill via `<!-- SYNC:tag -->` blocks (not file-read references) for maximum AI compliance.
+
+**Architecture:** The canonical source is `.claude/skills/shared/sync-inline-versions.md`. Each protocol is wrapped in `<!-- SYNC:protocol-name -->` / `<!-- /SYNC:protocol-name -->` HTML comment tags. Closing Reminders use `:reminder` suffix variants. To update a protocol: edit the canonical file first, then `grep SYNC:protocol-name` and update all copies.
 
 ```
 .claude/skills/shared/
-├── understand-code-first-protocol.md   ← READ before WRITE
-├── evidence-based-reasoning-protocol.md ← Prove before claim
+├── sync-inline-versions.md             ← CANONICAL source for all SYNC blocks
+├── understand-code-first-protocol.md   ← Full protocol (reference/archive)
+├── evidence-based-reasoning-protocol.md
 ├── scan-and-update-reference-doc-protocol.md
-├── design-system-check.md
-└── web-research-protocol.md
+├── plan-quality-protocol.md
+└── ... (25 protocol modules total)
 ```
+
+**Why inline instead of file-read?** AI compliance drops significantly when protocols are behind `MUST READ file.md` indirection. AI agents skip the file-read step ~40% of the time. Inline SYNC blocks are always present in the skill's context window.
 
 #### Protocol 1: Understand Code First
 
@@ -687,6 +692,34 @@ Three new review skills create quality checkpoints between artifact-producing st
 **Added to workflows:** idea-to-pbi, po-ba-handoff, full-feature-lifecycle, idea-to-tdd, pbi-to-tests, big-feature, greenfield-init
 
 **Why this matters:** Without review gates, artifacts flow through workflows unchecked. A vague PBI becomes vague stories which become vague tests. Review gates catch quality issues early when they're cheapest to fix.
+
+#### Pattern 4: SYNC Tag Inline Protocols
+
+Shared protocols are inlined directly into skills wrapped in HTML comment tags:
+
+```markdown
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns — cite file:line evidence
+>    ...
+
+<!-- /SYNC:understand-code-first -->
+```
+
+Bottom of each skill has condensed `:reminder` variants:
+
+```markdown
+<!-- SYNC:understand-code-first:reminder -->
+
+- **MUST** search 3+ existing patterns and read code BEFORE any modification.
+  <!-- /SYNC:understand-code-first:reminder -->
+```
+
+**Update workflow:** Edit `sync-inline-versions.md` (canonical) → `grep SYNC:tag-name` → update all copies. The `SYNC:shared-protocol-duplication-policy` tag in `code-simplifier` and `development-rules.md` prevents AI from "helpfully" extracting inline content back to file references.
+
+**Why this matters:** AI compliance with file-read directives (`MUST READ shared/*.md`) was inconsistent. Inlining ensures protocols are always in the context window. The SYNC tag system enables bulk updates via grep while maintaining the duplication intentionally.
 
 ---
 
@@ -3269,7 +3302,7 @@ flowchart TB
 │   └── tests/ ────────── Test suites
 ├── skills/ ────────────── 255 skill directories
 │   ├── {skill-name}/SKILL.md
-│   ├── shared/ ───────── 30 shared protocols + references (module-codes.md)
+│   ├── shared/ ───────── 25 shared protocols + sync-inline-versions.md (canonical)
 │   └── _templates/ ───── Skill scaffolding
 ├── agents/ ────────────── 28 agent definitions
 ├── docs/ ─────────────── Framework documentation (co-located)

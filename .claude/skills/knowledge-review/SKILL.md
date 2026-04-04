@@ -9,8 +9,19 @@ allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 
 **Prerequisites:** **MUST READ** before executing:
 
-> **Web Research Protocol** — Structured web research: define search queries, validate source credibility, cross-reference claims across 3+ sources, track evidence provenance.
-> MUST READ `.claude/skills/shared/web-research-protocol.md` for full protocol and checklists.
+<!-- SYNC:web-research -->
+
+> **Web Research** — Structured web search for evidence gathering.
+>
+> 1. Form 3-5 specific search queries (not generic questions)
+> 2. Use WebSearch for each query, collect top 3-5 sources
+> 3. Validate source credibility (official docs > blogs > forums)
+> 4. Cross-validate claims across 2+ sources before citing
+> 5. Write findings to research report with source URLs
+>
+> **NEVER cite a single source as authoritative. Always cross-validate.**
+
+<!-- /SYNC:web-research -->
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
@@ -110,7 +121,22 @@ allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 
 ## Round 2: Focused Re-Review (MANDATORY)
 
-> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+<!-- SYNC:double-round-trip-review -->
+
+> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+>
+> **Round 1:** Normal review building understanding. Read all files, note issues.
+> **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
+>
+> - Cross-cutting concerns missed in Round 1
+> - Interaction bugs between changed files
+> - Convention drift (new code vs existing patterns)
+> - Missing pieces (what should exist but doesn't)
+>
+> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
+> **Report must include `## Round 2 Findings` section.**
+
+<!-- /SYNC:double-round-trip-review -->
 
 After completing Round 1 evaluation, execute a **second full review round**:
 
@@ -134,5 +160,10 @@ After completing Round 1 evaluation, execute a **second full review round**:
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `.claude/skills/shared/web-research-protocol.md` before starting
+**MANDATORY IMPORTANT MUST** READ the following files before starting:
+    <!-- SYNC:web-research:reminder -->
+- **MUST** cite 2+ independent sources per claim. NEVER fabricate — "No evidence found" is valid output.
+      <!-- /SYNC:web-research:reminder -->
+      <!-- SYNC:double-round-trip-review:reminder -->
+- **MUST** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
+    <!-- /SYNC:double-round-trip-review:reminder -->
