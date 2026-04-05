@@ -7,10 +7,6 @@ allowed-tools: Read, Write, Edit, TaskCreate, Bash
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-**Prerequisites:** **MUST READ** before executing:
-
-- `.claude/skills/shared/web-research-protocol.md`
-
 ## Quick Summary
 
 **Goal:** Synthesize evidence base into final structured report using enforced template.
@@ -18,7 +14,7 @@ allowed-tools: Read, Write, Edit, TaskCreate, Bash
 **Workflow:**
 
 1. **Load evidence** — Read evidence base from deep-research
-2. **Load template** — Read enforced template from docs/templates/
+2. **Load template** — Read enforced template from .claude/templates/
 3. **Synthesize** — Write report following template structure
 4. **Citation check** — Verify every claim has citation
 5. **Confidence summary** — Aggregate scores, flag gaps
@@ -45,7 +41,7 @@ Inventory:
 
 ## Step 2: Load Template
 
-Read the enforced template: `docs/templates/research-report-template.md`
+Read the enforced template: `.claude/templates/research-report-template.md`
 
 Every section in the template MUST appear in the final report.
 

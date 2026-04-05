@@ -45,8 +45,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 **Key Rules:**
 
-- **⚠️ MUST READ** `references/module-codes.md` (relative to skill shared dir) for TC ID formats and module codes
-  <!-- SYNC:evidence-based-reasoning -->
+- **TC format:** `TC-{FEATURE}-{NNN}` — feature codes defined in `docs/project-reference/feature-docs-reference.md` and each feature doc's Section 17
+    <!-- SYNC:evidence-based-reasoning -->
 
 > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
 >
@@ -344,8 +344,6 @@ team-artifacts/test-specs/{YYMMDD}-testspec-{feature}.md        # From PBI mode
 
 ### ID Patterns
 
-Refer to `shared/references/module-codes.md` for full code tables.
-
 - **Spec-level:** `TS-{FEATURE}-{NNN}` (e.g., TS-GM-001)
 - **Test case:** `TC-{FEATURE}-{NNN}` (e.g., TC-GM-015)
 
@@ -380,11 +378,10 @@ Before completing test artifacts:
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:graph-impact-analysis:reminder -->
+      <!-- SYNC:graph-impact-analysis:reminder -->
 - **MUST** run graph impact analysis on changed files when `.code-graph/graph.db` exists. Compute stale file gap.
-    <!-- /SYNC:graph-impact-analysis:reminder -->
-- **MUST** READ `shared/references/module-codes.md` for TC ID formats and module codes
-    <!-- SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:graph-impact-analysis:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
 - **MUST** READ `CLAUDE.md` before starting

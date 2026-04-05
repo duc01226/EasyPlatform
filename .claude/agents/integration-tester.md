@@ -40,7 +40,7 @@ Generate subcutaneous integration tests for microservices. Tests execute through
 - **No guessing** -- If unsure, say so. Do NOT fabricate file paths, function names, or behavior. Investigate first.
 - **MANDATORY IMPORTANT MUST** activate `integration-test` skill before generating any test code
 - **MANDATORY IMPORTANT MUST** read integration test README in project test directories for patterns
-- **MANDATORY IMPORTANT MUST** use `TC-{MOD}-{NNN}` format for all test case IDs (**⚠️ MUST READ** `.claude/skills/shared/references/module-codes.md`)
+- **MANDATORY IMPORTANT MUST** use `TC-{MOD}-{NNN}` format for all test case IDs
 - **MANDATORY IMPORTANT MUST** use `[Collection("...")]` attribute on all test classes — test framework parallel isolation
 - Use `IntegrationTestHelper.UniqueName()` for all test data — prevents cross-test pollution
 - Use `ExecuteCommandAsync` / `ExecuteQueryAsync` — never instantiate handlers directly

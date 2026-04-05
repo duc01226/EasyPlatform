@@ -325,8 +325,6 @@ If `.code-graph/graph.db` exists, enhance analysis with structural queries:
 - **Trace affected code paths:** `python .claude/scripts/code_graph query callers_of <function> --json`
 - **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
 
-> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
-
 ### Graph-Trace for Fix Verification
 
 When graph DB is available, use `trace` to PROVE the fix doesn't break downstream consumers:
@@ -384,10 +382,10 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:ui-system-context:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:graph-assisted-investigation:reminder -->

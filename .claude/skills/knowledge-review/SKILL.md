@@ -123,7 +123,7 @@ allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+> **Deep Multi-Round Review** — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
 >
 > **Round 1:** Normal review building understanding. Read all files, note issues.
 > **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
@@ -133,8 +133,15 @@ allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces (what should exist but doesn't)
 >
-> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
-> **Report must include `## Round 2 Findings` section.**
+> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+>
+> - "What input causes failure? What error do I get?"
+> - "1000 concurrent users — what breaks?"
+> - "After deployment rollback — backward compatible?"
+> - "Can I debug issues from logs/monitoring output?"
+>
+> **Rules:** NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
+> **Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -160,10 +167,10 @@ After completing Round 1 evaluation, execute a **second full review round**:
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:web-research:reminder -->
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+  <!-- SYNC:web-research:reminder -->
 - **MUST** cite 2+ independent sources per claim. NEVER fabricate — "No evidence found" is valid output.
-      <!-- /SYNC:web-research:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
+  <!-- /SYNC:web-research:reminder -->
+  <!-- SYNC:double-round-trip-review:reminder -->
 - **MUST** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
-    <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- /SYNC:double-round-trip-review:reminder -->

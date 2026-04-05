@@ -88,7 +88,7 @@ grep -rh "BR-[A-Z]\{3\}-[0-9]\{3\}" team-artifacts/ 2>/dev/null | sort | uniq
 
 ### Issue: Module not detected
 
-**Fix:** Add keywords from `.claude/skills/shared/module-detection-keywords.md` to idea description
+**Fix:** Add keywords matching `docs/business-features/` module names to idea description
 
 ### Issue: related_features list empty
 

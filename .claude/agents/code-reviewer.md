@@ -42,13 +42,13 @@ Perform systematic code quality assessment using report-driven two-phase review.
 - **Convention Check**: Grep for 3+ existing patterns in codebase before flagging violations -- codebase convention wins over textbook rules
 - **DRY Check**: Grep for similar/duplicate code before accepting new code
 - **Doc Staleness**: Cross-reference changed files against related docs; flag stale docs in report
-- **Double Round-Trip**: After Phase 3, MUST execute Phase 4 (Round 2) per `.claude/skills/shared/double-round-trip-review-protocol.md` -- re-review all files focusing on what Round 1 missed
+- **Double Round-Trip**: After Phase 3, MUST execute Phase 4 (Round 2) per deep multi-round review protocol (inlined via SYNC:double-round-trip-review above) -- re-review all files focusing on what Round 1 missed
 
 ## Review Checklist (Priority Order)
 
 1. **Class Responsibility** -- Backend: mapping in Command/DTO not Handler. Frontend: constants/columns in Model not Component
 2. **DRY via OOP Abstraction** -- Classes with same suffix (*Entity, *Dto, \*Service) MUST share base class. Grep for 3+ similar patterns → extract. Generics for type-only variation. Shared interfaces for common contracts.
-3. **Design Pattern Assessment** -- READ `.claude/skills/shared/design-patterns-quality-checklist.md`. Check: switch/if-else→Strategy, scattered new→Factory, complex subsystem→Facade, notification needs→Observer. Flag anti-patterns: God Object, Copy-Paste, Circular Dependency. Only recommend patterns with evidence of 3+ occurrences.
+3. **Design Pattern Assessment** -- Check: switch/if-else→Strategy, scattered new→Factory, complex subsystem→Facade, notification needs→Observer. Flag anti-patterns: God Object, Copy-Paste, Circular Dependency. Only recommend patterns with evidence of 3+ occurrences.
 4. **Clean Code** -- No magic numbers/strings, explicit type annotations, single responsibility, DRY
 5. **Naming** -- Specific names (`employeeRecords` not `data`), verb+noun methods, boolean prefixes (is/has/can/should)
 6. **Performance** -- No O(n^2) nested loops, project in query, always paginate, batch load (no N+1)

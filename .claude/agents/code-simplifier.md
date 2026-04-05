@@ -63,7 +63,6 @@ if (!condition3) return;
 - Extract repeated code to shared methods
 - Use project patterns (**⚠️ MUST READ** `docs/project-reference/backend-patterns-reference.md`)
 - Consolidate similar logic
-- **READ** `.claude/skills/shared/design-patterns-quality-checklist.md` for pattern opportunity scan
 - Classes with same suffix (*Entity, *Dto, \*Service) → extract shared base class (even if empty now)
 - Long switch/if-else on type → Strategy pattern. Scattered `new ConcreteClass()` → Factory/DI
 - Flag anti-patterns: God Object (>500 lines), Copy-Paste (3+ similar blocks), Circular Dependencies

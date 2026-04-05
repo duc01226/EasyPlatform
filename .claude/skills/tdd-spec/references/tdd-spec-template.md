@@ -2,7 +2,7 @@
 
 > Template for test case entries in business feature docs Section 17.
 > Used by: `/tdd-spec` skill.
-> TC format: `TC-{FEATURE}-{NNN}` (see `module-codes.md` for feature codes).
+> TC format: `TC-{FEATURE}-{NNN}` (feature codes in `docs/project-reference/feature-docs-reference.md`).
 
 ---
 

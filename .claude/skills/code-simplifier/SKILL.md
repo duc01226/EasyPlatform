@@ -244,8 +244,6 @@ If `.code-graph/graph.db` exists, enhance analysis with structural queries:
 - **Check dependents:** `python .claude/scripts/code_graph query importers_of <module> --json`
 - **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
 
-> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
-
 ### Graph-Trace Before Simplification
 
 When graph DB is available, BEFORE simplifying code, trace to understand what depends on it:
@@ -298,10 +296,10 @@ When graph DB is available, BEFORE simplifying code, trace to understand what de
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:design-patterns-quality:reminder -->
 - **MUST** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+  <!-- /SYNC:design-patterns-quality:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->

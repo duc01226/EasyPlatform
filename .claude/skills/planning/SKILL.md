@@ -888,8 +888,6 @@ Each phase file should contain:
 
 ###### Test Specifications
 
-> Per `.claude/skills/shared/plan-quality-protocol.md`
-
 | TC ID           | Requirement                   | Priority | Evidence           |
 | --------------- | ----------------------------- | -------- | ------------------ |
 | TC-{FEAT}-{NNN} | {requirement from this phase} | P0-P3    | {file:line} or TBD |
@@ -1218,19 +1216,19 @@ After creating all phase files, run the **recursive decomposition loop**:
 - **MUST** add a final review todo task to verify work quality
 - **MUST** include Test Specifications section and story_points in plan frontmatter
 - **MUST** verify all phases pass granularity check
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:evidence-based-reasoning:reminder -->
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+  <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
 - **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
+  <!-- SYNC:plan-quality:reminder -->
 - **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:iterative-phase-quality:reminder -->
 - **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-      <!-- /SYNC:iterative-phase-quality:reminder -->
-      <!-- SYNC:plan-granularity:reminder -->
+  <!-- /SYNC:iterative-phase-quality:reminder -->
+  <!-- SYNC:plan-granularity:reminder -->
 - **MUST** pass 5-point granularity check: specific files, no planning verbs, <=30min steps, <=5 files, zero TBDs.
-    <!-- /SYNC:plan-granularity:reminder -->
+      <!-- /SYNC:plan-granularity:reminder -->

@@ -7,10 +7,6 @@ allowed-tools: Read, Write, Edit, WebSearch, WebFetch, TaskCreate, Bash
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-**Prerequisites:** **MUST READ** before executing:
-
-- `.claude/skills/shared/web-research-protocol.md`
-
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
@@ -119,7 +115,7 @@ Categories to consider: market, execution, financial, competitive, regulatory, t
 
 ## Output
 
-Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced template from `docs/templates/business-evaluation-template.md`.
+Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced template from `.claude/templates/business-evaluation-template.md`.
 
 ---
 

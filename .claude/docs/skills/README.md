@@ -227,23 +227,13 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 ---
 
-## Shared Modules
+## Shared Protocols (SYNC Inline)
 
-Reusable content blocks in `.claude/skills/shared/` extracted from multiple skills to eliminate duplication (DRY). Each module is referenced by 3+ skills.
+All shared protocols are now **inlined** into consuming skills via `<!-- SYNC:tag -->` blocks. Standalone protocol files have been deleted. The canonical source for all SYNC content is `.claude/skills/shared/sync-inline-versions.md`.
 
-| Module                                      | Purpose                                                                                              | Consumers                                                              |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `evidence-based-reasoning-protocol.md`      | Consolidated evidence-based reasoning: core rules, confidence levels, validation chain, risk matrix  | 50 skills (all code-modifying and analysis skills)                     |
-| `understand-code-first-protocol.md`         | Read-before-write protocol, assumption validation, external memory                                   | 34+ skills (all code-modifying skills)                                 |
-| `design-system-check.md`                    | Mandatory design system doc locations for frontend work                                              | frontend-design, web-design-guidelines                                 |
-| `module-detection-keywords.md`              | YourProject module keyword lists for context loading                                                 | 4 skills (idea, product-owner, refine, story)                          |
-| `scaffold-production-readiness-protocol.md` | Production readiness requirements: code quality, error handling, loading state, Docker               | 5 skills (scaffold, refine, refine-review, story, architecture-design) |
-| `ba-team-decision-model-protocol.md`        | BA team 2/3 vote model, technical veto, disagree-and-commit, role scope boundaries                   | 3 skills (pbi-challenge, dor-gate) + business-analyst agent            |
-| `refinement-dor-checklist-protocol.md`      | Definition of Ready checklist (7 items), validation rules, failure modes, gate output template       | 3 skills (pbi-challenge, dor-gate, refine-review) + ba-refinement hook |
-| `plan-quality-protocol.md`                  | Test spec integration in plans (TC mapping, evidence rules) + attention anchoring for long workflows | 15 skills (plan*, cook*, review-changes, code-review, iterative-phase) |
-| `output-quality-principles.md`              | 10 rules for AI-optimized reference doc generation (no inventories, no TOCs, density targets)        | 17 skills (15 scan/doc skills + prompt-enhance + claude-md-init)       |
+**Why inline?** AI compliance drops ~40% when protocols are behind file-read indirection. Inline SYNC blocks are always present in the skill's context window.
 
-See [shared/README.md](../../skills/shared/README.md) for full consumer lists and contribution guidelines.
+**To update a protocol:** Edit `sync-inline-versions.md` first, then `grep SYNC:protocol-name` and update all copies. Use `/sync-protocols` skill to automate.
 
 ---
 
@@ -258,16 +248,8 @@ Each skill is located at `.claude/skills/{skill-name}/`:
     |-- topic-1.md
     +-- topic-2.md
 
-.claude/skills/shared/          # Shared modules (cross-skill DRY content)
-|-- README.md                   # Index and guidelines
-|-- evidence-based-reasoning-protocol.md
-|-- understand-code-first-protocol.md
-|-- design-system-check.md
-|-- module-detection-keywords.md
-|-- scaffold-production-readiness-protocol.md
-|-- ba-team-decision-model-protocol.md
-|-- refinement-dor-checklist-protocol.md
-+-- plan-quality-protocol.md
+.claude/skills/shared/          # SYNC canonical source (protocols inlined into skills)
++-- sync-inline-versions.md    # Single source of truth for all SYNC protocol content
 ```
 
 ### SKILL.md Structure

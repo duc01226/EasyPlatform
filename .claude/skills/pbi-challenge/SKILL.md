@@ -38,37 +38,60 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
+<!-- SYNC:ba-team-decision-model -->
+
+> **BA Team Decision Model** — 2/3 majority vote: Dev BA PIC + UX BA + Designer BA per squad. 2 of 3 agree = decision final. 3-way split = escalate to full squad + Tech Leads + Engineering Manager.
+>
+> **Technical Veto:** Dev BA PIC can unilaterally veto on: architecture feasibility, dependency correctness, cross-service impact, performance, security. CANNOT veto: UI/UX design, visual design, business value, user research.
+>
+> **Rules:** Disagree-and-commit after vote. Grooming override requires >75% non-BA squad vote. Record decisions in PBI Validation Summary (member, role, vote, notes).
+>
+> **Escalation:** Tech uncertainty → Engineering Manager. Business value → PO. Design feasibility → UX BA + Designer BA consensus.
+
+<!-- /SYNC:ba-team-decision-model -->
+<!-- SYNC:refinement-dor-checklist -->
+
+> **Refinement DoR Checklist** — ALL 7 criteria MUST pass before grooming:
+>
+> 1. **User story template** — "As a {role}, I want {goal}, so that {benefit}" format
+> 2. **AC testable & unambiguous** — GIVEN/WHEN/THEN. No "should/might/TBD/various/appropriate". Min 3 scenarios (happy, edge, error) + 1 auth scenario
+> 3. **Wireframes attached** — UI features: `## UI Layout` with wireframe + components + states + tokens. Backend-only: explicit "N/A"
+> 4. **UI design ready** — Visual design + component decomposition tree. Backend-only: "N/A"
+> 5. **AI pre-review passed** — `/refine-review` or `/pbi-challenge` returned PASS or WARN (not FAIL)
+> 6. **Story points estimated** — Fibonacci 1-21 + complexity (Low/Medium/High). >13 SP → recommend split
+> 7. **Dependencies table complete** — Dependency, Type (must-before/can-parallel/blocked-by/independent), Status
+>
+> **Failure fixes:** Vague AC → specify exact CRUD + roles. Missing auth → add roles × CRUD table. No wireframes → UX BA creates. TBD in AC → replace with decision.
+
+<!-- /SYNC:refinement-dor-checklist -->
+
 ## Workflow
 
 1. **Locate PBI draft** — Find BA drafters' draft PBI in `team-artifacts/pbis/` or path provided by user
-2. **Load protocols** — Read these 3 protocols:
-    - `.claude/skills/shared/ba-team-decision-model-protocol.md` (decision model, veto scope)
-    - `.claude/skills/shared/refinement-dor-checklist-protocol.md` (DoR criteria)
-    - `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` (authorization, seed data, migration)
-3. **Load domain context** — Auto-detect module from PBI content, load:
+2. **Load domain context** — Auto-detect module from PBI content, load:
     - `docs/project-reference/domain-entities-reference.md` (entity definitions)
     - Relevant feature docs from `docs/business-features/{App}/`
     - Existing business rules (BR-{MOD}-XXX) from feature docs
-4. **Technical Feasibility Analysis:**
+3. **Technical Feasibility Analysis:**
     - Can described features be built with the project's architecture?
     - Any domain entity conflicts? (cross-reference entity definitions)
     - Any cross-service implications? (message bus events, shared data between services)
     - Estimated complexity alignment (does scope match story points?)
-5. **AC Quality Analysis:**
+4. **AC Quality Analysis:**
     - Vagueness detector: flag "should", "might", "TBD", "etc.", "various", "appropriate"
     - Coverage check: happy path + edge case + error case + authorization scenario
     - Missing scenarios: suggest specific additions based on feature type
-6. **Cross-Cutting Concerns Check:**
+5. **Cross-Cutting Concerns Check:**
     - Authorization section present and complete? (roles × CRUD matrix)
     - Seed data requirements addressed? (or explicit "N/A")
     - Data migration implications? (schema changes)
     - Performance considerations? (list/grid/export features)
-    - **UI Layout section present?** If PBI involves UI: must have `## UI Layout` per `ui-wireframe-protocol.md` with wireframe + components (with tiers) + states + design tokens. If backend-only: explicit "N/A". Flag missing UI visualization as a gap.
-7. **Generate Challenge Prompts** — Output specific, actionable questions:
+    - **UI Layout section present?** If PBI involves UI: must have `## UI Layout` per UI wireframe protocol with wireframe + components (with tiers) + states + design tokens. If backend-only: explicit "N/A". Flag missing UI visualization as a gap.
+6. **Generate Challenge Prompts** — Output specific, actionable questions:
     - NOT vague: "needs work" or "improve AC"
     - SPECIFIC: "AC #2 says 'user can filter results' — which filters exactly? Suggest: status, date range, priority"
-8. **Provide AI Verdict** — APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD
-9. **AskUserQuestion** — Dev BA PIC reviews AI analysis and makes final human decision
+7. **Provide AI Verdict** — APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD
+8. **AskUserQuestion** — Dev BA PIC reviews AI analysis and makes final human decision
 
 ## Output
 
@@ -151,4 +174,4 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->

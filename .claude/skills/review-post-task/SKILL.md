@@ -40,7 +40,7 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+> **Deep Multi-Round Review** — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
 >
 > **Round 1:** Normal review building understanding. Read all files, note issues.
 > **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
@@ -50,8 +50,15 @@ description: '[Code Quality] Two-pass code review for task completion'
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces (what should exist but doesn't)
 >
-> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
-> **Report must include `## Round 2 Findings` section.**
+> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+>
+> - "What input causes failure? What error do I get?"
+> - "1000 concurrent users — what breaks?"
+> - "After deployment rollback — backward compatible?"
+> - "Can I debug issues from logs/monitoring output?"
+>
+> **Rules:** NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
+> **Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -233,24 +240,24 @@ Fix issues found.
 - **MUST** add a final review todo task to verify work quality
 - **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
   **MANDATORY IMPORTANT MUST** READ the following files before starting:
-      <!-- SYNC:understand-code-first:reminder -->
+  <!-- SYNC:understand-code-first:reminder -->
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:design-patterns-quality:reminder -->
 - **MUST** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
+  <!-- /SYNC:design-patterns-quality:reminder -->
+  <!-- SYNC:double-round-trip-review:reminder -->
 - **MUST** execute TWO independent review rounds. Round 2 re-reads ALL files from scratch.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:graph-impact-analysis:reminder -->
+  <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- SYNC:graph-impact-analysis:reminder -->
 - **MUST** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
-      <!-- /SYNC:graph-impact-analysis:reminder -->
-      <!-- SYNC:logic-and-intention-review:reminder -->
+  <!-- /SYNC:graph-impact-analysis:reminder -->
+  <!-- SYNC:logic-and-intention-review:reminder -->
 - **MUST** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-      <!-- /SYNC:logic-and-intention-review:reminder -->
-      <!-- SYNC:bug-detection:reminder -->
+  <!-- /SYNC:logic-and-intention-review:reminder -->
+  <!-- SYNC:bug-detection:reminder -->
 - **MUST** check null safety, boundaries, error handling, resource management for every review.
-      <!-- /SYNC:bug-detection:reminder -->
-      <!-- SYNC:test-spec-verification:reminder -->
+  <!-- /SYNC:bug-detection:reminder -->
+  <!-- SYNC:test-spec-verification:reminder -->
 - **MUST** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
-      <!-- /SYNC:test-spec-verification:reminder -->
+  <!-- /SYNC:test-spec-verification:reminder -->

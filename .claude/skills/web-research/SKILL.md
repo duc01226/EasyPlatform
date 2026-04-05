@@ -7,10 +7,6 @@ allowed-tools: Read, Write, Grep, Glob, WebSearch, WebFetch, TaskCreate, Bash
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-**Prerequisites:** **MUST READ** before executing:
-
-- `.claude/skills/shared/web-research-protocol.md`
-
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
@@ -30,7 +26,7 @@ allowed-tools: Read, Write, Grep, Glob, WebSearch, WebFetch, TaskCreate, Bash
 **Key Rules:**
 
 - Maximum 10 WebSearch calls per invocation
-- Follow source hierarchy from web-research-protocol.md
+- Follow source hierarchy: Official docs (Tier 1) > Peer-reviewed (Tier 2) > Industry blogs (Tier 3) > Forums (Tier 4)
 - Output intermediate source map, not final report
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**

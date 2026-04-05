@@ -155,8 +155,6 @@ After each phase: re-assess remaining phases for scope changes.
 
 ## TC Satisfaction Verification (Per Phase)
 
-> Per `.claude/skills/shared/plan-quality-protocol.md`
-
 After implementing each phase, before marking it complete:
 
 1. Read the phase's `## Test Specifications` section
@@ -348,23 +346,23 @@ MUST run BEFORE writing code when graph.db exists:
 <!-- SYNC:plan-granularity:reminder -->
 
 - **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-<!-- /SYNC:plan-granularity:reminder -->
-  <!-- SYNC:understand-code-first:reminder -->
+    <!-- /SYNC:plan-granularity:reminder -->
+      <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:plan-quality:reminder -->
 - **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:rationalization-prevention:reminder -->
 - **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+  <!-- /SYNC:rationalization-prevention:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
+  <!-- /SYNC:ui-system-context:reminder -->
+  <!-- SYNC:iterative-phase-quality:reminder -->
 - **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-      <!-- /SYNC:iterative-phase-quality:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:iterative-phase-quality:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:graph-assisted-investigation:reminder -->

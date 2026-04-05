@@ -31,7 +31,6 @@
 
 > **Understand-Code-First** — Do NOT write code, create plans, or attempt fixes until you READ existing code.
 > Search 3+ similar implementations first. Run graph on key files (MANDATORY when graph.db exists).
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
 
 - Read existing code before modifying. Validate assumptions with evidence. Search before creating.
 

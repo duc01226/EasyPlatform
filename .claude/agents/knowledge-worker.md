@@ -19,8 +19,6 @@ Synthesize multi-source web research into structured knowledge artifacts. You ar
 
 ## Project Context
 
-> **MUST READ** `.claude/skills/shared/web-research-protocol.md` before any research task.
-
 ## Workflow
 
 1. **Research** — Execute WebSearch queries (varied angles), collect sources

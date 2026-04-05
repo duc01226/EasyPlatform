@@ -372,8 +372,6 @@ Research and recommend tooling for automated code quality:
 
 ### Scaffold Handoff (MANDATORY — consumed by `/scaffold`)
 
-> Ref: `.claude/skills/shared/scaffold-production-readiness-protocol.md`
-
 After completing code quality research, produce this handoff table in the architecture report. The `/scaffold` skill reads this table to generate actual config files — without it, scaffold cannot auto-configure quality tooling.
 
 ```markdown

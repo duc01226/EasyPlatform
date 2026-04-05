@@ -541,13 +541,10 @@ mindmap
 
 ```
 .claude/skills/shared/
-├── sync-inline-versions.md             ← CANONICAL source for all SYNC blocks
-├── understand-code-first-protocol.md   ← Full protocol (reference/archive)
-├── evidence-based-reasoning-protocol.md
-├── scan-and-update-reference-doc-protocol.md
-├── plan-quality-protocol.md
-└── ... (25 protocol modules total)
+└── sync-inline-versions.md             ← CANONICAL source for all SYNC blocks
 ```
+
+> **Note:** Standalone protocol files have been deleted. All protocol content is inlined into consuming skills via `<!-- SYNC:tag -->` blocks. Only `sync-inline-versions.md` remains as the canonical source.
 
 **Why inline instead of file-read?** AI compliance drops significantly when protocols are behind `MUST READ file.md` indirection. AI agents skip the file-read step ~40% of the time. Inline SYNC blocks are always present in the skill's context window.
 
@@ -714,7 +711,7 @@ Bottom of each skill has condensed `:reminder` variants:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification.
-  <!-- /SYNC:understand-code-first:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
 ```
 
 **Update workflow:** Edit `sync-inline-versions.md` (canonical) → `grep SYNC:tag-name` → update all copies. The `SYNC:shared-protocol-duplication-policy` tag in `code-simplifier` and `development-rules.md` prevents AI from "helpfully" extracting inline content back to file references.
@@ -1301,11 +1298,11 @@ All test-related skills use a **single TC ID format** across the entire project,
 │  Example: TC-GM-001 (Goal Management, test case 1)               │
 │  Example: TC-CI-025 (Check-In, test case 25)                     │
 │                                                                   │
-│  Feature Codes (from module-codes.md):                           │
+��  Feature Codes (from feature-docs-reference.md):                 │
 │  Define 2-3 letter codes per domain feature.                    │
 │  Examples: GM (Goal Mgmt), CI (Check-In), AUTH (Auth),          │
-│            ORD (Orders), INV (Inventory), USR (Users)           │
-│  Group codes by service/module in module-codes.md.              │
+│            CAN (Candidate), JOB (Job), EMP (Employee)           │
+│  Source: docs/project-reference/feature-docs-reference.md       │
 │                                                                   │
 │  SOURCE OF TRUTH: Feature docs Section 17 (canonical registry)  │
 │  DASHBOARD: docs/test-specs/ (aggregated cross-module views)    │

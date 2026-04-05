@@ -575,7 +575,6 @@ Present findings in clear format with: Answer, How It Works (with code refs), Ke
 
 ### Graph Intelligence
 
-> See `.claude/skills/shared/graph-intelligence-queries.md` for the full list of structural graph queries.
 > **RECOMMENDED** if `.code-graph/graph.db` exists.
 
 ### Graph-Trace for Feature Flow
@@ -631,4 +630,4 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->

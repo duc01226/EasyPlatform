@@ -31,7 +31,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 <!-- /SYNC:rationalization-prevention -->
 
-> **Graph Context (MANDATORY when graph.db exists):** Before generating test specs, run graph impact analysis per `.claude/skills/shared/graph-impact-analysis-protocol.md`. This reveals cross-service consumers, event handlers, and implicit connections (MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT) that tests must cover.
+> **Graph Context (MANDATORY when graph.db exists):** Before generating test specs, run graph impact analysis. This reveals cross-service consumers, event handlers, and implicit connections (MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT) that tests must cover.
 
 ## Quick Summary
 
@@ -40,8 +40,6 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
->
-> - `.claude/skills/shared/references/module-codes.md` — TC ID format and feature codes
 >
 > <!-- SYNC:evidence-based-reasoning -->
 >
@@ -86,11 +84,11 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 **Key Rules:**
 
-- **Unified format:** `TC-{FEATURE}-{NNN}` — see `module-codes.md` for feature codes
+- **Unified format:** `TC-{FEATURE}-{NNN}` — feature codes in `docs/project-reference/feature-docs-reference.md`
 - **Source of truth:** Feature docs Section 17 is the canonical TC registry
 - **Evidence required:** Every TC MUST have `Evidence: {FilePath}:{LineRange}` or `TBD (pre-implementation)` for TDD-first mode
 - **Minimum 4 categories:** Positive (happy path), negative (error handling), **authorization** (role-based access), edge cases
-- **Cross-cutting TC categories** (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md`):
+- **Cross-cutting TC categories:**
     - **Authorization TCs (mandatory):** Authorized access succeeds, unauthorized access rejected, role-based visibility verified
     - **Seed Data TCs (if applicable):** Reference data exists, seeder runs correctly
     - **Performance TCs (if applicable):** Feature performs within SLA under production-like data volume
@@ -120,7 +118,6 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 > **Phase-Mapped Coverage:** When a plan exists with multiple phases, generate test cases
 > PER PHASE — not just per feature. Each phase's success criteria MUST have ≥1 test case.
-> See `.claude/skills/shared/iterative-phase-quality-protocol.md`.
 
 ### Frontend/UI Context (if applicable)
 
@@ -162,7 +159,7 @@ Detect mode from user prompt and context:
 
 **Must read FIRST:**
 
-1. `module-codes.md` — identify the correct `{FEATURE}` code for TC IDs
+1. `docs/project-reference/feature-docs-reference.md` — identify the correct `{FEATURE}` code for TC IDs
 2. Target feature doc — check if Section 17 exists, read existing TCs to avoid ID collisions
 
 **If target feature doc doesn't exist:**
@@ -403,13 +400,13 @@ Based on mode, suggest via `AskUserQuestion`:
 <!-- SYNC:rationalization-prevention:reminder -->
 
 - **MUST** never skip steps via "too simple" or "already searched" evasions. Plan anyway, test first, show grep evidence.
-    <!-- /SYNC:rationalization-prevention:reminder -->
-    <!-- SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:cross-cutting-quality:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:cross-cutting-quality:reminder -->
 - **MUST** check error handling, logging, security, performance, and observability across changed files.
-    <!-- /SYNC:cross-cutting-quality:reminder -->
-    <!-- SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:cross-cutting-quality:reminder -->
+      <!-- SYNC:ui-system-context:reminder -->
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->

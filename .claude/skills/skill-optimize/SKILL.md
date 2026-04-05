@@ -59,7 +59,7 @@ Optimize skill at `.claude/skills/${SKILL}` directory.
 
 ### 2. SYNC Protocol Check
 
-- [ ] No `MUST READ .claude/skills/shared/` file references — convert to SYNC inline blocks
+- [ ] No file references to `.claude/skills/shared/` — all protocols inlined via SYNC blocks
 - [ ] All SYNC tags balanced (every open has matching close)
 - [ ] Content matches canonical source: `.claude/skills/shared/sync-inline-versions.md`
 - [ ] `:reminder` blocks present at bottom for each protocol
@@ -85,6 +85,6 @@ Optimize skill at `.claude/skills/${SKILL}` directory.
 - **MUST** inline shared protocols via `<!-- SYNC:tag -->` — NEVER use file references
 - **MUST** call `/prompt-enhance` on optimized skill as final quality pass
 - **MUST** verify SYNC tag balance and content matches canonical source
-    <!-- SYNC:shared-protocol-duplication-policy:reminder -->
+      <!-- SYNC:shared-protocol-duplication-policy:reminder -->
 - **MUST** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
-    <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
+      <!-- /SYNC:shared-protocol-duplication-policy:reminder -->

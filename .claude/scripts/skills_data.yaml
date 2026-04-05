@@ -29,8 +29,7 @@
   name: ai-multimodal
   path: ai-multimodal\SKILL.md
 - category: frontend
-  description: "**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md`
-    before executing."
+  description: "Design APIs following project CQRS patterns and architecture rules."
   has_references: false
   has_scripts: false
   name: api-design
@@ -360,8 +359,7 @@
   name: docx-to-markdown
   path: docx-to-markdown\SKILL.md
 - category: other
-  description: "**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md`
-    and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing."
+  description: "Implement features with investigation, planning, and testing."
   has_references: false
   has_scripts: false
   name: feature
@@ -691,8 +689,7 @@
   name: plan-validate
   path: plan-validate\SKILL.md
 - category: utilities
-  description: "**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md`
-    before executing."
+  description: "Research, analyze, and create structured implementation plans."
   has_references: false
   has_scripts: false
   name: planning
@@ -828,8 +825,7 @@
   name: review-post-task
   path: review-post-task\SKILL.md
 - category: other
-  description: "**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md`
-    before executing."
+  description: "Locate relevant files across codebase for a specific task."
   has_references: false
   has_scripts: false
   name: scout

@@ -202,8 +202,6 @@ If `.code-graph/graph.db` exists, you MUST use graph to enhance analysis with st
 - **Find existing tests:** `python .claude/scripts/code_graph query tests_for <function> --json`
 - **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
 
-> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
-
 ### Graph-Assisted Fix Verification
 
 Before and after fixing, use graph trace to understand blast radius:
@@ -247,16 +245,16 @@ Before and after fixing, use graph trace to understand blast radius:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
 - **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:red-flag-stop-conditions:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
+  <!-- SYNC:red-flag-stop-conditions:reminder -->
 - **MUST** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-      <!-- /SYNC:red-flag-stop-conditions:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+  <!-- /SYNC:red-flag-stop-conditions:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->

@@ -1,6 +1,6 @@
 # Anti-Hallucination Patterns
 
-> **Note**: The mandatory protocol has been consolidated into `.claude/skills/shared/evidence-based-reasoning-protocol.md`.
+> **Note**: The mandatory protocol is inlined via SYNC:evidence-based-reasoning blocks in skills.
 > This file remains as an optional deep-dive reference with comprehensive examples and verification commands.
 >
 > **Purpose**: Prevent AI speculation by requiring evidence before claims.

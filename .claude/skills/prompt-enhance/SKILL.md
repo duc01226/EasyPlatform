@@ -103,7 +103,7 @@ Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization co
 **Before:**
 
 ```
-**MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
 ```
 
 **After:**
@@ -111,7 +111,6 @@ Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization co
 ```
 > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof.
 > Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend.
-> MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
 ```
 
 **How to create the summary:**
@@ -253,10 +252,10 @@ For each `.claude/` protocol reference:
 - **MUST** keep all meaningful content — only restructure/compress, never delete rules or code examples
 - **MUST** verify no YAML frontmatter corruption after changes
   **MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:output-quality-principles:reminder -->
+      <!-- SYNC:output-quality-principles:reminder -->
 - **MUST** follow output quality principles: token efficiency, lead with answer, no trailing summaries
-    <!-- /SYNC:output-quality-principles:reminder -->
-    <!-- SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:output-quality-principles:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
 - **MUST** READ `CLAUDE.md` before starting

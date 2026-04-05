@@ -55,7 +55,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
 - Never skip hypothesis validation for new features
 - Validation interview is NOT optional — always ask 3-5 questions
 - Use project domain-specific vocabulary when available
-- MUST include `story_points` and `complexity` in PBI output (see `.claude/skills/shared/estimation-framework.md`)
+- MUST include `story_points` and `complexity` in PBI output
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 - <!-- SYNC:scaffold-production-readiness -->
 
@@ -68,7 +68,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
     >
     > Present 2-3 options per concern via AskUserQuestion. Verify each checklist before marking scaffold complete.
 
-    <!-- /SYNC:scaffold-production-readiness -->
+      <!-- /SYNC:scaffold-production-readiness -->
 
     — for Production Readiness Concerns table in PBI output
 
@@ -82,7 +82,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
     > 4. **Performance** — no N+1 queries, unnecessary allocations, or blocking calls in async paths
     > 5. **Observability** — health checks, metrics, tracing spans for new endpoints
 
-    <!-- /SYNC:cross-cutting-quality -->
+      <!-- /SYNC:cross-cutting-quality -->
 
     — for Authorization, Seed Data, Data Migration concerns in PBI output
 
@@ -329,7 +329,7 @@ Apply RICE score or MoSCoW for priority. Estimate using **Story Points (Modified
 
 ### Story Points (Primary Estimation)
 
-See `shared/estimation-framework.md` for SP reference table.
+Use SP reference table from estimation framework (already embedded above).
 
 ### Quick RICE Score
 
@@ -491,8 +491,6 @@ Then error "{message}"
 
 ## Production Readiness Concerns
 
-> Ref: `.claude/skills/shared/scaffold-production-readiness-protocol.md`
-
 | Concern                | Required        | Notes                                   |
 | ---------------------- | --------------- | --------------------------------------- |
 | Code linting/analyzers | Yes/No/Existing | {tool preference or "scaffold default"} |
@@ -504,8 +502,6 @@ Then error "{message}"
 
 ## Authorization & Access Control
 
-> Ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md`
-
 | Role   | Can Create | Can Read | Can Update | Can Delete | Notes         |
 | ------ | ---------- | -------- | ---------- | ---------- | ------------- |
 | {Role} | ✅/❌      | ✅/❌    | ✅/❌      | ✅/❌      | {scope notes} |
@@ -514,8 +510,6 @@ Then error "{message}"
 **Multi-tenant isolation:** {Yes/No}
 
 ## Seed Data Requirements
-
-> Ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md`
 
 | Data Type          | Description                          | Owner        | Required |
 | ------------------ | ------------------------------------ | ------------ | -------- |
@@ -527,8 +521,6 @@ Then error "{message}"
 > If no seed data needed: `N/A — no seed data required for this feature.`
 
 ## Data Migration
-
-> Ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md`
 
 | Change                      | Type                                   | Backward Compatible | Reversible |
 | --------------------------- | -------------------------------------- | ------------------- | ---------- |
@@ -559,7 +551,7 @@ Then error "{message}"
 
 - **{ComponentName}** — {behavior description} _(tier: common | domain-shared | page/app)_
 
-> Classify per **Component Hierarchy** in `ui-wireframe-protocol.md` — search existing libs before proposing new components.
+> Classify per **Component Hierarchy** in UI wireframe protocol — search existing libs before proposing new components.
 
 ### States
 
@@ -630,7 +622,7 @@ Then error "{message}"
 
 ## Project Integration
 
-For domain PBIs: detect module (ref: `.claude/skills/shared/module-detection-keywords.md`), extract business rules from `docs/business-features/{module}/`, load entity context from `.ai.md`. Target 8-12K tokens for feature context.
+For domain PBIs: detect module from `docs/business-features/` directory names, extract business rules from `docs/business-features/{module}/`, load entity context from `.ai.md`. Target 8-12K tokens for feature context.
 
 ---
 
@@ -662,13 +654,13 @@ For domain PBIs: detect module (ref: `.claude/skills/shared/module-detection-key
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-    <!-- SYNC:scaffold-production-readiness:reminder -->
+  <!-- /SYNC:ui-system-context:reminder -->
+      <!-- SYNC:scaffold-production-readiness:reminder -->
 - **MUST** verify 4 production-readiness foundations (code quality, error handling, loading state, Docker) for scaffold PBIs.
-    <!-- /SYNC:scaffold-production-readiness:reminder -->
-    <!-- SYNC:cross-cutting-quality:reminder -->
+      <!-- /SYNC:scaffold-production-readiness:reminder -->
+      <!-- SYNC:cross-cutting-quality:reminder -->
 - **MUST** check error handling, logging, security, performance, and observability across changed files.
-    <!-- /SYNC:cross-cutting-quality:reminder -->
-    <!-- SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:cross-cutting-quality:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
 - **MUST** estimate story points using Modified Fibonacci (1-21). SP >8 MUST split, >5 SHOULD split.
-    <!-- /SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:estimation-framework:reminder -->

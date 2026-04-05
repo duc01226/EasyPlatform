@@ -7,10 +7,6 @@ allowed-tools: Read, Write, Edit, TaskCreate, Bash
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-**Prerequisites:** **MUST READ** before executing:
-
-- `.claude/skills/shared/web-research-protocol.md`
-
 ## Quick Summary
 
 **Goal:** Build comprehensive marketing strategy with positioning, channels, messaging, campaigns, budget, and KPIs.
@@ -80,7 +76,7 @@ Total budget % must equal 100%.
 
 ## Output
 
-Write to `docs/knowledge/strategy/marketing/{descriptive-slug}.md` using enforced template from `docs/templates/marketing-strategy-template.md`.
+Write to `docs/knowledge/strategy/marketing/{descriptive-slug}.md` using enforced template from `.claude/templates/marketing-strategy-template.md`.
 
 ---
 

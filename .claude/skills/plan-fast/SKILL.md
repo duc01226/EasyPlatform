@@ -165,7 +165,7 @@ Use `planner` subagent to:
 
 - Save the overview access point at `{plan-dir}/plan.md`. Keep it generic, under 80 lines, and list each implementation phase with status and progress plus links to phase files.
 - For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` containing the following sections in order: Context links (reference parent plan, dependencies, docs), Overview (date, description, priority, implementation status, review status), Key Insights, Requirements, Architecture, **UI Layout** (see below), Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
-- **UI Layout**: For frontend-facing phases, include ASCII wireframe per `.claude/skills/shared/ui-wireframe-protocol.md`. Classify components by tier (common/domain-shared/page-app). For backend-only phases: `## UI Layout` → `N/A — Backend-only change.`
+- **UI Layout**: For frontend-facing phases, include ASCII wireframe. Classify components by tier (common/domain-shared/page-app). For backend-only phases: `## UI Layout` → `N/A — Backend-only change.`
 
 ## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
@@ -242,18 +242,18 @@ After creating all phase files, run the **recursive decomposition loop**:
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** include Test Specifications section and story_points in plan frontmatter
-      <!-- SYNC:plan-granularity:reminder -->
+  <!-- SYNC:plan-granularity:reminder -->
 - **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-      <!-- /SYNC:plan-granularity:reminder -->
-    <!-- SYNC:understand-code-first:reminder -->
+  <!-- /SYNC:plan-granularity:reminder -->
+      <!-- SYNC:understand-code-first:reminder -->
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
 - **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
+  <!-- SYNC:plan-quality:reminder -->
 - **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:iterative-phase-quality:reminder -->
 - **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-    <!-- /SYNC:iterative-phase-quality:reminder -->
+      <!-- /SYNC:iterative-phase-quality:reminder -->

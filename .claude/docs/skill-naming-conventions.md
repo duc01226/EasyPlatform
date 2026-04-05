@@ -62,34 +62,21 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 - Interactive mode is primary use case
 - Skill applies to many contexts
 
-## Shared Module Pattern
+## Shared Protocol Pattern (SYNC Inline)
 
 ### `shared/` Directory
 
-**Purpose:** Reusable content blocks extracted from 3+ skills to eliminate duplication (DRY).
+**Purpose:** Contains the canonical source for all SYNC-inlined protocol content.
 
-**Location:** `.claude/skills/shared/{module-name}.md`
+**Location:** `.claude/skills/shared/sync-inline-versions.md` (single canonical file)
 
-**Naming Rules:**
+**Architecture:** Standalone protocol files have been deleted. All protocol content is now inlined directly into consuming skills via `<!-- SYNC:tag -->` blocks. This approach improves AI compliance by ~40% compared to file-read indirection.
 
-- Use lowercase-hyphen-case (same as skill names)
-- Name describes the content purpose, not the consuming skills
-- Must include a `README.md` index file
+**To update protocols:**
 
-**Current Modules:**
-| Module | Purpose |
-| -------------------------------------- | -------------------------------------------------------------------------------------- |
-| `evidence-based-reasoning-protocol.md` | Evidence-based reasoning: core rules, confidence levels, validation chain, risk matrix |
-| `understand-code-first-protocol.md` | Read-before-write protocol, assumption validation, external memory |
-| `design-system-check.md` | Frontend design system doc locations |
-| `module-detection-keywords.md` | Project module keyword lists |
-
-**Guidelines:**
-
-- Only extract content duplicated across 3+ skills
-- Keep modules under 500 words
-- Self-contained (no dependencies on other shared modules)
-- Skills reference via: `**Prerequisites:** Read \`.claude/skills/shared/{file}.md\` before executing.`
+1. Edit `.claude/skills/shared/sync-inline-versions.md` (canonical source)
+2. Run `grep SYNC:protocol-name` to find all consuming skills
+3. Update all copies (or use `/sync-protocols` skill to automate)
 
 ### `references/` Subdirectory
 

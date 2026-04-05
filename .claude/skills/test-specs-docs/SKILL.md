@@ -71,7 +71,7 @@ docs/test-specs/
 TC-{FEATURE}-{NNN}
 ```
 
-**⚠️ MUST READ** `references/module-codes.md` (relative to skill shared dir) for module codes, feature codes, and TC ID formats.
+**TC format:** `TC-{FEATURE}-{NNN}` — feature codes in `docs/project-reference/feature-docs-reference.md` and each feature doc's Section 17.
 
 ### TC Code Numbering Rules
 
@@ -173,5 +173,5 @@ When user says "sync test specs to feature docs" or "reverse sync":
 - **MUST** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST** READ the following files before starting:
 - **MUST** READ `references/test-spec-template.md` before starting
-- **MUST** READ `references/module-codes.md` (relative to skill shared dir) for TC ID formats and module codes
+- **MUST** READ `docs/project-reference/feature-docs-reference.md` for TC ID formats and feature codes
 - **MUST** READ `CLAUDE.md` before starting

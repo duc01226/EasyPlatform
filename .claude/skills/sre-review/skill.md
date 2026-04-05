@@ -26,7 +26,7 @@ description: '[Code Quality] Production readiness review for service-layer and A
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+> **Deep Multi-Round Review** — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
 >
 > **Round 1:** Normal review building understanding. Read all files, note issues.
 > **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
@@ -36,8 +36,15 @@ description: '[Code Quality] Production readiness review for service-layer and A
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces (what should exist but doesn't)
 >
-> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
-> **Report must include `## Round 2 Findings` section.**
+> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+>
+> - "What input causes failure? What error do I get?"
+> - "1000 concurrent users — what breaks?"
+> - "After deployment rollback — backward compatible?"
+> - "Can I debug issues from logs/monitoring output?"
+>
+> **Rules:** NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
+> **Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -183,7 +190,7 @@ When graph DB is available, use `trace` to verify production readiness:
 
 ## Round 2: Focused Re-Review (MANDATORY)
 
-> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
 
 After completing Round 1 scoring, execute a **second full review round**:
 
@@ -278,10 +285,10 @@ After completing Round 1 scoring, execute a **second full review round**:
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:double-round-trip-review:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:double-round-trip-review:reminder -->
 - **MUST** execute TWO independent review rounds. Report must include `## Round 2 Findings`.
-    <!-- /SYNC:double-round-trip-review:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- SYNC:graph-assisted-investigation:reminder -->
 - **MUST** run at least ONE graph command on key files before concluding (when graph.db exists).
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:graph-assisted-investigation:reminder -->

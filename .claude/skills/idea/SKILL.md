@@ -49,7 +49,7 @@ allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 
 - Validation step is mandatory, not optional
 - Auto-detect module silently; only prompt when ambiguous
-- MUST include rough `t_shirt_size` (XS/S/M/L/XL) in idea artifact for early sizing (see `.claude/skills/shared/estimation-framework.md` T-Shirt to Story Point Mapping)
+- MUST include rough `t_shirt_size` (XS/S/M/L/XL) in idea artifact for early sizing
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -118,7 +118,7 @@ See: `.claude/docs/team-artifacts/templates/idea-template.md`
 
 1. Run: `Glob("docs/business-features/*/README.md")`
 2. Extract module names from paths (e.g., ServiceB, ServiceA, SupportingServices)
-3. Match idea keywords against module keywords (reference: `.claude/skills/shared/module-detection-keywords.md`)
+3. Match idea keywords against module keywords (detect module from docs/business-features/ directory names)
 
 **Detection Approach (silent auto-detect):**
 
@@ -281,7 +281,7 @@ When the idea involves UI changes, include this section in the idea artifact:
 
 ### Layout
 
-{Rough ASCII wireframe showing spatial arrangement — see ui-wireframe-protocol.md}
+{Rough ASCII wireframe showing spatial arrangement — see UI wireframe protocol}
 
 ### Key Components
 
@@ -289,7 +289,7 @@ When the idea involves UI changes, include this section in the idea artifact:
 - **{Component}** — {purpose} _(tier: common | domain-shared | page/app)_
 ```
 
-> Classify components per **Component Hierarchy** in `ui-wireframe-protocol.md` — search existing libs before proposing new components.
+> Classify components per **Component Hierarchy** in `UI wireframe protocol` — search existing libs before proposing new components.
 > If backend-only idea: `## UI Sketch` → `N/A — Backend-only change. No UI affected.`
 
 ## Example

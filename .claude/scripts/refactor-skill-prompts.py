@@ -21,131 +21,29 @@ from pathlib import Path
 
 # Inline summary map: protocol filename → (short_label, inline_summary)
 INLINE_SUMMARIES = {
-    "understand-code-first-protocol.md": (
-        "Understand Code First",
-        "Search codebase for 3+ similar implementations BEFORE writing any code. "
-        "Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. "
-        "Never invent new patterns when existing ones work."
-    ),
-    "evidence-based-reasoning-protocol.md": (
-        "Evidence-Based Reasoning",
-        "Speculation is FORBIDDEN. Every claim needs `file:line` proof. "
-        "Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. "
-        "Cross-service validation required for architectural changes."
-    ),
-    "rationalization-prevention-protocol.md": (
-        "Rationalization Prevention",
-        'AI consistently skips steps via: "too simple for a plan", "I\'ll test after", "already searched", '
-        '"code is self-explanatory". These are EVASIONS — not valid reasons. '
-        "Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to \"save time\"."
-    ),
-    "red-flag-stop-conditions-protocol.md": (
-        "Red Flag STOP Conditions",
-        "STOP current approach when: 3+ fix attempts on same issue (root cause not identified), "
-        "each fix reveals NEW problems (upstream root cause), fix requires 5+ files for \"simple\" change "
-        "(wrong abstraction layer), using \"should work\"/\"probably fixed\" without verification evidence. "
-        "After 3 failed attempts, report all outcomes and ask user before attempt #4."
-    ),
-    "graph-assisted-investigation-protocol.md": (
-        "Graph-Assisted Investigation",
-        "When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. "
-        "Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. "
-        "Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files."
-    ),
-    "ui-system-context.md": (
-        "UI System Context",
-        "For frontend/UI/styling tasks, MUST READ these BEFORE implementing: "
-        "`frontend-patterns-reference.md` (component base classes, stores, forms), "
-        "`scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), "
-        "`design-system/README.md` (design tokens, component inventory, icons)."
-    ),
-    "iterative-phase-quality-protocol.md": (
-        "Iterative Phase Quality",
-        "Assess complexity BEFORE planning (signals: >5 files +2, cross-service +3, new pattern +2). "
-        "Score ≥6 → MUST decompose into phases. Each phase: plan → implement → review → fix → verify. "
-        "No phase >5 files or >3h effort. DO NOT start next phase until current passes VERIFY."
-    ),
-    "plan-quality-protocol.md": (
-        "Plan Quality",
-        "Every plan phase MUST include `## Test Specifications` section with TC-{FEAT}-{NNN} format. "
-        "Verify TC satisfaction per phase before marking complete. "
-        "Plans must include `story_points` and `effort` in frontmatter."
-    ),
-    "two-stage-task-review-protocol.md": (
-        "Two-Stage Review",
-        "Every task review has two stages IN ORDER: (1) Spec Compliance — does implementation match requirements? "
-        "(2) Code Quality — is implementation well-built? "
-        "Stage 2 is BLOCKED until Stage 1 passes with zero FAIL items. No exceptions."
-    ),
-    "estimation-framework.md": (
-        "Estimation Framework",
-        "SP scale: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large, high risk) → "
-        "13(epic, SHOULD split) → 21(MUST split). "
-        "MUST provide `story_points` and `complexity` estimate after investigation."
-    ),
-    "design-patterns-quality-checklist.md": (
-        "Design Patterns Quality",
-        "Priority checks: (1) DRY via OOP — same-suffix classes MUST share base class, "
-        "3+ similar patterns → extract. (2) Right Responsibility — logic in LOWEST layer "
-        "(Entity > Service > Component). (3) SOLID principles."
-    ),
-    "double-round-trip-review-protocol.md": (
-        "Double Round-Trip Review",
-        "Every review executes TWO full rounds: Round 1 builds understanding (normal review), "
-        "Round 2 leverages accumulated context to catch what Round 1 missed. "
-        "Round 2 is MANDATORY — never skip, never combine into single pass."
-    ),
-    "scaffold-production-readiness-protocol.md": (
-        "Scaffold Production Readiness",
-        "Production scaffold checklist: health endpoints, structured logging, graceful shutdown, "
-        "config validation, CI pipeline, Dockerfile, env separation. "
-        "Verify each item exists before marking scaffold complete."
-    ),
-    "cross-cutting-quality-concerns-protocol.md": (
-        "Cross-Cutting Quality",
-        "Check: error handling consistency, logging standards, security headers, "
-        "input validation, rate limiting, CORS config, health checks across all services."
-    ),
-    "ba-team-decision-model-protocol.md": (
-        "BA Team Decision Model",
-        "Structured decision-making: identify options, score criteria (impact, effort, risk, alignment), "
-        "present comparison matrix, recommend with confidence level."
-    ),
-    "refinement-dor-checklist-protocol.md": (
-        "Refinement DoR Checklist",
-        "Definition of Ready gates: clear acceptance criteria, estimated story points, "
-        "dependencies identified, design artifacts available, testable requirements."
-    ),
-    "design-system-check.md": (
-        "Design System Check",
-        "Verify UI implementations use design system tokens (colors, spacing, typography), "
-        "follow component inventory, match icon library, respect theme variants."
-    ),
-    "ui-wireframe-protocol.md": (
-        "UI Wireframe Protocol",
-        "Wireframe-to-implementation flow: parse layout structure, map to components, "
-        "extract design tokens, generate responsive breakpoints."
-    ),
-    "web-research-protocol.md": (
-        "Web Research Protocol",
-        "Structured web research: define search queries, validate source credibility, "
-        "cross-reference claims across 3+ sources, track evidence provenance."
-    ),
-    "scan-and-update-reference-doc-protocol.md": (
-        "Scan & Update Reference Doc",
-        "Read existing doc first, scan codebase for current state, diff against doc content, "
-        "update only changed sections, preserve manual annotations."
-    ),
-    "graph-intelligence-queries.md": (
-        "Graph Intelligence Queries",
-        "Quick graph query reference: `connections` (1-hop), `trace` (full flow), "
-        "`callers_of`/`tests_for` (specific), `batch-query` (multiple files), `search` (by keyword)."
-    ),
-    "graph-impact-analysis-protocol.md": (
-        "Graph Impact Analysis",
-        "Use `trace --direction downstream` on changed files to find all impacted consumers, "
-        "bus message handlers, event subscribers. Verify each needs updating."
-    ),
+    # --- All shared protocol files deleted, content now inlined via SYNC tags ---
+    # understand-code-first-protocol.md — removed (inlined via SYNC:understand-code-first)
+    # evidence-based-reasoning-protocol.md — removed (inlined via SYNC:evidence-based-reasoning)
+    # rationalization-prevention-protocol.md — removed (inlined via SYNC:rationalization-prevention)
+    # red-flag-stop-conditions-protocol.md — removed (inlined via SYNC:red-flag-stop-conditions)
+    # graph-assisted-investigation-protocol.md — removed (inlined via SYNC:graph-assisted-investigation)
+    # ui-system-context.md — removed (inlined via SYNC:ui-system-context)
+    # iterative-phase-quality-protocol.md — removed (inlined via SYNC:iterative-phase-quality)
+    # plan-quality-protocol.md — removed (inlined via SYNC:plan-quality)
+    # two-stage-task-review-protocol.md — removed (inlined via SYNC:two-stage-task-review)
+    # estimation-framework.md — removed (inlined via SYNC:estimation-framework)
+    # design-patterns-quality-checklist.md — removed (inlined via SYNC:design-patterns-quality)
+    # double-round-trip-review-protocol.md — removed (inlined via SYNC:double-round-trip-review)
+    # scaffold-production-readiness-protocol.md — removed (inlined via SYNC:scaffold-production-readiness)
+    # cross-cutting-quality-concerns-protocol.md — removed (content inlined in consuming skills)
+    # ba-team-decision-model-protocol.md — removed (inlined via SYNC:ba-team-decision-model)
+    # refinement-dor-checklist-protocol.md — removed (inlined via SYNC:refinement-dor-checklist)
+    # design-system-check.md — removed (inlined via SYNC:design-system-check)
+    # ui-wireframe-protocol.md — removed (content inlined in consuming skills)
+    # web-research-protocol.md — removed (content inlined in consuming skills)
+    # scan-and-update-reference-doc-protocol.md — removed (content inlined in consuming skills)
+    # graph-intelligence-queries.md — removed (inlined via SYNC:graph-intelligence-queries)
+    # graph-impact-analysis-protocol.md — removed (inlined via SYNC:graph-impact-analysis)
 }
 
 # Standard Closing Reminders text

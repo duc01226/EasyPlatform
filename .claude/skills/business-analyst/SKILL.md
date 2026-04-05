@@ -23,7 +23,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, Bash
 - Always reference existing business rules from `docs/business-features/` before creating new ones
 - User stories must pass INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 - Include entity context and related domain model in every story
-- MUST include `story_points` and `complexity` in all PBI/story outputs (see `.claude/skills/shared/estimation-framework.md`)
+- MUST include `story_points` and `complexity` in all PBI/story outputs
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 

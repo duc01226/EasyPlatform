@@ -41,7 +41,6 @@
 
 > **Understand-Code-First** — Do NOT write code, create plans, or attempt fixes until you READ existing code.
 > Search 3+ similar implementations first. Run graph on key files (MANDATORY when graph.db exists).
-> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
 
 - Read and understand existing code before making changes
 - Validate assumptions with grep/read evidence, never guess
@@ -153,7 +152,6 @@ The step rule naturally tells you when extraction is needed:
 
 > **Iterative Phase Quality** — Score complexity before planning. Score >=6 → MUST decompose into phases.
 > Each phase: <=5 files, <=3h effort, plan → implement → review → fix → verify. No skipping.
-> MUST READ `.claude/skills/shared/iterative-phase-quality-protocol.md` for scoring table and phase rules.
 
 - **Principle:** Break large tasks into small phases. Each phase: plan → implement → review → fix → verify
 - **Rule:** No phase >5 files or >3h effort. No monolithic plans for complex tasks.

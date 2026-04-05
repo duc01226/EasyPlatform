@@ -114,7 +114,7 @@ Before approving, verify the code is **easy to read, easy to maintain, easy to u
 
 ## Round 2: Focused Re-Review (MANDATORY)
 
-> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
 
 After completing Round 1 evaluation, execute a **second full review round**:
 
@@ -159,9 +159,9 @@ After completing Round 1 evaluation, execute a **second full review round**:
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
-    <!-- SYNC:understand-code-first:reminder -->
+      <!-- SYNC:understand-code-first:reminder -->
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:graph-impact-analysis:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:graph-impact-analysis:reminder -->
 - **MUST** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-    <!-- /SYNC:graph-impact-analysis:reminder -->
+      <!-- /SYNC:graph-impact-analysis:reminder -->

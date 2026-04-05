@@ -129,7 +129,7 @@ PASSES after split: `"Phase 2A: Database Schema (1h, 3 files) — Create src/mod
 - [ ] No conflicting or duplicate steps
 - [ ] Dependencies between steps are clear
 - [ ] **New Tech/Lib Gate:** If plan introduces new packages/libraries/frameworks not in the project, verify alternatives were evaluated (top 3 compared) and user confirmed the choice. FAIL if new tech is added without evaluation.
-- [ ] **Test spec coverage** — Every phase has `## Test Specifications` section with TC mappings per `.claude/skills/shared/plan-quality-protocol.md`. "TBD" is valid for TDD-first mode.
+- [ ] **Test spec coverage** — Every phase has `## Test Specifications` section with TC mappings. "TBD" is valid for TDD-first mode.
 - [ ] **TC-requirement mapping** — Every functional requirement maps to ≥1 TC (or explicit "TBD" with rationale)
 
 #### Best Practices (Required - all must pass)
@@ -224,22 +224,59 @@ When graph DB is available, verify the plan covers all affected files:
 - Flag any downstream file NOT listed in the plan as "potentially missed"
 - This catches cross-service impact (MESSAGE_BUS consumers, event handlers) that the plan author may have overlooked
 
-## Round 2: Focused Re-Review (MANDATORY)
+## Deep Multi-Round Review (MANDATORY)
 
-> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+> **Replaces:** double-round-trip for plan reviews. Plans need deeper verification than code reviews.
 
-After completing Round 1 checklist evaluation, execute a **second full review round**:
+<!-- SYNC:deep-plan-review:inline -->
 
-1. **Re-read** the Round 1 verdict and checklist results
-2. **Re-evaluate** ALL checklist items — do NOT rely on Round 1 memory
-3. **Challenge** Round 1 PASS items: "Is this really PASS? Did I verify with evidence?"
-4. **Focus on** what Round 1 typically misses:
-    - Implicit assumptions that weren't validated
-    - Missing acceptance criteria coverage
-    - Edge cases not addressed in the artifact
-    - Cross-references that weren't verified
-5. **Update verdict** if Round 2 found new issues
-6. **Final verdict** must incorporate findings from BOTH rounds
+### Step 0: Self-Analysis (Before EACH Round)
+
+1. **Detect plan type** from keywords: Code/Feature, Documentation, Refactor, Infrastructure, Mixed
+2. **State top 3 concerns** specific to THIS plan (not generic)
+3. **Check complexity** from frontmatter SP: ≤3 → 2 rounds min, 4-8 → 3 rounds, >8 → 3 rounds + code-proof mandatory
+
+### Round 1: Structural Validation (Checklist)
+
+Standard checklist from Step 2 above. Score PASS/WARN/FAIL per category.
+**CRITICAL: Even if all checks PASS, do NOT declare final verdict. Proceed to Round 2.**
+
+### Round 2: Deep Trace (Code Proof)
+
+Re-read ALL plan files from scratch. For EACH phase:
+
+- **Precondition trace:** Read actual handler code. Verify execution order satisfies preconditions. Cite handler line numbers.
+- **Data dependency trace:** What must exist before this step? Is there a wait/sync mechanism?
+- **Failure mode analysis:** What causes 400/403/404/409? Does the plan handle it?
+- **Cross-cutting check:** Stale content? Inconsistent numbers? Missing scope (dual product scope)?
+
+### Round 3: Adversarial Simulation
+
+Pretend you are implementing RIGHT NOW. For each phase:
+
+1. "I open the file. Does the class/method exist as described?"
+2. "I write the code. What imports/DI do I need? Does the plan mention them?"
+3. "I run it. What fails first? Timing issue? Missing wait?"
+4. "I run it again (restart). Duplicates? Idempotency?"
+5. "I run in staging. All product scopes? All environments?"
+
+**Type-specific adversarial checks** (from deep-plan-review-protocol):
+
+- **Code:** preconditions, date/timezone, UoW boundaries, cross-service sync, dual scope, idempotency
+- **Docs:** section references, count drift, bidirectional cross-refs, stale dates/paths
+- **Refactor:** callers updated, breaking changes, test coverage, backward compat
+- **Infra:** port conflicts, env vars, secrets, rollback, monitoring
+
+### Verdict Rules
+
+- Round 1 PASS alone → **NEVER exit** — proceed to Round 2
+- Round 1+2 PASS → proceed to Round 3 (mandatory for SP>3)
+- Round 1+2+3 all PASS → **FINAL PASS**
+- Any round FAIL → fix + restart from Round 1 (max 3 full cycles)
+
+<!-- /SYNC:deep-plan-review:inline -->
+
+**Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
 
 ## Recursive Fix-and-Review Protocol (CRITICAL)
 
@@ -249,7 +286,9 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
 
 ```
 ┌──────────────────────────────────┐
-│  Round 1+2: Review plan          │
+│  Round 1: Structural Checklist   │
+│  Round 2: Deep Code-Proof Trace  │
+│  Round 3: Adversarial Simulation │
 │  Output: PASS / WARN / FAIL      │
 └──────────────┬───────────────────┘
                │
@@ -263,8 +302,8 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
         └──────┬──────────────────────────────────┘
                │
         ┌──────▼──────────────────────────────────┐
-        │  RE-REVIEW: Full checklist again         │
-        │  (both Round 1 + Round 2)                │
+        │  RE-REVIEW: All 3 rounds again            │
+        │  (Round 1 + Round 2 + Round 3)           │
         └──────┬──────────────────────────────────┘
                │
                └──→ Loop until PASS/WARN (max 3 iterations)
@@ -305,7 +344,7 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
 - Be constructive, not pedantic - focus on issues that would cause implementation problems
 - WARN is acceptable for missing optional sections
 - FAIL only for genuinely missing required content
-- If plan is simple and valid, quick review is fine
+- **NEVER do a quick review** — even "simple" plans had 13 bugs in real testing. Always run all 3 rounds.
 
 ---
 
@@ -328,10 +367,10 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
-- **MUST** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:double-round-trip-review:reminder -->
+- **MUST** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone.
+  <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:graph-assisted-investigation:reminder -->

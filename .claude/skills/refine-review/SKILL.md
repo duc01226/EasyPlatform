@@ -14,7 +14,7 @@ description: '[Code Quality] Review PBI artifact for completeness, missing conce
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+> **Deep Multi-Round Review** — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
 >
 > **Round 1:** Normal review building understanding. Read all files, note issues.
 > **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
@@ -24,8 +24,15 @@ description: '[Code Quality] Review PBI artifact for completeness, missing conce
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces (what should exist but doesn't)
 >
-> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
-> **Report must include `## Round 2 Findings` section.**
+> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+>
+> - "What input causes failure? What error do I get?"
+> - "1000 concurrent users — what breaks?"
+> - "After deployment rollback — backward compatible?"
+> - "Can I debug issues from logs/monitoring output?"
+>
+> **Rules:** NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
+> **Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -83,8 +90,8 @@ description: '[Code Quality] Review PBI artifact for completeness, missing conce
 - [ ] **Stakeholder validation** — User interview was conducted (validation section present)
 - [ ] **No vague language** — No "should work", "might need", "TBD" in acceptance criteria
 - [ ] **Scope boundary** — Clear "out of scope" or "not included" section
-- [ ] **Authorization defined** — PBI has "Authorization & Access Control" section with roles × CRUD table (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §1)
-- [ ] **UI Layout section** — If PBI involves UI changes: has `## UI Layout` section per `ui-wireframe-protocol.md` (wireframe + components with tiers + states + design tokens). If backend-only: explicit "N/A"
+- [ ] **Authorization defined** — PBI has "Authorization & Access Control" section with roles × CRUD table
+- [ ] **UI Layout section** — If PBI involves UI changes: has `## UI Layout` section per UI wireframe protocol (wireframe + components with tiers + states + design tokens). If backend-only: explicit "N/A"
 
 ### Recommended (>=50% should pass)
 
@@ -92,9 +99,9 @@ description: '[Code Quality] Review PBI artifact for completeness, missing conce
 - [ ] **Domain vocabulary** — Uses project-specific terms from domain-entities-reference.md
 - [ ] **Risk assessment** — Risks identified with mitigations
 - [ ] **Non-functional requirements** — Performance, security, accessibility considered
-- [ ] **Production readiness concerns** — PBI includes "Production Readiness Concerns" table with Yes/No/Existing for: code linting, error handling, loading indicators, Docker integration, CI/CD quality gates (ref: `.claude/skills/shared/scaffold-production-readiness-protocol.md`)
-- [ ] **Seed data assessed** — PBI addresses seed data needs (reference data, config data, test data) or explicitly states "N/A" (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §2)
-- [ ] **Data migration assessed** — PBI addresses schema changes and data migration needs or explicitly states "N/A" (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §5)
+- [ ] **Production readiness concerns** — PBI includes "Production Readiness Concerns" table with Yes/No/Existing for: code linting, error handling, loading indicators, Docker integration, CI/CD quality gates
+- [ ] **Seed data assessed** — PBI addresses seed data needs (reference data, config data, test data) or explicitly states "N/A"
+- [ ] **Data migration assessed** — PBI addresses schema changes and data migration needs or explicitly states "N/A"
 
 ## Output
 
@@ -124,7 +131,7 @@ description: '[Code Quality] Review PBI artifact for completeness, missing conce
 
 ## Round 2: Focused Re-Review (MANDATORY)
 
-> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
 
 After completing Round 1 checklist evaluation, execute a **second full review round**:
 
@@ -166,10 +173,10 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MUST** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:graph-impact-analysis:reminder -->
+  <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- SYNC:graph-impact-analysis:reminder -->
 - **MUST** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-      <!-- /SYNC:graph-impact-analysis:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+  <!-- /SYNC:graph-impact-analysis:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->

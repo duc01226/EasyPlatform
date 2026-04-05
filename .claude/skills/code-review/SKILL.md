@@ -38,7 +38,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 <!-- /SYNC:design-patterns-quality -->
 <!-- SYNC:double-round-trip-review -->
 
-> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+> **Deep Multi-Round Review** — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
 >
 > **Round 1:** Normal review building understanding. Read all files, note issues.
 > **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
@@ -48,8 +48,15 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces (what should exist but doesn't)
 >
-> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
-> **Report must include `## Round 2 Findings` section.**
+> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+>
+> - "What input causes failure? What error do I get?"
+> - "1000 concurrent users — what breaks?"
+> - "After deployment rollback — backward compatible?"
+> - "Can I debug issues from logs/monitoring output?"
+>
+> **Rules:** NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
+> **Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -267,7 +274,7 @@ Update report with: Overall Assessment, Critical Issues, High Priority, Architec
 
 ## Round 2: Focused Re-Review (MANDATORY)
 
-> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
 
 After completing Phase 3 (Round 1), execute a **second full review round**:
 
@@ -463,25 +470,25 @@ If `architectureRules` is not present in project-config.json, skip this check si
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:design-patterns-quality:reminder -->
 - **MUST** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
+  <!-- /SYNC:design-patterns-quality:reminder -->
+  <!-- SYNC:double-round-trip-review:reminder -->
 - **MUST** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
+  <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- SYNC:rationalization-prevention:reminder -->
 - **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:rationalization-prevention:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:logic-and-intention-review:reminder -->
+  <!-- /SYNC:graph-assisted-investigation:reminder -->
+  <!-- SYNC:logic-and-intention-review:reminder -->
 - **MUST** verify every changed file serves stated purpose. Trace happy + error paths. Flag scope creep.
-      <!-- /SYNC:logic-and-intention-review:reminder -->
-      <!-- SYNC:bug-detection:reminder -->
+  <!-- /SYNC:logic-and-intention-review:reminder -->
+  <!-- SYNC:bug-detection:reminder -->
 - **MUST** check null safety, boundary conditions, error handling, resource management for every review.
-      <!-- /SYNC:bug-detection:reminder -->
-      <!-- SYNC:test-spec-verification:reminder -->
+  <!-- /SYNC:bug-detection:reminder -->
+  <!-- SYNC:test-spec-verification:reminder -->
 - **MUST** map every changed function/endpoint to a TC-{FEAT}-{NNN}. Flag gaps, recommend `/tdd-spec`.
-    <!-- /SYNC:test-spec-verification:reminder -->
+      <!-- /SYNC:test-spec-verification:reminder -->

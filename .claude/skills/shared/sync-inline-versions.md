@@ -170,7 +170,7 @@
 
 ## SYNC:double-round-trip-review
 
-> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+> **Deep Multi-Round Review** — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
 >
 > **Round 1:** Normal review building understanding. Read all files, note issues.
 > **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
@@ -180,8 +180,15 @@
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces (what should exist but doesn't)
 >
-> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
-> **Report must include `## Round 2 Findings` section.**
+> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+>
+> - "What input causes failure? What error do I get?"
+> - "1000 concurrent users — what breaks?"
+> - "After deployment rollback — backward compatible?"
+> - "Can I debug issues from logs/monitoring output?"
+>
+> **Rules:** NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
+> **Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
 
 ---
 
@@ -349,6 +356,72 @@
 ## SYNC:knowledge-graph-template
 
 > **Knowledge Graph Template** — For each analyzed file, document: filePath, type (Entity/Command/Query/EventHandler/Controller/Consumer/Component/Store/Service), architecturalPattern, content summary, symbols, dependencies, businessContext, referenceFiles, relevanceScore (1-10), evidenceLevel (verified/inferred), frameworkAbstractions, serviceContext. Investigation fields: entryPoints, outputPoints, dataTransformations, errorScenarios. Consumer/bus fields: messageBusMessage, messageBusProducers, crossServiceIntegration. Frontend fields: componentHierarchy, stateManagementStores, dataBindingPatterns, validationStrategies.
+
+---
+
+## SYNC:module-detection
+
+> **Module Detection** — Detect target module from PBI/idea keywords. Match against `docs/business-features/` directory names. Load `docs/business-features/{module}/` context for domain rules. If ambiguous, ask user. Module list derived from codebase — do NOT hardcode.
+
+---
+
+## SYNC:ba-team-decision-model
+
+> **BA Team Decision Model** — 2/3 majority vote: Dev BA PIC + UX BA + Designer BA per squad. 2 of 3 agree = decision final. 3-way split = escalate to full squad + Tech Leads + Engineering Manager.
+>
+> **Technical Veto:** Dev BA PIC can unilaterally veto on: architecture feasibility, dependency correctness, cross-service impact, performance, security. CANNOT veto: UI/UX design, visual design, business value, user research.
+>
+> **Rules:** Disagree-and-commit after vote. Grooming override requires >75% non-BA squad vote. Record decisions in PBI Validation Summary (member, role, vote, notes).
+>
+> **Escalation:** Tech uncertainty → Engineering Manager. Business value → PO. Design feasibility → UX BA + Designer BA consensus.
+
+---
+
+## SYNC:refinement-dor-checklist
+
+> **Refinement DoR Checklist** — ALL 7 criteria MUST pass before grooming:
+>
+> 1. **User story template** — "As a {role}, I want {goal}, so that {benefit}" format
+> 2. **AC testable & unambiguous** — GIVEN/WHEN/THEN. No "should/might/TBD/various/appropriate". Min 3 scenarios (happy, edge, error) + 1 auth scenario
+> 3. **Wireframes attached** — UI features: `## UI Layout` with wireframe + components + states + tokens. Backend-only: explicit "N/A"
+> 4. **UI design ready** — Visual design + component decomposition tree. Backend-only: "N/A"
+> 5. **AI pre-review passed** — `/refine-review` or `/pbi-challenge` returned PASS or WARN (not FAIL)
+> 6. **Story points estimated** — Fibonacci 1-21 + complexity (Low/Medium/High). >13 SP → recommend split
+> 7. **Dependencies table complete** — Dependency, Type (must-before/can-parallel/blocked-by/independent), Status
+>
+> **Failure fixes:** Vague AC → specify exact CRUD + roles. Missing auth → add roles × CRUD table. No wireframes → UX BA creates. TBD in AC → replace with decision.
+
+---
+
+## SYNC:graph-intelligence-queries
+
+> **Graph Intelligence Queries** — CLI: `python .claude/scripts/code_graph {cmd} --json`. Use `--node-mode file` first (less noise), then `function` for detail.
+>
+> | Find                    | Command                                      |
+> | ----------------------- | -------------------------------------------- |
+> | All callers of function | `query callers_of <fn>`                      |
+> | All importers of module | `query importers_of <mod>`                   |
+> | Tests covering function | `query tests_for <fn>`                       |
+> | Class hierarchy         | `query inheritors_of <class>`                |
+> | Full connection network | `connections <file>`                         |
+> | Multi-file batch        | `batch-query <f1> <f2>`                      |
+> | Full system flow (BFS)  | `trace <file> --direction both --depth 3`    |
+> | Find node by keyword    | `search <keyword> --kind Function --limit 5` |
+> | Shortest path           | `find-path <source> <target>`                |
+>
+> **Orchestration:** grep → graph → grep (find files → expand network → verify). Iterative grep↔graph is encouraged.
+
+---
+
+## SYNC:design-system-check
+
+> **Design System Check** — Before ANY frontend work, read docs relevant to task type:
+>
+> 1. `docs/project-reference/design-system/README.md` — tokens, components, icons, themes
+> 2. `docs/project-reference/frontend-patterns-reference.md` — base classes, stores, forms, API services
+> 3. `docs/project-reference/scss-styling-guide.md` — BEM, SCSS vars, mixins, responsive
+>
+> App-specific paths: check `docs/project-config.json` → `designSystem.appMappings[]` and `contextGroups[]`.
 
 ---
 

@@ -14,7 +14,7 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+> **Deep Multi-Round Review** — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
 >
 > **Round 1:** Normal review building understanding. Read all files, note issues.
 > **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
@@ -24,8 +24,15 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces (what should exist but doesn't)
 >
-> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
-> **Report must include `## Round 2 Findings` section.**
+> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+>
+> - "What input causes failure? What error do I get?"
+> - "1000 concurrent users — what breaks?"
+> - "After deployment rollback — backward compatible?"
+> - "Can I debug issues from logs/monitoring output?"
+>
+> **Rules:** NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
+> **Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -84,17 +91,17 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 - [ ] **Dependency table** — Story set includes dependency ordering table (must-after, can-parallel, independent)
 - [ ] **No overlapping scope** — Stories don't duplicate functionality
 - [ ] **Vertical slices** — Each story delivers end-to-end value (not horizontal layers)
-- [ ] **Authorization scenarios** — Every story includes at least 1 authorization scenario (unauthorized access → rejection) per PBI roles table (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §1)
-- [ ] **UI Wireframe section** — If story involves UI: has `## UI Wireframe` section per `ui-wireframe-protocol.md` (wireframe + component tree + interaction flow + states + responsive). If backend-only: explicit "N/A"
+- [ ] **Authorization scenarios** — Every story includes at least 1 authorization scenario (unauthorized access → rejection) per PBI roles table
+- [ ] **UI Wireframe section** — If story involves UI: has `## UI Wireframe` section per UI wireframe protocol (wireframe + component tree + interaction flow + states + responsive). If backend-only: explicit "N/A"
 
 ### Recommended (>=50% should pass)
 
 - [ ] **Edge cases** — Boundary values, empty states, max limits addressed
 - [ ] **Error scenarios** — Failure paths explicitly covered in stories
 - [ ] **API contract** — If API changes needed, story specifies contract
-- [ ] **UI/UX visualization** — Frontend stories have component decomposition tree with EXISTING/NEW classification, design token mapping, and responsive breakpoint behavior per `ui-wireframe-protocol.md`
-- [ ] **Seed data stories** — If PBI has seed data requirements, Sprint 0 seed data story exists (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §2)
-- [ ] **Data migration stories** — If PBI has schema changes, data migration story exists (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §5)
+- [ ] **UI/UX visualization** — Frontend stories have component decomposition tree with EXISTING/NEW classification, design token mapping, and responsive breakpoint behavior per UI wireframe protocol
+- [ ] **Seed data stories** — If PBI has seed data requirements, Sprint 0 seed data story exists
+- [ ] **Data migration stories** — If PBI has schema changes, data migration story exists
 
 ## Output
 
@@ -133,7 +140,7 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 
 ## Round 2: Focused Re-Review (MANDATORY)
 
-> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
 
 After completing Round 1 checklist evaluation, execute a **second full review round**:
 
@@ -176,10 +183,10 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MUST** execute TWO independent review rounds. Report must include `## Round 2 Findings`.
-    <!-- /SYNC:double-round-trip-review:reminder -->
-    <!-- SYNC:graph-impact-analysis:reminder -->
+      <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- SYNC:graph-impact-analysis:reminder -->
 - **MUST** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-    <!-- /SYNC:graph-impact-analysis:reminder -->
-    <!-- SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:graph-impact-analysis:reminder -->
+      <!-- SYNC:ui-system-context:reminder -->
 - **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->

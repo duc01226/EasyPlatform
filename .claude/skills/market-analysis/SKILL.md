@@ -7,10 +7,6 @@ allowed-tools: Read, Write, WebSearch, WebFetch, TaskCreate, Bash
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-**Prerequisites:** **MUST READ** before executing:
-
-- `.claude/skills/shared/web-research-protocol.md`
-
 ## Quick Summary
 
 **Goal:** Analyze market landscape with competitive analysis, sizing, trends, SWOT, and customer segmentation.

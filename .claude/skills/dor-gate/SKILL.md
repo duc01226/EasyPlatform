@@ -19,7 +19,7 @@ description: '[Code Quality] Validate PBI against Definition of Ready before gro
 ## Workflow
 
 1. **Locate PBI** — Find PBI artifact in `team-artifacts/pbis/` or active plan context. If not found, ask user for path.
-2. **Load DoR protocol** — Read `.claude/skills/shared/refinement-dor-checklist-protocol.md` (single source of truth for all 7 criteria)
+2. **Load DoR protocol** — Apply DoR 7-criteria checklist (story template, testable AC, wireframes, UI design, AI pre-review, story points, dependencies)
 3. **Evaluate each criterion** — Parse PBI sections against 7 DoR items:
     - Check user story template format ("As a... I want... So that...")
     - Scan AC for vague language ("should", "might", "TBD", "etc.", "various")

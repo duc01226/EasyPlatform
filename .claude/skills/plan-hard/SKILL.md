@@ -231,7 +231,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 - Save overview at `{plan-dir}/plan.md` (<80 lines): list each phase with status, progress, and links to phase files.
 - For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` with sections: Context links, Overview, Key Insights, Requirements, **Alternatives Considered** (minimum 2 approaches with pros/cons), **Design Rationale** (WHY chosen approach), Architecture, **UI Layout** (see below), Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
-- **UI Layout**: For frontend-facing phases, include ASCII wireframe per `.claude/skills/shared/ui-wireframe-protocol.md`. Classify components by tier (common/domain-shared/page-app). For backend-only phases: `## UI Layout` → `N/A — Backend-only change.`
+- **UI Layout**: For frontend-facing phases, include ASCII wireframe. Classify components by tier (common/domain-shared/page-app). For backend-only phases: `## UI Layout` → `N/A — Backend-only change.`
 
 ## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
@@ -240,7 +240,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these three final tasks:
     1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
     2. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-    3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill with deep 3-round protocol (R1: checklist, R2: code-proof trace, R3: adversarial simulation). Review depth based on SP: ≤3 → 2 rounds min, 4-8 → 3 rounds, >8 → 3 rounds + code-proof mandatory.
 
 ## Important Notes
 
@@ -308,17 +308,17 @@ After creating all phase files, run the **recursive decomposition loop**:
 <!-- SYNC:plan-granularity:reminder -->
 
 - **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-<!-- /SYNC:plan-granularity:reminder -->
-  <!-- SYNC:understand-code-first:reminder -->
+    <!-- /SYNC:plan-granularity:reminder -->
+      <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
 - **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
+  <!-- SYNC:plan-quality:reminder -->
 - **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:iterative-phase-quality:reminder -->
 - **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-    <!-- /SYNC:iterative-phase-quality:reminder -->
+      <!-- /SYNC:iterative-phase-quality:reminder -->

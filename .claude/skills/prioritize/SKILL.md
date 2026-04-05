@@ -77,7 +77,7 @@ Order backlog items using data-driven prioritization frameworks to produce a ran
     Reach:      Users affected per quarter (number)
     Impact:     0.25 (minimal) | 0.5 (low) | 1 (medium) | 2 (high) | 3 (massive)
     Confidence: 0.5 (low) | 0.8 (medium) | 1.0 (high)
-    Effort:     Story points (1, 2, 3, 5, 8, 13, 21) — see .claude/skills/shared/estimation-framework.md
+    Effort:     Story points (1, 2, 3, 5, 8, 13, 21)
     ```
 
     **MoSCoW:**

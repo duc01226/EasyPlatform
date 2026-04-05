@@ -50,7 +50,7 @@ When working on domain ideas, automatically detect and load business feature con
 
 1. Run: `Glob("docs/business-features/*/README.md")`
 2. Extract module names from paths
-3. Match keywords using `.claude/skills/shared/module-detection-keywords.md`
+3. Match keywords (detect module from docs/business-features/ directory names)
 
 **Detection Approach (silent auto-detect):**
 
@@ -112,7 +112,7 @@ RICE = (Reach × Impact × Confidence) / Effort
 Reach: # users affected per quarter
 Impact: 0.25 (minimal) | 0.5 (low) | 1 (medium) | 2 (high) | 3 (massive)
 Confidence: 0.5 (low) | 0.8 (medium) | 1.0 (high)
-Effort: Story points (1, 2, 3, 5, 8, 13, 21) — see .claude/skills/shared/estimation-framework.md
+Effort: Story points (1, 2, 3, 5, 8, 13, 21)
 ```
 
 #### MoSCoW

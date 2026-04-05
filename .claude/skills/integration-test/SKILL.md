@@ -607,8 +607,6 @@ When test code and spec disagree, determine which is correct:
 
 ## Test Data Setup Guidelines
 
-> Ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §3
-
 | Pattern             | When to Use                        | Example                                                      |
 | ------------------- | ---------------------------------- | ------------------------------------------------------------ |
 | **Per-test inline** | Simple tests, unique data          | `var order = new CreateOrderCommand { Name = UniqueName() }` |
@@ -653,14 +651,14 @@ When test code and spec disagree, determine which is correct:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:graph-impact-analysis:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:graph-impact-analysis:reminder -->
 - **MUST** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-      <!-- /SYNC:graph-impact-analysis:reminder -->
-      <!-- SYNC:red-flag-stop-conditions:reminder -->
+  <!-- /SYNC:graph-impact-analysis:reminder -->
+  <!-- SYNC:red-flag-stop-conditions:reminder -->
 - **MUST** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-      <!-- /SYNC:red-flag-stop-conditions:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
+  <!-- /SYNC:red-flag-stop-conditions:reminder -->
+  <!-- SYNC:rationalization-prevention:reminder -->
 - **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-    <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- /SYNC:rationalization-prevention:reminder -->
 - **MUST** READ `references/integration-test-patterns.md` before starting
