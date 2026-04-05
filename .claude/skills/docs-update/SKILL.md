@@ -5,13 +5,13 @@ description: '[Documentation] Holistic documentation orchestrator — detects im
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 > **Critical Purpose:** Ensure ALL documentation stays in sync with code changes — project docs, business feature docs, and AI companions.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -158,7 +158,7 @@ For each module with existing docs:
 
 1. Read the existing feature doc (`README.{FeatureName}.md`)
 2. Update ONLY the sections identified in Step 2.4
-3. **Mandatory test coverage** — when documenting new functionality, MUST update:
+3. **Mandatory test coverage** — when documenting new functionality, MUST ATTENTION update:
     - Section 17 (Test Specifications): Add TC-{MOD}-XXX test cases with GIVEN/WHEN/THEN
     - Section 18 (Test Data): Add seed data for new test cases
     - Section 19 (Edge Cases): Add boundary conditions and error states
@@ -179,7 +179,7 @@ If `README.{FeatureName}.ai.md` exists alongside the updated feature doc:
 
 After updating feature docs, run a verification pass on all changed sections:
 
-1. **Evidence audit** — Every test case (TC-{MOD}-XXX) MUST have `file:line` evidence. Read the claimed file at the claimed line and verify the code supports the assertion. Fix immediately if wrong.
+1. **Evidence audit** — Every test case (TC-{MOD}-XXX) MUST ATTENTION have `file:line` evidence. Read the claimed file at the claimed line and verify the code supports the assertion. Fix immediately if wrong.
 2. **Domain model check** — Verify entity properties, types, and enum values against actual source code. Remove anything not found in source.
 3. **Cross-reference audit** — Test Summary counts match actual TC count. No template placeholders remain (`{FilePath}`, `{LineRange}`). All internal links resolve.
 
@@ -246,7 +246,7 @@ $ARGUMENTS
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/watzup (Recommended)"** — Wrap up session and check for remaining doc staleness
 - **"/workflow-review-changes"** — Review all changes before commit
@@ -254,6 +254,6 @@ $ARGUMENTS
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

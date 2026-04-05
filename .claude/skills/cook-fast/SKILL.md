@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Implementation] Fast implementation - skip research, minimal planning'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -27,7 +27,7 @@ description: '[Implementation] Fast implementation - skip research, minimal plan
 
 <!-- SYNC:plan-quality -->
 
-> **Plan Quality** — Every plan phase MUST include test specifications.
+> **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
 > 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
@@ -98,7 +98,7 @@ description: '[Implementation] Fast implementation - skip research, minimal plan
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -131,7 +131,7 @@ Start working on these tasks immediately with minimal planning:
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -188,9 +188,9 @@ When graph DB is available, run a quick downstream trace before implementing:
 
 ---
 
-## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (feature implemented). This ensures review, testing, and docs steps aren't skipped.
 - **"/code-simplifier"** — Simplify and clean up implementation
@@ -201,26 +201,26 @@ When graph DB is available, run a quick downstream trace before implementing:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** validate decisions with user via `AskUserQuestion` — never auto-decide
-    <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
-- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
-- **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:red-flag-stop-conditions:reminder -->
-- **MUST** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-      <!-- /SYNC:red-flag-stop-conditions:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
-- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide
+      <!-- SYNC:understand-code-first:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:plan-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:rationalization-prevention:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+  <!-- /SYNC:rationalization-prevention:reminder -->
+  <!-- SYNC:red-flag-stop-conditions:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
+  <!-- /SYNC:red-flag-stop-conditions:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+  <!-- /SYNC:ui-system-context:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+      <!-- /SYNC:graph-assisted-investigation:reminder -->

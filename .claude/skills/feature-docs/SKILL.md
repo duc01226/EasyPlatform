@@ -5,7 +5,7 @@ description: '[Documentation] Create or update business feature documentation in
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 ## Quick Summary
 
@@ -21,7 +21,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 **Key Rules:**
 
-- EVERY test case MUST have verifiable code evidence (`FilePath:LineNumber`), no exceptions
+- EVERY test case MUST ATTENTION have verifiable code evidence (`FilePath:LineNumber`), no exceptions
 - Output must have exactly 26 sections matching the master template
 - Always update CHANGELOG.md and Version History (Section 26) when modifying docs
 - When writing Section 17 test cases: include an `IntegrationTest` field pointing to the test file and method name. Format: `IntegrationTest: Orders/OrderCommandIntegrationTests.cs::{MethodName}`. If no integration test exists yet, set `Status: Untested`.
@@ -39,7 +39,7 @@ Before implementation, search your codebase for project-specific patterns:
 - Search for: `business-features`, `detailed-features`, `feature-docs-template`
 - Look for: existing feature doc folders, 26-section templates, AI companion files
 
-> **MANDATORY IMPORTANT MUST** Read the `feature-docs-reference.md` companion doc for project-specific patterns and code examples.
+> **MANDATORY IMPORTANT MUST ATTENTION** Read the `feature-docs-reference.md` companion doc for project-specific patterns and code examples.
 > If file not found, continue with search-based discovery above.
 
 # Feature Documentation Generation & Verification
@@ -61,7 +61,7 @@ find docs/business-features -name "README.*.md" -type f | head -5
 
 ## [CRITICAL] MANDATORY CODE EVIDENCE RULE
 
-**EVERY test case MUST have verifiable code evidence.** This is non-negotiable.
+**EVERY test case MUST ATTENTION have verifiable code evidence.** This is non-negotiable.
 
 ### Evidence Format
 
@@ -81,7 +81,7 @@ find docs/business-features -name "README.*.md" -type f | head -5
 
 ## Output Structure
 
-All documentation MUST be placed in the correct folder structure:
+All documentation MUST ATTENTION be placed in the correct folder structure:
 
 ```
 docs/
@@ -123,7 +123,7 @@ Map each module code to its folder name and service path. Example pattern:
 
 ## MANDATORY 26-SECTION STRUCTURE
 
-All feature documentation MUST follow this section order:
+All feature documentation MUST ATTENTION follow this section order:
 
 | #   | Section                    | Stakeholder Focus      |
 | --- | -------------------------- | ---------------------- |
@@ -264,7 +264,7 @@ When UPDATING an existing business feature document (not creating from scratch):
 
 ### Step 1.5.3: Mandatory Test Coverage (Sections 17-20)
 
-**CRITICAL**: When documenting ANY new functionality, you MUST update:
+**CRITICAL**: When documenting ANY new functionality, you MUST ATTENTION update:
 
 - **Section 17 (Test Specifications)**: Add test cases (TC-{MOD}-XXX) for new features with GIVEN/WHEN/THEN format. Each TC entry should include:
 
@@ -570,11 +570,11 @@ Before writing any documentation:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
     <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->

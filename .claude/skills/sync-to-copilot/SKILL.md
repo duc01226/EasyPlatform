@@ -87,7 +87,7 @@ This generates:
 
 ### Phase 2: AI Enrichment (This Skill)
 
-After the script runs, the AI MUST enrich the generated instruction files:
+After the script runs, the AI MUST ATTENTION enrich the generated instruction files:
 
 1. **For each per-group instruction file** in `.github/instructions/`:
     - Read the corresponding `docs/project-reference/*.md` source file
@@ -213,7 +213,7 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

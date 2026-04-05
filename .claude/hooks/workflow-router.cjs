@@ -57,11 +57,11 @@ function buildCatalogInjection(config, quickMode) {
     lines.push('');
     lines.push('## Workflow Catalog');
     lines.push('');
-    lines.push('> **MANDATORY:** You MUST check every prompt against this catalog before responding.');
+    lines.push('> **MANDATORY:** You MUST ATTENTION check every prompt against this catalog before responding.');
     lines.push('> Always detect the nearest matching workflow, then use `AskUserQuestion` to ask the user');
     lines.push('> whether to activate the detected workflow (Recommended) or execute directly without workflow.');
     lines.push('');
-    lines.push('> **IMPORTANT:** MUST create todo tasks for ALL steps. Do NOT skip any steps in the selected workflow.');
+    lines.push('> **IMPORTANT:** MUST ATTENTION create todo tasks for ALL steps. Do NOT skip any steps in the selected workflow.');
     lines.push('');
 
     lines.push(buildWorkflowCatalog(config));
@@ -206,7 +206,7 @@ function buildWorkflowInstructions(workflowId, workflow, config) {
     lines.push(`### Task Creation (MANDATORY — create EXACTLY ${stepCount} tasks BEFORE any other action)`);
     lines.push('');
     lines.push(
-        `**⚠️ HARD REQUIREMENT: You MUST create EXACTLY ${stepCount} TaskCreate calls — one per step. Count: ${stepCount}. Do NOT skip, combine, or summarize steps.**`
+        `**⚠️ HARD REQUIREMENT: You MUST ATTENTION create EXACTLY ${stepCount} TaskCreate calls — one per step. Count: ${stepCount}. Do NOT skip, combine, or summarize steps.**`
     );
     lines.push('');
     workflow.sequence.forEach((step, i) => {

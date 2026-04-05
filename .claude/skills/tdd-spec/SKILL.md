@@ -9,11 +9,11 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 # TDD Spec — Test-Driven Specification Writer
 
-> **[MANDATORY]** You MUST use `TaskCreate` to break ALL work into small tasks BEFORE starting. NEVER skip task creation.
+> **[MANDATORY]** You MUST ATTENTION use `TaskCreate` to break ALL work into small tasks BEFORE starting. NEVER skip task creation.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 <!-- SYNC:rationalization-prevention -->
 
@@ -39,7 +39,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > <!-- SYNC:evidence-based-reasoning -->
 >
@@ -86,7 +86,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 - **Unified format:** `TC-{FEATURE}-{NNN}` — feature codes in `docs/project-reference/feature-docs-reference.md`
 - **Source of truth:** Feature docs Section 17 is the canonical TC registry
-- **Evidence required:** Every TC MUST have `Evidence: {FilePath}:{LineRange}` or `TBD (pre-implementation)` for TDD-first mode
+- **Evidence required:** Every TC MUST ATTENTION have `Evidence: {FilePath}:{LineRange}` or `TBD (pre-implementation)` for TDD-first mode
 - **Minimum 4 categories:** Positive (happy path), negative (error handling), **authorization** (role-based access), edge cases
 - **Cross-cutting TC categories:**
     - **Authorization TCs (mandatory):** Authorized access succeeds, unauthorized access rejected, role-based visibility verified
@@ -117,7 +117,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 | Priority index (optional) | `docs/test-specs/PRIORITY-INDEX.md`                                      |
 
 > **Phase-Mapped Coverage:** When a plan exists with multiple phases, generate test cases
-> PER PHASE — not just per feature. Each phase's success criteria MUST have ≥1 test case.
+> PER PHASE — not just per feature. Each phase's success criteria MUST ATTENTION have ≥1 test case.
 
 ### Frontend/UI Context (if applicable)
 
@@ -127,7 +127,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -377,14 +377,14 @@ Based on mode, suggest via `AskUserQuestion`:
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `pbi-to-tests` workflow** (Recommended) — tdd-spec → tdd-spec-review → quality-gate
 > 2. **Execute `/tdd-spec` directly** — run this skill standalone
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/integration-test (Recommended)"** — Generate integration test code from specs
 - **"/test"** — Run tests to verify implementation
@@ -392,21 +392,21 @@ Based on mode, suggest via `AskUserQuestion`:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:rationalization-prevention:reminder -->
 
-- **MUST** never skip steps via "too simple" or "already searched" evasions. Plan anyway, test first, show grep evidence.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:cross-cutting-quality:reminder -->
-- **MUST** check error handling, logging, security, performance, and observability across changed files.
-      <!-- /SYNC:cross-cutting-quality:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
-- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** never skip steps via "too simple" or "already searched" evasions. Plan anyway, test first, show grep evidence.
+    <!-- /SYNC:rationalization-prevention:reminder -->
+    <!-- SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:cross-cutting-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** check error handling, logging, security, performance, and observability across changed files.
+    <!-- /SYNC:cross-cutting-quality:reminder -->
+    <!-- SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+    <!-- /SYNC:ui-system-context:reminder -->

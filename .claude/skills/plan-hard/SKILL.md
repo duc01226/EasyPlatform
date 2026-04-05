@@ -5,7 +5,7 @@ description: '[Planning] Research, analyze, and create an implementation plan'
 disable-model-invocation: false
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -25,7 +25,7 @@ disable-model-invocation: false
 
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
 
 <!-- /SYNC:estimation-framework -->
 
@@ -34,7 +34,7 @@ disable-model-invocation: false
 
 <!-- SYNC:plan-quality -->
 
-> **Plan Quality** — Every plan phase MUST include test specifications.
+> **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
 > 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
@@ -54,7 +54,7 @@ disable-model-invocation: false
 > **Iterative Phase Quality** — Score complexity BEFORE planning.
 >
 > **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
-> **Score >=6 →** MUST decompose into phases. Each phase:
+> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
 >
 > - ≤5 files modified
 > - ≤3h effort
@@ -65,9 +65,9 @@ disable-model-invocation: false
 
 <!-- /SYNC:iterative-phase-quality -->
 
-> Each phase file MUST satisfy: <=5 files per phase, <=3h effort, clear success criteria, mapped test cases.
+> Each phase file MUST ATTENTION satisfy: <=5 files per phase, <=3h effort, clear success criteria, mapped test cases.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
@@ -88,11 +88,11 @@ disable-model-invocation: false
 - PLANNING ONLY: do NOT implement or execute code changes
 - Always run /plan-review after plan creation
 - Ask user to confirm before any next step
-- **MANDATORY IMPORTANT MUST** detect new tech/lib in plan and create validation task (see New Tech/Lib Gate below)
+- **MANDATORY IMPORTANT MUST ATTENTION** detect new tech/lib in plan and create validation task (see New Tech/Lib Gate below)
 
 ## New Tech/Lib Gate (MANDATORY for all plans)
 
-**MANDATORY IMPORTANT MUST** after plan creation, detect new tech/packages/libraries not in the project. If found: `TaskCreate` per lib → WebSearch top 3 alternatives → compare (fit, size, community, learning curve, license) → recommend with confidence % → `AskUserQuestion` to confirm. **Skip if** plan uses only existing dependencies.
+**MANDATORY IMPORTANT MUST ATTENTION** after plan creation, detect new tech/packages/libraries not in the project. If found: `TaskCreate` per lib → WebSearch top 3 alternatives → compare (fit, size, community, learning curve, license) → recommend with confidence % → `AskUserQuestion` to confirm. **Skip if** plan uses only existing dependencies.
 
 ## Greenfield Mode
 
@@ -104,7 +104,7 @@ disable-model-invocation: false
 2. **Replace with:** market research + business evaluation phase using WebSearch + WebFetch
 3. Delegate architecture decisions to `solution-architect` agent
 4. Output: `plans/{id}/plan.md` with greenfield-specific phases (domain model, tech stack, project structure)
-5. Skip "MUST READ project-structure-reference.md" (won't exist)
+5. Skip "MUST ATTENTION READ project-structure-reference.md" (won't exist)
 6. Enable broad web research for tech landscape, best practices, framework comparisons
 7. Every decision point requires AskUserQuestion with 2-4 options + confidence %
 8. **[CRITICAL] Business-First Protocol:** Tech stack decisions come AFTER full business analysis. Do NOT ask user to pick a tech stack upfront. Instead: complete business evaluation → derive technical requirements → research current market options → produce comparison report → present to user for decision. See `solution-architect` agent for the full tech stack research methodology.
@@ -121,7 +121,7 @@ Activate `planning` skill.
 **Activation conditions (ALL must be true):**
 
 1. Active workflow is `greenfield-init` OR `big-feature`
-2. AI MUST self-investigate for existing base/foundational abstractions using these patterns:
+2. AI MUST ATTENTION self-investigate for existing base/foundational abstractions using these patterns:
     - Abstract/base classes: `abstract class.*Base|Base[A-Z]\w+|Abstract[A-Z]\w+`
     - Generic interfaces: `interface I\w+<|IGeneric|IBase`
     - Infrastructure abstractions: `IRepository|IUnitOfWork|IService|IHandler`
@@ -133,7 +133,7 @@ Activate `planning` skill.
 
 **When activated:**
 
-Phase 1 of the plan MUST be **Architecture Scaffolding** — all base abstract classes, generic interfaces, infrastructure abstractions, and DI registration with OOP/SOLID principles. Runs BEFORE feature stories. AI self-investigates what base classes the tech stack needs. All infrastructure behind interfaces with at least one concrete implementation (Dependency Inversion).
+Phase 1 of the plan MUST ATTENTION be **Architecture Scaffolding** — all base abstract classes, generic interfaces, infrastructure abstractions, and DI registration with OOP/SOLID principles. Runs BEFORE feature stories. AI self-investigates what base classes the tech stack needs. All infrastructure behind interfaces with at least one concrete implementation (Dependency Inversion).
 
 **When skipped:** Plan proceeds normally — feature stories build on existing base classes.
 
@@ -213,7 +213,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 **Plan File Specification**
 
-- Every `plan.md` MUST start with YAML frontmatter:
+- Every `plan.md` MUST ATTENTION start with YAML frontmatter:
 
     ```yaml
     ---
@@ -233,7 +233,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 - For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` with sections: Context links, Overview, Key Insights, Requirements, **Alternatives Considered** (minimum 2 approaches with pros/cons), **Design Rationale** (WHY chosen approach), Architecture, **UI Layout** (see below), Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
 - **UI Layout**: For frontend-facing phases, include ASCII wireframe. Classify components by tier (common/domain-shared/page-app). For backend-only phases: `## UI Layout` → `N/A — Backend-only change.`
 
-## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -261,13 +261,13 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 ## Standalone Review Gate (Non-Workflow Only)
 
-> **MANDATORY IMPORTANT MUST:** If this skill is called **outside a workflow** (standalone `/plan-hard`), the generated plan MUST include `/review-changes` as a **final phase/task** in the plan. This ensures all implementation changes get reviewed before commit even without a workflow enforcing it.
+> **MANDATORY IMPORTANT MUST ATTENTION:** If this skill is called **outside a workflow** (standalone `/plan-hard`), the generated plan MUST ATTENTION include `/review-changes` as a **final phase/task** in the plan. This ensures all implementation changes get reviewed before commit even without a workflow enforcing it.
 >
 > If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — the workflow sequence handles `/review-changes` at the appropriate step.
 
-## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
 - **"/plan-review"** — Validate plan before implementation
@@ -300,25 +300,26 @@ After creating all phase files, run the **recursive decomposition loop**:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:plan-granularity:reminder -->
 
-- **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-    <!-- /SYNC:plan-granularity:reminder -->
-      <!-- SYNC:understand-code-first:reminder -->
+- **IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
+  <!-- /SYNC:plan-granularity:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:estimation-framework:reminder -->
-- **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-  <!-- /SYNC:estimation-framework:reminder -->
-  <!-- SYNC:plan-quality:reminder -->
-- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-  <!-- /SYNC:plan-quality:reminder -->
-  <!-- SYNC:iterative-phase-quality:reminder -->
-- **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-      <!-- /SYNC:iterative-phase-quality:reminder -->
+                <!-- SYNC:understand-code-first:reminder -->
+
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
+- **IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
+      <!-- /SYNC:estimation-framework:reminder -->
+      <!-- SYNC:plan-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+      <!-- /SYNC:plan-quality:reminder -->
+      <!-- SYNC:iterative-phase-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+    <!-- /SYNC:iterative-phase-quality:reminder -->

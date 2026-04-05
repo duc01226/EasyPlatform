@@ -5,9 +5,9 @@ description: '[Planning] Validate plan with critical questions interview'
 allowed-tools: Read, Glob, Grep, TaskCreate, AskUserQuestion, Bash
 ---
 
-> **[BLOCKING]** This skill MUST use `AskUserQuestion` to interview the user. Completing without asking at least one question is a violation.
+> **[BLOCKING]** This skill MUST ATTENTION use `AskUserQuestion` to interview the user. Completing without asking at least one question is a violation.
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -27,7 +27,7 @@ allowed-tools: Read, Glob, Grep, TaskCreate, AskUserQuestion, Bash
 
 <!-- SYNC:plan-quality -->
 
-> **Plan Quality** — Every plan phase MUST include test specifications.
+> **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
 > 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
@@ -42,7 +42,7 @@ allowed-tools: Read, Glob, Grep, TaskCreate, AskUserQuestion, Bash
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -181,7 +181,7 @@ After validation completes, provide summary:
 - Any items flagged for plan revision
 - Recommendation: proceed to implementation or revise plan first
 
-## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -194,13 +194,13 @@ After validation completes, provide summary:
 **IMPORTANT:** Only ask questions about genuine decision points - don't manufacture artificial choices.
 **IMPORTANT:** If plan is simple with few decisions, it's okay to ask fewer than min questions.
 **IMPORTANT:** Prioritize questions that could change implementation significantly.
-**MANDATORY IMPORTANT MUST** If plan introduces new tech/packages/libraries, ask user: "Plan uses {lib}. Were alternatives evaluated? Confirm choice or research more?"
+**MANDATORY IMPORTANT MUST ATTENTION** If plan introduces new tech/packages/libraries, ask user: "Plan uses {lib}. Were alternatives evaluated? Confirm choice or research more?"
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/cook (Recommended)"** — Begin implementation with validated plan
 - **"/refine"** — If plan needs PBI refinement first
@@ -208,15 +208,15 @@ After validation completes, provide summary:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
-- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-    <!-- /SYNC:plan-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:plan-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+  <!-- /SYNC:plan-quality:reminder -->

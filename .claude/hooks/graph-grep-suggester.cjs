@@ -130,7 +130,7 @@ runHook(
         } else {
             // Level 2+: STRONG WARNING — AI has repeatedly ignored
             msg += `[graph] **STRONG WARNING (${escalationLevel + 1}x reminded) — Graph trace still not executed. This is a PROTOCOL VIOLATION.**\n`;
-            msg += `You MUST run graph trace before concluding. Without it, callers, bus consumers, and event chains are INVISIBLE to grep.\n`;
+            msg += `You MUST ATTENTION run graph trace before concluding. Without it, callers, bus consumers, and event chains are INVISIBLE to grep.\n`;
         }
 
         msg += `\n`;

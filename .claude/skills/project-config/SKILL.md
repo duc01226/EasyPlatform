@@ -11,17 +11,17 @@ disable-model-invocation: false
 
 **Goal:** Scan the project workspace and update `docs/project-config.json` with accurate values.
 
-**MUST** follow Plan → Review → Execute workflow. **MUST** use exact schema field names (`--describe`). **MUST** validate after each phase. **NEVER** use `classPattern`/`keyExtractor` — the correct fields are `contentPattern`/`keyGroup`.
+**IMPORTANT MUST ATTENTION** follow Plan → Review → Execute workflow. **IMPORTANT MUST ATTENTION** use exact schema field names (`--describe`). **IMPORTANT MUST ATTENTION** validate after each phase. **NEVER** use `classPattern`/`keyExtractor` — the correct fields are `contentPattern`/`keyGroup`.
 
 **Workflow:** Recon → `/plan` → `/plan-review` → Execute phases (scan → merge → validate → fix) → Follow-up scans → `/prompt-enhance`
 
 **Key Rules:**
 
-- MUST run `node .claude/hooks/lib/project-config-schema.cjs --describe` and use field names verbatim
-- MUST create one TaskCreate per config section — NEVER scan everything in one pass
-- MUST validate schema after each merge — `validateConfig(config)` returns PASSED or errors
-- MUST review-and-fix after each phase — read back, spot-check paths, self-review
-- Path regexes MUST use `[\\/]` for cross-platform separator matching
+- MUST ATTENTION run `node .claude/hooks/lib/project-config-schema.cjs --describe` and use field names verbatim
+- MUST ATTENTION create one TaskCreate per config section — NEVER scan everything in one pass
+- MUST ATTENTION validate schema after each merge — `validateConfig(config)` returns PASSED or errors
+- MUST ATTENTION review-and-fix after each phase — read back, spot-check paths, self-review
+- Path regexes MUST ATTENTION use `[\\/]` for cross-platform separator matching
 - Schema enforced by `.claude/hooks/lib/project-config-schema.cjs`
 
 ---
@@ -108,7 +108,7 @@ docs/project-config.json
 └── DEPRECATED: backendServices, frontendApps, scss, componentFinder, sharedNamespace
 ```
 
-> MUST run `node .claude/hooks/lib/project-config-schema.cjs --describe` for exact field names.
+> MUST ATTENTION run `node .claude/hooks/lib/project-config-schema.cjs --describe` for exact field names.
 
 ### ⛔ Common AI Field Name Mistakes
 
@@ -193,7 +193,7 @@ Build `framework { name, searchPatternKeywords[] }` from commonly used base clas
 ### 2e. Context Groups
 
 Build `contextGroups[]` with `pathRegexes[]`, `fileExtensions[]`, `patternsDoc`, `rules[]`.
-Rules MUST be specific: "Use IPlatformRootRepository<TEntity>" not "follow best practices".
+Rules MUST ATTENTION be specific: "Use IPlatformRootRepository<TEntity>" not "follow best practices".
 
 ### 2f–2h. Design System, Styling, Component System
 
@@ -228,7 +228,7 @@ Route prefix: `"api"` for .NET/Spring, `""` for Express/FastAPI.
 
 ### 2p. Graph Connectors — Implicit Connections
 
-#### ⛔ How implicitConnections Works (MUST UNDERSTAND)
+#### ⛔ How implicitConnections Works (MUST ATTENTION UNDERSTAND)
 
 Algorithm: scan source files → extract keys via `contentPattern` regex capture group `keyGroup` → scan target files → match keys via `matchBy` → create `edgeKind` edges.
 
@@ -266,7 +266,7 @@ Algorithm: scan source files → extract keys via `contentPattern` regex capture
 }
 ```
 
-**MUST** present detected rules to user before writing. **MUST** scope `paths` to relevant dirs (not repo root).
+**IMPORTANT MUST ATTENTION** present detected rules to user before writing. **IMPORTANT MUST ATTENTION** scope `paths` to relevant dirs (not repo root).
 
 ### 2q. Reference Docs
 
@@ -280,7 +280,7 @@ Merge findings section-by-section. Only overwrite if scan found concrete values.
 
 ## Phase 4: Verify (MANDATORY)
 
-1. Schema validation — MUST pass
+1. Schema validation — MUST ATTENTION pass
 2. Spot-check 2-3 service paths
 3. Run hook tests: `node .claude/hooks/tests/test-all-hooks.cjs`
 
@@ -317,10 +317,10 @@ Report: sections updated vs unchanged, new modules discovered, path mismatches, 
 
 ## Closing Reminders (AI Attention Anchor)
 
-**MUST** plan first — recon → `/plan` → `/plan-review` → execute. NEVER jump to scanning.
-**MUST** break into phases with review cycles — scan → merge → validate → spot-check → fix per phase.
-**MUST** use exact schema field names — run `--describe`, copy verbatim. NEVER guess.
-**MUST** validate after EACH phase — catch errors early.
+**IMPORTANT MUST ATTENTION** plan first — recon → `/plan` → `/plan-review` → execute. NEVER jump to scanning.
+**IMPORTANT MUST ATTENTION** break into phases with review cycles — scan → merge → validate → spot-check → fix per phase.
+**IMPORTANT MUST ATTENTION** use exact schema field names — run `--describe`, copy verbatim. NEVER guess.
+**IMPORTANT MUST ATTENTION** validate after EACH phase — catch errors early.
 **NEVER** use `classPattern`/`keyExtractor` — correct fields: `contentPattern` (regex) + `keyGroup` (number).
-**MUST** create one TaskCreate per config section — NEVER monolithic scan.
-**MUST** do final holistic review — read entire config, cross-reference, fix inconsistencies.
+**IMPORTANT MUST ATTENTION** create one TaskCreate per config section — NEVER monolithic scan.
+**IMPORTANT MUST ATTENTION** do final holistic review — read entire config, cross-reference, fix inconsistencies.

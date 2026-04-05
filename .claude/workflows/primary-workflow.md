@@ -164,9 +164,9 @@ All workflows are defined in `.claude/workflows.json`. Each workflow composes a 
 
 ## Closing Reminders
 
-- **MUST** understand existing code FIRST (read, grep 3+ patterns, graph trace) before ANY modification
-- **MUST** compile-check after every code file change
-- **MUST** never use fake data/mocks/cheats just to pass tests — fix real issues
-- **MUST** activate relevant skills from catalog during the process
-- **MUST** detect nearest matching workflow from catalog and ask user to confirm activation
-- **MUST** run at least ONE graph command on key files before concluding investigation/plan/fix
+- **MANDATORY IMPORTANT MUST ATTENTION** understand existing code FIRST (read, grep 3+ patterns, graph trace) before ANY modification
+- **MANDATORY IMPORTANT MUST ATTENTION** compile-check after every code file change
+- **MANDATORY IMPORTANT MUST ATTENTION** never use fake data/mocks/cheats just to pass tests — fix real issues
+- **MANDATORY IMPORTANT MUST ATTENTION** activate relevant skills from catalog during the process
+- **MANDATORY IMPORTANT MUST ATTENTION** detect nearest matching workflow from catalog and ask user to confirm activation
+- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding investigation/plan/fix

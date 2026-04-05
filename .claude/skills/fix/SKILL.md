@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -42,7 +42,7 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
 
 <!-- /SYNC:estimation-framework -->
 
@@ -103,7 +103,7 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -137,7 +137,7 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 **Be skeptical. Every claim needs `file:line` traced proof. Confidence >80% to act.**
 
 - NEVER assume first hypothesis is correct — verify with actual code traces
-- MUST include `file:line` evidence for every root cause claim; otherwise state "hypothesis, not confirmed"
+- MUST ATTENTION include `file:line` evidence for every root cause claim; otherwise state "hypothesis, not confirmed"
 - ALWAYS trace execution path before claiming cause; ALWAYS check related code paths for contributing factors
 - NEVER say "should fix it" without proof the fix addresses the traced root cause
 - **Confidence Gate:** `Confidence: X%` required for EVERY claim. **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
@@ -147,9 +147,9 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 
 ## ⚠️ MANDATORY: Plan Before Fix (NON-NEGOTIABLE)
 
-**MANDATORY IMPORTANT MUST** — Before routing to ANY fix variant, you MUST have a validated plan. This applies whether running standalone or within a workflow.
+**MANDATORY IMPORTANT MUST ATTENTION** — Before routing to ANY fix variant, you MUST ATTENTION have a validated plan. This applies whether running standalone or within a workflow.
 
-**If no plan exists**, you MUST create todo tasks for and execute these steps IN ORDER before proceeding to fix:
+**If no plan exists**, you MUST ATTENTION create todo tasks for and execute these steps IN ORDER before proceeding to fix:
 
 1. **`/plan`** — Create an implementation plan for the fix (root cause analysis + fix approach + affected files)
 2. **`/plan-review`** — Auto-review the plan for validity, correctness, and best practices
@@ -194,7 +194,7 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 
 ## Graph Intelligence (MANDATORY — DO NOT SKIP when graph.db exists)
 
-If `.code-graph/graph.db` exists, you MUST use graph to enhance analysis with structural queries:
+If `.code-graph/graph.db` exists, you MUST ATTENTION use graph to enhance analysis with structural queries:
 
 **Without graph, your fix may miss affected callers, consumers, and tests. This step is NOT optional.**
 
@@ -211,7 +211,7 @@ Before and after fixing, use graph trace to understand blast radius:
 
 ## MANDATORY: Post-Fix Verification
 
-**After EVERY fix, you MUST run `/prove-fix` to verify correctness.**
+**After EVERY fix, you MUST ATTENTION run `/prove-fix` to verify correctness.**
 
 `/prove-fix` builds code proof traces (stack-trace-style) per change, assigns confidence percentages, and produces a ship/block verdict. This is non-negotiable — never skip it. If confidence < 80% on any change, return to investigation.
 
@@ -219,16 +219,16 @@ Before and after fixing, use graph trace to understand blast radius:
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → plan-review → plan-validate → fix → prove-fix → review → test
 > 2. **Execute `/fix` directly** — still requires `/plan → /plan-review → /plan-validate` before fixing (enforced by Plan Before Fix gate above)
 
 ---
 
-## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (fix applied). This ensures prove-fix, review, testing, and docs steps aren't skipped.
 - **"/prove-fix"** — Prove fix correctness with code traces
@@ -237,24 +237,24 @@ Before and after fixing, use graph trace to understand blast radius:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
-  <!-- SYNC:estimation-framework:reminder -->
-- **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-  <!-- /SYNC:estimation-framework:reminder -->
-  <!-- SYNC:red-flag-stop-conditions:reminder -->
-- **MUST** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-  <!-- /SYNC:red-flag-stop-conditions:reminder -->
-  <!-- SYNC:ui-system-context:reminder -->
-- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
+- **IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
+      <!-- /SYNC:estimation-framework:reminder -->
+      <!-- SYNC:red-flag-stop-conditions:reminder -->
+- **IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
+      <!-- /SYNC:red-flag-stop-conditions:reminder -->
+      <!-- SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+    <!-- /SYNC:ui-system-context:reminder -->

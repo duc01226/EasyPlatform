@@ -6,7 +6,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
 
@@ -154,13 +154,13 @@ Spot-check 3 file counts:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-    <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **MUST** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-    <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-    <!-- SYNC:output-quality-principles:reminder -->
-- **MUST** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
-    <!-- /SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  <!-- SYNC:scan-and-update-reference-doc:reminder -->
+- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+  <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+  <!-- SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
+  <!-- /SYNC:output-quality-principles:reminder -->

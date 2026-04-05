@@ -5,9 +5,9 @@ description: '[Project Management] Map and visualize feature dependencies betwee
 allowed-tools: Read, Write, Grep, Glob, Bash, Edit
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
 
@@ -202,11 +202,11 @@ graph TD
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+  <!-- SYNC:understand-code-first:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->

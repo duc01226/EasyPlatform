@@ -54,7 +54,7 @@ Use concrete examples when:
 - The audience needs to understand what things actually look like
 - You're showing how multiple technologies integrate
 
-**For technical diagrams, you MUST include evidence artifacts** (see below).
+**For technical diagrams, you MUST ATTENTION include evidence artifacts** (see below).
 
 ---
 
@@ -224,13 +224,13 @@ Only now create the Excalidraw elements. **See below for how to handle large dia
 
 ### Step 6: Render & Validate (MANDATORY)
 
-After generating the JSON, you MUST run the render-view-fix loop until the diagram looks right. This is not optional — see the **Render & Validate** section below for the full process.
+After generating the JSON, you MUST ATTENTION run the render-view-fix loop until the diagram looks right. This is not optional — see the **Render & Validate** section below for the full process.
 
 ---
 
 ## Large / Comprehensive Diagram Strategy
 
-**For comprehensive or technical diagrams, you MUST build the JSON one section at a time.** Do NOT attempt to generate the entire file in a single pass. This is a hard constraint — Claude Code has a ~32,000 token output limit per response, and a comprehensive diagram easily exceeds that in one shot. Even if it didn't, generating everything at once leads to worse quality. Section-by-section is better in every way.
+**For comprehensive or technical diagrams, you MUST ATTENTION build the JSON one section at a time.** Do NOT attempt to generate the entire file in a single pass. This is a hard constraint — Claude Code has a ~32,000 token output limit per response, and a comprehensive diagram easily exceeds that in one shot. Even if it didn't, generating everything at once leads to worse quality. Section-by-section is better in every way.
 
 ### The Section-by-Section Workflow
 
@@ -527,7 +527,7 @@ See `references/element-templates.md` for copy-paste JSON templates for each ele
 
 ## Render & Validate (MANDATORY)
 
-You cannot judge a diagram from JSON alone. After generating or editing the Excalidraw JSON, you MUST render it to PNG, view the image, and fix what you see — in a loop until it's right. This is a core part of the workflow, not a final check.
+You cannot judge a diagram from JSON alone. After generating or editing the Excalidraw JSON, you MUST ATTENTION render it to PNG, view the image, and fix what you see — in a loop until it's right. This is a core part of the workflow, not a final check.
 
 ### How to Render
 
@@ -649,7 +649,7 @@ uv run playwright install chromium
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

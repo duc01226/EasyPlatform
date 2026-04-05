@@ -171,7 +171,7 @@ function main() {
                     if (fs.existsSync(graphDbPath)) {
                         console.log(
                             `\n<HARD-GATE>\n` +
-                                `[GRAPH MANDATORY for /${skillName}] You MUST run at least ONE graph trace on key files before concluding this task.\n` +
+                                `[GRAPH MANDATORY for /${skillName}] You MUST ATTENTION run at least ONE graph trace on key files before concluding this task.\n` +
                                 `Command: python .claude/scripts/code_graph trace <key-file> --direction both --json\n` +
                                 `Skip ONLY if .code-graph/graph.db does not exist. It EXISTS — so graph trace is REQUIRED.\n` +
                                 `</HARD-GATE>`

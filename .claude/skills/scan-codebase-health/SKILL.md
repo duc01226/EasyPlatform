@@ -143,10 +143,10 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-    <!-- SYNC:output-quality-principles:reminder -->
-- **MUST** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
-    <!-- /SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  <!-- SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
+  <!-- /SYNC:output-quality-principles:reminder -->

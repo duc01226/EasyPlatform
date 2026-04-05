@@ -24,7 +24,7 @@ disable-model-invocation: false
 
 - Focus on the specific errors reported in logs
 - When fixing SKILL.md structure: maintain SYNC tag balance, keep inline protocols
-- MUST call `/prompt-enhance` if structural changes were made to SKILL.md
+- MUST ATTENTION call `/prompt-enhance` if structural changes were made to SKILL.md
 - STOP after 3 failed fix attempts — report outcomes, ask user before #4
 
 ## Mission
@@ -45,8 +45,8 @@ Fix the agent skill based on `logs.txt` file (project root).
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** preserve SYNC tag balance when editing SKILL.md
-- **MUST** call `/prompt-enhance` on SKILL.md after structural fixes
-- **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** preserve SYNC tag balance when editing SKILL.md
+- **IMPORTANT MUST ATTENTION** call `/prompt-enhance` on SKILL.md after structural fixes
+- **IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)

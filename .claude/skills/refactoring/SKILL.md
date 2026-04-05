@@ -5,7 +5,7 @@ description: '[Code Quality] Restructure code without changing behavior using ex
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -43,7 +43,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 > **Design Patterns Quality** — Priority checks for every code change:
 >
-> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION share base class. 3+ similar patterns → extract to shared abstraction.
 > 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
 > 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
 > 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
@@ -85,7 +85,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 ## ⚠️ MANDATORY: Confidence & Evidence Gate
 
-**MANDATORY IMPORTANT MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
+**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
 **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 Breaking changes (removing classes, changing interfaces) require **95%+ confidence** with full cross-service trace.
 
@@ -250,8 +250,8 @@ var config = req.Dto.MapToObject()
 
 > **[IMPORTANT] Database Performance Protocol (MANDATORY):**
 >
-> 1. **Paging Required** — ALL list/collection queries MUST use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
-> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+> 1. **Paging Required** — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
 
 When extracting expressions or moving queries, verify index coverage:
 
@@ -275,11 +275,11 @@ Before any refactoring:
 
 ## Code Responsibility Refactoring (Priority Check)
 
-**⚠️ MUST READ:** CLAUDE.md "Code Responsibility Hierarchy" for the Entity/Model > Service > Component layering rule. When refactoring, verify logic is in the LOWEST appropriate layer.
+**⚠️ MUST ATTENTION READ:** CLAUDE.md "Code Responsibility Hierarchy" for the Entity/Model > Service > Component layering rule. When refactoring, verify logic is in the LOWEST appropriate layer.
 
 ## Component HTML & SCSS Standards
 
-**⚠️ MUST READ:** CLAUDE.md "Component HTML Template Standard (BEM Classes)" and `docs/project-reference/scss-styling-guide.md` for BEM class requirements and host/wrapper styling patterns. When refactoring components, ensure all HTML elements have proper BEM classes.
+**⚠️ MUST ATTENTION READ:** CLAUDE.md "Component HTML Template Standard (BEM Classes)" and `docs/project-reference/scss-styling-guide.md` for BEM class requirements and host/wrapper styling patterns. When refactoring components, ensure all HTML elements have proper BEM classes.
 
 ## Anti-Patterns
 
@@ -293,7 +293,7 @@ Before any refactoring:
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -338,7 +338,7 @@ When graph DB is available, BEFORE refactoring, trace to verify all consumers:
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `refactor` workflow** (Recommended) — scout → investigate → plan → code → review → sre-review → test → docs
 > 2. **Execute `/refactoring` directly** — run this skill standalone
@@ -357,20 +357,20 @@ When graph DB is available, BEFORE refactoring, trace to verify all consumers:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-      <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
-- **MUST** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+    <!-- SYNC:understand-code-first:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:design-patterns-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
+    <!-- /SYNC:design-patterns-quality:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
+- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->

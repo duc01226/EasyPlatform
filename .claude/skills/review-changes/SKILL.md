@@ -3,9 +3,9 @@ name: review-changes
 description: '[Code Quality] Review all uncommitted changes before commit'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
 
@@ -27,7 +27,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 > **Design Patterns Quality** — Priority checks for every code change:
 >
-> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION share base class. 3+ similar patterns → extract to shared abstraction.
 > 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
 > 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
 > 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
@@ -41,7 +41,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 > **Logic & Intention Review** — Verify WHAT code does matches WHY it was changed.
 >
-> 1. **Change Intention Check:** Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
+> 1. **Change Intention Check:** Every changed file MUST ATTENTION serve the stated purpose. Flag unrelated changes as scope creep.
 > 2. **Happy Path Trace:** Walk through one complete success scenario through changed code
 > 3. **Error Path Trace:** Walk through one failure/edge case scenario through changed code
 > 4. **Acceptance Mapping:** If plan context available, map every acceptance criterion to a code change
@@ -52,7 +52,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 <!-- SYNC:bug-detection -->
 
-> **Bug Detection** — MUST check categories 1-4 for EVERY review. Never skip.
+> **Bug Detection** — MUST ATTENTION check categories 1-4 for EVERY review. Never skip.
 >
 > 1. **Null Safety:** Can params/returns be null? Are they guarded? Optional chaining gaps? `.find()` returns checked?
 > 2. **Boundary Conditions:** Off-by-one (`<` vs `<=`)? Empty collections handled? Zero/negative values? Max limits?
@@ -70,7 +70,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 > **Test Spec Verification** — Map changed code to test specifications.
 >
 > 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
-> 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC")
+> 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
 > 5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
@@ -86,15 +86,15 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 ## Quick Summary
 
 **Goal:** Comprehensive code review of all uncommitted changes following project standards.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
 > - `project-structure-reference.md` — service list, directory tree, conventions
@@ -156,7 +156,7 @@ Target: All uncommitted changes (staged and unstaged) in the current working dir
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -176,7 +176,7 @@ Target: All uncommitted changes (staged and unstaged) in the current working dir
 
 ## Blast Radius Pre-Analysis (MANDATORY FIRST STEP)
 
-> **IMPORTANT MANDATORY MUST:** This is the FIRST action in every review. Call `/graph-blast-radius` skill BEFORE any other review work.
+> **IMPORTANT MANDATORY MUST ATTENTION:** This is the FIRST action in every review. Call `/graph-blast-radius` skill BEFORE any other review work.
 
 If `.code-graph/graph.db` exists, run graph-blast-radius analysis before reviewing changes:
 
@@ -197,7 +197,7 @@ For each changed file, trace its full impact:
 **⛔ MANDATORY FIRST: Create Todo Tasks for Review Phases**
 Before starting, call TaskCreate with:
 
-- [ ] `[Review Phase 0] Run /graph-blast-radius to analyze change impact` - in_progress **(MUST BE FIRST)**
+- [ ] `[Review Phase 0] Run /graph-blast-radius to analyze change impact` - in_progress **(MUST ATTENTION BE FIRST)**
 - [ ] `[Review Phase 1] Get changes and create report file` - pending
 - [ ] `[Review Phase 2] Review file-by-file and update report` - pending
 - [ ] `[Review Phase 3] Re-read report for holistic assessment` - pending
@@ -210,7 +210,7 @@ Before starting, call TaskCreate with:
 
 **Phase 0: Run Graph Blast Radius Analysis (MANDATORY FIRST STEP)**
 
-> **IMPORTANT MANDATORY MUST:** This is the FIRST action before ANY other review work. The blast radius analysis provides structural impact data (impacted files, untested changes, risk level) that informs the entire review.
+> **IMPORTANT MANDATORY MUST ATTENTION:** This is the FIRST action before ANY other review work. The blast radius analysis provides structural impact data (impacted files, untested changes, risk level) that informs the entire review.
 
 - [ ] Call `/graph-blast-radius` skill (runs `python .claude/scripts/code_graph blast-radius --json`)
 - [ ] Record in report: changed files count, impacted files count, untested changes, risk level
@@ -336,7 +336,7 @@ If the Documentation Staleness Check in Phase 4 identified stale docs:
 
 > **Note:** This step runs the docs-update triage (Phase 0) which fast-exits when no docs are impacted. Overhead is minimal for non-doc-impacting changes.
 
-## Readability Checklist (MUST evaluate)
+## Readability Checklist (MUST ATTENTION evaluate)
 
 Before approving, verify the code is **easy to read, easy to maintain, easy to understand**:
 
@@ -483,7 +483,7 @@ type(scope): description
 
 ## Systematic Review Protocol (for 10+ changed files)
 
-> **NON-NEGOTIABLE: When the changeset is large (10+ files), you MUST use this systematic protocol instead of reviewing files one-by-one sequentially.**
+> **NON-NEGOTIABLE: When the changeset is large (10+ files), you MUST ATTENTION use this systematic protocol instead of reviewing files one-by-one sequentially.**
 >
 > **Principle:** Review carefully and systematically — break into groups, fire multiple agents to review in parallel. Ensure no flaws, no bugs, no stale info, and best practices in every aspect.
 
@@ -553,7 +553,7 @@ Parallel categorized review ensures thorough coverage with holistic synthesis.
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `review-changes` workflow** (Recommended) — review-changes → review-architecture → code-simplifier → code-review → performance → plan → plan-validate → cook → watzup
 > 2. **Execute `/review-changes` directly** — run this skill standalone
@@ -577,7 +577,7 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/code-review (Recommended)"** — Deeper code quality review
 - **"/watzup"** — Wrap up session and review all changes
@@ -595,27 +595,27 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
   <!-- SYNC:understand-code-first:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
-- **MUST** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:logic-and-intention-review:reminder -->
-- **MUST** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-      <!-- /SYNC:logic-and-intention-review:reminder -->
-      <!-- SYNC:bug-detection:reminder -->
-- **MUST** check null safety, boundaries, error handling, resource management for every review.
-      <!-- /SYNC:bug-detection:reminder -->
-      <!-- SYNC:test-spec-verification:reminder -->
-- **MUST** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
-      <!-- /SYNC:test-spec-verification:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:design-patterns-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
+    <!-- /SYNC:design-patterns-quality:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
+- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->
+    <!-- SYNC:logic-and-intention-review:reminder -->
+- **IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
+    <!-- /SYNC:logic-and-intention-review:reminder -->
+    <!-- SYNC:bug-detection:reminder -->
+- **IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
+    <!-- /SYNC:bug-detection:reminder -->
+    <!-- SYNC:test-spec-verification:reminder -->
+- **IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
+    <!-- /SYNC:test-spec-verification:reminder -->

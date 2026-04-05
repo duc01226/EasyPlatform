@@ -40,7 +40,7 @@
 
 ## SYNC:estimation-framework
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
 
 ---
 
@@ -48,7 +48,7 @@
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -60,7 +60,7 @@
 
 ## SYNC:plan-quality
 
-> **Plan Quality** — Every plan phase MUST include test specifications.
+> **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
 > 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
@@ -107,7 +107,7 @@
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -196,7 +196,7 @@
 
 > **Logic & Intention Review** — Verify WHAT code does matches WHY it was changed.
 >
-> 1. **Change Intention Check:** Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
+> 1. **Change Intention Check:** Every changed file MUST ATTENTION serve the stated purpose. Flag unrelated changes as scope creep.
 > 2. **Happy Path Trace:** Walk through one complete success scenario through changed code
 > 3. **Error Path Trace:** Walk through one failure/edge case scenario through changed code
 > 4. **Acceptance Mapping:** If plan context available, map every acceptance criterion to a code change
@@ -207,7 +207,7 @@
 
 ## SYNC:bug-detection
 
-> **Bug Detection** — MUST check categories 1-4 for EVERY review. Never skip.
+> **Bug Detection** — MUST ATTENTION check categories 1-4 for EVERY review. Never skip.
 >
 > 1. **Null Safety:** Can params/returns be null? Are they guarded? Optional chaining gaps? `.find()` returns checked?
 > 2. **Boundary Conditions:** Off-by-one (`<` vs `<=`)? Empty collections handled? Zero/negative values? Max limits?
@@ -225,7 +225,7 @@
 > **Test Spec Verification** — Map changed code to test specifications.
 >
 > 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
-> 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC")
+> 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
 > 5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
@@ -240,7 +240,7 @@
 > **Iterative Phase Quality** — Score complexity BEFORE planning.
 >
 > **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
-> **Score >=6 →** MUST decompose into phases. Each phase:
+> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
 >
 > - ≤5 files modified
 > - ≤3h effort
@@ -255,7 +255,7 @@
 
 > **Design Patterns Quality** — Priority checks for every code change:
 >
-> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION share base class. 3+ similar patterns → extract to shared abstraction.
 > 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
 > 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
 > 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
@@ -294,7 +294,7 @@
 
 ## SYNC:scaffold-production-readiness
 
-> **Scaffold Production Readiness** — Every scaffolded project MUST include 4 foundations:
+> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 4 foundations:
 >
 > 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates
 > 2. **Error Handling Foundation** — HTTP error interception, classification, user notification patterns
@@ -307,7 +307,7 @@
 
 ## SYNC:two-stage-task-review
 
-> **Two-Stage Task Review** — Both stages MUST complete before marking task done.
+> **Two-Stage Task Review** — Both stages MUST ATTENTION complete before marking task done.
 >
 > **Stage 1: Self-review** — Immediately after implementation:
 >
@@ -379,7 +379,7 @@
 
 ## SYNC:refinement-dor-checklist
 
-> **Refinement DoR Checklist** — ALL 7 criteria MUST pass before grooming:
+> **Refinement DoR Checklist** — ALL 7 criteria MUST ATTENTION pass before grooming:
 >
 > 1. **User story template** — "As a {role}, I want {goal}, so that {benefit}" format
 > 2. **AC testable & unambiguous** — GIVEN/WHEN/THEN. No "should/might/TBD/various/appropriate". Min 3 scenarios (happy, edge, error) + 1 auth scenario

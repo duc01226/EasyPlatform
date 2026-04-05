@@ -4,9 +4,9 @@ version: 1.0.0
 description: '[Code Quality] Review artifact quality before handoff. Use to verify PBIs, designs, stories meet quality standards.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
 
@@ -29,7 +29,7 @@ description: '[Code Quality] Review artifact quality before handoff. Use to veri
 
 <!-- /SYNC:graph-impact-analysis -->
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 ## Quick Summary
 
@@ -84,7 +84,7 @@ description: '[Code Quality] Review artifact quality before handoff. Use to veri
 - [ ] GIVEN/WHEN/THEN format used
 - [ ] Negative test cases included
 
-## Readability Checklist (MUST evaluate)
+## Readability Checklist (MUST ATTENTION evaluate)
 
 Before approving, verify the code is **easy to read, easy to maintain, easy to understand**:
 
@@ -129,7 +129,7 @@ After completing Round 1 evaluation, execute a **second full review round**:
 5. **Update verdict** if Round 2 found new issues
 6. **Final verdict** must incorporate findings from BOTH rounds
 
-## IMPORTANT Task Planning Notes (MUST FOLLOW)
+## IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -154,14 +154,14 @@ After completing Round 1 evaluation, execute a **second full review round**:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
-      <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:graph-impact-analysis:reminder -->
-- **MUST** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-      <!-- /SYNC:graph-impact-analysis:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
+    <!-- SYNC:understand-code-first:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:graph-impact-analysis:reminder -->
+- **IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
+    <!-- /SYNC:graph-impact-analysis:reminder -->

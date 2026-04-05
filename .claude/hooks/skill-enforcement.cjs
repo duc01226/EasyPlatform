@@ -29,18 +29,29 @@ const { hasActiveWorkflow } = require('./lib/workflow-state.cjs');
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Always allowed without workflow or tasks
-const META_SKILLS = new Set([
-  'help', 'memory', 'checkpoint', 'recover', 'context', 'ck-help', 'watzup', 'compact'
-]);
+const META_SKILLS = new Set(['help', 'memory', 'checkpoint', 'recover', 'context', 'ck-help', 'watzup', 'compact']);
 
 // Allowed without tasks (research/investigation phase) — includes META_SKILLS
 const ALLOWED_SKILLS = new Set([
-  ...META_SKILLS,
-  'scout', 'investigate', 'explore',
-  'plan', 'plan:hard', 'plan-validate', 'design',
-  'analyze', 'review', 'code-review', 'review:codebase',
-  'debug', 'docs', 'docs:update', 'test',
-  'git:status', 'git:log', 'git:diff',
+    ...META_SKILLS,
+    'scout',
+    'investigate',
+    'explore',
+    'plan',
+    'plan:hard',
+    'plan-validate',
+    'design',
+    'analyze',
+    'review',
+    'code-review',
+    'review:codebase',
+    'debug',
+    'docs',
+    'docs:update',
+    'test',
+    'git:status',
+    'git:log',
+    'git:diff'
 ]);
 
 // Implementation keywords — skills containing these require tasks
@@ -51,21 +62,21 @@ const IMPL_KEYWORDS = ['cook', 'code', 'fix', 'implement', 'refactor', 'build', 
 // ═══════════════════════════════════════════════════════════════════════════
 
 function normalizeSkill(skill) {
-  if (!skill) return '';
-  return skill.replace(/^\/+/, '').toLowerCase().trim();
+    if (!skill) return '';
+    return skill.replace(/^\/+/, '').toLowerCase().trim();
 }
 
 function isAllowedSkill(skill) {
-  const norm = normalizeSkill(skill);
-  if (ALLOWED_SKILLS.has(norm)) return true;
-  return ALLOWED_SKILLS.has(norm.split(':')[0]);
+    const norm = normalizeSkill(skill);
+    if (ALLOWED_SKILLS.has(norm)) return true;
+    return ALLOWED_SKILLS.has(norm.split(':')[0]);
 }
 
 function requiresTodos(skill) {
-  const norm = normalizeSkill(skill);
-  // Check base name and full name against implementation keywords
-  const baseName = norm.split(':')[0];
-  return IMPL_KEYWORDS.some(kw => baseName === kw || norm.includes(kw));
+    const norm = normalizeSkill(skill);
+    // Check base name and full name against implementation keywords
+    const baseName = norm.split(':')[0];
+    return IMPL_KEYWORDS.some(kw => baseName === kw || norm.includes(kw));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -73,7 +84,7 @@ function requiresTodos(skill) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function blockMessage(skill) {
-  return `## Todo Enforcement Block
+    return `## Todo Enforcement Block
 
 **Skill blocked:** \`${skill}\`
 
@@ -84,7 +95,7 @@ Prefix your message with \`quick:\` to bypass enforcement.`;
 }
 
 function workflowBlockMessage(skill) {
-  return `## Workflow Task Enforcement Block
+    return `## Workflow Task Enforcement Block
 
 **Skill blocked:** \`${skill}\`
 
@@ -93,11 +104,11 @@ Call \`TaskCreate\` for EACH workflow step BEFORE executing any skill.`;
 }
 
 function noWorkflowBlockMessage(skill) {
-  return `## Workflow Detection Required
+    return `## Workflow Detection Required
 
 **Skill blocked:** \`${skill}\`
 
-No workflow has been activated and no tasks exist. You MUST either:
+No workflow has been activated and no tasks exist. You MUST ATTENTION either:
 1. **Detect nearest workflow and ask user via AskUserQuestion:** Present "Activate [Workflow] (Recommended)" vs "Execute directly"
 2. **Or create tasks:** Call \`TaskCreate\` to track your work
 
@@ -110,62 +121,61 @@ Prefix your message with \`quick:\` to bypass enforcement.`;
 // ═══════════════════════════════════════════════════════════════════════════
 
 function main() {
-  try {
-    const stdin = fs.readFileSync(0, 'utf-8').trim();
-    if (!stdin) process.exit(0);
+    try {
+        const stdin = fs.readFileSync(0, 'utf-8').trim();
+        if (!stdin) process.exit(0);
 
-    const payload = JSON.parse(stdin);
-    if (payload.tool_name !== 'Skill') process.exit(0);
+        const payload = JSON.parse(stdin);
+        if (payload.tool_name !== 'Skill') process.exit(0);
 
-    const sessionId = process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID || 'unknown';
-    const skillName = payload.tool_input?.skill || '';
-    if (!skillName) process.exit(0);
+        const sessionId = process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID || 'unknown';
+        const skillName = payload.tool_input?.skill || '';
+        if (!skillName) process.exit(0);
 
-    // Quick mode bypass
-    if (process.env.CK_QUICK_MODE === 'true') {
-      recordBypass(sessionId, { skill: skillName, reason: 'quick_mode' });
-      process.exit(0);
-    }
+        // Quick mode bypass
+        if (process.env.CK_QUICK_MODE === 'true') {
+            recordBypass(sessionId, { skill: skillName, reason: 'quick_mode' });
+            process.exit(0);
+        }
 
-    // Always allow workflow-start itself
-    if (normalizeSkill(skillName) === 'workflow-start') process.exit(0);
+        // Always allow workflow-start itself
+        if (normalizeSkill(skillName) === 'workflow-start') process.exit(0);
 
-    const workflowActive = hasActiveWorkflow(sessionId);
-    const todosExist = hasTodos(sessionId);
+        const workflowActive = hasActiveWorkflow(sessionId);
+        const todosExist = hasTodos(sessionId);
 
-    // Workflow active + no tasks → block all non-meta
-    if (workflowActive && !todosExist) {
-      if (META_SKILLS.has(normalizeSkill(skillName))) process.exit(0);
-      console.log(workflowBlockMessage(skillName));
-      process.exit(1);
-    }
+        // Workflow active + no tasks → block all non-meta
+        if (workflowActive && !todosExist) {
+            if (META_SKILLS.has(normalizeSkill(skillName))) process.exit(0);
+            console.log(workflowBlockMessage(skillName));
+            process.exit(1);
+        }
 
-    // No workflow + no tasks → block non-meta skills
-    if (!workflowActive && !todosExist) {
-      const norm = normalizeSkill(skillName);
-      if (!META_SKILLS.has(norm)) {
-        console.log(noWorkflowBlockMessage(skillName));
+        // No workflow + no tasks → block non-meta skills
+        if (!workflowActive && !todosExist) {
+            const norm = normalizeSkill(skillName);
+            if (!META_SKILLS.has(norm)) {
+                console.log(noWorkflowBlockMessage(skillName));
+                process.exit(1);
+            }
+        }
+
+        // Research/planning skills → allow
+        if (isAllowedSkill(skillName)) process.exit(0);
+
+        // Non-implementation skill → allow
+        if (!requiresTodos(skillName)) process.exit(0);
+
+        // Implementation skill + tasks exist → allow
+        if (todosExist) process.exit(0);
+
+        // Implementation skill + no tasks → block
+        console.log(blockMessage(skillName));
         process.exit(1);
-      }
+    } catch (error) {
+        console.error(`[skill-enforcement] Uncaught error — allowing operation: ${error.message}`);
+        process.exit(0);
     }
-
-    // Research/planning skills → allow
-    if (isAllowedSkill(skillName)) process.exit(0);
-
-    // Non-implementation skill → allow
-    if (!requiresTodos(skillName)) process.exit(0);
-
-    // Implementation skill + tasks exist → allow
-    if (todosExist) process.exit(0);
-
-    // Implementation skill + no tasks → block
-    console.log(blockMessage(skillName));
-    process.exit(1);
-
-  } catch (error) {
-    console.error(`[skill-enforcement] Uncaught error — allowing operation: ${error.message}`);
-    process.exit(0);
-  }
 }
 
 main();

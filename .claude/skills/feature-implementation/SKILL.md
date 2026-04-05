@@ -5,13 +5,13 @@ description: "[Implementation] Use when the user asks to implement a new feature
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Interactive feature implementation with comprehensive knowledge graph analysis and external memory management (same core as `feature` skill).
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
 > - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
@@ -30,7 +30,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, T
 - **External Memory**: All analysis in `.ai/workspace/analysis/{task}.analysis.md`
 - **Evidence-Based**: grep/search to verify assumptions, never assume service ownership
 - **Approval Required**: STOP at Phase 3, do NOT proceed without user confirmation
-- **High Priority Files**: Domain Entities, Commands, Queries, EventHandlers, Controllers MUST be analyzed
+- **High Priority Files**: Domain Entities, Commands, Queries, EventHandlers, Controllers MUST ATTENTION be analyzed
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -84,9 +84,9 @@ Your sole objective is to build a structured knowledge model in a Markdown analy
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is the full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `docs/project-reference/backend-patterns-reference.md` and `docs/project-reference/frontend-patterns-reference.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box).
+First, **initialize** the analysis file with a `## Metadata` heading and under it is the full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST ATTENTION 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `docs/project-reference/backend-patterns-reference.md` and `docs/project-reference/frontend-patterns-reference.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST ATTENTION 6 chars for start and end of markdown box).
 
-You **MANDATORY IMPORTANT MUST** also create the following top-level headings:
+You **MANDATORY IMPORTANT MUST ATTENTION** also create the following top-level headings:
 
 - `## Progress`
 - `## Errors`
@@ -118,13 +118,13 @@ After semantic search, perform additional targeted searches to ensure no critica
 - `grep search` with patterns: `.*Helper.*{EntityName}|{EntityName}.*Helper`
 - All files (include pattern: `**/*.{cs,ts,html}`)
 
-High Priority files MUST be analyzed: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components .ts**.
+High Priority files MUST ATTENTION be analyzed: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components .ts**.
 
 Update the `Total Items` count in the `## Progress` section.
 
 ### PHASE 1B: KNOWLEDGE GRAPH CONSTRUCTION
 
-**IMPORTANT MUST DO WITH TODO LIST**
+**IMPORTANT MUST ATTENTION DO WITH TODO LIST**
 
 Count total files in file list, split it into many batches of 10 files in priority order, each group insert in the current todo list new task for Analyze each batch of files group for all of files in file list.
 
@@ -161,7 +161,7 @@ Populate `specificAspects:` key with deeper analysis:
 - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
 - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
 
-**MANDATORY PROGRESS TRACKING**: After processing every 10 files, you **MANDATORY IMPORTANT MUST** update `Items Processed` in `## Progress`, run a `CONTEXT_ANCHOR_CHECK`, and explicitly state your progress. After each file, add its path to the `## Processed Files` list.
+**MANDATORY PROGRESS TRACKING**: After processing every 10 files, you **MANDATORY IMPORTANT MUST ATTENTION** update `Items Processed` in `## Progress`, run a `CONTEXT_ANCHOR_CHECK`, and explicitly state your progress. After each file, add its path to the `## Processed Files` list.
 
 ### PHASE 1C: OVERALL ANALYSIS
 
@@ -176,7 +176,7 @@ Write comprehensive `overallAnalysis:` summary showing:
 
 ## PHASE 2: PLAN GENERATION
 
-You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MANDATORY IMPORTANT MUST** follow coding convention and patterns in `docs/project-reference/backend-patterns-reference.md` and `docs/project-reference/frontend-patterns-reference.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read these pattern references to follow code convention and patterns.
+You MUST ATTENTION ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MANDATORY IMPORTANT MUST ATTENTION** follow coding convention and patterns in `docs/project-reference/backend-patterns-reference.md` and `docs/project-reference/frontend-patterns-reference.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read these pattern references to follow code convention and patterns.
 
 ### PHASE 2.1: VERIFY AND REFACTOR
 
@@ -231,7 +231,7 @@ You must present the plan for my explicit approval. **DO NOT** proceed without i
 
 ## PHASE 4: EXECUTION
 
-Once approved, execute the plan. Before creating or modifying **ANY** file, you **MANDATORY IMPORTANT MUST** first load its relevant entry from your `## Knowledge Graph`. Use all **EXECUTION_SAFEGUARDS**. If any step fails, **HALT**, report the failure, and return to the APPROVAL GATE.
+Once approved, execute the plan. Before creating or modifying **ANY** file, you **MANDATORY IMPORTANT MUST ATTENTION** first load its relevant entry from your `## Knowledge Graph`. Use all **EXECUTION_SAFEGUARDS**. If any step fails, **HALT**, report the failure, and return to the APPROVAL GATE.
 
 **EXECUTION_SAFEGUARDS:**
 
@@ -335,12 +335,12 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** validate decisions with user via `AskUserQuestion` — never auto-decide
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
     <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+  <!-- /SYNC:understand-code-first:reminder -->

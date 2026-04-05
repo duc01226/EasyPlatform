@@ -44,6 +44,6 @@ When a subagent fails or produces incomplete results:
 
 ## Closing Reminders
 
-- **MUST** complete each sequential agent fully before starting the next
-- **MUST** verify no file conflicts before parallel execution
-- **MUST** check `TaskList` to recover workflow position after failures or context compaction
+- **MANDATORY IMPORTANT MUST ATTENTION** complete each sequential agent fully before starting the next
+- **MANDATORY IMPORTANT MUST ATTENTION** verify no file conflicts before parallel execution
+- **MANDATORY IMPORTANT MUST ATTENTION** check `TaskList` to recover workflow position after failures or context compaction

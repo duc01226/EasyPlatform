@@ -6,7 +6,7 @@ allowed-tools: NONE
 license: Complete terms in LICENSE.txt
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 ## Quick Summary
 
@@ -30,7 +30,7 @@ license: Complete terms in LICENSE.txt
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -56,7 +56,7 @@ The user provides frontend requirements: a component, page, application, or inte
 
 ## Prerequisites
 
-**⚠️ MUST READ** `references/design-extraction-overview.md` before executing screenshot-based workflows — contains design guideline extraction protocols, analysis prompts, and visual verification methods required by the screenshot/image input workflow below. For asset generation workflows, also **⚠️ MUST READ** `references/asset-generation.md`.
+**⚠️ MUST ATTENTION READ** `references/design-extraction-overview.md` before executing screenshot-based workflows — contains design guideline extraction protocols, analysis prompts, and visual verification methods required by the screenshot/image input workflow below. For asset generation workflows, also **⚠️ MUST ATTENTION READ** `references/asset-generation.md`.
 
 ## Input Types & Workflows
 
@@ -156,13 +156,13 @@ Remember: Claude is capable of extraordinary creative work. Don't hold back, sho
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:ui-system-context:reminder -->
-- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
-- **MUST** READ `references/design-extraction-overview.md` before starting
-- **MUST** READ `references/asset-generation.md` before starting
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+  <!-- SYNC:ui-system-context:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+      <!-- /SYNC:ui-system-context:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** READ `references/design-extraction-overview.md` before starting
+- **MANDATORY IMPORTANT MUST ATTENTION** READ `references/asset-generation.md` before starting

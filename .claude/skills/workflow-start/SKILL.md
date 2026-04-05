@@ -5,7 +5,7 @@ description: "[Skill Management] Activate a workflow from the injected catalog. 
 allowed-tools: TaskCreate
 ---
 
-> **[MANDATORY]** You MUST use `TaskCreate` to break ALL work into small tasks BEFORE starting. NEVER skip task creation.
+> **[MANDATORY]** You MUST ATTENTION use `TaskCreate` to break ALL work into small tasks BEFORE starting. NEVER skip task creation.
 
 ## Quick Summary
 
@@ -19,7 +19,7 @@ allowed-tools: TaskCreate
 
 **Key Rules:**
 
-- AI MUST always detect nearest workflow and ask user via AskUserQuestion to confirm activation
+- AI MUST ATTENTION always detect nearest workflow and ask user via AskUserQuestion to confirm activation
 - Present "Activate [Workflow] (Recommended)" vs "Execute directly without workflow"
 - Create workflow-level tasks BEFORE any implementation tasks
 
@@ -70,7 +70,7 @@ Activate a workflow from the injected catalog and initialize step tracking via T
 
 ## After Activation â€” Task Creation Protocol (ZERO TOLERANCE)
 
-Your FIRST action after activation MUST be creating EXACTLY one `TaskCreate` for EACH entry in the workflow's `sequence` array from `.claude/workflows.json`.
+Your FIRST action after activation MUST ATTENTION be creating EXACTLY one `TaskCreate` for EACH entry in the workflow's `sequence` array from `.claude/workflows.json`.
 
 ### How to determine the task list:
 
@@ -111,7 +111,7 @@ To skip a conditional step: `TaskUpdate in_progress` â†’ add comment "Skipped â€
 
 ---
 
-## IMPORTANT Task Planning Notes (MUST FOLLOW)
+## IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -120,7 +120,7 @@ To skip a conditional step: `TaskUpdate in_progress` â†’ add comment "Skipped â€
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

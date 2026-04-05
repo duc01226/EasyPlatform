@@ -396,7 +396,7 @@ async function testProjectConfigInit() {
             logResult('Exits 0 when config missing', result.code === 0);
             logResult('Silent creation (no verbose output)', !result.stdout.includes('Project Config Initialized'));
             // Advisory text removed — enforcement is now in init-prompt-gate.cjs (exit 2)
-            logResult('No advisory text (gate handles enforcement)', !result.stdout.includes('MANDATORY MUST'));
+            logResult('No advisory text (gate handles enforcement)', !result.stdout.includes('MANDATORY MUST ATTENTION'));
 
             // Verify skeleton was created
             const configPath = path.join(docsDir, 'project-config.json');
@@ -471,7 +471,7 @@ async function testProjectConfigInit() {
             );
             logResult('Second run exits 0', result.code === 0);
             // Advisory removed — gate handles enforcement via init-prompt-gate.cjs
-            logResult('Second run silent (gate handles enforcement)', !result.stdout.includes('MANDATORY MUST'));
+            logResult('Second run silent (gate handles enforcement)', !result.stdout.includes('MANDATORY MUST ATTENTION'));
         } finally {
             cleanupTempDir(tmpDir);
         }

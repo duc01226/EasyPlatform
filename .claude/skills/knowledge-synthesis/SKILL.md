@@ -21,7 +21,7 @@ allowed-tools: Read, Write, Edit, TaskCreate, Bash
 
 **Key Rules:**
 
-- MUST use enforced template structure — all sections required
+- MUST ATTENTION use enforced template structure — all sections required
 - Every factual claim inline-cited: `[N]` referencing source table
 - Knowledge gaps section mandatory
 
@@ -43,7 +43,7 @@ Inventory:
 
 Read the enforced template: `.claude/templates/research-report-template.md`
 
-Every section in the template MUST appear in the final report.
+Every section in the template MUST ATTENTION appear in the final report.
 
 ## Step 3: Synthesize Report
 
@@ -82,7 +82,7 @@ Clean up working files from `.claude/tmp/` after successful synthesis.
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

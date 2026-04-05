@@ -4,9 +4,9 @@ version: 1.0.0
 description: '[Planning] Auto-review plan for validity, correctness, and best practices — recursive: review, fix issues, re-review until PASS (max 3 iterations)'
 ---
 
-> **[BLOCKING]** This is a validation gate. MUST use `AskUserQuestion` to present review findings and get user confirmation. Completing without asking at least one question is a violation.
+> **[BLOCKING]** This is a validation gate. MUST ATTENTION use `AskUserQuestion` to present review findings and get user confirmation. Completing without asking at least one question is a violation.
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -45,9 +45,9 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 ## Quick Summary
 
@@ -200,7 +200,7 @@ PASSES after split: `"Phase 2A: Database Schema (1h, 3 files) — Create src/mod
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -331,7 +331,7 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
 - **If FAIL (iteration < 3)**: Fix the issues directly in plan files, then re-review (recursive).
 - **If FAIL (iteration = 3)**: List remaining issues. STOP. Ask user to fix or regenerate plan via `AskUserQuestion`.
 
-## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -348,9 +348,9 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
 
 ---
 
-## Skill Interconnection (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+## Skill Interconnection (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan reviewed). This ensures validation, implementation, testing, and docs steps aren't skipped.
 - **"/plan-validate"** — Interview user to confirm plan assumptions
@@ -359,18 +359,18 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:double-round-trip-review:reminder -->
-- **MUST** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone.
-  <!-- /SYNC:double-round-trip-review:reminder -->
-  <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:double-round-trip-review:reminder -->
+- **IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone.
+      <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- SYNC:graph-assisted-investigation:reminder -->
+- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->

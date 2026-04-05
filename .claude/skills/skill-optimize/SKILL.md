@@ -28,8 +28,8 @@ disable-model-invocation: false
 **Key Rules:**
 
 - SKILL.md under 500 lines; reference files under 100 lines each
-- Shared protocols MUST be inlined via `<!-- SYNC:tag -->` blocks, NEVER `MUST READ shared/` references
-- MUST call `/prompt-enhance` as final quality pass
+- Shared protocols MUST ATTENTION be inlined via `<!-- SYNC:tag -->` blocks, NEVER `MUST ATTENTION READ shared/` references
+- MUST ATTENTION call `/prompt-enhance` as final quality pass
 - Attention structure: SYNC blocks at top, Quick Summary, detailed steps, Closing Reminders with `:reminder` blocks at bottom
 
 ## Arguments
@@ -75,16 +75,16 @@ Optimize skill at `.claude/skills/${SKILL}` directory.
 
 - [ ] Call `/prompt-enhance` on the finished SKILL.md
 - [ ] Verify no content loss (diff check)
-- [ ] Rule density maintained or improved (count MUST/NEVER/ALWAYS before and after)
+- [ ] Rule density maintained or improved (count MUST ATTENTION/NEVER/ALWAYS before and after)
 
 ---
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** inline shared protocols via `<!-- SYNC:tag -->` — NEVER use file references
-- **MUST** call `/prompt-enhance` on optimized skill as final quality pass
-- **MUST** verify SYNC tag balance and content matches canonical source
-      <!-- SYNC:shared-protocol-duplication-policy:reminder -->
-- **MUST** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
-      <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** inline shared protocols via `<!-- SYNC:tag -->` — NEVER use file references
+- **IMPORTANT MUST ATTENTION** call `/prompt-enhance` on optimized skill as final quality pass
+- **IMPORTANT MUST ATTENTION** verify SYNC tag balance and content matches canonical source
+    <!-- SYNC:shared-protocol-duplication-policy:reminder -->
+- **IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
+    <!-- /SYNC:shared-protocol-duplication-policy:reminder -->

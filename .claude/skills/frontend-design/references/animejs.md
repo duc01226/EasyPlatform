@@ -10,6 +10,7 @@
 ## 🚀 Quick Start - Essential Setup
 
 ### 1. Correct v4 Import (REQUIRED)
+
 ```javascript
 // ✅ CORRECT v4 imports
 import { animate, createTimeline, stagger, utils, svg, eases, engine } from 'animejs';
@@ -19,6 +20,7 @@ import { animate, createTimeline, stagger, utils, svg, eases, engine } from 'ani
 ```
 
 ### 2. Configure Time Units to Seconds (SET ONCE IN APP ENTRY POINT)
+
 ```javascript
 // ⚠️ IMPORTANT: Set this ONLY ONCE in your app's main entry point
 // For React: App.js/App.tsx or index.js/index.tsx
@@ -35,21 +37,23 @@ engine.timeUnit = 's';
 ```
 
 ### 3. Single-Line Format for Simple Animations (REQUIRED)
+
 ```javascript
 // ✅ GOOD - Clean, readable, one line for simple tweens
 animate('.element', { x: 250, duration: 1, ease: 'outQuad' });
 
 // ❌ BAD - Unnecessary multi-line for simple tweens
 animate('.element', {
-  x: 250,
-  duration: 1,
-  ease: 'outQuad'
+    x: 250,
+    duration: 1,
+    ease: 'outQuad'
 });
 ```
 
 ## ✅ Quick Validation Checklist
 
 Before generating anime.js code, verify:
+
 - [ ] Using `import { animate, ... } from 'animejs'` NOT `import anime`
 - [ ] Set `engine.timeUnit = 's'` ONLY ONCE in app entry point (NOT in components)
 - [ ] Using seconds for all durations (1 = 1 second)
@@ -66,6 +70,7 @@ Before generating anime.js code, verify:
 ## 🎯 Core API - Most Common Patterns
 
 ### Basic Animation (single line for simple tweens)
+
 ```javascript
 // Simple tween - ALWAYS one line
 animate('.element', { x: 250, rotate: 180, duration: 0.8, ease: 'inOutQuad' });
@@ -81,23 +86,26 @@ animate('.element', { rotate: 360, duration: 2, loop: true, ease: 'linear' });
 ```
 
 ### Timeline Creation
+
 ```javascript
 const tl = createTimeline({ defaults: { duration: 1, ease: 'outQuad' } });
 
 tl.add('.element1', { x: 250 })
-  .add('.element2', { y: 100 }, '+=0.2')  // 0.2s after previous
-  .add('.element3', { rotate: 180 }, '<'); // at start of previous
+    .add('.element2', { y: 100 }, '+=0.2') // 0.2s after previous
+    .add('.element3', { rotate: 180 }, '<'); // at start of previous
 ```
 
 ### Stagger Animations (single line)
+
 ```javascript
-animate('.elements', { x: 250, delay: stagger(0.1) });  // 0.1s between each
+animate('.elements', { x: 250, delay: stagger(0.1) }); // 0.1s between each
 animate('.elements', { x: 250, delay: stagger(0.1, { from: 'center' }) });
 ```
 
 ## ❌ Common AI Mistakes to Avoid
 
 ### MISTAKE #1: Using v3 Import Pattern
+
 ```javascript
 // ❌ WRONG - This is v3
 import anime from 'animejs';
@@ -109,6 +117,7 @@ animate('.element', { x: 250 });
 ```
 
 ### MISTAKE #2: Using 'targets' Property
+
 ```javascript
 // ❌ WRONG - 'targets' is v3
 animate({ targets: '.element', translateX: 250 });
@@ -118,6 +127,7 @@ animate('.element', { x: 250 });
 ```
 
 ### MISTAKE #3: Using 'easing' Instead of 'ease'
+
 ```javascript
 // ❌ WRONG
 animate('.element', { x: 250, easing: 'easeInOutQuad' });
@@ -127,6 +137,7 @@ animate('.element', { x: 250, ease: 'inOutQuad' });
 ```
 
 ### MISTAKE #4: Using 'value' for Animation Values
+
 ```javascript
 // ❌ WRONG - 'value' is v3
 animate('.element', { x: { value: 250 } });
@@ -136,6 +147,7 @@ animate('.element', { x: { to: 250 } });
 ```
 
 ### MISTAKE #5: Wrong Timeline Syntax
+
 ```javascript
 // ❌ WRONG - anime.timeline() is v3
 const tl = anime.timeline();
@@ -148,27 +160,44 @@ const tl = createTimeline();
 ## 📋 Property Syntax Reference (v3 → v4)
 
 ### Animation Values
+
 ```javascript
 // ✅ v4: Use 'to' for target values
-{ opacity: { to: 0.5 } }
-{ x: { to: [0, 100] } }
+{
+    opacity: {
+        to: 0.5;
+    }
+}
+{
+    x: {
+        to: [0, 100];
+    }
+}
 
 // ❌ v3: DON'T use 'value'
 // { opacity: { value: 0.5 } }
 ```
 
 ### Easing Functions
+
 ```javascript
 // ✅ v4: Use 'ease' (no 'ease' prefix)
-{ ease: 'inOutQuad' }
-{ ease: 'outElastic(1, 0.5)' }
-{ ease: 'cubicBezier(0.4, 0, 0.2, 1)' }
+{
+    ease: 'inOutQuad';
+}
+{
+    ease: 'outElastic(1, 0.5)';
+}
+{
+    ease: 'cubicBezier(0.4, 0, 0.2, 1)';
+}
 
 // ❌ v3: DON'T use 'easing' or 'ease' prefix
 // { easing: 'easeInOutQuad' }
 ```
 
 ### Direction & Looping
+
 ```javascript
 // ✅ v4
 {
@@ -183,24 +212,26 @@ const tl = createTimeline();
 ```
 
 ### Transform Properties (Shorthand Preferred)
+
 ```javascript
 // ✅ Both syntaxes work in v4:
-animate('.element', { x: 100, y: 50, z: 25 });           // shorthand (preferred)
+animate('.element', { x: 100, y: 50, z: 25 }); // shorthand (preferred)
 animate('.element', { translateX: 100, translateY: 50, translateZ: 25 }); // explicit
 ```
 
 ### Callbacks (ALL prefixed with 'on')
+
 ```javascript
 // ✅ v4: Simple callback - keep on one line
 animate('.element', { x: 250, duration: 1, onComplete: () => console.log('Done!') });
 
 // ✅ v4: Multiple callbacks - use multi-line
 animate('.element', {
-  x: 250,
-  duration: 1,
-  onBegin: (anim) => console.log('Started'),
-  onUpdate: (anim) => console.log('Progress:', anim.progress),
-  onComplete: (anim) => console.log('Finished')
+    x: 250,
+    duration: 1,
+    onBegin: anim => console.log('Started'),
+    onUpdate: anim => console.log('Progress:', anim.progress),
+    onComplete: anim => console.log('Finished')
 });
 
 // ❌ v3: DON'T use unprefixed callbacks
@@ -210,7 +241,9 @@ animate('.element', {
 ## 📝 Code Formatting Guidelines
 
 ### ALWAYS Use Single-Line Format for Simple Animations
+
 **This is mandatory for readability** - Use for animations with ≤4 properties:
+
 ```javascript
 // ✅ GOOD - Clean, readable, one line
 animate('.element', { x: 250, duration: 1, ease: 'outQuad' });
@@ -218,56 +251,60 @@ animate('.box', { opacity: 0.5, scale: 0.8, duration: 0.3 });
 
 // ❌ BAD - Unnecessary multi-line for simple tweens
 animate('.element', {
-  x: 250,
-  duration: 1,
-  ease: 'outQuad'
+    x: 250,
+    duration: 1,
+    ease: 'outQuad'
 });
 ```
 
 ### Multi-Line Format (Only for Complex Animations)
+
 Use for animations with >4 properties or callbacks:
+
 ```javascript
 // Complex animation with callbacks - multi-line is appropriate
 animate('.element', {
-  x: { to: [0, 100, 50], duration: 2 },
-  y: { to: [0, -50, 0], duration: 2 },
-  scale: [0, 1.2, 1],
-  ease: 'outElastic(1, 0.5)',
-  onComplete: () => console.log('Done!')
+    x: { to: [0, 100, 50], duration: 2 },
+    y: { to: [0, -50, 0], duration: 2 },
+    scale: [0, 1.2, 1],
+    ease: 'outElastic(1, 0.5)',
+    onComplete: () => console.log('Done!')
 });
 ```
 
 ## 🎨 Common Animation Patterns
 
 ### Hover Animation (single line per animation)
+
 ```javascript
 element.addEventListener('mouseenter', () => animate(element, { scale: 1.1, duration: 0.3, ease: 'outQuad' }));
 element.addEventListener('mouseleave', () => animate(element, { scale: 1, duration: 0.3, ease: 'outQuad' }));
 ```
 
 ### Sequential Timeline
+
 ```javascript
 const tl = createTimeline({ defaults: { duration: 0.5 } });
-tl.add('.step1', { x: 100 })
-  .add('.step2', { y: 100 })
-  .add('.step3', { scale: 2 });
+tl.add('.step1', { x: 100 }).add('.step2', { y: 100 }).add('.step3', { scale: 2 });
 ```
 
 ### Scroll-triggered Animation
+
 ```javascript
 import { createScrollObserver } from 'animejs';
 
 createScrollObserver({
-  target: '.scroll-element',
-  root: document.querySelector('.scroll-container'),
-  play: () => animate('.element', { x: 250, duration: 1 }),
-  visibility: 0.5
+    target: '.scroll-element',
+    root: document.querySelector('.scroll-container'),
+    play: () => animate('.element', { x: 250, duration: 1 }),
+    visibility: 0.5
 });
 ```
 
 ## 🔧 Advanced Features
 
 ### SVG Animations
+
 ```javascript
 import { animate, svg } from 'animejs';
 
@@ -284,6 +321,7 @@ animate('.element', { x: motionPath.translateX, y: motionPath.translateY, rotate
 ```
 
 ### Utility Functions
+
 ```javascript
 import { utils } from 'animejs';
 
@@ -307,6 +345,7 @@ utils.clamp(150, 0, 100); // 100
 ```
 
 ### TypeScript Support
+
 ```typescript
 import { animate, createTimeline, JSAnimation, Timeline, AnimationParams, TimelineParams } from 'animejs';
 
@@ -319,34 +358,36 @@ const timeline: Timeline = createTimeline({ defaults: { duration: 0.8 } } as Tim
 ## ⚡ Performance Tips
 
 1. **Use transforms over position properties**
-   ```javascript
-   // ✅ Good - uses transform
-   animate('.element', { x: 100 });
-   
-   // ❌ Avoid - triggers layout
-   animate('.element', { left: 100 });
-   ```
+
+    ```javascript
+    // ✅ Good - uses transform
+    animate('.element', { x: 100 });
+
+    // ❌ Avoid - triggers layout
+    animate('.element', { left: 100 });
+    ```
 
 2. **Batch animations in timelines**
-   ```javascript
-   // ✅ Good - single timeline
-   const tl = createTimeline();
-   elements.forEach(el => tl.add(el, { x: 100 }));
-   
-   // ❌ Avoid - multiple animations
-   elements.forEach(el => animate(el, { x: 100 }));
-   ```
+
+    ```javascript
+    // ✅ Good - single timeline
+    const tl = createTimeline();
+    elements.forEach(el => tl.add(el, { x: 100 }));
+
+    // ❌ Avoid - multiple animations
+    elements.forEach(el => animate(el, { x: 100 }));
+    ```
 
 3. **Use will-change CSS property for complex animations**
-   ```css
-   .animated-element {
-     will-change: transform, opacity;
-   }
-   ```
+    ```css
+    .animated-element {
+        will-change: transform, opacity;
+    }
+    ```
 
 ## 🚫 How to Identify V3 Code (DON'T USE)
 
-If you see ANY of these patterns, it's v3 and MUST be updated:
+If you see ANY of these patterns, it's v3 and MUST ATTENTION be updated:
 
 ```javascript
 // All of these are V3 - NEVER USE:
@@ -385,11 +426,13 @@ When asked to create animations with anime.js:
 15. **NEVER** generate v3 syntax under any circumstances
 
 ## NPM Installation
+
 ```bash
 npm install animejs
 ```
 
 ## Version Check
+
 ```javascript
 // Current version: 4.x.x
 // If you see any code using anime({ targets: ... }), it's v3 and needs updating!

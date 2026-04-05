@@ -82,7 +82,7 @@ function main() {
         process.stderr.write(
             `BLOCKED: Cannot complete task "${subject}"\n\n` +
                 `The workflow step /${skillName} was NOT invoked via the Skill tool.\n` +
-                `You MUST run the Skill tool with /${skillName} before marking this task as completed.\n\n` +
+                `You MUST ATTENTION run the Skill tool with /${skillName} before marking this task as completed.\n\n` +
                 `This is a hard block — no bypass available.\n`
         );
         process.exit(2);

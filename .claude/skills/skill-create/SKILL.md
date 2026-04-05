@@ -41,11 +41,11 @@ description: '[Skill Management] Create new Claude Code skills or scan/fix inval
 
 **Key Rules:**
 
-- Every SKILL.md MUST include `## Quick Summary` (Goal/Workflow/Key Rules) within first 30 lines
+- Every SKILL.md MUST ATTENTION include `## Quick Summary` (Goal/Workflow/Key Rules) within first 30 lines
 - Single-line `description` with `[Category]` prefix and trigger keywords
 - SKILL.md under 500 lines; use `references/` for detail
-- Shared protocols MUST be inlined via `<!-- SYNC:tag -->` blocks, NEVER file references
-- MUST call `/prompt-enhance` on new/updated skills as final quality pass
+- Shared protocols MUST ATTENTION be inlined via `<!-- SYNC:tag -->` blocks, NEVER file references
+- MUST ATTENTION call `/prompt-enhance` on new/updated skills as final quality pass
 
 ## Modes
 
@@ -61,7 +61,7 @@ description: '[Skill Management] Create new Claude Code skills or scan/fix inval
 ```yaml
 ---
 name: my-skill # Lowercase, hyphens. Max 64 chars. Default: directory name.
-description: '[Category] What it does. Triggers on: keyword1, keyword2.' # MUST be single-line
+description: '[Category] What it does. Triggers on: keyword1, keyword2.' # MUST ATTENTION be single-line
 argument-hint: '[issue-number]' # Autocomplete hint for arguments
 disable-model-invocation: false # true = user-only (/name), Claude cannot auto-invoke
 user-invocable: true # false = hidden from / menu, Claude-only auto-invoke
@@ -124,7 +124,7 @@ description: '[Category] What it does. Triggers on: keyword1, keyword2.'
 ---
 ```
 
-### Skill Attention Structure (MUST follow)
+### Skill Attention Structure (MUST ATTENTION follow)
 
 ```
 [Frontmatter]
@@ -142,7 +142,7 @@ description: '[Category] What it does. Triggers on: keyword1, keyword2.'
 2. Identify which protocols the skill needs (e.g., investigation skills need `understand-code-first` + `evidence-based-reasoning`)
 3. Copy the checklist content between `<!-- SYNC:tag -->` open/close tags at the TOP of the skill
 4. Add 1-line `:reminder` versions at the BOTTOM inside Closing Reminders
-5. NEVER use `MUST READ shared/` file references — always inline
+5. NEVER use `MUST ATTENTION READ shared/` file references — always inline
 
 ### Rules
 
@@ -193,15 +193,15 @@ node .claude/skills/skill-create/scripts/validate-skills.cjs --fix    # Report +
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** inline shared protocols via `<!-- SYNC:tag -->` blocks — NEVER use `MUST READ shared/` file references
-- **MUST** call `/prompt-enhance` on new/updated skills as final attention-anchoring quality pass
-- **MUST** include `## Quick Summary` within first 30 lines of every SKILL.md
-- **MUST** add Closing Reminders section with `:reminder` SYNC blocks at bottom of every skill
-- **MUST** follow SKILL.md Schema Reference (inlined above) for official frontmatter fields
-    <!-- SYNC:shared-protocol-duplication-policy:reminder -->
-- **MUST** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
-    <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
-    <!-- SYNC:output-quality-principles:reminder -->
-- **MUST** follow output quality principles: token efficiency, lead with answer, no filler
-    <!-- /SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** inline shared protocols via `<!-- SYNC:tag -->` blocks — NEVER use `MUST ATTENTION READ shared/` file references
+- **IMPORTANT MUST ATTENTION** call `/prompt-enhance` on new/updated skills as final attention-anchoring quality pass
+- **IMPORTANT MUST ATTENTION** include `## Quick Summary` within first 30 lines of every SKILL.md
+- **IMPORTANT MUST ATTENTION** add Closing Reminders section with `:reminder` SYNC blocks at bottom of every skill
+- **IMPORTANT MUST ATTENTION** follow SKILL.md Schema Reference (inlined above) for official frontmatter fields
+  <!-- SYNC:shared-protocol-duplication-policy:reminder -->
+- **IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
+  <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
+  <!-- SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** follow output quality principles: token efficiency, lead with answer, no filler
+  <!-- /SYNC:output-quality-principles:reminder -->

@@ -4,9 +4,9 @@ version: 1.0.0
 description: '[Documentation] Scan project and populate/sync docs/project-reference/domain-entities-reference.md with domain entities, data models, DTOs, aggregate boundaries, cross-service entity sync, and ER diagrams.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
 
@@ -16,7 +16,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- SYNC:output-quality-principles -->
 
-> **Output Quality** — Reference docs are injected into AI context. Apply 10 rules: (1) No inventories/counts — AI can grep. (2) No directory trees — AI can glob. (3) No TOCs. (4) Rules > descriptions — "MUST use X" not "X allows you to...". (5) 1 example per pattern. (6) Tables > prose. (7) BAD/GOOD pairs: 2-3 lines each. (8) Primacy-recency anchoring — critical rules in first AND last 5 lines. (9) No checkbox checklists — bullets force reading. (10) Density target: >=8 MUST/NEVER/ALWAYS per 100 lines.
+> **Output Quality** — Reference docs are injected into AI context. Apply 10 rules: (1) No inventories/counts — AI can grep. (2) No directory trees — AI can glob. (3) No TOCs. (4) Rules > descriptions — "MUST ATTENTION use X" not "X allows you to...". (5) 1 example per pattern. (6) Tables > prose. (7) BAD/GOOD pairs: 2-3 lines each. (8) Primacy-recency anchoring — critical rules in first AND last 5 lines. (9) No checkbox checklists — bullets force reading. (10) Density target: >=8 MUST ATTENTION/NEVER/ALWAYS per 100 lines.
 
 <!-- /SYNC:output-quality-principles -->
 
@@ -188,13 +188,13 @@ erDiagram
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-    <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **MUST** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-    <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-    <!-- SYNC:output-quality-principles:reminder -->
-- **MUST** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
-    <!-- /SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  <!-- SYNC:scan-and-update-reference-doc:reminder -->
+- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+  <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+  <!-- SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
+  <!-- /SYNC:output-quality-principles:reminder -->

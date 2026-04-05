@@ -179,7 +179,7 @@ function buildWorkflowCatalog(config) {
     lines.push('4. **CREATE TASKS:** Use task tracking for ALL workflow steps BEFORE starting');
     lines.push('5. **EXECUTE:** Follow each step in sequence, updating status as you progress');
     lines.push('');
-    lines.push('> **IMPORTANT:** MUST create todo tasks for ALL steps. Do NOT skip any steps in the selected workflow.');
+    lines.push('> **IMPORTANT:** MUST ATTENTION create todo tasks for ALL steps. Do NOT skip any steps in the selected workflow.');
     lines.push('');
     if (settings?.allowOverride && settings?.overridePrefix) {
         lines.push(`**Override:** Prefix prompt with \`${settings.overridePrefix}\` to bypass workflow detection.`);
@@ -378,7 +378,7 @@ function generateCommonProtocolFile(workflowConfig) {
         '',
         '## PROMPT PROTOCOL (MANDATORY)',
         '',
-        '**Confirm Before Execute:** If the user prompt could be complex or vague, you **MANDATORY IMPORTANT MUST** first confirm your understanding and clarify intent before executing. Restate what you understood, ask clarifying questions if ambiguous, and only proceed after confirmation.',
+        '**Confirm Before Execute:** If the user prompt could be complex or vague, you **MANDATORY IMPORTANT MUST ATTENTION** first confirm your understanding and clarify intent before executing. Restate what you understood, ask clarifying questions if ambiguous, and only proceed after confirmation.',
         '',
         '**Workflow Detection:** DETECT matching workflow from catalog below -> ASK user to confirm (Recommended) or skip -> WAIT for choice -> ACTIVATE if confirmed. Never auto-activate. Override: `quick:` prefix bypasses.',
         '',
@@ -388,7 +388,7 @@ function generateCommonProtocolFile(workflowConfig) {
         '',
         '**Task Creation:** For 2+ files or 20+ lines, create tasks BEFORE editing. Override: `quick:` prefix.',
         '',
-        '**Search First:** MUST grep/glob for existing patterns (3+ examples) before implementing .ts/.cs/.html/.scss. Follow codebase patterns, cite evidence. Override: user says "skip search".',
+        '**Search First:** MUST ATTENTION grep/glob for existing patterns (3+ examples) before implementing .ts/.cs/.html/.scss. Follow codebase patterns, cite evidence. Override: user says "skip search".',
         '',
         '**Code Responsibility Hierarchy:** Place logic in LOWEST layer: Entity/Model > Service > Component/Handler.',
         '',

@@ -48,8 +48,8 @@ And {additional verification}
 
 **Acceptance Criteria:**
 
-- ✅ {Expected success behavior — what MUST happen}
-- ❌ {Expected failure behavior — what MUST NOT happen}
+- ✅ {Expected success behavior — what MUST ATTENTION happen}
+- ❌ {Expected failure behavior — what MUST ATTENTION NOT happen}
 
 **Test Data:**
 \`\`\`json
@@ -69,7 +69,7 @@ And {additional verification}
 
 **Related Files:**
 | Layer | Type | File |
-|-------|------|------|
+| ------ | ------------- | ------------------------------------------------------------------------------------- |
 | API | Controller | `src/Services/{service}/{Service}.Service/Controllers/{Feature}Controller.cs` |
 | App | Command/Query | `src/Services/{service}/{Service}.Application/UseCaseCommands/{Feature}/{Command}.cs` |
 | Domain | Entity | `src/Services/{service}/{Service}.Domain/Entities/{Feature}/{Entity}.cs` |

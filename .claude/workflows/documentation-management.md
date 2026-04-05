@@ -37,7 +37,7 @@ Maintain project docs in `./docs/`. Create if the project needs them:
 
 ### Documentation Triggers
 
-The `project-manager` agent MUST update documents when:
+The `project-manager` agent MUST ATTENTION update documents when:
 
 - A development phase status changes (e.g., "In Progress" → "Complete")
 - Major features are implemented or released
@@ -99,7 +99,7 @@ plans/
 ##### Phase Files (phase-XX-name.md)
 
 > **Development Rules** — YAGNI/KISS/DRY. Logic in LOWEST layer. Understand code first. Evidence-based actions.
-> Phase files MUST follow `./.claude/docs/development-rules.md`.
+> Phase files MUST ATTENTION follow `./.claude/docs/development-rules.md`.
 
 Each phase file contains:
 
@@ -122,7 +122,7 @@ Each phase file contains:
 
 ## Closing Reminders
 
-- **MUST** update docs after every feature, milestone, bug fix, or security patch
-- **MUST** read current doc state before updating — never overwrite blindly
-- **MUST** save plans in `./plans/` with timestamp naming and structured phase files
-- **MUST** follow development-rules.md in all phase files (YAGNI/KISS/DRY, class responsibility, evidence-based)
+- **MANDATORY IMPORTANT MUST ATTENTION** update docs after every feature, milestone, bug fix, or security patch
+- **MANDATORY IMPORTANT MUST ATTENTION** read current doc state before updating — never overwrite blindly
+- **MANDATORY IMPORTANT MUST ATTENTION** save plans in `./plans/` with timestamp naming and structured phase files
+- **MANDATORY IMPORTANT MUST ATTENTION** follow development-rules.md in all phase files (YAGNI/KISS/DRY, class responsibility, evidence-based)

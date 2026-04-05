@@ -6,7 +6,7 @@ disable-model-invocation: false
 allowed-tools: Read, Write, Edit, Glob, Bash
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 ## Quick Summary
 
@@ -145,7 +145,7 @@ After generalizing a lesson, evaluate whether it qualifies as a **System Lesson*
 
 ### Lesson Quality Gate (MANDATORY before saving)
 
-Every lesson MUST be **generic and reusable across any project**. Before saving:
+Every lesson MUST ATTENTION be **generic and reusable across any project**. Before saving:
 
 1. **Analyze root cause** — Why did this mistake happen? What is the underlying pattern?
 2. **Generalize** — Strip project-specific names, file paths, and tool names. Express the lesson as a universal principle.
@@ -284,9 +284,9 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 
 ## Closing Reminders
 
-- **MUST** check Reference Doc Catalog to find the best target file — NOT always `lessons.md`
-- **MUST** run `/prompt-enhance` on modified file(s) after saving (unless skip conditions met)
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** prefer auto-injected files for high-recurrence lessons (higher visibility)
+- **IMPORTANT MUST ATTENTION** check Reference Doc Catalog to find the best target file — NOT always `lessons.md`
+- **IMPORTANT MUST ATTENTION** run `/prompt-enhance` on modified file(s) after saving (unless skip conditions met)
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** prefer auto-injected files for high-recurrence lessons (higher visibility)

@@ -267,8 +267,8 @@ keep-coding-instructions: true
 Instructions for Claude on how to respond.
 
 ## MANDATORY RULES
-1. **MANDATORY IMPORTANT MUST** do X
-2. **MANDATORY IMPORTANT MUST** do Y
+1. **MANDATORY IMPORTANT MUST ATTENTION** do X
+2. **MANDATORY IMPORTANT MUST ATTENTION** do Y
 
 ## FORBIDDEN
 1. **NEVER** do Z

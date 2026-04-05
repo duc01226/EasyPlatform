@@ -20,7 +20,7 @@ description: '[Skill Management] Enhance any prompt/doc/skill file with AI atten
 **Key Rules:**
 
 - AI attention is strongest at TOP and BOTTOM of prompt, weakest in middle (Stanford "lost-in-the-middle" research)
-- Every READ instruction MUST include an inline summary of the referenced file's key rules
+- Every READ instruction MUST ATTENTION include an inline summary of the referenced file's key rules
 - Top section = concise summary + key rules. Bottom section = closing reminders echoing top rules
 - Middle section = detailed steps. Accept intentional duplication between top and bottom
 - **Prompt quality > token count** — but verbose prompts degrade quality too. Optimize for clarity-per-token
@@ -61,7 +61,7 @@ LLM performance drops 15-47% for information placed in the middle of long contex
 
 ### 2. High-Signal Density
 
-Anthropic: _"Identify the smallest collection of high-signal tokens that maximize the probability of the desired outcome."_ **Action:** Every line should change AI behavior. If removing a line doesn't change output → cut it. Target: ≥8 rules (MUST/NEVER/ALWAYS) per 100 lines.
+Anthropic: _"Identify the smallest collection of high-signal tokens that maximize the probability of the desired outcome."_ **Action:** Every line should change AI behavior. If removing a line doesn't change output → cut it. Target: ≥8 rules (MUST ATTENTION/NEVER/ALWAYS) per 100 lines.
 
 ### 3. Context Rot
 
@@ -77,7 +77,7 @@ Modern LLMs (2025+) already know how to reason. What they need: **R**ole (person
 
 ### 6. Checkbox Avoidance
 
-Checkbox `[ ]` syntax triggers mechanical compliance — AI ticks boxes without reasoning. Bullet rules force reading and evaluation. **Action:** Replace `- [ ] Check X` with `- MUST verify X`.
+Checkbox `[ ]` syntax triggers mechanical compliance — AI ticks boxes without reasoning. Bullet rules force reading and evaluation. **Action:** Replace `- [ ] Check X` with `- MUST ATTENTION verify X`.
 
 ### 7. Example Economy
 
@@ -89,7 +89,7 @@ Claude Code delays loading tool definitions when they exceed 10% of context wind
 
 ### 9. Rule Density Verification
 
-Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization count. Compression should preserve or increase density, never decrease it. **Action:** Count before and after every optimization pass.
+Post-optimization rule count (MUST ATTENTION/NEVER/ALWAYS) must be ≥ pre-optimization count. Compression should preserve or increase density, never decrease it. **Action:** Count before and after every optimization pass.
 
 ---
 
@@ -97,7 +97,7 @@ Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization co
 
 ### Transformation 1: Inline Summaries for READ References
 
-**Problem:** AI sees "MUST READ `file.md`" and skips reading it.
+**Problem:** AI sees "MUST ATTENTION READ `file.md`" and skips reading it.
 **Solution:** Add 2-3 line summary of the file's key rules BEFORE the read instruction.
 
 **Before:**
@@ -116,9 +116,9 @@ Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization co
 **How to create the summary:**
 
 1. Read the referenced file
-2. Extract the 2-3 most critical rules (what AI MUST do/not do)
+2. Extract the 2-3 most critical rules (what AI MUST ATTENTION do/not do)
 3. Write as a blockquote with bold label + em dash + rules
-4. Keep the MUST READ instruction on the next line (still tells AI to read for details)
+4. Keep the MUST ATTENTION READ instruction on the next line (still tells AI to read for details)
 
 **Scope rules:**
 
@@ -139,8 +139,8 @@ Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization co
 ```markdown
 > **[IMPORTANT]** TaskCreate instruction...
 
-> **Protocol Name** — [inline summary]. MUST READ `path` for details.
-> **Another Protocol** — [inline summary]. MUST READ `path` for details.
+> **Protocol Name** — [inline summary]. MUST ATTENTION READ `path` for details.
+> **Another Protocol** — [inline summary]. MUST ATTENTION READ `path` for details.
 
 ## Quick Summary
 
@@ -166,10 +166,10 @@ Post-optimization rule count (MUST/NEVER/ALWAYS) must be ≥ pre-optimization co
 
 ## Closing Reminders
 
-- **MUST** [echo the #1 most important rule from the top]
-- **MUST** [echo the #2 most important rule]
-- **MUST** [echo the #3 most important rule]
-- **MUST** add a final review task to verify work quality
+- **IMPORTANT MUST ATTENTION** [echo the #1 most important rule from the top]
+- **IMPORTANT MUST ATTENTION** [echo the #2 most important rule]
+- **IMPORTANT MUST ATTENTION** [echo the #3 most important rule]
+- **IMPORTANT MUST ATTENTION** add a final review task to verify work quality
 ```
 
 Pick 3-5 rules from the top that AI most commonly violates. The bottom section exists purely to re-anchor attention after the long middle section.
@@ -207,7 +207,7 @@ Pick 3-5 rules from the top that AI most commonly violates. The bottom section e
 ### Step 1: Read and Analyze
 
 1. Read the target file completely
-2. List all READ/MUST READ references found
+2. List all READ/MUST ATTENTION READ references found
 3. For each: classify as `.claude/` (needs inline summary) or `docs/` (skip, project-specific)
 4. Check: does it have a Quick Summary section? Closing Reminders?
 5. Report findings before making changes
@@ -219,7 +219,7 @@ For each `.claude/` protocol reference:
 1. Read the referenced file
 2. Extract 2-3 key rules
 3. Write the inline summary blockquote
-4. Replace the bare MUST READ with summary + read instruction
+4. Replace the bare MUST ATTENTION READ with summary + read instruction
 
 ### Step 3: Add/Fix Top Section
 
@@ -244,18 +244,18 @@ For each `.claude/` protocol reference:
 
 ## Closing Reminders
 
-- **MUST** read target file completely before any changes
-- **MUST** read each referenced protocol file to write accurate inline summaries — never guess content
-- **MUST** apply primacy-recency anchoring — 3 critical rules in first 5 AND last 5 lines of every enhanced file
-- **MUST** verify rule density: count MUST/NEVER/ALWAYS before and after — post ≥ pre
-- **MUST** add inline summaries only for `.claude/` protocol files, not project-specific `docs/` files
-- **MUST** keep all meaningful content — only restructure/compress, never delete rules or code examples
-- **MUST** verify no YAML frontmatter corruption after changes
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-      <!-- SYNC:output-quality-principles:reminder -->
-- **MUST** follow output quality principles: token efficiency, lead with answer, no trailing summaries
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-- **MUST** READ `CLAUDE.md` before starting
+- **IMPORTANT MUST ATTENTION** read target file completely before any changes
+- **IMPORTANT MUST ATTENTION** read each referenced protocol file to write accurate inline summaries — never guess content
+- **IMPORTANT MUST ATTENTION** apply primacy-recency anchoring — 3 critical rules in first 5 AND last 5 lines of every enhanced file
+- **IMPORTANT MUST ATTENTION** verify rule density: count MUST ATTENTION/NEVER/ALWAYS before and after — post ≥ pre
+- **IMPORTANT MUST ATTENTION** add inline summaries only for `.claude/` protocol files, not project-specific `docs/` files
+- **IMPORTANT MUST ATTENTION** keep all meaningful content — only restructure/compress, never delete rules or code examples
+- **IMPORTANT MUST ATTENTION** verify no YAML frontmatter corruption after changes
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+    <!-- SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** follow output quality principles: token efficiency, lead with answer, no trailing summaries
+    <!-- /SYNC:output-quality-principles:reminder -->
+    <!-- SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting

@@ -5,13 +5,13 @@ description: '[Architecture] Full solution architecture: backend + frontend patt
 allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, TaskCreate, AskUserQuestion, Bash
 ---
 
-**MANDATORY IMPORTANT MUST** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST** use `AskUserQuestion` at EVERY decision point — never assume user preferences.
-**MANDATORY IMPORTANT MUST** research top 3 options per architecture concern, compare with evidence, present report with recommendation + confidence %.
+**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY decision point — never assume user preferences.
+**MANDATORY IMPORTANT MUST ATTENTION** research top 3 options per architecture concern, compare with evidence, present report with recommendation + confidence %.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -34,9 +34,9 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, TaskCreate, A
 
 **Key Rules:**
 
-- **MANDATORY IMPORTANT MUST** research minimum 3 options per architecture concern with web evidence
-- **MANDATORY IMPORTANT MUST** include confidence % with evidence for every recommendation
-- **MANDATORY IMPORTANT MUST** run user validation interview at end (never skip)
+- **MANDATORY IMPORTANT MUST ATTENTION** research minimum 3 options per architecture concern with web evidence
+- **MANDATORY IMPORTANT MUST ATTENTION** include confidence % with evidence for every recommendation
+- **MANDATORY IMPORTANT MUST ATTENTION** run user validation interview at end (never skip)
 - Delegate to `solution-architect` agent for complex architecture decisions
 - All claims must cite sources (URL, benchmark, case study, or codebase evidence)
 - Never recommend based on familiarity alone — evidence required
@@ -87,7 +87,7 @@ Map signals to architecture constraints:
 | Real-time                   | Event sourcing or pub/sub, WebSocket/SSE support          | Should   |
 | High integration complexity | Anti-corruption layers, adapter pattern, API gateway      | Should   |
 
-**MANDATORY IMPORTANT MUST** validate derived requirements with user via `AskUserQuestion` before proceeding.
+**MANDATORY IMPORTANT MUST ATTENTION** validate derived requirements with user via `AskUserQuestion` before proceeding.
 
 ---
 
@@ -208,7 +208,7 @@ WebSearch top 3 styling approaches for the confirmed frontend framework:
 | Breakpoints | 320/768/1024/1280 / Custom              | Standard           |
 | Grid system | CSS Grid / Flexbox / Framework grid     | CSS Grid + Flexbox |
 
-**MANDATORY IMPORTANT MUST** validate all UI system decisions with user via `AskUserQuestion` before proceeding to Step 5.
+**MANDATORY IMPORTANT MUST ATTENTION** validate all UI system decisions with user via `AskUserQuestion` before proceeding to Step 5.
 
 ---
 
@@ -499,7 +499,7 @@ graph TB
 
 ## Step 12: User Validation Interview
 
-**MANDATORY IMPORTANT MUST** present findings and ask 8-12 questions via `AskUserQuestion`:
+**MANDATORY IMPORTANT MUST ATTENTION** present findings and ask 8-12 questions via `AskUserQuestion`:
 
 ### Required Questions
 
@@ -559,16 +559,16 @@ Validate architecture against these principles — flag violations in report:
 
 ---
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate EVERY architecture recommendation with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** include confidence % and evidence citations for all claims.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate EVERY architecture recommendation with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** include confidence % and evidence citations for all claims.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/plan (Recommended)"** — Create implementation plan from architecture design
 - **"/refine"** — If need to create PBIs first
@@ -576,6 +576,6 @@ Validate architecture against these principles — flag violations in report:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

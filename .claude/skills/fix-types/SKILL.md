@@ -3,7 +3,7 @@ name: fix-types
 description: '[Implementation] Fix type errors'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -72,7 +72,7 @@ description: '[Implementation] Fix type errors'
 
 <!-- /SYNC:root-cause-debugging -->
 
-> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After identifying type errors and root cause, MUST present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After identifying type errors and root cause, MUST ATTENTION present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
 
 Run `bun run typecheck` or `tsc` or `npx tsc` and fix all type errors.
 
@@ -89,7 +89,7 @@ Run `bun run typecheck` or `tsc` or `npx tsc` and fix all type errors.
 
 ## ⚠️ MANDATORY: Confidence & Evidence Gate
 
-**MANDATORY IMPORTANT MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
+**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
 **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 
 ## Rules
@@ -97,21 +97,21 @@ Run `bun run typecheck` or `tsc` or `npx tsc` and fix all type errors.
 - Fix all of type errors and repeat the process until there are no more type errors.
 - Do not use `any` just to pass the type check.
 
-- **After fixing, MUST run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.
+- **After fixing, MUST ATTENTION run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.
 
 ---
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
     <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->

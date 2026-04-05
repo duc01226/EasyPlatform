@@ -4,9 +4,9 @@ version: 1.0.0
 description: '[Documentation] Scan project and populate/sync docs/project-reference/integration-test-reference.md with test base classes, fixtures, helpers, configuration, and service-specific setup.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
 
@@ -16,7 +16,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- SYNC:output-quality-principles -->
 
-> **Output Quality** — 10 rules for reference docs: (1) No inventories/counts, (2) No directory trees, (3) No TOCs, (4) Rules over descriptions, (5) 1 example per pattern, (6) Tables over prose, (7) Primacy-recency anchoring (critical rules in first+last 5 lines), (8) No checkbox checklists — use "MUST verify X", (9) Min density: 8 MUST/NEVER/ALWAYS per 100 lines, (10) Verify base class names and code examples preserved.
+> **Output Quality** — 10 rules for reference docs: (1) No inventories/counts, (2) No directory trees, (3) No TOCs, (4) Rules over descriptions, (5) 1 example per pattern, (6) Tables over prose, (7) Primacy-recency anchoring (critical rules in first+last 5 lines), (8) No checkbox checklists — use "MUST ATTENTION verify X", (9) Min density: 8 MUST ATTENTION/NEVER/ALWAYS per 100 lines, (10) Verify base class names and code examples preserved.
 
 <!-- /SYNC:output-quality-principles -->
 
@@ -125,11 +125,11 @@ Read the report. Build these sections:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following before starting:
-    <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **MUST** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following before starting:
+  <!-- SYNC:scan-and-update-reference-doc:reminder -->
+- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+    <!-- /SYNC:scan-and-update-reference-doc:reminder -->

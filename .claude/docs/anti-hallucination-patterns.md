@@ -10,7 +10,7 @@
 
 ## CRITICAL: Evidence-Based Reasoning (MANDATORY)
 
-Before making ANY claim about code behavior, you MUST complete this checklist:
+Before making ANY claim about code behavior, you MUST ATTENTION complete this checklist:
 
 ### Pre-Claim Verification Checklist
 

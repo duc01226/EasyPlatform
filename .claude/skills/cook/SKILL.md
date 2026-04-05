@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Implementation] Implement a feature [step by step]'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -27,7 +27,7 @@ description: '[Implementation] Implement a feature [step by step]'
 
 <!-- SYNC:plan-quality -->
 
-> **Plan Quality** — Every plan phase MUST include test specifications.
+> **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
 > 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
@@ -40,7 +40,7 @@ description: '[Implementation] Implement a feature [step by step]'
 
 <!-- /SYNC:plan-quality -->
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 <!-- SYNC:rationalization-prevention -->
 
@@ -86,7 +86,7 @@ description: '[Implementation] Implement a feature [step by step]'
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -137,7 +137,7 @@ DO NOT implement a phase that contains planning verbs, unnamed files, or unresol
 > **Iterative Phase Quality** — Score complexity BEFORE planning.
 >
 > **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
-> **Score >=6 →** MUST decompose into phases. Each phase:
+> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
 >
 > - ≤5 files modified
 > - ≤3h effort
@@ -190,10 +190,10 @@ Think harder to plan & start working on these tasks:
 
 ## Your Approach
 
-- MUST use `AskUserQuestion` to clarify — NEVER assume requirements
-- MUST be brutally honest — flag unrealistic/over-engineered approaches directly
-- MUST present 2-3 alternatives with pros/cons for non-trivial decisions
-- MUST challenge initial approach — the best solution often differs from first instinct
+- MUST ATTENTION use `AskUserQuestion` to clarify — NEVER assume requirements
+- MUST ATTENTION be brutally honest — flag unrealistic/over-engineered approaches directly
+- MUST ATTENTION present 2-3 alternatives with pros/cons for non-trivial decisions
+- MUST ATTENTION challenge initial approach — the best solution often differs from first instinct
 
 ---
 
@@ -205,7 +205,7 @@ Think harder to plan & start working on these tasks:
 
 - Parallel `researcher` subagents. Reports <=150 lines with citations.
 - `/scout-ext` (preferred) or `/scout` (fallback) for codebase search.
-- MUST write findings to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
+- MUST ATTENTION write findings to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
 
 ### Plan
 
@@ -216,7 +216,7 @@ Think harder to plan & start working on these tasks:
 
 - `/code` to implement step by step. `/interface-design` for product UIs. `/frontend-design` for marketing/creative UIs.
 - `ui-ux-designer` subagent for frontend per `./docs/design-guidelines.md`.
-- MUST run type checking and compile after each change.
+- MUST ATTENTION run type checking and compile after each change.
 
 **Subagent Discipline:** Paste full task text (NEVER make subagent read plan file). Require "ask questions before starting". Require self-review before reporting.
 
@@ -245,7 +245,7 @@ mistakes compound through later tasks.
 
 <!-- SYNC:two-stage-task-review -->
 
-> **Two-Stage Task Review** — Both stages MUST complete before marking task done.
+> **Two-Stage Task Review** — Both stages MUST ATTENTION complete before marking task done.
 >
 > **Stage 1: Self-review** — Immediately after implementation:
 >
@@ -284,7 +284,7 @@ mistakes compound through later tasks.
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -304,7 +304,7 @@ mistakes compound through later tasks.
 
 ### Graph-Trace Before Implementation
 
-MUST run BEFORE writing code when graph.db exists:
+MUST ATTENTION run BEFORE writing code when graph.db exists:
 
 - `python .claude/scripts/code_graph trace <file-to-modify> --direction both --json` — callers + triggers
 - `python .claude/scripts/code_graph trace <file-to-modify> --direction downstream --json` — all downstream consumers
@@ -314,16 +314,16 @@ MUST run BEFORE writing code when graph.db exists:
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → sre-review → test → docs
 > 2. **Execute `/cook` directly** — run this skill standalone
 
 ---
 
-## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (feature implemented). This ensures review, testing, and docs steps aren't skipped.
 - **"/code-simplifier"** — Simplify and clean up implementation
@@ -332,37 +332,38 @@ MUST run BEFORE writing code when graph.db exists:
 
 ## Standalone Review Gate (Non-Workflow Only)
 
-> **MANDATORY IMPORTANT MUST:** If this skill is called **outside a workflow** (standalone `/cook`), you MUST create a `TaskCreate` todo task for `/review-changes` as the **last task** in your task list. This ensures all changes are reviewed before commit even without a workflow enforcing it.
+> **MANDATORY IMPORTANT MUST ATTENTION:** If this skill is called **outside a workflow** (standalone `/cook`), you MUST ATTENTION create a `TaskCreate` todo task for `/review-changes` as the **last task** in your task list. This ensures all changes are reviewed before commit even without a workflow enforcing it.
 >
 > If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — the workflow sequence handles `/review-changes` at the appropriate step.
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:plan-granularity:reminder -->
 
-- **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-    <!-- /SYNC:plan-granularity:reminder -->
-      <!-- SYNC:understand-code-first:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
+      <!-- /SYNC:plan-granularity:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:plan-quality:reminder -->
-- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-  <!-- /SYNC:plan-quality:reminder -->
-  <!-- SYNC:rationalization-prevention:reminder -->
-- **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-  <!-- /SYNC:rationalization-prevention:reminder -->
-  <!-- SYNC:ui-system-context:reminder -->
-- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
-  <!-- SYNC:iterative-phase-quality:reminder -->
-- **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-  <!-- /SYNC:iterative-phase-quality:reminder -->
-  <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
+                    <!-- SYNC:understand-code-first:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:plan-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+    <!-- /SYNC:plan-quality:reminder -->
+    <!-- SYNC:rationalization-prevention:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+    <!-- /SYNC:rationalization-prevention:reminder -->
+    <!-- SYNC:ui-system-context:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+    <!-- /SYNC:ui-system-context:reminder -->
+    <!-- SYNC:iterative-phase-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+    <!-- /SYNC:iterative-phase-quality:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+  <!-- /SYNC:graph-assisted-investigation:reminder -->

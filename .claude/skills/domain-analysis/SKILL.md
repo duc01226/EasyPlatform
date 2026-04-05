@@ -5,13 +5,13 @@ description: '[Architecture] Analyze business domain: bounded contexts, aggregat
 allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, TaskCreate, AskUserQuestion, Bash
 ---
 
-**MANDATORY IMPORTANT MUST** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST** use `AskUserQuestion` at EVERY decision point — validate every bounded context and entity relationship with user.
-**MANDATORY IMPORTANT MUST** produce ERD diagram (Mermaid) and domain model report with confidence %.
+**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY decision point — validate every bounded context and entity relationship with user.
+**MANDATORY IMPORTANT MUST ATTENTION** produce ERD diagram (Mermaid) and domain model report with confidence %.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -30,9 +30,9 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, TaskCreate, AskUserQues
 
 **Key Rules:**
 
-- **MANDATORY IMPORTANT MUST** validate every bounded context boundary with user
-- **MANDATORY IMPORTANT MUST** include Mermaid ERD diagram in report
-- **MANDATORY IMPORTANT MUST** run user validation interview at end (never skip)
+- **MANDATORY IMPORTANT MUST ATTENTION** validate every bounded context boundary with user
+- **MANDATORY IMPORTANT MUST ATTENTION** include Mermaid ERD diagram in report
+- **MANDATORY IMPORTANT MUST ATTENTION** run user validation interview at end (never skip)
 - Every entity must belong to exactly one bounded context
 - Cross-context communication via domain events only (no direct references)
 
@@ -40,7 +40,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, TaskCreate, AskUserQues
 
 ## Step 0: Locate Active Plan & Domain Reference (MANDATORY)
 
-**MANDATORY IMPORTANT MUST** find and read the current active plan BEFORE starting analysis:
+**MANDATORY IMPORTANT MUST ATTENTION** find and read the current active plan BEFORE starting analysis:
 
 1. **Search for active plan directory** — Glob `plans/*/plan.md` sorted by modification time, or check `TaskList` for plan context
 2. **Read `plan.md`** (if exists) — understand project scope, goals, prior decisions
@@ -50,7 +50,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, TaskCreate, AskUserQues
 
 If no plan directory exists, create one using the naming convention from session context.
 
-**After completing domain analysis, MUST update `{plan-dir}/plan.md`** with a domain model summary section (bounded contexts, entity count, key relationships, ERD reference).
+**After completing domain analysis, MUST ATTENTION update `{plan-dir}/plan.md`** with a domain model summary section (bounded contexts, entity count, key relationships, ERD reference).
 
 ## Step 1: Load Business Context
 
@@ -88,7 +88,7 @@ Rules for context boundaries:
 - Minimize cross-context dependencies
 - Consider team structure (Conway's Law)
 
-**MANDATORY IMPORTANT MUST** present identified contexts to user via `AskUserQuestion`:
+**MANDATORY IMPORTANT MUST ATTENTION** present identified contexts to user via `AskUserQuestion`:
 
 - "I identified {N} bounded contexts: {list}. Does this grouping make sense?"
 - Options: Agree (Recommended) | Merge {X} and {Y} | Split {Z} | Add missing context
@@ -189,7 +189,7 @@ ERD requirements:
 
 ## Step 7: User Validation Interview
 
-**MANDATORY IMPORTANT MUST** present domain model and ask 5-8 questions via `AskUserQuestion`:
+**MANDATORY IMPORTANT MUST ATTENTION** present domain model and ask 5-8 questions via `AskUserQuestion`:
 
 ### Required Questions
 
@@ -212,7 +212,7 @@ After user confirms, update report with final decisions and mark as `status: con
 
 ## Step 8: Domain Entity Change Assessment (MANDATORY)
 
-**MANDATORY IMPORTANT MUST** compare domain analysis results against `docs/project-reference/domain-entities-reference.md` (if exists): (content auto-injected by hook — check for [Injected: ...] header before reading)
+**MANDATORY IMPORTANT MUST ATTENTION** compare domain analysis results against `docs/project-reference/domain-entities-reference.md` (if exists): (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 1. **Identify new entities** — entities in analysis that don't exist in reference doc
 2. **Identify modified entities** — entities with changed fields, relationships, or bounded context assignment
@@ -230,7 +230,7 @@ If `docs/project-reference/domain-entities-reference.md` does NOT exist, ask use
 
 ## Step 9: Update Main Plan (MANDATORY)
 
-**MANDATORY IMPORTANT MUST** read `{plan-dir}/plan.md` and append/update a `## Domain Model` section:
+**MANDATORY IMPORTANT MUST ATTENTION** read `{plan-dir}/plan.md` and append/update a `## Domain Model` section:
 
 ```markdown
 ## Domain Model
@@ -268,16 +268,16 @@ Report must be **<=200 lines**. Use tables over prose.
 
 ---
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate EVERY bounded context and key relationship with user via `AskUserQuestion`.
-**MANDATORY IMPORTANT MUST** include Mermaid ERD and confidence % for all architectural decisions.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate EVERY bounded context and key relationship with user via `AskUserQuestion`.
+**MANDATORY IMPORTANT MUST ATTENTION** include Mermaid ERD and confidence % for all architectural decisions.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/tech-stack-research (Recommended)"** — Research tech stack based on domain model
 - **"/plan"** — If tech stack already decided
@@ -285,6 +285,6 @@ Report must be **<=200 lines**. Use tables over prose.
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

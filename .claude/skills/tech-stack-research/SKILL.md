@@ -5,13 +5,13 @@ description: '[Architecture] Research, analyze, and compare tech stack options a
 allowed-tools: Read, Write, Edit, WebSearch, WebFetch, TaskCreate, AskUserQuestion, Bash
 ---
 
-**MANDATORY IMPORTANT MUST** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST** use `AskUserQuestion` at EVERY decision point — never assume user preferences.
-**MANDATORY IMPORTANT MUST** research top 3 options per stack layer, compare with evidence, present report with recommendation + confidence %.
+**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY decision point — never assume user preferences.
+**MANDATORY IMPORTANT MUST ATTENTION** research top 3 options per stack layer, compare with evidence, present report with recommendation + confidence %.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -29,9 +29,9 @@ allowed-tools: Read, Write, Edit, WebSearch, WebFetch, TaskCreate, AskUserQuesti
 
 **Key Rules:**
 
-- **MANDATORY IMPORTANT MUST** research minimum 3 options per stack layer
-- **MANDATORY IMPORTANT MUST** include confidence % with evidence for every recommendation
-- **MANDATORY IMPORTANT MUST** run user validation interview at end (never skip)
+- **MANDATORY IMPORTANT MUST ATTENTION** research minimum 3 options per stack layer
+- **MANDATORY IMPORTANT MUST ATTENTION** include confidence % with evidence for every recommendation
+- **MANDATORY IMPORTANT MUST ATTENTION** run user validation interview at end (never skip)
 - All claims must cite sources (URL, benchmark, case study)
 - Never recommend based on familiarity alone — evidence required
 
@@ -72,7 +72,7 @@ Map business signals to technical requirements:
 | Tight budget       | Open-source, low hosting cost                   | Should   |
 | Compliance         | Audit trail, encryption, auth framework         | Must     |
 
-**MANDATORY IMPORTANT MUST** validate derived requirements with user via `AskUserQuestion` before proceeding to research.
+**MANDATORY IMPORTANT MUST ATTENTION** validate derived requirements with user via `AskUserQuestion` before proceeding to research.
 
 ## Step 3: Research Per Stack Layer
 
@@ -171,7 +171,7 @@ Report must be **<=200 lines**. Use tables over prose.
 
 ## Step 7: User Validation Interview
 
-**MANDATORY IMPORTANT MUST** present findings and ask 5-8 questions via `AskUserQuestion`:
+**MANDATORY IMPORTANT MUST ATTENTION** present findings and ask 5-8 questions via `AskUserQuestion`:
 
 ### Required Questions
 
@@ -200,16 +200,16 @@ After user confirms, update report with final decisions and mark as `status: con
 
 ---
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate EVERY recommendation with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** include confidence % and evidence citations for all claims.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate EVERY recommendation with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** include confidence % and evidence citations for all claims.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/architecture-design (Recommended)"** — Design solution architecture with chosen tech stack
 - **"/plan"** — If architecture already decided
@@ -217,6 +217,6 @@ After user confirms, update report with final decisions and mark as `status: con
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

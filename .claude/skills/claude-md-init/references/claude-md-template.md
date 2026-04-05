@@ -68,16 +68,16 @@
 1. Explicit slash command? (e.g., /plan, /cook) -> Execute it
 2. Detect nearest matching workflow from the Workflow Catalog
 3. ALWAYS ask user via AskUserQuestion to confirm: activate workflow or execute directly
-4. FALLBACK -> MUST invoke /plan <prompt> FIRST
+4. FALLBACK -> MUST ATTENTION invoke /plan <prompt> FIRST
 ```
 
 **CRITICAL: Modification > Research.** If prompt contains BOTH research AND modification intent, **modification workflow wins** (investigation is a substep of `/plan`).
 
 ---
 
-## IMPORTANT: Task Planning Rules (MUST FOLLOW)
+## IMPORTANT: Task Planning Rules (MUST ATTENTION FOLLOW)
 
-1. **MANDATORY task creation for file-modifying prompts** — If the prompt could result in ANY file changes, you MUST create `TaskCreate` items BEFORE making changes.
+1. **MANDATORY task creation for file-modifying prompts** — If the prompt could result in ANY file changes, you MUST ATTENTION create `TaskCreate` items BEFORE making changes.
 2. **Always break work into many small todo tasks** — granular tasks prevent losing track of progress
 3. **Always add a final review todo task** to review all work done
 4. **Mark todos as completed IMMEDIATELY** after finishing each task
@@ -185,7 +185,7 @@ Speculation is FORBIDDEN. Every claim about code behavior, every recommendation 
 2. **Confidence declaration required** — Every recommendation must state confidence level with evidence list.
 3. **Inference alone is FORBIDDEN** — Always upgrade to code evidence. When unsure: _"I don't have enough evidence yet."_
 4. **Cross-service validation** — Check ALL services before recommending architectural changes.
-5. **Graph trace before conclusion** — When investigating code flow, you MUST run graph trace on key files.
+5. **Graph trace before conclusion** — When investigating code flow, you MUST ATTENTION run graph trace on key files.
 
 ### Confidence Levels
 
@@ -201,7 +201,7 @@ Speculation is FORBIDDEN. Every claim about code behavior, every recommendation 
 ## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
 
 <HARD-GATE>
-You MUST run at least ONE graph command on key files before concluding any investigation,
+You MUST ATTENTION run at least ONE graph command on key files before concluding any investigation,
 creating any plan, or verifying any fix. Proceeding without graph evidence is FORBIDDEN.
 Skip only if `.code-graph/graph.db` does not exist.
 </HARD-GATE>
@@ -226,7 +226,7 @@ python .claude/scripts/code_graph search <keyword> --kind Function --json       
 
 <!-- SECTION:skill-activation -->
 
-When working in specific areas, these skills MUST be automatically activated BEFORE any file creation or modification:
+When working in specific areas, these skills MUST ATTENTION be automatically activated BEFORE any file creation or modification:
 
 | Path Pattern   | Skill / Auto-Context | Pre-Read Files   |
 | -------------- | -------------------- | ---------------- |

@@ -6,7 +6,7 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim requires `file:line` proof or traced evidence with confidence percentage (>80% to act).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim requires `file:line` proof or traced evidence with confidence percentage (>80% to act).
 
 ## Quick Summary
 
@@ -24,7 +24,7 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -51,7 +51,7 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 <!-- /SYNC:ba-team-decision-model -->
 <!-- SYNC:refinement-dor-checklist -->
 
-> **Refinement DoR Checklist** — ALL 7 criteria MUST pass before grooming:
+> **Refinement DoR Checklist** — ALL 7 criteria MUST ATTENTION pass before grooming:
 >
 > 1. **User story template** — "As a {role}, I want {goal}, so that {benefit}" format
 > 2. **AC testable & unambiguous** — GIVEN/WHEN/THEN. No "should/might/TBD/various/appropriate". Min 3 scenarios (happy, edge, error) + 1 auth scenario
@@ -157,7 +157,7 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/dor-gate (Recommended)"** — If APPROVE: validate DoR before grooming
 - **"/refine"** — If REQUEST_REVISION: BA drafters revise, then re-run `/pbi-challenge`
@@ -166,12 +166,12 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:ui-system-context:reminder -->
 
-- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+  <!-- /SYNC:ui-system-context:reminder -->

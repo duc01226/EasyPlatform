@@ -2,10 +2,10 @@
 
 ## Models
 
-| Model ID | Type | Best For |
-|----------|------|----------|
-| `gemini-2.5-flash-image` | Flash | Speed, high-volume |
-| `gemini-3-pro-image-preview` | Pro | Text rendering, complex prompts |
+| Model ID                     | Type  | Best For                        |
+| ---------------------------- | ----- | ------------------------------- |
+| `gemini-2.5-flash-image`     | Flash | Speed, high-volume              |
+| `gemini-3-pro-image-preview` | Pro   | Text rendering, complex prompts |
 
 ## Core Principle
 
@@ -16,7 +16,7 @@
 ```python
 responseModalities=['TEXT', 'IMAGE']
 aspect_ratio="16:9"  # 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
-image_size="2K"      # 1K, 2K, 4K - MUST be uppercase K
+image_size="2K"      # 1K, 2K, 4K - MUST ATTENTION be uppercase K
 ```
 
 ## Prompt Templates
@@ -31,14 +31,14 @@ image_size="2K"      # 1K, 2K, 4K - MUST be uppercase K
 
 ## Techniques
 
-| Technique | Example |
-|-----------|---------|
-| Emphasis | `ALL CAPS` for critical requirements |
-| Precision colors | `#9F2B68` instead of "dark magenta" |
-| Negative constraints | `NEVER include text/watermarks. DO NOT add labels.` |
-| Realism trigger | `Natural lighting, DOF. Captured with Canon EOS 90D DSLR.` |
-| Structured edits | `Make ALL edits: - [1] - [2] - [3]` |
-| Complex logic | `Kittens MUST have heterochromatic eyes matching fur colors` |
+| Technique            | Example                                                                |
+| -------------------- | ---------------------------------------------------------------------- |
+| Emphasis             | `ALL CAPS` for critical requirements                                   |
+| Precision colors     | `#9F2B68` instead of "dark magenta"                                    |
+| Negative constraints | `NEVER include text/watermarks. DO NOT add labels.`                    |
+| Realism trigger      | `Natural lighting, DOF. Captured with Canon EOS 90D DSLR.`             |
+| Structured edits     | `Make ALL edits: - [1] - [2] - [3]`                                    |
+| Complex logic        | `Kittens MUST ATTENTION have heterochromatic eyes matching fur colors` |
 
 ## Advanced Features
 

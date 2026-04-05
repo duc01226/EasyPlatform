@@ -5,11 +5,11 @@ description: "[Investigation] Use when the user asks to investigate, explore, un
 allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate, Bash
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
@@ -17,7 +17,7 @@ allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate, Bash
 
 **Goal:** Investigate and explain how existing features or logic work through READ-ONLY code exploration -- no modifications.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
 >
@@ -60,7 +60,7 @@ Investigate and explain how existing features or logic work as an expert full-st
 
 ## ⚠️ MANDATORY: Confidence & Evidence Gate
 
-**MANDATORY IMPORTANT MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY finding.
+**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY finding.
 **95%+** verified fact | **80-94%** with caveats | **60-79%** "partially verified" | **<60% "inferred — needs verification", NOT fact.**
 
 **IMPORTANT**: Always use TaskCreate to plan step-by-step tasks.
@@ -243,7 +243,7 @@ grep: ".*Component.*{FeatureName}|{FeatureName}.*Component"
 ```markdown
 ## File List
 
-### High Priority - Core Logic (MUST ANALYZE FIRST)
+### High Priority - Core Logic (MUST ATTENTION ANALYZE FIRST)
 
 1. [Domain Entity path]
 2. [Command/Query Handler path]
@@ -298,7 +298,7 @@ For each file, document:
 **Message Bus Analysis (FOR CONSUMERS ONLY):**
 
 - **messageBusMessage**: Message type consumed
-- **messageBusProducers**: Files that publish this message (MUST grep across ALL services)
+- **messageBusProducers**: Files that publish this message (MUST ATTENTION grep across ALL services)
 - **crossServiceIntegration**: Cross-service data flow description
 
 **Targeted Aspect Analysis:**
@@ -605,7 +605,7 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `investigation` workflow** (Recommended) — scout → investigate
 > 2. **Execute `/investigate` directly** — run this skill standalone
@@ -614,7 +614,7 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/plan (Recommended)"** — Create implementation plan from investigation findings
 - **"/fix"** — If investigating a bug to fix
@@ -622,12 +622,12 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->

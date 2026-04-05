@@ -13,14 +13,14 @@ maxTurns: 45
 
 ## Role
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 Generate subcutaneous integration tests for microservices. Tests execute through real DI containers against live infrastructure without HTTP layer.
 
 ## Project Context
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `integration-test-reference.md` — primary patterns for integration testing
 > - `project-structure-reference.md` — service list, directory tree, ports
@@ -32,16 +32,16 @@ Generate subcutaneous integration tests for microservices. Tests execute through
 
 1. **Investigate** — Read test spec or git diff to identify what needs testing
 2. **Analyze** — Study existing test patterns in target service's IntegrationTests project
-3. **Generate** — Create test classes extending the project integration test base class (**⚠️ MUST READ** `docs/project-reference/integration-test-reference.md`)
+3. **Generate** — Create test classes extending the project integration test base class (**⚠️ MUST ATTENTION READ** `docs/project-reference/integration-test-reference.md`)
 4. **Verify** — Build tests, check compilation, validate traceability to test spec
 
 ## Key Rules
 
 - **No guessing** -- If unsure, say so. Do NOT fabricate file paths, function names, or behavior. Investigate first.
-- **MANDATORY IMPORTANT MUST** activate `integration-test` skill before generating any test code
-- **MANDATORY IMPORTANT MUST** read integration test README in project test directories for patterns
-- **MANDATORY IMPORTANT MUST** use `TC-{MOD}-{NNN}` format for all test case IDs
-- **MANDATORY IMPORTANT MUST** use `[Collection("...")]` attribute on all test classes — test framework parallel isolation
+- **MANDATORY IMPORTANT MUST ATTENTION** activate `integration-test` skill before generating any test code
+- **MANDATORY IMPORTANT MUST ATTENTION** read integration test README in project test directories for patterns
+- **MANDATORY IMPORTANT MUST ATTENTION** use `TC-{MOD}-{NNN}` format for all test case IDs
+- **MANDATORY IMPORTANT MUST ATTENTION** use `[Collection("...")]` attribute on all test classes — test framework parallel isolation
 - Use `IntegrationTestHelper.UniqueName()` for all test data — prevents cross-test pollution
 - Use `ExecuteCommandAsync` / `ExecuteQueryAsync` — never instantiate handlers directly
 - Assert with `AssertEntityExistsAsync`, `AssertEntityMatchesAsync`, `AssertEntityDeletedAsync`
@@ -54,7 +54,7 @@ Generate subcutaneous integration tests for microservices. Tests execute through
 
 ## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
 
-After grep/search finds key files, you MUST use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
+After grep/search finds key files, you MUST ATTENTION use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
 
 ```bash
 python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow (BEST FIRST CHOICE)

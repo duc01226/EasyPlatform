@@ -83,7 +83,7 @@ This re-evaluates all docs and removes the `.scan-stale` gate if all are now fre
 
 ## Post-Scan: Build Knowledge Graph (MANDATORY)
 
-After all scans complete, **MUST create a follow-up task:**
+After all scans complete, **MUST ATTENTION create a follow-up task:**
 
 **TaskCreate: "Run /graph-build to build/update code knowledge graph"**
 
@@ -99,7 +99,7 @@ python .claude/scripts/code_graph build --json
 
 ## Post-Scan: Enhance Generated Docs (MANDATORY)
 
-After graph build, **MUST create tasks to run `/prompt-enhance` on all scanned docs.** Reference docs are injected into AI context — attention anchoring (top/bottom summaries, inline READ summaries, token density) directly improves AI output quality.
+After graph build, **MUST ATTENTION create tasks to run `/prompt-enhance` on all scanned docs.** Reference docs are injected into AI context — attention anchoring (top/bottom summaries, inline READ summaries, token density) directly improves AI output quality.
 
 **TaskCreate one task per doc, parallel OK:**
 
@@ -135,10 +135,10 @@ After all scans complete, report:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-    <!-- SYNC:output-quality-principles:reminder -->
-- **MUST** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
-    <!-- /SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  <!-- SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
+  <!-- /SYNC:output-quality-principles:reminder -->

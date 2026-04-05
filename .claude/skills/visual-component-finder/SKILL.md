@@ -4,7 +4,7 @@ version: 1.1.0
 description: '[Frontend] Use when matching screenshots to Angular components, finding which component renders a page, or refreshing the component index. Matches via BEM classes, route paths, text content, and selectors with >=85% confidence.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 Find the Angular component(s) matching this screenshot: `$ARGUMENTS`
 
@@ -28,8 +28,8 @@ Find the Angular component(s) matching this screenshot: `$ARGUMENTS`
 
 ## Prerequisites
 
-- **MUST READ** `references/anti-hallucination-protocol.md` before any output
-- **MUST READ** `references/matching-algorithm.md` for the 6-step protocol
+- **MUST ATTENTION READ** `references/anti-hallucination-protocol.md` before any output
+- **MUST ATTENTION READ** `references/matching-algorithm.md` for the 6-step protocol
 
 ## Workflow
 
@@ -91,7 +91,7 @@ When attached to bugfix/feature/refactor prompts, this skill runs **before** `/s
 
 ## Important Notes
 
-- Every match MUST cite `file:line` evidence — see anti-hallucination protocol
+- Every match MUST ATTENTION cite `file:line` evidence — see anti-hallucination protocol
 - Show ranked candidates when confidence <85%
 - Detect reusable components (in `libs/`) and trace to page consumers
 - Index covers all frontend application versions
@@ -100,10 +100,10 @@ When attached to bugfix/feature/refactor prompts, this skill runs **before** `/s
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `references/anti-hallucination-protocol.md` before starting
-- **MUST** READ `references/matching-algorithm.md` before starting
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **IMPORTANT MUST ATTENTION** READ `references/anti-hallucination-protocol.md` before starting
+- **IMPORTANT MUST ATTENTION** READ `references/matching-algorithm.md` before starting

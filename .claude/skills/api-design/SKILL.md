@@ -5,7 +5,7 @@ description: "[Architecture] Use when designing or modifying REST API endpoints,
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -29,7 +29,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 **Goal:** Design or modify REST API endpoints following the project platform patterns and REST best practices.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `backend-patterns-reference.md` — project patterns and structure
 > - `docs/project-config.json` → `api` section — API conventions (style: REST/GraphQL, authPattern: jwt/api-key, docsFormat: swagger/openapi)
@@ -48,7 +48,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 - Use proper route naming: `/api/{resource}` (plural, lowercase, no verbs)
 - Validation in Command/Query `Validate()`, NOT in controller
 - Always add authorization attributes (see docs/project-reference/backend-patterns-reference.md)
-- MUST READ `docs/project-reference/backend-patterns-reference.md` before implementation
+- MUST ATTENTION READ `docs/project-reference/backend-patterns-reference.md` before implementation
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -58,7 +58,7 @@ Expert API design agent for the project following platform patterns and REST bes
 
 **Patterns:** Follow CLAUDE.md backend patterns for controller, CQRS command/query, validation, and authorization.
 
-**MUST READ** before implementation:
+**MUST ATTENTION READ** before implementation:
 
 - `docs/project-reference/backend-patterns-reference.md`
 
@@ -74,7 +74,7 @@ Expert API design agent for the project following platform patterns and REST bes
 | Custom Action   | POST        | `/api/{resource}/{id}/{action}` | `POST /api/employees/123/activate` |
 | Nested Resource | GET         | `/api/{parent}/{id}/{child}`    | `GET /api/departments/1/employees` |
 
-**⚠️ MUST READ:** CLAUDE.md for CQRS command/query DTOs, validation patterns, and authorization patterns.
+**⚠️ MUST ATTENTION READ:** CLAUDE.md for CQRS command/query DTOs, validation patterns, and authorization patterns.
 
 ## File Upload Endpoints
 
@@ -143,12 +143,12 @@ public sealed class UploadCommand : CqrsCommand<UploadCommandResult> // project 
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-- **MUST** READ `docs/project-reference/backend-patterns-reference.md` before starting
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+  <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** READ `docs/project-reference/backend-patterns-reference.md` before starting

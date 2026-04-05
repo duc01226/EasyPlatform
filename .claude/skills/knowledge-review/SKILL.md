@@ -7,7 +7,7 @@ allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:web-research -->
 
@@ -23,7 +23,7 @@ allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 
 <!-- /SYNC:web-research -->
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 ## Quick Summary
 
@@ -162,15 +162,15 @@ After completing Round 1 evaluation, execute a **second full review round**:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-  <!-- SYNC:web-research:reminder -->
-- **MUST** cite 2+ independent sources per claim. NEVER fabricate — "No evidence found" is valid output.
-  <!-- /SYNC:web-research:reminder -->
-  <!-- SYNC:double-round-trip-review:reminder -->
-- **MUST** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
-      <!-- /SYNC:double-round-trip-review:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+      <!-- SYNC:web-research:reminder -->
+- **IMPORTANT MUST ATTENTION** cite 2+ independent sources per claim. NEVER fabricate — "No evidence found" is valid output.
+      <!-- /SYNC:web-research:reminder -->
+      <!-- SYNC:double-round-trip-review:reminder -->
+- **IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
+    <!-- /SYNC:double-round-trip-review:reminder -->

@@ -12,18 +12,18 @@ maxTurns: 22
 
 ## Role
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 Translate business needs into actionable requirements. Write user stories, acceptance criteria, and business rules for the project.
 
 ## Project Context
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
 >
 > If files not found, search for: service directories, configuration files, project patterns.
 
-> **BA Team Process:** MUST READ `ba-team-decision-model-protocol.md` for:
+> **BA Team Process:** MUST ATTENTION READ `ba-team-decision-model-protocol.md` for:
 >
 > - 2/3 majority vote model (UX BA + Designer BA + Dev BA PIC)
 > - Technical veto scope (Dev BA PIC only)

@@ -6,7 +6,7 @@ allowed-tools: NONE
 license: MIT
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -26,7 +26,7 @@ license: MIT
 
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
 
 <!-- /SYNC:estimation-framework -->
 
@@ -34,7 +34,7 @@ license: MIT
 
 <!-- SYNC:plan-quality -->
 
-> **Plan Quality** — Every plan phase MUST include test specifications.
+> **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
 > 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
@@ -52,7 +52,7 @@ license: MIT
 > **Iterative Phase Quality** — Score complexity BEFORE planning.
 >
 > **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
-> **Score >=6 →** MUST decompose into phases. Each phase:
+> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
 >
 > - ≤5 files modified
 > - ≤3h effort
@@ -781,7 +781,7 @@ node .claude/scripts/set-active-plan.cjs {plan-dir}
 
 ##### Overview Plan (plan.md)
 
-**IMPORTANT:** All plan.md files MUST include YAML frontmatter. See output standards below for schema.
+**IMPORTANT:** All plan.md files MUST ATTENTION include YAML frontmatter. See output standards below for schema.
 
 **Example plan.md structure:**
 
@@ -907,7 +907,7 @@ Coverage: {X}/{Y} requirements mapped to TCs
 
 ##### YAML Frontmatter (Required for plan.md)
 
-All `plan.md` files MUST include YAML frontmatter at the top:
+All `plan.md` files MUST ATTENTION include YAML frontmatter at the top:
 
 ```yaml
 ---
@@ -1131,7 +1131,7 @@ Check the `## Plan Context` section injected by hooks:
 
 ### Report Output Location
 
-All agents writing reports MUST:
+All agents writing reports MUST ATTENTION:
 
 1. Check `## Naming` section injected by hooks for the computed naming pattern
 2. Active plans use plan-specific reports path
@@ -1158,7 +1158,7 @@ All agents writing reports MUST:
 
 ---
 
-## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -1210,25 +1210,25 @@ After creating all phase files, run the **recursive decomposition loop**:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** include Test Specifications section and story_points in plan frontmatter
-- **MUST** verify all phases pass granularity check
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-  <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
-  <!-- SYNC:estimation-framework:reminder -->
-- **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-  <!-- /SYNC:estimation-framework:reminder -->
-  <!-- SYNC:plan-quality:reminder -->
-- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-  <!-- /SYNC:plan-quality:reminder -->
-  <!-- SYNC:iterative-phase-quality:reminder -->
-- **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-  <!-- /SYNC:iterative-phase-quality:reminder -->
-  <!-- SYNC:plan-granularity:reminder -->
-- **MUST** pass 5-point granularity check: specific files, no planning verbs, <=30min steps, <=5 files, zero TBDs.
-      <!-- /SYNC:plan-granularity:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** include Test Specifications section and story_points in plan frontmatter
+- **IMPORTANT MUST ATTENTION** verify all phases pass granularity check
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+      <!-- SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
+- **IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
+      <!-- /SYNC:estimation-framework:reminder -->
+      <!-- SYNC:plan-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+      <!-- /SYNC:plan-quality:reminder -->
+      <!-- SYNC:iterative-phase-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+      <!-- /SYNC:iterative-phase-quality:reminder -->
+      <!-- SYNC:plan-granularity:reminder -->
+- **IMPORTANT MUST ATTENTION** pass 5-point granularity check: specific files, no planning verbs, <=30min steps, <=5 files, zero TBDs.
+    <!-- /SYNC:plan-granularity:reminder -->

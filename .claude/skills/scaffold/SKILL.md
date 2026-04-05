@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Architecture] Scaffold project architecture with OOP/SOLID base classes, infrastructure abstractions, and reusable foundation code before feature implementation.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -24,7 +24,7 @@ description: '[Architecture] Scaffold project architecture with OOP/SOLID base c
 
 <!-- SYNC:scaffold-production-readiness -->
 
-> **Scaffold Production Readiness** — Every scaffolded project MUST include 4 foundations:
+> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 4 foundations:
 >
 > 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates
 > 2. **Error Handling Foundation** — HTTP error interception, classification, user notification patterns
@@ -35,7 +35,7 @@ description: '[Architecture] Scaffold project architecture with OOP/SOLID base c
 
 <!-- /SYNC:scaffold-production-readiness -->
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -52,7 +52,7 @@ description: '[Architecture] Scaffold project architecture with OOP/SOLID base c
 **ALL conditions must be true to proceed:**
 
 1. **Workflow check:** Active workflow is `greenfield-init` OR `big-feature`. If not → SKIP this skill entirely, mark step as completed.
-2. **Existing scaffolding check:** AI MUST self-investigate for existing base/foundational abstractions:
+2. **Existing scaffolding check:** AI MUST ATTENTION self-investigate for existing base/foundational abstractions:
     - Abstract/base classes: grep `abstract class.*Base|Base[A-Z]\w+|Abstract[A-Z]\w+`
     - Generic interfaces: grep `interface I\w+<|IGeneric|IBase`
     - Infrastructure abstractions: grep `IRepository|IUnitOfWork|IService|IHandler`
@@ -162,30 +162,30 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 - [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples (content auto-injected by hook — check for [Injected: ...] header before reading)
 
-## Code Quality Gate Tooling (MANDATORY MUST — Setup Before Any Feature Code)
+## Code Quality Gate Tooling (MANDATORY MUST ATTENTION — Setup Before Any Feature Code)
 
-**MANDATORY IMPORTANT MUST** scaffold ALL code quality enforcement tools as part of project infrastructure — code that passes without quality gates is technical debt from day one.
+**MANDATORY IMPORTANT MUST ATTENTION** scaffold ALL code quality enforcement tools as part of project infrastructure — code that passes without quality gates is technical debt from day one.
 
 ### Static Analysis & Linting
 
-- [ ] **MANDATORY MUST** configure language-appropriate linter with strict ruleset (zero warnings policy on new code)
-- [ ] **MANDATORY MUST** configure static code analyzer with quality gate thresholds (complexity, duplication, coverage)
-- [ ] **MANDATORY MUST** enable compiler/transpiler strict mode and treat warnings as errors on build
-- [ ] **MANDATORY MUST** add code style formatter with shared config (enforce consistent formatting across team)
+- [ ] **MANDATORY MUST ATTENTION** configure language-appropriate linter with strict ruleset (zero warnings policy on new code)
+- [ ] **MANDATORY MUST ATTENTION** configure static code analyzer with quality gate thresholds (complexity, duplication, coverage)
+- [ ] **MANDATORY MUST ATTENTION** enable compiler/transpiler strict mode and treat warnings as errors on build
+- [ ] **MANDATORY MUST ATTENTION** add code style formatter with shared config (enforce consistent formatting across team)
 
 ### Build-Time Quality Enforcement
 
-- [ ] **MANDATORY MUST** configure pre-commit hooks to run linter + formatter automatically
-- [ ] **MANDATORY MUST** configure CI pipeline to fail on any linter violation, analyzer warning, or test failure
-- [ ] **MANDATORY MUST** set minimum test coverage threshold in CI (fail build if below)
-- [ ] **MANDATORY MUST** enable security vulnerability scanning in dependency management
+- [ ] **MANDATORY MUST ATTENTION** configure pre-commit hooks to run linter + formatter automatically
+- [ ] **MANDATORY MUST ATTENTION** configure CI pipeline to fail on any linter violation, analyzer warning, or test failure
+- [ ] **MANDATORY MUST ATTENTION** set minimum test coverage threshold in CI (fail build if below)
+- [ ] **MANDATORY MUST ATTENTION** enable security vulnerability scanning in dependency management
 
 ### Code Rules & Standards
 
-- [ ] **MANDATORY MUST** create shared linter config file at project root (team-wide consistency)
-- [ ] **MANDATORY MUST** create shared formatter config file at project root
-- [ ] **MANDATORY MUST** create `.editorconfig` for cross-IDE consistency (indentation, encoding, line endings)
-- [ ] **MANDATORY MUST** document code quality standards in project README or contributing guide
+- [ ] **MANDATORY MUST ATTENTION** create shared linter config file at project root (team-wide consistency)
+- [ ] **MANDATORY MUST ATTENTION** create shared formatter config file at project root
+- [ ] **MANDATORY MUST ATTENTION** create `.editorconfig` for cross-IDE consistency (indentation, encoding, line endings)
+- [ ] **MANDATORY MUST ATTENTION** document code quality standards in project README or contributing guide
 
 ### Adaptation Protocol
 
@@ -198,7 +198,7 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 > **Scaffold Production Readiness** — See `<!-- SYNC:scaffold-production-readiness -->` block above for full inline protocol.
 
-Every scaffolded project MUST include these 4 foundations. AI must detect the tech stack from the plan/architecture report and present 2-3 options per concern via `AskUserQuestion`.
+Every scaffolded project MUST ATTENTION include these 4 foundations. AI must detect the tech stack from the plan/architecture report and present 2-3 options per concern via `AskUserQuestion`.
 
 ### 1. Code Quality Tooling
 
@@ -280,7 +280,7 @@ Run ALL verification checklists from the production readiness protocol:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/cook (Recommended)"** — Begin implementing feature stories on top of the scaffolding
 - **"/workflow-review-changes"** — Review scaffolding code before proceeding
@@ -288,15 +288,15 @@ Run ALL verification checklists from the production readiness protocol:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
   <!-- SYNC:understand-code-first:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:scaffold-production-readiness:reminder -->
-- **MUST** verify all 4 production readiness foundations (quality tooling, error handling, loading state, Docker) before marking scaffold complete.
-      <!-- /SYNC:scaffold-production-readiness:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:scaffold-production-readiness:reminder -->
+- **IMPORTANT MUST ATTENTION** verify all 4 production readiness foundations (quality tooling, error handling, loading state, Docker) before marking scaffold complete.
+    <!-- /SYNC:scaffold-production-readiness:reminder -->

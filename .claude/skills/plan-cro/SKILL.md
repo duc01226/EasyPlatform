@@ -5,7 +5,7 @@ description: '[Planning] Create a CRO plan for the given content'
 disable-model-invocation: false
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -41,7 +41,7 @@ disable-model-invocation: false
 
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
 
 <!-- /SYNC:estimation-framework -->
 
@@ -49,7 +49,7 @@ disable-model-invocation: false
 
 <!-- SYNC:plan-quality -->
 
-> **Plan Quality** — Every plan phase MUST include test specifications.
+> **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
 > 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
@@ -67,7 +67,7 @@ disable-model-invocation: false
 > **Iterative Phase Quality** — Score complexity BEFORE planning.
 >
 > **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
-> **Score >=6 →** MUST decompose into phases. Each phase:
+> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
 >
 > - ≤5 files modified
 > - ≤3h effort
@@ -150,7 +150,7 @@ Activate `planning` skill.
 - Use `/scout-ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
 - Use `planner` agent to create a comprehensive CRO plan following the progressive disclosure structure:
     - Create a directory using naming pattern from `## Naming` section.
-    - Every `plan.md` MUST start with YAML frontmatter:
+    - Every `plan.md` MUST ATTENTION start with YAML frontmatter:
 
         ```yaml
         ---
@@ -171,7 +171,7 @@ Activate `planning` skill.
       **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
       **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
 
-## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -192,20 +192,20 @@ Activate `planning` skill.
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** include Test Specifications section and story_points in plan frontmatter
-    <!-- SYNC:plan-quality:reminder -->
-- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-    <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
-- **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-    <!-- /SYNC:estimation-framework:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** include Test Specifications section and story_points in plan frontmatter
+      <!-- SYNC:plan-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
+      <!-- /SYNC:estimation-framework:reminder -->
       <!-- SYNC:iterative-phase-quality:reminder -->
-- **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-    <!-- /SYNC:iterative-phase-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+      <!-- /SYNC:iterative-phase-quality:reminder -->

@@ -20,7 +20,7 @@ from connections import create_connection
 
 EVALUATION_PROMPT = """You are an AI assistant with access to tools.
 
-When given a task, you MUST:
+When given a task, you MUST ATTENTION:
 1. Use the available tools to complete the task
 2. Provide summary of each step in your approach, wrapped in <summary> tags
 3. Provide feedback on the tools provided, wrapped in <feedback> tags

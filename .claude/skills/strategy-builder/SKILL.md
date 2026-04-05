@@ -22,7 +22,7 @@ allowed-tools: Read, Write, Edit, TaskCreate, Bash
 
 **Key Rules:**
 
-- Positioning MUST reference competitive analysis
+- Positioning MUST ATTENTION reference competitive analysis
 - Every channel: purpose, budget %, expected ROI, priority
 - KPIs must be specific, measurable, time-bound
 
@@ -82,7 +82,7 @@ Write to `docs/knowledge/strategy/marketing/{descriptive-slug}.md` using enforce
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

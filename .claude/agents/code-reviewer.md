@@ -13,14 +13,14 @@ maxTurns: 30
 
 ## Role
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 Perform systematic code quality assessment using report-driven two-phase review. Evaluate adherence to the project patterns, identify issues, and produce actionable review reports.
 
 ## Project Context
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
 >
 > If files not found, search for: service directories, configuration files, project patterns.
 
@@ -42,12 +42,12 @@ Perform systematic code quality assessment using report-driven two-phase review.
 - **Convention Check**: Grep for 3+ existing patterns in codebase before flagging violations -- codebase convention wins over textbook rules
 - **DRY Check**: Grep for similar/duplicate code before accepting new code
 - **Doc Staleness**: Cross-reference changed files against related docs; flag stale docs in report
-- **Double Round-Trip**: After Phase 3, MUST execute Phase 4 (Round 2) per deep multi-round review protocol (inlined via SYNC:double-round-trip-review above) -- re-review all files focusing on what Round 1 missed
+- **Double Round-Trip**: After Phase 3, MUST ATTENTION execute Phase 4 (Round 2) per deep multi-round review protocol (inlined via SYNC:double-round-trip-review above) -- re-review all files focusing on what Round 1 missed
 
 ## Review Checklist (Priority Order)
 
 1. **Class Responsibility** -- Backend: mapping in Command/DTO not Handler. Frontend: constants/columns in Model not Component
-2. **DRY via OOP Abstraction** -- Classes with same suffix (*Entity, *Dto, \*Service) MUST share base class. Grep for 3+ similar patterns → extract. Generics for type-only variation. Shared interfaces for common contracts.
+2. **DRY via OOP Abstraction** -- Classes with same suffix (*Entity, *Dto, \*Service) MUST ATTENTION share base class. Grep for 3+ similar patterns → extract. Generics for type-only variation. Shared interfaces for common contracts.
 3. **Design Pattern Assessment** -- Check: switch/if-else→Strategy, scattered new→Factory, complex subsystem→Facade, notification needs→Observer. Flag anti-patterns: God Object, Copy-Paste, Circular Dependency. Only recommend patterns with evidence of 3+ occurrences.
 4. **Clean Code** -- No magic numbers/strings, explicit type annotations, single responsibility, DRY
 5. **Naming** -- Specific names (`employeeRecords` not `data`), verb+noun methods, boolean prefixes (is/has/can/should)
@@ -78,7 +78,7 @@ When invoked with spec compliance context (requirements/plan text provided along
 
 ## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
 
-After grep/search finds key files, you MUST use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
+After grep/search finds key files, you MUST ATTENTION use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
 
 ```bash
 python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow (BEST FIRST CHOICE)

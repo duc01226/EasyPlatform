@@ -5,7 +5,7 @@ description: "[Code Quality] Use when the user asks to enhance documentation, ad
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 ## Quick Summary
 
@@ -249,7 +249,7 @@ Document under `## Documentation Validation`.
 - **Practical examples**: Include working examples users can follow; show common use cases; provide copy-pasteable code snippets
 - **No assumptions**: Don't assume user knowledge; explain acronyms and domain terms; link to prerequisite documentation
 
-**⚠️ MUST READ:** CLAUDE.md for code pattern examples (backend/frontend) when writing code documentation. See `.claude/docs/` for existing documentation structure.
+**⚠️ MUST ATTENTION READ:** CLAUDE.md for code pattern examples (backend/frontend) when writing code documentation. See `.claude/docs/` for existing documentation structure.
 
 ---
 
@@ -291,7 +291,7 @@ Every 10 operations:
 
 ---
 
-### Task Planning Notes (MUST FOLLOW)
+### Task Planning Notes (MUST ATTENTION FOLLOW)
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -300,11 +300,11 @@ Every 10 operations:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+  <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+      <!-- /SYNC:evidence-based-reasoning:reminder -->

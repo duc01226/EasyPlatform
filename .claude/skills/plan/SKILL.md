@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Planning] Intelligent plan creation with prompt enhancement'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -41,7 +41,7 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 <!-- /SYNC:rationalization-prevention -->
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
 
 <!-- /SYNC:estimation-framework -->
 
@@ -49,7 +49,7 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 
 <!-- SYNC:plan-quality -->
 
-> **Plan Quality** — Every plan phase MUST include test specifications.
+> **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
 > 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
@@ -67,7 +67,7 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 > **Iterative Phase Quality** — Score complexity BEFORE planning.
 >
 > **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
-> **Score >=6 →** MUST decompose into phases. Each phase:
+> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
 >
 > - ≤5 files modified
 > - ≤3h effort
@@ -78,7 +78,7 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 
 <!-- /SYNC:iterative-phase-quality -->
 
-> Before routing, assess complexity score. Score >=3 → plan MUST produce multiple phases with per-phase quality cycles.
+> Before routing, assess complexity score. Score >=3 → plan MUST ATTENTION produce multiple phases with per-phase quality cycles.
 
 ## Quick Summary
 
@@ -105,7 +105,7 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 **When greenfield is detected:**
 
 1. **ALWAYS route to `/plan-hard`** — greenfield planning requires deep research, never fast plans
-2. Skip "MUST READ project-structure-reference.md" step (file won't exist or is placeholder)
+2. Skip "MUST ATTENTION READ project-structure-reference.md" step (file won't exist or is placeholder)
 3. Enable web research for tech landscape analysis (WebSearch + WebFetch)
 4. Delegate architecture decisions to `solution-architect` agent
 5. Increase user interview frequency (AskUserQuestion at each major decision)
@@ -159,7 +159,7 @@ Check the `## Plan Context` section in the injected context:
 - Activate `planning` skill.
 - Note: `detailed-instructions-prompt` is **an enhanced prompt** that describes the task in detail based on the provided task description.
 
-## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -187,13 +187,13 @@ Check the `## Plan Context` section in the injected context:
 
 ## Standalone Review Gate (Non-Workflow Only)
 
-> **MANDATORY IMPORTANT MUST:** If this skill is called **outside a workflow** (standalone `/plan`), the generated plan MUST include `/review-changes` as a **final phase/task** in the plan. This ensures all implementation changes get reviewed before commit even without a workflow enforcing it.
+> **MANDATORY IMPORTANT MUST ATTENTION:** If this skill is called **outside a workflow** (standalone `/plan`), the generated plan MUST ATTENTION include `/review-changes` as a **final phase/task** in the plan. This ensures all implementation changes get reviewed before commit even without a workflow enforcing it.
 >
 > If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — the workflow sequence handles `/review-changes` at the appropriate step.
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `pre-development` workflow** (Recommended) — quality-gate → plan → plan-review → plan-validate
 > 2. **Execute `/plan` directly** — run this skill standalone
@@ -224,9 +224,9 @@ After creating all phase files, run the **recursive decomposition loop**:
 3. Re-score new phases. Repeat until ALL leaf phases pass (max depth: 3)
 4. **Self-question:** "For each phase, can I start coding RIGHT NOW? If any needs 'figuring out' → sub-plan it."
 
-## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
 - **"/plan-review"** — Auto-review plan for validity and best practices
@@ -237,26 +237,26 @@ After creating all phase files, run the **recursive decomposition loop**:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** include Test Specifications section and story_points in plan frontmatter
-      <!-- SYNC:plan-granularity:reminder -->
-- **MUST** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-      <!-- /SYNC:plan-granularity:reminder -->
-    <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
-- **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
-- **MUST** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
-- **MUST** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
-- **MUST** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-    <!-- /SYNC:iterative-phase-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** include Test Specifications section and story_points in plan frontmatter
+  <!-- SYNC:plan-granularity:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
+  <!-- /SYNC:plan-granularity:reminder -->
+  <!-- SYNC:understand-code-first:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:rationalization-prevention:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+  <!-- /SYNC:rationalization-prevention:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
+  <!-- /SYNC:estimation-framework:reminder -->
+  <!-- SYNC:plan-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:iterative-phase-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+      <!-- /SYNC:iterative-phase-quality:reminder -->

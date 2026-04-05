@@ -5,7 +5,7 @@ description: '[Implementation] Start coding an existing plan (no testing)'
 disable-model-invocation: false
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -44,7 +44,7 @@ disable-model-invocation: false
 - Critical code review issues block progression (must be 0)
 - User must explicitly approve before finalize step
 
-**MUST READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
+**MUST ATTENTION READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -100,7 +100,7 @@ Read plan file completely. Map dependencies between tasks. List ambiguities or b
 - Initialize TaskCreate with `Step 0: [Plan Name] - [Phase Name]` and all command steps (Step 1 through Step 6)
 - Read phase file (e.g., phase-01-preparation.md)
 - Look for tasks/steps/phases/sections/numbered/bulleted lists
-- MUST convert to TaskCreate tasks:
+- MUST ATTENTION convert to TaskCreate tasks:
     - Phase Implementation tasks → Step 2.X (Step 2.1, Step 2.2, etc.)
     - Phase Code Review tasks → Step 3.X (Step 3.1, Step 3.2, etc.)
 - Ensure each task has UNIQUE name (increment X for each task)
@@ -214,9 +214,9 @@ Mark Step 5 complete in TaskCreate.
 
 ---
 
-## Next Steps (Standalone: MUST ask user via `AskUserQuestion`. Skip if inside workflow.)
+## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (code implemented, no tests). This ensures review, testing, and docs steps aren't skipped.
 - **"/code-simplifier"** — Simplify implementation
@@ -227,13 +227,13 @@ Mark Step 5 complete in TaskCreate.
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** validate decisions with user via `AskUserQuestion` — never auto-decide
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
     <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-- **MUST** READ `CLAUDE.md` before starting
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+  <!-- /SYNC:understand-code-first:reminder -->
+- **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting

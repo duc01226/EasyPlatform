@@ -7,7 +7,7 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 1. **Format:** lowercase-hyphen-case only
 2. **Max Length:** 64 characters
 3. **Characters:** `a-z`, `0-9`, `-` (no underscores, spaces)
-4. **Match:** `name` field MUST match directory name exactly
+4. **Match:** `name` field MUST ATTENTION match directory name exactly
 
 ## Prefix Conventions
 

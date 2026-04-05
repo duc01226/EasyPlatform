@@ -14,11 +14,12 @@ NEVER assume a single match. Search the `selectorIndex` for duplicate selectors.
 
 ### R3: Confidence Declaration
 
-EVERY output MUST include `Confidence: X%` with an evidence list showing which signals matched and which missed. No exceptions.
+EVERY output MUST ATTENTION include `Confidence: X%` with an evidence list showing which signals matched and which missed. No exceptions.
 
 ### R4: Category Diversity
 
 For >=85% confidence claims, at least 2 signals must come from DIFFERENT categories:
+
 - **Route-based**: S1 (URL/route match)
 - **Visual-based**: S2 (BEM), S5 (child composition), S6 (app ID)
 - **Text-based**: S3 (text content), S4 (selector match)
@@ -36,6 +37,7 @@ READ the component's `.html` template to confirm that visual elements mentioned 
 ### R7: Reusable Component Detection
 
 If the matched component lives in `libs/` (shared component library, domain library, platform core):
+
 1. Flag it as a **shared/reusable** component
 2. Use `parentSelectors` from the index to find page-level consumers
 3. Ask user which page context they're working in

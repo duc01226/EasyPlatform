@@ -3,7 +3,7 @@
 Refactor skill SKILL.md files for AI attention anchoring best practices.
 
 Two transformations:
-1. Replace bare "MUST READ" references with inline summary + read instruction
+1. Replace bare "MUST ATTENTION READ" references with inline summary + read instruction
 2. Add "Closing Reminders" bottom anchoring section if missing
 
 Usage:
@@ -52,19 +52,19 @@ CLOSING_REMINDERS = """
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
 """
 
 # Skill-type-specific closing reminders additions
 CLOSING_EXTRAS_BY_TYPE = {
-    "review": "- **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)\n",
-    "fix": "- **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4\n",
-    "cook": "- **MUST** validate decisions with user via `AskUserQuestion` — never auto-decide\n",
-    "plan": "- **MUST** include Test Specifications section and story_points in plan frontmatter\n",
-    "implementation": "- **MUST** validate decisions with user via `AskUserQuestion` — never auto-decide\n",
+    "review": "- **MANDATORY IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)\n",
+    "fix": "- **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts — report outcomes, ask user before #4\n",
+    "cook": "- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide\n",
+    "plan": "- **MANDATORY IMPORTANT MUST ATTENTION** include Test Specifications section and story_points in plan frontmatter\n",
+    "implementation": "- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide\n",
 }
 
 
@@ -84,7 +84,7 @@ def get_skill_type(skill_name):
 
 
 def find_protocol_filename(text):
-    """Extract protocol filename from a MUST READ reference line."""
+    """Extract protocol filename from a MUST ATTENTION READ reference line."""
     # Match patterns like `.claude/skills/shared/filename.md` or `shared/filename.md`
     match = re.search(r'(?:\.claude/skills/)?shared/([a-z0-9-]+\.md)', text)
     if match:
@@ -97,7 +97,7 @@ def build_inline_reference(protocol_filename, original_path):
     if protocol_filename not in INLINE_SUMMARIES:
         return None
     label, summary = INLINE_SUMMARIES[protocol_filename]
-    return f"> **{label}** — {summary}\n> MUST READ `{original_path}` for full protocol and checklists."
+    return f"> **{label}** — {summary}\n> MUST ATTENTION READ `{original_path}` for full protocol and checklists."
 
 
 def has_closing_reminders(content):
@@ -117,10 +117,10 @@ def is_workflow_redirect(content):
 
 
 def transform_must_read_references(content):
-    """Transform bare MUST READ references into inline summary + read instructions."""
+    """Transform bare MUST ATTENTION READ references into inline summary + read instructions."""
     changes = 0
 
-    # Pattern 1: **Prerequisites:** **MUST READ** `path` before executing.
+    # Pattern 1: **Prerequisites:** **MUST ATTENTION READ** `path` before executing.
     # This is usually a standalone line or combined with AND
     def replace_prereq_line(match):
         nonlocal changes
@@ -143,14 +143,14 @@ def transform_must_read_references(content):
 
         return "\n\n".join(replacements)
 
-    # Match prerequisite lines with MUST READ shared protocol references
+    # Match prerequisite lines with MUST ATTENTION READ shared protocol references
     content = re.sub(
-        r'\*\*Prerequisites:\*\*\s*\*\*(?:MUST READ|⚠️ MUST READ)\*\*\s*`\.claude/skills/shared/[^`]+`(?:\s*AND\s*`\.claude/skills/shared/[^`]+`)*\s*before executing\.',
+        r'\*\*Prerequisites:\*\*\s*\*\*(?:MUST ATTENTION READ|⚠️ MUST ATTENTION READ)\*\*\s*`\.claude/skills/shared/[^`]+`(?:\s*AND\s*`\.claude/skills/shared/[^`]+`)*\s*before executing\.',
         replace_prereq_line,
         content
     )
 
-    # Pattern 2: > **Process Discipline:** MUST READ `path` — description
+    # Pattern 2: > **Process Discipline:** MUST ATTENTION READ `path` — description
     def replace_process_line(match):
         nonlocal changes
         full_line = match.group(0)
@@ -165,12 +165,12 @@ def transform_must_read_references(content):
         return full_line
 
     content = re.sub(
-        r'>\s*\*\*Process Discipline:\*\*\s*MUST READ\s*`\.claude/skills/shared/[^`]+`\s*[^\n]*',
+        r'>\s*\*\*Process Discipline:\*\*\s*MUST ATTENTION READ\s*`\.claude/skills/shared/[^`]+`\s*[^\n]*',
         replace_process_line,
         content
     )
 
-    # Pattern 3: > **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `path`. ...rest
+    # Pattern 3: > **Graph Intelligence (MANDATORY when graph.db exists):** MUST ATTENTION READ `path`. ...rest
     def replace_graph_line(match):
         nonlocal changes
         full_line = match.group(0)
@@ -180,7 +180,7 @@ def transform_must_read_references(content):
         path, filename = path_match.group(1), path_match.group(2)
         inline = build_inline_reference(filename, path)
         if inline:
-            # Preserve any additional instructions after the MUST READ
+            # Preserve any additional instructions after the MUST ATTENTION READ
             after_read = re.search(r'\.md`[.\s]*((?:Run|After|Use)[^\n]*)', full_line)
             extra = ""
             if after_read:
@@ -190,12 +190,12 @@ def transform_must_read_references(content):
         return full_line
 
     content = re.sub(
-        r'>\s*\*\*Graph Intelligence[^:]*:\*\*\s*MUST READ\s*`\.claude/skills/shared/[^`]+`[^\n]*',
+        r'>\s*\*\*Graph Intelligence[^:]*:\*\*\s*MUST ATTENTION READ\s*`\.claude/skills/shared/[^`]+`[^\n]*',
         replace_graph_line,
         content
     )
 
-    # Pattern 4: > **Iterative Quality Gate:** **MUST READ** `path`.
+    # Pattern 4: > **Iterative Quality Gate:** **MUST ATTENTION READ** `path`.
     def replace_quality_gate_line(match):
         nonlocal changes
         full_line = match.group(0)
@@ -215,7 +215,7 @@ def transform_must_read_references(content):
         return full_line
 
     content = re.sub(
-        r'>\s*\*\*Iterative Quality Gate:\*\*\s*\*\*MUST READ\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
+        r'>\s*\*\*Iterative Quality Gate:\*\*\s*\*\*MUST ATTENTION READ\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
         replace_quality_gate_line,
         content
     )
@@ -248,7 +248,7 @@ def transform_must_read_references(content):
         content
     )
 
-    # Pattern 6: **⚠️ MUST READ:** path for ... (standalone warning blocks)
+    # Pattern 6: **⚠️ MUST ATTENTION READ:** path for ... (standalone warning blocks)
     def replace_warning_read(match):
         nonlocal changes
         full_line = match.group(0)
@@ -263,7 +263,7 @@ def transform_must_read_references(content):
         return full_line
 
     content = re.sub(
-        r'\*\*⚠️ MUST READ:\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
+        r'\*\*⚠️ MUST ATTENTION READ:\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
         replace_warning_read,
         content
     )
@@ -288,7 +288,7 @@ def transform_must_read_references(content):
         content
     )
 
-    # Pattern 8: When ... **MUST READ** `shared/path` and ... (standalone MUST READ in sentences)
+    # Pattern 8: When ... **MUST ATTENTION READ** `shared/path` and ... (standalone MUST ATTENTION READ in sentences)
     def replace_standalone_must_read(match):
         nonlocal changes
         full_line = match.group(0)
@@ -308,12 +308,12 @@ def transform_must_read_references(content):
         return full_line
 
     content = re.sub(
-        r'(?:When|If)\s+[^*\n]*\*\*MUST READ\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
+        r'(?:When|If)\s+[^*\n]*\*\*MUST ATTENTION READ\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
         replace_standalone_must_read,
         content
     )
 
-    # Pattern 9: **⚠️ MUST READ:** `shared/path` for ... (with backtick path)
+    # Pattern 9: **⚠️ MUST ATTENTION READ:** `shared/path` for ... (with backtick path)
     def replace_warning_read2(match):
         nonlocal changes
         full_line = match.group(0)
@@ -334,14 +334,14 @@ def transform_must_read_references(content):
             return f"{inline}{extra}"
         return full_line
 
-    # Broader pattern for ⚠️ MUST READ with shared protocol refs
+    # Broader pattern for ⚠️ MUST ATTENTION READ with shared protocol refs
     content = re.sub(
-        r'\*\*⚠️\s*MUST READ:?\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
+        r'\*\*⚠️\s*MUST ATTENTION READ:?\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
         replace_warning_read2,
         content
     )
 
-    # Pattern 10: **MUST READ** `shared/path` then ... (at start of line or in blockquote)
+    # Pattern 10: **MUST ATTENTION READ** `shared/path` then ... (at start of line or in blockquote)
     def replace_bold_must_read(match):
         nonlocal changes
         full_line = match.group(0)
@@ -363,7 +363,7 @@ def transform_must_read_references(content):
         return full_line
 
     content = re.sub(
-        r'\*\*MUST READ\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
+        r'\*\*MUST ATTENTION READ\*\*\s*`\.claude/skills/shared/[^`]+`[^\n]*',
         replace_bold_must_read,
         content
     )
@@ -395,7 +395,7 @@ def strip_old_task_planning_notes(content):
     """Remove old 'IMPORTANT Task Planning Notes' sections that are superseded by Closing Reminders."""
     # Pattern: standalone IMPORTANT Task Planning Notes block (with --- separator)
     pattern1 = re.compile(
-        r'\n---\s*\n+\*\*IMPORTANT Task Planning Notes \(MUST FOLLOW\)\*\*\s*\n+'
+        r'\n---\s*\n+\*\*IMPORTANT Task Planning Notes \(MUST ATTENTION FOLLOW\)\*\*\s*\n+'
         r'[-*]\s*Always plan and break work into many small todo tasks[^\n]*\n'
         r'[-*]\s*Always add a final review todo task[^\n]*\n*',
         re.DOTALL
@@ -404,7 +404,7 @@ def strip_old_task_planning_notes(content):
 
     # Pattern: without --- separator
     pattern2 = re.compile(
-        r'\n\*\*IMPORTANT Task Planning Notes \(MUST FOLLOW\)\*\*\s*\n+'
+        r'\n\*\*IMPORTANT Task Planning Notes \(MUST ATTENTION FOLLOW\)\*\*\s*\n+'
         r'[-*]\s*Always plan and break work into many small todo tasks[^\n]*\n'
         r'[-*]\s*Always add a final review todo task[^\n]*\n*',
         re.DOTALL
@@ -449,7 +449,7 @@ def process_skill(skill_path, dry_run=False):
     skill_name = skill_path.parent.name
     content = original
 
-    # Transform 1: Inline summaries for MUST READ references
+    # Transform 1: Inline summaries for MUST ATTENTION READ references
     content, read_changes = transform_must_read_references(content)
 
     # Transform 2: Add Closing Reminders
@@ -481,14 +481,14 @@ def verify_skills(skills_dir):
         if skill_name == "_templates":
             continue
 
-        # Check for bare MUST READ without inline summary (shared protocols only)
-        # Find all lines with MUST READ references to shared protocols
+        # Check for bare MUST ATTENTION READ without inline summary (shared protocols only)
+        # Find all lines with MUST ATTENTION READ references to shared protocols
         for line_num, line in enumerate(content.split('\n')):
-            if 'MUST READ' not in line or '.claude/skills/shared/' not in line:
+            if 'MUST ATTENTION READ' not in line or '.claude/skills/shared/' not in line:
                 continue
-            # Skip lines that ARE the inline reference (start with "> MUST READ")
+            # Skip lines that ARE the inline reference (start with "> MUST ATTENTION READ")
             stripped = line.strip()
-            if stripped.startswith('> MUST READ'):
+            if stripped.startswith('> MUST ATTENTION READ'):
                 continue
             # Skip lines in our new inline format (contain "for full protocol")
             if 'for full protocol' in line:
@@ -501,7 +501,7 @@ def verify_skills(skills_dir):
                 # If previous line has inline summary marker, this is part of the block
                 if re.search(r'> \*\*[A-Z][^*]+\*\*\s', prev_prev):
                     continue
-            issues.append(f"  {skill_name}: bare MUST READ without inline summary (line {line_num+1})")
+            issues.append(f"  {skill_name}: bare MUST ATTENTION READ without inline summary (line {line_num+1})")
 
         # Check for Closing Reminders (skip workflow redirects)
         if not is_workflow_redirect(content) and not has_closing_reminders(content):
@@ -567,7 +567,7 @@ def main():
     print(f"Total skills processed: {len(results)}")
     print(f"Skills changed: {len(changed)}")
     print(f"Skills unchanged: {len(unchanged)}")
-    print(f"MUST READ -> inline summary: {total_read_changes} replacements")
+    print(f"MUST ATTENTION READ -> inline summary: {total_read_changes} replacements")
     print(f"Closing Reminders added: {total_reminders}")
     print()
 

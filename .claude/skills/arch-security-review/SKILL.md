@@ -5,7 +5,7 @@ description: '[Architecture] Use when reviewing code for security vulnerabilitie
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -222,7 +222,7 @@ private bool IsAllowedUrl(string url)
 
 ## Authorization Patterns
 
-**⚠️ MUST READ:** CLAUDE.md for authorization controller/handler patterns, `RequestContext` usage, and entity-level access filters (see docs/project-reference/backend-patterns-reference.md).
+**⚠️ MUST ATTENTION READ:** CLAUDE.md for authorization controller/handler patterns, `RequestContext` usage, and entity-level access filters (see docs/project-reference/backend-patterns-reference.md).
 
 ## Data Protection
 
@@ -382,12 +382,12 @@ await DeleteAllUsers();
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+  <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+      <!-- /SYNC:evidence-based-reasoning:reminder -->

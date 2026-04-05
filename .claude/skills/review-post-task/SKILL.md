@@ -4,9 +4,9 @@ version: 1.0.0
 description: '[Code Quality] Two-pass code review for task completion'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
 
@@ -28,7 +28,7 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 > **Design Patterns Quality** — Priority checks for every code change:
 >
-> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION share base class. 3+ similar patterns → extract to shared abstraction.
 > 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
 > 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
 > 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
@@ -72,7 +72,7 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 > **Logic & Intention Review** — Verify WHAT code does matches WHY it was changed.
 >
-> 1. **Change Intention Check:** Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
+> 1. **Change Intention Check:** Every changed file MUST ATTENTION serve the stated purpose. Flag unrelated changes as scope creep.
 > 2. **Happy Path Trace:** Walk through one complete success scenario through changed code
 > 3. **Error Path Trace:** Walk through one failure/edge case scenario through changed code
 > 4. **Acceptance Mapping:** If plan context available, map every acceptance criterion to a code change
@@ -83,7 +83,7 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 <!-- SYNC:bug-detection -->
 
-> **Bug Detection** — MUST check categories 1-4 for EVERY review. Never skip.
+> **Bug Detection** — MUST ATTENTION check categories 1-4 for EVERY review. Never skip.
 >
 > 1. **Null Safety:** Can params/returns be null? Are they guarded? Optional chaining gaps? `.find()` returns checked?
 > 2. **Boundary Conditions:** Off-by-one (`<` vs `<=`)? Empty collections handled? Zero/negative values? Max limits?
@@ -101,7 +101,7 @@ description: '[Code Quality] Two-pass code review for task completion'
 > **Test Spec Verification** — Map changed code to test specifications.
 >
 > 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
-> 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC")
+> 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
 > 5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
@@ -113,14 +113,14 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)** (content auto-injected by hook — check for [Injected: ...] header before reading)
 > - `project-structure-reference.md` — service list, directory tree, conventions
 >
 > If files not found, search for: project documentation, coding standards, architecture docs.
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 ## Quick Summary
 
@@ -166,7 +166,7 @@ Activate `code-review` skill and follow its workflow with **post-task two-pass**
 **Proof Required** — Every claim backed by `file:line` evidence or grep results. Speculation is forbidden.
 **Doc Staleness** — Cross-reference changed files against related docs (feature docs, test specs, READMEs). Flag any doc that is stale or missing updates to reflect current code changes.
 
-## Readability Checklist (MUST evaluate)
+## Readability Checklist (MUST ATTENTION evaluate)
 
 Before approving, verify the code is **easy to read, easy to maintain, easy to understand**:
 
@@ -192,8 +192,8 @@ Before approving, verify the code is **easy to read, easy to maintain, easy to u
 
 > **[IMPORTANT] Database Performance Protocol (MANDATORY):**
 >
-> 1. **Paging Required** — ALL list/collection queries MUST use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
-> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+> 1. **Paging Required** — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
 
 Fix issues found.
 
@@ -234,30 +234,30 @@ Fix issues found.
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-- **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-  <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:design-patterns-quality:reminder -->
-- **MUST** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-  <!-- /SYNC:design-patterns-quality:reminder -->
-  <!-- SYNC:double-round-trip-review:reminder -->
-- **MUST** execute TWO independent review rounds. Round 2 re-reads ALL files from scratch.
-  <!-- /SYNC:double-round-trip-review:reminder -->
-  <!-- SYNC:graph-impact-analysis:reminder -->
-- **MUST** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
-  <!-- /SYNC:graph-impact-analysis:reminder -->
-  <!-- SYNC:logic-and-intention-review:reminder -->
-- **MUST** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-  <!-- /SYNC:logic-and-intention-review:reminder -->
-  <!-- SYNC:bug-detection:reminder -->
-- **MUST** check null safety, boundaries, error handling, resource management for every review.
-  <!-- /SYNC:bug-detection:reminder -->
-  <!-- SYNC:test-spec-verification:reminder -->
-- **MUST** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
-  <!-- /SYNC:test-spec-verification:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+      <!-- SYNC:understand-code-first:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:design-patterns-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
+      <!-- /SYNC:design-patterns-quality:reminder -->
+      <!-- SYNC:double-round-trip-review:reminder -->
+- **IMPORTANT MUST ATTENTION** execute TWO independent review rounds. Round 2 re-reads ALL files from scratch.
+      <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- SYNC:graph-impact-analysis:reminder -->
+- **IMPORTANT MUST ATTENTION** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
+      <!-- /SYNC:graph-impact-analysis:reminder -->
+      <!-- SYNC:logic-and-intention-review:reminder -->
+- **IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
+      <!-- /SYNC:logic-and-intention-review:reminder -->
+      <!-- SYNC:bug-detection:reminder -->
+- **IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
+      <!-- /SYNC:bug-detection:reminder -->
+      <!-- SYNC:test-spec-verification:reminder -->
+- **IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
+      <!-- /SYNC:test-spec-verification:reminder -->

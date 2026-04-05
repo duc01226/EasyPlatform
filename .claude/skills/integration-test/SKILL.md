@@ -5,9 +5,9 @@ description: '[Testing] Generate or review integration tests. Modes: generate (f
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate, AskUserQuestion
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
 
@@ -41,7 +41,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate, AskUserQue
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 <!-- SYNC:red-flag-stop-conditions -->
 
@@ -86,7 +86,7 @@ Before implementation, search your codebase for project-specific patterns:
 - Search for: `IntegrationTest`, `TestFixture`, `TestUserContext`, `IntegrationTestBase`
 - Look for: existing test projects, test collection definitions, service-specific test base classes
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ `integration-test-reference.md` for project-specific patterns and code examples.
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ `integration-test-reference.md` for project-specific patterns and code examples.
 > If file not found, continue with search-based discovery above.
 
 **Five modes:** (1) From git changes (default) — detects uncommitted command/query files and generates matching tests. (2) From prompt — user specifies what to test. (3) Review — audit existing tests for quality, best practices, and flaky patterns. (4) Diagnose — analyze test failures to determine root cause (test bug vs code bug). (5) Verify-traceability — check test code matches test specs and feature docs.
@@ -101,21 +101,21 @@ Before implementation, search your codebase for project-specific patterns:
 
 **Key Rules:**
 
-- MUST search for existing test patterns in the same service BEFORE generating
-- MUST READ `references/integration-test-patterns.md` before writing any test
+- MUST ATTENTION search for existing test patterns in the same service BEFORE generating
+- MUST ATTENTION READ `references/integration-test-patterns.md` before writing any test
 - **Organize by domain feature, NOT by type** — command and query tests for the same domain go in the same folder (e.g., `Orders/OrderCommandIntegrationTests.cs` + `Orders/OrderQueryIntegrationTests.cs`). NEVER create a `Queries/` or `Commands/` folder.
 - Use `IntegrationTestHelper.UniqueName()` for ALL string test data
 - Use `AssertEntityMatchesAsync<T>` for DB verification (built-in WaitUntil polling)
-- **IMPORTANT MUST ENSURE:** When asserting DB state changed by **async event handlers** (entity event handlers, message bus consumers), ALWAYS wrap assertions in `PlatformIntegrationTestHelper.WaitUntilAsync()`. Direct `ExecuteWithServicesAsync` without retry will flake because handlers run in background threads. Only synchronous command results can be asserted directly.
+- **IMPORTANT MUST ATTENTION ENSURE:** When asserting DB state changed by **async event handlers** (entity event handlers, message bus consumers), ALWAYS wrap assertions in `PlatformIntegrationTestHelper.WaitUntilAsync()`. Direct `ExecuteWithServicesAsync` without retry will flake because handlers run in background threads. Only synchronous command results can be asserted directly.
 - Minimum 3 test methods: happy path, validation failure, DB state check
 - **Authorization tests:** Include tests with multiple user contexts (`TestUserContextFactory.CreateAdmin()`, `CreateRegularUser()`, etc.) — verify authorized access succeeds AND unauthorized access is rejected
-- Every test method MUST have `// TC-{MOD}-XXX: Description` comment AND `[Trait("TestSpec", "TC-{MOD}-XXX")]` — placed **before** `[Fact]`, outside method body
+- Every test method MUST ATTENTION have `// TC-{MOD}-XXX: Description` comment AND `[Trait("TestSpec", "TC-{MOD}-XXX")]` — placed **before** `[Fact]`, outside method body
 - If no TC exists in feature docs, **auto-create** it in Section 17 before generating the test
 - For comprehensive test spec generation before coding, use `/tdd-spec` first
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-## Mandatory Task Ordering (MUST FOLLOW)
+## Mandatory Task Ordering (MUST ATTENTION FOLLOW)
 
 When generating integration tests, ALWAYS create and execute tasks in this exact order:
 
@@ -626,7 +626,7 @@ When test code and spec disagree, determine which is correct:
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `test-to-integration` workflow** (Recommended) — scout → integration-test → test
 > 2. **Execute `/integration-test` directly** — run this skill standalone
@@ -635,7 +635,7 @@ When test code and spec disagree, determine which is correct:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/test (Recommended)"** — Run full test suite to verify integration tests pass
 - **"/workflow-review-changes"** — Review all changes before committing
@@ -643,22 +643,22 @@ When test code and spec disagree, determine which is correct:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:graph-impact-analysis:reminder -->
-- **MUST** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-  <!-- /SYNC:graph-impact-analysis:reminder -->
-  <!-- SYNC:red-flag-stop-conditions:reminder -->
-- **MUST** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-  <!-- /SYNC:red-flag-stop-conditions:reminder -->
-  <!-- SYNC:rationalization-prevention:reminder -->
-- **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-- **MUST** READ `references/integration-test-patterns.md` before starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:graph-impact-analysis:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
+    <!-- /SYNC:graph-impact-analysis:reminder -->
+    <!-- SYNC:red-flag-stop-conditions:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
+    <!-- /SYNC:red-flag-stop-conditions:reminder -->
+    <!-- SYNC:rationalization-prevention:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+  <!-- /SYNC:rationalization-prevention:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** READ `references/integration-test-patterns.md` before starting

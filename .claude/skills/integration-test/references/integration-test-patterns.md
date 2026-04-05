@@ -9,7 +9,7 @@ Before implementation, search your codebase for project-specific patterns:
 - Search for: `IntegrationTest`, `TestFixture`, `TestUserContext`, `IntegrationTestBase`
 - Look for: existing test projects, test collection definitions, service-specific test base classes
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ `integration-test-reference.md` for project-specific patterns and code examples.
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ `integration-test-reference.md` for project-specific patterns and code examples.
 > If file not found, continue with search-based discovery above.
 
 > **IMPORTANT:** These patterns use generic `{Service}` placeholders. When generating for a specific service, replace all placeholders with the target service's equivalents. Always read an existing test in the same service first.

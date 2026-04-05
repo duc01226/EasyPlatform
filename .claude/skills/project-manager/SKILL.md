@@ -5,7 +5,7 @@ description: '[Project Management] Generate project status reports, track depend
 allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, Bash
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 ## Quick Summary
 
@@ -20,7 +20,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, Bash
 
 **Key Rules:**
 
-- MUST READ `references/report-templates.md` before executing
+- MUST ATTENTION READ `references/report-templates.md` before executing
 - All data must be current; blockers need owners and actions
 - Status colors: Green (on track), Yellow (at risk), Red (blocked)
 
@@ -34,7 +34,7 @@ Help Project Managers generate status reports, track dependencies, manage risks,
 
 ## Prerequisites
 
-**⚠️ MUST READ** `references/report-templates.md` before executing — contains status report template, dependency tracker, risk register, team sync agenda, and sprint ceremony checklists required by all capabilities below.
+**⚠️ MUST ATTENTION READ** `references/report-templates.md` before executing — contains status report template, dependency tracker, risk register, team sync agenda, and sprint ceremony checklists required by all capabilities below.
 
 ## Core Capabilities
 
@@ -58,7 +58,7 @@ Generate from:
 3. Open blockers in todo lists
 4. Quality gate reports
 
-**⚠️ MUST READ:** `references/report-templates.md` for full status report template.
+**⚠️ MUST ATTENTION READ:** `references/report-templates.md` for full status report template.
 
 ---
 
@@ -68,7 +68,7 @@ Generate from:
 
 Visualize and track upstream/downstream dependencies, external dependencies, and critical path.
 
-**⚠️ MUST READ:** `references/report-templates.md` for dependency matrix and tracker template.
+**⚠️ MUST ATTENTION READ:** `references/report-templates.md` for dependency matrix and tracker template.
 
 ---
 
@@ -82,7 +82,7 @@ Maintain risk register with probability x impact scoring (1-9 scale).
 | 4-6 High     | Active mitigation, weekly review       |
 | 1-3 Low      | Monitor, bi-weekly review              |
 
-**⚠️ MUST READ:** `references/report-templates.md` for risk register template and scoring matrix.
+**⚠️ MUST ATTENTION READ:** `references/report-templates.md` for risk register template and scoring matrix.
 
 ---
 
@@ -92,7 +92,7 @@ Maintain risk register with probability x impact scoring (1-9 scale).
 
 Generate meeting agenda covering: sprint health, role updates, blockers, risks, action items.
 
-**⚠️ MUST READ:** `references/report-templates.md` for agenda template and sprint ceremonies checklists.
+**⚠️ MUST ATTENTION READ:** `references/report-templates.md` for agenda template and sprint ceremonies checklists.
 
 ---
 
@@ -150,9 +150,9 @@ Generate meeting agenda covering: sprint health, role updates, blockers, risks, 
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `references/report-templates.md` before starting
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **IMPORTANT MUST ATTENTION** READ `references/report-templates.md` before starting

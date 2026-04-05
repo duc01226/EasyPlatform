@@ -5,7 +5,7 @@ description: '[Code Quality] Review architecture compliance — clean architectu
 allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, TaskUpdate, Agent, AskUserQuestion
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -27,7 +27,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, TaskUpdate, Agent, Ask
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -35,7 +35,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, TaskUpdate, Agent, Ask
 
 **Default scope:** All uncommitted changes (staged + unstaged). User can override scope via prompt (e.g., specific files, directories, services, or full codebase).
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs BEFORE reviewing:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs BEFORE reviewing:
 >
 > 1. `docs/project-reference/backend-patterns-reference.md` — CQRS, messaging, repositories, validation, entity events, layer rules **(READ FIRST — primary architecture rules source)**
 > 2. `docs/project-reference/project-structure-reference.md` — service map, layer structure, database ownership
@@ -81,7 +81,7 @@ $ARGUMENTS
 
 ## Phase 0: Load Architecture Rules (MANDATORY FIRST)
 
-> **IMPORTANT MANDATORY MUST:** Read project-specific architecture docs BEFORE reviewing any code. The rules come from these docs, not from general knowledge.
+> **IMPORTANT MANDATORY MUST ATTENTION:** Read project-specific architecture docs BEFORE reviewing any code. The rules come from these docs, not from general knowledge.
 
 - [ ] Read `docs/project-reference/backend-patterns-reference.md` — extract messaging naming conventions, layer rules, CQRS patterns, repository rules, entity event handler patterns, validation patterns
 - [ ] Read `docs/project-reference/project-structure-reference.md` — extract service map, layer structure, database ownership
@@ -113,7 +113,7 @@ git diff --cached   # Staged only
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -152,7 +152,7 @@ For EACH file in scope, evaluate against ALL applicable categories below. Skip c
 
 ### Category 1: Clean Architecture Layers — Severity: BLOCKED
 
-**What to check:** Dependency direction violations. Dependencies MUST flow inward only: Service/API → Application → Domain ← Persistence.
+**What to check:** Dependency direction violations. Dependencies MUST ATTENTION flow inward only: Service/API → Application → Domain ← Persistence.
 
 **How to check:**
 
@@ -189,25 +189,25 @@ BLOCKED: {layer} layer file {filePath}:{line} imports from {forbiddenLayer} laye
 
 **Base classes (BLOCKED if wrong):**
 
-- All bus messages MUST extend `PlatformTrackableBusMessage` or `PlatformBusMessage<TPayload>`
-- Consumers MUST extend `PlatformApplicationMessageBusConsumer<TMessage>`
-- Producers MUST extend `PlatformCqrsEventBusMessageProducer<TEvent, TMessage>`
+- All bus messages MUST ATTENTION extend `PlatformTrackableBusMessage` or `PlatformBusMessage<TPayload>`
+- Consumers MUST ATTENTION extend `PlatformApplicationMessageBusConsumer<TMessage>`
+- Producers MUST ATTENTION extend `PlatformCqrsEventBusMessageProducer<TEvent, TMessage>`
 
 **Upstream/Downstream (BLOCKED if violated):**
 
 - Leader service owns entity data and defines EventBusMessage
 - Follower services consume events — they do NOT produce events about data they don't own
 - NO circular listening: if A→B events exist, B→A events for same data = boundary violation
-- Consumers MUST implement dependency waiting with `TryWaitUntilAsync` when depending on data from other messages
+- Consumers MUST ATTENTION implement dependency waiting with `TryWaitUntilAsync` when depending on data from other messages
 
 **SubQueuePrefix (WARN if missing for ordered messages):**
 
-- Messages requiring ordered processing MUST override `SubQueuePrefix()` with a meaningful key
+- Messages requiring ordered processing MUST ATTENTION override `SubQueuePrefix()` with a meaningful key
 - Messages not requiring ordering should return `null`
 
 **Also check:**
 
-- [ ] No direct cross-service database access (MUST use message bus)
+- [ ] No direct cross-service database access (MUST ATTENTION use message bus)
 - [ ] `LastMessageSyncDate` used for conflict resolution in consumers
 - [ ] Inbox/Outbox pattern used for reliable delivery (check `EnableInboxEventBusMessage`)
 
@@ -221,18 +221,18 @@ BLOCKED: {layer} layer file {filePath}:{line} imports from {forbiddenLayer} laye
 
 **File organization (BLOCKED):**
 
-- Command + Result + Handler MUST be in ONE file under `UseCaseCommands/{Feature}/`
-- Query + Result + Handler MUST be in ONE file under `UseCaseQueries/{Feature}/`
+- Command + Result + Handler MUST ATTENTION be in ONE file under `UseCaseCommands/{Feature}/`
+- Query + Result + Handler MUST ATTENTION be in ONE file under `UseCaseQueries/{Feature}/`
 
 **Validation (BLOCKED):**
 
-- MUST use `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`)
+- MUST ATTENTION use `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`)
 - NEVER throw exceptions for validation — return validation result
 - Sync validation in `command.Validate()`, async validation in `ValidateRequestAsync()`
 
 **DTO mapping (BLOCKED):**
 
-- DTOs MUST own mapping via `MapToEntity()` or `MapToObject()`
+- DTOs MUST ATTENTION own mapping via `MapToEntity()` or `MapToObject()`
 - NEVER map in command handlers — mapping belongs in DTO/Command class
 
 **Side effects (BLOCKED):**
@@ -249,10 +249,10 @@ BLOCKED: {layer} layer file {filePath}:{line} imports from {forbiddenLayer} laye
 
 **How to check (rules from backend-patterns-reference.md):**
 
-- MUST use service-specific repository: `I{ServiceName}PlatformRootRepository<TEntity>` (e.g., `IGrowthRootRepository<T>`, `ICandidatePlatformRootRepository<T>`)
+- MUST ATTENTION use service-specific repository: `I{ServiceName}PlatformRootRepository<TEntity>` (e.g., `IGrowthRootRepository<T>`, `ICandidatePlatformRootRepository<T>`)
 - NEVER use generic `IPlatformRootRepository<T>` directly
-- Complex queries MUST use `RepositoryExtensions` with static expressions
-- All query filter/FK/sort columns MUST have database indexes
+- Complex queries MUST ATTENTION use `RepositoryExtensions` with static expressions
+- All query filter/FK/sort columns MUST ATTENTION have database indexes
 
 **Violation format:**
 
@@ -270,10 +270,10 @@ BLOCKED: {filePath}:{line} uses generic IPlatformRootRepository instead of servi
 
 **For NEW services (BLOCKED if v1 pattern used):**
 
-- MUST use multi-scheme auth (JWT Bearer + Azure AD Teams)
-- MUST use `UsePermissionProviderClaimGenerationByProductScope()`
-- MUST use OpenTelemetry via Aspire (NO ApplicationInsights)
-- MUST use modern C# collection syntax `[...]`
+- MUST ATTENTION use multi-scheme auth (JWT Bearer + Azure AD Teams)
+- MUST ATTENTION use `UsePermissionProviderClaimGenerationByProductScope()`
+- MUST ATTENTION use OpenTelemetry via Aspire (NO ApplicationInsights)
+- MUST ATTENTION use modern C# collection syntax `[...]`
 
 **For EXISTING v1 services (WARN if new v2 patterns mixed in without full migration):**
 
@@ -297,13 +297,13 @@ BLOCKED: {filePath}:{line} uses generic IPlatformRootRepository instead of servi
 
 **Location (BLOCKED):**
 
-- Entity event handlers MUST be in `UseCaseEvents/` directory
+- Entity event handlers MUST ATTENTION be in `UseCaseEvents/` directory
 - NEVER inline side effects in command handlers
 
 **Implementation (BLOCKED):**
 
-- MUST extend `PlatformCqrsEntityEventApplicationHandler<TEntity>`
-- MUST implement `HandleWhen()` to filter by CRUD action
+- MUST ATTENTION extend `PlatformCqrsEntityEventApplicationHandler<TEntity>`
+- MUST ATTENTION implement `HandleWhen()` to filter by CRUD action
 - One handler = one independent concern
 
 **Naming (WARN):**
@@ -313,8 +313,8 @@ BLOCKED: {filePath}:{line} uses generic IPlatformRootRepository instead of servi
 
 **Producer patterns (BLOCKED):**
 
-- Entity event bus message producers MUST extend `PlatformCqrsEventBusMessageProducer<TEvent, TMessage>`
-- MUST implement `BuildMessage()` and `HandleWhen()`
+- Entity event bus message producers MUST ATTENTION extend `PlatformCqrsEventBusMessageProducer<TEvent, TMessage>`
+- MUST ATTENTION implement `BuildMessage()` and `HandleWhen()`
 
 ---
 
@@ -344,11 +344,11 @@ BLOCKED: {filePath}:{line} references {otherService} domain/persistence directly
 
 **How to check (rules from frontend-patterns-reference.md):**
 
-- [ ] Components MUST extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` (BLOCKED)
-- [ ] State management MUST use `PlatformVmStore` + `effectSimple()` — no manual signals or direct HttpClient (BLOCKED)
-- [ ] API services MUST extend `PlatformApiService` (BLOCKED)
-- [ ] All subscriptions MUST use `.pipe(this.untilDestroyed())` — no manual unsubscribe (BLOCKED)
-- [ ] All template elements MUST have BEM classes (WARN)
+- [ ] Components MUST ATTENTION extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` (BLOCKED)
+- [ ] State management MUST ATTENTION use `PlatformVmStore` + `effectSimple()` — no manual signals or direct HttpClient (BLOCKED)
+- [ ] API services MUST ATTENTION extend `PlatformApiService` (BLOCKED)
+- [ ] All subscriptions MUST ATTENTION use `.pipe(this.untilDestroyed())` — no manual unsubscribe (BLOCKED)
+- [ ] All template elements MUST ATTENTION have BEM classes (WARN)
 - [ ] Logic in lowest layer: Model > Service > Component (WARN)
 
 ---
@@ -444,7 +444,7 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/code-simplifier" (Recommended)** — Simplify and refine code
 - **"/code-review"** — Deep code quality review
@@ -462,16 +462,16 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** read project-specific architecture docs BEFORE reviewing — rules come from docs, not general knowledge.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** read project-specific architecture docs BEFORE reviewing — rules come from docs, not general knowledge.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
   <!-- SYNC:evidence-based-reasoning:reminder -->
 
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
+- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->

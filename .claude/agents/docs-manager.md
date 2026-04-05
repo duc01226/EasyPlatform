@@ -13,14 +13,14 @@ maxTurns: 30
 
 ## Role
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 Detect which documentation is impacted by code changes and update accordingly. Orchestrate project docs, business feature docs, and AI companion sync to keep documentation accurate and current.
 
 ## Project Context
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
 >
 > If files not found, search for: service directories, configuration files, project patterns.
 

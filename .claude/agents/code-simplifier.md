@@ -13,14 +13,14 @@ maxTurns: 30
 
 ## Role
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 Simplify and refine code for clarity, consistency, and maintainability while preserving all functionality. Focus on recently modified code unless instructed otherwise.
 
 ## Project Context
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
 >
 > If files not found, search for: service directories, configuration files, project patterns.
 
@@ -61,7 +61,7 @@ if (!condition3) return;
 ### 4. Remove Duplication (DRY) & Design Pattern Assessment
 
 - Extract repeated code to shared methods
-- Use project patterns (**⚠️ MUST READ** `docs/project-reference/backend-patterns-reference.md`)
+- Use project patterns (**⚠️ MUST ATTENTION READ** `docs/project-reference/backend-patterns-reference.md`)
 - Consolidate similar logic
 - Classes with same suffix (*Entity, *Dto, \*Service) → extract shared base class (even if empty now)
 - Long switch/if-else on type → Strategy pattern. Scattered `new ConcreteClass()` → Factory/DI
@@ -81,14 +81,14 @@ if (!condition3) return;
 - Extract query logic to `Entity.XxxExpr()` static expressions
 - Use `.With()`, `.Then()`, `.PipeIf()` fluent helpers
 - Move DTO mapping to `MapToObject()` / `MapToEntity()`
-- Replace manual validation with project validation fluent API (**⚠️ MUST READ** `docs/project-reference/backend-patterns-reference.md`)
+- Replace manual validation with project validation fluent API (**⚠️ MUST ATTENTION READ** `docs/project-reference/backend-patterns-reference.md`)
 
 ### Frontend
 
 - Use `project store base (search for: store base class)` for complex state
 - Apply `untilDestroyed()` to all subscriptions
-- Leverage project component base classes (**⚠️ MUST READ** `docs/project-reference/frontend-patterns-reference.md`)
-- Follow BEM/SCSS conventions (**⚠️ MUST READ** `docs/project-reference/scss-styling-guide.md`)
+- Leverage project component base classes (**⚠️ MUST ATTENTION READ** `docs/project-reference/frontend-patterns-reference.md`)
+- Follow BEM/SCSS conventions (**⚠️ MUST ATTENTION READ** `docs/project-reference/scss-styling-guide.md`)
 - Use BEM naming for all CSS classes
 
 ## Workflow

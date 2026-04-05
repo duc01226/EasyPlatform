@@ -204,7 +204,7 @@ function buildE2EContext() {
 
     // Best practices
     if (e2eConfig.bestPractices && e2eConfig.bestPractices.length > 0) {
-        parts.push('**Best Practices (MUST FOLLOW):**');
+        parts.push('**Best Practices (MUST ATTENTION FOLLOW):**');
         e2eConfig.bestPractices.forEach((practice, i) => {
             parts.push(`${i + 1}. ${practice}`);
         });
@@ -235,7 +235,7 @@ function buildE2EContext() {
     }
 
     // Reminder
-    parts.push(`> **CRITICAL:** Every E2E test MUST have TC code in test name.`);
+    parts.push(`> **CRITICAL:** Every E2E test MUST ATTENTION have TC code in test name.`);
 
     return parts.join('\n');
 }

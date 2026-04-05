@@ -452,11 +452,11 @@ async function main() {
         // ═══════════════════════════════════════════════════════════════════════════
         if (confirmationMode === 'always') {
             console.log(
-                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST CRITICAL — Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Match prompt against catalog → ask user → then proceed.**`
+                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL — Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Match prompt against catalog → ask user → then proceed.**`
             );
         } else if (confirmationMode === 'never') {
             console.log(
-                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST CRITICAL — Do not skip for any reason. First action: workflow detection. Match prompt against catalog → \`/workflow-start\` → then proceed.**`
+                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL — Do not skip for any reason. First action: workflow detection. Match prompt against catalog → \`/workflow-start\` → then proceed.**`
             );
         }
 

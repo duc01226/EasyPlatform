@@ -28,7 +28,7 @@ allowed-tools: Read, Write, Grep, Glob, AskUserQuestion, Bash
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -103,15 +103,15 @@ Output as `team-artifacts/design-specs/{YYMMDD}-wireframe-spec-{slug}.md`
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-    <!-- SYNC:ui-system-context:reminder -->
-- **MUST** read frontend pattern docs, SCSS guide, and design system tokens BEFORE any UI implementation.
-    <!-- /SYNC:ui-system-context:reminder -->
-    <!-- SYNC:ui-wireframe-protocol:reminder -->
-- **MUST** follow wireframe protocol: ASCII wireframe, component inventory with tiers, states table, design tokens, responsive breakpoints.
-    <!-- /SYNC:ui-wireframe-protocol:reminder -->
-- **MUST** READ `CLAUDE.md` before starting
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+  <!-- SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** read frontend pattern docs, SCSS guide, and design system tokens BEFORE any UI implementation.
+  <!-- /SYNC:ui-system-context:reminder -->
+  <!-- SYNC:ui-wireframe-protocol:reminder -->
+- **IMPORTANT MUST ATTENTION** follow wireframe protocol: ASCII wireframe, component inventory with tiers, states table, design tokens, responsive breakpoints.
+  <!-- /SYNC:ui-wireframe-protocol:reminder -->
+- **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting

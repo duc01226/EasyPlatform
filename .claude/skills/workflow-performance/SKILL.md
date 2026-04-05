@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger Performance Optimization workflow — investigate bottlenecks, optimize queries, reduce latency.'
 ---
 
-> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `performance` workflow. Run `/workflow-start performance` with the user's prompt as context.
 

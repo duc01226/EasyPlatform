@@ -14,14 +14,14 @@ maxTurns: 22
 
 ## Role
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 Rapidly locate relevant files across the codebase using parallel search strategies, producing a numbered, prioritized file list.
 
 ## Project Context
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `project-structure-reference.md` — service list, directory tree, ports
 > - `graph-intelligence-queries.md` — Graph CLI commands for structural code queries
@@ -37,7 +37,7 @@ Rapidly locate relevant files across the codebase using parallel search strategi
 
 2. **Execute prioritized search** using project directory structure and search patterns (see below)
 
-3. **Graph expand (MANDATORY — DO NOT SKIP)** — after finding entry files, YOU MUST use graph to discover the full dependency network. Without this step, results are incomplete:
+3. **Graph expand (MANDATORY — DO NOT SKIP)** — after finding entry files, YOU MUST ATTENTION use graph to discover the full dependency network. Without this step, results are incomplete:
 
     ```bash
     ls .code-graph/graph.db 2>/dev/null && echo "GRAPH_AVAILABLE" || echo "NO_GRAPH"
@@ -69,7 +69,7 @@ When user prompt is semantic (not file-specific), grep/glob/search FIRST to find
 ## Search Patterns by Priority
 
 ```bash
-# HIGH PRIORITY - Core Logic (MUST FIND)
+# HIGH PRIORITY - Core Logic (MUST ATTENTION FIND)
 **/Domain/Entities/**/*{keyword}*.cs
 **/UseCaseCommands/**/*{keyword}*.cs
 **/UseCaseQueries/**/*{keyword}*.cs
@@ -119,7 +119,7 @@ grep: "{feature-name}" in **/*.ts
 ```markdown
 ## Scout Results: {search query}
 
-### High Priority - Core Logic (MUST ANALYZE)
+### High Priority - Core Logic (MUST ATTENTION ANALYZE)
 
 1. `path/to/Entity.cs`
 2. `path/to/SaveEntityCommand.cs`
@@ -161,12 +161,12 @@ grep: "{feature-name}" in **/*.ts
 
 ## Error Handling
 
-| Issue                     | Solution                                    |
-| ------------------------- | ------------------------------------------- |
-| Sparse results            | Expand search scope, try synonyms           |
-| Too many results          | Categorize by priority, filter by relevance |
-| Large files (>25K tokens) | Use Grep for specific content, chunked Read |
-| Consumer found            | MUST grep for producers across ALL services |
+| Issue                     | Solution                                              |
+| ------------------------- | ----------------------------------------------------- |
+| Sparse results            | Expand search scope, try synonyms                     |
+| Too many results          | Categorize by priority, filter by relevance           |
+| Large files (>25K tokens) | Use Grep for specific content, chunked Read           |
+| Consumer found            | MUST ATTENTION grep for producers across ALL services |
 
 ## Handling Large Files
 

@@ -5,24 +5,24 @@ description: "[Project Management] Break PBIs into user stories using vertical s
 allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
 **Goal:** Break Product Backlog Items into implementable user stories using vertical slicing, SPIDR splitting, and INVEST criteria.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `project-structure-reference.md` -- project patterns and structure
->   <!-- SYNC:estimation-framework -->
+>       <!-- SYNC:estimation-framework -->
 >
->     > **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+>     > **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
 >
->         <!-- /SYNC:estimation-framework -->
+>                   <!-- /SYNC:estimation-framework -->
 >
 > - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 > - `docs/test-specs/` — Test specifications by module (read existing TCs for related features; include test story/acceptance criteria for new stories)
@@ -47,7 +47,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -61,8 +61,8 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
-- Stories with SP >8 MUST be split; >5 SHOULD be split (see estimation-framework.md)
-- All stories MUST include `story_points` and `complexity` fields
+- Stories with SP >8 MUST ATTENTION be split; >5 SHOULD be split (see estimation-framework.md)
+- All stories MUST ATTENTION include `story_points` and `complexity` fields
 
 ## Greenfield Mode
 
@@ -72,7 +72,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 
 1. Generate **foundation PBIs** instead of feature stories: infrastructure setup, project scaffold, CI/CD pipeline, first feature vertical slice
 2. Add dependency ordering: infrastructure stories BEFORE feature stories
-3. Skip "MUST READ project-structure-reference.md" (won't exist)
+3. Skip "MUST ATTENTION READ project-structure-reference.md" (won't exist)
 4. Include setup stories: dev environment, build tooling, deployment pipeline, monitoring
 5. Priority order: infra → scaffold → first feature → remaining features
 6. **[CRITICAL] Architecture Scaffolding Story:** FIRST story = "Architecture Scaffolding" — all OOP/SOLID base abstract classes, generic interfaces, infrastructure abstractions per chosen tech stack. AI self-investigates what base classes the project needs. All feature stories depend on this.
@@ -85,7 +85,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, AskUserQuestion, Bash
     | "Create base layout and responsive grid"                                  | 2-3 | Must Have | Design tokens            |
     | "Create core UI components (loading, error, empty, toast, button, input)" | 3-5 | Must Have | Design tokens + layout   |
 
-    **Dependency rule:** All UI feature stories MUST depend on "UI System Foundation" stories.
+    **Dependency rule:** All UI feature stories MUST ATTENTION depend on "UI System Foundation" stories.
 
 - Each story needs happy path, edge case, and error scenario (minimum)
 - Use correct project domain vocabulary when available (check project docs for terminology)
@@ -194,7 +194,7 @@ Read `docs/project-config.json` modules[] and `docs/business-features/` to detec
 
 ## SPIDR Splitting Checklist
 
-**When to apply:** Story SP >8 MUST split. SP >5 SHOULD split. SP 13 = SHOULD split into 2-3 stories. SP 21 = MUST split (epic-level).
+**When to apply:** Story SP >8 MUST ATTENTION split. SP >5 SHOULD split. SP 13 = SHOULD split into 2-3 stories. SP 21 = MUST ATTENTION split (epic-level).
 
 | Pattern        | Question                     | Split Strategy                            |
 | -------------- | ---------------------------- | ----------------------------------------- |
@@ -218,7 +218,7 @@ Read `docs/project-config.json` modules[] and `docs/business-features/` to detec
 SP 1-5:   ✅ Good size
 SP 6-8:   ⚠️ Consider splitting (apply SPIDR)
 SP 13:    ❌ SHOULD split into 2-3 stories
-SP 21:    ❌ MUST split — epic-level, not sprint-ready
+SP 21:    ❌ MUST ATTENTION split — epic-level, not sprint-ready
 ```
 
 ---
@@ -425,7 +425,7 @@ When the PBI includes a "Production Readiness Concerns" table with "Required" it
 | Data migration = Required | "Create data migration for schema changes" | 1-3 SP | Must Have |
 
 ### Rules
-- Foundation stories MUST be completed before feature stories begin
+- Foundation stories MUST ATTENTION be completed before feature stories begin
 - Mark as `sprint: 0` or `sprint: foundation` in story metadata
 - Each foundation story references the specific protocol section for implementation guidance
 - If PBI concern = "Existing", skip story generation (already set up)
@@ -449,8 +449,8 @@ When the PBI includes a "Production Readiness Concerns" table with "Required" it
 
 ## Key Rules
 
-- **Every story set MUST include a Story Dependencies table** — with types: `must-after`, `can-parallel`, `blocked-by`, `independent`. This enables `/prioritize` and `/plan` to respect implementation ordering.
-- **SPIDR splits MUST include dependency chains** — When splitting a story, declare which split stories depend on others.
+- **Every story set MUST ATTENTION include a Story Dependencies table** — with types: `must-after`, `can-parallel`, `blocked-by`, `independent`. This enables `/prioritize` and `/plan` to respect implementation ordering.
+- **SPIDR splits MUST ATTENTION include dependency chains** — When splitting a story, declare which split stories depend on others.
 - **No orphan stories** — Every story must appear in the dependency table, even if independent.
 
 ## Quality Checklist
@@ -513,12 +513,12 @@ After creating user stories, validate with user.
 
 ## MANDATORY: Systematic Task Breakdown for Stories
 
-**MANDATORY IMPORTANT MUST** break down ALL stories into small, systematic todo tasks using `TaskCreate` BEFORE starting implementation. Each story MUST have its own set of tasks that cover:
+**MANDATORY IMPORTANT MUST ATTENTION** break down ALL stories into small, systematic todo tasks using `TaskCreate` BEFORE starting implementation. Each story MUST ATTENTION have its own set of tasks that cover:
 
 1. **Read & understand story** — Load story artifact, acceptance criteria, domain context
 2. **Identify vertical slice layers** — Backend entity/command/query, frontend component/store/API, integration points
 3. **Create implementation subtasks per layer** — One task per file or logical unit (entity, command handler, DTO, component, service, test)
-4. **Include spec tasks** — Each story MUST have corresponding test specifications (unit, integration, or E2E as appropriate)
+4. **Include spec tasks** — Each story MUST ATTENTION have corresponding test specifications (unit, integration, or E2E as appropriate)
 5. **Include validation task** — Verify story against acceptance criteria GIVEN/WHEN/THEN after implementation
 6. **Include review task** — Final quality check per story
 
@@ -551,7 +551,7 @@ Example for a "Create Goal" story:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 - **"/tdd-spec (Recommended)"** — Generate test specifications from stories
 - **"/pbi-mockup"** — Generate HTML mockup report from PBI and stories
 - **"/plan-validate"** — If stories need validation against plan
@@ -559,17 +559,17 @@ Example for a "Create Goal" story:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 ````
 
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:estimation-framework:reminder -->
 
-- **MUST** estimate story points using Modified Fibonacci (1-21). SP >8 MUST split, >5 SHOULD split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
-- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** estimate story points using Modified Fibonacci (1-21). SP >8 MUST ATTENTION split, >5 SHOULD split.
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+    <!-- /SYNC:ui-system-context:reminder -->

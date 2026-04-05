@@ -23,9 +23,9 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 > "No ARIA is better than bad ARIA" -- Sites with ARIA average 41% more errors than those without.
 
 - Only use ARIA when no native HTML equivalent exists (custom widgets like tabs, trees, comboboxes)
-- Icon-only buttons MUST have `aria-label`: `<button aria-label="Close">`
-- Decorative icons MUST have `aria-hidden="true"`
-- Async updates (toasts, validation) MUST use `aria-live="polite"` (reserve `assertive` for critical errors)
+- Icon-only buttons MUST ATTENTION have `aria-label`: `<button aria-label="Close">`
+- Decorative icons MUST ATTENTION have `aria-hidden="true"`
+- Async updates (toasts, validation) MUST ATTENTION use `aria-live="polite"` (reserve `assertive` for critical errors)
 - Collapsed sections need `aria-expanded="false"`, expanded need `aria-expanded="true"`
 - Hidden elements need `aria-hidden="true"` to exclude from screen readers
 - Invalid form fields need `aria-invalid="true"`
@@ -33,7 +33,7 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ### 1.3 Images & Media
 
-- All `<img>` MUST have `alt` attribute
+- All `<img>` MUST ATTENTION have `alt` attribute
 - Decorative images: `alt=""` (empty, not missing)
 - Informative images: descriptive `alt` text explaining content/purpose
 - Complex images (charts, diagrams): provide long description or `aria-describedby`
@@ -56,7 +56,7 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ### 2.1 Focus Visibility
 
-- Interactive elements MUST have visible focus indicator
+- Interactive elements MUST ATTENTION have visible focus indicator
 - NEVER use `outline: none` or `outline-none` without replacement
 - Use `:focus-visible` over `:focus` (avoids focus ring on click)
 - Focus indicator minimum: 2px thick, 3:1 contrast against adjacent colors
@@ -81,7 +81,7 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ### 3.1 Labels & Association
 
-- Every input MUST have a visible `<label>` with `for`/`htmlFor` matching input `id`
+- Every input MUST ATTENTION have a visible `<label>` with `for`/`htmlFor` matching input `id`
 - OR wrap input inside `<label>` element
 - Placeholder is NOT a substitute for label
 - Group related inputs with `<fieldset>` and `<legend>`
@@ -119,10 +119,12 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 ```
 
@@ -200,7 +202,7 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ## 7. Images & Media
 
-- `<img>` MUST have explicit `width` and `height` attributes (prevents CLS)
+- `<img>` MUST ATTENTION have explicit `width` and `height` attributes (prevents CLS)
 - Below-fold images: `loading="lazy"`
 - Above-fold critical images: `fetchpriority="high"`
 - Use modern formats: WebP, AVIF
@@ -210,11 +212,11 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ## 8. Performance (Core Web Vitals)
 
-| Metric | Target | Key Actions |
-|--------|--------|-------------|
-| LCP | < 2.5s | Preload critical resources, optimize largest element |
-| CLS | < 0.1 | Specify image dimensions, reserve space for dynamic content |
-| INP | < 200ms | Avoid layout reads in render, debounce expensive handlers |
+| Metric | Target  | Key Actions                                                 |
+| ------ | ------- | ----------------------------------------------------------- |
+| LCP    | < 2.5s  | Preload critical resources, optimize largest element        |
+| CLS    | < 0.1   | Specify image dimensions, reserve space for dynamic content |
+| INP    | < 200ms | Avoid layout reads in render, debounce expensive handlers   |
 
 - Large lists (>50 items): virtualize
 - Paginate or infinite scroll for large datasets
@@ -268,7 +270,7 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ## 14. Hydration Safety (SSR/SSG)
 
-- Inputs with `value` prop MUST have `onChange` handler
+- Inputs with `value` prop MUST ATTENTION have `onChange` handler
 - Guard against hydration mismatch (server vs client timezone)
 - Dynamic content based on `window`/`localStorage`: render client-side only
 
@@ -276,7 +278,7 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ## 15. Interactive States
 
-- Buttons and links MUST have hover state
+- Buttons and links MUST ATTENTION have hover state
 - Disabled: `disabled` attribute + reduced opacity + `cursor: not-allowed`
 - Consider `aria-disabled="true"` if element should remain focusable
 
@@ -284,20 +286,20 @@ Comprehensive rules for reviewing web UI code against WCAG 2.2, Core Web Vitals,
 
 ## Anti-Patterns Quick Reference
 
-| Pattern | Issue |
-|---------|-------|
-| `user-scalable=no` or `maximum-scale=1` | Disables zoom -- accessibility violation |
-| `onPaste` + `preventDefault()` | Blocks paste -- UX hostile |
-| `transition: all` | Performance -- list properties explicitly |
-| `outline: none` without replacement | Removes focus indicator |
-| `<div onClick>` or `<span onClick>` | Should be `<button>` or `<a>` |
-| `<img>` without `width`/`height` | Causes layout shift (CLS) |
-| `<img>` without `alt` | Missing alt text |
-| Form inputs without `<label>` | Missing label |
-| Icon buttons without `aria-label` | Screen reader cannot identify action |
-| `tabindex` > 0 | Disrupts natural tab order |
-| Color-only indicators | Fails colorblind users |
-| Placeholder as label | Label disappears on input |
+| Pattern                                 | Issue                                     |
+| --------------------------------------- | ----------------------------------------- |
+| `user-scalable=no` or `maximum-scale=1` | Disables zoom -- accessibility violation  |
+| `onPaste` + `preventDefault()`          | Blocks paste -- UX hostile                |
+| `transition: all`                       | Performance -- list properties explicitly |
+| `outline: none` without replacement     | Removes focus indicator                   |
+| `<div onClick>` or `<span onClick>`     | Should be `<button>` or `<a>`             |
+| `<img>` without `width`/`height`        | Causes layout shift (CLS)                 |
+| `<img>` without `alt`                   | Missing alt text                          |
+| Form inputs without `<label>`           | Missing label                             |
+| Icon buttons without `aria-label`       | Screen reader cannot identify action      |
+| `tabindex` > 0                          | Disrupts natural tab order                |
+| Color-only indicators                   | Fails colorblind users                    |
+| Placeholder as label                    | Label disappears on input                 |
 
 ---
 

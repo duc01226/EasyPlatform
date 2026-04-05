@@ -11,7 +11,7 @@ const SUFFIX = `
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+**IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 `;

@@ -5,17 +5,17 @@ description: "[Project Management] Capture and structure product ideas as backlo
 allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
 **Goal:** Capture raw product ideas as structured backlog artifacts with project module context.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
 >
@@ -40,7 +40,7 @@ allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 **When greenfield is detected:**
 
 1. Skip module auto-detection from existing project (no modules exist yet)
-2. Skip "MUST READ project-structure-reference.md" (won't exist)
+2. Skip "MUST ATTENTION READ project-structure-reference.md" (won't exist)
 3. Focus on broader problem-space capture: market gap, competitors, differentiation
 4. Output tech-agnostic problem statement (no existing tech stack to reference)
 5. Enable web research for market/competitor context (WebSearch)
@@ -49,7 +49,7 @@ allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 
 - Validation step is mandatory, not optional
 - Auto-detect module silently; only prompt when ambiguous
-- MUST include rough `t_shirt_size` (XS/S/M/L/XL) in idea artifact for early sizing
+- MUST ATTENTION include rough `t_shirt_size` (XS/S/M/L/XL) in idea artifact for early sizing
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -166,7 +166,7 @@ Once module detected:
 
 ### Step 6.5: Idea Discovery Interview (MANDATORY)
 
-Use `AskUserQuestion` to probe the idea with 3-5 structured questions. Each question MUST have 2-4 options with one marked "(Recommended)".
+Use `AskUserQuestion` to probe the idea with 3-5 structured questions. Each question MUST ATTENTION have 2-4 options with one marked "(Recommended)".
 
 #### Question Categories (pick 3-5 based on idea type):
 
@@ -310,7 +310,7 @@ Creates with ServiceB context: `team-artifacts/ideas/260119-po-idea-goal-progres
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `idea-to-pbi` workflow** (Recommended) — idea → refine → refine-review → story → story-review → prioritize
 > 2. **Execute `/idea` directly** — run this skill standalone
@@ -319,7 +319,7 @@ Creates with ServiceB context: `team-artifacts/ideas/260119-po-idea-goal-progres
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/refine (Recommended)"** — Transform idea into actionable PBI
 - **"/web-research"** — If idea needs market research first
@@ -327,6 +327,6 @@ Creates with ServiceB context: `team-artifacts/ideas/260119-po-idea-goal-progres
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

@@ -12,7 +12,7 @@ maxTurns: 45
 
 ## ⚠️ MANDATORY: Read Project E2E Reference (FIRST)
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 **BEFORE ANY E2E WORK:**
@@ -52,7 +52,7 @@ Generate and maintain E2E tests using the project's configured testing framework
 
 ### TC Code Traceability (MANDATORY)
 
-Every test MUST have TC code: `TC-{MODULE}-E2E-{NNN}`
+Every test MUST ATTENTION have TC code: `TC-{MODULE}-E2E-{NNN}`
 
 ### Page Object Model
 
@@ -80,7 +80,7 @@ Encapsulate locators in page classes, methods represent user actions.
 
 ## Reference Docs
 
-> **MUST READ** before generating tests:
+> **MUST ATTENTION READ** before generating tests:
 >
 > - `docs/project-reference/e2e-test-reference.md` — Project-specific patterns
 > - `docs/project-config.json` — e2eTesting section

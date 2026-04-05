@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Code Quality] Run quality gate checklist. Use for pre-release, pre-dev, or pre-QA quality verification.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:understand-code-first -->
 
@@ -56,7 +56,7 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -78,7 +78,7 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 - [ ] Dependencies identified and available
 - [ ] Design specs available (if UI work)
 - [ ] No blocking questions unresolved
-- [ ] Story points assigned (Fibonacci 1-21: 1=trivial, 2=small, 3=medium, 5=large, 8=very large, 13=epic SHOULD split, 21=MUST split)
+- [ ] Story points assigned (Fibonacci 1-21: 1=trivial, 2=small, 3=medium, 5=large, 8=very large, 13=epic SHOULD split, 21=MUST ATTENTION split)
 
 ### Pre-QA Gate
 
@@ -101,8 +101,8 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 
 > **[IMPORTANT] Database Performance Protocol (MANDATORY):**
 >
-> 1. **Paging Required** — ALL list/collection queries MUST use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
-> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+> 1. **Paging Required** — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
 
 - [ ] All list queries use pagination (no unbounded GetAll/ToList)
 - [ ] Query filter fields have matching database indexes
@@ -128,7 +128,7 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 1. [Specific item that must be resolved]
 ```
 
-## IMPORTANT Task Planning Notes (MUST FOLLOW)
+## IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
@@ -137,7 +137,7 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `pre-development` workflow** (Recommended) — quality-gate → plan → plan-review → plan-validate
 > 2. **Execute `/quality-gate` directly** — run this skill standalone
@@ -146,17 +146,17 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-      <!-- SYNC:understand-code-first:reminder -->
-- **MUST** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:graph-impact-analysis:reminder -->
-- **MUST** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
-      <!-- /SYNC:graph-impact-analysis:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
-- **MUST** read frontend-patterns-reference, scss-styling-guide, and design-system/README before any UI work.
-      <!-- /SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+    <!-- SYNC:understand-code-first:reminder -->
+- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:graph-impact-analysis:reminder -->
+- **IMPORTANT MUST ATTENTION** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
+    <!-- /SYNC:graph-impact-analysis:reminder -->
+    <!-- SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, and design-system/README before any UI work.
+    <!-- /SYNC:ui-system-context:reminder -->

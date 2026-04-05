@@ -164,7 +164,7 @@ function buildSkillActivation(config) {
         });
 
     if (rows.length === 0) return null;
-    return `When working in specific areas, these skills MUST be automatically activated BEFORE any file creation or modification:\n\n| Path Pattern | Skill / Auto-Context | Pre-Read Files |\n|---|---|---|\n${rows.join('\n')}`;
+    return `When working in specific areas, these skills MUST ATTENTION be automatically activated BEFORE any file creation or modification:\n\n| Path Pattern | Skill / Auto-Context | Pre-Read Files |\n|---|---|---|\n${rows.join('\n')}`;
 }
 
 function buildDocIndex(config, projectDir) {

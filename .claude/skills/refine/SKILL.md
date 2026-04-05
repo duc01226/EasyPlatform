@@ -5,11 +5,11 @@ description: "[Project Management] Transform ideas into Product Backlog Items us
 allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQuestion, Bash
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 - `docs/test-specs/` — Test specifications by module (read existing TCs for related features; recommend test spec generation for new PBIs)
 
@@ -38,7 +38,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
 >
-> **MUST READ before implementing:**
+> **MUST ATTENTION READ before implementing:**
 >
 > 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
 > 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
@@ -55,11 +55,11 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
 - Never skip hypothesis validation for new features
 - Validation interview is NOT optional — always ask 3-5 questions
 - Use project domain-specific vocabulary when available
-- MUST include `story_points` and `complexity` in PBI output
+- MUST ATTENTION include `story_points` and `complexity` in PBI output
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 - <!-- SYNC:scaffold-production-readiness -->
 
-    > **Scaffold Production Readiness** — Every scaffolded project MUST include 4 foundations:
+    > **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 4 foundations:
     >
     > 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates
     > 2. **Error Handling Foundation** — HTTP error interception, classification, user notification patterns
@@ -68,7 +68,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
     >
     > Present 2-3 options per concern via AskUserQuestion. Verify each checklist before marking scaffold complete.
 
-      <!-- /SYNC:scaffold-production-readiness -->
+                <!-- /SYNC:scaffold-production-readiness -->
 
     — for Production Readiness Concerns table in PBI output
 
@@ -82,7 +82,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
     > 4. **Performance** — no N+1 queries, unnecessary allocations, or blocking calls in async paths
     > 5. **Observability** — health checks, metrics, tracing spans for new endpoints
 
-      <!-- /SYNC:cross-cutting-quality -->
+                <!-- /SYNC:cross-cutting-quality -->
 
     — for Authorization, Seed Data, Data Migration concerns in PBI output
 
@@ -321,7 +321,7 @@ Document in PBI under `## Testability Assessment`.
 
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
 
 <!-- /SYNC:estimation-framework -->
 
@@ -600,7 +600,7 @@ Then error "{message}"
 
 ## Key Rules
 
-- **Every PBI MUST include a Dependencies table** — with types: `must-before`, `can-parallel`, `blocked-by`, `independent`. This enables `/prioritize` and `/plan` to respect ordering.
+- **Every PBI MUST ATTENTION include a Dependencies table** — with types: `must-before`, `can-parallel`, `blocked-by`, `independent`. This enables `/prioritize` and `/plan` to respect ordering.
 - **No vague dependency descriptions** — Each dependency must specify the concrete PBI, service, or feature and WHY the relationship exists.
 
 ## Definition of Ready (INVEST)
@@ -637,7 +637,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/story (Recommended)"** — Break PBI into implementable user stories
 - **"/pbi-mockup"** — Generate HTML mockup report from PBI
@@ -646,21 +646,21 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:ui-system-context:reminder -->
 
-- **MUST** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+      <!-- /SYNC:ui-system-context:reminder -->
       <!-- SYNC:scaffold-production-readiness:reminder -->
-- **MUST** verify 4 production-readiness foundations (code quality, error handling, loading state, Docker) for scaffold PBIs.
-      <!-- /SYNC:scaffold-production-readiness:reminder -->
-      <!-- SYNC:cross-cutting-quality:reminder -->
-- **MUST** check error handling, logging, security, performance, and observability across changed files.
-      <!-- /SYNC:cross-cutting-quality:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
-- **MUST** estimate story points using Modified Fibonacci (1-21). SP >8 MUST split, >5 SHOULD split.
-      <!-- /SYNC:estimation-framework:reminder -->
+- **IMPORTANT MUST ATTENTION** verify 4 production-readiness foundations (code quality, error handling, loading state, Docker) for scaffold PBIs.
+    <!-- /SYNC:scaffold-production-readiness:reminder -->
+    <!-- SYNC:cross-cutting-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** check error handling, logging, security, performance, and observability across changed files.
+    <!-- /SYNC:cross-cutting-quality:reminder -->
+    <!-- SYNC:estimation-framework:reminder -->
+- **IMPORTANT MUST ATTENTION** estimate story points using Modified Fibonacci (1-21). SP >8 MUST ATTENTION split, >5 SHOULD split.
+    <!-- /SYNC:estimation-framework:reminder -->

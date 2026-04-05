@@ -201,7 +201,7 @@ ID: [agent_id] | CWD: [working_directory]
 - Paths: plans/ | docs/
 
 ## Rules
-- **MUST READ:** .claude/docs/development-rules.md before implementation
+- **MUST ATTENTION READ:** .claude/docs/development-rules.md before implementation
 - Reports → [reports_path]
 - YAGNI / KISS / DRY
 - Class Responsibility: Logic in LOWEST layer

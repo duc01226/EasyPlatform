@@ -5,7 +5,7 @@ description: "[Project Management] Assist Business Analysts with requirements re
 allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, Bash
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,7 +23,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, Bash
 - Always reference existing business rules from `docs/business-features/` before creating new ones
 - User stories must pass INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 - Include entity context and related domain model in every story
-- MUST include `story_points` and `complexity` in all PBI/story outputs
+- MUST ATTENTION include `story_points` and `complexity` in all PBI/story outputs
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -451,7 +451,7 @@ Add to user story/PBI:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

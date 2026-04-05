@@ -11,11 +11,11 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '../..');
-const SUFFIX_MARKER = '**IMPORTANT Task Planning Notes (MUST FOLLOW)**';
+const SUFFIX_MARKER = '**IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**';
 
 const SUFFIX_NOTE = `
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+**IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

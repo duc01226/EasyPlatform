@@ -6,7 +6,7 @@ description: '[Documentation] Sync test specifications between feature docs and 
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 - `docs/test-specs/` — Test specifications dashboard (canonical sync target; read all module READMEs before syncing)
 
@@ -23,8 +23,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 **Key Rules:**
 
 - Test case IDs follow `TC-{FEATURE}-{NNN}` format
-- Every test case MUST reference actual source code (anti-hallucination)
-- MUST READ `references/test-spec-template.md` before executing
+- Every test case MUST ATTENTION reference actual source code (anti-hallucination)
+- MUST ATTENTION READ `references/test-spec-template.md` before executing
 - Verify IDs against PRIORITY-INDEX.md to avoid duplicates
 - **Source of truth:** Feature docs Section 17 is the canonical TC registry. This skill SYNCS from there.
 
@@ -39,7 +39,7 @@ Before implementation, search your codebase for project-specific patterns:
 - Search for: `test-specs`, `TC-`, test specifications
 - Look for: existing test spec folders, priority indexes, module test documents
 
-> **MANDATORY IMPORTANT MUST** Read the `integration-test-reference.md` companion doc for project-specific patterns and code examples.
+> **MANDATORY IMPORTANT MUST ATTENTION** Read the `integration-test-reference.md` companion doc for project-specific patterns and code examples.
 > If file not found, continue with search-based discovery above.
 
 # Test Specifications Documentation
@@ -50,7 +50,7 @@ Generate comprehensive test specifications following project conventions with Gi
 
 ## Prerequisites
 
-**MUST READ** `references/test-spec-template.md` before executing -- contains full module test spec template, Given-When-Then best practices, acceptance criteria format, evidence requirements, and complete example required by Phase 2.
+**MUST ATTENTION READ** `references/test-spec-template.md` before executing -- contains full module test spec template, Given-When-Then best practices, acceptance criteria format, evidence requirements, and complete example required by Phase 2.
 
 ## Output Structure
 
@@ -105,7 +105,7 @@ When creating new `TC-{FEATURE}-{NNN}` codes:
 
 ### Phase 2: Write Test Specifications
 
-**⚠️ MUST READ:** `references/test-spec-template.md` for full module template, GWT best practices, and complete example.
+**⚠️ MUST ATTENTION READ:** `references/test-spec-template.md` for full module template, GWT best practices, and complete example.
 
 Each test case requires: Priority, Preconditions, Given-When-Then steps, Acceptance Criteria (success + failure), Test Data (JSON), Edge Cases, Evidence (controller + handler refs + code snippets), Related Files table.
 
@@ -134,7 +134,7 @@ When user says "sync test specs to feature docs" or "reverse sync":
 
 ## Anti-Hallucination Protocols
 
-- Every test case MUST reference actual source code
+- Every test case MUST ATTENTION reference actual source code
 - Read validation logic before writing acceptance criteria
 - Verify authorization policies from controller attributes
 - Verify line numbers are current using Grep
@@ -167,11 +167,11 @@ When user says "sync test specs to feature docs" or "reverse sync":
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
-  **MANDATORY IMPORTANT MUST** READ the following files before starting:
-- **MUST** READ `references/test-spec-template.md` before starting
-- **MUST** READ `docs/project-reference/feature-docs-reference.md` for TC ID formats and feature codes
-- **MUST** READ `CLAUDE.md` before starting
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **IMPORTANT MUST ATTENTION** READ `references/test-spec-template.md` before starting
+- **IMPORTANT MUST ATTENTION** READ `docs/project-reference/feature-docs-reference.md` for TC ID formats and feature codes
+- **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting

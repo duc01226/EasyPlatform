@@ -4,7 +4,7 @@ version: 3.0.0
 description: '[Workflow] Trigger Code Review workflow — review, fix, and re-review recursively until all issues resolved.'
 ---
 
-> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `review` workflow. Run `/workflow-start review` with the user's prompt as context.
 
@@ -86,8 +86,8 @@ This workflow is **self-recursive**. After fixing issues, it calls itself to re-
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** track iteration count — log "Review iteration N/3" at start of each cycle
-- **MUST** stop after max 3 iterations and escalate remaining issues to user
-- **MUST** skip plan/cook/recursive-call when all reviews PASS
-- **MUST** cite `file:line` evidence for every finding (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION** track iteration count — log "Review iteration N/3" at start of each cycle
+- **IMPORTANT MUST ATTENTION** stop after max 3 iterations and escalate remaining issues to user
+- **IMPORTANT MUST ATTENTION** skip plan/cook/recursive-call when all reviews PASS
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every finding (confidence >80% to act)

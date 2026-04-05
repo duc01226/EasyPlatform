@@ -4,9 +4,9 @@ version: 1.1.0
 description: '[Planning] Start a new project from scratch with full waterfall inception — idea, research, domain modeling, tech stack, and implementation plan'
 ---
 
-**MANDATORY IMPORTANT MUST** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST** use `AskUserQuestion` at EVERY stage — validate decisions before proceeding.
-**MANDATORY IMPORTANT MUST** NEVER ask tech stack upfront — business analysis and domain modeling first.
+**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY stage — validate decisions before proceeding.
+**MANDATORY IMPORTANT MUST ATTENTION** NEVER ask tech stack upfront — business analysis and domain modeling first.
 
 ## Quick Summary
 
@@ -35,11 +35,11 @@ description: '[Planning] Start a new project from scratch with full waterfall in
 
 - PLANNING ONLY: never implement code
 - Every stage saves artifacts to plan directory
-- **MANDATORY IMPORTANT MUST** every stage requires `AskUserQuestion` validation before proceeding
+- **MANDATORY IMPORTANT MUST ATTENTION** every stage requires `AskUserQuestion` validation before proceeding
 - Delegate architecture decisions to `solution-architect` agent
 - Present 2-4 options for every major decision with confidence %
 - **Business-First Protocol:** Tech stack is NEVER asked upfront. Business analysis (steps 1-5) + domain modeling (step 6) must complete first. Tech stack is derived from requirements through research and presented as a comparison report with options.
-- **MANDATORY IMPORTANT MUST** architecture design and scaffold steps MUST include code quality gate tooling setup — linter, static analyzer, formatter, pre-commit hooks, CI quality gates, and build-time enforcement are NON-SKIPPABLE infrastructure.
+- **MANDATORY IMPORTANT MUST ATTENTION** architecture design and scaffold steps MUST ATTENTION include code quality gate tooling setup — linter, static analyzer, formatter, pre-commit hooks, CI quality gates, and build-time enforcement are NON-SKIPPABLE infrastructure.
 
 ## Entry Point
 
@@ -94,15 +94,15 @@ After completion, recommend next step: `/cook` to scaffold the project structure
 
 ---
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks — one per workflow step.
-**MANDATORY IMPORTANT MUST** validate with user at EVERY step — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality and identify fixes/enhancements.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks — one per workflow step.
+**MANDATORY IMPORTANT MUST ATTENTION** validate with user at EVERY step — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality and identify fixes/enhancements.
 
 ---
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

@@ -6,7 +6,7 @@ description: "[Investigation] Fast codebase file discovery for task-related file
 allowed-tools: Glob, Grep, Read, Bash, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -44,7 +44,7 @@ allowed-tools: Glob, Grep, Read, Bash, Task, TaskCreate
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -54,7 +54,7 @@ allowed-tools: Glob, Grep, Read, Bash, Task, TaskCreate
 
 1. **Analyze Request** — Extract entity names, feature keywords, file types from prompt
 2. **Parallel Search** — Spawn 3 agents searching backend core, backend infra, and frontend paths
-3. **Graph Expand (MANDATORY — DO NOT SKIP)** — **YOU MUST** run `/graph-query` on 2-3 key files found in Step 2. This is NOT optional. Graph reveals the complete dependency network that grep alone CANNOT find. Use `/graph-connect-api` for frontend↔backend API tracing. Without this step, investigation results are incomplete.
+3. **Graph Expand (MANDATORY — DO NOT SKIP)** — **YOU MUST ATTENTION** run `/graph-query` on 2-3 key files found in Step 2. This is NOT optional. Graph reveals the complete dependency network that grep alone CANNOT find. Use `/graph-connect-api` for frontend↔backend API tracing. Without this step, investigation results are incomplete.
 4. **Synthesize** — Combine grep + graph results into numbered, prioritized file list with suggested starting points
 
 **Key Rules:**
@@ -128,7 +128,7 @@ Spawn SCALE number of `scout` subagents in parallel using Agent tool (`subagent_
 
 ### Step 3: Graph Expand (MANDATORY — DO NOT SKIP)
 
-**YOU (the main agent) MUST run these graph commands YOURSELF after sub-agents return.** This step is NOT optional — without graph, results are incomplete. Sub-agents cannot use graph — only you can.
+**YOU (the main agent) MUST ATTENTION run these graph commands YOURSELF after sub-agents return.** This step is NOT optional — without graph, results are incomplete. Sub-agents cannot use graph — only you can.
 
 ```bash
 # Check graph exists
@@ -199,7 +199,7 @@ Combine grep + graph results into a **numbered, prioritized file list** (see Res
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -324,7 +324,7 @@ Use naming pattern: `plans/reports/scout-{date}-{slug}.md`
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `investigation` workflow** (Recommended) — scout → investigate
 > 2. **Execute `/scout` directly** — run this skill standalone
@@ -333,7 +333,7 @@ Use naming pattern: `plans/reports/scout-{date}-{slug}.md`
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/investigate (Recommended)"** — Deep-dive into discovered files to understand logic and relationships
 - **"/plan"** — If scouted files are sufficient to start planning implementation
@@ -341,18 +341,18 @@ Use naming pattern: `plans/reports/scout-{date}-{slug}.md`
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
   <!-- SYNC:evidence-based-reasoning:reminder -->
 
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
     <!-- SYNC:rationalization-prevention:reminder -->
-- **MUST** never skip steps via evasions. Plan anyway. Test first. Show grep evidence with `file:line`.
-      <!-- /SYNC:rationalization-prevention:reminder -->
+- **IMPORTANT MUST ATTENTION** never skip steps via evasions. Plan anyway. Test first. Show grep evidence with `file:line`.
+    <!-- /SYNC:rationalization-prevention:reminder -->
     <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MUST** run at least ONE graph command on key files before concluding when `.code-graph/graph.db` exists.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
+- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding when `.code-graph/graph.db` exists.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->

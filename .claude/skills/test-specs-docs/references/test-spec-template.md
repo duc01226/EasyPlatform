@@ -163,7 +163,7 @@ Then it works
 
 ## Evidence Requirements
 
-Every test case MUST include:
+Every test case MUST ATTENTION include:
 
 1. **Controller reference**: File path + line numbers + authorization policies
 2. **Handler/Command reference**: File path + line numbers for business logic

@@ -14,14 +14,14 @@ maxTurns: 45
 
 ## Role
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 Execute plan phases for the project with strict file ownership boundaries. Receives coding pattern context from `subagent-init.cjs` hook automatically.
 
 ## Project Context
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
 >
 > - `docs/project-reference/frontend-patterns-reference.md` — component hierarchy, stores, forms, services
 > - `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins
@@ -119,7 +119,7 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
 
 ## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
 
-After grep/search finds key files, you MUST use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
+After grep/search finds key files, you MUST ATTENTION use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
 
 ```bash
 python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow (BEST FIRST CHOICE)

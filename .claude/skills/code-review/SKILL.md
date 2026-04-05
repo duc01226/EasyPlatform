@@ -5,7 +5,7 @@ description: '[Code Quality] Use when receiving code review feedback (especially
 allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -27,7 +27,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 > **Design Patterns Quality** — Priority checks for every code change:
 >
-> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION share base class. 3+ similar patterns → extract to shared abstraction.
 > 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
 > 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
 > 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
@@ -66,7 +66,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 <!-- SYNC:rationalization-prevention -->
 
@@ -87,7 +87,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 > **Logic & Intention Review** — Verify WHAT code does matches WHY it was changed.
 >
-> 1. **Change Intention Check:** Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
+> 1. **Change Intention Check:** Every changed file MUST ATTENTION serve the stated purpose. Flag unrelated changes as scope creep.
 > 2. **Happy Path Trace:** Walk through one complete success scenario through changed code
 > 3. **Error Path Trace:** Walk through one failure/edge case scenario through changed code
 > 4. **Acceptance Mapping:** If plan context available, map every acceptance criterion to a code change
@@ -97,7 +97,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 <!-- /SYNC:logic-and-intention-review -->
 <!-- SYNC:bug-detection -->
 
-> **Bug Detection** — MUST check categories 1-4 for EVERY review. Never skip.
+> **Bug Detection** — MUST ATTENTION check categories 1-4 for EVERY review. Never skip.
 >
 > 1. **Null Safety:** Can params/returns be null? Are they guarded? Optional chaining gaps? `.find()` returns checked?
 > 2. **Boundary Conditions:** Off-by-one (`<` vs `<=`)? Empty collections handled? Zero/negative values? Max limits?
@@ -114,7 +114,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 > **Test Spec Verification** — Map changed code to test specifications.
 >
 > 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
-> 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC")
+> 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
 > 5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
@@ -124,13 +124,13 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 <!-- /SYNC:test-spec-verification -->
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 ## Quick Summary
 
 **Goal:** Ensure technical correctness through three practices: receiving feedback with verification over performative agreement, requesting systematic reviews via code-reviewer subagent, and enforcing verification gates before completion claims.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
 > - `backend-patterns-reference.md` — backend CQRS, validation, entity patterns
@@ -161,7 +161,7 @@ Three practices: (1) Receiving feedback with technical rigor, (2) Requesting sys
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
 >
-> **HARD-GATE:** MUST run at least ONE graph command on key files before concluding any investigation.
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
 >
 > **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
 >
@@ -190,16 +190,16 @@ Three practices: (1) Receiving feedback with technical rigor, (2) Requesting sys
 
 ## Core Principles (ENFORCE ALL)
 
-| Principle          | Rule                                                                                              |
-| ------------------ | ------------------------------------------------------------------------------------------------- |
-| **YAGNI**          | Flag code solving hypothetical problems (unused params, speculative interfaces)                   |
-| **KISS**           | Flag unnecessary complexity. "Is there a simpler way?"                                            |
-| **DRY**            | Grep for similar/duplicate code. 3+ similar patterns → flag for extraction                        |
-| **Clean Code**     | Readable > clever. Names reveal intent. Functions do ONE thing. Nesting <=3. Methods <30 lines    |
-| **Convention**     | MUST grep 3+ existing examples before flagging violations. Codebase convention wins over textbook |
-| **No Bugs**        | Trace logic paths. Verify edge cases (null, empty, boundary). Check error handling                |
-| **Proof Required** | Every claim backed by `file:line` evidence. Speculation is forbidden                              |
-| **Doc Staleness**  | Cross-ref changed files against related docs. Flag stale/missing updates                          |
+| Principle          | Rule                                                                                                        |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| **YAGNI**          | Flag code solving hypothetical problems (unused params, speculative interfaces)                             |
+| **KISS**           | Flag unnecessary complexity. "Is there a simpler way?"                                                      |
+| **DRY**            | Grep for similar/duplicate code. 3+ similar patterns → flag for extraction                                  |
+| **Clean Code**     | Readable > clever. Names reveal intent. Functions do ONE thing. Nesting <=3. Methods <30 lines              |
+| **Convention**     | MUST ATTENTION grep 3+ existing examples before flagging violations. Codebase convention wins over textbook |
+| **No Bugs**        | Trace logic paths. Verify edge cases (null, empty, boundary). Check error handling                          |
+| **Proof Required** | Every claim backed by `file:line` evidence. Speculation is forbidden                                        |
+| **Doc Staleness**  | Cross-ref changed files against related docs. Flag stale/missing updates                                    |
 
 **Technical correctness over social comfort.** Verify before implementing. Evidence before claims.
 
@@ -250,9 +250,9 @@ After ALL files reviewed, **re-read accumulated report** to see big picture:
 - **Plan Compliance (if active plan exists):** Check `## Plan Context` → if plan path exists, verify: implementation matches plan requirements, plan TCs have code evidence (not "TBD"), no plan requirement unaddressed
 - **Design Patterns** (per `design-patterns-quality-checklist.md`): Pattern opportunities (switch→Strategy, scattered new→Factory)? Anti-patterns (God Object, Copy-Paste, Circular Dependency)? DRY via base classes/generics? Right responsibility layer? Tech-agnostic abstractions?
 
-**MUST CHECK — Clean Code:** YAGNI (unused params, speculative interfaces)? KISS (simpler alternative exists)? Methods >30 lines or nesting >3? Abstractions for single-use?
+**MUST ATTENTION CHECK — Clean Code:** YAGNI (unused params, speculative interfaces)? KISS (simpler alternative exists)? Methods >30 lines or nesting >3? Abstractions for single-use?
 
-**MUST CHECK — Correctness:** Null/empty/boundary handled? Error paths caught and propagated? Async race conditions? Trace one happy path + one error path through business logic.
+**MUST ATTENTION CHECK — Correctness:** Null/empty/boundary handled? Error paths caught and propagated? Async race conditions? Trace one happy path + one error path through business logic.
 
 **Documentation Staleness Check:**
 
@@ -290,7 +290,7 @@ After completing Phase 3 (Round 1), execute a **second full review round**:
 4. **Update report** with `## Round 2 Findings` section
 5. **Final verdict** must incorporate findings from BOTH rounds
 
-## Clean Code Rules (MUST CHECK)
+## Clean Code Rules (MUST ATTENTION CHECK)
 
 | #   | Rule                      | Details                                                                                                                                 |
 | --- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -302,7 +302,7 @@ After completing Phase 3 (Round 1), execute a **second full review round**:
 | 6   | **Performance**           | No O(n²) (use dictionary). Project in query (not load-all). ALWAYS paginate. Batch-by-IDs (not N+1)                                     |
 | 7   | **Entity Indexes**        | Collections: index management methods. EF Core: composite indexes. Expression fields match index order. Text search → text indexes      |
 
-## Data Lifecycle Rules (MUST CHECK)
+## Data Lifecycle Rules (MUST ATTENTION CHECK)
 
 **Decision test:** _"Delete DB and start fresh — does this data still need to exist?"_ Yes → **Seeder**. No → **Migration**.
 
@@ -320,7 +320,7 @@ class ApplicationDataSeeder { if (exists) return; else create(); }
 
 ## Legacy Frontend Pattern Compliance
 
-When reviewing legacy frontend apps (check `docs/project-config.json` → `modules[].tags` for `"legacy"`), MUST verify:
+When reviewing legacy frontend apps (check `docs/project-config.json` → `modules[].tags` for `"legacy"`), MUST ATTENTION verify:
 
 - [ ] Component extends base component class (search for: app base component hierarchy) with `super(...)` in constructor
 - [ ] Uses subscription cleanup pattern (search for: subscription cleanup pattern) — NO manual `Subject` destroy
@@ -340,7 +340,7 @@ export class MyComponent implements OnInit, OnDestroy { }
 
 ## When to Use This Skill
 
-| Practice               | Triggers                                                                                   | MUST READ                                      |
+| Practice               | Triggers                                                                                   | MUST ATTENTION READ                            |
 | ---------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------- |
 | **Receiving Feedback** | Review comments received, feedback unclear/questionable, conflicts with existing decisions | `references/code-review-reception.md`          |
 | **Requesting Review**  | After each subagent task, major feature done, before merge, after complex bug fix          | `references/requesting-code-review.md`         |
@@ -371,9 +371,9 @@ SITUATION?
 
 - NEVER use performative agreement ("You're right!", "Great point!", "Thanks for...")
 - NEVER implement before verification
-- MUST restate requirement, ask questions, or push back with technical reasoning
-- MUST ask for clarification on ALL unclear items BEFORE starting
-- MUST grep for usage before implementing suggested "proper" features (YAGNI check)
+- MUST ATTENTION restate requirement, ask questions, or push back with technical reasoning
+- MUST ATTENTION ask for clarification on ALL unclear items BEFORE starting
+- MUST ATTENTION grep for usage before implementing suggested "proper" features (YAGNI check)
 
 **Source handling:** Human partner → implement after understanding. External reviewer → verify technically, push back if wrong.
 
@@ -420,7 +420,7 @@ SITUATION?
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `quality-audit` workflow** (Recommended) — code-review → plan → code → review-changes → test
 > 2. **Execute `/code-review` directly** — run this skill standalone
@@ -444,7 +444,7 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/fix (Recommended)"** — If review found issues that need fixing
 - **"/watzup"** — If review is clean, wrap up session
@@ -462,33 +462,33 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
-- **MUST** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
-  <!-- SYNC:design-patterns-quality:reminder -->
-- **MUST** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
-  <!-- /SYNC:design-patterns-quality:reminder -->
-  <!-- SYNC:double-round-trip-review:reminder -->
-- **MUST** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
-  <!-- /SYNC:double-round-trip-review:reminder -->
-  <!-- SYNC:rationalization-prevention:reminder -->
-- **MUST** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-  <!-- /SYNC:rationalization-prevention:reminder -->
-  <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MUST** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-  <!-- /SYNC:graph-assisted-investigation:reminder -->
-  <!-- SYNC:logic-and-intention-review:reminder -->
-- **MUST** verify every changed file serves stated purpose. Trace happy + error paths. Flag scope creep.
-  <!-- /SYNC:logic-and-intention-review:reminder -->
-  <!-- SYNC:bug-detection:reminder -->
-- **MUST** check null safety, boundary conditions, error handling, resource management for every review.
-  <!-- /SYNC:bug-detection:reminder -->
-  <!-- SYNC:test-spec-verification:reminder -->
-- **MUST** map every changed function/endpoint to a TC-{FEAT}-{NNN}. Flag gaps, recommend `/tdd-spec`.
-      <!-- /SYNC:test-spec-verification:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:design-patterns-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
+    <!-- /SYNC:design-patterns-quality:reminder -->
+    <!-- SYNC:double-round-trip-review:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
+    <!-- /SYNC:double-round-trip-review:reminder -->
+    <!-- SYNC:rationalization-prevention:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+    <!-- /SYNC:rationalization-prevention:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->
+    <!-- SYNC:logic-and-intention-review:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** verify every changed file serves stated purpose. Trace happy + error paths. Flag scope creep.
+    <!-- /SYNC:logic-and-intention-review:reminder -->
+    <!-- SYNC:bug-detection:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** check null safety, boundary conditions, error handling, resource management for every review.
+    <!-- /SYNC:bug-detection:reminder -->
+    <!-- SYNC:test-spec-verification:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** map every changed function/endpoint to a TC-{FEAT}-{NNN}. Flag gaps, recommend `/tdd-spec`.
+  <!-- /SYNC:test-spec-verification:reminder -->

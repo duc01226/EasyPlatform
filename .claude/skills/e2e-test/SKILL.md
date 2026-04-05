@@ -18,7 +18,7 @@ Generate and maintain E2E tests using the project's configured testing framework
 
 ## ⚠️ MANDATORY: Read Project E2E Reference (FIRST)
 
-**BEFORE ANY E2E WORK, you MUST:**
+**BEFORE ANY E2E WORK, you MUST ATTENTION:**
 
 ```bash
 # 1. Read project-specific E2E patterns (REQUIRED)
@@ -79,7 +79,7 @@ grep -r "Selenium.WebDriver\|Microsoft.Playwright" **/*.csproj 2>/dev/null
 
 ### 1. TC Code Traceability (MANDATORY)
 
-**Every E2E test MUST have:**
+**Every E2E test MUST ATTENTION have:**
 
 - TC code in test name: `TC-{MODULE}-E2E-{NNN}`
 - Tag/trait linking to spec
@@ -156,7 +156,7 @@ Report:
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `e2e-from-changes` workflow** (Recommended) — scout → e2e-test → test → watzup
 > 2. **Execute `/e2e-test` directly** — run this skill standalone
@@ -165,7 +165,7 @@ Report:
 
 ## Closing Reminders
 
-- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MUST** search codebase for 3+ similar patterns before creating new code
-- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MUST** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

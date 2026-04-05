@@ -45,7 +45,7 @@
 - Read and understand existing code before making changes
 - Validate assumptions with grep/read evidence, never guess
 - Search for existing patterns before creating new ones
-- **MUST USE graph trace** on key files when `.code-graph/graph.db` exists — after grep finds entry points, **STOP AND DECIDE:** run `python .claude/scripts/code_graph trace <file> --direction both --json` NOW. Use `--node-mode file` for overview (10-30x less noise), `--node-mode function` for detail. Graph reveals callers, importers, bus messages, event chains that grep cannot find. See CLAUDE.md "Graph Intelligence" section.
+- **MUST ATTENTION USE graph trace** on key files when `.code-graph/graph.db` exists — after grep finds entry points, **STOP AND DECIDE:** run `python .claude/scripts/code_graph trace <file> --direction both --json` NOW. Use `--node-mode file` for overview (10-30x less noise), `--node-mode function` for detail. Graph reveals callers, importers, bus messages, event chains that grep cannot find. See CLAUDE.md "Graph Intelligence" section.
 
 ## Code Quality Guidelines
 
@@ -64,14 +64,14 @@
 
 ## Code Step Rule (Universal — All Languages)
 
-**[CRITICAL]** Code is a tree of steps. Formatting MUST reveal the tree structure.
+**[CRITICAL]** Code is a tree of steps. Formatting MUST ATTENTION reveal the tree structure.
 
 ### Three Rules
 
 | Rule                                      | Meaning                                                                                                  | C# Analyzer                                                         |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **No blank line** between statements      | Same step — independent/parallel work                                                                    | `STEP002` warns if blank line exists between independent statements |
-| **Blank line** between statements         | New step — MUST consume all outputs from previous step                                                   | `STEP001` warns if missing; `STEP003` warns if outputs not consumed |
+| **Blank line** between statements         | New step — MUST ATTENTION consume all outputs from previous step                                         | `STEP001` warns if missing; `STEP003` warns if outputs not consumed |
 | **No flat mixing** of unrelated sub-tasks | If tasks A1 and A2 are independent but each has sub-steps, don't flatten all sub-steps into one sequence | Detected by STEP001/STEP002 combination                             |
 
 ### Anti-Pattern: Flat Mixing
@@ -150,7 +150,7 @@ The step rule naturally tells you when extraction is needed:
 
 ## Task Decomposition & Iterative Quality
 
-> **Iterative Phase Quality** — Score complexity before planning. Score >=6 → MUST decompose into phases.
+> **Iterative Phase Quality** — Score complexity before planning. Score >=6 → MUST ATTENTION decompose into phases.
 > Each phase: <=5 files, <=3h effort, plan → implement → review → fix → verify. No skipping.
 
 - **Principle:** Break large tasks into small phases. Each phase: plan → implement → review → fix → verify
@@ -203,10 +203,10 @@ After completing code changes, check for stale documentation:
 
 ## Closing Reminders
 
-- **MUST** understand existing code FIRST — read, grep 3+ patterns, run graph trace before ANY modification
-- **MUST** follow Code Step Rule — no blank line = same step (parallel), blank line = new step (consume all previous outputs). Fix via extract function or chaining.
-- **MUST** place logic in LOWEST layer: Entity/Model > Service > Component/Handler
-- **MUST** ensure zero broken builds — code must compile with no syntax errors
-- **MUST** follow YAGNI/KISS/DRY — no speculative abstractions
-- **MUST** run doc review at session wrap-up (map changed files → affected docs)
-- **MUST** activate relevant skills from catalog during the process
+- **MANDATORY IMPORTANT MUST ATTENTION** understand existing code FIRST — read, grep 3+ patterns, run graph trace before ANY modification
+- **MANDATORY IMPORTANT MUST ATTENTION** follow Code Step Rule — no blank line = same step (parallel), blank line = new step (consume all previous outputs). Fix via extract function or chaining.
+- **MANDATORY IMPORTANT MUST ATTENTION** place logic in LOWEST layer: Entity/Model > Service > Component/Handler
+- **MANDATORY IMPORTANT MUST ATTENTION** ensure zero broken builds — code must compile with no syntax errors
+- **MANDATORY IMPORTANT MUST ATTENTION** follow YAGNI/KISS/DRY — no speculative abstractions
+- **MANDATORY IMPORTANT MUST ATTENTION** run doc review at session wrap-up (map changed files → affected docs)
+- **MANDATORY IMPORTANT MUST ATTENTION** activate relevant skills from catalog during the process
