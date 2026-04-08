@@ -100,7 +100,7 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 > **Test Spec Verification** — Map changed code to test specifications.
 >
-> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
+> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 15
 > 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
@@ -197,13 +197,27 @@ Before approving, verify the code is **easy to read, easy to maintain, easy to u
 
 Fix issues found.
 
-**Pass 2 (MANDATORY — Round 2):** Re-review ALL changes (original + corrections) with fresh eyes. Do NOT skip even if Pass 1 made no changes. Focus on what Pass 1 missed: cross-cutting concerns, subtle edge cases, naming inconsistencies, missing pieces, convention drift, over-engineering. Update report with Round 2 findings. See `<!-- SYNC:double-round-trip-review -->` block above.
+**Pass 2 (MANDATORY — Fresh-Context Round 2):** Delegate re-review to a fresh `code-reviewer` sub-agent for unbiased perspective. The sub-agent has ZERO memory of Pass 1 findings or fixes.
+
+Spawn the sub-agent:
+
+```
+Agent({
+  description: "Fresh-context Pass 2 holistic review",
+  subagent_type: "code-reviewer",
+  prompt: "## Task\nReview ALL uncommitted changes. This is a holistic second-pass review.\nYou are reviewing with completely fresh eyes — no knowledge of any prior review pass.\n\n## Review Scope\nRun git diff to see all uncommitted changes.\n\n## Focus Areas\n- Cross-cutting concerns spanning multiple changed files\n- Interaction bugs between changed files\n- Convention drift (new code vs existing patterns — grep 3+ examples)\n- Missing pieces (what should exist but doesn't)\n- Subtle edge cases (null, empty, boundary, off-by-one)\n- Over-engineering that may not be justified\n- Naming inconsistencies across files\n\nRead docs/project-reference/code-review-rules.md for project standards.\n\n## Output\nReturn structured findings:\n- **Status**: PASS or FAIL\n- **Issues**: [list with file:line evidence]\n- **Issue Count**: {number}\n\nEvery finding MUST have file:line evidence. No speculation."
+})
+```
+
+After sub-agent returns, integrate findings into the main report as `## Round 2 Findings (Fresh-Context)`.
 
 **Round 2 Additional Focus:**
 
 - Logic errors that Round 1 accepted at face value
 - Bug patterns that only emerge when viewing cross-file interactions
 - Test spec gaps visible only after seeing the full change set
+
+> **Note:** Round 2 is now performed by a fresh sub-agent. The focus areas above are included in the sub-agent's prompt.
 
 **Final Report:** Task description, Pass 1/2 results, changes summary, issues fixed, remaining concerns.
 
@@ -240,24 +254,24 @@ Fix issues found.
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
 - **IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-      <!-- SYNC:understand-code-first:reminder -->
+    <!-- SYNC:understand-code-first:reminder -->
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:design-patterns-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
-- **IMPORTANT MUST ATTENTION** execute TWO independent review rounds. Round 2 re-reads ALL files from scratch.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:graph-impact-analysis:reminder -->
+    <!-- /SYNC:design-patterns-quality:reminder -->
+    <!-- SYNC:double-round-trip-review:reminder -->
+- **IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context).
+    <!-- /SYNC:double-round-trip-review:reminder -->
+    <!-- SYNC:graph-impact-analysis:reminder -->
 - **IMPORTANT MUST ATTENTION** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
-      <!-- /SYNC:graph-impact-analysis:reminder -->
-      <!-- SYNC:logic-and-intention-review:reminder -->
+    <!-- /SYNC:graph-impact-analysis:reminder -->
+    <!-- SYNC:logic-and-intention-review:reminder -->
 - **IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-      <!-- /SYNC:logic-and-intention-review:reminder -->
-      <!-- SYNC:bug-detection:reminder -->
+    <!-- /SYNC:logic-and-intention-review:reminder -->
+    <!-- SYNC:bug-detection:reminder -->
 - **IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
-      <!-- /SYNC:bug-detection:reminder -->
-      <!-- SYNC:test-spec-verification:reminder -->
+    <!-- /SYNC:bug-detection:reminder -->
+    <!-- SYNC:test-spec-verification:reminder -->
 - **IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
-      <!-- /SYNC:test-spec-verification:reminder -->
+    <!-- /SYNC:test-spec-verification:reminder -->

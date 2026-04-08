@@ -51,7 +51,7 @@ template_version: '1.0'
 
 ### 3.1 Functional Tests
 
-#### TC-{MOD}-001: {Test case title}
+#### TC-{FEATURE}-001: {Test case title}
 
 - **Priority:** P1 | P2 | P3
 - **Type:** Positive | Negative | Boundary
@@ -72,7 +72,7 @@ template_version: '1.0'
 
 ---
 
-#### TC-{MOD}-002: {Test case title}
+#### TC-{FEATURE}-002: {Test case title}
 
 - **Priority:** P2
 - **Type:** Negative
@@ -88,7 +88,7 @@ template_version: '1.0'
 
 ### 3.2 Integration Tests
 
-#### TC-{MOD}-101: {Cross-service test}
+#### TC-{FEATURE}-101: {Cross-service test}
 
 <!-- Integration test cases -->
 
@@ -96,7 +96,7 @@ template_version: '1.0'
 
 ### 3.3 Edge Cases
 
-#### TC-{MOD}-201: {Edge case title}
+#### TC-{FEATURE}-201: {Edge case title}
 
 <!-- Edge case test cases -->
 

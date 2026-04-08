@@ -1,12 +1,12 @@
-# TDD Spec Template — Feature Doc Section 17
+# TDD Spec Template — Feature Doc Section 15
 
-> Template for test case entries in business feature docs Section 17.
+> Template for test case entries in business feature docs Section 15.
 > Used by: `/tdd-spec` skill.
 > TC format: `TC-{FEATURE}-{NNN}` (feature codes in `docs/project-reference/feature-docs-reference.md`).
 
 ---
 
-## Section 17 Header
+## Section 15 Header
 
 ```markdown
 ## Test Specifications

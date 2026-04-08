@@ -72,7 +72,7 @@ Launch **2 Explore agents** in parallel:
 - Discover documentation section patterns (recurring H2/H3 headings across docs)
 - Identify INDEX.md / README.md hub files and their link structures
 - Count docs per app/module to assess coverage distribution
-- Find AI companion docs (\*.ai.md or similar patterns)
+- Identify documentation naming patterns across feature docs
 
 ### Agent 2: App-to-Service Mapping
 
@@ -124,6 +124,6 @@ Read the report. Build these sections:
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following before starting:
-  <!-- SYNC:scan-and-update-reference-doc:reminder -->
+      <!-- SYNC:scan-and-update-reference-doc:reminder -->
 - **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-    <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+  <!-- /SYNC:scan-and-update-reference-doc:reminder -->

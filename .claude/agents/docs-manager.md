@@ -36,8 +36,8 @@ Detect which documentation is impacted by code changes and update accordingly. O
 - **No guessing** -- If unsure, say so. Do NOT fabricate file paths, function names, or behavior. Investigate first.
 - **Never Create From Scratch**: Only update existing business feature docs -- recommend `/feature-docs` for new doc creation
 - **Fast Exit**: If only `.claude/` or config changes, report "No documentation impacted" and exit early
-- **Section-Impact Mapping**: Map change types to specific doc sections (entity change -> sections 3, 9, 10; new endpoint -> sections 10, 12, 14; any new functionality -> sections 17-20 mandatory)
-- **Evidence Verification**: Every test case (TC-{MOD}-XXX) must have `file:line` evidence -- read claimed file at claimed line to verify
+- **Section-Impact Mapping**: Map change types to specific doc sections (entity change -> sections 3, 5, 6; new endpoint -> sections 8, 11, 12; any new functionality -> section 15 mandatory)
+- **Evidence Verification**: Every test case (TC-{FEATURE}-{NNN}) must have `file:line` evidence -- read claimed file at claimed line to verify
 - **TC Coverage Cross-Reference**: Compare `[Trait("TestSpec", ...)]` in integration tests against TC codes in feature docs; flag discrepancies
 - **Always Report**: Even if nothing needed updating, report what was checked
 

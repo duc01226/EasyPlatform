@@ -16,7 +16,7 @@ Before implementation, search your codebase for project-specific patterns:
 
 > **Prerequisite:** Full backend system must be running before tests execute. Tests use real DB, RabbitMQ, and depend on running API services for cross-service data sync. See `docs/getting-started.md` for local setup instructions.
 
-> **TC annotation:** Each test method requires `// TC-{MOD}-XXX: description` comment + `[Trait("TestSpec", "TC-{MOD}-XXX")]` placed **before** `[Fact]`. Replace `{MOD}` with the module abbreviation from the Module Registry in SKILL.md.
+> **TC annotation:** Each test method requires `// TC-{FEATURE}-{NNN}: description` comment + `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` placed **before** `[Fact]`. Replace `{MOD}` with the module abbreviation from the Module Registry in SKILL.md.
 
 ## Pattern 1: Create Command (Save/Upsert)
 
@@ -33,8 +33,8 @@ namespace {Service}.IntegrationTests.{Domain};
 [Trait("Category", "Command")]
 public class {CommandName}IntegrationTests : {Service}ServiceIntegrationTestBase
 {
-    // TC-{MOD}-001: Create valid order — happy path
-    [Trait("TestSpec", "TC-{MOD}-001")]
+    // TC-{FEATURE}-001: Create valid order — happy path
+    [Trait("TestSpec", "TC-{FEATURE}-001")]
     [Fact]
     public async Task {CommandName}_WhenValidData_ShouldCreateSuccessfully()
     {
@@ -68,8 +68,8 @@ public class {CommandName}IntegrationTests : {Service}ServiceIntegrationTestBase
         });
     }
 
-    // TC-{MOD}-002: Create order with empty title — validation failure
-    [Trait("TestSpec", "TC-{MOD}-002")]
+    // TC-{FEATURE}-002: Create order with empty title — validation failure
+    [Trait("TestSpec", "TC-{FEATURE}-002")]
     [Fact]
     public async Task {CommandName}_WhenInvalidData_ShouldFailValidation()
     {
@@ -97,8 +97,8 @@ public class {CommandName}IntegrationTests : {Service}ServiceIntegrationTestBase
 ## Pattern 2: Update Command (Create then Update)
 
 ```csharp
-// TC-{MOD}-003: Update existing order — preserve ID and update fields
-[Trait("TestSpec", "TC-{MOD}-003")]
+// TC-{FEATURE}-003: Update existing order — preserve ID and update fields
+[Trait("TestSpec", "TC-{FEATURE}-003")]
 [Fact]
 public async Task SaveOrder_WhenUpdatingExisting_ShouldPreserveIdAndUpdateFields()
 {
@@ -145,8 +145,8 @@ public async Task SaveOrder_WhenUpdatingExisting_ShouldPreserveIdAndUpdateFields
 [Trait("Category", "Command")]
 public class DeleteOrderCommandIntegrationTests : {Service}ServiceIntegrationTestBase
 {
-    // TC-{MOD}-004: Delete existing order — removes from database
-    [Trait("TestSpec", "TC-{MOD}-004")]
+    // TC-{FEATURE}-004: Delete existing order — removes from database
+    [Trait("TestSpec", "TC-{FEATURE}-004")]
     [Fact]
     public async Task DeleteOrder_WhenExists_ShouldDeleteFromDatabase()
     {
@@ -177,8 +177,8 @@ public class DeleteOrderCommandIntegrationTests : {Service}ServiceIntegrationTes
 [Trait("Category", "Query")]
 public class GetOrderListQueryIntegrationTests : {Service}ServiceIntegrationTestBase
 {
-    // TC-{MOD}-005: Query orders with filter — returns paged results
-    [Trait("TestSpec", "TC-{MOD}-005")]
+    // TC-{FEATURE}-005: Query orders with filter — returns paged results
+    [Trait("TestSpec", "TC-{FEATURE}-005")]
     [Fact]
     public async Task GetOrderList_WhenFiltering_ShouldReturnPagedResults()
     {
@@ -201,8 +201,8 @@ public class GetOrderListQueryIntegrationTests : {Service}ServiceIntegrationTest
         result.PageSize.Should().Be(10);
     }
 
-    // TC-{MOD}-006: Create then query — new order appears in results
-    [Trait("TestSpec", "TC-{MOD}-006")]
+    // TC-{FEATURE}-006: Create then query — new order appears in results
+    [Trait("TestSpec", "TC-{FEATURE}-006")]
     [Fact]
     public async Task GetOrderList_WhenCreateThenQuery_ShouldIncludeNewOrder()
     {

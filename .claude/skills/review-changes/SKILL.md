@@ -69,7 +69,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 > **Test Spec Verification** — Map changed code to test specifications.
 >
-> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
+> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 15
 > 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
@@ -108,7 +108,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 1. **Phase 0: Blast Radius** — Call `/graph-blast-radius` skill first (MANDATORY)
 2. **Phase 1: Collect** — Run git status/diff, create report file
 3. **Phase 2: File Review** — Review each changed file, update report incrementally
-4. **Phase 3: Holistic** — Re-read report for big-picture architecture and responsibility checks
+4. **Phase 3: Holistic** — Spawn fresh-context sub-agent for unbiased holistic assessment
 5. **Phase 4: Finalize** — Generate critical issues, recommendations, and suggested commit message
 
 **Key Rules:**
@@ -200,7 +200,7 @@ Before starting, call TaskCreate with:
 - [ ] `[Review Phase 0] Run /graph-blast-radius to analyze change impact` - in_progress **(MUST ATTENTION BE FIRST)**
 - [ ] `[Review Phase 1] Get changes and create report file` - pending
 - [ ] `[Review Phase 2] Review file-by-file and update report` - pending
-- [ ] `[Review Phase 3] Re-read report for holistic assessment` - pending
+- [ ] `[Review Phase 3] Spawn fresh-context sub-agent for holistic assessment` - pending
 - [ ] `[Review Phase 4] Generate final review findings` - pending
 - [ ] `[Review Phase 5] Run /docs-update if staleness detected` - pending
       Update todo status as each phase completes. This ensures review is tracked.
@@ -254,18 +254,20 @@ For EACH changed file, read and **immediately update report** with:
 - [ ] Issues Found: naming, typing, responsibility, patterns, bugs, over-engineering, logic errors
 - [ ] Continue to next file, repeat
 
-**Phase 3: Holistic Review (Review the Accumulated Report)**
-After ALL files reviewed, **re-read the report** to see big picture:
+**Phase 3: Holistic Review (Fresh-Context Sub-Agent)**
 
-- [ ] Overall technical approach makes sense?
-- [ ] Solution architecture coherent as unified plan?
-- [ ] New files in correct layers (Domain/Application/Presentation)?
-- [ ] Logic in LOWEST appropriate layer?
-- [ ] Backend: mapping in Command/DTO (not Handler)?
-- [ ] Frontend: constants/columns in Model (not Component)?
-- [ ] No duplicated logic across changes?
-- [ ] Service boundaries respected?
-- [ ] No circular dependencies?
+After ALL files reviewed in Phase 2, spawn a fresh `code-reviewer` sub-agent for unbiased holistic assessment. The sub-agent has ZERO memory of the Phase 2 file-by-file review.
+
+```
+Agent({
+  description: "Fresh-context holistic review",
+  subagent_type: "code-reviewer",
+  prompt: "## Task\nReview ALL uncommitted changes holistically. Focus on big picture — not file-by-file.\nYou are reviewing with completely fresh eyes.\n\n## Review Scope\nRun git diff to see all uncommitted changes.\n\n## Holistic Focus Areas\n- Overall technical approach coherence — does it make sense as a unified plan?\n- Architecture: new files in correct layers (Domain/Application/Presentation)?\n- Logic in LOWEST appropriate layer?\n- Backend: mapping in Command/DTO (not Handler)?\n- Frontend: constants/columns in Model (not Component)?\n- No duplicated logic across changes?\n- Service boundaries respected?\n- No circular dependencies?\n- YAGNI: code solving hypothetical future problems?\n- KISS: unnecessarily complex solutions?\n- Function complexity: methods >30 lines? Nesting >3 levels?\n\nRead docs/project-reference/code-review-rules.md for project standards.\n\n## Output\nReturn structured findings:\n- **Status**: PASS or FAIL\n- **Architecture Issues**: [list with file:line evidence]\n- **DRY Violations**: [list]\n- **Over-engineering**: [list]\n- **Issue Count**: {number}\n\nEvery finding MUST have file:line evidence."
+})
+```
+
+After sub-agent returns, integrate findings into the Phase 2 report for Phase 4 consolidation.
+The following checks are now handled by the sub-agent but can be verified in Phase 4:
 
 **Clean Code & Over-engineering Checks:**
 
@@ -603,19 +605,19 @@ If `architectureRules` is not present in project-config.json, skip this check si
   <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:design-patterns-quality:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:design-patterns-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-    <!-- /SYNC:design-patterns-quality:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:design-patterns-quality:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
-    <!-- SYNC:logic-and-intention-review:reminder -->
+  <!-- /SYNC:graph-assisted-investigation:reminder -->
+  <!-- SYNC:logic-and-intention-review:reminder -->
 - **IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-    <!-- /SYNC:logic-and-intention-review:reminder -->
-    <!-- SYNC:bug-detection:reminder -->
+  <!-- /SYNC:logic-and-intention-review:reminder -->
+  <!-- SYNC:bug-detection:reminder -->
 - **IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
-    <!-- /SYNC:bug-detection:reminder -->
-    <!-- SYNC:test-spec-verification:reminder -->
+  <!-- /SYNC:bug-detection:reminder -->
+  <!-- SYNC:test-spec-verification:reminder -->
 - **IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
-    <!-- /SYNC:test-spec-verification:reminder -->
+  <!-- /SYNC:test-spec-verification:reminder -->

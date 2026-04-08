@@ -1,7 +1,7 @@
 ---
 name: workflow-feature-docs
 version: 1.0.0
-description: '[Workflow] Trigger Business Feature Documentation workflow — business feature documentation with 26-section template enforcement, plan validation, and mandatory test coverage.'
+description: '[Workflow] Trigger Business Feature Documentation workflow — business feature documentation with 17-section template enforcement, plan validation, and mandatory test coverage.'
 ---
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.

@@ -2,7 +2,7 @@
 name: tdd-spec
 version: 1.0.0
 category: Testing
-description: '[Testing] Generate or update test specifications in feature docs (Section 17) with unified TC-{FEATURE}-{NNN} format. Supports TDD-first, implement-first, update, and sync modes.'
+description: '[Testing] Generate or update test specifications in feature docs (Section 15) with unified TC-{FEATURE}-{NNN} format. Supports TDD-first, implement-first, update, and sync modes.'
 triggers: 'tdd spec, tdd test, test driven, write test specs, create test cases, update test specs, test specifications for feature, test spec for feature, sync test specs, generate test specs from code, update test specs after changes, test specs from PR, test specs from pull request, code to test specs'
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQuestion
 ---
@@ -35,7 +35,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 ## Quick Summary
 
-**Goal:** Generate or update test specifications in feature docs Section 17 (canonical TC registry) using the unified `TC-{FEATURE}-{NNN}` format. Supports 5 modes: TDD-first, implement-first, update (post-change/PR), sync, and from-integration-tests.
+**Goal:** Generate or update test specifications in feature docs Section 15 (canonical TC registry) using the unified `TC-{FEATURE}-{NNN}` format. Supports 5 modes: TDD-first, implement-first, update (post-change/PR), sync, and from-integration-tests.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -78,14 +78,14 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 1. **Mode Detection** — Determine mode: TDD-first, implement-first, update, sync, or from-integration-tests
 2. **Investigation** — Analyze PBI/codebase/existing TCs/git changes based on mode
 3. **TC Generation** — Generate TC outlines, review interactively with user
-4. **Write to Feature Doc** — Upsert TCs into target feature doc Section 17
+4. **Write to Feature Doc** — Upsert TCs into target feature doc Section 15
 5. **Dashboard Sync** — Optionally update `docs/test-specs/` cross-module dashboard
 6. **Next Steps** — Suggest follow-on actions based on mode
 
 **Key Rules:**
 
 - **Unified format:** `TC-{FEATURE}-{NNN}` — feature codes in `docs/project-reference/feature-docs-reference.md`
-- **Source of truth:** Feature docs Section 17 is the canonical TC registry
+- **Source of truth:** Feature docs Section 15 is the canonical TC registry
 - **Evidence required:** Every TC MUST ATTENTION have `Evidence: {FilePath}:{LineRange}` or `TBD (pre-implementation)` for TDD-first mode
 - **Minimum 4 categories:** Positive (happy path), negative (error handling), **authorization** (role-based access), edge cases
 - **Cross-cutting TC categories:**
@@ -104,15 +104,15 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 | Skill              | Relationship                                                                |
 | ------------------ | --------------------------------------------------------------------------- |
 | `test-spec`        | Heavyweight planning/investigation → feeds into this skill                  |
-| `test-specs-docs`  | Dashboard writer → syncs FROM feature docs Section 17                       |
+| `test-specs-docs`  | Dashboard writer → syncs FROM feature docs Section 15                       |
 | `integration-test` | Code generator → generates integration tests FROM TCs written by this skill |
-| `feature-docs`     | Feature doc creator → creates the Section 17 that this skill populates      |
+| `feature-docs`     | Feature doc creator → creates the Section 15 that this skill populates      |
 
 ### Output Locations
 
 | Artifact                  | Path                                                                     |
 | ------------------------- | ------------------------------------------------------------------------ |
-| TCs (canonical)           | `docs/business-features/{App}/detailed-features/{feature}.md` Section 17 |
+| TCs (canonical)           | `docs/business-features/{App}/detailed-features/{feature}.md` Section 15 |
 | Dashboard (optional)      | `docs/test-specs/{Module}/README.md` Implementation Index                |
 | Priority index (optional) | `docs/test-specs/PRIORITY-INDEX.md`                                      |
 
@@ -160,12 +160,12 @@ Detect mode from user prompt and context:
 **Must read FIRST:**
 
 1. `docs/project-reference/feature-docs-reference.md` — identify the correct `{FEATURE}` code for TC IDs
-2. Target feature doc — check if Section 17 exists, read existing TCs to avoid ID collisions
+2. Target feature doc — check if Section 15 exists, read existing TCs to avoid ID collisions
 
 **If target feature doc doesn't exist:**
 
 - Suggest running `/feature-docs` first, OR
-- Create a minimal Section 17 stub in the appropriate feature doc
+- Create a minimal Section 15 stub in the appropriate feature doc
 
 ### Phase 2: Investigation
 
@@ -174,7 +174,7 @@ Detect mode from user prompt and context:
 1. Read the PBI/story document (from `team-artifacts/pbis/` or user-provided)
 2. Extract acceptance criteria
 3. Identify test categories: CRUD operations, validation rules, **authorization** (mandatory), workflows, edge cases, **seed data**, **performance data**, **data migration**
-4. Cross-reference with existing feature doc requirements (Sections 1-16)
+4. Cross-reference with existing feature doc requirements (Sections 1-14)
 5. Cross-reference PBI Authorization section → generate authorization TCs (unauthorized access rejection per role)
 6. Cross-reference PBI Seed Data section → generate seed data TCs if reference/config data needed
 7. Cross-reference PBI Data Migration section → generate migration TCs if schema changes exist
@@ -188,16 +188,16 @@ Detect mode from user prompt and context:
 
 **Update mode (post-change / post-bugfix / post-PR):**
 
-1. Read existing Section 17 TCs
+1. Read existing Section 15 TCs
 2. `git diff` or `git diff main...HEAD` (for PRs) to find code changes since TCs were last updated
 3. Identify: new commands/queries not covered, changed behaviors, removed features
 4. For bugfixes: add a regression TC for the bug that was fixed (e.g., `TC-GM-040: Regression — goal title validation bypass`)
 5. Generate gap analysis
-6. Update **both** feature docs Section 17 AND `docs/test-specs/` dashboard
+6. Update **both** feature docs Section 15 AND `docs/test-specs/` dashboard
 
 **Sync mode (bidirectional reconciliation):**
 
-1. Read feature docs Section 17 TCs for target module
+1. Read feature docs Section 15 TCs for target module
 2. Read `docs/test-specs/{Module}/README.md` TCs
 3. Read test files: grep for test spec annotations in `src/Services/{service}*.IntegrationTests/`
 4. Build 3-way comparison table:
@@ -218,7 +218,7 @@ Detect mode from user prompt and context:
 1. Grep for `[Trait("TestSpec", "TC-...")]` in target test project
 2. For each test method: extract TC ID, method name, test description from comments
 3. Read the test method body to generate GWT steps and evidence
-4. Write extracted TCs to feature doc Section 17 (if not already there)
+4. Write extracted TCs to feature doc Section 15 (if not already there)
 5. Useful when: tests were written before the spec system existed, or imported from another project
 
 ### Phase 3: TC Generation with Interactive Review
@@ -246,13 +246,13 @@ Options:
 
 3. Iterate until user approves.
 
-### Phase 4: Write to Feature Doc Section 17
+### Phase 4: Write to Feature Doc Section 15
 
 **This is the canonical write — feature docs own the TCs.**
 
-1. Locate Section 17 in target feature doc
-2. If Section 17 exists: append new TCs after existing ones, preserving existing TC IDs
-3. If Section 17 doesn't exist: create it from template
+1. Locate Section 15 in target feature doc
+2. If Section 15 exists: append new TCs after existing ones, preserving existing TC IDs
+3. If Section 15 doesn't exist: create it from template
 4. Use `Edit` tool to upsert — never overwrite existing TCs
 
 **TC format** (from `tdd-spec-template.md`):
@@ -357,9 +357,9 @@ Based on mode, suggest via `AskUserQuestion`:
 
 ## Anti-Patterns
 
-- ❌ Writing TCs to `docs/test-specs/` as the primary destination (use feature docs Section 17)
+- ❌ Writing TCs to `docs/test-specs/` as the primary destination (use feature docs Section 15)
 - ❌ Using `TC-{SVC}-{NNN}` or `TC-{SVC}-{FEATURE}-{NNN}` format (use unified `TC-{FEATURE}-{NNN}`)
-- ❌ Generating TCs without reading existing Section 17 (causes ID collisions)
+- ❌ Generating TCs without reading existing Section 15 (causes ID collisions)
 - ❌ Skipping the interactive review step (user must approve TC list)
 - ❌ Writing TCs without Evidence field (every TC needs it, even if `TBD`)
 
@@ -370,7 +370,7 @@ Based on mode, suggest via `AskUserQuestion`:
 - `test-spec` — Heavyweight test planning and investigation (use BEFORE this skill for complex features)
 - `test-specs-docs` — Dashboard sync skill (aggregates TCs from feature docs to `docs/test-specs/`)
 - `integration-test` — Integration test code generator (use AFTER this skill to generate test stubs)
-- `feature-docs` — Feature doc creator (creates the Section 17 that this skill populates)
+- `feature-docs` — Feature doc creator (creates the Section 15 that this skill populates)
 - `refine` — PBI refinement (feeds acceptance criteria into this skill's TDD-first mode)
 
 ---
@@ -400,13 +400,13 @@ Based on mode, suggest via `AskUserQuestion`:
 <!-- SYNC:rationalization-prevention:reminder -->
 
 - **IMPORTANT MUST ATTENTION** never skip steps via "too simple" or "already searched" evasions. Plan anyway, test first, show grep evidence.
-    <!-- /SYNC:rationalization-prevention:reminder -->
-    <!-- SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:rationalization-prevention:reminder -->
+  <!-- SYNC:evidence-based-reasoning:reminder -->
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:cross-cutting-quality:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:cross-cutting-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** check error handling, logging, security, performance, and observability across changed files.
-    <!-- /SYNC:cross-cutting-quality:reminder -->
-    <!-- SYNC:ui-system-context:reminder -->
+  <!-- /SYNC:cross-cutting-quality:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
 - **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+  <!-- /SYNC:ui-system-context:reminder -->

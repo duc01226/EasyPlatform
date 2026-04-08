@@ -1,7 +1,7 @@
 ---
 name: workflow-pbi-to-tests
 version: 1.0.0
-description: '[Workflow] Trigger PBI to Tests workflow — qa workflow: generate tdd test specs from pbi, write to feature docs section 17, run quality gate.'
+description: '[Workflow] Trigger PBI to Tests workflow — qa workflow: generate tdd test specs from pbi, write to feature docs section 15, run quality gate.'
 ---
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.

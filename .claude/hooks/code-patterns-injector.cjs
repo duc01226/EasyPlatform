@@ -275,7 +275,7 @@ function buildFeatureDocsContext() {
     if (indexContent) parts.push(indexContent);
 
     parts.push('');
-    parts.push('> **CRITICAL:** Feature docs follow 26-section template. Use TC-{MOD}-XXX format for test specs.');
+    parts.push('> **CRITICAL:** Feature docs follow 17-section template. Use TC-{FEATURE}-{NNN} format for test specs.');
     return parts.join('\n');
 }
 
@@ -349,7 +349,8 @@ function main() {
 
         // Read and output patterns — prepend dedup marker so transcript dedup works
         const content = readPatternFiles(backend, frontend);
-        if (content) console.log(`${DEDUP_MARKER}\n\n${content}`);
+        const ROOT_CAUSE_PRINCIPLE = '> **[ROOT-CAUSE-FIX]** Never patch symptoms. Trace the full call chain to find WHO is responsible. Fix at the correct layer (Entity > Service > Handler). If a fix feels like a workaround, it IS — find the real root cause first.';
+        if (content) console.log(`${DEDUP_MARKER}\n\n${ROOT_CAUSE_PRINCIPLE}\n\n${content}`);
 
         process.exit(0);
     } catch {

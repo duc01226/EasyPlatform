@@ -1,75 +1,75 @@
 {
-  "assertions": [
-    "Read docs/project-reference/project-structure-reference.md for project tech stack and architecture",
-    "Backend: Use service-specific repositories - see docs/project-reference/backend-patterns-reference.md",
-    "Backend: Use project validation fluent API - see docs/project-reference/backend-patterns-reference.md",
-    "Backend: Side effects go in Entity Event Handlers (UseCaseEvents/) - never in command handlers",
-    "Backend: DTOs own mapping - see docs/project-reference/backend-patterns-reference.md",
-    "Backend: Command + Result + Handler in ONE file under UseCaseCommands/{Feature}/",
-    "Backend: Cross-service communication via message bus only - never direct database access",
-    "Frontend: Extend project component base classes - see docs/project-reference/frontend-patterns-reference.md",
-    "Frontend: Use project state management - see docs/project-reference/frontend-patterns-reference.md",
-    "Frontend: Extend project API service base for HTTP calls - see docs/project-reference/frontend-patterns-reference.md",
-    "Frontend: Always use .pipe(this.untilDestroyed()) for subscriptions - never manual unsubscribe",
-    "Frontend: All template elements must have BEM classes (block__element --modifier)",
-    "Architecture: Search for existing implementations before creating new code",
-    "Architecture: Place logic in LOWEST layer (Entity > Service > Component) to enable reuse",
-    "Architecture: Plan before implementing non-trivial tasks"
-  ],
-  "codeReview": {
-    "enabled": true,
-    "injectOnSkills": ["code-review", "review-pr", "review-changes", "code-reviewer", "review"],
-    "rulesPath": "docs/project-reference/code-review-rules.md"
-  },
-  "codingLevel": 4,
-  "locale": {
-    "responseLanguage": null,
-    "thinkingLanguage": null
-  },
-  "paths": {
-    "docs": "docs",
-    "plans": "plans"
-  },
-  "plan": {
-    "dateFormat": "YYMMDD-HHmm",
-    "issuePrefix": "GH-",
-    "namingFormat": "{date}-{issue}-{slug}",
-    "reportsDir": "reports",
-    "resolution": {
-      "branchPattern": "(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)",
-      "order": ["session", "branch"]
+    "assertions": [
+        "Read docs/project-reference/project-structure-reference.md for project tech stack and architecture",
+        "Backend: Use service-specific repositories - see docs/project-reference/backend-patterns-reference.md",
+        "Backend: Use project validation fluent API - see docs/project-reference/backend-patterns-reference.md",
+        "Backend: Side effects go in Entity Event Handlers (UseCaseEvents/) - never in command handlers",
+        "Backend: DTOs own mapping - see docs/project-reference/backend-patterns-reference.md",
+        "Backend: Command + Result + Handler in ONE file under UseCaseCommands/{Feature}/",
+        "Backend: Cross-service communication via message bus only - never direct database access",
+        "Frontend: Extend project component base classes - see docs/project-reference/frontend-patterns-reference.md",
+        "Frontend: Use project state management - see docs/project-reference/frontend-patterns-reference.md",
+        "Frontend: Extend project API service base for HTTP calls - see docs/project-reference/frontend-patterns-reference.md",
+        "Frontend: Always use .pipe(this.untilDestroyed()) for subscriptions - never manual unsubscribe",
+        "Frontend: All template elements must have BEM classes (block__element --modifier)",
+        "Architecture: Search for existing implementations before creating new code",
+        "Architecture: Place logic in LOWEST layer (Entity > Service > Component) to enable reuse",
+        "Architecture: Plan before implementing non-trivial tasks"
+    ],
+    "codeReview": {
+        "enabled": true,
+        "injectOnSkills": ["code-review", "review-pr", "review-changes", "code-reviewer", "review"],
+        "rulesPath": "docs/project-reference/code-review-rules.md"
     },
-    "validation": {
-      "focusAreas": ["assumptions", "risks", "tradeoffs", "architecture"],
-      "maxQuestions": 8,
-      "minQuestions": 3,
-      "mode": "prompt"
+    "codingLevel": 4,
+    "locale": {
+        "responseLanguage": null,
+        "thinkingLanguage": null
+    },
+    "paths": {
+        "docs": "docs",
+        "plans": "plans"
+    },
+    "plan": {
+        "dateFormat": "YYMMDD-HHmm",
+        "issuePrefix": "GH-",
+        "namingFormat": "{date}-{issue}-{slug}",
+        "reportsDir": "reports",
+        "resolution": {
+            "branchPattern": "(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)",
+            "order": ["session", "branch"]
+        },
+        "validation": {
+            "focusAreas": ["assumptions", "risks", "tradeoffs", "architecture"],
+            "maxQuestions": 8,
+            "minQuestions": 3,
+            "mode": "prompt"
+        }
+    },
+    "privacyBlock": true,
+    "project": {
+        "framework": "auto",
+        "packageManager": "auto",
+        "type": "auto"
+    },
+    "subagent": {
+        "agents": {
+            "backend-developer": {
+                "contextPrefix": "Focus: Backend CQRS development. Read docs/project-reference/backend-patterns-reference.md for patterns."
+            },
+            "integration-tester": {
+                "contextPrefix": "Focus: Integration tests. Read docs/project-reference/integration-test-reference.md for patterns. Use TC-{FEATURE}-{NNN} format."
+            },
+            "researcher": {
+                "contextPrefix": "Focus: Technology research. Check codebase for existing implementations first."
+            }
+        }
+    },
+    "trust": {
+        "enabled": false,
+        "passphrase": null
+    },
+    "workflow": {
+        "confirmationMode": "always"
     }
-  },
-  "privacyBlock": true,
-  "project": {
-    "framework": "auto",
-    "packageManager": "auto",
-    "type": "auto"
-  },
-  "subagent": {
-    "agents": {
-      "backend-developer": {
-        "contextPrefix": "Focus: Backend CQRS development. Read docs/project-reference/backend-patterns-reference.md for patterns."
-      },
-      "integration-tester": {
-        "contextPrefix": "Focus: Integration tests. Read docs/project-reference/integration-test-reference.md for patterns. Use TC-{MOD}-XXX format."
-      },
-      "researcher": {
-        "contextPrefix": "Focus: Technology research. Check codebase for existing implementations first."
-      }
-    }
-  },
-  "trust": {
-    "enabled": false,
-    "passphrase": null
-  },
-  "workflow": {
-    "confirmationMode": "always"
-  }
 }

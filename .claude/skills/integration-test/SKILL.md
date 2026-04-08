@@ -37,6 +37,8 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate, AskUserQue
 
 > **CRITICAL: Search existing patterns FIRST.** Before generating ANY test, grep for existing integration test files in the same service. Read at least 1 existing test file to match conventions (namespace, usings, collection name, base class, helper usage). Never generate tests that contradict established patterns in the codebase.
 
+> **CRITICAL: Data State Verification.** All integration tests MUST verify expected data state as source of truth. Use `AssertEntityMatchesAsync<T>` or `ExecuteWithServicesAsync` with repo queries to verify entity state after commands. Smoke-only tests (`NotThrowAsync`) are acceptable ONLY for unobservable side effects (cache invalidation). Mark smoke-only tests with `// TODO: Smoke-only by design — [reason]`.
+
 > **For test specifications and test case generation from PBIs, use `/tdd-spec` skill (preferred) or `/test-spec` skill instead.**
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
@@ -109,8 +111,8 @@ Before implementation, search your codebase for project-specific patterns:
 - **IMPORTANT MUST ATTENTION ENSURE:** When asserting DB state changed by **async event handlers** (entity event handlers, message bus consumers), ALWAYS wrap assertions in `PlatformIntegrationTestHelper.WaitUntilAsync()`. Direct `ExecuteWithServicesAsync` without retry will flake because handlers run in background threads. Only synchronous command results can be asserted directly.
 - Minimum 3 test methods: happy path, validation failure, DB state check
 - **Authorization tests:** Include tests with multiple user contexts (`TestUserContextFactory.CreateAdmin()`, `CreateRegularUser()`, etc.) — verify authorized access succeeds AND unauthorized access is rejected
-- Every test method MUST ATTENTION have `// TC-{MOD}-XXX: Description` comment AND `[Trait("TestSpec", "TC-{MOD}-XXX")]` — placed **before** `[Fact]`, outside method body
-- If no TC exists in feature docs, **auto-create** it in Section 17 before generating the test
+- Every test method MUST ATTENTION have `// TC-{FEATURE}-{NNN}: Description` comment AND `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` — placed **before** `[Fact]`, outside method body
+- If no TC exists in feature docs, **auto-create** it in Section 15 before generating the test
 - For comprehensive test spec generation before coding, use `/tdd-spec` first
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -120,10 +122,10 @@ Before implementation, search your codebase for project-specific patterns:
 When generating integration tests, ALWAYS create and execute tasks in this exact order:
 
 1. **FIRST task: Verify/upsert test specs in feature docs**
-    - Read feature doc Section 17 (`docs/business-features/{App}/detailed-features/`) for the target domain
+    - Read feature doc Section 15 (`docs/business-features/{App}/detailed-features/`) for the target domain
     - Read test-specs doc (`docs/test-specs/{App}/README.md`) if exists
-    - For each test case to generate: verify a matching `TC-{MOD}-XXX` exists in docs
-    - If TC is MISSING: create the TC entry in Section 17 with Priority, Status, GIVEN/WHEN/THEN, Evidence
+    - For each test case to generate: verify a matching `TC-{FEATURE}-{NNN}` exists in docs
+    - If TC is MISSING: create the TC entry in Section 15 with Priority, Status, GIVEN/WHEN/THEN, Evidence
     - If TC is INCORRECT: update it to reflect current command/query behavior
     - Output: a TC mapping list (TC code → test method name) for subsequent tasks
 
@@ -140,7 +142,7 @@ When generating integration tests, ALWAYS create and execute tasks in this exact
 
 3. **FINAL task: Verify bidirectional traceability**
     - Grep all `[Trait("TestSpec", ...)]` in the test project
-    - Grep all `TC-{MOD}-XXX` in feature doc Section 17 / test-specs doc
+    - Grep all `TC-{FEATURE}-{NNN}` in feature doc Section 15 / test-specs doc
     - Verify every test method links to a doc TC, and every doc TC links back to a test
     - Flag orphans: tests without doc TCs, or doc TCs without matching tests
     - Update `IntegrationTest` field in feature doc TCs with `{File}::{MethodName}`
@@ -159,7 +161,7 @@ When generating integration tests, ALWAYS create and execute tasks in this exact
 
 ## TC Code Numbering Rules
 
-When creating new `TC-{MOD}-{NNN}` codes:
+When creating new `TC-{FEATURE}-{NNN}` codes:
 
 1. **Always check the feature doc's first** — `docs/business-features/{App}/detailed-features/` contains existing TC codes. New codes must not collide.
 2. **Existing docs use decade-based grouping** — e.g., OM: 001-004 (CRUD), 011-013 (validation), 021-023 (permissions), 031-033 (events). Find the next free decade.
@@ -230,14 +232,14 @@ For each target, read these files (in parallel):
 
 For each target domain, read the matching test spec:
 
-- `docs/business-features/{App}/detailed-features/` Section 17 (primary source of truth)
+- `docs/business-features/{App}/detailed-features/` Section 15 (primary source of truth)
 - `docs/test-specs/{App}/README.md` (secondary reference)
 
 Build a mapping: test case description → TC code (e.g., "create valid order" → TC-OM-001).
-If no TC exists, **CREATE IT** in the feature doc Section 17 before generating the test.
+If no TC exists, **CREATE IT** in the feature doc Section 15 before generating the test.
 If TC is outdated or incorrect, **UPDATE IT** first.
 This is NOT optional — the doc is the source of truth and must be correct before tests reference it.
-If no TC exists and feature doc Section 17 is missing, run `/tdd-spec` first to generate test specifications.
+If no TC exists and feature doc Section 15 is missing, run `/tdd-spec` first to generate test specifications.
 
 ## Step 3: Generate Test File
 
@@ -288,7 +290,7 @@ Check:
 - [ ] User context via `TestUserContextFactory.Create*()`
 - [ ] DB assertions use `AssertEntityMatchesAsync` or `AssertEntityDeletedAsync`
 - [ ] No mocks — real DI only
-- [ ] Every `[Fact]` method has `// TC-{MOD}-XXX: Description` comment + `[Trait("TestSpec", "TC-{MOD}-XXX")]`
+- [ ] Every `[Fact]` method has `// TC-{FEATURE}-{NNN}: Description` comment + `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]`
 
 ## Example Files to Study
 
@@ -312,7 +314,7 @@ find src/Services -name "*IntegrationTestFixture.cs" -type f
 
 | Skill             | Relationship                                         | When to Use                                                               |
 | ----------------- | ---------------------------------------------------- | ------------------------------------------------------------------------- |
-| `tdd-spec`        | TC source — generates test specs this skill consumes | Run FIRST to create TCs in feature doc Section 17 before generating tests |
+| `tdd-spec`        | TC source — generates test specs this skill consumes | Run FIRST to create TCs in feature doc Section 15 before generating tests |
 | `test-spec`       | Heavyweight planning — feeds test strategies         | Use for complex test planning requiring deep investigation                |
 | `test-specs-docs` | Dashboard sync — keeps docs/test-specs/ in sync      | Run AFTER generating tests to update the cross-module dashboard           |
 | `test`            | Test runner — executes the generated tests           | Run AFTER generating tests to verify they pass                            |
@@ -320,13 +322,13 @@ find src/Services -name "*IntegrationTestFixture.cs" -type f
 
 ### How to Use for Each Case
 
-**Case: Generate tests from existing test specs (feature docs Section 17)**
+**Case: Generate tests from existing test specs (feature docs Section 15)**
 
 ```
 /integration-test CreateOrderCommand
 ```
 
-→ Reads Section 17 TCs, generates test file with TC annotations
+→ Reads Section 15 TCs, generates test file with TC annotations
 
 **Case: Generate tests from git changes (default)**
 
@@ -334,7 +336,7 @@ find src/Services -name "*IntegrationTestFixture.cs" -type f
 /integration-test
 ```
 
-→ Detects changed command/query files, checks Section 17 for matching TCs, generates tests
+→ Detects changed command/query files, checks Section 15 for matching TCs, generates tests
 
 **Case: Generate tests after /tdd-spec created new TCs**
 
@@ -342,7 +344,7 @@ find src/Services -name "*IntegrationTestFixture.cs" -type f
 /tdd-spec → /integration-test
 ```
 
-→ tdd-spec writes TCs to Section 17, then integration-test generates tests from those TCs
+→ tdd-spec writes TCs to Section 15, then integration-test generates tests from those TCs
 
 **Case: Review existing tests for quality**
 
@@ -531,8 +533,8 @@ When mode = VERIFY, perform bidirectional traceability check between test code, 
 ## Verify Workflow
 
 1. **Collect test methods** — Grep for test spec annotations in test project
-2. **Collect doc TCs** — Read feature doc Section 17 for all TC entries
-3. **Build 3-way matrix** — Test code ↔ test-specs/ ↔ feature doc Section 17
+2. **Collect doc TCs** — Read feature doc Section 15 for all TC entries
+3. **Build 3-way matrix** — Test code ↔ test-specs/ ↔ feature doc Section 15
 4. **Identify mismatches** — Orphans, stale references, behavior drift
 5. **Classify mismatches** — Which source is correct?
 6. **Report** — Traceability matrix + recommended fixes
@@ -551,13 +553,13 @@ When test code and spec disagree, determine which is correct:
 
 ## Verification Checklist
 
-- [ ] Every test method has a matching TC in feature doc Section 17
-- [ ] Every TC in Section 17 has a matching test method (or is marked `Status: Untested`)
+- [ ] Every test method has a matching TC in feature doc Section 15
+- [ ] Every TC in Section 15 has a matching test method (or is marked `Status: Untested`)
 - [ ] TC descriptions in docs match what the test actually validates
 - [ ] Evidence file paths in TCs point to current (not stale) code locations
 - [ ] Test annotations match TC IDs (no typos, no orphaned IDs)
 - [ ] Priority levels in docs match test categorization
-- [ ] `docs/test-specs/` dashboard is in sync with feature doc Section 17
+- [ ] `docs/test-specs/` dashboard is in sync with feature doc Section 15
 
 ## Verify Report Format
 
@@ -591,7 +593,7 @@ When test code and spec disagree, determine which is correct:
 
 | TC ID     | Doc Location | Priority | Action                              |
 | --------- | ------------ | -------- | ----------------------------------- |
-| TC-OM-005 | Section 17   | P0       | Generate test via /integration-test |
+| TC-OM-005 | Section 15   | P0       | Generate test via /integration-test |
 
 ## Behavior Mismatches
 
@@ -632,6 +634,15 @@ When test code and spec disagree, determine which is correct:
 > 2. **Execute `/integration-test` directly** — run this skill standalone
 
 ---
+
+## Test Execution & Failure Diagnosis (MANDATORY)
+
+> **IMPORTANT MUST ATTENTION:** After generating/modifying integration tests, you MUST:
+>
+> 1. **Run tests:** `dotnet test` on the test project
+> 2. **If tests fail:** Diagnose root cause — is the failure because (a) test code has wrong setup/assertions → fix test code, or (b) actual service code has a bug → report as finding
+> 3. **Never mark done until tests pass.** Unrun tests have zero value.
+> 4. **Iterate:** Fix → rerun → verify until all tests pass or failures are confirmed as service bugs
 
 ## Next Steps
 

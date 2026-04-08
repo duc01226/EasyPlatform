@@ -1,7 +1,7 @@
 ---
 name: feature-docs
-version: 2.0.0
-description: '[Documentation] Create or update business feature documentation in docs/business-features/{Module}/. Generates comprehensive 26-section docs with verified code evidence and AI companion files. Triggers on: feature docs, business feature documentation, module documentation, document feature, update feature docs, ai companion, ai context file, quick feature docs, feature readme, single file docs, verified documentation.'
+version: 3.0.0
+description: '[Documentation] Create or update business feature documentation in docs/business-features/{Module}/. Generates 17-section docs (no code details, business logic only) with verified test case evidence. Triggers on: feature docs, business feature documentation, module documentation, document feature, update feature docs, quick feature docs, feature readme, single file docs, verified documentation.'
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
@@ -9,23 +9,22 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 ## Quick Summary
 
-**Goal:** Generate comprehensive 26-section business feature documentation with mandatory code evidence for all test cases, plus AI companion file.
+**Goal:** Generate comprehensive 17-section business feature documentation with mandatory code evidence for all test cases.
 
 **Workflow:**
 
 1. **Detect & Gather** — Auto-detect modules from git changes OR user-specified module, read existing docs
 2. **Investigate Code** — Grep/glob codebase to gather evidence (`file:line` format) for every test case
-3. **Write Documentation** — Follow exact 26-section structure, place in `docs/business-features/{Module}/`
-4. **Generate AI Companion** — Create `.ai.md` file (max 300 lines) with domain model, file locations, key expressions
-5. **Verification** — 3-pass system: evidence audit, domain model verification, cross-reference audit
+3. **Write Documentation** — Follow exact 17-section structure, place in `docs/business-features/{Module}/`
+4. **Verification** — 3-pass system: evidence audit, domain model verification, cross-reference audit
 
 **Key Rules:**
 
 - EVERY test case MUST ATTENTION have verifiable code evidence (`FilePath:LineNumber`), no exceptions
-- Output must have exactly 26 sections matching the master template
-- Always update CHANGELOG.md and Version History (Section 26) when modifying docs
-- When writing Section 17 test cases: include an `IntegrationTest` field pointing to the test file and method name. Format: `IntegrationTest: Orders/OrderCommandIntegrationTests.cs::{MethodName}`. If no integration test exists yet, set `Status: Untested`.
-- Verify every TC-{MOD}-XXX in Section 17 has a corresponding `[Trait("TestSpec", "TC-{MOD}-XXX")]` in the integration test codebase. If missing, flag as `Status: Untested`.
+- Output must have exactly 17 sections matching the master template
+- Always update CHANGELOG.md and Version History (Section 17) when modifying docs
+- When writing Section 15 test cases: include an `IntegrationTest` field pointing to the test file and method name. Format: `IntegrationTest: Orders/OrderCommandIntegrationTests.cs::{MethodName}`. If no integration test exists yet, set `Status: Untested`.
+- Verify every TC-{FEATURE}-{NNN} in Section 15 has a corresponding `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` in the integration test codebase. If missing, flag as `Status: Untested`.
 - If third verification pass finds >5 issues, HALT and re-run verification
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -37,7 +36,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 Before implementation, search your codebase for project-specific patterns:
 
 - Search for: `business-features`, `detailed-features`, `feature-docs-template`
-- Look for: existing feature doc folders, 26-section templates, AI companion files
+- Look for: existing feature doc folders, 17-section templates
 
 > **MANDATORY IMPORTANT MUST ATTENTION** Read the `feature-docs-reference.md` companion doc for project-specific patterns and code examples.
 > If file not found, continue with search-based discovery above.
@@ -55,7 +54,6 @@ find docs/business-features -name "README.*.md" -type f | head -5
 ```
 
 **Template File**: `docs/templates/detailed-feature-docs-template.md`
-**AI Companion Template**: `docs/templates/feature-docs-ai-template.md`
 
 ---
 
@@ -95,8 +93,7 @@ docs/
     │   ├── API-REFERENCE.md          # Endpoint documentation
     │   ├── TROUBLESHOOTING.md        # Issue resolution guide
     │   └── detailed-features/
-    │       ├── README.{FeatureName}.md     # Comprehensive (human-facing, 1000+ lines)
-    │       └── README.{FeatureName}.ai.md  # AI companion (code-focused, 300-500 lines)
+    │       └── README.{FeatureName}.md     # Comprehensive (17-section, max 1200 lines)
     └── ...
 ```
 
@@ -121,49 +118,40 @@ Map each module code to its folder name and service path. Example pattern:
 
 ---
 
-## MANDATORY 26-SECTION STRUCTURE
+## MANDATORY 17-SECTION STRUCTURE
 
 All feature documentation MUST ATTENTION follow this section order:
 
-| #   | Section                    | Stakeholder Focus      |
-| --- | -------------------------- | ---------------------- |
-| 1   | Executive Summary          | PO, BA                 |
-| 2   | Business Value             | PO, BA                 |
-| 3   | Business Requirements      | PO, BA                 |
-| 4   | Business Rules             | BA, Dev                |
-| 5   | Process Flows              | BA, Dev, Architect     |
-| 6   | Design Reference           | BA, UX, Dev            |
-| 7   | System Design              | Dev, Architect         |
-| 8   | Architecture               | Dev, Architect         |
-| 9   | Domain Model               | Dev, Architect         |
-| 10  | API Reference              | Dev, Architect         |
-| 11  | Frontend Components        | Dev                    |
-| 12  | Backend Controllers        | Dev                    |
-| 13  | Cross-Service Integration  | Dev, Architect         |
-| 14  | Security Architecture      | Dev, Architect         |
-| 15  | Performance Considerations | Dev, Architect, DevOps |
-| 16  | Implementation Guide       | Dev                    |
-| 17  | Test Specifications        | QA                     |
-| 18  | Test Data Requirements     | QA                     |
-| 19  | Edge Cases Catalog         | QA, Dev                |
-| 20  | Regression Impact          | QA                     |
-| 21  | Troubleshooting            | Dev, QA, DevOps        |
-| 22  | Operational Runbook        | DevOps                 |
-| 23  | Roadmap and Dependencies   | PO, BA                 |
-| 24  | Related Documentation      | All                    |
-| 25  | Glossary                   | PO, BA                 |
-| 26  | Version History            | All                    |
+| #   | Section                              | Audience       |
+| --- | ------------------------------------ | -------------- |
+| 1   | Header + Metadata (YAML frontmatter) | All            |
+| 2   | Glossary                             | All            |
+| 3   | Executive Summary                    | PO, BA         |
+| 4   | Business Requirements                | BA, Dev        |
+| 5   | Domain Model                         | Dev, Architect |
+| 6   | Business Rules                       | BA, Dev        |
+| 7   | Process Flows                        | BA, Dev        |
+| 8   | Commands & Operations                | Dev            |
+| 9   | Events & Background Jobs             | Dev            |
+| 10  | UI Pages                             | Dev, UX        |
+| 11  | API Reference (Simplified)           | Dev            |
+| 12  | Cross-Service Integration            | Architect      |
+| 13  | Security & Permissions               | Dev, Architect |
+| 14  | Performance Considerations           | Dev, Architect |
+| 15  | Test Specifications                  | QA, Dev        |
+| 16  | Troubleshooting                      | Dev, QA        |
+| 17  | Version History                      | All            |
 
 ### Stakeholder Quick Navigation
 
-| Audience                | Sections                                                           |
-| ----------------------- | ------------------------------------------------------------------ |
-| **Product Owner**       | Executive Summary, Business Value, Roadmap                         |
-| **Business Analyst**    | Business Requirements, Business Rules, Process Flows, Domain Model |
-| **Developer**           | Architecture, Domain Model, API Reference, Implementation Guide    |
-| **Technical Architect** | System Design, Cross-Service Integration, Security, Performance    |
-| **QA/QC**               | Test Specifications, Test Data, Edge Cases, Regression Impact      |
-| **DevOps/Support**      | Troubleshooting, Operational Runbook                               |
+| Audience                | Sections                                                             |
+| ----------------------- | -------------------------------------------------------------------- |
+| **Product Owner**       | Executive Summary, Business Requirements                             |
+| **Business Analyst**    | Business Requirements, Business Rules, Process Flows, Domain Model   |
+| **Developer**           | Domain Model, Commands & Operations, API Reference, Events, UI Pages |
+| **Technical Architect** | Domain Model, Cross-Service Integration, Security, Performance       |
+| **QA/QC**               | Test Specifications, Business Rules, Troubleshooting                 |
+| **UX Designer**         | UI Pages, Process Flows                                              |
 
 ---
 
@@ -252,36 +240,36 @@ When UPDATING an existing business feature document (not creating from scratch):
 
 ### Step 1.5.2: Section Impact Mapping
 
-| Change Type            | Impacted Sections                                                                        |
-| ---------------------- | ---------------------------------------------------------------------------------------- |
-| New entity property    | 3 (Business Requirements), 9 (Domain Model), 10 (API Reference)                          |
-| New API endpoint       | 10 (API Reference), 12 (Backend Controllers), 14 (Security)                              |
-| New frontend component | 11 (Frontend Components)                                                                 |
-| New filter/query       | 3 (Business Requirements), 10 (API Reference)                                            |
-| New i18n keys          | 11 (Frontend Components)                                                                 |
-| Any new functionality  | **17 (Test Specs), 18 (Test Data), 19 (Edge Cases), 20 (Regression Impact)** — MANDATORY |
-| Any change             | 1 (Executive Summary), 26 (Version History) — ALWAYS UPDATE                              |
+| Change Type            | Impacted Sections                                               |
+| ---------------------- | --------------------------------------------------------------- |
+| New entity property    | 4 (Business Requirements), 5 (Domain Model), 11 (API Reference) |
+| New API endpoint       | 11 (API Reference), 13 (Security & Permissions)                 |
+| New frontend component | 10 (UI Pages)                                                   |
+| New filter/query       | 4 (Business Requirements), 11 (API Reference)                   |
+| Any new functionality  | **15 (Test Specifications)** — MANDATORY                        |
+| Any change             | 3 (Executive Summary), 17 (Version History) — ALWAYS UPDATE     |
 
-### Step 1.5.3: Mandatory Test Coverage (Sections 17-20)
+### Step 1.5.3: Mandatory Test Coverage (Section 15)
 
 **CRITICAL**: When documenting ANY new functionality, you MUST ATTENTION update:
 
-- **Section 17 (Test Specifications)**: Add test cases (TC-{MOD}-XXX) for new features with GIVEN/WHEN/THEN format. Each TC entry should include:
+- **Section 15 (Test Specifications)**: Add test cases (TC-{FEATURE}-{NNN}) for new features with GIVEN/WHEN/THEN format. Test data, edge cases, and regression impact are included inline within each test case. Each TC entry should include:
 
     ```markdown
     #### TC-GM-001: Create SMART Goal Successfully
 
     **Priority**: P0-Critical
     **Status**: Tested | Untested
+    **Business Rules**: BR-GM-001, BR-GM-003
     **IntegrationTest**: `Orders/OrderCommandIntegrationTests.cs::SaveOrder_WhenValidData_ShouldCreateSuccessfully`
     **Evidence**: `{Service}.Application/{Feature}/Commands/Save{Feature}Command.cs:42-68`
+
+    **Edge Cases**:
+
+    - {Invalid scenario} -> {Expected error/behavior}
     ```
 
-- **Section 18 (Test Data)**: Add seed data required for new test cases
-- **Section 19 (Edge Cases)**: Add edge cases for boundary conditions, error states, permission checks
-- **Section 20 (Regression Impact)**: Add regression risk rows for impacted areas, update test suite counts
-
-**Failure to update test sections is a blocking quality issue.**
+**Failure to update Section 15 is a blocking quality issue.**
 
 ### Step 1.5.4: CHANGELOG Entry
 
@@ -337,7 +325,7 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 **Test Case Format (TC-XX)**:
 
 ```markdown
-#### TC-{MOD}-001: {Test Name} [P0]
+#### TC-{FEATURE}-001: {Test Name} [P0]
 
 **Acceptance Criteria**:
 
@@ -383,74 +371,17 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 
 ---
 
-## Phase 2.5: AI Companion Generation
+## Note: AI Companion Files Deprecated
 
-Generate AI-agent optimized companion file alongside the comprehensive documentation.
+As of 2026-04-07, `.ai.md` companion files are no longer generated. Single `README.{Feature}.md` is the only output. The 17-section template at `docs/templates/detailed-feature-docs-template.md` is the authoritative source.
 
-**Output**: `docs/business-features/{Module}/detailed-features/README.{FeatureName}.ai.md`
-**Template**: `docs/templates/detailed-feature-docs-template.ai.md`
+### Key Principles (v3.0)
 
-### AI Companion Structure (10 Sections, ~260 lines)
-
-| Section         | Content                            | Source from Full Doc      |
-| --------------- | ---------------------------------- | ------------------------- |
-| Context         | Purpose, entities, service         | Executive Summary         |
-| File Locations  | Exact paths to all key files       | Implementation Guide      |
-| Domain Model    | Properties, expressions            | Domain Model              |
-| API Contracts   | Endpoints, request/response shapes | API Reference             |
-| Business Rules  | Validation, state transitions      | Business Rules            |
-| Patterns        | Required / Anti-patterns           | Architecture              |
-| Integration     | Events, dependencies               | Cross-Service Integration |
-| Security        | Authorization matrix               | Security Architecture     |
-| Test Scenarios  | Key GIVEN/WHEN/THEN cases          | Test Specifications       |
-| Quick Reference | Decision tree, code snippets       | Implementation Guide      |
-
-### Compression Rules
-
-1. **Tables over prose** - Convert paragraphs to table rows
-2. **Paths over descriptions** - `File:Line` over "located in..."
-3. **Signatures over examples** - `{ id: string } → { entity: Dto }` over full code
-4. **Decisions over explanations** - What to do, not why
-
-### AI Companion Extended (6-Section Variant, ~420 lines)
-
-For larger features, use the extended companion format:
-
-1. **Quick Reference** (~40 lines) - Module, service, file locations
-2. **Domain Model** (~80 lines) - Entities, enums, value objects (condensed)
-3. **API Contracts** (~100 lines) - Signatures with DTOs only
-4. **Validation Rules** (~80 lines) - BR-XX table format
-5. **Service Boundaries** (~60 lines) - Cross-service integration
-6. **Critical Paths** (~60 lines) - Key workflows as decision trees
-
-### AI Companion Header
-
-```markdown
-# {FeatureName} Feature - AI Context
-
-> AI-optimized context file for code generation tasks.
-> Full documentation: [README.{FeatureName}Feature.md](./README.{FeatureName}Feature.md)
-> Last synced: {YYYY-MM-DD}
-```
-
-### Skip These Sections in AI Companion
-
-- Troubleshooting (operational)
-- Operational Runbook (DevOps)
-- Business Value (stakeholder)
-- Version History (changelog)
-- Glossary (definitions)
-
-### AI Companion Quality Check
-
-- [ ] File size ≤300 lines (standard) or ≤500 lines (extended)
-- [ ] All file paths are exact and current
-- [ ] API contracts include request/response shapes
-- [ ] Business rules have evidence references
-- [ ] Patterns section has required/anti-pattern markers
-- [ ] Evidence chain preserved from full doc
-- [ ] Links back to comprehensive doc
-- [ ] 'Last synced' timestamp included
+- **No code details** in docs -- no file paths, no C# types, no API shapes in sections 1-14, 16
+- **Evidence only in Section 15** (Test Specifications) -- `file:line` references
+- **Commands cross-reference BR-XXX** -- each command lists which business rules it validates
+- **Max 1200 lines** per doc (target 500-800)
+- **YAML frontmatter** required: module, service, feature_code, entities[], status, last_updated
 
 ---
 
@@ -506,7 +437,7 @@ Before writing any documentation:
 
 ## Phase 3.5: Verification (3 Passes)
 
-### First Pass - Test Case Evidence Audit
+### First Pass - Test Case Evidence Audit (Section 15)
 
 **For EVERY test case in documentation:**
 
@@ -517,17 +448,19 @@ Before writing any documentation:
 
 ### Second Pass - Domain Model Verification
 
-- Read EACH entity file referenced in Domain Model section
-- Verify property names, types, and line numbers
+- Read EACH entity file referenced in Domain Model section (Section 5)
+- Verify property names and business meanings are accurate (no C# types -- use business meaning column)
 - Check enum values exist in actual source
 - Remove any documented properties not found in source
 
 ### Third Pass - Cross-Reference Audit
 
-- Test Summary counts match actual test case count
+- Document has exactly 17 sections in correct order
+- Test Summary counts match actual test case count in Section 15
 - All internal links work
 - No template placeholders remain (`{FilePath}`, `{LineRange}`)
 - ErrorMessage.cs constants match edge case messages
+- YAML frontmatter is present and complete
 
 **CRITICAL**: If ANY pass finds hallucinated content, re-investigate and fix before completing.
 
@@ -538,13 +471,15 @@ Before writing any documentation:
 ### Structure
 
 - [ ] Documentation placed in correct folder structure
-- [ ] README.md follows template format (26 sections)
+- [ ] README.md follows template format (17 sections)
+- [ ] **YAML frontmatter** present with module, service, feature_code, entities[]
 - [ ] INDEX.md created with navigation links
 - [ ] Master index (BUSINESS-FEATURES.md) updated
 - [ ] Stakeholder navigation table present
-- [ ] ASCII diagrams for architecture
-- [ ] API endpoints documented with examples
 - [ ] CHANGELOG.md updated with entry under `[Unreleased]`
+- [ ] **Max 1200 lines** total document length
+- [ ] **No code details** in sections 1-14, 16 (no file paths, no C# types)
+- [ ] **Commands reference BR-XXX** IDs they validate
 
 ### Test Case Evidence (MANDATORY)
 
@@ -552,7 +487,7 @@ Before writing any documentation:
 - [ ] **No template placeholders** remain (`{FilePath}`, `{LineRange}`)
 - [ ] **Line numbers verified** by reading actual source files
 - [ ] **Edge case errors match** constants from `ErrorMessage.cs`
-- [ ] **Test Summary counts match** actual number of test cases
+- [ ] **Test Summary counts match** actual number of test cases in Section 15
 
 ### Anti-Hallucination
 
@@ -568,6 +503,16 @@ Before writing any documentation:
 
 ---
 
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"/tdd-spec (Recommended)"** — Generate/update test specs for documented features
+- **"/test-specs-docs"** — Sync test specs to dashboard
+- **"Skip, continue manually"** — user decides
+
+---
+
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
@@ -575,6 +520,6 @@ Before writing any documentation:
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-    <!-- SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:evidence-based-reasoning:reminder -->
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->

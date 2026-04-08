@@ -45,7 +45,7 @@ const ROLE_PATH_MAPPINGS = {
         role: 'qa-engineer',
         skill: 'test-spec',
         template: '.claude/docs/team-artifacts/templates/test-spec-template.md',
-        context: 'TEST SPEC: TC-{MOD}-{NNN} IDs required, Evidence field mandatory with file:line format.'
+        context: 'TEST SPEC: TC-{FEATURE}-{NNN} IDs required, Evidence field mandatory with file:line format.'
     },
     'team-artifacts/design-specs/': {
         role: 'ux-designer',
@@ -85,7 +85,7 @@ const QUALITY_CHECKLISTS = {
         '- [ ] GIVEN/WHEN/THEN format',
         '- [ ] INVEST criteria met'
     ],
-    'qa-engineer': ['- [ ] TC-{MOD}-{NNN} IDs assigned', '- [ ] Evidence field has file:line', '- [ ] Summary counts match', '- [ ] No template placeholders'],
+    'qa-engineer': ['- [ ] TC-{FEATURE}-{NNN} IDs assigned', '- [ ] Evidence field has file:line', '- [ ] Summary counts match', '- [ ] No template placeholders'],
     'ux-designer': [
         '- [ ] All states documented',
         '- [ ] Design tokens specified',

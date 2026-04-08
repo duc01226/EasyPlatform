@@ -79,7 +79,7 @@ THEN {expected outcome}
 
 Follow test case patterns from related feature docs:
 
-- **Format:** TC-{MOD}-{FEATURE}-XXX
+- **Format:** TC-{FEATURE}-{NNN}
 - **Evidence:** file:line format (e.g., component.ts:142)
 - **Reference:** See existing patterns in feature doc Section 15 (Test Cases)
 
@@ -87,7 +87,7 @@ Follow test case patterns from related feature docs:
 
 #### AC-01: {Criteria title}
 
-**Test Case:** TC-{MOD}-{FEATURE}-001
+**Test Case:** TC-{FEATURE}-001
 
 ```gherkin
 GIVEN {precondition}
@@ -106,7 +106,7 @@ THEN {outcome}
 
 #### AC-02: {Criteria title}
 
-**Test Case:** TC-{MOD}-{FEATURE}-002
+**Test Case:** TC-{FEATURE}-002
 
 ```gherkin
 GIVEN {precondition}
@@ -123,7 +123,7 @@ THEN {outcome}
 
 #### AC-03: {Error case}
 
-**Test Case:** TC-{MOD}-{FEATURE}-003
+**Test Case:** TC-{FEATURE}-003
 
 ```gherkin
 GIVEN {precondition}
@@ -144,7 +144,7 @@ THEN {error handling}
 
 ### Test Case Pattern Alignment
 
-- [ ] TC format follows TC-{MOD}-{FEATURE}-XXX pattern
+- [ ] TC format follows TC-{FEATURE}-{NNN} pattern
 - [ ] All ACs use GIVEN/WHEN/THEN format
 - [ ] Evidence format specified (file:line)
 
@@ -173,16 +173,16 @@ THEN {error handling}
 - **Primary Feature:** [{Feature Name}]({path_to_feature_doc})
 - **Module Overview:** [{Module Name}]({path_to_module_readme})
 
-### Related Entities (from .ai.md)
+### Related Entities (from feature docs)
 
-- [{Entity1}]({path_to_ai_md})
-- [{Entity2}]({path_to_ai_md})
+- [{Entity1}]({path_to_feature_doc}#7-domain-model)
+- [{Entity2}]({path_to_feature_doc}#7-domain-model)
 
 ### Existing Test Cases
 
 See Section 15 (Test Cases & Scenarios) in primary feature doc for patterns:
 
-- TC-{MOD}-{FEATURE}-XXX format
+- TC-{FEATURE}-{NNN} format
 - GIVEN/WHEN/THEN structure
 - Evidence format examples
 
@@ -234,7 +234,7 @@ Node ID: Use URL format (e.g., 1-3), extraction converts to API format (1:3)
 
 ### Acceptance Criteria
 
-- Use TC-{MOD}-{FEATURE}-XXX format for domain features
+- Use TC-{FEATURE}-{NNN} format for domain features
 - Reference existing test case patterns from feature docs
 - Include Evidence format reminder (will be populated during implementation)
 - Link to related business rules

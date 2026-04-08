@@ -360,7 +360,7 @@ Check these locations for Figma URLs:
 
 - PBI `## Design Reference` section
 - Design spec `figma_file:` and `figma_nodes:` frontmatter
-- Feature doc Section 6 (Design Reference)
+- Feature doc (if design reference exists in any section)
 
 ##### 2. Parse URLs
 
@@ -1217,18 +1217,18 @@ After creating all phase files, run the **recursive decomposition loop**:
 - **IMPORTANT MUST ATTENTION** include Test Specifications section and story_points in plan frontmatter
 - **IMPORTANT MUST ATTENTION** verify all phases pass granularity check
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-      <!-- SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:evidence-based-reasoning:reminder -->
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:estimation-framework:reminder -->
 - **IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:plan-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
+    <!-- /SYNC:plan-quality:reminder -->
+    <!-- SYNC:iterative-phase-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-      <!-- /SYNC:iterative-phase-quality:reminder -->
-      <!-- SYNC:plan-granularity:reminder -->
+    <!-- /SYNC:iterative-phase-quality:reminder -->
+    <!-- SYNC:plan-granularity:reminder -->
 - **IMPORTANT MUST ATTENTION** pass 5-point granularity check: specific files, no planning verbs, <=30min steps, <=5 files, zero TBDs.
-    <!-- /SYNC:plan-granularity:reminder -->
+  <!-- /SYNC:plan-granularity:reminder -->

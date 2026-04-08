@@ -17,7 +17,7 @@ Use this checklist to validate idea and PBI templates before committing.
 - [ ] `module` is valid (matches a module in project-config.json backendServices.serviceMap)
 - [ ] `related_features` list matches features in module README
 - [ ] `feature_doc_path` points to existing file
-- [ ] `entities` list uses exact entity names from .ai.md files
+- [ ] `entities` list uses exact entity names from feature docs Domain Model section
 
 ### Content Sections
 
@@ -52,7 +52,7 @@ Use this checklist to validate idea and PBI templates before committing.
     - [ ] New rules defined (if applicable)
     - [ ] Conflicts/clarifications flagged
 - [ ] Acceptance Criteria follow BDD format (GIVEN/WHEN/THEN)
-- [ ] Test case IDs follow TC-{MOD}-{FEATURE}-XXX format (domain features)
+- [ ] Test case IDs follow TC-{FEATURE}-{NNN} format (domain features)
 - [ ] Evidence format mentioned (file:line)
 - [ ] Reference Documentation section has valid links
 
@@ -60,7 +60,7 @@ Use this checklist to validate idea and PBI templates before committing.
 
 - [ ] All internal links resolve correctly
 - [ ] Feature doc paths exist
-- [ ] .ai.md entity links exist
+- [ ] Domain entity references valid
 - [ ] Business rule IDs exist in referenced feature docs
 
 ## Validation Commands
@@ -100,11 +100,11 @@ grep -rh "BR-[A-Z]\{3\}-[0-9]\{3\}" team-artifacts/ 2>/dev/null | sort | uniq
 
 ### Issue: Test case format inconsistent
 
-**Fix:** Check Section 15 of related feature doc for correct TC-{MOD}-{FEATURE}-XXX format
+**Fix:** Check Section 15 of related feature doc for correct TC-{FEATURE}-{NNN} format
 
 ### Issue: Entity names don't match domain vocabulary
 
-**Fix:** Use exact entity names from .ai.md files. Check project-config.json for module-to-entity mapping.
+**Fix:** Use exact entity names from feature docs Domain Model section. Check project-config.json for module-to-entity mapping.
 
 ## Version History
 

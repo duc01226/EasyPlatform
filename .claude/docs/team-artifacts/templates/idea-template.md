@@ -57,7 +57,7 @@ pbi_references: [] # Links to generated PBIs
 
 ### Domain Entities
 
-<!-- Entities involved, from .ai.md files -->
+<!-- Entities involved, from feature docs Domain Model section -->
 
 - **Primary:** {Entity1}, {Entity2}
 - **Related:** {Entity3}, {Entity4}

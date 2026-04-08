@@ -25,7 +25,7 @@ When this workflow starts, create EXACTLY these 10 tasks in order (source: `work
 | 5   | `[Workflow] /plan — Consolidate review findings into fix plan`     | Yes — skip if all reviews PASS |
 | 6   | `[Workflow] /plan-validate — Critical questions on fix plan`       | Yes — skip if all reviews PASS |
 | 7   | `[Workflow] /cook — Implement fixes from plan`                     | Yes — skip if all reviews PASS |
-| 8   | `[Workflow] /workflow-review — Recursive re-review`                | Yes — skip if all reviews PASS |
+| 8   | `[Workflow] Fresh-context sub-agent re-review (iteration N/3)`     | Yes — skip if all reviews PASS |
 | 9   | `[Workflow] /watzup — Wrap up and summarize`                       | No                             |
 | 10  | `[Workflow] /workflow-end — End workflow`                          | No                             |
 
@@ -33,9 +33,23 @@ When this workflow starts, create EXACTLY these 10 tasks in order (source: `work
 
 ---
 
-## Recursive Review Protocol (CRITICAL)
+## Fresh-Context Sub-Agent Re-Review Protocol (CRITICAL)
 
-This workflow is **self-recursive**. After fixing issues, it calls itself to re-review the changes made by the fix. The loop continues until all reviews pass clean.
+This workflow uses **fresh-context sub-agents** for re-review iterations. After fixing issues, it spawns a NEW `code-reviewer` sub-agent with ZERO memory of prior fixes — eliminating AI confirmation bias.
+
+<!-- SYNC:fresh-context-review -->
+
+> **Fresh-Context Review** — Eliminate AI confirmation bias. Spawn `code-reviewer` sub-agent for re-review iterations — zero memory of prior fixes.
+>
+> **When:** After fixing review findings. NOT for initial review (needs intent context).
+>
+> **How:** `Agent(subagent_type: "code-reviewer")` with self-contained prompt: git diff scope + `docs/project-reference/code-review-rules.md` + checklist summary. Prompt MUST NOT reference prior findings. Report to `plans/reports/review-iteration-{N}-{date}.md`.
+>
+> **Result:** PASS → proceed | FAIL (iteration < 3) → fix ALL issues, spawn NEW agent | FAIL (iteration 3) → escalate to user | Issue count increased → STOP, escalate
+>
+> **Max 3 iterations.** Track `[Re-Review {N}/3]` tasks per iteration.
+
+<!-- /SYNC:fresh-context-review -->
 
 ### Flow Diagram
 
@@ -64,9 +78,12 @@ This workflow is **self-recursive**. After fixing issues, it calls itself to re-
         └──────┬──────────────────────────────────┘
                │
         ┌──────▼──────────────────────────────────┐
-        │  Phase 4: RE-REVIEW (RECURSIVE)         │
-        │  /workflow-review                       │
-        │  (calls itself — full review cycle)     │
+        │  Phase 4: FRESH-CONTEXT RE-REVIEW       │
+        │  Spawn Agent(code-reviewer) with:       │
+        │  - git diff for scope                   │
+        │  - code-review-rules.md for standards   │
+        │  - No mention of prior fixes            │
+        │  Returns: PASS or FAIL with issues      │
         └──────┬──────────────────────────────────┘
                │
                └──→ Loop until PASS (max 3 iterations)
@@ -76,10 +93,10 @@ This workflow is **self-recursive**. After fixing issues, it calls itself to re-
 
 1. **Max 3 iterations** — if issues persist after 3 full review-fix cycles, STOP and report remaining issues to user via `AskUserQuestion`
 2. **Track iteration count** — log "Review iteration N/3" at the start of each cycle
-3. **PASS = exit** — when all review steps report no Critical/Major issues, skip plan/cook/recursive-call and proceed to `/watzup`
+3. **PASS = exit** — when sub-agent reports no Critical/Major issues, skip plan/cook/re-review and proceed to `/watzup`
 4. **Diminishing scope** — each iteration should find FEWER issues. If iteration N finds MORE issues than N-1, STOP and escalate to user
-5. **Skip conditions for plan/cook/recursive-call:**
-    - All reviews PASS with no Critical or Major findings
+5. **Skip conditions for plan/cook/re-review:**
+    - Sub-agent reports PASS with no Critical or Major findings
     - Only Minor/cosmetic findings remain (log them, don't fix)
 
 ---
@@ -89,5 +106,5 @@ This workflow is **self-recursive**. After fixing issues, it calls itself to re-
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **IMPORTANT MUST ATTENTION** track iteration count — log "Review iteration N/3" at start of each cycle
 - **IMPORTANT MUST ATTENTION** stop after max 3 iterations and escalate remaining issues to user
-- **IMPORTANT MUST ATTENTION** skip plan/cook/recursive-call when all reviews PASS
+- **IMPORTANT MUST ATTENTION** spawn fresh code-reviewer sub-agent for each re-review iteration (zero prior context)
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every finding (confidence >80% to act)

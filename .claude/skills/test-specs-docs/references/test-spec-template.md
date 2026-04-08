@@ -25,7 +25,7 @@ Reference: Search for existing test spec files in `docs/test-specs/{Module}/READ
 
 ### 1.1 [Sub-Feature] Tests
 
-#### TC-{MOD}-{FEAT}-001: [Descriptive Test Name]
+#### TC-{FEATURE}-001: [Descriptive Test Name]
 
 **Priority**: P0-Critical | P1-High | P2-Medium | P3-Low
 
@@ -98,7 +98,7 @@ Then [expected outcome]
 
 ---
 
-#### TC-{MOD}-{FEAT}-002: [Next Test Name]
+#### TC-{FEATURE}-002: [Next Test Name]
 
 [Continue with same format...]
 
@@ -175,7 +175,7 @@ Every test case MUST ATTENTION include:
 ## Complete Example: Feature Test Case
 
 ````markdown
-#### TC-{MOD}-{FEAT}-001: Execute Feature Action Successfully
+#### TC-{FEATURE}-001: Execute Feature Action Successfully
 
 **Priority**: P1-High
 

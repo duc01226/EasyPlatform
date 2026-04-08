@@ -173,22 +173,22 @@
 > **Deep Multi-Round Review** — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
 >
 > **Round 1:** Normal review building understanding. Read all files, note issues.
-> **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
+> **Round 2:** MANDATORY fresh-context review. Delegate to a `code-reviewer` sub-agent via `Agent` tool for unbiased re-review (see `SYNC:fresh-context-review` for protocol). The sub-agent re-reads ALL files from scratch with zero memory of Round 1. Focus on:
 >
 > - Cross-cutting concerns missed in Round 1
 > - Interaction bugs between changed files
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces (what should exist but doesn't)
 >
-> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+> **Round 3:** MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Stays in main session — needs Round 1+2 findings for targeted probing. Pretend you are using/running this code RIGHT NOW:
 >
 > - "What input causes failure? What error do I get?"
 > - "1000 concurrent users — what breaks?"
 > - "After deployment rollback — backward compatible?"
 > - "Can I debug issues from logs/monitoring output?"
 >
-> **Rules:** NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
-> **Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
+> **Rules:** Round 2 MUST use fresh sub-agent. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds.
+> **Report must include `## Round 2 Findings (Fresh-Context)` and `## Round 3 Findings` sections.**
 
 ---
 
@@ -224,7 +224,7 @@
 
 > **Test Spec Verification** — Map changed code to test specifications.
 >
-> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
+> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 15
 > 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
@@ -428,3 +428,40 @@
 ## SYNC:shared-protocol-duplication-policy
 
 > **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+---
+
+## SYNC:fresh-context-review
+
+> **Fresh-Context Review** — Eliminate AI confirmation bias. Spawn `code-reviewer` sub-agent for re-review iterations — zero memory of prior fixes.
+>
+> **When:** After fixing review findings. NOT for initial review (needs intent context).
+>
+> **How:** `Agent(subagent_type: "code-reviewer")` with self-contained prompt: git diff scope + `docs/project-reference/code-review-rules.md` + checklist summary. Prompt MUST NOT reference prior findings. Report to `plans/reports/review-iteration-{N}-{date}.md`.
+>
+> **Result:** PASS → proceed | FAIL (iteration < 3) → fix ALL issues, spawn NEW agent | FAIL (iteration 3) → escalate to user | Issue count increased → STOP, escalate
+>
+> **Max 3 iterations.** Track `[Re-Review {N}/3]` tasks per iteration.
+
+---
+
+## SYNC:fix-layer-accountability
+
+> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
+>
+> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
+>
+> **MANDATORY before ANY fix:**
+>
+> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
+> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
+> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
+> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
+>
+> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
+>
+> **Anti-patterns (REJECT these):**
+>
+> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
+> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
+> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.

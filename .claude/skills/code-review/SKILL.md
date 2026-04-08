@@ -113,7 +113,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 > **Test Spec Verification** — Map changed code to test specifications.
 >
-> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 17
+> 1. From changed files → find TC-{FEAT}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 15
 > 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
@@ -123,6 +123,29 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 > **NEVER skip test mapping.** Untested code paths are the #1 source of production bugs.
 
 <!-- /SYNC:test-spec-verification -->
+
+<!-- SYNC:fix-layer-accountability -->
+
+> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
+>
+> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
+>
+> **MANDATORY before ANY fix:**
+>
+> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
+> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
+> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
+> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
+>
+> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
+>
+> **Anti-patterns (REJECT these):**
+>
+> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
+> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
+> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
+
+<!-- /SYNC:fix-layer-accountability -->
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
@@ -272,23 +295,26 @@ Flag stale counts/tables/examples, missing docs for new features, outdated test 
 **Phase 3: Final Review Result**
 Update report with: Overall Assessment, Critical Issues, High Priority, Architecture Recommendations, Documentation Staleness, Positive Observations
 
-## Round 2: Focused Re-Review (MANDATORY)
+## Round 2: Focused Re-Review (MANDATORY — Fresh-Context)
 
-> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
+> **Protocol:** Fresh-Context Review (SYNC:fresh-context-review) — Round 2 is delegated to a fresh sub-agent for unbiased review.
 
-After completing Phase 3 (Round 1), execute a **second full review round**:
+After completing Phase 3 (Round 1), spawn a **fresh code-reviewer sub-agent** for Round 2:
 
-1. **Re-read** the Round 1 report to understand what was already caught
-2. **Re-scan** ALL reviewed files — do NOT rely on Round 1 memory
-3. **Focus on** what Round 1 typically misses:
-    - Cross-cutting concerns spanning multiple files
-    - Subtle edge cases (null, empty, boundary, off-by-one)
-    - Naming inconsistencies across files
-    - Missing pieces (error handling, validation, tests)
-    - Convention drift (grep to verify against codebase patterns)
-    - Over-engineering that seemed justified in Round 1
-4. **Update report** with `## Round 2 Findings` section
-5. **Final verdict** must incorporate findings from BOTH rounds
+```
+Agent({
+  description: "Fresh-context Round 2 deep review",
+  subagent_type: "code-reviewer",
+  prompt: "## Task\nReview ALL uncommitted changes for code quality. This is a focused deep review.\nYou are reviewing with completely fresh eyes — no knowledge of any prior review round.\n\n## Review Scope\nRun git diff to see all uncommitted changes.\n\n## Focus Areas\n- Cross-cutting concerns spanning multiple changed files\n- Interaction bugs between changed files\n- Convention drift (new code vs existing patterns — grep 3+ examples)\n- Missing pieces (what should exist but doesn't)\n- Subtle edge cases (null, empty, boundary, off-by-one)\n- Logic errors that may have been accepted at face value\n- Bug patterns that only emerge when viewing cross-file interactions\n- Test spec gaps visible only after seeing the full change set\n\nRead docs/project-reference/code-review-rules.md for project standards.\nWrite findings to plans/reports/code-review-round2-{date}.md\n\n## Output\nReturn structured findings:\n- **Status**: PASS or FAIL\n- **Issues**: [list with file:line evidence]\n- **Issue Count**: {number}\n\nEvery finding MUST have file:line evidence. No speculation."
+})
+```
+
+After sub-agent returns:
+
+1. **Read** the sub-agent's report from `plans/reports/code-review-round2-{date}.md`
+2. **Integrate** findings into the main report as `## Round 2 Findings (Fresh-Context)`
+3. **Proceed** to Round 3 (adversarial simulation) with combined Round 1 + Round 2 knowledge
+4. **Final verdict** must incorporate findings from BOTH rounds
 
 ## Clean Code Rules (MUST ATTENTION CHECK)
 
@@ -475,7 +501,7 @@ If `architectureRules` is not present in project-config.json, skip this check si
 - **MANDATORY IMPORTANT MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
     <!-- /SYNC:design-patterns-quality:reminder -->
     <!-- SYNC:double-round-trip-review:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 re-reads from scratch — never skip or combine with Round 1.
+- **MANDATORY IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context) — never skip or combine with Round 1.
     <!-- /SYNC:double-round-trip-review:reminder -->
     <!-- SYNC:rationalization-prevention:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
@@ -492,3 +518,6 @@ If `architectureRules` is not present in project-config.json, skip this check si
     <!-- SYNC:test-spec-verification:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** map every changed function/endpoint to a TC-{FEAT}-{NNN}. Flag gaps, recommend `/tdd-spec`.
   <!-- /SYNC:test-spec-verification:reminder -->
+  <!-- SYNC:fix-layer-accountability:reminder -->
+- **IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+    <!-- /SYNC:fix-layer-accountability:reminder -->

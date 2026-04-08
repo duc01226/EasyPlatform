@@ -366,10 +366,10 @@
   path: feature\SKILL.md
 - category: other
   description: "[Documentation] Create or update business feature documentation in
-    docs/business-features/{Module}/. Generates comprehensive 26-section docs with
-    verified code evidence and AI companion files. Triggers on: feature docs, business
+    docs/business-features/{Module}/. Generates 17-section docs with
+    verified code evidence. Triggers on: feature docs, business
     feature documentation, module documentation, document feature, update feature
-    docs, ai companion, ai context file, quick feature docs, feature readme, single
+    docs, quick feature docs, feature readme, single
     file docs, verified documentation."
   has_references: false
   has_scripts: false

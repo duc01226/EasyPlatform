@@ -44,7 +44,7 @@
 ## Phase 2: Design Review
 
 - Use `/why-review` to validate design rationale before implementation
-- Use `/tdd-spec` to write test specifications (feature doc Section 17) — CREATE mode before implementation, UPDATE mode after
+- Use `/tdd-spec` to write test specifications (feature doc Section 15) — CREATE mode before implementation, UPDATE mode after
 - Use `/tdd-spec-review` to review test specs for coverage and correctness
 - For features: two planning rounds — PLAN1 (architecture) then PLAN2 (incorporating test strategy)
 
@@ -108,7 +108,7 @@ All workflows are defined in `.claude/workflows.json`. Each workflow composes a 
 | **tdd-feature**                   | 0→2→1→3→4→5→6                      | Test-first development (specs before plan)          |
 | **batch-operation**               | 1→2→3→4→5→6                        | Bulk multi-file modifications                       |
 | **documentation**                 | 0→1→3→5→6                          | Documentation creation/update                       |
-| **feature-docs**                  | 0→1→3→5→6                          | Business feature docs (26-section template)         |
+| **feature-docs**                  | 0→1→3→5→6                          | Business feature docs (17-section template)         |
 | **testing**                       | 4 only                             | Run test suites                                     |
 | **performance**                   | 0→1→2→3→4→5→6                      | Performance investigation and optimization          |
 | **migration**                     | 0→1→3→5→6                          | Database schema/data migrations                     |

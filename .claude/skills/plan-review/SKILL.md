@@ -280,7 +280,21 @@ Pretend you are implementing RIGHT NOW. For each phase:
 
 ## Recursive Fix-and-Review Protocol (CRITICAL)
 
-When the review results in **FAIL**, plan-review **fixes the issues itself** and re-reviews, looping until PASS or max iterations.
+When the review results in **FAIL**, plan-review fixes the issues and spawns a **fresh-context sub-agent** for re-review — eliminating AI confirmation bias from the fix process.
+
+<!-- SYNC:fresh-context-review -->
+
+> **Fresh-Context Review** — Eliminate AI confirmation bias. Spawn `code-reviewer` sub-agent for re-review iterations — zero memory of prior fixes.
+>
+> **When:** After fixing review findings. NOT for initial review (needs intent context).
+>
+> **How:** `Agent(subagent_type: "code-reviewer")` with self-contained prompt: git diff scope + `docs/project-reference/code-review-rules.md` + checklist summary. Prompt MUST NOT reference prior findings. Report to `plans/reports/review-iteration-{N}-{date}.md`.
+>
+> **Result:** PASS → proceed | FAIL (iteration < 3) → fix ALL issues, spawn NEW agent | FAIL (iteration 3) → escalate to user | Issue count increased → STOP, escalate
+>
+> **Max 3 iterations.** Track `[Re-Review {N}/3]` tasks per iteration.
+
+<!-- /SYNC:fresh-context-review -->
 
 ### Flow
 
@@ -302,11 +316,25 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
         └──────┬──────────────────────────────────┘
                │
         ┌──────▼──────────────────────────────────┐
-        │  RE-REVIEW: All 3 rounds again            │
-        │  (Round 1 + Round 2 + Round 3)           │
+        │  FRESH-CONTEXT RE-REVIEW:               │
+        │  Spawn code-reviewer sub-agent to       │
+        │  review plan files with fresh eyes      │
+        │  (zero memory of prior fixes)           │
         └──────┬──────────────────────────────────┘
                │
                └──→ Loop until PASS/WARN (max 3 iterations)
+```
+
+### Plan-Specific Sub-Agent Prompt
+
+When spawning the re-review sub-agent for plan files, use this prompt template:
+
+```
+Agent({
+  description: "Fresh-context plan re-review iteration N/3",
+  subagent_type: "code-reviewer",
+  prompt: "## Task\nReview the implementation plan at {plan-path} for validity, correctness, and best practices.\nYou are reviewing with completely fresh eyes — no knowledge of prior fixes.\n\n## Files to Read\n- {plan-path}/plan.md — overview and phase list\n- {plan-path}/phase-*.md — all phase files\n\n## Checklist\n1. Validity: Has summary, requirements, steps, file listings\n2. Correctness: Steps are specific (file paths, not vague), no planning verbs, each step <=30min, <=5 files per phase, no unresolved TBDs\n3. Best Practices: YAGNI, KISS, DRY, follows project patterns\n4. Completeness: Risks, testing strategy, success criteria, security\n5. Test Specs: Every phase has TC-{FEAT}-{NNN} mappings\n\n## Output\n- Status: PASS / WARN / FAIL\n- Issues: [list with specific plan section references]\n- Recommendations: [specific fixes]"
+})
 ```
 
 ### Iteration Rules
@@ -367,10 +395,10 @@ When the review results in **FAIL**, plan-review **fixes the issues itself** and
 <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:double-round-trip-review:reminder -->
 - **IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:graph-assisted-investigation:reminder -->

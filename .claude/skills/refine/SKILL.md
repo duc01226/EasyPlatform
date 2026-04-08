@@ -68,7 +68,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
     >
     > Present 2-3 options per concern via AskUserQuestion. Verify each checklist before marking scaffold complete.
 
-                <!-- /SYNC:scaffold-production-readiness -->
+                    <!-- /SYNC:scaffold-production-readiness -->
 
     — for Production Readiness Concerns table in PBI output
 
@@ -82,7 +82,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
     > 4. **Performance** — no N+1 queries, unnecessary allocations, or blocking calls in async paths
     > 5. **Observability** — health checks, metrics, tracing spans for new endpoints
 
-                <!-- /SYNC:cross-cutting-quality -->
+                    <!-- /SYNC:cross-cutting-quality -->
 
     — for Authorization, Seed Data, Data Migration concerns in PBI output
 
@@ -622,7 +622,7 @@ Then error "{message}"
 
 ## Project Integration
 
-For domain PBIs: detect module from `docs/business-features/` directory names, extract business rules from `docs/business-features/{module}/`, load entity context from `.ai.md`. Target 8-12K tokens for feature context.
+For domain PBIs: detect module from `docs/business-features/` directory names, extract business rules from `docs/business-features/{module}/`, load entity context from feature doc. Target 8-12K tokens for feature context.
 
 ---
 
@@ -654,13 +654,13 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 <!-- SYNC:ui-system-context:reminder -->
 
 - **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:scaffold-production-readiness:reminder -->
+    <!-- /SYNC:ui-system-context:reminder -->
+    <!-- SYNC:scaffold-production-readiness:reminder -->
 - **IMPORTANT MUST ATTENTION** verify 4 production-readiness foundations (code quality, error handling, loading state, Docker) for scaffold PBIs.
-    <!-- /SYNC:scaffold-production-readiness:reminder -->
-    <!-- SYNC:cross-cutting-quality:reminder -->
+  <!-- /SYNC:scaffold-production-readiness:reminder -->
+  <!-- SYNC:cross-cutting-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** check error handling, logging, security, performance, and observability across changed files.
-    <!-- /SYNC:cross-cutting-quality:reminder -->
-    <!-- SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:cross-cutting-quality:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
 - **IMPORTANT MUST ATTENTION** estimate story points using Modified Fibonacci (1-21). SP >8 MUST ATTENTION split, >5 SHOULD split.
-    <!-- /SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->

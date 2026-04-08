@@ -155,7 +155,7 @@ Include in frontmatter (if project domain):
 module: ServiceB # Detected module
 related_features: [OrderManagement, Feedback] # From README feature list
 feature_doc_path: docs/business-features/ServiceB/detailed-features/README.GoalManagementFeature.md
-entities: [Goal, Employee, OrganizationalUnit] # From .ai.md
+entities: [Goal, Employee, OrganizationalUnit] # From feature doc
 ```
 
 Use domain vocabulary in idea description based on loaded context.

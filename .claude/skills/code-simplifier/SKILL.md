@@ -63,6 +63,7 @@ allowed-tools: Read, Edit, Glob, Grep, Task, Bash
 2. **Analyze** — Find complexity hotspots (nesting >3, methods >20 lines), duplicates, naming issues
 3. **Apply Simplifications** — One refactoring type at a time following KISS/DRY/YAGNI
 4. **Verify** — Run related tests, confirm no behavior changes
+5. **Fresh-Context Verification** — Spawn code-reviewer sub-agent to validate simplifications
 
 **Key Rules:**
 
@@ -259,6 +260,36 @@ When graph DB is available, BEFORE simplifying code, trace to understand what de
 
 ---
 
+## Fresh-Context Verification (MANDATORY after simplifications)
+
+After tests pass, spawn a fresh `code-reviewer` sub-agent to verify simplifications from an unbiased perspective:
+
+<!-- SYNC:fresh-context-review -->
+
+> **Fresh-Context Review** — Eliminate AI confirmation bias. Spawn `code-reviewer` sub-agent for re-review iterations — zero memory of prior fixes.
+>
+> **When:** After fixing review findings. NOT for initial review (needs intent context).
+>
+> **How:** `Agent(subagent_type: "code-reviewer")` with self-contained prompt: git diff scope + `docs/project-reference/code-review-rules.md` + checklist summary. Prompt MUST NOT reference prior findings. Report to `plans/reports/review-iteration-{N}-{date}.md`.
+>
+> **Result:** PASS → proceed | FAIL (iteration < 3) → fix ALL issues, spawn NEW agent | FAIL (iteration 3) → escalate to user | Issue count increased → STOP, escalate
+>
+> **Max 3 iterations.** Track `[Re-Review {N}/3]` tasks per iteration.
+
+<!-- /SYNC:fresh-context-review -->
+
+**Simplification-specific sub-agent prompt:**
+
+```
+Agent({
+  description: "Fresh-context simplification verification",
+  subagent_type: "code-reviewer",
+  prompt: "## Task\nReview ALL uncommitted changes. These are code simplification refactors.\nYou are reviewing with completely fresh eyes — no knowledge of WHY simplifications were made.\n\n## Verify\n1. No behavior changes (logic equivalence preserved)\n2. Simplifications actually improved readability\n3. No accidental removal of necessary code\n4. Conventions still followed (grep 3+ patterns)\n5. No new issues introduced by refactoring\n\nRead docs/project-reference/code-review-rules.md for project standards.\n\n## Output\n- **Status**: PASS or FAIL\n- **Issues**: [list with file:line evidence]\n- **Reverts Needed**: [list of changes that should be reverted]\n\nEvery finding MUST have file:line evidence."
+})
+```
+
+If sub-agent flags issues with simplifications → revert problematic changes and log reasoning.
+
 ## Workflow Recommendation
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
@@ -296,10 +327,10 @@ When graph DB is available, BEFORE simplifying code, trace to understand what de
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:design-patterns-quality:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:design-patterns-quality:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
-    <!-- /SYNC:design-patterns-quality:reminder -->
-    <!-- SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:design-patterns-quality:reminder -->
+      <!-- SYNC:ui-system-context:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
+    <!-- /SYNC:ui-system-context:reminder -->

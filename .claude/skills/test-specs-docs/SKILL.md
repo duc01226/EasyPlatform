@@ -12,11 +12,11 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 ## Quick Summary
 
-**Goal:** Sync test specifications between feature docs (Section 17) and docs/test-specs/ dashboard. Supports forward sync (feature docs → dashboard), reverse sync (dashboard → feature docs), and bidirectional reconciliation. Feature docs are the canonical TC registry.
+**Goal:** Sync test specifications between feature docs (Section 15) and docs/test-specs/ dashboard. Supports forward sync (feature docs → dashboard), reverse sync (dashboard → feature docs), and bidirectional reconciliation. Feature docs are the canonical TC registry.
 
 **Workflow:**
 
-1. **Context Gathering** — Identify module, read feature doc Section 17 for canonical TCs
+1. **Context Gathering** — Identify module, read feature doc Section 15 for canonical TCs
 2. **Sync Test Specs** — Aggregate TCs from feature docs into docs/test-specs/ dashboard views
 3. **Index Updates** — Update PRIORITY-INDEX.md and master README.md
 
@@ -26,7 +26,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 - Every test case MUST ATTENTION reference actual source code (anti-hallucination)
 - MUST ATTENTION READ `references/test-spec-template.md` before executing
 - Verify IDs against PRIORITY-INDEX.md to avoid duplicates
-- **Source of truth:** Feature docs Section 17 is the canonical TC registry. This skill SYNCS from there.
+- **Source of truth:** Feature docs Section 15 is the canonical TC registry. This skill SYNCS from there.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -71,7 +71,7 @@ docs/test-specs/
 TC-{FEATURE}-{NNN}
 ```
 
-**TC format:** `TC-{FEATURE}-{NNN}` — feature codes in `docs/project-reference/feature-docs-reference.md` and each feature doc's Section 17.
+**TC format:** `TC-{FEATURE}-{NNN}` — feature codes in `docs/project-reference/feature-docs-reference.md` and each feature doc's Section 15.
 
 ### TC Code Numbering Rules
 
@@ -119,9 +119,9 @@ Each test case requires: Priority, Preconditions, Given-When-Then steps, Accepta
 When user says "sync test specs to feature docs" or "reverse sync":
 
 1. Read `docs/test-specs/{Module}/README.md` — extract all TCs
-2. Read target feature doc Section 17 — extract existing TCs
-3. Identify TCs present in test-specs/ but missing from feature doc Section 17
-4. For each missing TC: use `Edit` to insert into feature doc Section 17
+2. Read target feature doc Section 15 — extract existing TCs
+3. Identify TCs present in test-specs/ but missing from feature doc Section 15
+4. For each missing TC: use `Edit` to insert into feature doc Section 15
 5. Preserve feature doc format (full TC template with GWT, evidence, etc.)
 
 **Direction detection:**
@@ -162,6 +162,16 @@ When user says "sync test specs to feature docs" or "reverse sync":
 | File                               | Contents                                                                                                      |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `references/test-spec-template.md` | Full module template, GWT best practices, acceptance criteria format, evidence requirements, complete example |
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"/watzup (Recommended)"** — Wrap up session and review all changes
+- **"/review-changes"** — Review all uncommitted changes before commit
+- **"Skip, continue manually"** — user decides
 
 ---
 

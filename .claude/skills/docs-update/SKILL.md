@@ -1,38 +1,40 @@
 ---
 name: docs-update
-version: 2.0.0
-description: '[Documentation] Holistic documentation orchestrator — detects impacted docs from git changes and updates project docs + business feature docs'
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
+version: 3.0.0
+description: '[Documentation] Holistic documentation orchestrator — detects impacted docs from git changes, then delegates to /feature-docs (business docs), /tdd-spec (test specifications), and /test-specs-docs (dashboard sync). Single entry point for all post-change documentation updates.'
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQuestion
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each phase. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-> **Critical Purpose:** Ensure ALL documentation stays in sync with code changes — project docs, business feature docs, and AI companions.
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **Critical Purpose:** Single orchestrator for ALL documentation sync after code changes. Triages impact, then delegates to specialized skills.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
-**Goal:** Detect which documentation categories are impacted by recent code changes and update them accordingly.
+**Goal:** Detect which documentation is impacted by code changes and orchestrate updates across all doc types.
 
-**Workflow:**
+**Orchestration Model:**
 
-1. **Phase 0: Triage** — `git diff` to categorize what changed and which doc types are impacted
-2. **Phase 1: Project Docs** — Update project-level docs (README, project-structure-reference, etc.) if impacted
-3. **Phase 2: Business Feature Docs** — Detect affected modules, update existing feature docs in `docs/business-features/`
-4. **Phase 3: Summary Report** — What was checked, updated, and skipped
+```
+git diff → Triage → Phase 1: Project Docs (inline)
+                  → Phase 2: /feature-docs (business feature docs)
+                  → Phase 3: /tdd-spec (test specifications)
+                  → Phase 4: /test-specs-docs (dashboard sync)
+                  → Phase 5: Summary Report
+```
 
 **Key Rules:**
 
-- NEVER create new business feature docs from scratch — only update existing ones
-- Fast exit when no documentation is impacted (e.g., only `.claude/` config changes)
-- Always report what was checked, even if nothing needed updating
-
----
+- This skill is a **router** — it triages, then invokes sub-skills. No duplicating sub-skill logic.
+- Each phase checks whether it's needed before invoking — skip phases with no impact.
+- Always report what was checked, even if nothing needed updating.
+- Pass triage context (changed files, detected modules, impacted sections) to each sub-skill via `$ARGUMENTS`.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+---
 
 ## Phase 0: Triage — Detect Impacted Documentation
 
@@ -46,65 +48,24 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 Classify each changed file into documentation impact categories:
 
-| Changed File Pattern                                                                | Impact Category                 | Action            |
-| ----------------------------------------------------------------------------------- | ------------------------------- | ----------------- |
-| `src/Services/**`                                                                   | **feature-docs** + project-docs | Phase 1 + Phase 2 |
-| `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**`                     | **feature-docs** + project-docs | Phase 1 + Phase 2 |
-| `{legacy-frontend-dir}/**Client/**`                                                 | **feature-docs** + project-docs | Phase 1 + Phase 2 |
-| `src/{Framework}/**`                                                                | project-docs                    | Phase 1 only      |
-| `docs/**`                                                                           | project-docs                    | Phase 1 only      |
-| `.claude/**`, config files only                                                     | **none**                        | Fast exit         |
-| `{frontend-libs-dir}/{platform-core-lib}/**`, `{frontend-libs-dir}/{common-lib}/**` | project-docs                    | Phase 1 only      |
+| Changed File Pattern                                                                | Impact Category                                | Phases to Run |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------- | ------------- |
+| `src/Services/**`                                                                   | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
+| `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**`                     | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
+| `{legacy-frontend-dir}/**Client/**`                                                 | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
+| `src/{Framework}/**`                                                                | project-docs only                              | 1 only        |
+| `docs/**`                                                                           | project-docs only                              | 1 only        |
+| `.claude/**`, config files only                                                     | **none**                                       | Fast exit     |
+| `{frontend-libs-dir}/{platform-core-lib}/**`, `{frontend-libs-dir}/{common-lib}/**` | project-docs only                              | 1 only        |
 
 ### Step 0.3: Fast Exit Check
 
 If ALL changed files fall into the **none** category (e.g., only `.claude/`, `.github/`, root config files):
 
 - Report: `"No documentation impacted by current changes (config/tooling only)."`
-- **Exit early** — skip Phase 1 and Phase 2.
+- **Exit early** — skip all phases.
 
----
-
-## Phase 1: Project Documentation Update
-
-**When to run:** Changed files include `src/{Framework}/**`, `docs/**`, or architectural changes.
-
-**When to skip:** Only service-layer or frontend feature files changed (no architectural impact). Skip and proceed to Phase 2.
-
-### Step 1.1: Spawn Scouts (standalone invocation only)
-
-When invoked standalone (not as a workflow step), spawn scouts for broad codebase context:
-
-1. Spawn 2-4 `scout-external` (preferred) or `scout` (fallback) via Task tool
-2. Target directories that actually exist — adapt to project structure
-3. Merge scout results into context summary
-
-**When invoked as a workflow step:** Skip scouting — use git diff context from Phase 0 directly.
-
-### Step 1.2: Update Project Docs
-
-Pass context to `docs-manager` agent to update impacted project docs:
-
-- `docs/project-reference/project-structure-reference.md`: Update if service architecture or cross-service patterns changed
-- `README.md`: Update if project scope or setup changed (keep under 300 lines)
-
-Only update docs that are **directly impacted** by the changes. Do not regenerate all docs.
-
----
-
-## Phase 2: Business Feature Documentation Update
-
-> **This phase replaces the need to invoke `/feature-docs` separately for update scenarios.**
-> docs-update handles the full update lifecycle: detection → analysis → update → verification.
-> Only invoke `/feature-docs` directly when **creating new feature docs from scratch**.
-
-**When to run:** Changed files match `src/Services/**`, `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**`, or `{legacy-frontend-dir}/**Client/**`.
-
-**When to skip:** No service-layer or frontend feature files changed. Report: `"No business feature docs impacted."`
-
-### Step 2.1: Auto-Detect Affected Modules
-
-<!-- Source: feature-docs Step 1.0 -->
+### Step 0.4: Auto-Detect Affected Modules
 
 Extract unique module names from changed file paths:
 
@@ -122,98 +83,176 @@ ls -d src/Services/*/
 ls -d docs/business-features/*/
 ```
 
-### Step 2.2: Check Existing Docs
+### Step 0.5: Check Existing Docs for Each Module
 
 For each detected module:
 
 1. Check if `docs/business-features/{Module}/` exists
 2. Check if `docs/business-features/{Module}/detailed-features/` has feature docs
-3. **If docs exist** → proceed to Step 2.3 (update mode)
-4. **If no docs exist** → report: `"Module {Module} has no feature docs. Consider running /feature-docs to create them."` and skip
-
-### Step 2.3: Diff Analysis
-
-<!-- Source: feature-docs Step 1.5.1 -->
-
-1. Categorize changes by type: backend entity, command, query, frontend component, i18n, etc.
-2. Map each change to impacted documentation sections using the table below
-
-### Step 2.4: Section Impact Mapping
-
-<!-- Source: feature-docs Step 1.5.2 -->
-
-| Change Type            | Impacted Doc Sections                                                                    |
-| ---------------------- | ---------------------------------------------------------------------------------------- |
-| New entity property    | 3 (Business Requirements), 9 (Domain Model), 10 (API Reference)                          |
-| New API endpoint       | 10 (API Reference), 12 (Backend Controllers), 14 (Security)                              |
-| New frontend component | 11 (Frontend Components)                                                                 |
-| New filter/query       | 3 (Business Requirements), 10 (API Reference)                                            |
-| New i18n keys          | 11 (Frontend Components)                                                                 |
-| Any new functionality  | **17 (Test Specs), 18 (Test Data), 19 (Edge Cases), 20 (Regression Impact)** — MANDATORY |
-| Any change             | 1 (Executive Summary), 26 (Version History) — ALWAYS UPDATE                              |
-
-### Step 2.5: Update Impacted Sections
-
-For each module with existing docs:
-
-1. Read the existing feature doc (`README.{FeatureName}.md`)
-2. Update ONLY the sections identified in Step 2.4
-3. **Mandatory test coverage** — when documenting new functionality, MUST ATTENTION update:
-    - Section 17 (Test Specifications): Add TC-{MOD}-XXX test cases with GIVEN/WHEN/THEN
-    - Section 18 (Test Data): Add seed data for new test cases
-    - Section 19 (Edge Cases): Add boundary conditions and error states
-    - Section 20 (Regression Impact): Add regression risk rows
-4. Update Section 26 (Version History) with new version entry
-5. Add CHANGELOG entry under `[Unreleased]` following Keep a Changelog format
-
-### Step 2.6: AI Companion Sync
-
-If `README.{FeatureName}.ai.md` exists alongside the updated feature doc:
-
-- Update the AI companion to reflect changes (keep 300-500 lines)
-- Update `Last synced` timestamp
-
-### Step 2.7: Verification (Mandatory)
-
-<!-- Source: feature-docs Phase 3.5 -->
-
-After updating feature docs, run a verification pass on all changed sections:
-
-1. **Evidence audit** — Every test case (TC-{MOD}-XXX) MUST ATTENTION have `file:line` evidence. Read the claimed file at the claimed line and verify the code supports the assertion. Fix immediately if wrong.
-2. **Domain model check** — Verify entity properties, types, and enum values against actual source code. Remove anything not found in source.
-3. **Cross-reference audit** — Test Summary counts match actual TC count. No template placeholders remain (`{FilePath}`, `{LineRange}`). All internal links resolve.
-
-**If verification finds hallucinated or stale content → fix before completing Phase 2.**
-
-### Step 2.8: TC Coverage Cross-Reference
-
-After updating feature docs, cross-reference integration test TC codes against doc TC codes:
-
-1. Use the Grep tool to find all `[Trait("TestSpec", ...)]` in the affected service's integration test project:
-    ```
-    Grep pattern="Trait\(\"TestSpec\"" path="src/Services/{ServiceDir}/{Service}.IntegrationTests" glob="*.cs"
-    ```
-2. Use the Grep tool to find all `TC-{MOD}-XXX` in the affected feature doc Section 17 / test-specs doc:
-    ```
-    Grep pattern="TC-[A-Z]{2,}-[0-9]+" path="docs/business-features/{Module}/detailed-features" glob="*.md"
-    ```
-3. Compare the TC codes found:
-    - TC in docs but no Trait in code → flag as `Status: Untested` in the doc
-    - Trait in code but no TC in docs → add TC entry to the feature doc Section 17
-4. Report discrepancies in the Phase 3 Summary Report
-
-### Decision: When docs-update Handles It vs. When to Recommend /feature-docs
-
-| Scenario                                                       | Action                                                                                              |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Existing docs + code changes                                   | **docs-update handles it** (Steps 2.1–2.7 above)                                                    |
-| No existing docs for module                                    | Report: recommend `/feature-docs` for creation                                                      |
-| Major new feature (new entity, new service, >10 new endpoints) | **docs-update handles update**, but report: "Consider full `/feature-docs` review for completeness" |
-| User explicitly asks for full 26-section doc                   | Defer to `/feature-docs`                                                                            |
+3. Check if `docs/test-specs/{Module}/` exists
+4. Record: `hasFeatureDocs`, `hasTestSpecs`, `hasTestSpecsDashboard`
 
 ---
 
-## Phase 3: Summary Report
+## Phase 1: Project Documentation Update (Inline)
+
+**When to run:** Changed files include `src/{Framework}/**`, `docs/**`, or architectural changes.
+
+**When to skip:** Only service-layer or frontend feature files changed (no architectural impact). Skip and proceed to Phase 2.
+
+### Step 1.1: Spawn Scouts (standalone invocation only)
+
+When invoked standalone (not as a workflow step), spawn scouts for broad codebase context:
+
+1. Spawn 2-4 `scout-external` (preferred) or `scout` (fallback) via Task tool
+2. Target directories that actually exist — adapt to project structure
+3. Merge scout results into context summary
+
+**When invoked as a workflow step:** Skip scouting — use git diff context from Phase 0 directly.
+
+### Step 1.2: Update Project Docs
+
+Pass context to `docs-manager` sub-agent (Agent tool with `subagent_type="docs-manager"`) to update impacted project docs:
+
+- `docs/project-reference/project-structure-reference.md`: Update if service architecture or cross-service patterns changed
+- `README.md`: Update if project scope or setup changed (keep under 300 lines)
+
+Only update docs that are **directly impacted** by the changes. Do not regenerate all docs.
+
+---
+
+## Phase 2: Business Feature Documentation — Invoke `/feature-docs`
+
+**When to run:** Triage detected modules with `hasFeatureDocs = true` AND service/frontend files changed.
+
+**When to skip:** No service-layer or frontend feature files changed. Report: `"No business feature docs impacted."`
+
+### Step 2.1: Determine Create vs Update
+
+| Scenario                                    | Action                                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Module has existing feature docs            | Invoke `/feature-docs` — auto-detect mode will trigger update flow                   |
+| Module has NO feature docs                  | Report: `"Module {Module} has no feature docs. Run /feature-docs to create."` — skip |
+| User explicitly asked for full doc creation | Invoke `/feature-docs` with explicit module name                                     |
+
+### Step 2.2: Invoke `/feature-docs`
+
+Execute the `/feature-docs` skill with triage context:
+
+```
+/feature-docs Update feature docs for modules: {detected modules}.
+Changed files: {list from triage}.
+Impacted sections based on change types: {section impact from triage}.
+Mode: update (existing docs only, do not create from scratch).
+```
+
+**What `/feature-docs` handles (DO NOT duplicate here):**
+
+- 17-section structure enforcement
+- Diff analysis → section impact mapping
+- Codebase analysis (entities, commands, queries, controllers)
+- Update impacted sections with evidence
+- Master index update (BUSINESS-FEATURES.md)
+- 3-pass verification (evidence audit, domain model, cross-reference)
+- CHANGELOG entry
+- v3.0 principles (no code details in S1-14, evidence in S15 only)
+
+### Step 2.3: Review `/feature-docs` Output
+
+After `/feature-docs` completes, verify:
+
+1. Updated sections align with triage's section impact mapping
+2. No sections were missed that the triage identified as impacted
+3. If gaps found → re-invoke `/feature-docs` for missed sections
+
+---
+
+## Phase 3: Test Specifications — Invoke `/tdd-spec`
+
+**When to run:** ANY new functionality was added (new commands, queries, endpoints, components) OR existing behavior changed.
+
+**When to skip:** Changes are purely cosmetic (styling, comments, docs-only) with no behavioral impact.
+
+### Step 3.1: Determine TC Mode
+
+Based on triage context, determine the appropriate `/tdd-spec` mode:
+
+| Context                                | TC Mode                  |
+| -------------------------------------- | ------------------------ |
+| New feature code, no existing TCs      | `implement-first`        |
+| PBI/story exists, code not yet written | `TDD-first`              |
+| Existing TCs + code changes / bugfix   | `update`                 |
+| User says "sync test specs"            | `sync`                   |
+| Tests exist with annotations, no docs  | `from-integration-tests` |
+
+### Step 3.2: Invoke `/tdd-spec`
+
+Execute the `/tdd-spec` skill with triage context:
+
+```
+/tdd-spec Mode: {detected mode}.
+Modules: {detected modules}.
+Changed files: {list from triage}.
+New functionality detected: {new commands/queries/endpoints from diff analysis}.
+```
+
+**What `/tdd-spec` handles (DO NOT duplicate here):**
+
+- 5 modes: TDD-first, implement-first, update, sync, from-integration-tests
+- TC-{FEATURE}-{NNN} format with decade-based numbering
+- Interactive TC review with user (AskUserQuestion)
+- Cross-cutting categories: authorization, seed data, performance, data migration
+- Phase-mapped coverage (plan phases → TCs)
+- Graph context analysis for cross-service impact
+- Evidence verification per TC
+- Write to feature doc Section 15 (canonical TC registry)
+
+### Step 3.3: Review `/tdd-spec` Output
+
+After `/tdd-spec` completes, verify:
+
+1. New TCs cover all new functionality identified in triage
+2. TC IDs don't collide with existing ones
+3. Evidence fields are populated (not template placeholders)
+
+---
+
+## Phase 4: Test Specs Dashboard Sync — Invoke `/test-specs-docs`
+
+**When to run:** Phase 3 produced new or updated TCs, OR `docs/test-specs/` exists and may be stale.
+
+**When to skip:** No test specification changes and no `docs/test-specs/` directory exists.
+
+### Step 4.1: Invoke `/test-specs-docs`
+
+Execute the `/test-specs-docs` skill:
+
+```
+/test-specs-docs Sync test specs for modules: {detected modules}.
+Direction: forward (feature docs Section 15 → docs/test-specs/ dashboard).
+Updated TCs from Phase 3: {list of new/changed TC IDs}.
+```
+
+**What `/test-specs-docs` handles (DO NOT duplicate here):**
+
+- Forward sync: feature docs → dashboard
+- Reverse sync: dashboard → feature docs (when requested)
+- 3-way comparison: feature doc vs test-specs/ vs test code
+- PRIORITY-INDEX.md management
+- Module dashboard generation
+- Integration test cross-reference (`[Trait("TestSpec", ...)]`)
+
+### Step 4.2: Review Sync Results
+
+After `/test-specs-docs` completes, verify:
+
+1. All new TCs from Phase 3 appear in dashboard
+2. PRIORITY-INDEX.md updated with correct priority tiers
+3. No orphaned TCs (in dashboard but not in feature docs)
+
+---
+
+## Phase 5: Summary Report
 
 Always output a summary of what happened:
 
@@ -221,18 +260,43 @@ Always output a summary of what happened:
 ### Documentation Update Summary
 
 **Triage:** {N} files changed → {categories detected}
+**Modules detected:** {module list}
 
-**Project Docs:**
+**Phase 1 — Project Docs:**
 - {Updated/Skipped}: {reason}
 
-**Business Feature Docs:**
+**Phase 2 — Business Feature Docs (/feature-docs):**
 - Module {X}: {Updated sections A, B, C / No existing docs / Not impacted}
 - Module {Y}: {Updated sections D, E / Skipped: no feature docs}
+
+**Phase 3 — Test Specifications (/tdd-spec):**
+- Mode: {mode used}
+- New TCs: {list of TC IDs added}
+- Updated TCs: {list of TC IDs modified}
+- Skipped: {reason if skipped}
+
+**Phase 4 — Dashboard Sync (/test-specs-docs):**
+- {Synced N TCs to dashboard / Skipped: no dashboard exists}
+- Discrepancies: {any 3-way comparison issues}
 
 **Recommendations:**
 - {Any new docs that should be created}
 - {Any stale docs flagged but not auto-fixed}
+- {Any TCs flagged as Untested}
 ```
+
+---
+
+## Decision Matrix: When docs-update Orchestrates vs Direct Skill Invocation
+
+| Scenario                                       | Use docs-update?             | Use skill directly? |
+| ---------------------------------------------- | ---------------------------- | ------------------- |
+| Post-implementation doc sync (any code change) | **Yes** — full orchestration | —                   |
+| Create new feature docs from scratch           | No                           | `/feature-docs`     |
+| Generate TCs for a specific PBI (TDD-first)    | No                           | `/tdd-spec`         |
+| Sync dashboard only (no code changes)          | No                           | `/test-specs-docs`  |
+| Workflow step after `/code` or `/fix`          | **Yes** — full orchestration | —                   |
+| User asks "update docs after my changes"       | **Yes** — full orchestration | —                   |
 
 ---
 

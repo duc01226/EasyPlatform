@@ -150,11 +150,11 @@ Once module detected:
 
 1. Read module README overview section (~2K tokens)
 2. Identify closest matching feature(s) from feature list
-3. Read corresponding feature doc or `.ai.md` file (3-5K tokens)
+3. Read corresponding feature doc (3-5K tokens)
 4. Extract:
     - Related entities
     - Existing business rules (BR-{MOD}-XXX)
-    - Test case patterns (TC-{MOD}-XXX)
+    - Test case patterns (TC-{FEATURE}-{NNN})
 
 **Token Budget:** Target 8-12K tokens total for feature context.
 

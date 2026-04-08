@@ -711,7 +711,7 @@ Bottom of each skill has condensed `:reminder` variants:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification.
-      <!-- /SYNC:understand-code-first:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
 ```
 
 **Update workflow:** Edit `sync-inline-versions.md` (canonical) → `grep SYNC:tag-name` → update all copies. The `SYNC:shared-protocol-duplication-policy` tag in `code-simplifier` and `development-rules.md` prevents AI from "helpfully" extracting inline content back to file references.
@@ -1304,7 +1304,7 @@ All test-related skills use a **single TC ID format** across the entire project,
 │            CAN (Candidate), JOB (Job), EMP (Employee)           │
 │  Source: docs/project-reference/feature-docs-reference.md       │
 │                                                                   │
-│  SOURCE OF TRUTH: Feature docs Section 17 (canonical registry)  │
+│  SOURCE OF TRUTH: Feature docs Section 15 (canonical registry)  │
 │  DASHBOARD: docs/test-specs/ (aggregated cross-module views)    │
 │  CODE LINK: Test annotation linking test to TC ID               │
 │             e.g., tag/trait/decorator in test files               │
@@ -1323,7 +1323,7 @@ flowchart LR
     end
 
     subgraph "Persistence"
-        FD["Feature Doc<br/>Section 17<br/>(Source of Truth)"]
+        FD["Feature Doc<br/>Section 15<br/>(Source of Truth)"]
         TSD["/test-specs-docs<br/>Dashboard Sync"]
         DASH["docs/test-specs/<br/>(Cross-Module Dashboard)"]
     end
@@ -1371,7 +1371,7 @@ flowchart LR
 │  Next: /test → /review-changes                                   │
 │                                                                   │
 │  ALL MODES:                                                       │
-│  • Write TCs to feature doc Section 17 (canonical)              │
+│  • Write TCs to feature doc Section 15 (canonical)              │
 │  • Use AskUserQuestion for TC review with user                  │
 │  • Optionally sync to docs/test-specs/ dashboard                │
 │  • Unified format: TC-{FEATURE}-{NNN}                           │
@@ -1489,7 +1489,7 @@ This section provides concrete prompts and expected flows for every test generat
 │  SOURCE OF TRUTH           DASHBOARD              CODE LINK     │
 │  ┌───────────────┐    ┌──────────────────┐   ┌──────────────┐  │
 │  │ Feature Docs   │───→│ docs/test-specs/  │   │ Test Code    │  │
-│  │ Section 17     │    │ {Module}/README   │   │ (annotated   │  │
+│  │ Section 15     │    │ {Module}/README   │   │ (annotated   │  │
 │  │ TC-{FEAT}-{N}  │←───│ (cross-module     │   │  with TC ID  │  │
 │  │                │    │  dashboard)       │   │  per test)   │  │
 │  └───────┬───────┘    └──────────────────┘   └──────┬───────┘  │
@@ -1528,14 +1528,14 @@ This section provides concrete prompts and expected flows for every test generat
 3. Traces code paths: Controller → Command → Handler → Entity → Event Handler
 4. Generates TC outlines with `Evidence: {file}:{line}` references
 5. Presents TC list via `AskUserQuestion` for interactive review
-6. Writes approved TCs to feature doc Section 17 (canonical)
+6. Writes approved TCs to feature doc Section 15 (canonical)
 7. Optionally updates `docs/test-specs/` dashboard
 
 **Output locations:**
 
 | Artifact             | Path                                                                     |
 | -------------------- | ------------------------------------------------------------------------ |
-| TCs (canonical)      | `docs/business-features/{App}/detailed-features/{feature}.md` Section 17 |
+| TCs (canonical)      | `docs/business-features/{App}/detailed-features/{feature}.md` Section 15 |
 | Dashboard (optional) | `docs/test-specs/{Module}/README.md`                                     |
 
 ---
@@ -1564,7 +1564,7 @@ This section provides concrete prompts and expected flows for every test generat
 3. Extracts acceptance criteria, identifies test categories (CRUD, validation, permissions, workflows, edge cases)
 4. Generates TC outlines with `Evidence: TBD (pre-implementation)`
 5. Interactive review via `AskUserQuestion`
-6. Writes TCs to feature doc Section 17
+6. Writes TCs to feature doc Section 15
 7. Suggests: `/integration-test` to generate test stubs, or `/plan` to start implementation
 
 **TDD workflow sequence:**
@@ -1601,7 +1601,7 @@ feature-with-integration-test:
 
 #### Case 3: Sync Test Specs ↔ Feature Docs (Bidirectional)
 
-**Scenario:** Test specs exist in `docs/test-specs/` but not in feature docs Section 17, or vice versa. Need to reconcile.
+**Scenario:** Test specs exist in `docs/test-specs/` but not in feature docs Section 15, or vice versa. Need to reconcile.
 
 **Prompt examples:**
 
@@ -1621,7 +1621,7 @@ feature-with-integration-test:
 
 **What happens (bidirectional via /tdd-spec sync mode):**
 
-1. Reads feature doc Section 17 TCs
+1. Reads feature doc Section 15 TCs
 2. Reads `docs/test-specs/{Module}/README.md` TCs
 3. Greps for TC annotations (e.g., test tags/traits) in test files
 4. Builds 3-way comparison:
@@ -1670,12 +1670,12 @@ feature-with-integration-test:
 **What happens:**
 
 1. `/tdd-spec` detects **update mode** (existing TCs + code changes/bugfix/PR)
-2. Reads existing Section 17 TCs
+2. Reads existing Section 15 TCs
 3. Runs `git diff` (or `git diff main...HEAD` for PRs) to find code changes
 4. Identifies: new commands/queries not covered, changed behaviors, removed features
 5. For bugfixes: adds a **regression TC** (e.g., `TC-GM-040: Regression — goal title validation bypass`)
 6. Generates gap analysis
-7. Updates **both** feature docs Section 17 AND `docs/test-specs/` dashboard
+7. Updates **both** feature docs Section 15 AND `docs/test-specs/` dashboard
 8. Suggests: `/integration-test` to generate/update tests for changed TCs
 
 **test-spec-update workflow sequence:**
@@ -1691,7 +1691,7 @@ test-spec-update: review-changes → tdd-spec → test-specs-docs →
 
 #### Case 5: Test Specs → Generate Integration Tests
 
-**Scenario:** Test specifications exist in feature docs Section 17 (or `docs/test-specs/`). Now generate integration test code.
+**Scenario:** Test specifications exist in feature docs Section 15 (or `docs/test-specs/`). Now generate integration test code.
 
 **Prompt examples:**
 
@@ -1711,7 +1711,7 @@ test-spec-update: review-changes → tdd-spec → test-specs-docs →
 
 **What happens:**
 
-1. `/integration-test` reads feature doc Section 17 for TC codes matching target domain
+1. `/integration-test` reads feature doc Section 15 for TC codes matching target domain
 2. Builds mapping: TC code → test method name (e.g., `TC-ORD-001` → `CreateOrder_WhenValidData_ShouldCreateSuccessfully`)
 3. Reads existing integration tests in same service for conventions (namespace, base class, naming)
 4. Generates test file with:
@@ -1727,7 +1727,7 @@ test-spec-update: review-changes → tdd-spec → test-specs-docs →
 test-to-integration: scout → integration-test → test → watzup → workflow-end
 ```
 
-**If TCs are missing:** `/integration-test` auto-creates TC entries in Section 17 before generating tests. For comprehensive spec creation first, use `/tdd-spec` → `/integration-test`.
+**If TCs are missing:** `/integration-test` auto-creates TC entries in Section 15 before generating tests. For comprehensive spec creation first, use `/tdd-spec` → `/integration-test`.
 
 ---
 
@@ -1809,7 +1809,7 @@ test-verify: scout → integration-test (review) → test → integration-test (
 
 1. `/integration-test` enters VERIFY-TRACEABILITY mode
 2. Collects test methods with TC annotations from the test project
-3. Collects TC entries from feature doc Section 17
+3. Collects TC entries from feature doc Section 15
 4. Builds 3-way traceability matrix: test code ↔ feature doc ↔ test-specs dashboard
 5. Identifies:
     - Orphaned tests (have annotation but no matching TC in docs)
@@ -1907,7 +1907,7 @@ The framework includes a comprehensive **end-to-end testing system** that auto-d
 │                          │  • from-changes   │                   │
 │  ┌──────────────────┐    │  • update-ui      │                   │
 │  │ Feature Doc TCs  │───▶│                   │                   │
-│  │ TC-{MOD}-{NNN}   │    └──────────────────┘                   │
+│  │ TC-{FEATURE}-{NNN}│    └──────────────────┘                   │
 │  └──────────────────┘                                            │
 │                                                                   │
 │  Supported: Playwright, Selenium+SpecFlow, Cypress, any stack   │
@@ -3252,7 +3252,7 @@ flowchart TB
 | **Task-gated edits**                           | edit-enforcement.cjs requires TaskCreate before edits      | Hooks     |
 | **Auto-formatting**                            | post-edit-prettier.cjs runs formatter after every edit     | Hooks     |
 | **Doc staleness detection**                    | /watzup skill cross-references changes vs. docs/           | Skills    |
-| **Unified test specification**                 | /tdd-spec writes TCs to feature doc Section 17             | Skills    |
+| **Unified test specification**                 | /tdd-spec writes TCs to feature doc Section 15             | Skills    |
 | **TDD-first workflow**                         | tdd-feature: spec→plan→implement→test→verify               | Workflows |
 | **Interactive requirement capture**            | /idea discovery interview + /refine testability check      | Skills    |
 | **Test-to-code traceability**                  | TC-{FEATURE}-{NNN} → test annotation linking to TC ID      | Skills    |

@@ -54,7 +54,7 @@ description: '[Code Quality] Review test specifications for coverage, completene
 
 ## Workflow
 
-1. **Locate test specs** — Find TCs in feature doc Section 17 or `docs/test-specs/`
+1. **Locate test specs** — Find TCs in feature doc Section 15 or `docs/test-specs/`
 2. **Load source** — Read stories/PBI/acceptance criteria that TCs should cover
 3. **Evaluate checklist** — Score each check
 4. **Calculate coverage** — % of stories/AC with corresponding TCs
@@ -159,7 +159,7 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **IMPORTANT MUST ATTENTION** execute TWO independent review rounds. Report must include `## Round 2 Findings`.
-    <!-- /SYNC:double-round-trip-review:reminder -->
-    <!-- SYNC:graph-impact-analysis:reminder -->
+  <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- SYNC:graph-impact-analysis:reminder -->
 - **IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-    <!-- /SYNC:graph-impact-analysis:reminder -->
+  <!-- /SYNC:graph-impact-analysis:reminder -->

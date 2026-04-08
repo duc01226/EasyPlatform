@@ -14,7 +14,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, Bash
 **Workflow:**
 
 1. **Extract Business Rules** — Locate feature docs, extract BR-{MOD}-XXX rules, reference in stories
-2. **Investigate Entities** — Load .ai.md companion files, extract domain model and query patterns
+2. **Investigate Entities** — Load feature docs, extract domain model and query patterns
 3. **Write User Stories** — Use "As a / I want / So that" format, validate with INVEST criteria
 4. **Define Acceptance Criteria** — BDD format (GIVEN/WHEN/THEN), gap analysis for missing scenarios
 
@@ -45,7 +45,6 @@ When refining domain-related PBIs, automatically extract and reference existing 
 
 1. Run: `Glob("docs/business-features/{module}/detailed-features/*.md")` for feature docs
 2. Or: `Glob("docs/business-features/{module}/detailed-features/**/*.md")` for nested features
-3. For AI companion files: `Glob("docs/business-features/{module}/detailed-features/*.ai.md")`
 
 From PBI frontmatter or module detection:
 
@@ -94,19 +93,19 @@ Target 8-12K tokens total (validated decision: prefer completeness):
 
 ## Entity Domain Investigation
 
-When refining domain-related PBIs, investigate related entities using .ai.md files.
+When refining domain-related PBIs, investigate related entities using feature docs.
 
-### Step 1: Load AI Companion File
+### Step 1: Load Feature Doc
 
 ```
-Glob("docs/business-features/{module}/detailed-features/*.ai.md")
+Glob("docs/business-features/{module}/detailed-features/*.md")
 ```
 
 Select file matching feature from PBI context.
 
 ### Step 2: Extract Domain Model
 
-From `## Domain Model` section:
+From `## Domain Model` section (Section 5):
 
 - Entity inheritance: `Entity : BaseClass`
 - Property types: `Property: Type`
@@ -187,7 +186,7 @@ Scenario: {Descriptive title}
 **For Project Domain:**
 
 1. Reference existing test case patterns from feature docs
-2. Use TC-{MOD}-{FEATURE}-XXX format (e.g., TC-GRO-GOAL-001)
+2. Use TC-{FEATURE}-{NNN} format (e.g., TC-GM-001)
 3. Include Evidence field: `file:line` format
 4. Example from GoalManagement feature:
     ```
@@ -225,8 +224,8 @@ Before finalizing user story:
 ### Cross-Reference Check
 
 - [ ] Business rules don't conflict with existing BR-{MOD}-XXX rules
-- [ ] Test case format matches existing TC-{MOD}-{FEATURE}-XXX patterns
-- [ ] Entity names match those in .ai.md files
+- [ ] Test case format matches existing TC-{FEATURE}-{NNN} patterns
+- [ ] Entity names match those in feature docs
 - [ ] Evidence format follows file:line convention
 
 ### Documentation Links
@@ -237,8 +236,8 @@ Add to user story:
 ## Reference Documentation
 
 - Feature Doc: `docs/business-features/{module}/detailed-features/{feature}.md`
-- Related Entities: `docs/business-features/{module}/*.ai.md`
-- Existing Test Cases: See feature doc Section 15 (Test Cases & Scenarios)
+- Related Entities: `docs/business-features/{module}/detailed-features/*.md`
+- Existing Test Cases: See feature doc Section 15 (Test Specifications)
 ```
 
 If conflicts found, note in "Unresolved Questions" section.
@@ -377,7 +376,7 @@ Then {error handling}
 - `AC-{NNN}` per story/PBI
 
 ### Test Case IDs (Project)
-- `TC-{MOD}-{FEATURE}-{NNN}` (e.g., TC-GRO-GOAL-001)
+- `TC-{FEATURE}-{NNN}` (e.g., TC-GM-001)
 
 ---
 
