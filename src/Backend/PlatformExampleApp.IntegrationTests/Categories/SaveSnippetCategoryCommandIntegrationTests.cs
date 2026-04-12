@@ -15,6 +15,7 @@ namespace PlatformExampleApp.IntegrationTests.Categories;
 public class SaveSnippetCategoryCommandIntegrationTests : TextSnippetIntegrationTestBase
 {
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-007")]
     public async Task SaveSnippetCategory_WhenValidData_ShouldCreateSuccessfully()
     {
         // Arrange
@@ -46,6 +47,7 @@ public class SaveSnippetCategoryCommandIntegrationTests : TextSnippetIntegration
     }
 
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-008")]
     public async Task SaveSnippetCategory_WhenEmptyName_ShouldFailValidation()
     {
         // Arrange — empty name violates validation
@@ -64,6 +66,7 @@ public class SaveSnippetCategoryCommandIntegrationTests : TextSnippetIntegration
     }
 
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-009")]
     public async Task SaveSnippetCategory_WhenUpdating_ShouldPreserveIdAndUpdateFields()
     {
         // Arrange — Create first

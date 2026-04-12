@@ -15,6 +15,7 @@ namespace PlatformExampleApp.IntegrationTests.TextSnippets;
 public class SearchSnippetTextQueryIntegrationTests : TextSnippetIntegrationTestBase
 {
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-016")]
     public async Task SearchSnippetText_WhenQuerying_ShouldReturnPagedResults()
     {
         // Arrange
@@ -35,6 +36,7 @@ public class SearchSnippetTextQueryIntegrationTests : TextSnippetIntegrationTest
     }
 
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-017")]
     public async Task SearchSnippetText_WhenCreateThenQuery_ShouldFindCreatedSnippet()
     {
         // Arrange — Create a snippet with unique text

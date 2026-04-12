@@ -117,5 +117,34 @@ public static partial class Util
                 totalExecutionCount += 1;
             }
         }
+
+        /// <summary>
+        /// Executes an asynchronous action repeatedly until it returns no items, with no max execution limit.
+        /// </summary>
+        public static Task ExecuteScrollingPagingAsync<TItem>(
+            Func<Task<IEnumerable<TItem>>> executeFn,
+            TimeSpan? pageDelayTime = null,
+            CancellationToken cancellationToken = default)
+        {
+            return ExecuteScrollingPagingAsync(executeFn: () => executeFn().Then(i => i.ToList()), pageDelayTime, cancellationToken);
+        }
+
+        /// <summary>
+        /// Executes an asynchronous action repeatedly until it returns no items, with no max execution limit.
+        /// </summary>
+        public static async Task ExecuteScrollingPagingAsync<TItem>(
+            Func<Task<List<TItem>>> executeFn,
+            TimeSpan? pageDelayTime = null,
+            CancellationToken cancellationToken = default)
+        {
+            var executionItemsResult = await executeFn();
+
+            while (executionItemsResult.Any() && !cancellationToken.IsCancellationRequested)
+            {
+                if (pageDelayTime.HasValue) await Task.Delay(pageDelayTime.Value, cancellationToken);
+
+                executionItemsResult = await executeFn();
+            }
+        }
     }
 }

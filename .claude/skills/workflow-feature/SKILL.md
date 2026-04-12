@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Feature Implementation workflow — implement a
 
 Activate the `feature` workflow. Run `/workflow-start feature` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /tdd-spec → /tdd-spec-review → /test-specs-docs → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /integration-test-review → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
 
 ## Repeated Steps Disambiguation (CRITICAL for task creation)
 

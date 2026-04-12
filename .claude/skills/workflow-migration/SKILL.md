@@ -8,4 +8,4 @@ description: '[Workflow] Trigger Database Migration workflow — schema changes,
 
 Activate the `migration` workflow. Run `/workflow-start migration` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /workflow-review-changes → /sre-review → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /integration-test → /integration-test-review → /workflow-review-changes → /sre-review → /test → /docs-update → /watzup → /workflow-end

@@ -1,7 +1,6 @@
 #region
 
 using Easy.Platform.AutomationTest.IntegrationTests;
-using PlatformExampleApp.TextSnippet.Api;
 
 #endregion
 
@@ -11,7 +10,7 @@ namespace PlatformExampleApp.IntegrationTests;
 /// Integration test fixture for the TextSnippet service.
 /// Manages DI container lifecycle across all test classes in the collection.
 /// </summary>
-public class TextSnippetIntegrationTestFixture : PlatformServiceIntegrationTestFixture<TextSnippetApiAspNetCoreModule>
+public class TextSnippetIntegrationTestFixture : PlatformServiceIntegrationTestFixture<TextSnippetIntegrationTestAspNetCoreModule>
 {
     public override string FallbackAspCoreEnvironmentValue()
     {

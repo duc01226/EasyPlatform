@@ -8,4 +8,4 @@ description: '[Workflow] Trigger Code Refactoring workflow — restructure and i
 
 Activate the `refactor` workflow. Run `/workflow-start refactor` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /code → /tdd-spec → /tdd-spec-review → /test-specs-docs → /workflow-review-changes → /sre-review → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /code → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /integration-test-review → /workflow-review-changes → /sre-review → /changelog → /test → /docs-update → /watzup → /workflow-end

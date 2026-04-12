@@ -270,7 +270,7 @@ public sealed class TaskItemEntityDto : PlatformEntityDto<TaskItemEntity, string
         }
         else
         {
-            // For new entities, use provided status (default is Todo)
+            // For new entities, use provided status
             entity.Status = Status;
         }
 

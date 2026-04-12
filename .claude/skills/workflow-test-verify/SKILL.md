@@ -8,7 +8,20 @@ description: '[Workflow] Trigger Test Verification & Quality workflow — compre
 
 Activate the `test-verify` workflow. Run `/workflow-start test-verify` with the user's prompt as context.
 
-**Steps:** /scout → /integration-test → /test → /integration-test → /watzup → /workflow-end
+**Steps:** /scout → /integration-test → /test → /integration-test → /integration-test-review → /docs-update → /watzup → /workflow-end
+
+> **[NOTE]** The two `/integration-test` occurrences are intentional and serve distinct purposes:
+>
+> - **First `/integration-test` (audit mode):** Review test quality — check for flaky patterns, missing `WaitUntilAsync`, smoke-only assertions, and best practice compliance.
+> - **Second `/integration-test` (diagnose mode):** Root-cause failing or flaky tests identified in the audit phase. Fix and re-verify.
+> - **`/integration-test-review`:** Final quality gate — verify tests have real assertion value after any fixes applied.
+
+## Repeated Steps Disambiguation (CRITICAL for task creation)
+
+| Step                | Occurrence | Task Description                                                       |
+| ------------------- | ---------- | ---------------------------------------------------------------------- |
+| `/integration-test` | 1st        | INT-TEST₁ — audit mode: review test quality, identify flaky/weak tests |
+| `/integration-test` | 2nd        | INT-TEST₂ — diagnose mode: root-cause and fix failing/flaky tests      |
 
 ---
 

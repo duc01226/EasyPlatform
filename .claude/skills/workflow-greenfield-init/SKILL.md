@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Greenfield Project Init workflow — full water
 
 Activate the `greenfield-init` workflow. Run `/workflow-start greenfield-init` with the user's prompt as context.
 
-**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /tech-stack-research → /architecture-design → /plan → /security → /performance → /plan-review → /refine → /refine-review → /story → /story-review → /pbi-mockup → /plan-validate → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /scaffold → /why-review → /cook → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /integration-test → /test → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /tech-stack-research → /architecture-design → /plan → /security → /performance → /plan-review → /refine → /refine-review → /story → /story-review → /pbi-mockup → /plan-validate → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /scaffold → /why-review → /cook → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /integration-test → /integration-test-review → /test → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
 
 ---
 

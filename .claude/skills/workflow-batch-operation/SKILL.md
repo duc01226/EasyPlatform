@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Batch Operation workflow — bulk modifications
 
 Activate the `batch-operation` workflow. Run `/workflow-start batch-operation` with the user's prompt as context.
 
-**Steps:** /plan → /plan-review → /plan-validate → /why-review → /code → /tdd-spec → /tdd-spec-review → /test-specs-docs → /workflow-review-changes → /sre-review → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /plan → /plan-review → /plan-validate → /why-review → /code → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /integration-test-review → /workflow-review-changes → /sre-review → /test → /docs-update → /watzup → /workflow-end
 
 ---
 

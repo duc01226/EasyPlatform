@@ -502,3 +502,4 @@ tmpclaude-*
 .claude/workflow-state.json
 .claude/.commit-skill-active
 plans/
+.claude/scheduled_tasks.lock

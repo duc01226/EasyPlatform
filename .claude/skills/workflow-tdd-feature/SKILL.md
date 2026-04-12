@@ -8,7 +8,7 @@ description: '[Workflow] Trigger TDD Feature workflow — test-driven developmen
 
 Activate the `tdd-feature` workflow. Run `/workflow-start tdd-feature` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /plan-validate → /why-review → /cook → /integration-test → /test → /workflow-review-changes → /sre-review → /changelog → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /plan-validate → /why-review → /cook → /integration-test → /integration-test-review → /test → /workflow-review-changes → /sre-review → /changelog → /docs-update → /watzup → /workflow-end
 
 ---
 

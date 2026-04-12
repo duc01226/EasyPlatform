@@ -47,6 +47,7 @@ const MINDSET_SKILLS = new Set([
     'review-changes',
     'review-post-task',
     'integration-test',
+    'integration-test-review',
     'tdd-spec',
     // Investigation skills — also get graph protocol reminder
     'scout',

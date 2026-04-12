@@ -8,4 +8,4 @@ description: '[Workflow] Trigger Performance Optimization workflow — investiga
 
 Activate the `performance` workflow. Run `/workflow-start performance` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /tdd-spec → /tdd-spec-review → /test-specs-docs → /test → /workflow-review-changes → /sre-review → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /integration-test-review → /test → /workflow-review-changes → /sre-review → /docs-update → /watzup → /workflow-end

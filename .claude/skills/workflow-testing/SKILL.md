@@ -8,4 +8,4 @@ description: '[Workflow] Trigger Testing workflow — test creation and executio
 
 Activate the `testing` workflow. Run `/workflow-start testing` with the user's prompt as context.
 
-**Steps:** /test → /workflow-end
+**Steps:** /test → /docs-update → /workflow-end

@@ -26,20 +26,181 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Double Round-Trip Review** — TWO mandatory independent rounds. NEVER combine.
+> **Deep Multi-Round Review** — Escalating rounds. Round 1 in main session. Round 2+ and EVERY recursive re-review iteration MUST use a fresh sub-agent.
 >
-> **Round 1:** Normal review building understanding. Read all files, note issues.
-> **Round 2:** MANDATORY re-read ALL files from scratch. Focus on:
+> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output baseline findings.
+>
+> **Round 2:** MANDATORY fresh sub-agent review — see `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. The sub-agent re-reads ALL files from scratch with ZERO Round 1 memory. It must catch:
 >
 > - Cross-cutting concerns missed in Round 1
 > - Interaction bugs between changed files
 > - Convention drift (new code vs existing patterns)
-> - Missing pieces (what should exist but doesn't)
+> - Missing pieces that should exist but don't
+> - Subtle edge cases the main session rationalized away
 >
-> **Rules:** NEVER rely on Round 1 memory for Round 2. Final verdict must incorporate BOTH rounds.
-> **Report must include `## Round 2 Findings` section.**
+> **Round 3+ (recursive after fixes):** After ANY fix cycle, MANDATORY fresh sub-agent re-review. Spawn a **NEW** Agent tool call each iteration — never reuse Round 2's agent. Each new agent re-reads ALL files from scratch with full protocol injection. Continue until PASS or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
+>
+> **Rules:**
+>
+> - NEVER declare PASS after Round 1 alone
+> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
+> - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
+> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via `AskUserQuestion` (do NOT silently loop)
+> - Track round count in conversation context (session-scoped)
+> - Final verdict must incorporate ALL rounds
+>
+> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2.**
 
 <!-- /SYNC:double-round-trip-review -->
+
+<!-- SYNC:review-protocol-injection -->
+
+> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 9 protocol blocks VERBATIM. The template below has ALL 9 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
+>
+> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 9 protocol bodies pre-embedded.
+
+### Subagent Type Selection
+
+- `code-reviewer` — for code reviews (reviewing source files, git diffs, implementation)
+- `general-purpose` — for plan / doc / artifact reviews (reviewing markdown plans, docs, specs)
+
+### Canonical Agent Call Template (Copy Verbatim)
+
+```
+Agent({
+  description: "Fresh Round {N} review",
+  subagent_type: "code-reviewer",
+  prompt: `
+## Task
+{review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
+
+## Round
+Round {N}. You have ZERO memory of prior rounds. Re-read all target files from scratch via your own tool calls. Do NOT trust anything from the main agent beyond this prompt.
+
+## Protocols (follow VERBATIM — these are non-negotiable)
+
+### Evidence-Based Reasoning
+Speculation is FORBIDDEN. Every claim needs proof.
+1. Cite file:line, grep results, or framework docs for EVERY claim
+2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+3. Cross-service validation required for architectural changes
+4. "I don't have enough evidence" is valid and expected output
+BLOCKED until: Evidence file path (file:line) provided; Grep search performed; 3+ similar patterns found; Confidence level stated.
+Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because".
+If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+### Bug Detection
+MUST check categories 1-4 for EVERY review. Never skip.
+1. Null Safety: Can params/returns be null? Are they guarded? Optional chaining gaps? .find() returns checked?
+2. Boundary Conditions: Off-by-one (< vs <=)? Empty collections handled? Zero/negative values? Max limits?
+3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
+4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
+5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
+6. Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
+Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
+
+### Design Patterns Quality
+Priority checks for every code change:
+1. DRY via OOP: Same-suffix classes (*Entity, *Dto, *Service) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+2. Right Responsibility: Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
+3. SOLID: Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
+4. After extraction/move/rename: Grep ENTIRE scope for dangling references. Zero tolerance.
+5. YAGNI gate: NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
+Anti-patterns to flag: God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
+
+### Logic & Intention Review
+Verify WHAT code does matches WHY it was changed.
+1. Change Intention Check: Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
+2. Happy Path Trace: Walk through one complete success scenario through changed code.
+3. Error Path Trace: Walk through one failure/edge case scenario through changed code.
+4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
+NEVER mark review PASS without completing both traces (happy + error path).
+
+### Test Spec Verification
+Map changed code to test specifications.
+1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
+2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
+3. New functions/endpoints/handlers → flag for test spec creation.
+4. Verify TC evidence fields point to actual code (file:line, not stale references).
+5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+6. If no specs exist → log gap and recommend /tdd-spec.
+NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
+
+### Fix-Layer Accountability
+NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
+MANDATORY before ANY fix:
+1. Trace full data flow — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where bad state ENTERS, not where it CRASHES.
+2. Identify the invariant owner — Which layer's contract guarantees this value is valid? Fix at the LOWEST layer that owns the invariant, not the highest layer that consumes it.
+3. One fix, maximum protection — If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
+4. Verify no bypass paths — Confirm all data flows through the fix point. Check for direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
+BLOCKED until: Full data flow traced (origin → crash); Invariant owner identified with file:line evidence; All access sites audited (grep count); Fix layer justified (lowest layer that protects most consumers).
+Anti-patterns (REJECT): "Fix it where it crashes" (crash site ≠ cause site, trace upstream); "Add defensive checks at every consumer" (scattered defense = wrong layer); "Both fix is safer" (pick ONE authoritative layer).
+
+### Rationalization Prevention
+AI skips steps via these evasions. Recognize and reject:
+- "Too simple for a plan" → Simple + wrong assumptions = wasted time. Plan anyway.
+- "I'll test after" → RED before GREEN. Write/verify test first.
+- "Already searched" → Show grep evidence with file:line. No proof = no search.
+- "Just do it" → Still need TaskCreate. Skip depth, never skip tracking.
+- "Just a small fix" → Small fix in wrong location cascades. Verify file:line first.
+- "Code is self-explanatory" → Future readers need evidence trail. Document anyway.
+- "Combine steps to save time" → Combined steps dilute focus. Each step has distinct purpose.
+
+### Graph-Assisted Investigation
+MANDATORY when .code-graph/graph.db exists.
+HARD-GATE: MUST run at least ONE graph command on key files before concluding any investigation.
+Pattern: Grep finds files → trace --direction both reveals full system flow → Grep verifies details.
+- Investigation/Scout: trace --direction both on 2-3 entry files
+- Fix/Debug: callers_of on buggy function + tests_for
+- Feature/Enhancement: connections on files to be modified
+- Code Review: tests_for on changed functions
+- Blast Radius: trace --direction downstream
+CLI: python .claude/scripts/code_graph {command} --json. Use --node-mode file first (10-30x less noise), then --node-mode function for detail.
+
+### Understand Code First
+HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+1. Search 3+ similar patterns (grep/glob) — cite file:line evidence.
+2. Read existing files in target area — understand structure, base classes, conventions.
+3. Run python .claude/scripts/code_graph trace <file> --direction both --json when .code-graph/graph.db exists.
+4. Map dependencies via connections or callers_of — know what depends on your target.
+5. Write investigation to .ai/workspace/analysis/ for non-trivial tasks (3+ files).
+6. Re-read analysis file before implementing — never work from memory alone.
+7. NEVER invent new patterns when existing ones work — match exactly or document deviation.
+BLOCKED until: Read target files; Grep 3+ patterns; Graph trace (if graph.db exists); Assumptions verified with evidence.
+
+## Reference Docs (READ before reviewing)
+- docs/project-reference/code-review-rules.md
+- {skill-specific reference docs — e.g., integration-test-reference.md for integration-test-review; backend-patterns-reference.md for backend reviews; frontend-patterns-reference.md for frontend reviews}
+
+## Target Files
+{explicit file list OR "run git diff to see uncommitted changes" OR "read all files under {plan-dir}"}
+
+## Output
+Write a structured report to plans/reports/{review-type}-round{N}-{date}.md with sections:
+- Status: PASS | FAIL
+- Issue Count: {number}
+- Critical Issues (with file:line evidence)
+- High Priority Issues (with file:line evidence)
+- Medium / Low Issues
+- Cross-cutting findings
+
+Return the report path and status to the main agent.
+Every finding MUST have file:line evidence. Speculation is forbidden.
+`
+})
+```
+
+### Rules
+
+- DO copy the template wholesale — including all 9 embedded protocol sections
+- DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
+- DO choose `code-reviewer` subagent_type for code reviews and `general-purpose` for plan / doc / artifact reviews
+- DO NOT paraphrase, summarize, or skip any protocol section
+- DO NOT pass file contents inline — the sub-agent reads via its own tool calls so it has a fresh context
+- DO NOT reference protocols by file path or tag name — the bodies are already embedded above
+- DO NOT introduce placeholder markers for the protocols — they must stay literally expanded
+
+<!-- /SYNC:review-protocol-injection -->
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
@@ -62,8 +223,15 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 5. **Output Result** — Status, checks passed, issues, recommendations, verdict
 6. **If FAIL** — Fix issues in plan files directly, then re-review (loop back to step 2, max 3 iterations)
 
+**Core Principle — Detailed & Small Enough:**
+
+- **Too vague?** → Detail it: add specific file paths, concrete actions, exact method names
+- **Too big to detail?** → Break it: split into smaller phases/sub-plans until each is detailed
+- A plan that can't be immediately coded from is NOT ready. Every step must be implementation-ready.
+
 **Key Rules:**
 
+- **No hallucination**: Every plan claim about existing source code must have `file:line` proof — unverified paths, class names, or behaviors = FAIL
 - **PASS**: Proceed to implementation
 - **WARN**: Proceed with caution, note gaps
 - **FAIL (iteration < 3)**: Fix plan issues directly, then re-review
@@ -105,29 +273,55 @@ Read the plan directory:
 
 #### Correctness (Required - all must pass)
 
-- [ ] Steps are specific and actionable (not vague)
-- [ ] **Implementation-Readiness Granularity Check (5-Point)** — FAIL if any phase fails ANY criterion:
+- [ ] **Granularity Gate — "Detailed & Small Enough"** — FAIL if ANY phase fails ANY criterion below. A plan you can't immediately code from is NOT ready.
 
-| #   | Criterion                  | How to Measure                                                                                | PASS                            | FAIL                               |
-| --- | -------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------- | ---------------------------------- |
-| 1   | Steps name specific files  | Every step includes a file path                                                               | "Modify `src/auth/login.ts`"    | "Implement authentication"         |
-| 2   | No planning verbs in steps | Absent: "research", "determine", "figure out", "decide", "evaluate", "explore", "investigate" | "Add `validateToken()` method"  | "Determine the best auth approach" |
-| 3   | Each step ≤30 min effort   | No single step is a mini-project                                                              | "Add error handler to endpoint" | "Build the entire auth module"     |
-| 4   | Phase totals within limits | ≤5 files AND ≤3h effort                                                                       | 3 files, 2h                     | 12 files, 8h                       |
-| 5   | No unresolved decisions    | Zero open questions / TBDs in approach                                                        | All approaches decided          | "TBD: which library to use"        |
+**Decision tree — apply to EACH phase:**
 
-**Tiered action on failure:**
+```
+Phase too vague? (no file paths, planning verbs, unclear actions)
+  → YES → DETAIL IT: add specific file paths, exact method names, concrete actions
+  → NO ↓
+Phase too big? (>5 files OR >3h effort OR single step is a mini-project)
+  → YES → BREAK IT: split into smaller sibling phases until each meets limits
+  → NO → PASS this phase
+```
 
-- Complexity 6-9 → Refine vague phases in-place (expand steps, split into sibling phases)
-- Complexity 10+ → Create sub-plan directory `{plan-dir}/sub-plans/phase-{XX}-{name}/plan.md`
+**5-Point Criteria (all must pass per phase):**
 
-**Worked example of FAIL → PASS:**
+| #   | Criterion                 | PASS example                    | FAIL example                       |
+| --- | ------------------------- | ------------------------------- | ---------------------------------- |
+| 1   | Steps name specific files | "Modify `src/auth/login.ts`"    | "Implement authentication"         |
+| 2   | No planning verbs         | "Add `validateToken()` method"  | "Determine the best auth approach" |
+| 3   | Each step ≤30 min effort  | "Add error handler to endpoint" | "Build the entire auth module"     |
+| 4   | Phase ≤5 files AND ≤3h    | 3 files, 2h                     | 12 files, 8h                       |
+| 5   | No unresolved decisions   | All approaches decided          | "TBD: which library to use"        |
+
+**Planning verbs that trigger FAIL:** "research", "determine", "figure out", "decide", "evaluate", "explore", "investigate" — these belong in investigation, not implementation plans.
+
+**Action on failure:**
+
+- **Too vague** → Refine in-place: expand steps with file paths, method names, concrete actions
+- **Too big (≤9 files)** → Split phase into sibling phases (Phase 2A, 2B, 2C)
+- **Too big (10+ files)** → Create sub-plan: `{plan-dir}/sub-plans/phase-{XX}-{name}/plan.md`
+
+**Worked example:**
 FAILS: `"Phase 2: Data Layer — Set up database models, Create repositories, Implement data access patterns. Effort: 4h, Files: ~8"`
 PASSES after split: `"Phase 2A: Database Schema (1h, 3 files) — Create src/models/user.entity.ts, Create src/models/session.entity.ts, Create migrations/001-create-users-sessions.ts"` + `"Phase 2B: Repository Layer (1.5h, 3 files) — Create src/repos/user.repository.ts, Create src/repos/session.repository.ts, Register in src/app.module.ts"`
 
 - [ ] File paths follow project patterns
 - [ ] No conflicting or duplicate steps
 - [ ] Dependencies between steps are clear
+- [ ] **Anti-Hallucination & Code-Proof Gate** — FAIL if ANY plan claim about existing source code lacks `file:line` proof.
+
+| Claim type             | Required proof                    |
+| ---------------------- | --------------------------------- |
+| File path              | File exists (glob/read)           |
+| Class/method name      | Symbol grep → `file:line`         |
+| Behavior ("X calls Y") | Code evidence `file:line`         |
+| Base class / interface | Inheritance verified (grep/graph) |
+
+**FAIL triggers:** unread file paths, ungrepped method names, "should be"/"probably"/"typically" language about existing code, behaviors assumed from similar projects instead of THIS codebase. Greenfield-only plans (no existing code refs) → PASS.
+
 - [ ] **New Tech/Lib Gate:** If plan introduces new packages/libraries/frameworks not in the project, verify alternatives were evaluated (top 3 compared) and user confirmed the choice. FAIL if new tech is added without evaluation.
 - [ ] **Test spec coverage** — Every phase has `## Test Specifications` section with TC mappings. "TBD" is valid for TDD-first mode.
 - [ ] **TC-requirement mapping** — Every functional requirement maps to ≥1 TC (or explicit "TBD" with rationale)
@@ -224,85 +418,61 @@ When graph DB is available, verify the plan covers all affected files:
 - Flag any downstream file NOT listed in the plan as "potentially missed"
 - This catches cross-service impact (MESSAGE_BUS consumers, event handlers) that the plan author may have overlooked
 
-## Deep Multi-Round Review (MANDATORY)
+<!-- SYNC:fresh-context-review -->
 
-> **Replaces:** double-round-trip for plan reviews. Plans need deeper verification than code reviews.
+> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
+>
+> **Why:** The main agent knows what it (or `/cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
+>
+> **When:** Round 2 of ANY review AND every recursive re-review iteration after fixes. NOT needed when Round 1 already PASSes with zero issues.
+>
+> **How:**
+>
+> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
+> 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
+> 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
+> 5. Main agent reads the report, integrates findings into its own report, DOES NOT override or filter
+>
+> **Rules:**
+>
+> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW `Agent` call
+> - NEVER skip fresh-subagent review because "last round was clean" — every fix triggers a fresh round
+> - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
+> - Track iteration count in conversation context (session-scoped, no persistent files)
 
-<!-- SYNC:deep-plan-review:inline -->
-
-### Step 0: Self-Analysis (Before EACH Round)
-
-1. **Detect plan type** from keywords: Code/Feature, Documentation, Refactor, Infrastructure, Mixed
-2. **State top 3 concerns** specific to THIS plan (not generic)
-3. **Check complexity** from frontmatter SP: ≤3 → 2 rounds min, 4-8 → 3 rounds, >8 → 3 rounds + code-proof mandatory
-
-### Round 1: Structural Validation (Checklist)
-
-Standard checklist from Step 2 above. Score PASS/WARN/FAIL per category.
-**CRITICAL: Even if all checks PASS, do NOT declare final verdict. Proceed to Round 2.**
-
-### Round 2: Deep Trace (Code Proof)
-
-Re-read ALL plan files from scratch. For EACH phase:
-
-- **Precondition trace:** Read actual handler code. Verify execution order satisfies preconditions. Cite handler line numbers.
-- **Data dependency trace:** What must exist before this step? Is there a wait/sync mechanism?
-- **Failure mode analysis:** What causes 400/403/404/409? Does the plan handle it?
-- **Cross-cutting check:** Stale content? Inconsistent numbers? Missing scope (dual product scope)?
-
-### Round 3: Adversarial Simulation
-
-Pretend you are implementing RIGHT NOW. For each phase:
-
-1. "I open the file. Does the class/method exist as described?"
-2. "I write the code. What imports/DI do I need? Does the plan mention them?"
-3. "I run it. What fails first? Timing issue? Missing wait?"
-4. "I run it again (restart). Duplicates? Idempotency?"
-5. "I run in staging. All product scopes? All environments?"
-
-**Type-specific adversarial checks** (from deep-plan-review-protocol):
-
-- **Code:** preconditions, date/timezone, UoW boundaries, cross-service sync, dual scope, idempotency
-- **Docs:** section references, count drift, bidirectional cross-refs, stale dates/paths
-- **Refactor:** callers updated, breaking changes, test coverage, backward compat
-- **Infra:** port conflicts, env vars, secrets, rollback, monitoring
-
-### Verdict Rules
-
-- Round 1 PASS alone → **NEVER exit** — proceed to Round 2
-- Round 1+2 PASS → proceed to Round 3 (mandatory for SP>3)
-- Round 1+2+3 all PASS → **FINAL PASS**
-- Any round FAIL → fix + restart from Round 1 (max 3 full cycles)
-
-<!-- /SYNC:deep-plan-review:inline -->
-
-**Report must include `## Round 2 Findings` and `## Round 3 Findings` sections.**
+<!-- /SYNC:fresh-context-review -->
 
 ## Recursive Fix-and-Review Protocol (CRITICAL)
 
-When the review results in **FAIL**, plan-review fixes the issues and spawns a **fresh-context sub-agent** for re-review — eliminating AI confirmation bias from the fix process.
+> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
 
-<!-- SYNC:fresh-context-review -->
+When the review results in **FAIL**, plan-review fixes the issues directly in plan files, then spawns a fresh `general-purpose` sub-agent for re-review using the canonical Agent template from `SYNC:review-protocol-injection` above. Each fresh sub-agent re-reads ALL plan files from scratch with ZERO memory of prior fixes, eliminating orchestrator confirmation bias.
 
-> **Fresh-Context Review** — Eliminate AI confirmation bias. Spawn `code-reviewer` sub-agent for re-review iterations — zero memory of prior fixes.
->
-> **When:** After fixing review findings. NOT for initial review (needs intent context).
->
-> **How:** `Agent(subagent_type: "code-reviewer")` with self-contained prompt: git diff scope + `docs/project-reference/code-review-rules.md` + checklist summary. Prompt MUST NOT reference prior findings. Report to `plans/reports/review-iteration-{N}-{date}.md`.
->
-> **Result:** PASS → proceed | FAIL (iteration < 3) → fix ALL issues, spawn NEW agent | FAIL (iteration 3) → escalate to user | Issue count increased → STOP, escalate
->
-> **Max 3 iterations.** Track `[Re-Review {N}/3]` tasks per iteration.
+**When constructing the Agent call prompt for Round N (N≥2):**
 
-<!-- /SYNC:fresh-context-review -->
+1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
+2. Use `subagent_type: "general-purpose"` (this is a plan review, not a code review)
+3. Embed the full verbatim body of these SYNC blocks (inlined above in this skill file): `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:test-spec-verification` which are not applicable to plan files)
+4. Set the Task as `"Review plan files under {plan-dir}. Validate structural completeness, code-proof anti-hallucination (every file:line claim about existing source code must exist), and adversarial simulation (imagine implementing each phase right now — what fails first?)."`
+5. Set Target Files as `"read plan.md and all phase-*.md files under {plan-dir}"`
+6. Set report path as `plans/reports/plan-review-round{N}-{date}.md`
+
+After the sub-agent returns:
+
+1. **Read** the sub-agent's report
+2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
+3. **If FAIL:** fix issues in plan files, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
+4. **Max 3 fresh rounds** — escalate to user via `AskUserQuestion` if still failing after 3 rounds
+5. **Final verdict** must incorporate findings from ALL rounds
 
 ### Flow
 
 ```
 ┌──────────────────────────────────┐
-│  Round 1: Structural Checklist   │
-│  Round 2: Deep Code-Proof Trace  │
-│  Round 3: Adversarial Simulation │
+│  Round 1: Main-session review    │
+│  (structural checklist + basic   │
+│   code-proof trace)              │
 │  Output: PASS / WARN / FAIL      │
 └──────────────┬───────────────────┘
                │
@@ -316,33 +486,22 @@ When the review results in **FAIL**, plan-review fixes the issues and spawns a *
         └──────┬──────────────────────────────────┘
                │
         ┌──────▼──────────────────────────────────┐
-        │  FRESH-CONTEXT RE-REVIEW:               │
-        │  Spawn code-reviewer sub-agent to       │
-        │  review plan files with fresh eyes      │
-        │  (zero memory of prior fixes)           │
+        │  Round 2+: FRESH SUB-AGENT RE-REVIEW    │
+        │  Spawn NEW Agent (general-purpose) with │
+        │  verbatim SYNC protocol injection.      │
+        │  Sub-agent re-reads ALL plan files      │
+        │  from scratch (zero memory of fixes).   │
         └──────┬──────────────────────────────────┘
                │
-               └──→ Loop until PASS/WARN (max 3 iterations)
-```
-
-### Plan-Specific Sub-Agent Prompt
-
-When spawning the re-review sub-agent for plan files, use this prompt template:
-
-```
-Agent({
-  description: "Fresh-context plan re-review iteration N/3",
-  subagent_type: "code-reviewer",
-  prompt: "## Task\nReview the implementation plan at {plan-path} for validity, correctness, and best practices.\nYou are reviewing with completely fresh eyes — no knowledge of prior fixes.\n\n## Files to Read\n- {plan-path}/plan.md — overview and phase list\n- {plan-path}/phase-*.md — all phase files\n\n## Checklist\n1. Validity: Has summary, requirements, steps, file listings\n2. Correctness: Steps are specific (file paths, not vague), no planning verbs, each step <=30min, <=5 files per phase, no unresolved TBDs\n3. Best Practices: YAGNI, KISS, DRY, follows project patterns\n4. Completeness: Risks, testing strategy, success criteria, security\n5. Test Specs: Every phase has TC-{FEAT}-{NNN} mappings\n\n## Output\n- Status: PASS / WARN / FAIL\n- Issues: [list with specific plan section references]\n- Recommendations: [specific fixes]"
-})
+               └──→ Loop until PASS/WARN (max 3 fresh-subagent rounds)
 ```
 
 ### Iteration Rules
 
-1. **Max 3 iterations** — if issues persist after 3 review-fix cycles, STOP and escalate to user via `AskUserQuestion`
-2. **Track iteration count** — log "Plan review iteration N/3" at the start of each cycle
+1. **Max 3 fresh-subagent rounds** — if issues persist after 3 fresh Agent re-review cycles, STOP and escalate to user via `AskUserQuestion`
+2. **Track round count** — log "Plan review Round N/3 (fresh sub-agent)" at the start of each cycle
 3. **PASS/WARN = exit** — when all Required checks pass, proceed (WARN is acceptable)
-4. **Diminishing scope** — each iteration should find FEWER issues. If iteration N finds MORE than N-1, STOP and escalate
+4. **Diminishing scope** — each round should find FEWER issues. If Round N finds MORE than Round N-1, STOP and escalate
 5. **Fix scope** — only fix issues flagged as FAIL (Required check failures). Do NOT rewrite the plan.
 6. **Fix approach:**
     - Vague steps → expand with specific file paths, concrete actions
@@ -350,7 +509,8 @@ Agent({
     - Conflicting steps → resolve conflicts, document rationale
     - Over-engineering → simplify, remove unnecessary complexity
     - Missing TC mappings → add TC references or "TBD" with rationale
-7. **After each fix** — re-read the modified plan files before re-reviewing (don't review stale content)
+7. **After each fix** — spawn a NEW fresh sub-agent for re-review (never reuse a prior agent — each round is a new `Agent` tool call)
+8. **No silent fallback** — if 3 fresh rounds fail, escalate via `AskUserQuestion`. NEVER fall back to any prior protocol.
 
 ## Next Steps
 
@@ -359,20 +519,12 @@ Agent({
 - **If FAIL (iteration < 3)**: Fix the issues directly in plan files, then re-review (recursive).
 - **If FAIL (iteration = 3)**: List remaining issues. STOP. Ask user to fix or regenerate plan via `AskUserQuestion`.
 
-## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
-
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
-- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
-
 ## Important Notes
 
-- Be constructive, not pedantic - focus on issues that would cause implementation problems
+- Be constructive, not pedantic — focus on issues that would cause implementation problems
 - WARN is acceptable for missing optional sections
 - FAIL only for genuinely missing required content
-- **NEVER do a quick review** — even "simple" plans had 13 bugs in real testing. Always run all 3 rounds.
+- **NEVER do a quick review** — even "simple" plans had 13 bugs in real testing. Always run all 3 rounds
 
 ---
 
@@ -387,6 +539,8 @@ Agent({
 
 ## Closing Reminders
 
+**MANDATORY IMPORTANT MUST ATTENTION** plans must not hallucinate — every claim about existing source code needs `file:line` proof. Unverified paths, class names, or behaviors = FAIL.
+**MANDATORY IMPORTANT MUST ATTENTION** plans must be detailed and small enough — too vague? detail it. Too big? break it. Every step must be implementation-ready.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
@@ -395,10 +549,10 @@ Agent({
 <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:double-round-trip-review:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:double-round-trip-review:reminder -->
 - **IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone.
-  <!-- /SYNC:double-round-trip-review:reminder -->
-  <!-- SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
+    <!-- /SYNC:graph-assisted-investigation:reminder -->

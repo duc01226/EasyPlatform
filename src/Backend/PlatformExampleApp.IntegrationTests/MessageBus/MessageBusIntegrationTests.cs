@@ -54,6 +54,7 @@ public class MessageBusIntegrationTests : TextSnippetIntegrationTestBase
     /// Proves: command handler → bus producer → outbox write all work correctly.
     /// </summary>
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-010")]
     public async Task SendFreeFormatMessage_ViaCommand_ShouldSucceed()
     {
         // Arrange
@@ -71,8 +72,9 @@ public class MessageBusIntegrationTests : TextSnippetIntegrationTestBase
     }
 
     /// <summary>
-    /// Direct producer send: resolve <c>IPlatformApplicationBusMessageProducer</c> from DI
+    /// Smoke test: direct producer send — resolve <c>IPlatformApplicationBusMessageProducer</c> from DI
     /// and call <c>SendAsync</c> directly. Proves DI wiring and outbox infrastructure work.
+    /// Outbox verification is not possible here because the outbox table is internal to the platform framework.
     ///
     /// <para>
     /// <strong>POC Pattern:</strong> Use <c>ExecuteWithServicesAsync</c> to access DI services
@@ -80,9 +82,12 @@ public class MessageBusIntegrationTests : TextSnippetIntegrationTestBase
     /// </para>
     /// </summary>
     [Fact]
-    public async Task SendFreeFormatMessage_DirectViaProducer_ShouldNotThrow()
+    [Trait("TestSpec", "TC-EXAMPLE-011")]
+    public async Task SendFreeFormatMessage_DirectViaProducer_SmokeTest()
     {
-        // Act & Assert — direct producer call should not throw
+        // Act & Assert — direct producer call should not throw.
+        // Smoke-only by design — outbox verification requires reading platform internal tables
+        // which are not part of the application's public API surface.
         await FluentActions.Invoking(async () =>
         {
             await ExecuteWithServicesAsync(async sp =>
@@ -103,6 +108,7 @@ public class MessageBusIntegrationTests : TextSnippetIntegrationTestBase
     /// Proves the auto-producer is registered and fires correctly in the CQRS pipeline.
     /// </summary>
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-012")]
     public async Task SaveSnippetText_ShouldTriggerEventBusProducer()
     {
         // Arrange

@@ -40,6 +40,7 @@ disable-model-invocation: false
 <!-- /SYNC:evidence-based-reasoning -->
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+- `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
 
 <!-- SYNC:estimation-framework -->
 

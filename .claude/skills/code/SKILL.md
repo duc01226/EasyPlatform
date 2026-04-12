@@ -214,6 +214,7 @@ Do not skip steps. Do not proceed if validation fails. Do not assume approval wi
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (code implemented). This ensures review, testing, and docs steps aren't skipped.
 - **"/code-simplifier"** — Simplify implementation
+- **"/integration-test"** — Generate/update integration tests from test specs
 - **"/workflow-review-changes"** — Review changes before commit
 - **"Skip, continue manually"** — user decides
 
@@ -235,7 +236,7 @@ Do not skip steps. Do not proceed if validation fails. Do not assume approval wi
 - **IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
       <!-- /SYNC:plan-granularity:reminder -->
 
-              <!-- SYNC:understand-code-first:reminder -->
+                    <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
   <!-- /SYNC:understand-code-first:reminder -->

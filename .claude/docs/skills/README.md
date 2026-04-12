@@ -80,11 +80,12 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 ## Debugging/Testing
 
-| Skill             | Triggers                                                       | Description                                                    |
-| ----------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
-| `webapp-testing`  | E2E, Playwright, Cypress                                       | End-to-end testing                                             |
-| `test-spec`       | test specification, QA spec, test strategy, TC-IDs, test cases | Test specification and detailed test case generation from PBIs |
-| `test-specs-docs` | test specs docs, Given-When-Then, QA docs                      | YourProject test spec documentation                            |
+| Skill                     | Triggers                                                              | Description                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `webapp-testing`          | E2E, Playwright, Cypress                                              | End-to-end testing                                                                                              |
+| `test-spec`               | test specification, QA spec, test strategy, TC-IDs, test cases        | Test specification and detailed test case generation from PBIs                                                  |
+| `test-specs-docs`         | test specs docs, Given-When-Then, QA docs                             | YourProject test spec documentation                                                                             |
+| `integration-test-review` | integration test review, assertion quality, test gate review, TC gate | Review integration tests against 5 quality gates (assertion value, data state, repeatability, domain logic, TC) |
 
 ---
 

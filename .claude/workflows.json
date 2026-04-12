@@ -85,6 +85,10 @@
             "claude": "/refine-review",
             "copilot": "/refine-review"
         },
+        "integration-test-review": {
+            "claude": "/integration-test-review",
+            "copilot": "/integration-test-review"
+        },
         "review-architecture": {
             "claude": "/review-architecture",
             "copilot": "/review-architecture"
@@ -287,7 +291,7 @@
             "description": "Systematic debugging and fix workflow with investigation-first approach",
             "name": "Bug Fix",
             "preActions": {
-                "injectContext": "BUG FIX PROTOCOL:\n1. Scout: Find files related to the reported issue\n2. Investigate: Understand current vs expected behavior\n   IMPORTANT: When analyzing 'unused' code during investigation:\n   - Follow Investigation Protocol (CLAUDE.md)\n   - Require grep evidence, confidence ≥80%, cross-service checks (all services)\n   - Use /investigate skill for removal/refactoring decisions\n3. Debug: Identify root cause with evidence (file:line)\n4. Plan fix with minimal blast radius\n5. Validate plan before implementing\n6. Validate fix rationale with /why-review\n7. Fix the identified issue\n8. PROVE FIX: Build code proof traces per change, confidence scores, stack-trace-style evidence. MANDATORY — never skip.\n9. Update test specs — /tdd-spec UPDATE mode generates regression TCs for the bug fixed. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n10. Simplify code for readability and consistency\n11. Code review for quality and regression risk\n12. Update changelog\n13. Run tests to verify fix and no regressions\n14. Summary report of fix and verification results"
+                "injectContext": "BUG FIX PROTOCOL (TDD-FIRST):\n1. Scout: Find files related to the reported issue\n2. Investigate: Understand current vs expected behavior\n   IMPORTANT: When analyzing 'unused' code during investigation:\n   - Follow Investigation Protocol (CLAUDE.md)\n   - Require grep evidence, confidence >=80%, cross-service checks (all services)\n   - Use /investigate skill for removal/refactoring decisions\n3. Debug: Identify root cause with evidence (file:line)\n4. Plan fix with minimal blast radius\n5. Validate plan before implementing\n6. Validate fix rationale with /why-review\n7. Write test specs (/tdd-spec REGRESSION mode): Create TC specs that reproduce the bug. These become the integration test scenarios.\n8. Review test specs with /tdd-spec-review\n9. WRITE INTEGRATION TEST — RED phase: Implement integration test(s) based on the bug reproduction spec. Run the test(s) — they MUST FAIL. A passing test means it does NOT actually catch the bug. Never proceed to fix until the test(s) fail.\n10. Fix the identified issue\n11. PROVE FIX: Build code proof traces per change, confidence scores, stack-trace-style evidence. MANDATORY — never skip.\n12. RE-RUN INTEGRATION TESTS — GREEN phase: Run integration tests again — expect all to PASS. This confirms the fix resolves the bug AND regression guard is in place.\n13. Review integration tests with /integration-test-review — verify tests have real assertion value, not just smoke/existence checks.\n14. Code review for quality and regression risk\n15. Update changelog\n16. Run full test suite to verify fix and no regressions\n17. Summary report of fix and verification results"
             },
             "sequence": [
                 "scout",
@@ -297,11 +301,13 @@
                 "plan-review",
                 "plan-validate",
                 "why-review",
-                "fix",
-                "prove-fix",
                 "tdd-spec",
                 "tdd-spec-review",
-                "test-specs-docs",
+                "integration-test",
+                "fix",
+                "prove-fix",
+                "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "changelog",
                 "test",
@@ -362,7 +368,7 @@
             "description": "Full feature development workflow with search-first approach, planning, implementation, testing, and documentation",
             "name": "Feature Implementation",
             "preActions": {
-                "injectContext": "FEATURE IMPLEMENTATION PROTOCOL:\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar features, patterns, and implementation examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Design solution following discovered project patterns (CQRS, state management, CSS methodology, validation, etc.)\n4. Validate plan via /plan-review before any code changes\n5. Validate design rationale with /why-review (features/refactors)\n6. Write test specifications with /tdd-spec CREATE mode (before implementation). Review with /tdd-spec-review.\n7. Update plan with test strategy via /plan (re-plan cycle). Review with /plan-review.\n8. Implement with /cook (backend + frontend) — guided by test specs\n9. Update test specs to catch implementation gaps with /tdd-spec UPDATE mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n10. Simplify code for readability and consistency\n11. Code review for quality, security, patterns compliance\n12. SRE review for production readiness (service-layer/API changes)\n13. Update changelog with feature entry\n14. Run tests to verify no regressions\n15. Update documentation if feature impacts business docs\n16. Summary report of all changes\n\nPLAN PHASES:\n- PLAN₁ (after investigate): Feature design plan. Scope: architecture, file changes, implementation approach.\n- PLAN₂ (after tdd-spec-review): Updated plan incorporating test strategy. Scope: refine PLAN₁ with test infrastructure, test data setup, spec coverage gaps.\n\nGUARDRAIL: Provide file:line evidence of pattern search in plan. Follow project conventions over generic docs."
+                "injectContext": "FEATURE IMPLEMENTATION PROTOCOL:\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar features, patterns, and implementation examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Design solution following discovered project patterns (CQRS, state management, CSS methodology, validation, etc.)\n4. Validate plan via /plan-review before any code changes\n5. Validate design rationale with /why-review (features/refactors)\n6. Write test specifications with /tdd-spec CREATE mode (before implementation). Review with /tdd-spec-review.\n7. Update plan with test strategy via /plan (re-plan cycle). Review with /plan-review.\n8. Implement with /cook (backend + frontend) — guided by test specs\n9. Update test specs to catch implementation gaps with /tdd-spec UPDATE mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n10. Generate/update integration tests with /integration-test — creates actual test files from TC specifications.\n11. Simplify code for readability and consistency\n12. Code review for quality, security, patterns compliance\n13. SRE review for production readiness (service-layer/API changes)\n14. Update changelog with feature entry\n15. Run tests to verify no regressions\n16. Update documentation if feature impacts business docs\n17. Summary report of all changes\n\nPLAN PHASES:\n- PLAN₁ (after investigate): Feature design plan. Scope: architecture, file changes, implementation approach.\n- PLAN₂ (after tdd-spec-review): Updated plan incorporating test strategy. Scope: refine PLAN₁ with test infrastructure, test data setup, spec coverage gaps.\n\nGUARDRAIL: Provide file:line evidence of pattern search in plan. Follow project conventions over generic docs."
             },
             "sequence": [
                 "scout",
@@ -379,6 +385,8 @@
                 "tdd-spec",
                 "tdd-spec-review",
                 "test-specs-docs",
+                "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "sre-review",
                 "security",
@@ -411,6 +419,7 @@
                 "plan-review",
                 "cook",
                 "integration-test",
+                "integration-test-review",
                 "test",
                 "workflow-review-changes",
                 "sre-review",
@@ -455,6 +464,7 @@
                 "why-review",
                 "cook",
                 "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "sre-review",
                 "security",
@@ -483,7 +493,7 @@
             "description": "Code improvement and restructuring workflow with search-first approach",
             "name": "Code Refactoring",
             "preActions": {
-                "injectContext": "Role: Refactoring Specialist\nREFACTORING PROTOCOL:\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar refactoring patterns, identify target architecture examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Identify code smells, define target architecture following discovered project patterns\n4. Validate plan  --  ensure no behavioral changes, only structural\n5. Validate design rationale with /why-review (features/refactors)\n6. Implement incrementally  --  small, verifiable steps\n7. Verify test specs still match after refactoring with /tdd-spec update mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n8. Simplify: Remove dead code, flatten nesting, extract duplicates\n   CRITICAL: Before removing any code:\n   - Use /investigate skill for 'unused' code verification\n   - Require evidence: grep results + confidence ≥80% + cross-service validation\n   - See Investigation Protocol (CLAUDE.md)\n9. Code review: Verify no functional regressions\n10. SRE review for production readiness (service-layer/API changes)\n11. Update changelog with refactoring summary\n12. Run tests  --  all existing tests MUST ATTENTION pass\n13. Summary report of structural improvements\n\nGUARDRAILS:\n- Refactoring MUST ATTENTION NOT change observable behavior\n- Follow project patterns: CQRS, state management, CSS methodology, validation, etc.\n- Apply Code Responsibility Hierarchy: Entity > Service > Component\n- Provide file:line evidence of pattern search in plan"
+                "injectContext": "Role: Refactoring Specialist\nREFACTORING PROTOCOL:\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar refactoring patterns, identify target architecture examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Identify code smells, define target architecture following discovered project patterns\n4. Validate plan  --  ensure no behavioral changes, only structural\n5. Validate design rationale with /why-review (features/refactors)\n6. Implement incrementally  --  small, verifiable steps\n7. Verify test specs still match after refactoring with /tdd-spec update mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n8. Verify/update integration tests with /integration-test — ensures tests reflect refactored code paths.\n9. Simplify: Remove dead code, flatten nesting, extract duplicates\n   CRITICAL: Before removing any code:\n   - Use /investigate skill for 'unused' code verification\n   - Require evidence: grep results + confidence ≥80% + cross-service validation\n   - See Investigation Protocol (CLAUDE.md)\n10. Code review: Verify no functional regressions\n11. SRE review for production readiness (service-layer/API changes)\n12. Update changelog with refactoring summary\n13. Run tests  --  all existing tests MUST ATTENTION pass\n14. Summary report of structural improvements\n\nGUARDRAILS:\n- Refactoring MUST ATTENTION NOT change observable behavior\n- Follow project patterns: CQRS, state management, CSS methodology, validation, etc.\n- Apply Code Responsibility Hierarchy: Entity > Service > Component\n- Provide file:line evidence of pattern search in plan"
             },
             "sequence": [
                 "scout",
@@ -496,6 +506,8 @@
                 "tdd-spec",
                 "tdd-spec-review",
                 "test-specs-docs",
+                "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "sre-review",
                 "changelog",
@@ -512,7 +524,7 @@
             "description": "Review uncommitted changes, plan and fix issues, then re-review recursively until clean",
             "name": "Review Current Changes",
             "preActions": {
-                "injectContext": "PRE-COMMIT REVIEW (RECURSIVE):\n- Review all staged and unstaged changes\n- Check for: security issues, debug artifacts (console.log, debugger), incomplete code, style violations\n- Verify no sensitive files (.env, credentials) are staged\n- Check architecture compliance, naming, patterns\n- Report findings with file:line references\n- Output: PASS (safe to commit) or ISSUES FOUND (with list)\n- If ISSUES FOUND: plan fixes, validate plan, implement fixes, then RE-REVIEW\n- RECURSIVE: After cook, re-run review-changes. Loop until PASS or max 3 iterations.\n- LOGIC REVIEW: Verify changes match their stated intention. Trace business logic paths. Clean code can be wrong code.\n- BUG DETECTION: Check for null safety, boundary conditions, resource leaks, concurrency issues per bug-detection-protocol.\n- TEST SPEC VERIFICATION: Cross-reference changes against TC-{FEAT}-{NNN} test specifications. Flag untested code paths."
+                "injectContext": "PRE-COMMIT REVIEW (RECURSIVE):\n- Review all staged and unstaged changes\n- Check for: security issues, debug artifacts (console.log, debugger), incomplete code, style violations\n- Verify no sensitive files (.env, credentials) are staged\n- Check architecture compliance, naming, patterns\n- Report findings with file:line references\n- Output: PASS (safe to commit) or ISSUES FOUND (with list)\n- If ISSUES FOUND: plan fixes, validate plan, implement fixes, then RE-REVIEW\n- RECURSIVE: After cook, re-run review-changes. Loop until PASS or max 3 iterations.\n- LOGIC REVIEW: Verify changes match their stated intention. Trace business logic paths. Clean code can be wrong code.\n- BUG DETECTION: Check for null safety, boundary conditions, resource leaks, concurrency issues per bug-detection-protocol.\n- TEST SPEC VERIFICATION: Cross-reference changes against TC-{FEAT}-{NNN} test specifications. Flag untested code paths.\n- INTEGRATION TEST SYNC: Check if changed command/query handlers have corresponding integration tests. Flag missing tests as advisory finding."
             },
             "sequence": [
                 "review-changes",
@@ -520,6 +532,7 @@
                 "code-simplifier",
                 "code-review",
                 "performance",
+                "integration-test-review",
                 "plan",
                 "plan-validate",
                 "cook",
@@ -543,6 +556,7 @@
                 "code-simplifier",
                 "code-review",
                 "performance",
+                "integration-test-review",
                 "plan",
                 "plan-validate",
                 "cook",
@@ -617,6 +631,8 @@
                 "tdd-spec",
                 "tdd-spec-review",
                 "test-specs-docs",
+                "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "sre-review",
                 "test",
@@ -713,6 +729,8 @@
                 "tdd-spec",
                 "tdd-spec-review",
                 "test-specs-docs",
+                "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "test",
                 "docs-update",
@@ -737,6 +755,8 @@
                 "code",
                 "tdd-spec",
                 "tdd-spec-review",
+                "integration-test",
+                "integration-test-review",
                 "test",
                 "docs-update",
                 "watzup",
@@ -759,6 +779,8 @@
                 "plan-review",
                 "plan-validate",
                 "code",
+                "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "sre-review",
                 "test",
@@ -783,6 +805,8 @@
                 "plan-review",
                 "plan-validate",
                 "code",
+                "integration-test",
+                "integration-test-review",
                 "test",
                 "workflow-review-changes",
                 "docs-update",
@@ -809,6 +833,8 @@
                 "tdd-spec",
                 "tdd-spec-review",
                 "test-specs-docs",
+                "integration-test",
+                "integration-test-review",
                 "test",
                 "workflow-review-changes",
                 "sre-review",
@@ -833,6 +859,8 @@
                 "plan-review",
                 "plan-validate",
                 "code",
+                "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "sre-review",
                 "test",
@@ -937,17 +965,19 @@
             "description": "Fast-path production fix with lightweight planning — for P0/P1 urgent issues",
             "name": "Hotfix",
             "preActions": {
-                "injectContext": "HOTFIX PROTOCOL (URGENT):\n1. Scout: Find affected code immediately\n2. Plan: Lightweight plan — document what you'll fix and why\n3. Plan-review: Quick sanity check on approach\n4. Fix: Apply minimal, targeted fix\n5. PROVE FIX: Build code proof traces per change, confidence scores. MANDATORY even for hotfixes.\n6. Update test specs — /tdd-spec UPDATE mode generates regression TC for the fix. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n7. Test: Verify fix and no regressions\n8. Review: Quick review of changes\n9. SRE: Verify production readiness\n10. Summary: Report fix and verification\n\nGUARDRAILS:\n- Minimal blast radius — fix ONLY the broken thing\n- No refactoring, no cleanup, no improvements\n- Must be deployable immediately\n- Planning is lightweight — document intent, not full architecture"
+                "injectContext": "HOTFIX PROTOCOL (URGENT — TDD-FIRST):\n1. Scout: Find affected code immediately\n2. Plan: Lightweight plan — document what you will fix and why\n3. Plan-review: Quick sanity check on approach\n4. Write test specs (/tdd-spec REGRESSION mode): Create a spec that reproduces the production bug. Keep it minimal but precise.\n5. Review test specs (/tdd-spec-review): Quick review for correctness\n6. WRITE INTEGRATION TEST — RED phase: Implement the regression test. Run it — MUST FAIL. If it passes, it does NOT catch the bug. Do NOT skip even in emergencies — an untested hotfix is a future incident.\n7. Fix: Apply minimal, targeted fix\n8. PROVE FIX: Build code proof traces per change, confidence scores. MANDATORY even for hotfixes.\n9. RE-RUN INTEGRATION TESTS — GREEN phase: Run tests — expect PASS. Confirms fix resolves the bug AND regression guard is in place.\n10. Review integration tests (/integration-test-review): Verify test has real assertion value, not smoke-only.\n11. Run full test suite — confirm no regressions\n12. SRE review for blast radius and rollback plan\n13. Update docs"
             },
             "sequence": [
                 "scout",
                 "plan",
                 "plan-review",
-                "fix",
-                "prove-fix",
                 "tdd-spec",
                 "tdd-spec-review",
-                "test-specs-docs",
+                "integration-test",
+                "fix",
+                "prove-fix",
+                "integration-test",
+                "integration-test-review",
                 "test",
                 "workflow-review-changes",
                 "sre-review",
@@ -981,6 +1011,8 @@
                 "plan-review",
                 "plan-validate",
                 "cook",
+                "integration-test",
+                "integration-test-review",
                 "workflow-review-changes",
                 "sre-review",
                 "test-spec",
@@ -1070,6 +1102,7 @@
                 "why-review",
                 "cook",
                 "integration-test",
+                "integration-test-review",
                 "test",
                 "workflow-review-changes",
                 "sre-review",
@@ -1094,6 +1127,7 @@
                 "tdd-spec-review",
                 "test-specs-docs",
                 "integration-test",
+                "integration-test-review",
                 "test",
                 "docs-update",
                 "workflow-end"
@@ -1108,7 +1142,7 @@
             "preActions": {
                 "injectContext": "TEST-TO-INTEGRATION WORKFLOW:\nGenerate integration tests from existing test specifications.\n1. Scout: Find the relevant test spec documents and existing test files\n2. Integration Test: Generate test files from TCs in feature doc Section 15\n   - Each test gets test spec annotation linking to TC-{FEATURE}-{NNN}\n   - Tests use real DI, no mocks (subcutaneous testing pattern)\n3. Test: Build and run the generated tests\n4. Verify: Check bidirectional traceability (every TC has a test, every test has a TC)"
             },
-            "sequence": ["scout", "integration-test", "test", "docs-update", "watzup", "workflow-end"],
+            "sequence": ["scout", "integration-test", "integration-test-review", "test", "docs-update", "watzup", "workflow-end"],
             "whenNotToUse": "No test specs exist yet (use tdd-spec first), test planning phase, documentation-only",
             "whenToUse": "Generate integration tests from test specs, create tests from feature docs, implement test cases from specifications, test specs to code"
         },
@@ -1119,7 +1153,7 @@
             "preActions": {
                 "injectContext": "TEST VERIFICATION WORKFLOW:\nComprehensive test quality verification covering 4 concerns:\n1. Scout: Find all integration test files and related specs\n2. Integration Test (review mode): Audit test quality — flaky patterns, missing polling for async assertions, non-unique test data, best practice violations\n3. Integration Test (verify mode): Check bidirectional traceability — every test has a TC in feature docs, every TC has a matching test, no orphans\n4. Test: Run tests to identify actual failures\n5. Integration Test (diagnose mode): For any failures — determine root cause: test bug vs code bug vs infrastructure issue\n6. Review: Summarize findings and recommended fixes\n\nKEY FLAKY PATTERNS TO DETECT:\n- DB assertions without WaitUntilAsync/polling after async event handlers\n- Hardcoded delays instead of condition-based polling\n- Non-unique test data causing cross-test interference\n- Race conditions from shared mutable state\n\nMISMATCH RESOLUTION:\n- Test passes but spec says different behavior → update spec\n- Test fails but spec describes expected behavior → update test\n- Test exists without spec → create spec from test\n- Spec exists without test → generate test from spec"
             },
-            "sequence": ["scout", "integration-test", "test", "integration-test", "docs-update", "watzup", "workflow-end"],
+            "sequence": ["scout", "integration-test", "test", "integration-test", "integration-test-review", "docs-update", "watzup", "workflow-end"],
             "whenNotToUse": "Writing new tests (use test-to-integration), creating test specs (use tdd-spec), new feature implementation",
             "whenToUse": "Review test quality, fix flaky tests, diagnose test failures, verify test traceability, test audit, test health check, integration test review, why tests fail, tests not matching specs"
         },
@@ -1160,6 +1194,7 @@
                 "plan",
                 "plan-review",
                 "integration-test",
+                "integration-test-review",
                 "test",
                 "workflow-review-changes",
                 "sre-review",

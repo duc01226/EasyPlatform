@@ -4,7 +4,6 @@ using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AutomationTest.IntegrationTests;
 using Easy.Platform.Domain.Repositories;
 using Microsoft.Extensions.DependencyInjection;
-using PlatformExampleApp.TextSnippet.Api;
 using PlatformExampleApp.TextSnippet.Application.Context.RequestContext;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
@@ -32,7 +31,7 @@ namespace PlatformExampleApp.IntegrationTests;
 /// </para>
 /// </summary>
 public abstract class TextSnippetIntegrationTestBase
-    : PlatformServiceIntegrationTestWithAssertions<TextSnippetApiAspNetCoreModule>
+    : PlatformServiceIntegrationTestWithAssertions<TextSnippetIntegrationTestAspNetCoreModule>
 {
     /// <inheritdoc />
     protected override IPlatformRepository<TEntity, string> ResolveRepository<TEntity>(IServiceProvider sp)

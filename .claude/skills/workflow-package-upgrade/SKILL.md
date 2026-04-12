@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Package Upgrade workflow — upgrade dependenci
 
 Activate the `package-upgrade` workflow. Run `/workflow-start package-upgrade` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /test → /workflow-review-changes → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /integration-test → /integration-test-review → /test → /workflow-review-changes → /docs-update → /watzup → /workflow-end
 
 ---
 

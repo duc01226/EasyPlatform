@@ -8,7 +8,7 @@ description: '[Workflow] Trigger E2E from Recording workflow — generate playwr
 
 Activate the `e2e-from-recording` workflow. Run `/workflow-start e2e-from-recording` with the user's prompt as context.
 
-**Steps:** /scout → /e2e-test → /test → /watzup → /workflow-end
+**Steps:** /scout → /e2e-test → /test → /docs-update → /watzup → /workflow-end
 
 ---
 

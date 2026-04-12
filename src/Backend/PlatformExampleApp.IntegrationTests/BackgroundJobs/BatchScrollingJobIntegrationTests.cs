@@ -51,6 +51,7 @@ public class BatchScrollingJobIntegrationTests : TextSnippetIntegrationTestBase
     /// verifies FullText was updated with [BatchProcessed] marker.
     /// </summary>
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-003")]
     public async Task BatchScrollingJob_UpdateFullText_ShouldProcessEntitiesForBatchKey()
     {
         // Arrange — seed 2 entities with SnippetText starting with "T"
@@ -93,6 +94,7 @@ public class BatchScrollingJobIntegrationTests : TextSnippetIntegrationTestBase
     /// This verifies the batch key filtering logic works correctly.
     /// </summary>
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-004")]
     public async Task BatchScrollingJob_ShouldNotProcessEntitiesOutsideBatchKey()
     {
         // Arrange — seed entity in batch "X" and entity in batch "Y"

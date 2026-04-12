@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Release Preparation workflow — pre-release qu
 
 Activate the `release-prep` workflow. Run `/workflow-start release-prep` with the user's prompt as context.
 
-**Steps:** /sre-review → /quality-gate → /status → /workflow-end
+**Steps:** /sre-review → /quality-gate → /status → /docs-update → /workflow-end
 
 ---
 

@@ -37,7 +37,22 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate, AskUserQue
 
 > **CRITICAL: Search existing patterns FIRST.** Before generating ANY test, grep for existing integration test files in the same service. Read at least 1 existing test file to match conventions (namespace, usings, collection name, base class, helper usage). Never generate tests that contradict established patterns in the codebase.
 
-> **CRITICAL: Data State Verification.** All integration tests MUST verify expected data state as source of truth. Use `AssertEntityMatchesAsync<T>` or `ExecuteWithServicesAsync` with repo queries to verify entity state after commands. Smoke-only tests (`NotThrowAsync`) are acceptable ONLY for unobservable side effects (cache invalidation). Mark smoke-only tests with `// TODO: Smoke-only by design — [reason]`.
+> **CRITICAL: NO Smoke/Fake/Useless Tests.** Every test MUST execute actual commands/handlers and verify data state in the database — like a QC tester testing the real system. NO DI-resolution-only tests (`GetRequiredService + NotBeNull`). NO exception-check-only tests (`exception.Should().BeNull()` alone). Before writing assertions: READ the handler/entity/event source to understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assert specific field values in the database.
+
+> **CRITICAL: WaitUntilAsync for ALL Data Assertions.** ALWAYS wrap data state assertions in `WaitUntilAsync()`. This is the DEFAULT for ALL data verification — not just "async event handlers". Data persistence may be delayed by entity event handlers, message bus consumers, background jobs, or DB write latency. `WaitUntilAsync` retries with polling and is always safe. **Rule: If you assert data in the database, use `WaitUntilAsync`. No exceptions.**
+
+<!-- SYNC:repeatable-test-principle -->
+
+> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data.
+>
+> 1. **Unique data per run:** Use `Ulid.NewUlid()` or `Guid.NewGuid()` for ALL entity IDs created in tests. NEVER hardcode IDs.
+> 2. **Additive only:** Tests create data, never delete/reset. Prior test runs MUST NOT interfere with current run.
+> 3. **No migration Down() dependency:** Tests work with current schema only. Never rely on rollback.
+> 4. **Idempotent seeders:** Fixture-level seeders use create-if-missing pattern (check existence before insert). Test-level data uses unique IDs per execution.
+> 5. **No cleanup required:** No teardown, no database reset between runs. Each test is isolated by unique seed data, not by cleanup.
+> 6. **Unique names/codes:** When entities require unique names/codes, append `Ulid.NewUlid()` suffix (e.g., `$"TestGoal-{Ulid.NewUlid()}"`).
+
+<!-- /SYNC:repeatable-test-principle -->
 
 > **For test specifications and test case generation from PBIs, use `/tdd-spec` skill (preferred) or `/test-spec` skill instead.**
 
@@ -108,7 +123,8 @@ Before implementation, search your codebase for project-specific patterns:
 - **Organize by domain feature, NOT by type** — command and query tests for the same domain go in the same folder (e.g., `Orders/OrderCommandIntegrationTests.cs` + `Orders/OrderQueryIntegrationTests.cs`). NEVER create a `Queries/` or `Commands/` folder.
 - Use `IntegrationTestHelper.UniqueName()` for ALL string test data
 - Use `AssertEntityMatchesAsync<T>` for DB verification (built-in WaitUntil polling)
-- **IMPORTANT MUST ATTENTION ENSURE:** When asserting DB state changed by **async event handlers** (entity event handlers, message bus consumers), ALWAYS wrap assertions in `PlatformIntegrationTestHelper.WaitUntilAsync()`. Direct `ExecuteWithServicesAsync` without retry will flake because handlers run in background threads. Only synchronous command results can be asserted directly.
+- **CRITICAL MUST ATTENTION ENSURE:** ALWAYS wrap ALL data state assertions in `WaitUntilAsync()`. This is the DEFAULT — not just for "async" handlers. Data may be delayed by entity event handlers, message bus consumers, or background jobs. `WaitUntilAsync` retries with polling and is always safe. **If you assert data in DB → use WaitUntilAsync. No exceptions.**
+- **CRITICAL MUST ATTENTION ENSURE:** Before writing assertions, READ the handler/entity/event source code. Understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assert specific field values, not just non-null. Smoke-only is FORBIDDEN unless side effect is truly unobservable.
 - Minimum 3 test methods: happy path, validation failure, DB state check
 - **Authorization tests:** Include tests with multiple user contexts (`TestUserContextFactory.CreateAdmin()`, `CreateRegularUser()`, etc.) — verify authorized access succeeds AND unauthorized access is rejected
 - Every test method MUST ATTENTION have `// TC-{FEATURE}-{NNN}: Description` comment AND `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` — placed **before** `[Fact]`, outside method body
@@ -662,14 +678,14 @@ When test code and spec disagree, determine which is correct:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:graph-impact-analysis:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:graph-impact-analysis:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-    <!-- /SYNC:graph-impact-analysis:reminder -->
-    <!-- SYNC:red-flag-stop-conditions:reminder -->
+  <!-- /SYNC:graph-impact-analysis:reminder -->
+  <!-- SYNC:red-flag-stop-conditions:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-    <!-- /SYNC:red-flag-stop-conditions:reminder -->
-    <!-- SYNC:rationalization-prevention:reminder -->
+  <!-- /SYNC:red-flag-stop-conditions:reminder -->
+  <!-- SYNC:rationalization-prevention:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-  <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- /SYNC:rationalization-prevention:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** READ `references/integration-test-patterns.md` before starting

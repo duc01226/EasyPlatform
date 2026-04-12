@@ -21,6 +21,9 @@
     },
     "env": {
         "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1",
+        "CLAUDE_CODE_DISABLE_1M_CONTEXT": "0",
+        "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000",
+        "CLAUDE_CODE_USE_POWERSHELL_TOOL": "1",
         "MCP_TIMEOUT": "30000"
     },
     "hooks": {
@@ -443,6 +446,7 @@
         ]
     },
     "includeCoAuthoredBy": false,
+    "model": "sonnet",
     "permissions": {
         "allow": ["Edit(.claude/**)", "Bash(tmp/**)", "Edit(tmp/**)", "Read(tmp/**)", "Write(tmp/**)", "Glob(tmp/**)"],
         "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)"],
@@ -479,8 +483,8 @@
             "Bash(*git restore --staged:*)",
             "Edit(**/.git/**)",
             "Edit(.git/**)",
-            "Edit(**/.env*)",
-            "Edit(.env*)",
+            "Edit(**/.env!(.example))",
+            "Edit(.env!(.example))",
             "Edit(**/secrets/**)",
             "Edit(**/credentials*)",
             "Edit(**/generated/**)",
@@ -490,8 +494,8 @@
             "Edit(**/node_modules/**)",
             "Read(**/.git/**)",
             "Read(.git/**)",
-            "Read(**/.env*)",
-            "Read(.env*)",
+            "Read(**/.env!(.example))",
+            "Read(.env!(.example))",
             "Read(**/secrets/**)",
             "Read(**/credentials*)",
             "Read(~/.ssh/**)",
@@ -499,8 +503,8 @@
             "Read(~/.config/gcloud/**)",
             "Write(**/.git/**)",
             "Write(.git/**)",
-            "Write(**/.env*)",
-            "Write(.env*)",
+            "Write(**/.env!(.example))",
+            "Write(.env!(.example))",
             "Write(**/secrets/**)",
             "Write(**/credentials*)",
             "Write(**/generated/**)",

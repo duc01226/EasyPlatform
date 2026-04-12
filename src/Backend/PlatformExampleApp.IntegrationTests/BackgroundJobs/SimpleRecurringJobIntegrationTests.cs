@@ -31,14 +31,26 @@ public class SimpleRecurringJobIntegrationTests : TextSnippetIntegrationTestBase
     /// <summary>
     /// Smoke test: the recurring job should execute without error through the full platform pipeline.
     /// Verifies DI resolution, repository access, and bus message sending all work.
+    /// After execution, verifies the entity was upserted in the database.
     /// </summary>
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-001")]
     public async Task SimpleRecurringJob_ShouldExecuteWithoutError()
     {
+        // Arrange — the job uses this hardcoded ID (see TestRecurringBackgroundJobExecutor.ProcessAsync)
+        var expectedEntityId = Ulid.Parse("01J0P1BYG30CNTMDRG6540WEGQ").ToString();
+
         // Act & Assert — job should complete without throwing
         var act = () => ExecuteBackgroundJobAsync<TestRecurringBackgroundJobExecutor>();
         await act.Should().NotThrowAsync(
             "Simple recurring job should execute without error through the full platform pipeline");
+
+        // Assert — entity should exist in DB with expected content
+        await AssertEntityMatchesAsync<TextSnippetEntity>(expectedEntityId, entity =>
+        {
+            entity.SnippetText.Should().Contain("TestRecurringBackgroundJob",
+                "The recurring job upserts an entity with SnippetText starting with 'TestRecurringBackgroundJob'");
+        });
     }
 
     /// <summary>
@@ -52,6 +64,7 @@ public class SimpleRecurringJobIntegrationTests : TextSnippetIntegrationTestBase
     /// </para>
     /// </summary>
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-002")]
     public async Task SimpleRecurringJob_ShouldUpsertEntityWithHardcodedId()
     {
         // Arrange — the job uses this hardcoded ID (see TestRecurringBackgroundJobExecutor.ProcessAsync)

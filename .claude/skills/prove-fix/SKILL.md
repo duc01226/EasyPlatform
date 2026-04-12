@@ -392,6 +392,7 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/code-simplifier (Recommended)"** — Clean up fix implementation
+- **"/integration-test"** — Generate/update regression integration tests
 - **"/workflow-review-changes"** — Review all changes before commit
 - **"Skip, continue manually"** — user decides
 
@@ -405,13 +406,13 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:ui-system-context:reminder -->
 - **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+    <!-- /SYNC:ui-system-context:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
-    <!-- SYNC:fix-layer-accountability:reminder -->
+  <!-- /SYNC:graph-assisted-investigation:reminder -->
+  <!-- SYNC:fix-layer-accountability:reminder -->
 - **IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
-    <!-- /SYNC:fix-layer-accountability:reminder -->
+  <!-- /SYNC:fix-layer-accountability:reminder -->

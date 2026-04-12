@@ -8,7 +8,7 @@ description: '[Workflow] Trigger E2E Update UI workflow — update e2e screensho
 
 Activate the `e2e-update-ui` workflow. Run `/workflow-start e2e-update-ui` with the user's prompt as context.
 
-**Steps:** /scout → /e2e-test → /test → /watzup → /workflow-end
+**Steps:** /scout → /e2e-test → /test → /docs-update → /watzup → /workflow-end
 
 ---
 

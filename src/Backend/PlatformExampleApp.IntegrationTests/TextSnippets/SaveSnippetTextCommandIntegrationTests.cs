@@ -16,6 +16,7 @@ namespace PlatformExampleApp.IntegrationTests.TextSnippets;
 public class SaveSnippetTextCommandIntegrationTests : TextSnippetIntegrationTestBase
 {
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-013")]
     public async Task SaveSnippetText_WhenValidData_ShouldCreateSuccessfully()
     {
         // Arrange
@@ -50,6 +51,7 @@ public class SaveSnippetTextCommandIntegrationTests : TextSnippetIntegrationTest
     }
 
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-014")]
     public async Task SaveSnippetText_WhenInvalidData_ShouldFailValidation()
     {
         // Arrange — empty SnippetText violates entity validation
@@ -69,6 +71,7 @@ public class SaveSnippetTextCommandIntegrationTests : TextSnippetIntegrationTest
     }
 
     [Fact]
+    [Trait("TestSpec", "TC-EXAMPLE-015")]
     public async Task SaveSnippetText_WhenUpdatingExisting_ShouldPreserveIdAndUpdateFields()
     {
         // Arrange — Create first

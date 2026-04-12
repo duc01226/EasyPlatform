@@ -258,6 +258,7 @@ Before and after fixing, use graph trace to understand blast radius:
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (fix applied). This ensures prove-fix, review, testing, and docs steps aren't skipped.
 - **"/prove-fix"** — Prove fix correctness with code traces
 - **"/test"** — Run tests to verify fix
+- **"/integration-test"** — Generate/update regression integration tests
 - **"Skip, continue manually"** — user decides
 
 ## Closing Reminders
@@ -270,19 +271,19 @@ Before and after fixing, use graph trace to understand blast radius:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:evidence-based-reasoning:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:evidence-based-reasoning:reminder -->
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:estimation-framework:reminder -->
 - **IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:red-flag-stop-conditions:reminder -->
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:red-flag-stop-conditions:reminder -->
 - **IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-      <!-- /SYNC:red-flag-stop-conditions:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+    <!-- /SYNC:red-flag-stop-conditions:reminder -->
+    <!-- SYNC:ui-system-context:reminder -->
 - **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
-    <!-- SYNC:fix-layer-accountability:reminder -->
+  <!-- /SYNC:ui-system-context:reminder -->
+  <!-- SYNC:fix-layer-accountability:reminder -->
 - **IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
-    <!-- /SYNC:fix-layer-accountability:reminder -->
+  <!-- /SYNC:fix-layer-accountability:reminder -->
