@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Test Specs to Integration Tests workflow — ge
 
 Activate the `test-to-integration` workflow. Run `/workflow-start test-to-integration` with the user's prompt as context.
 
-**Steps:** /scout → /integration-test → /integration-test-review → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /integration-test → /integration-test-review → /integration-test-verify → /test → /docs-update → /watzup → /workflow-end
 
 ---
 

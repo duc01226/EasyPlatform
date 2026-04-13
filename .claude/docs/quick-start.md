@@ -30,9 +30,9 @@ git --version
 ```
 .claude/
 |-- settings.json     # Main configuration (hooks, features)
-|-- skills/           # 202 domain skills (invoked via / prefix, activated by context)
+|-- skills/           # 258 skills (invoked via / prefix, activated by context)
 |-- agents/           # Subagent configurations
-|-- hooks/            # 34 hooks + 25 lib modules
+|-- hooks/            # 53 hook files + 27 lib modules
 |   +-- lib/          # Shared hook libraries
 |-- workflows/        # Development rules and workflows
 +-- scripts/          # Utility scripts
@@ -108,7 +108,7 @@ Searches codebase for relevant files and explains functionality.
 
 ## Step 5: Understanding Hook Events (Optional)
 
-Claude Code intercepts 10 event types:
+Claude Code intercepts 9 event types:
 
 | Event                   | When It Fires             | Example Hook                   |
 | ----------------------- | ------------------------- | ------------------------------ |

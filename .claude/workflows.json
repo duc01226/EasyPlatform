@@ -89,6 +89,10 @@
             "claude": "/integration-test-review",
             "copilot": "/integration-test-review"
         },
+        "integration-test-verify": {
+            "claude": "/integration-test-verify",
+            "copilot": "/integration-test-verify"
+        },
         "review-architecture": {
             "claude": "/review-architecture",
             "copilot": "/review-architecture"
@@ -264,6 +268,22 @@
         "test-specs-docs": {
             "claude": "/test-specs-docs",
             "copilot": "/test-specs-docs"
+        },
+        "debug-investigate": {
+            "claude": "/debug-investigate",
+            "copilot": "/debug-investigate"
+        },
+        "workflow-review": {
+            "claude": "/workflow-review",
+            "copilot": "/workflow-review"
+        },
+        "frontend-design": {
+            "claude": "/frontend-design",
+            "copilot": "/frontend-design"
+        },
+        "db-migrate": {
+            "claude": "/db-migrate",
+            "copilot": "/db-migrate"
         }
     },
     "description": "Workflow automation configuration for Claude Code and GitHub Copilot (multilingual)",
@@ -291,7 +311,7 @@
             "description": "Systematic debugging and fix workflow with investigation-first approach",
             "name": "Bug Fix",
             "preActions": {
-                "injectContext": "BUG FIX PROTOCOL (TDD-FIRST):\n1. Scout: Find files related to the reported issue\n2. Investigate: Understand current vs expected behavior\n   IMPORTANT: When analyzing 'unused' code during investigation:\n   - Follow Investigation Protocol (CLAUDE.md)\n   - Require grep evidence, confidence >=80%, cross-service checks (all services)\n   - Use /investigate skill for removal/refactoring decisions\n3. Debug: Identify root cause with evidence (file:line)\n4. Plan fix with minimal blast radius\n5. Validate plan before implementing\n6. Validate fix rationale with /why-review\n7. Write test specs (/tdd-spec REGRESSION mode): Create TC specs that reproduce the bug. These become the integration test scenarios.\n8. Review test specs with /tdd-spec-review\n9. WRITE INTEGRATION TEST — RED phase: Implement integration test(s) based on the bug reproduction spec. Run the test(s) — they MUST FAIL. A passing test means it does NOT actually catch the bug. Never proceed to fix until the test(s) fail.\n10. Fix the identified issue\n11. PROVE FIX: Build code proof traces per change, confidence scores, stack-trace-style evidence. MANDATORY — never skip.\n12. RE-RUN INTEGRATION TESTS — GREEN phase: Run integration tests again — expect all to PASS. This confirms the fix resolves the bug AND regression guard is in place.\n13. Review integration tests with /integration-test-review — verify tests have real assertion value, not just smoke/existence checks.\n14. Code review for quality and regression risk\n15. Update changelog\n16. Run full test suite to verify fix and no regressions\n17. Summary report of fix and verification results"
+                "injectContext": "BUG FIX PROTOCOL (TDD-FIRST):\n1. Scout: Find files related to the reported issue\n2. Investigate: Understand current vs expected behavior\n   IMPORTANT: When analyzing 'unused' code during investigation:\n   - Follow Investigation Protocol (CLAUDE.md)\n   - Require grep evidence, confidence >=80%, cross-module/service checks (see docs/project-config.json → workflowPatterns.crossModuleValidation)\n   - Use /investigate skill for removal/refactoring decisions\n3. Debug: Identify root cause with evidence (file:line)\n4. Plan fix with minimal blast radius\n5. Validate plan before implementing\n6. Validate fix rationale with /why-review\n7. Write test specs (/tdd-spec REGRESSION mode): Create TC specs that reproduce the bug. These become the integration test scenarios.\n8. Review test specs with /tdd-spec-review\n9. WRITE INTEGRATION TEST — RED phase: Implement integration test(s) based on the bug reproduction spec. Run the test(s) — they MUST FAIL. A passing test means it does NOT actually catch the bug. Never proceed to fix until the test(s) fail.\n10. Fix the identified issue\n11. PROVE FIX: Build code proof traces per change, confidence scores, stack-trace-style evidence. MANDATORY — never skip.\n12. RE-RUN INTEGRATION TESTS — GREEN phase: Run integration tests again — expect all to PASS. This confirms the fix resolves the bug AND regression guard is in place.\n13. Review integration tests with /integration-test-review — verify tests have real assertion value, not just smoke/existence checks.\n14. Code review for quality and regression risk\n15. Update changelog\n16. Run full test suite to verify fix and no regressions\n17. Summary report of fix and verification results\n\nPERFORMANCE EXCEPTION: If this bug fix is performance-related (latency, throughput, memory, query speed), skip steps 7-9 (tdd-spec REGRESSION mode, tdd-spec-review, integration-test RED phase) and steps 12-13 (integration-test GREEN phase, integration-test-review, integration-test-verify). Integration tests cannot measure performance. Run /test only to confirm no functional regressions. Use workflow-performance instead when the primary goal is performance optimization."
             },
             "sequence": [
                 "scout",
@@ -308,6 +328,7 @@
                 "prove-fix",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "workflow-review-changes",
                 "changelog",
                 "test",
@@ -323,8 +344,7 @@
             "description": "Business feature documentation with 17-section template enforcement, plan validation, and mandatory test coverage",
             "name": "Business Feature Documentation",
             "preActions": {
-                "readFiles": ["docs/templates/detailed-feature-docs-template.md"],
-                "injectContext": "Role: Documentation Specialist\nBUSINESS FEATURE DOC PROTOCOL:\n- 17 sections mandatory (see template)\n- Quick Navigation with Audience column\n- TC-{FEATURE}-{NNN} test case format with GIVEN/WHEN/THEN\n- Evidence field with file:line format\n- Cross-reference parent features if sub-feature\n\nMANDATORY UPDATE CHECKLIST (when updating existing docs):\n- ALWAYS update Section 15 (Test Specifications) when documenting new functionality\n- ALWAYS update CHANGELOG.md with feature entry\n- ALWAYS update Version History (Section 17) with new version entry\n- Plan MUST ATTENTION include all impacted sections identified from diff analysis\n- Plan MUST ATTENTION be validated via /plan-review and /plan-validate before any edits begin\n\nOUTPUT: Complete 17-section README.{Feature}.md"
+                "injectContext": "Role: Documentation Specialist\nBUSINESS FEATURE DOC PROTOCOL:\n⚠️ PROJECT CONTEXT: Read docs/project-config.json → workflowPatterns.featureDocTemplate to find and read the feature doc template — follow its section requirements exactly. Read workflowPatterns.featureDocPath for the docs directory.\n- TC-{FEATURE}-{NNN} test case format with GIVEN/WHEN/THEN\n- Evidence field with file:line format\n- Cross-reference parent features if sub-feature\n\nMANDATORY UPDATE CHECKLIST (when updating existing docs):\n- ALWAYS update the Test Specifications section when documenting new functionality\n- ALWAYS update CHANGELOG.md with feature entry\n- ALWAYS update Version History section with new version entry\n- Plan MUST ATTENTION include all impacted sections identified from diff analysis\n- Plan MUST ATTENTION be validated via /plan-review and /plan-validate before any edits begin\n\nOUTPUT: Complete feature README following template sections."
             },
             "sequence": [
                 "scout",
@@ -346,7 +366,7 @@
             "description": "Documentation creation and update workflow with plan validation",
             "name": "Documentation Update",
             "preActions": {
-                "injectContext": "IMPORTANT: For business feature docs in docs/business-features/, use feature-docs workflow instead.\n\nDOCUMENTATION UPDATE PROTOCOL:\n1. Scout: Identify all documentation files affected by recent changes\n2. Investigate: Read existing docs, understand current structure and content\n3. Plan: List all files and sections to update with specific changes\n4. Validate plan via /plan-review before making any edits\n5. Execute updates following existing doc conventions and templates\n6. Review changes before finalizing\n7. Summary report of all documentation changes\n\nRULES:\n- For business feature docs (17-section format), use feature-docs workflow instead\n- Match existing style and formatting of target documents\n- Update table of contents and cross-references if structure changes\n- Never create new doc files when existing ones should be updated"
+                "injectContext": "IMPORTANT: For project feature docs (path from docs/project-config.json → workflowPatterns.featureDocPath), use feature-docs workflow instead.\n\nDOCUMENTATION UPDATE PROTOCOL:\n1. Scout: Identify all documentation files affected by recent changes\n2. Investigate: Read existing docs, understand current structure and content\n3. Plan: List all files and sections to update with specific changes\n4. Validate plan via /plan-review before making any edits\n5. Execute updates following existing doc conventions and templates\n6. Review changes before finalizing\n7. Summary report of all documentation changes\n\nRULES:\n- For business feature docs (17-section format), use feature-docs workflow instead\n- Match existing style and formatting of target documents\n- Update table of contents and cross-references if structure changes\n- Never create new doc files when existing ones should be updated"
             },
             "sequence": [
                 "scout",
@@ -368,7 +388,7 @@
             "description": "Full feature development workflow with search-first approach, planning, implementation, testing, and documentation",
             "name": "Feature Implementation",
             "preActions": {
-                "injectContext": "FEATURE IMPLEMENTATION PROTOCOL:\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar features, patterns, and implementation examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Design solution following discovered project patterns (CQRS, state management, CSS methodology, validation, etc.)\n4. Validate plan via /plan-review before any code changes\n5. Validate design rationale with /why-review (features/refactors)\n6. Write test specifications with /tdd-spec CREATE mode (before implementation). Review with /tdd-spec-review.\n7. Update plan with test strategy via /plan (re-plan cycle). Review with /plan-review.\n8. Implement with /cook (backend + frontend) — guided by test specs\n9. Update test specs to catch implementation gaps with /tdd-spec UPDATE mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n10. Generate/update integration tests with /integration-test — creates actual test files from TC specifications.\n11. Simplify code for readability and consistency\n12. Code review for quality, security, patterns compliance\n13. SRE review for production readiness (service-layer/API changes)\n14. Update changelog with feature entry\n15. Run tests to verify no regressions\n16. Update documentation if feature impacts business docs\n17. Summary report of all changes\n\nPLAN PHASES:\n- PLAN₁ (after investigate): Feature design plan. Scope: architecture, file changes, implementation approach.\n- PLAN₂ (after tdd-spec-review): Updated plan incorporating test strategy. Scope: refine PLAN₁ with test infrastructure, test data setup, spec coverage gaps.\n\nGUARDRAIL: Provide file:line evidence of pattern search in plan. Follow project conventions over generic docs."
+                "injectContext": "FEATURE IMPLEMENTATION PROTOCOL:\n⚠️ PROJECT CONTEXT: Read docs/project-config.json → workflowPatterns for project-specific architecture rules, code hierarchy, naming conventions, and CSS methodology.\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar features, patterns, and implementation examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Design solution following discovered project patterns (architecture, state management, CSS — see docs/project-config.json → workflowPatterns)\n4. Validate plan via /plan-review before any code changes\n5. Validate design rationale with /why-review (features/refactors)\n6. Write test specifications with /tdd-spec CREATE mode (before implementation). Review with /tdd-spec-review.\n7. Update plan with test strategy via /plan (re-plan cycle). Review with /plan-review.\n8. Implement with /cook (backend + frontend) — guided by test specs\n9. Update test specs to catch implementation gaps with /tdd-spec UPDATE mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n10. Generate/update integration tests with /integration-test — creates actual test files from TC specifications.\n11. Simplify code for readability and consistency\n12. Code review for quality, security, patterns compliance\n13. SRE review for production readiness\n14. Update changelog with feature entry\n15. Run tests to verify no regressions\n16. Update documentation if feature impacts business docs\n17. Summary report of all changes\n\nPLAN PHASES:\n- PLAN₁ (after investigate): Feature design plan. Scope: architecture, file changes, implementation approach.\n- PLAN₂ (after tdd-spec-review): Updated plan incorporating test strategy. Scope: refine PLAN₁ with test infrastructure, test data setup, spec coverage gaps.\n\nGUARDRAIL: Provide file:line evidence of pattern search in plan. Follow project conventions over generic docs.\n\nPERFORMANCE EXCEPTION: If this feature is a performance enhancement (query optimization, caching, throughput improvement, latency reduction), skip tdd-spec (both occurrences), tdd-spec-review (both occurrences), the PLAN2 re-plan cycle, test-specs-docs, integration-test, integration-test-review, and integration-test-verify. Do NOT skip /cook — implementation still runs. Integration tests cannot measure performance. Run /test only to confirm no functional regressions. Use workflow-performance instead."
             },
             "sequence": [
                 "scout",
@@ -387,6 +407,7 @@
                 "test-specs-docs",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "workflow-review-changes",
                 "sre-review",
                 "security",
@@ -420,6 +441,7 @@
                 "cook",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "test",
                 "workflow-review-changes",
                 "sre-review",
@@ -465,6 +487,7 @@
                 "cook",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "workflow-review-changes",
                 "sre-review",
                 "security",
@@ -493,7 +516,7 @@
             "description": "Code improvement and restructuring workflow with search-first approach",
             "name": "Code Refactoring",
             "preActions": {
-                "injectContext": "Role: Refactoring Specialist\nREFACTORING PROTOCOL:\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar refactoring patterns, identify target architecture examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Identify code smells, define target architecture following discovered project patterns\n4. Validate plan  --  ensure no behavioral changes, only structural\n5. Validate design rationale with /why-review (features/refactors)\n6. Implement incrementally  --  small, verifiable steps\n7. Verify test specs still match after refactoring with /tdd-spec update mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n8. Verify/update integration tests with /integration-test — ensures tests reflect refactored code paths.\n9. Simplify: Remove dead code, flatten nesting, extract duplicates\n   CRITICAL: Before removing any code:\n   - Use /investigate skill for 'unused' code verification\n   - Require evidence: grep results + confidence ≥80% + cross-service validation\n   - See Investigation Protocol (CLAUDE.md)\n10. Code review: Verify no functional regressions\n11. SRE review for production readiness (service-layer/API changes)\n12. Update changelog with refactoring summary\n13. Run tests  --  all existing tests MUST ATTENTION pass\n14. Summary report of structural improvements\n\nGUARDRAILS:\n- Refactoring MUST ATTENTION NOT change observable behavior\n- Follow project patterns: CQRS, state management, CSS methodology, validation, etc.\n- Apply Code Responsibility Hierarchy: Entity > Service > Component\n- Provide file:line evidence of pattern search in plan"
+                "injectContext": "Role: Refactoring Specialist\nREFACTORING PROTOCOL:\n⚠️ PROJECT CONTEXT: Read docs/project-config.json → workflowPatterns for project-specific architecture patterns, code hierarchy, and naming conventions.\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar refactoring patterns, identify target architecture examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Identify code smells, define target architecture following discovered project patterns\n4. Validate plan  --  ensure no behavioral changes, only structural\n5. Validate design rationale with /why-review (features/refactors)\n6. Implement incrementally  --  small, verifiable steps\n7. Verify test specs still match after refactoring with /tdd-spec update mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n8. Verify/update integration tests with /integration-test — ensures tests reflect refactored code paths.\n9. Simplify: Remove dead code, flatten nesting, extract duplicates\n   CRITICAL: Before removing any code:\n   - Use /investigate skill for 'unused' code verification\n   - Require evidence: grep results + confidence ≥80% + cross-module/service validation\n   - See Investigation Protocol (CLAUDE.md)\n10. Code review: Verify no functional regressions\n11. SRE review for production readiness\n12. Update changelog with refactoring summary\n13. Run tests  --  all existing tests MUST ATTENTION pass\n14. Summary report of structural improvements\n\nGUARDRAILS:\n- Refactoring MUST ATTENTION NOT change observable behavior\n- Follow project patterns from docs/project-config.json → workflowPatterns (architecture, code hierarchy, naming)\n- Apply project code responsibility hierarchy from docs/project-config.json → workflowPatterns.codeHierarchy\n- Provide file:line evidence of pattern search in plan\n\nPERFORMANCE EXCEPTION: If this refactor is performance-driven (query optimization, caching, reducing allocations, improving throughput), skip tdd-spec update mode, tdd-spec-review, test-specs-docs, integration-test, integration-test-review, and integration-test-verify. Integration tests cannot measure performance. Run /test only to confirm no functional regressions. Use workflow-performance instead."
             },
             "sequence": [
                 "scout",
@@ -508,6 +531,7 @@
                 "test-specs-docs",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "workflow-review-changes",
                 "sre-review",
                 "changelog",
@@ -533,6 +557,7 @@
                 "code-review",
                 "performance",
                 "integration-test-review",
+                "integration-test-verify",
                 "plan",
                 "plan-validate",
                 "cook",
@@ -549,7 +574,7 @@
             "description": "Code review and quality check, plan and fix issues, then re-review recursively until clean",
             "name": "Code Review",
             "preActions": {
-                "injectContext": "CODE REVIEW PROTOCOL (RECURSIVE):\n1. Review code for quality, patterns compliance, security, and performance\n2. Apply project standards: CQRS, state management, CSS methodology, Code Responsibility Hierarchy\n3. Check docs/project-reference/code-review-rules.md for project-specific review rules\n4. Report findings with severity (Critical/Major/Minor) and file:line references\n5. Summarize with actionable recommendations\n6. If ISSUES FOUND: plan fixes, validate plan, implement fixes, then RE-REVIEW\n7. RECURSIVE: After cook, re-run review. Loop until PASS or max 3 iterations.\n- LOGIC REVIEW: Verify changes match their stated intention. Trace business logic paths. Clean code can be wrong code.\n- BUG DETECTION: Check for null safety, boundary conditions, resource leaks, concurrency issues per bug-detection-protocol.\n- TEST SPEC VERIFICATION: Cross-reference changes against TC-{FEAT}-{NNN} test specifications. Flag untested code paths."
+                "injectContext": "CODE REVIEW PROTOCOL (RECURSIVE):\n⚠️ PROJECT CONTEXT: Read docs/project-config.json → workflowPatterns for project-specific architecture rules, code hierarchy, and naming conventions. Read workflowPatterns.reviewRulesDoc for project code review rules.\n1. Review code for quality, patterns compliance, security, and performance\n2. Apply project standards from docs/project-config.json → workflowPatterns (architecture, code hierarchy, naming conventions, CSS methodology)\n3. Check project code review rules doc from docs/project-config.json → workflowPatterns.reviewRulesDoc\n4. Report findings with severity (Critical/Major/Minor) and file:line references\n5. Summarize with actionable recommendations\n6. If ISSUES FOUND: plan fixes, validate plan, implement fixes, then RE-REVIEW\n7. RECURSIVE: After cook, re-run review. Loop until PASS or max 3 iterations.\n- LOGIC REVIEW: Verify changes match their stated intention. Trace business logic paths. Clean code can be wrong code.\n- BUG DETECTION: Check for null safety, boundary conditions, resource leaks, concurrency issues per bug-detection-protocol.\n- TEST SPEC VERIFICATION: Cross-reference changes against TC-{FEAT}-{NNN} test specifications. Flag untested code paths."
             },
             "sequence": [
                 "review-architecture",
@@ -557,6 +582,7 @@
                 "code-review",
                 "performance",
                 "integration-test-review",
+                "integration-test-verify",
                 "plan",
                 "plan-validate",
                 "cook",
@@ -568,24 +594,13 @@
             "whenNotToUse": "Reviewing uncommitted changes (use review-changes), reviewing plans/designs/specs/docs",
             "whenToUse": "User wants a code review, PR review, codebase quality audit, or code quality check"
         },
-        "testing": {
-            "confirmFirst": false,
-            "description": "Test creation and execution workflow",
-            "name": "Testing",
-            "preActions": {
-                "injectContext": "TEST EXECUTION:\n- Run relevant test suites for the current context\n- Report results with pass/fail counts and failure details\n- For failing tests, include file:line and error message\n- Suggest fixes for failures when root cause is clear"
-            },
-            "sequence": ["test", "docs-update", "workflow-end"],
-            "whenNotToUse": "Test specification creation (use pbi-to-tests), test case generation from PBI",
-            "whenToUse": "User wants to write tests, run test suites, check test coverage, or execute tests"
-        },
         "e2e-from-recording": {
             "confirmFirst": false,
             "description": "Generate Playwright E2E tests from Chrome DevTools recordings",
             "name": "E2E from Recording",
             "preActions": {
                 "readFiles": [".claude/skills/e2e-test/SKILL.md"],
-                "injectContext": "E2E FROM RECORDING PROTOCOL:\n1. Validate recording file exists (JSON format)\n2. Identify target app and feature from user context\n3. Run convert-recording.ts to generate initial test file\n4. Load test specifications from feature docs Section 15\n5. Map TC-{FEATURE}-{NNN} test cases to recording steps\n6. Enhance generated code with BEM selectors\n7. Add screenshot assertions at key states\n8. Generate Page Object if complex flow\n9. Run test to verify it passes\n10. Report generated files and any manual steps needed"
+                "injectContext": "E2E FROM RECORDING PROTOCOL:\n1. Validate recording file exists (JSON format)\n2. Identify target app and feature from user context\n3. Run convert-recording.ts to generate initial test file\n4. Load test specifications from feature docs Section 15\n5. Map TC-{FEATURE}-{NNN} test cases to recording steps\n6. Enhance generated code with project CSS conventions (from docs/project-config.json → workflowPatterns.cssMethodology)\n7. Add screenshot assertions at key states\n8. Generate Page Object if complex flow\n9. Run test to verify it passes\n10. Report generated files and any manual steps needed"
             },
             "sequence": ["scout", "e2e-test", "test", "docs-update", "watzup", "workflow-end"],
             "whenNotToUse": "Updating existing tests, writing tests from scratch, running existing tests",
@@ -633,6 +648,7 @@
                 "test-specs-docs",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "workflow-review-changes",
                 "sre-review",
                 "test",
@@ -642,28 +658,6 @@
             ],
             "whenNotToUse": "Test-only operations, documentation",
             "whenToUse": "User wants to modify multiple files at once: bulk rename, find-and-replace across codebase, update all instances"
-        },
-        "idea-to-pbi": {
-            "confirmFirst": false,
-            "description": "PO/BA workflow: capture idea, refine to PBI, create stories, prioritize",
-            "name": "Idea to PBI",
-            "preActions": {
-                "injectContext": "Role: Product Owner\nIDEA-TO-PBI WORKFLOW:\n1. Capture idea with problem statement\n2. Refine into PBI with acceptance criteria\n3. Break into user stories (GIVEN/WHEN/THEN)\n4. Dev BA PIC collaborative review via /pbi-challenge\n5. DoR gate validation via /dor-gate\n6. Prioritize using RICE or MoSCoW"
-            },
-            "sequence": ["idea", "refine", "refine-review", "story", "story-review", "pbi-challenge", "dor-gate", "pbi-mockup", "prioritize", "workflow-end"],
-            "whenNotToUse": "Bug fixes, direct implementation (use feature workflow)",
-            "whenToUse": "User has a new idea, feature request, or wants to add to backlog; wants to refine idea into PBI with stories"
-        },
-        "sprint-planning": {
-            "confirmFirst": false,
-            "description": "Sprint planning ceremony with backlog prioritization and dependency check",
-            "name": "Sprint Planning",
-            "preActions": {
-                "injectContext": "Role: Product Owner\nSPRINT PLANNING:\n1. /prioritize - Review and prioritize backlog\n2. /dependency - Check blockers and dependencies\n3. /team-sync - Generate planning meeting agenda"
-            },
-            "sequence": ["prioritize", "dependency", "team-sync", "workflow-end"],
-            "whenNotToUse": "Sprint reviews, sprint status reports, sprint retrospectives",
-            "whenToUse": "User wants to plan a sprint, run backlog grooming/refinement, or kick off a new sprint"
         },
         "pre-development": {
             "confirmFirst": false,
@@ -676,39 +670,16 @@
             "whenNotToUse": "QA checks, release prep, production readiness",
             "whenToUse": "User wants to verify readiness before starting development: check prerequisites, quality gate, start dev"
         },
-        "pbi-to-tests": {
-            "confirmFirst": false,
-            "description": "QA workflow: generate TDD test specs from PBI, write to feature docs Section 15, run quality gate",
-            "name": "PBI to Tests",
-            "preActions": {
-                "injectContext": "PBI-TO-TESTS WORKFLOW:\n1. Read PBI acceptance criteria\n2. Generate test specifications with TC-{FEATURE}-{NNN} IDs using /tdd-spec\n3. Write TCs to feature doc Section 15 (canonical registry)\n4. Run pre-QA quality gate"
-            },
-            "sequence": ["tdd-spec", "tdd-spec-review", "quality-gate", "workflow-end"],
-            "whenNotToUse": "Running existing tests, checking test results",
-            "whenToUse": "User wants to generate test specs or test cases from a PBI, feature, story, or acceptance criteria"
-        },
         "design-workflow": {
             "confirmFirst": false,
             "description": "Designer workflow: create design specification and implement UI (product, marketing, creative) from requirements or screenshots",
             "name": "Design Workflow",
             "preActions": {
-                "readFiles": ["docs/project-reference/design-system/README.md"],
-                "injectContext": "Role: UX Designer\nDESIGN WORKFLOW:\n1. Read requirements/PBI\n2. Create design spec with component inventory, states, tokens, accessibility\n3. DESIGN IMPLEMENTATION GATE (pick ONE, skip the other):\n   - Product UIs (dashboards, admin panels, SaaS apps, data interfaces) → /interface-design (skip frontend-design)\n   - Marketing pages, landing pages, creative UIs, screenshot replication → /frontend-design (skip interface-design)\n   Mark the skipped step as completed immediately.\n4. Review with code-review agent"
+                "injectContext": "Role: UX Designer\nDESIGN WORKFLOW:\n⚠️ PROJECT CONTEXT: Read docs/project-config.json → designSystem.docsPath to find design system documentation. Read docs/project-config.json → workflowPatterns.cssMethodology for project CSS conventions.\n1. Read requirements/PBI\n2. Create design spec with component inventory, states, tokens, accessibility\n3. DESIGN IMPLEMENTATION GATE (pick ONE, skip the other):\n   - Product UIs (dashboards, admin panels, SaaS apps, data interfaces) → /interface-design (skip frontend-design)\n   - Marketing pages, landing pages, creative UIs, screenshot replication → /frontend-design (skip interface-design)\n   Mark the skipped step as completed immediately.\n4. Review with code-review agent"
             },
             "sequence": ["design-spec", "interface-design", "frontend-design", "workflow-review-changes", "docs-update", "workflow-end"],
             "whenNotToUse": "Implementing an existing design in code",
             "whenToUse": "User wants to create a UI/UX design spec, mockup, wireframe, or component specification, design a product interface (dashboard, admin panel, SaaS app), build a landing page, create a marketing page, replicate a screenshot/design, or build a creative/distinctive frontend interface"
-        },
-        "pm-reporting": {
-            "confirmFirst": false,
-            "description": "PM workflow: generate status report and dependency analysis",
-            "name": "PM Reporting",
-            "preActions": {
-                "injectContext": "Role: Project Manager\nPM REPORTING WORKFLOW:\n1. Gather sprint/project data\n2. Generate status report with metrics\n3. Analyze dependencies and blockers\n4. Output to plans/reports/"
-            },
-            "sequence": ["status", "dependency", "workflow-end"],
-            "whenNotToUse": "Git status, build status, PR status, commit status",
-            "whenToUse": "User wants a status report, sprint update, project progress report, or weekly summary"
         },
         "verification": {
             "confirmFirst": false,
@@ -731,6 +702,7 @@
                 "test-specs-docs",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "workflow-review-changes",
                 "test",
                 "docs-update",
@@ -757,6 +729,7 @@
                 "tdd-spec-review",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "test",
                 "docs-update",
                 "watzup",
@@ -781,6 +754,7 @@
                 "code",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "workflow-review-changes",
                 "sre-review",
                 "test",
@@ -807,6 +781,7 @@
                 "code",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "test",
                 "workflow-review-changes",
                 "docs-update",
@@ -821,7 +796,7 @@
             "description": "Performance investigation and optimization workflow",
             "name": "Performance Optimization",
             "preActions": {
-                "injectContext": "Role: Performance Engineer\nPERFORMANCE PROTOCOL:\n1. Scout: Identify slow endpoints/components\n2. Investigate: Profile, measure baseline metrics\n3. Plan: Design optimization with expected improvement targets\n4. Implement: Apply optimizations\n5. Update test specs for performance-impacted behavior with /tdd-spec update mode. Review with /tdd-spec-review. Sync dashboard with /test-specs-docs.\n6. Test: Verify improvements with before/after metrics\n7. SRE: Validate production readiness\n8. Summary: Report metrics improvement\n\nGUARDRAILS:\n- Measure BEFORE and AFTER — no optimization without metrics\n- Focus on p95/p99 latency, not just average\n- Consider query plans for DB optimizations\n- Check all services for cross-service performance impact"
+                "injectContext": "Role: Performance Engineer\nPERFORMANCE PROTOCOL:\n1. Scout: Identify slow endpoints/components\n2. Investigate: Profile, measure baseline metrics\n3. Plan: Design optimization with expected improvement targets\n4. Implement: Apply optimizations\n5. Test: Verify improvements with before/after metrics — run /test to confirm no functional regressions\n6. SRE: Validate production readiness\n7. Summary: Report metrics improvement\n\nGUARDRAILS:\n- Measure BEFORE and AFTER — no optimization without metrics\n- Focus on p95/p99 latency, not just average\n- Consider query plans for DB optimizations\n- Check all services for cross-service performance impact\n\nPERFORMANCE EXCEPTION — NO INTEGRATION TESTS:\nIntegration tests verify functional correctness — they cannot measure latency, throughput, or resource consumption. Do NOT run tdd-spec, tdd-spec-review, test-specs-docs, integration-test, or integration-test-review in this workflow. Run /test only to confirm no functional regressions were introduced by the optimization."
             },
             "sequence": [
                 "scout",
@@ -830,11 +805,6 @@
                 "plan-review",
                 "plan-validate",
                 "code",
-                "tdd-spec",
-                "tdd-spec-review",
-                "test-specs-docs",
-                "integration-test",
-                "integration-test-review",
                 "test",
                 "workflow-review-changes",
                 "sre-review",
@@ -858,9 +828,11 @@
                 "plan",
                 "plan-review",
                 "plan-validate",
+                "db-migrate",
                 "code",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "workflow-review-changes",
                 "sre-review",
                 "test",
@@ -882,84 +854,6 @@
             "whenNotToUse": "Implementing new security features, fixing known security bugs (use bugfix workflow)",
             "whenToUse": "User wants a security audit: vulnerability assessment, OWASP check, security review, penetration test analysis, or security compliance check"
         },
-        "po-ba-handoff": {
-            "confirmFirst": false,
-            "description": "PO hands off idea/PBI to BA for refinement and story creation",
-            "name": "PO to BA Handoff",
-            "preActions": {
-                "injectContext": "Role: Product Owner\nPO-BA HANDOFF:\n1. Capture idea with /idea\n2. Review artifact quality with /review-artifact\n3. Create handoff record with /handoff\n4. BA refines into PBI with /refine\n5. BA creates user stories with /story\n6. Dev BA PIC collaborative review via /pbi-challenge\n7. DoR gate validation via /dor-gate"
-            },
-            "sequence": [
-                "idea",
-                "review-artifact",
-                "handoff",
-                "refine",
-                "refine-review",
-                "story",
-                "story-review",
-                "pbi-challenge",
-                "dor-gate",
-                "pbi-mockup",
-                "workflow-end"
-            ],
-            "whenNotToUse": "Direct development, design-first workflows, already refined requirements",
-            "whenToUse": "PO hands off idea/PBI to BA for refinement and story creation"
-        },
-        "ba-dev-handoff": {
-            "confirmFirst": false,
-            "description": "BA hands off refined stories to development team with quality gate",
-            "name": "BA to Dev Handoff",
-            "preActions": {
-                "injectContext": "Role: Business Analyst\nBA-DEV HANDOFF:\n1. Review artifact completeness with /review-artifact\n2. Run quality gate with /quality-gate\n3. Create handoff record with /handoff\n4. Proceed to planning with /plan\n5. Validate plan before implementation"
-            },
-            "sequence": ["review-artifact", "quality-gate", "handoff", "plan", "plan-review", "plan-validate", "workflow-end"],
-            "whenNotToUse": "Unrefined ideas, missing acceptance criteria, design-first features",
-            "whenToUse": "BA hands off refined stories to development team, pre-dev quality gate"
-        },
-        "dev-qa-handoff": {
-            "confirmFirst": false,
-            "description": "Development complete, handoff to QA for testing",
-            "name": "Dev to QA Handoff",
-            "preActions": {
-                "injectContext": "DEV-QA HANDOFF:\n1. Create handoff record with /handoff\n2. Generate test spec and test cases with /test-spec"
-            },
-            "sequence": ["handoff", "test-spec", "workflow-end"],
-            "whenNotToUse": "Incomplete features, missing unit tests, untested code",
-            "whenToUse": "Development complete, handoff to QA for testing"
-        },
-        "qa-po-acceptance": {
-            "confirmFirst": false,
-            "description": "Testing complete, QA hands off to PO for acceptance and sign-off",
-            "name": "QA to PO Acceptance",
-            "preActions": {
-                "injectContext": "Role: QC Specialist\nQA-PO ACCEPTANCE:\n1. Run quality gate with /quality-gate\n2. Create handoff record with /handoff\n3. PO acceptance decision with /acceptance"
-            },
-            "sequence": ["quality-gate", "handoff", "acceptance", "workflow-end"],
-            "whenNotToUse": "Incomplete testing, known defects, missing test coverage",
-            "whenToUse": "Testing complete, QA hands off to PO for acceptance and sign-off"
-        },
-        "design-dev-handoff": {
-            "confirmFirst": false,
-            "description": "Designer hands off design spec to developer for implementation",
-            "name": "Designer to Dev Handoff",
-            "preActions": {
-                "injectContext": "Role: UX Designer\nDESIGN-DEV HANDOFF:\n1. Create design spec with /design-spec\n2. Review artifact with /review-artifact\n3. Create handoff record with /handoff\n4. Proceed to planning with /plan\n5. Validate plan before implementation"
-            },
-            "sequence": ["design-spec", "review-artifact", "handoff", "plan", "plan-review", "plan-validate", "workflow-end"],
-            "whenNotToUse": "Incomplete designs, missing specs, design exploration",
-            "whenToUse": "Designer hands off design spec to developer for implementation"
-        },
-        "sprint-retro": {
-            "confirmFirst": false,
-            "description": "End of sprint retrospective with feedback and action items",
-            "name": "Sprint Retrospective",
-            "preActions": {
-                "injectContext": "SPRINT RETRO:\n1. Generate status report with /status\n2. Run retrospective with /retro\n- Gather what went well, what didn't, action items\n- Output to plans/reports/"
-            },
-            "sequence": ["status", "retro", "workflow-end"],
-            "whenNotToUse": "Mid-sprint, planning activities, status reporting",
-            "whenToUse": "End of sprint, gather feedback, identify improvements, create action items"
-        },
         "hotfix": {
             "confirmFirst": false,
             "description": "Fast-path production fix with lightweight planning — for P0/P1 urgent issues",
@@ -978,6 +872,7 @@
                 "prove-fix",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "test",
                 "workflow-review-changes",
                 "sre-review",
@@ -987,102 +882,6 @@
             ],
             "whenNotToUse": "Non-urgent bugs (use bugfix), new features, refactoring",
             "whenToUse": "Production emergency, P0/P1 urgent fix, hotfix, service down, critical bug in production"
-        },
-        "full-feature-lifecycle": {
-            "confirmFirst": true,
-            "description": "Complete feature from idea to release with all role handoffs",
-            "name": "Full Feature Lifecycle",
-            "preActions": {
-                "injectContext": "FULL FEATURE LIFECYCLE:\n1. PO captures idea\n2. BA refines and creates stories\n3. Dev BA PIC collaborative review via /pbi-challenge\n4. DoR gate validation via /dor-gate\n5. Designer creates design spec\n5a. DESIGN IMPLEMENTATION GATE (pick ONE, skip the other):\n    - Product UIs (dashboards, admin panels, SaaS apps) → /interface-design (skip frontend-design)\n    - Marketing pages, landing pages, creative UIs, screenshot replication → /frontend-design (skip interface-design)\n    Mark the skipped step as completed immediately.\n6. Dev plans and implements with plan validation\n7. Code simplification, review changes, code review, SRE review\n8. QA generates test spec\n9. QC runs quality gate\n10. PO signs off acceptance\n\nThis is an end-to-end workflow crossing all roles."
-            },
-            "sequence": [
-                "idea",
-                "refine",
-                "refine-review",
-                "story",
-                "story-review",
-                "pbi-challenge",
-                "dor-gate",
-                "pbi-mockup",
-                "design-spec",
-                "interface-design",
-                "frontend-design",
-                "plan",
-                "plan-review",
-                "plan-validate",
-                "cook",
-                "integration-test",
-                "integration-test-review",
-                "workflow-review-changes",
-                "sre-review",
-                "test-spec",
-                "quality-gate",
-                "docs-update",
-                "watzup",
-                "acceptance",
-                "workflow-end"
-            ],
-            "whenNotToUse": "Quick fixes, minor changes, single-role tasks, dev-only features without cross-role handoffs (use big-feature or feature)",
-            "whenToUse": "Complete feature from idea to release with formal role handoffs (PO→BA→Designer→Dev→QA→PO acceptance). Use when multiple team roles are involved and formal sign-off is required"
-        },
-        "research": {
-            "confirmFirst": false,
-            "description": "Research a topic on the web, deep-dive into sources, synthesize findings into a structured report, and review quality",
-            "name": "Research & Synthesis",
-            "preActions": {
-                "readFiles": [],
-                "injectContext": "RESEARCH & SYNTHESIS PROTOCOL:\n1. Web Research: Broad search (max 10 WebSearch), collect sources, validate credibility, build source map\n2. Deep Research: Fetch top sources (max 8 WebFetch), extract key findings, cross-validate claims, build evidence base\n3. Knowledge Synthesis: Load evidence + template, write structured report with inline citations, citation audit\n4. Knowledge Review: 7-point quality check (template, citations, confidence, sources, gaps, cross-validation, actionability)\n\nGUARDRAILS:\n- Every factual claim requires 2+ independent sources\n- Never fabricate sources or citations\n- Confidence scoring mandatory for all findings\n- Working files in .claude/tmp/, final output in docs/knowledge/research/\n- Use enforced template: .claude/templates/research-report-template.md"
-            },
-            "sequence": ["web-research", "deep-research", "knowledge-synthesis", "knowledge-review", "workflow-end"],
-            "whenNotToUse": "Codebase investigation (use investigation), course building, marketing strategy, business evaluation",
-            "whenToUse": "User wants to research a topic, synthesize knowledge, create a research report, learn about a subject, gather information from the web"
-        },
-        "course-building": {
-            "confirmFirst": false,
-            "description": "Research a topic and build structured learning/teaching course material with Bloom taxonomy objectives",
-            "name": "Course Material Builder",
-            "preActions": {
-                "readFiles": [".claude/templates/course-outline-template.md"],
-                "injectContext": "COURSE BUILDING PROTOCOL:\n1. Web Research: Research the topic broadly (max 10 WebSearch)\n2. Deep Research: Deep-dive into pedagogical sources and subject matter (max 8 WebFetch)\n3. Course Builder: Build structured course with Bloom taxonomy objectives, modules, lessons, exercises, assessments\n4. Knowledge Review: Quality review of course material\n\nGUARDRAILS:\n- Learning objectives must use Bloom taxonomy verbs (Remember→Understand→Apply→Analyze→Evaluate→Create)\n- Each module needs clear prerequisites and outcomes\n- Include practical exercises and assessments\n- Working files in .claude/tmp/, final output in docs/knowledge/courses/\n- Use enforced template: .claude/templates/course-outline-template.md"
-            },
-            "sequence": ["web-research", "deep-research", "course-builder", "knowledge-review", "workflow-end"],
-            "whenNotToUse": "Research reports, marketing strategy, business evaluation, code documentation",
-            "whenToUse": "User wants to build a course, create learning material, design a curriculum, prepare teaching content, training program"
-        },
-        "marketing-strategy": {
-            "confirmFirst": false,
-            "description": "Research market landscape and build a comprehensive marketing strategy with positioning, channels, campaigns, and KPIs",
-            "name": "Marketing Strategy",
-            "preActions": {
-                "readFiles": [".claude/templates/marketing-strategy-template.md"],
-                "injectContext": "MARKETING STRATEGY PROTOCOL:\n1. Web Research: Research market landscape, competitors, trends (max 10 WebSearch)\n2. Deep Research: Deep-dive into competitor strategies, market data, customer insights (max 8 WebFetch)\n3. Market Analysis: Competitor analysis, TAM/SAM/SOM sizing, SWOT, customer segmentation\n4. Strategy Builder: Positioning, channels, messaging, campaigns, budget, KPIs\n5. Knowledge Review: Quality review of strategy document\n\nGUARDRAILS:\n- Market sizing must use verifiable data with source citations\n- Competitor analysis needs evidence-based comparisons\n- Campaign recommendations need budget estimates and KPI targets\n- Working files in .claude/tmp/, final output in docs/knowledge/strategy/marketing/\n- Use enforced template: .claude/templates/marketing-strategy-template.md"
-            },
-            "sequence": ["web-research", "deep-research", "market-analysis", "strategy-builder", "knowledge-review", "workflow-end"],
-            "whenNotToUse": "Research reports, course building, business evaluation, code tasks",
-            "whenToUse": "User wants to build a marketing strategy, analyze market landscape, plan campaigns, competitive analysis, go-to-market strategy"
-        },
-        "business-evaluation": {
-            "confirmFirst": false,
-            "description": "Research market, evaluate business idea viability with BMC, financials, risk matrix, and execution plan",
-            "name": "Business Idea Evaluation",
-            "preActions": {
-                "readFiles": [".claude/templates/business-evaluation-template.md"],
-                "injectContext": "BUSINESS EVALUATION PROTOCOL:\n1. Web Research: Research market, competitors, industry trends (max 10 WebSearch)\n2. Deep Research: Deep-dive into market data, business models, financial benchmarks (max 8 WebFetch)\n3. Market Analysis: TAM/SAM/SOM, competitor landscape, customer segments\n4. Business Evaluation: BMC (9 blocks), 3-year financials, risk matrix (min 5 risks), execution plan (3 phases), verdict (1-10 + Pursue/Pivot/Pause/Pass)\n5. Knowledge Review: Quality review of evaluation document\n\nGUARDRAILS:\n- Financial projections need stated assumptions and sensitivity analysis\n- Risk matrix must include likelihood × impact scoring\n- BMC must cover all 9 building blocks\n- Verdict must be evidence-based with clear reasoning\n- Working files in .claude/tmp/, final output in docs/knowledge/strategy/business/\n- Use enforced template: .claude/templates/business-evaluation-template.md"
-            },
-            "sequence": ["web-research", "deep-research", "market-analysis", "business-evaluation", "knowledge-review", "workflow-end"],
-            "whenNotToUse": "Research reports, course building, marketing strategy only, code tasks",
-            "whenToUse": "User wants to evaluate a business idea, assess viability, create a business plan, analyze opportunity and risk, startup validation"
-        },
-        "idea-to-tdd": {
-            "confirmFirst": false,
-            "description": "Full cycle: capture idea interactively, refine to PBI with testability assessment, generate TDD test specifications",
-            "name": "Idea to TDD Specs",
-            "preActions": {
-                "injectContext": "IDEA-TO-TDD WORKFLOW:\n1. Capture idea interactively with discovery interview (AskUserQuestion)\n2. Refine into PBI with testability assessment\n3. Generate TDD test specs in feature docs Section 15 using /tdd-spec\n\nThis workflow supports TDD-first development: write test specs BEFORE implementation."
-            },
-            "sequence": ["idea", "refine", "refine-review", "tdd-spec", "tdd-spec-review", "pbi-mockup", "workflow-end"],
-            "whenNotToUse": "Direct implementation, bug fixes, existing PBIs that already have test specs",
-            "whenToUse": "User wants to go from idea to test-driven specifications, TDD approach, spec-first development, write tests before code"
         },
         "tdd-feature": {
             "confirmFirst": false,
@@ -1103,6 +902,7 @@
                 "cook",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "test",
                 "workflow-review-changes",
                 "sre-review",
@@ -1128,6 +928,7 @@
                 "test-specs-docs",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "test",
                 "docs-update",
                 "workflow-end"
@@ -1142,9 +943,32 @@
             "preActions": {
                 "injectContext": "TEST-TO-INTEGRATION WORKFLOW:\nGenerate integration tests from existing test specifications.\n1. Scout: Find the relevant test spec documents and existing test files\n2. Integration Test: Generate test files from TCs in feature doc Section 15\n   - Each test gets test spec annotation linking to TC-{FEATURE}-{NNN}\n   - Tests use real DI, no mocks (subcutaneous testing pattern)\n3. Test: Build and run the generated tests\n4. Verify: Check bidirectional traceability (every TC has a test, every test has a TC)"
             },
-            "sequence": ["scout", "integration-test", "integration-test-review", "test", "docs-update", "watzup", "workflow-end"],
-            "whenNotToUse": "No test specs exist yet (use tdd-spec first), test planning phase, documentation-only",
+            "sequence": ["scout", "integration-test", "integration-test-review", "integration-test-verify", "test", "docs-update", "watzup", "workflow-end"],
+            "whenNotToUse": "No test specs exist yet — use write-integration-test (includes tdd-spec step), test planning phase, documentation-only",
             "whenToUse": "Generate integration tests from test specs, create tests from feature docs, implement test cases from specifications, test specs to code"
+        },
+        "write-integration-test": {
+            "confirmFirst": false,
+            "description": "Write or update integration tests for existing code — spec-first: investigate domain logic → write/update specs → generate test code → 6-gate review → run and verify",
+            "name": "Write Integration Tests",
+            "preActions": {
+                "injectContext": "WRITE INTEGRATION TEST PROTOCOL:\n⚠️ PROJECT CONTEXT: Read docs/project-config.json → framework.integrationTestDoc for project-specific test patterns, helper classes, and async wait conventions.\n⚠️ MANDATORY: Understand domain logic BEFORE writing assertions\n1. Scout: Find target command/handler files; locate existing integration tests in same service for pattern matching\n2. Investigate: Read the handler/entity/event source — understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. This is the prerequisite for correct assertions.\n3. TDD Spec: Write/update test specs in feature doc Section 15 (TC-{FEATURE}-{NNN} codes). Path from docs/project-config.json → workflowPatterns.featureDocPath. CREATE mode for new tests, UPDATE mode for changed behavior.\n4. TDD Spec Review: Validate spec coverage — GIVEN/WHEN/THEN completeness, happy path + validation failure + auth paths, no duplicate TC codes\n5. Integration Test: Generate test files from TC specs. FROM-PROMPT for specific target, FROM-CHANGES for git diff.\n   RULES (project-specific patterns from docs/project-config.json → framework.integrationTestDoc):\n   - NO smoke-only tests (no-exception alone is FORBIDDEN)\n   - ALL DB assertions wrapped in project async-wait helper\n   - ALL string data uses project unique-data helper\n   - Each test method has TC spec annotation linking to TC-{FEATURE}-{NNN}\n   - Minimum 3 tests per command: happy path + validation failure + DB state check\n6. Integration Test Review: 6-gate quality check (assertion value, data state, repeatability, domain logic, traceability, three-way sync). Mandatory fix loop + fresh sub-agent re-check. NEVER proceed with CRITICAL/HIGH issues outstanding.\n7. Integration Test Verify: Run tests via quickRunCommand from docs/project-config.json → integrationTestVerify. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.\n8. Test Specs Docs: Sync cross-module spec dashboard. Update IntegrationTest fields with {File}::{MethodName} traceability links.\n9. Docs Update: Update feature doc evidence fields and version history if test coverage changed materially.\n10. Summary report\n\nGUARDRAIL: Read handler source BEFORE writing any assertions. Use project async-wait helper for all DB assertions — no exceptions."
+            },
+            "sequence": [
+                "scout",
+                "investigate",
+                "tdd-spec",
+                "tdd-spec-review",
+                "integration-test",
+                "integration-test-review",
+                "integration-test-verify",
+                "test-specs-docs",
+                "docs-update",
+                "watzup",
+                "workflow-end"
+            ],
+            "whenNotToUse": "No implementation yet (use feature or bugfix), spec-only with no code generation (use pbi-to-tests), specs already exist and just need code generation (use test-to-integration), auditing existing tests for quality/flakiness (use test-verify)",
+            "whenToUse": "Write integration tests for a specific command/handler, add test coverage to an untested feature, update integration tests after code changes, integration test authoring from scratch for a feature area, cover uncommitted code changes with integration tests"
         },
         "test-verify": {
             "confirmFirst": false,
@@ -1153,8 +977,18 @@
             "preActions": {
                 "injectContext": "TEST VERIFICATION WORKFLOW:\nComprehensive test quality verification covering 4 concerns:\n1. Scout: Find all integration test files and related specs\n2. Integration Test (review mode): Audit test quality — flaky patterns, missing polling for async assertions, non-unique test data, best practice violations\n3. Integration Test (verify mode): Check bidirectional traceability — every test has a TC in feature docs, every TC has a matching test, no orphans\n4. Test: Run tests to identify actual failures\n5. Integration Test (diagnose mode): For any failures — determine root cause: test bug vs code bug vs infrastructure issue\n6. Review: Summarize findings and recommended fixes\n\nKEY FLAKY PATTERNS TO DETECT:\n- DB assertions without WaitUntilAsync/polling after async event handlers\n- Hardcoded delays instead of condition-based polling\n- Non-unique test data causing cross-test interference\n- Race conditions from shared mutable state\n\nMISMATCH RESOLUTION:\n- Test passes but spec says different behavior → update spec\n- Test fails but spec describes expected behavior → update test\n- Test exists without spec → create spec from test\n- Spec exists without test → generate test from spec"
             },
-            "sequence": ["scout", "integration-test", "test", "integration-test", "integration-test-review", "docs-update", "watzup", "workflow-end"],
-            "whenNotToUse": "Writing new tests (use test-to-integration), creating test specs (use tdd-spec), new feature implementation",
+            "sequence": [
+                "scout",
+                "integration-test",
+                "test",
+                "integration-test",
+                "integration-test-review",
+                "integration-test-verify",
+                "docs-update",
+                "watzup",
+                "workflow-end"
+            ],
+            "whenNotToUse": "Writing new tests (use write-integration-test or test-to-integration), creating test specs (use pbi-to-tests), new feature implementation",
             "whenToUse": "Review test quality, fix flaky tests, diagnose test failures, verify test traceability, test audit, test health check, integration test review, why tests fail, tests not matching specs"
         },
         "greenfield-init": {
@@ -1195,6 +1029,7 @@
                 "plan-review",
                 "integration-test",
                 "integration-test-review",
+                "integration-test-verify",
                 "test",
                 "workflow-review-changes",
                 "sre-review",

@@ -1,6 +1,6 @@
 # Skills Reference
 
-> 246 skills across 15+ domains + 25 shared modules for context-aware AI assistance
+> 258 skills across 15+ domains + 25 shared modules for context-aware AI assistance
 
 ## Overview
 
@@ -80,12 +80,13 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 ## Debugging/Testing
 
-| Skill                     | Triggers                                                              | Description                                                                                                     |
-| ------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `webapp-testing`          | E2E, Playwright, Cypress                                              | End-to-end testing                                                                                              |
-| `test-spec`               | test specification, QA spec, test strategy, TC-IDs, test cases        | Test specification and detailed test case generation from PBIs                                                  |
-| `test-specs-docs`         | test specs docs, Given-When-Then, QA docs                             | YourProject test spec documentation                                                                             |
-| `integration-test-review` | integration test review, assertion quality, test gate review, TC gate | Review integration tests against 5 quality gates (assertion value, data state, repeatability, domain logic, TC) |
+| Skill                     | Triggers                                                              | Description                                                                                                      |
+| ------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `webapp-testing`          | E2E, Playwright, Cypress                                              | End-to-end testing                                                                                               |
+| `test-spec`               | test specification, QA spec, test strategy, TC-IDs, test cases        | Test specification and detailed test case generation from PBIs                                                   |
+| `test-specs-docs`         | test specs docs, Given-When-Then, QA docs                             | YourProject test spec documentation                                                                              |
+| `integration-test-review` | integration test review, assertion quality, test gate review, TC gate | Review integration tests against 5 quality gates (assertion value, data state, repeatability, domain logic, TC)  |
+| `integration-test-verify` | run integration tests, verify tests pass, test runner, dotnet test    | Run integration tests after writing/reviewing them — reads project-config.json for project-specific run guidance |
 
 ---
 
@@ -326,4 +327,4 @@ Use `/skill/create` to create a new skill:
 
 ---
 
-_Source: `.claude/skills/` | 246 skills across 15+ domains + 25 shared modules_
+_Source: `.claude/skills/` | 258 skills across 15+ domains + 25 shared modules_

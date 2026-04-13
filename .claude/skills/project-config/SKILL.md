@@ -105,6 +105,8 @@ docs/project-config.json
 ├── graphConnectors — apiEndpoints{ enabled, frontend{ framework, paths[] }, backend{ framework, paths[], routePrefix } }
 │   └── implicitConnections[] — { name, edgeKind, paths[], source{ filePattern, contentPattern, keyGroup }, target{...}, matchBy }
 ├── referenceDocs[] — { filename, purpose, sections[] }
+├── integrationTestVerify — { guidance, quickRunCommand, testProjectPattern, testProjects[], systemCheckCommand, runScript, startupScript }
+├── workflowPatterns — { architectureStyle, codeHierarchy, cssMethodology, stateManagement, crossModuleValidation, featureDocPath, featureDocTemplate, reviewRulesDoc }
 └── DEPRECATED: backendServices, frontendApps, scss, componentFinder, sharedNamespace
 ```
 

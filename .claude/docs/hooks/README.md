@@ -1,6 +1,6 @@
 # Hooks Reference
 
-> 44 hook files + 27 lib modules for context-aware AI behavior (some hooks register on multiple events)
+> 53 hook files + 27 lib modules for context-aware AI behavior (some hooks register on multiple events)
 
 ## Overview
 
@@ -16,17 +16,17 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 
 ## Hook Events
 
-| Event              | Trigger                      | Hooks | Use Cases                                                      |
-| ------------------ | ---------------------------- | ----- | -------------------------------------------------------------- |
-| `SessionStart`     | Session begins/resumes       | 7     | Init state, recover from compaction, resume context, load docs |
-| `SessionEnd`       | Session ends                 | 1     | Save state, cleanup temp/swap files, notifications             |
-| `UserPromptSubmit` | Before processing user input | 2     | Route workflows, gate init, assemble prompt context            |
-| `PreToolUse`       | Before tool execution        | 17    | Block sensitive ops, inject context, enforce plans/todos       |
-| `PostToolUse`      | After tool completes         | 7     | Externalize outputs, format code, track events                 |
-| `PreCompact`       | Before context compaction    | 1     | Write compaction marker                                        |
-| `SubagentStart`    | Subagent spawning            | 1     | Configure subagent with parent context                         |
-| `Notification`     | Idle/waiting events          | 1     | System notifications                                           |
-| `Stop`             | Response complete            | 1     | System notifications                                           |
+| Event              | Trigger                      | Hooks | Use Cases                                                                           |
+| ------------------ | ---------------------------- | ----- | ----------------------------------------------------------------------------------- |
+| `SessionStart`     | Session begins/resumes       | 7     | Init state, recover from compaction, resume context, load docs                      |
+| `SessionEnd`       | Session ends                 | 1     | Save state, cleanup temp/swap files, notifications                                  |
+| `UserPromptSubmit` | Before processing user input | 2     | Route workflows (3 split hooks), gate init, assemble prompt context (6 split hooks) |
+| `PreToolUse`       | Before tool execution        | 17    | Block sensitive ops, inject context, enforce plans/todos                            |
+| `PostToolUse`      | After tool completes         | 7     | Externalize outputs, format code, track events                                      |
+| `PreCompact`       | Before context compaction    | 1     | Write compaction marker                                                             |
+| `SubagentStart`    | Subagent spawning            | 1     | Configure subagent with parent context                                              |
+| `Notification`     | Idle/waiting events          | 1     | System notifications                                                                |
+| `Stop`             | Response complete            | 1     | System notifications                                                                |
 
 ---
 
@@ -34,19 +34,26 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 
 ### Session Lifecycle
 
-| Hook                           | Event                          | Matcher                           | Purpose                                                                                   |
-| ------------------------------ | ------------------------------ | --------------------------------- | ----------------------------------------------------------------------------------------- |
-| `session-init.cjs`             | SessionStart                   | `startup\|resume\|clear\|compact` | Initialize session: detect project, write env vars                                        |
-| `post-compact-recovery.cjs`    | SessionStart                   | `resume\|compact`                 | Restore workflow state, todos, and swap inventory after compaction                        |
-| `session-resume.cjs`           | SessionStart                   | `resume`                          | Inject pending-tasks warning from prev session, restore todos from checkpoint             |
-| `npm-auto-install.cjs`         | SessionStart                   | `startup`                         | Auto-install missing npm packages from root `package.json`                                |
-| `session-init-docs.cjs`        | SessionStart                   | `startup`                         | Config skeleton + reference doc placeholder creation                                      |
-| `workflow-router.cjs`          | SessionStart, UserPromptSubmit | `startup`, `*`                    | Detect intent, inject matching workflow from 45-workflow catalog                          |
-| `prompt-context-assembler.cjs` | SessionStart, UserPromptSubmit | `startup`, `*`                    | Assemble session context, lessons, and lesson-learned reminder                            |
-| `graph-session-init.cjs`       | SessionStart                   | `startup`                         | Check Python/tree-sitter/graph.db, inject status guidance (skips if config not populated) |
-| `session-end.cjs`              | SessionEnd                     | `clear\|exit\|compact`            | Write pending-tasks warning, cleanup temp/swap files, delete markers                      |
-| `notify-waiting.js`            | SessionEnd, Stop, Notification | various                           | System notification when Claude is waiting for input                                      |
-| `subagent-init.cjs`            | SubagentStart                  | `*`                               | Inject project context, rules, and workflow state into subagent sessions                  |
+| Hook                                     | Event                          | Matcher                           | Purpose                                                                                   |
+| ---------------------------------------- | ------------------------------ | --------------------------------- | ----------------------------------------------------------------------------------------- |
+| `session-init.cjs`                       | SessionStart                   | `startup\|resume\|clear\|compact` | Initialize session: detect project, write env vars                                        |
+| `post-compact-recovery.cjs`              | SessionStart                   | `resume\|compact`                 | Restore workflow state, todos, and swap inventory after compaction                        |
+| `session-resume.cjs`                     | SessionStart                   | `resume`                          | Inject pending-tasks warning from prev session, restore todos from checkpoint             |
+| `npm-auto-install.cjs`                   | SessionStart                   | `startup`                         | Auto-install missing npm packages from root `package.json`                                |
+| `session-init-docs.cjs`                  | SessionStart                   | `startup`                         | Config skeleton + reference doc placeholder creation                                      |
+| `workflow-router.cjs`                    | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject first third of 32-workflow catalog + detection instructions (part 1 of 3)          |
+| `workflow-router-p2.cjs`                 | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject second third of 32-workflow catalog (part 2 of 3)                                  |
+| `workflow-router-p3.cjs`                 | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject final third of 32-workflow catalog (part 3 of 3)                                   |
+| `prompt-context-assembler.cjs`           | SessionStart, UserPromptSubmit | `startup`, `*`                    | Assemble session context, rules, modularization guidance, lessons (part 1 of 2)           |
+| `prompt-context-assembler-p2.cjs`        | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject graph protocol, workflow gate, and lesson-learned reminder (part 2 of 2)           |
+| `prompt-context-assembler-docs.cjs`      | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject first half of project-structure-reference.md (part 1 of 2)                         |
+| `prompt-context-assembler-docs-p2.cjs`   | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject second half of project-structure-reference.md (part 2 of 2)                        |
+| `prompt-context-assembler-claude.cjs`    | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject CLAUDE.md TL;DR key rules (part 1 of 2)                                            |
+| `prompt-context-assembler-claude-p2.cjs` | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject project-config-summary (part 2 of 2)                                               |
+| `graph-session-init.cjs`                 | SessionStart                   | `startup`                         | Check Python/tree-sitter/graph.db, inject status guidance (skips if config not populated) |
+| `session-end.cjs`                        | SessionEnd                     | `clear\|exit\|compact`            | Write pending-tasks warning, cleanup temp/swap files, delete markers                      |
+| `notify-waiting.js`                      | SessionEnd, Stop, Notification | various                           | System notification when Claude is waiting for input                                      |
+| `subagent-init.cjs`                      | SubagentStart                  | `*`                               | Inject project context, rules, and workflow state into subagent sessions                  |
 
 ### Context Injection (PreToolUse)
 
@@ -80,17 +87,17 @@ Lessons are managed via `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 
 ### Workflow Automation
 
-| Hook                           | Event                                             | Purpose                                                             |
-| ------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------- |
-| `init-prompt-gate.cjs`         | UserPromptSubmit                                  | Block prompts until config populated + graph built (exit 2 = block) |
-| `workflow-router.cjs`          | SessionStart, UserPromptSubmit                    | Detect intent, inject matching workflow from 45-workflow catalog    |
-| `prompt-context-assembler.cjs` | SessionStart, UserPromptSubmit                    | Assemble session context, lessons, and lesson-learned reminder      |
-| `session-init-docs.cjs`        | SessionStart:`startup`                            | Config skeleton + reference doc placeholder creation                |
-| `workflow-step-tracker.cjs`    | PostToolUse:`Skill`                               | Track workflow step completion                                      |
-| `edit-enforcement.cjs`         | PreToolUse:`Edit\|Write\|MultiEdit\|NotebookEdit` | Track edits, plan warnings at 4/8 files, block without TaskCreate   |
-| `skill-enforcement.cjs`        | PreToolUse:`Skill`                                | Block implementation skills without TaskCreate                      |
-| `todo-tracker.cjs`             | PostToolUse:`TaskCreate\|TaskUpdate`              | Persist todo state to disk for cross-compaction recovery            |
-| `workflow-task-guard.cjs`      | PreToolUse:`TaskUpdate`                           | Block completing workflow tasks without Skill invocation            |
+| Hook                                                                    | Event                                             | Purpose                                                             |
+| ----------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------- |
+| `init-prompt-gate.cjs`                                                  | UserPromptSubmit                                  | Block prompts until config populated + graph built (exit 2 = block) |
+| `workflow-router.cjs` (+ p2, p3)                                        | SessionStart, UserPromptSubmit                    | Inject 32-workflow catalog in three parts (split for size safety)   |
+| `prompt-context-assembler.cjs` (+ p2, docs, docs-p2, claude, claude-p2) | SessionStart, UserPromptSubmit                    | Assemble all session context in 6 parts (split for size safety)     |
+| `session-init-docs.cjs`                                                 | SessionStart:`startup`                            | Config skeleton + reference doc placeholder creation                |
+| `workflow-step-tracker.cjs`                                             | PostToolUse:`Skill`                               | Track workflow step completion                                      |
+| `edit-enforcement.cjs`                                                  | PreToolUse:`Edit\|Write\|MultiEdit\|NotebookEdit` | Track edits, plan warnings at 4/8 files, block without TaskCreate   |
+| `skill-enforcement.cjs`                                                 | PreToolUse:`Skill`                                | Block implementation skills without TaskCreate                      |
+| `todo-tracker.cjs`                                                      | PostToolUse:`TaskCreate\|TaskUpdate`              | Persist todo state to disk for cross-compaction recovery            |
+| `workflow-task-guard.cjs`                                               | PreToolUse:`TaskUpdate`                           | Block completing workflow tasks without Skill invocation            |
 
 ### Safety & Privacy
 
@@ -155,8 +162,8 @@ SESSION START (8 hooks)                         DURING SESSION
     └── inject swap inventory           │       SESSION END (2 hooks)
   npm-auto-install.cjs                  │         session-end.cjs
   session-init-docs.cjs                 │           ├── write pending-tasks-warning.json
-  workflow-router.cjs                   │           ├── cleanupAll()
-  prompt-context-assembler.cjs          │           ├── deleteMarker() (on /clear)
+  workflow-router.cjs (+ p2, p3)         │           ├── cleanupAll()
+  prompt-context-assembler.cjs (+p2,docs,docs-p2,claude,claude-p2) │ ├── deleteMarker() (on /clear)
   graph-session-init.cjs ───────────────┘           └── deleteSessionSwap() (on exit/clear)
 ```
 
@@ -194,12 +201,12 @@ SESSION START (8 hooks)                         DURING SESSION
 
 ### Context Injection
 
-| Module                      | Purpose                                                       |
-| --------------------------- | ------------------------------------------------------------- |
-| `context-injector-base.cjs` | Shared base for PreToolUse context injection hooks            |
-| `prompt-injections.cjs`     | Shared prompt injection helpers (lessons, lesson-learned)     |
-| `session-init-helpers.cjs`  | SessionStart helpers: reference doc placeholders, config init |
-| `dedup-constants.cjs`       | Centralized dedup markers and dynamic line count calculation  |
+| Module                      | Purpose                                                                                                               |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `context-injector-base.cjs` | Shared base for PreToolUse context injection hooks                                                                    |
+| `prompt-injections.cjs`     | Shared prompt injection helpers (critical context, AI mistake prevention, lessons, lesson-learned, workflow protocol) |
+| `session-init-helpers.cjs`  | SessionStart helpers: reference doc placeholders, config init                                                         |
+| `dedup-constants.cjs`       | Centralized dedup markers and dynamic line count calculation                                                          |
 
 ### Configuration
 

@@ -361,6 +361,34 @@ const SCHEMA = {
             configPatterns: { type: 'array', required: false },
             excludePaths: { type: 'array', required: false }
         }
+    },
+    integrationTestVerify: {
+        type: 'object',
+        required: false,
+        properties: {
+            guidance: { type: 'string', required: false },
+            runScript: { type: 'string', required: false },
+            startupScript: { type: 'string', required: false },
+            quickRunCommand: { type: 'string', required: false },
+            systemCheckCommand: { type: 'string', required: false },
+            testProjectPattern: { type: 'string', required: false },
+            testProjects: { type: 'array', required: false }
+        }
+    },
+    workflowPatterns: {
+        type: 'object',
+        required: false,
+        properties: {
+            _description: { type: 'string', required: false },
+            architectureStyle: { type: 'string', required: false },
+            codeHierarchy: { type: 'string', required: false },
+            cssMethodology: { type: 'string', required: false },
+            stateManagement: { type: 'string', required: false },
+            crossModuleValidation: { type: 'string', required: false },
+            featureDocPath: { type: 'string', required: false },
+            featureDocTemplate: { type: 'string', required: false },
+            reviewRulesDoc: { type: 'string', required: false }
+        }
     }
 };
 

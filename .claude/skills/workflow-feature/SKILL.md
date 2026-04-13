@@ -10,6 +10,8 @@ Activate the `feature` workflow. Run `/workflow-start feature` with the user's p
 
 **Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /integration-test-review → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
 
+> **[PERFORMANCE EXCEPTION]** If this feature is a performance enhancement (query optimization, caching, throughput improvement, latency reduction), skip `/tdd-spec` (both occurrences), `/tdd-spec-review` (both occurrences), PLAN₂ + its `/plan-review`, `/test-specs-docs`, `/integration-test`, `/integration-test-review`, and `/integration-test-verify`. Do NOT skip `/cook` — implementation still runs. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead.
+
 ## Repeated Steps Disambiguation (CRITICAL for task creation)
 
 This workflow has steps that appear multiple times. When creating tasks, use these descriptions to distinguish them:

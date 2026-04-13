@@ -342,6 +342,24 @@ function generateProjectSummary(config) {
         if (parts.length) lines.push(`**Infra:** ${parts.join(' + ')}`);
     }
 
+    // --- Workflow Patterns ---
+    const wp = config.workflowPatterns;
+    if (wp) {
+        const wpParts = [];
+        if (wp.architectureStyle) wpParts.push(`**Architecture:** ${wp.architectureStyle}`);
+        if (wp.codeHierarchy) wpParts.push(`**Code Hierarchy:** ${wp.codeHierarchy}`);
+        if (wp.cssMethodology) wpParts.push(`**CSS:** ${wp.cssMethodology}`);
+        if (wp.stateManagement) wpParts.push(`**State:** ${wp.stateManagement}`);
+        if (wp.crossModuleValidation) wpParts.push(`**Cross-Module Validation:** ${wp.crossModuleValidation}`);
+        if (wpParts.length) {
+            lines.push('');
+            lines.push('**Workflow Patterns:**');
+            for (const p of wpParts) lines.push(`  ${p}`);
+        }
+        if (wp.featureDocPath) lines.push(`**Feature Docs:** ${wp.featureDocPath}${wp.featureDocTemplate ? ` (template: ${wp.featureDocTemplate})` : ''}`);
+        if (wp.reviewRulesDoc) lines.push(`**Review Rules:** ${wp.reviewRulesDoc}`);
+    }
+
     return lines.join('\n');
 }
 

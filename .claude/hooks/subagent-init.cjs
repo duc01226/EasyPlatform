@@ -247,7 +247,7 @@ async function main() {
             ...buildPlanContext(resolved, reportsPath, plansPath, docsPath),
             ...buildLanguageSection(config),
             `## Rules`,
-            `- **Development Rules** — YAGNI/KISS/DRY. Logic in LOWEST layer (Entity > Service > Component). Kebab-case files. Search 3+ existing patterns before creating new code. Read existing code before changes. Run linting before commit.`,
+            `- **Development Rules** — YAGNI/KISS/DRY. Logic in LOWEST layer (Entity > Service > Component). Kebab-case files. Search 3+ existing patterns before creating new code. Read existing code before changes. Run linting before commit. Surface ambiguity before coding: list assumptions (scope/format/volume), present interpretations with effort estimates — NEVER pick silently.`,
             `- MUST ATTENTION READ \`.claude/docs/development-rules.md\` for full rules, code quality guidelines, and pre-commit checklist.`,
             `- Reports → ${reportsPath}`,
             `- YAGNI / KISS / DRY`,

@@ -271,12 +271,12 @@ The #1 AI failure: **hallucination assertions** — look real, verify nothing.
 
 > **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data.
 >
-> 1. **Unique data per run:** Use `Ulid.NewUlid()` or `Guid.NewGuid()` for ALL entity IDs created in tests. NEVER hardcode IDs.
+> 1. **Unique data per run:** Use the project's unique ID generator for ALL entity IDs created in tests. NEVER hardcode IDs.
 > 2. **Additive only:** Tests create data, never delete/reset. Prior test runs MUST NOT interfere with current run.
-> 3. **No migration Down() dependency:** Tests work with current schema only. Never rely on rollback.
+> 3. **No schema rollback dependency:** Tests work with current schema only. Never rely on schema rollback or migration reversals.
 > 4. **Idempotent seeders:** Fixture-level seeders use create-if-missing pattern (check existence before insert). Test-level data uses unique IDs per execution.
 > 5. **No cleanup required:** No teardown, no database reset between runs. Each test is isolated by unique seed data, not by cleanup.
-> 6. **Unique names/codes:** When entities require unique names/codes, append unique suffix.
+> 6. **Unique names/codes:** When entities require unique names/codes, append a unique suffix using the project's ID generator.
 
 <!-- /SYNC:repeatable-test-principle -->
 
@@ -454,6 +454,14 @@ After sub-agents return:
 | **Stale docs assumed without two-source proof**  | Docs may be right; code may be the bug           |
 
 ---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"/integration-test-verify (Recommended)"** — Run integration tests to verify they all pass
+- **"/workflow-review-changes"** — Review all changes before committing
+- **"Skip, continue manually"** — user decides
 
 ## Closing Reminders
 

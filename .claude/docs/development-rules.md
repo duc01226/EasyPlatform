@@ -16,19 +16,18 @@
 - **YAGNI / KISS / DRY** — No speculative abstractions, no over-engineering
 - **Evidence-based** — Every claim needs `file:line` proof, confidence >80% to act
 - **Zero broken builds** — Code must compile with no syntax errors
+- **Names express PURPOSE** — "OrXxx/AndYyy" joining roles/types/statuses = content-driven red flag. Test: "if I add/remove one item, must I rename?" → YES = rename
+- **Surgical changes (context-aware)** — Bug fix: every changed line traces to the bug (diff test). Review/enhancement: implement improvements AND announce them explicitly. Never silently scope-creep.
+- **Surface ambiguity before coding** — List assumptions (scope, format, volume), present interpretations with effort estimates, push back when simpler approach exists. Never pick silently and run.
+- **Goal-driven execution** — Each TaskCreate step needs explicit verify criterion: `step → verify: [observable check]`, not "make it work"
 
 ---
-
-**IMPORTANT:** You ALWAYS follow these principles: **YAGNI (You Aren't Gonna Need It) - KISS (Keep It Simple, Stupid) - DRY (Don't Repeat Yourself)**
 
 ## General
 
 - **File Naming**: kebab-case with meaningful names — LLMs must understand purpose from filename alone without reading content
 - **File Size**: Keep code files under 200 lines — split into focused components, extract utilities, use composition over inheritance
-- Use `docs-seeker` skill for fetching latest documentation via Context7 MCP
-- Use `gh` bash command for Github features
-- Use `ai-multimodal` skill for images, videos, documents
-- Use `sequential-thinking` and `debug-investigate` skills for analysis and debugging
+- Skills: `docs-seeker` (docs via Context7), `ai-multimodal` (images/video), `sequential-thinking`/`debug-investigate` (analysis), `gh` (GitHub)
 - **[IMPORTANT]** Follow codebase structure and code standards in `./docs` during implementation
 - **[IMPORTANT]** Always implement real code — never simulate or mock implementations
 - **[CRITICAL] Class Responsibility Rule:**
@@ -42,12 +41,17 @@
 > **Understand-Code-First** — Do NOT write code, create plans, or attempt fixes until you READ existing code.
 > Search 3+ similar implementations first. Run graph on key files (MANDATORY when graph.db exists).
 
-- Read and understand existing code before making changes
-- Validate assumptions with grep/read evidence, never guess
-- Search for existing patterns before creating new ones
 - **MUST ATTENTION USE graph trace** on key files when `.code-graph/graph.db` exists — after grep finds entry points, **STOP AND DECIDE:** run `python .claude/scripts/code_graph trace <file> --direction both --json` NOW. Use `--node-mode file` for overview (10-30x less noise), `--node-mode function` for detail. Graph reveals callers, importers, bus messages, event chains that grep cannot find. See CLAUDE.md "Graph Intelligence" section.
 
 ## Code Quality Guidelines
+
+### Naming — Purpose vs Content
+
+- **Name the PURPOSE, not the member list.** `OrXxx/AndYyy` joining roles/types/statuses → red flag. Test: "If I add/remove one item, must I rename?" → YES = content-driven = rename.
+- **"Or" is fine in behavioral idioms** (`FirstOrDefault`, `SuccessOrThrow`) — it expresses WHAT HAPPENS, not WHO IS IN A SET.
+- Full examples: `docs/project-reference/code-review-rules.md` → `### Naming Abstraction — Purpose vs Content`.
+
+### Standards
 
 - **Zero tolerance for broken builds** — code must compile with no syntax errors
 - Follow codebase structure and code standards in `./docs`
@@ -103,31 +107,16 @@ var result = Combine(a1, a2);  // new step — consumes all outputs from previou
 
 ### Fix Option 2: Chaining
 
-When sub-steps exist but you want to keep it flat, use chaining — indentation reveals the tree:
+When sub-steps exist but you want to keep it flat, use chaining — indentation reveals tree structure:
 
 ```csharp
-// C#
-var a1 = GetInput1().Pipe(x => Process(x));
+var a1 = GetInput1().Pipe(x => Process(x));  // C# / LINQ
 var a2 = GetInput2().Pipe(x => Process(x));
 
 var result = Combine(a1, a2);
 ```
 
-```typescript
-// TypeScript / RxJS
-const a1$ = getInput1().pipe(map(x => process(x)));
-const a2$ = getInput2().pipe(map(x => process(x)));
-
-const result = combineLatest([a1$, a2$]);
-```
-
-```python
-# Python — single expression = implicit chaining
-a1 = process(get_input_1())
-a2 = process(get_input_2())
-
-result = combine(a1, a2)
-```
+_(Same pattern: TypeScript/RxJS → `.pipe(map(...))`, Python → single-expression calls)_
 
 ### Decision: Extract vs Chain
 
@@ -148,6 +137,43 @@ The step rule naturally tells you when extraction is needed:
 - A "step" has internal blank lines → its sub-steps should be a function
 - Two adjacent lines are independent but each needs multiple operations → extract each into a function, call both on the same step (no blank line between them)
 
+---
+
+## Surgical Changes (MANDATORY — applies to every edit)
+
+> **Touch only what you must. Clean up only your own mess.**
+
+**The diff test** — Before submitting any change, ask: "Would this line appear in the diff if I hadn't been asked to do X?" If the answer is no, delete it.
+
+### Rules
+
+- **Don't improve adjacent code** — Don't refactor things that aren't broken. Don't add type hints, docstrings, or comments that weren't requested.
+- **Match existing style** — Match existing quote style, spacing, naming conventions even if you'd do it differently. Style drift in a diff is noise that obscures the real change.
+- **Orphan cleanup** — When your changes create unused imports/variables/functions, remove them. But do NOT remove pre-existing dead code unless asked. The distinction: YOU made it unused → remove it. It was already dead → mention it, don't touch it.
+- **Scope discipline** — Two modes, same transparency rule:
+    - **Bug fix context:** "Fix the bug" ≠ "improve the function." If you see a related improvement, announce it — don't silently implement it.
+    - **Review / enhancement context:** If you see improvement opportunities, **implement them AND explicitly announce** what was enhanced beyond the main request. Never leave visible quality improvements unfixed when the task gives you license to improve. The rule either way: **never silently scope-creep**. Always declare what you did beyond the stated request.
+
+### Anti-Pattern: Drive-By Refactoring
+
+```diff
+# BAD — fixing empty email bug but also adding username validation nobody asked for
+-  if not user_data.get('email'):
++  email = user_data.get('email', '').strip()
++  if not email:
+      raise ValueError("Email required")
++  if not user_data.get('username'):    # ← not part of the bug fix
++      raise ValueError("Username required")  # ← not asked for
+
+# GOOD — surgical: only the lines that fix the empty email crash
+-  if not user_data.get('email'):
++  email = user_data.get('email', '')
++  if not email or not email.strip():
+      raise ValueError("Email required")
+```
+
+---
+
 ## Task Decomposition & Iterative Quality
 
 > **Iterative Phase Quality** — Score complexity before planning. Score >=6 → MUST ATTENTION decompose into phases.
@@ -155,6 +181,82 @@ The step rule naturally tells you when extraction is needed:
 
 - **Principle:** Break large tasks into small phases. Each phase: plan → implement → review → fix → verify
 - **Rule:** No phase >5 files or >3h effort. No monolithic plans for complex tasks.
+
+---
+
+## Surface Ambiguity Before Coding (MANDATORY)
+
+> **Never pick an interpretation silently and run. Surface it first.**
+
+Before implementing any non-trivial request, surface ambiguity using this protocol:
+
+**1. List assumptions explicitly:**
+
+| Dimension       | Question to ask                                                        |
+| --------------- | ---------------------------------------------------------------------- |
+| **Scope**       | All records or filtered? Privacy implications?                         |
+| **Format**      | File download? API response? Background job?                           |
+| **Volume**      | How many records? (affects approach: in-memory vs streaming)           |
+| **Constraints** | Performance targets? Security boundaries? Existing patterns to follow? |
+
+**2. If multiple interpretations exist, present them with effort estimates:**
+
+```
+"[Request]" could mean:
+1. [Interpretation A] — [approach] — ~[Nh] effort
+2. [Interpretation B] — [approach] — ~[Nh] effort
+3. [Interpretation C] — [approach] — ~[Nh] effort
+
+Simplest approach: [X]. Need more context for [Y]. Which matters most?
+```
+
+**3. Push back when simpler exists:** State the simpler approach explicitly before implementing. NEVER silently pick the complex path because it was implied.
+
+### Anti-Pattern: Silent Assumption
+
+```
+❌ User: "Export user data"
+   AI: [immediately builds CSV/JSON exporter with file-writing, all users, all fields]
+
+✅ User: "Export user data"
+   AI: Before implementing, I need to clarify:
+       1. Scope: Export all users or filtered? (privacy implications if all)
+       2. Format: File download in browser, API endpoint, or background job with email?
+       3. Fields: Which fields? Some may be sensitive.
+       Simplest approach: API endpoint returning paginated JSON.
+       Need more info for file-based or email-delivery exports. Which direction?
+```
+
+---
+
+## Goal-Driven Execution (MANDATORY)
+
+> **LLMs loop well when given success criteria. Vague tasks produce vague results.**
+
+Transform imperative tasks into verifiable goals **before writing any code**. This is the difference between "I'll look into it" and a self-contained loop that runs to completion.
+
+| Instead of...    | Transform to...                                                                   |
+| ---------------- | --------------------------------------------------------------------------------- |
+| "Fix the bug"    | "Write a failing test that reproduces it → make it pass"                          |
+| "Add validation" | "Write tests for invalid inputs → make them pass"                                 |
+| "Refactor X"     | "Ensure tests pass before AND after"                                              |
+| "Make it faster" | Define: latency target? throughput? perceived? Then measure baseline → hit target |
+| "Review this"    | List specific acceptance criteria — what does PASS look like?                     |
+
+For multi-step tasks, each step in `TaskCreate` must carry an explicit verify criterion:
+
+```
+1. [Step] → verify: [specific observable check]
+2. [Step] → verify: [specific observable check]
+3. [Step] → verify: [specific observable check]
+```
+
+**Weak criteria** ("make it work", "improve it") require constant clarification — the loop stalls.
+**Strong criteria** let you loop independently to completion — the loop self-terminates when done.
+
+**Test-first application:** For bugs, write the failing test BEFORE fixing. The test is the success criterion made executable.
+
+---
 
 ## Pre-commit/Push Rules
 
@@ -208,5 +310,9 @@ After completing code changes, check for stale documentation:
 - **MANDATORY IMPORTANT MUST ATTENTION** place logic in LOWEST layer: Entity/Model > Service > Component/Handler
 - **MANDATORY IMPORTANT MUST ATTENTION** ensure zero broken builds — code must compile with no syntax errors
 - **MANDATORY IMPORTANT MUST ATTENTION** follow YAGNI/KISS/DRY — no speculative abstractions
+- **MANDATORY IMPORTANT MUST ATTENTION** apply surgical changes (context-aware) — bug fix: diff test (every line traces to the bug). Review/enhancement: implement improvements you see AND announce them explicitly. Never silently scope-creep either way.
+- **MANDATORY IMPORTANT MUST ATTENTION** surface ambiguity before coding — list assumptions (scope/format/volume/constraints), present interpretations with effort estimates, push back when simpler exists. Never pick silently.
+- **MANDATORY IMPORTANT MUST ATTENTION** define verifiable success criteria per task — step → verify: [observable check], not "make it work"
 - **MANDATORY IMPORTANT MUST ATTENTION** run doc review at session wrap-up (map changed files → affected docs)
 - **MANDATORY IMPORTANT MUST ATTENTION** activate relevant skills from catalog during the process
+- **MANDATORY IMPORTANT MUST ATTENTION** names express PURPOSE not CONTENT — "OrXxx/AndYyy" joining roles/types/statuses = content-driven = rename. "Or" in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) is fine.

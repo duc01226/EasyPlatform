@@ -8,4 +8,6 @@ description: '[Workflow] Trigger Performance Optimization workflow — investiga
 
 Activate the `performance` workflow. Run `/workflow-start performance` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /integration-test-review → /test → /workflow-review-changes → /sre-review → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /test → /workflow-review-changes → /sre-review → /docs-update → /watzup → /workflow-end
+
+> **[PERFORMANCE EXCEPTION — NO INTEGRATION TESTS]** Integration tests verify functional correctness — they cannot measure latency, throughput, or resource consumption. Do NOT run `/tdd-spec`, `/tdd-spec-review`, `/test-specs-docs`, `/integration-test`, or `/integration-test-review` in this workflow. Run `/test` only to confirm no functional regressions were introduced by the optimization.

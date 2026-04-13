@@ -19,21 +19,16 @@ const os = require('os');
 const path = require('path');
 const { execSync } = require('child_process');
 const { loadConfig, resolvePlanPath, getReportsPath, resolveNamingPattern, normalizePath } = require('./lib/ck-config-utils.cjs');
-const { injectLessons, injectCriticalContext, injectWorkflowProtocol, injectLessonReminder } = require('./lib/prompt-injections.cjs');
+const { injectLessons, injectCriticalContext, injectWorkflowProtocol } = require('./lib/prompt-injections.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DEDUPLICATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 const {
-    PROJECT_STRUCTURE: PROJECT_STRUCTURE_MARKER,
-    CLAUDE_MD: CLAUDE_MD_MARKER,
-    PROJECT_CONFIG_SUMMARY: PROJECT_CONFIG_SUMMARY_MARKER,
     DEDUP_LINES,
     TOP_DEDUP_LINES
 } = require('./lib/dedup-constants.cjs');
-const { generateProjectSummary } = require('./lib/project-config-loader.cjs');
-const { readAndInjectDoc } = require('./lib/context-injector-base.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -266,6 +261,12 @@ async function main() {
 
         const payload = JSON.parse(stdin);
 
+        const isSessionStart = payload.hook_event_name === 'SessionStart';
+
+        // SessionStart output is truncated at ~2KB by the harness — skip injection entirely.
+        // Full context is injected on first UserPromptSubmit where there is no size limit.
+        if (isSessionStart) process.exit(0);
+
         // ═══════════════════════════════════════════════════════════════════════════
         // WORKFLOW PROTOCOL — ABSOLUTE FIRST (primacy position #1)
         // Injected BEFORE everything else for maximum primacy attention.
@@ -338,135 +339,19 @@ async function main() {
         const lessons = injectLessons(payload.transcript_path);
         if (lessons) console.log(lessons);
 
-        // Cache transcript lines once — avoids re-reading the same file for each dedup check
-        let transcriptLines = null;
-        try {
-            if (payload.transcript_path && fs.existsSync(payload.transcript_path)) {
-                transcriptLines = fs.readFileSync(payload.transcript_path, 'utf-8').split('\n');
-            }
-        } catch {
-            /* non-blocking */
-        }
+        // NOTE: Graph protocol, workflow-gate compact reminder, and lesson-learned reminder
+        // are injected by prompt-context-assembler-p2.cjs (a separate hook in the same UPS
+        // array, registered after this file). Split to keep each hook under the harness
+        // per-hook 10,000 character limit — content is dynamic so splitting adds safety margin.
 
-        // Project structure reference — inject once per session, re-injects after compaction
-        try {
-            if (!isMarkerInContext(transcriptLines, PROJECT_STRUCTURE_MARKER, DEDUP_LINES.PROJECT_STRUCTURE)) {
-                const projStructContent = readAndInjectDoc('docs/project-reference/project-structure-reference.md');
-                if (projStructContent) console.log(projStructContent);
-            }
-        } catch {
-            /* non-blocking */
-        }
-
-        // CLAUDE.md key rules re-injection — prevents context drift in long sessions
-        // CLAUDE.md is loaded once at session start but drifts to weak attention zone.
-        // Re-inject key rules (not full file) when marker scrolls out of dedup window.
-        try {
-            if (!isMarkerInContext(transcriptLines, CLAUDE_MD_MARKER, DEDUP_LINES.CLAUDE_MD)) {
-                const claudeMdPath = path.resolve(process.env.CLAUDE_PROJECT_DIR || '.', 'CLAUDE.md');
-                if (fs.existsSync(claudeMdPath)) {
-                    const content = fs.readFileSync(claudeMdPath, 'utf-8');
-                    // Extract TL;DR section (key rules) — not the full file
-                    const tldrMatch = content.match(/## TL;DR[^\n]*\n([\s\S]*?)(?=\n## [A-Z])/);
-                    if (tldrMatch) {
-                        console.log(`\n${CLAUDE_MD_MARKER}\n`);
-                        console.log(tldrMatch[1].trim());
-                        console.log('');
-                    }
-                }
-            }
-        } catch {
-            /* non-blocking */
-        }
-
-        // Project config summary — compact structural map (modules, stack, context groups)
-        // Injected after CLAUDE.md so AI has the structural overview for planning decisions.
-        try {
-            if (!isMarkerInContext(transcriptLines, PROJECT_CONFIG_SUMMARY_MARKER, DEDUP_LINES.PROJECT_CONFIG_SUMMARY)) {
-                const summary = generateProjectSummary();
-                if (summary) {
-                    console.log(`\n${PROJECT_CONFIG_SUMMARY_MARKER}\n`);
-                    console.log(summary);
-                    console.log('');
-                }
-            }
-        } catch {
-            /* non-blocking */
-        }
+        // NOTE: project-structure-reference.md, CLAUDE.md TL;DR re-injection, and
+        // project-config-summary are injected by separate hooks later in the same UPS array:
+        //   prompt-context-assembler-docs.cjs / prompt-context-assembler-docs-p2.cjs
+        //   prompt-context-assembler-claude.cjs / prompt-context-assembler-claude-p2.cjs
 
         // AI Mistake Prevention: REMOVED from UserPromptSubmit (Phase 1 — attention optimization).
         // Now injected ONLY via mindset-injector.cjs on PreToolUse (Edit|Write|MultiEdit|Skill).
         // Rationale: Tier 3 advisory content was diluting Tier 0 urgency markers (47→5 reduction).
-
-        // ═══════════════════════════════════════════════════════════════════════════
-        // GRAPH PROTOCOL REMINDER — TWO TIERS:
-        //   1. FULL reference (with dedup) — detailed CLI commands, sub-agent block
-        //   2. COMPACT mandatory reminder (ALWAYS injected, no dedup) — 2 lines at very end
-        // Tier 2 ensures graph protocol stays in AI attention window even in long sessions.
-        // ═══════════════════════════════════════════════════════════════════════════
-        try {
-            const graphDbPath = path.join(process.env.CLAUDE_PROJECT_DIR || '.', '.code-graph', 'graph.db');
-            if (fs.existsSync(graphDbPath)) {
-                const graphMarker = '[graph] Knowledge graph active';
-
-                // Tier 1: Full reference (deduped — top+bottom check)
-                if (!isMarkerInContext(transcriptLines, graphMarker, 50)) {
-                    console.log(
-                        [
-                            `${graphMarker}. **ACTION REQUIRED for investigation/scout/review/fix/debug tasks:**`,
-                            `- **Grep/Glob/Search-first:** When query is semantic (not file-specific), grep/glob/search for key terms FIRST to find entry point files`,
-                            `- **Graph expand:** Run \`python .claude/scripts/code_graph connections <file> --json\` on discovered files`,
-                            `- **Full system trace:** Run \`python .claude/scripts/code_graph trace <file> --direction both --json\` to see full upstream (callers, frontend) + downstream (events, bus messages, consumers) flow. Use \`--direction downstream\` for impact-only analysis.`,
-                            `- For frontend↔backend API tracing → run \`/graph-connect-api\` skill to match HTTP calls with backend routes`,
-                            `- **After Grep/Search finds key files:** Run \`python .claude/scripts/code_graph trace <found-file> --direction both --json\` on the most important 2-3 files from search results to discover full system flow instantly.`,
-                            `- **Required for sub-agents:** Include this in sub-agent prompts involving code investigation:\n> "**Graph DB active.** After grep finds key files, run graph trace to discover callers, bus consumers, event chains. Commands: python .claude/scripts/code_graph trace <file> --direction both --json | connections <file> --json. Pattern: grep → trace → grep."`,
-                            `- Graph finds structural + implicit relationships (MESSAGE_BUS, events, API endpoints) instantly vs grepping 15K files.`,
-                            `- Run at least ONE graph command on key files before concluding any investigation, fix, review, or plan.`
-                        ].join('\n')
-                    );
-                }
-            }
-        } catch {
-            /* silent */
-        }
-
-        // ═══════════════════════════════════════════════════════════════════════════
-        // TIER 2: Compact graph mandatory reminder (ALWAYS injected, NO dedup)
-        // Only 2 lines — minimal token cost (~30 tokens per injection).
-        // Generic: only fires if .code-graph/graph.db exists.
-        // ═══════════════════════════════════════════════════════════════════════════
-        try {
-            const graphDbForCompact = path.join(process.env.CLAUDE_PROJECT_DIR || '.', '.code-graph', 'graph.db');
-            if (fs.existsSync(graphDbForCompact)) {
-                console.log(
-                    `**[GRAPH-GATE]** Run at least ONE \`python .claude/scripts/code_graph trace <file> --direction both --json\` on key files before concluding any investigation, fix, review, or plan.`
-                );
-            }
-        } catch {
-            /* silent */
-        }
-
-        // ═══════════════════════════════════════════════════════════════════════════
-        // TIER 0: Compact workflow mandatory reminder (ALWAYS injected, NO dedup)
-        // Fires for both "always" and "never" modes with mode-appropriate content.
-        // ═══════════════════════════════════════════════════════════════════════════
-        if (confirmationMode === 'always') {
-            console.log(
-                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL — Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Match prompt against catalog → ask user → then proceed.**`
-            );
-        } else if (confirmationMode === 'never') {
-            console.log(
-                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL — Do not skip for any reason. First action: workflow detection. Match prompt against catalog → \`/workflow-start\` → then proceed.**`
-            );
-        }
-
-        // ═══════════════════════════════════════════════════════════════════════════
-        // LESSON REMINDER — ABSOLUTE LAST output.
-        // "Check lessons learned" prompt at recency position ensures AI always
-        // evaluates session mistakes before finishing.
-        // ═══════════════════════════════════════════════════════════════════════════
-        const reminder = injectLessonReminder(payload.transcript_path);
-        if (reminder) console.log(reminder);
 
         process.exit(0);
     } catch (error) {

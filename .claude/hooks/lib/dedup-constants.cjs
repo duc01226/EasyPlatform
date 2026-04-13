@@ -13,7 +13,7 @@
  *   BACKEND_CONTEXT     → backend-context
  *   FRONTEND_CONTEXT    → frontend-context
  *   STYLING_CONTEXT     → scss-styling-context
- *   LESSON_LEARNED      → prompt-context-assembler (via lib/prompt-injections)
+ *   LESSON_LEARNED      → prompt-context-assembler-p2 (via lib/prompt-injections)
  *   CODE_REVIEW_RULES   → code-review-rules-injector
  *   DEV_RULES           → dev-rules-injector (PreToolUse: Edit|Write|MultiEdit|Skill)
  *   KNOWLEDGE_CONTEXT   → knowledge-context
@@ -21,12 +21,12 @@
  *   LESSONS             → prompt-context-assembler (via lib/prompt-injections), lessons-injector (PreToolUse)
  *   CRITICAL_THINKING   → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   AI_MISTAKE_PREVENTION → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
- *   WORKFLOW_CATALOG    → workflow-router
+ *   WORKFLOW_CATALOG    → workflow-router (p1), workflow-router-p2 (p2), workflow-router-p3 (p3)
  *   INTEGRATION_TEST_CONTEXT → code-patterns-injector
  *   FEATURE_DOCS_CONTEXT     → code-patterns-injector
- *   PROJECT_STRUCTURE    → prompt-context-assembler
- *   CLAUDE_MD            → prompt-context-assembler
- *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler
+ *   PROJECT_STRUCTURE    → prompt-context-assembler-docs (p1), prompt-context-assembler-docs-p2 (p2)
+ *   CLAUDE_MD            → prompt-context-assembler-claude
+ *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler-claude-p2
  *   DESIGN_SYSTEM        → design-system-context
  *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
  *
@@ -111,7 +111,8 @@ function countProjectConfigSummaryLines() {
  * Multiplier rationale:
  *   Default 3× for most injections — ensures content stays visible in the
  *   AI attention window across long sessions. Exceptions:
- *   - PROJECT_STRUCTURE, DEV_RULES, WORKFLOW_CATALOG use 2× (larger content, less drift-sensitive).
+ *   - DEV_RULES, WORKFLOW_CATALOG use 2× (larger content, less drift-sensitive).
+ *   - PROJECT_STRUCTURE uses 3× (increased to reduce re-injection frequency by ~50%).
  */
 const CONTENT_SOURCES = {
     CODE_PATTERNS: {
@@ -151,7 +152,7 @@ const CONTENT_SOURCES = {
     PROJECT_STRUCTURE: {
         type: 'file',
         files: ['docs/project-reference/project-structure-reference.md'],
-        multiplier: 2,
+        multiplier: 3,
         fallback: 400
     },
     CLAUDE_MD: {

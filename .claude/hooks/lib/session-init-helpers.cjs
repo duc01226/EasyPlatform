@@ -67,7 +67,26 @@ const SKELETON = {
     messaging: {},
     api: {},
     infrastructure: {},
-    referenceDocs: []
+    referenceDocs: [],
+    workflowPatterns: {
+        architectureStyle: '',
+        codeHierarchy: '',
+        cssMethodology: '',
+        stateManagement: '',
+        crossModuleValidation: '',
+        featureDocPath: '',
+        featureDocTemplate: '',
+        reviewRulesDoc: ''
+    },
+    integrationTestVerify: {
+        guidance: '',
+        quickRunCommand: '',
+        testProjectPattern: '',
+        testProjects: [],
+        systemCheckCommand: '',
+        runScript: '',
+        startupScript: ''
+    }
 };
 
 // =============================================================================

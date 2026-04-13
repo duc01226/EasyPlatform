@@ -39,7 +39,7 @@
 
 ## 1. Executive Summary
 
-This framework wraps Claude Code in a **3-layer framework** — **34 hooks**, **202 skills**, **48 workflows**, and **28 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
+This framework wraps Claude Code in a **3-layer framework** — **~37 hooks** (53 files), **258 skills**, **48 workflows**, and **28 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
 
 **Core insight:** LLMs forget, hallucinate, and drift. Instead of hoping the AI "just gets it right," this framework uses **programmatic guardrails** (hooks) and **prompt-engineered protocols** (skills/workflows) to enforce correctness at every stage.
 
@@ -55,6 +55,7 @@ This framework wraps Claude Code in a **3-layer framework** — **34 hooks**, **
 │  AI ignores patterns   │  project-config     │  Dynamic context │
 │  AI loses state        │  Swap engine        │  External memory │
 │  AI drifts from plan   │  Edit enforcement   │  Task gating     │
+│  AI injects duplicates │  Hooks (dedup)      │  File-based dedup│
 │  AI skips test specs   │  TDD skills/flows   │  Unified TC IDs  │
 │  AI misses lifecycle   │  48 workflows       │  Full SDLC cover │
 │  AI skips research   │  big-feature wf      │  Step-select gate  │
@@ -79,7 +80,7 @@ graph TB
         AUQ[AskUserQuestion<br/>Confirm Workflow]
     end
 
-    subgraph "Enforcement Layer — 34 Hooks"
+    subgraph "Enforcement Layer — ~37 Hooks"
         subgraph "Safety Hooks"
             PB[Path Boundary Block]
             PR[Privacy Block]
@@ -262,10 +263,10 @@ graph LR
     style UPS fill:#9C27B0,color:white
 ```
 
-### 4.3 The 34 Hooks — Organized by Purpose
+### 4.3 The ~37 Hooks — Organized by Purpose
 
 ```
-HOOK SYSTEM (34 hooks)
+HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
 │
 ├── SESSION LIFECYCLE (7 hooks)
 │   ├── session-init.cjs ─────────── Load config, set 25 env vars
@@ -313,7 +314,7 @@ HOOK SYSTEM (34 hooks)
 │   ├── workflow-step-tracker.cjs ── Track workflow step completion
 │   └── write-compact-marker.cjs ─── Save recovery state pre-compact
 │
-└── SUPPORT INFRASTRUCTURE (25 lib modules)
+└── SUPPORT INFRASTRUCTURE (27 lib modules)
     ├── State: ck-session-state, workflow-state, todo-state, edit-state
     ├── Context: context-injector-base, prompt-injections, context-tracker
     ├── Memory: swap-engine (externalize large outputs)
@@ -321,6 +322,25 @@ HOOK SYSTEM (34 hooks)
     ├── Session: session-init-helpers, test-fixture-generator
     └── Utils: debug-log, hook-runner, stdin-parser, dedup-constants, ck-env-utils, ck-git-utils, ck-plan-resolver
 ```
+
+### 4.3.5 Hook Part-File Architecture
+
+Large hooks are split into chained **part-files** (`-p2.cjs`, `-p3.cjs`) to stay within single-file maintainability limits. The Claude Code harness chains them sequentially at runtime — each part-file reads stdin, appends its output, and passes through to the next.
+
+```
+prompt-context-assembler.cjs      ← Main: dev rules + workflow catalog
+prompt-context-assembler-p2.cjs   ← Part 2: project config summary + CLAUDE.md re-injection
+prompt-context-assembler-docs.cjs ← Docs variant: reference doc injection
+prompt-context-assembler-docs-p2.cjs ← Docs part 2: staleness gate + graph gate
+
+workflow-router.cjs               ← Main: detect workflow intent
+workflow-router-p2.cjs            ← Part 2: inject workflow catalog
+workflow-router-p3.cjs            ← Part 3: lesson-learned reminder
+```
+
+**Why this matters:** Previously, accumulating logic in a single hook file made it hard to reason about, test, and maintain. Part-file splitting applies single-responsibility at the file level — each part handles one concern.
+
+**File-based deduplication:** `dedup-constants.cjs` holds shared dedup keys. Every injection point checks whether its key has already fired in the current session, preventing the same rules from appearing multiple times in a long prompt context.
 
 ### 4.4 How Context Injection Works
 
@@ -431,11 +451,11 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate
 2. Declare confidence level...
 ```
 
-### 5.2 Skill Categories (202 skills)
+### 5.2 Skill Categories (258 skills)
 
 ```mermaid
 mindmap
-  root((202 Skills))
+  root((258 Skills))
     Quality & Verification
       code-review
       prove-fix
@@ -469,6 +489,8 @@ mindmap
       tdd-spec
       test-spec
       integration-test
+      integration-test-review
+      integration-test-verify
       e2e-test
       test-specs-docs
       test
@@ -895,8 +917,8 @@ The hook and skill system is **project-agnostic**. All project-specific knowledg
 ```mermaid
 graph LR
     subgraph "Generic Framework (reusable)"
-        H[34 Hooks]
-        S[202 Skills]
+        H[~37 Hooks]
+        S[258 Skills]
         W[48 Workflows]
     end
 
@@ -1453,7 +1475,9 @@ The framework supports AI-assisted development across **every phase** of the sof
 │                     │ feature workflow        │ context injection  │
 │─────────────────────│────────────────────────│────────────────────│
 │  6. TESTING         │ /integration-test      │ Test gen from      │
-│                     │ /test, /webapp-testing │ TDD specs, auto    │
+│                     │ /integration-test-review│ TDD specs; review │
+│                     │ /integration-test-verify│ quality; verify   │
+│                     │ /test, /webapp-testing │ spec traceability  │
 │                     │ tdd-feature workflow   │ build verification │
 │─────────────────────│────────────────────────│────────────────────│
 │  7. CODE REVIEW     │ /code-review           │ Automated quality  │
@@ -1475,6 +1499,18 @@ The framework supports AI-assisted development across **every phase** of the sof
 ```
 
 **Key insight:** No phase is "AI-free." The framework ensures AI has the right context, constraints, and quality gates at every stage — from the first idea sketch to production deployment review.
+
+#### Integration Testing — 3-Step Sequence
+
+Testing is not a single step. The framework breaks it into three discrete skills enforced across all major development workflows (feature, bugfix, refactor, hotfix, big-feature, tdd-feature, and 14 others):
+
+| Step         | Skill                      | Purpose                                                                              |
+| ------------ | -------------------------- | ------------------------------------------------------------------------------------ |
+| 1. Write/run | `/integration-test`        | Generate test code from TDD specs, execute, verify pass/fail                         |
+| 2. Review    | `/integration-test-review` | Review test quality: coverage, edge cases, naming, assertions                        |
+| 3. Verify    | `/integration-test-verify` | Verify **spec traceability** — every TC-ID maps to a test, every test maps to a spec |
+
+The verify step is the novel one. It catches tests that pass but don't actually cover the requirement they're supposed to cover — the most common form of false confidence in test suites.
 
 ### 8.11 How to Use — Test Generation & Documentation Cases
 
@@ -3239,7 +3275,7 @@ flowchart TB
 | **Context injection at decision points**       | 10 context injector hooks, auto-triggered by file path     | Hooks     |
 | **Reminder rules prevent forgetting**          | 3 UserPromptSubmit hooks re-inject on every prompt         | Hooks     |
 | **Generic & configurable via config**          | project-config.json drives all context injection           | Config    |
-| **Prompt engineering quality**                 | 202 skills with YAML frontmatter + behavior protocols      | Skills    |
+| **Prompt engineering quality**                 | 258 skills with YAML frontmatter + behavior protocols      | Skills    |
 | **Confirm workflow before acting**             | workflow-router.cjs → AskUserQuestion → confirm            | Workflows |
 | **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation    | Skills    |
 | **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill      | Skills    |
@@ -3436,16 +3472,19 @@ This framework answers that question with **defense in depth**: multiple indepen
 
 ### Design Principles
 
-| Principle                         | Implementation                                                                                                                                                                         |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Trust but verify**              | Every AI claim must cite `file:line` evidence. The `evidence-based-reasoning-protocol` makes speculation forbidden.                                                                    |
-| **Fail closed, not open**         | Safety hooks use `exit 2` (non-overridable block). When in doubt, block and explain rather than allow and hope.                                                                        |
-| **Convention over configuration** | `project-config.json` centralizes all project-specific knowledge. Hooks read it at runtime — no hardcoded assumptions.                                                                 |
-| **Enforce at the boundary**       | Hooks run as separate processes at lifecycle boundaries. The AI can't bypass them because they execute outside the LLM's control loop.                                                 |
-| **Learn from mistakes**           | The `/learn` skill captures AI errors into `lessons.md`. The `lessons-injector.cjs` hook re-injects them on every prompt and edit. Past mistakes become future guardrails.             |
-| **Search before create**          | `search-before-code.cjs` blocks file creation/modification until evidence of codebase search exists. This prevents pattern invention and ensures code follows established conventions. |
-| **Plan before implement**         | `edit-enforcement.cjs` requires `TaskCreate` before any file edit. Combined with workflow step tracking, this ensures AI doesn't skip from question to code without a plan.            |
-| **State survives amnesia**        | External state files (todo, workflow progress, swap) persist to disk. After context compaction, `post-compact-recovery.cjs` restores progress — the AI resumes where it left off.      |
+| Principle                         | Implementation                                                                                                                                                                                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Trust but verify**              | Every AI claim must cite `file:line` evidence. The `evidence-based-reasoning-protocol` makes speculation forbidden.                                                                                                                            |
+| **Fail closed, not open**         | Safety hooks use `exit 2` (non-overridable block). When in doubt, block and explain rather than allow and hope.                                                                                                                                |
+| **Convention over configuration** | `project-config.json` centralizes all project-specific knowledge. Hooks read it at runtime — no hardcoded assumptions.                                                                                                                         |
+| **Enforce at the boundary**       | Hooks run as separate processes at lifecycle boundaries. The AI can't bypass them because they execute outside the LLM's control loop.                                                                                                         |
+| **Learn from mistakes**           | The `/learn` skill captures AI errors into `lessons.md`. The `lessons-injector.cjs` hook re-injects them on every prompt and edit. Past mistakes become future guardrails.                                                                     |
+| **Search before create**          | `search-before-code.cjs` blocks file creation/modification until evidence of codebase search exists. This prevents pattern invention and ensures code follows established conventions.                                                         |
+| **Plan before implement**         | `edit-enforcement.cjs` requires `TaskCreate` before any file edit. Combined with workflow step tracking, this ensures AI doesn't skip from question to code without a plan.                                                                    |
+| **State survives amnesia**        | External state files (todo, workflow progress, swap) persist to disk. After context compaction, `post-compact-recovery.cjs` restores progress — the AI resumes where it left off.                                                              |
+| **Stateless-per-turn invariants** | Rules are re-injected at every `UserPromptSubmit` via `mindset-injector` and `prompt-context-assembler`. The framework never trusts the AI to remember rules from prior turns — they are re-stated as invariants at each interaction boundary. |
+| **Self-contained skill units**    | Skills inline shared protocols via `<!-- SYNC:tag -->` blocks rather than referencing external files. Each skill is a complete, deployable prompt unit. The `sync-protocols` skill keeps copies synchronized from a canonical source.          |
+| **Structural intelligence first** | The code graph (`code_graph.py`) is a HARD-GATE before any investigation concludes. Grep finds files; graph traces reveal callers, events, bus consumers, and API contracts — relationships that textual search cannot find.                   |
 
 ### What Makes This Framework Different
 
@@ -3496,7 +3535,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 
 ### The Result
 
-**34 hooks**, **202 skills**, **48 workflows**, and **28 specialized agents** working in concert to deliver:
+**~37 hooks** (53 files), **258 skills**, **48 workflows**, and **28 specialized agents** working in concert to deliver:
 
 - **Fewer hallucinations** — Evidence gates, search-before-code, and proof traces catch AI fabrications before they reach files
 - **Better code quality** — Pattern injection ensures AI follows project conventions, not generic training data
@@ -3504,7 +3543,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 - **Consistent adherence** — Programmatic enforcement means quality doesn't degrade in long sessions or complex tasks
 - **Recovery from amnesia** — External state persistence means context compaction doesn't lose progress
 - **Persistent learning** — Mistakes captured once prevent recurrence across all future sessions
-- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 202 skills (Section 8.15)
+- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 258 skills (Section 8.15)
 - **Context engineering precision** — JIT injection, dedup, external memory, budget management, and recovery keep the AI informed without overwhelming its context window (Section 8.16)
 
 The framework is **generic and reusable**. Replace `project-config.json` with your project's specifics, and the entire system adapts — different tech stack, different patterns, different conventions, same quality enforcement.

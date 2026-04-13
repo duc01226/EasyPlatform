@@ -11,7 +11,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
 const { loadConfig } = require('./lib/ck-config-loader.cjs');
 const { WORKFLOW_CATALOG: WORKFLOW_CATALOG_MARKER, DEDUP_LINES, TOP_DEDUP_LINES } = require('./lib/dedup-constants.cjs');
@@ -21,22 +20,26 @@ const { WORKFLOW_CATALOG: WORKFLOW_CATALOG_MARKER, DEDUP_LINES, TOP_DEDUP_LINES 
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Build a compact workflow catalog string (~2 lines per workflow).
+ * Build the workflow catalog string for a given slice of entries.
+ * Full format: 2 lines per workflow (name line + Use/Not for/Steps line).
  * Entries are sorted alphabetically by workflow ID.
  * @param {Object} config - Workflow configuration
+ * @param {number} [sliceStart=0] - Start index (inclusive) for this catalog part
+ * @param {number} [sliceEnd] - End index (exclusive); omit for all remaining
  * @returns {string} Formatted catalog text
  */
-function buildWorkflowCatalog(config) {
+function buildWorkflowCatalog(config, sliceStart = 0, sliceEnd) {
     const { workflows, commandMapping } = config;
-    const lines = [];
 
-    const entries = Object.entries(workflows)
+    let entries = Object.entries(workflows)
         .filter(([, wf]) => wf.whenToUse)
         .sort(([a], [b]) => a.localeCompare(b));
 
+    entries = entries.slice(sliceStart, sliceEnd);
+
+    const lines = [];
     for (const [id, wf] of entries) {
         const sequence = wf.sequence.map(step => commandMapping[step]?.claude || `/${step}`).join(' \u2192 ');
-
         const confirm = wf.confirmFirst ? ' | \u26a0\ufe0f Confirm' : '';
         lines.push(`**${id}** \u2014 ${wf.name}${confirm}`);
         lines.push(`  Use: ${wf.whenToUse} | Not for: ${wf.whenNotToUse || 'N/A'} | Steps: ${sequence}`);
@@ -46,12 +49,20 @@ function buildWorkflowCatalog(config) {
 }
 
 /**
- * Build the full catalog injection output with AI detection instructions.
+ * Build the catalog injection output for the FIRST THIRD of workflows.
+ * The remaining workflows are injected by workflow-router-p2.cjs and workflow-router-p3.cjs
+ * as separate hooks, keeping each hook's output under the harness per-hook size limit.
+ * Detection instructions are included here (primacy position) and reference parts 2 and 3.
  * @param {Object} config - Workflow configuration
  * @param {boolean} quickMode - Whether quick mode is active
- * @returns {string} Full injection text
+ * @returns {string} Full injection text (part 1)
  */
 function buildCatalogInjection(config, quickMode) {
+    const allEntries = Object.entries(config.workflows)
+        .filter(([, wf]) => wf.whenToUse)
+        .sort(([a], [b]) => a.localeCompare(b));
+    const thirdCount = Math.ceil(allEntries.length / 3);
+
     const lines = [];
 
     lines.push('');
@@ -62,9 +73,10 @@ function buildCatalogInjection(config, quickMode) {
     lines.push('> whether to activate the detected workflow (Recommended) or execute directly without workflow.');
     lines.push('');
     lines.push('> **IMPORTANT:** MUST ATTENTION create todo tasks for ALL steps. Do NOT skip any steps in the selected workflow.');
+    lines.push(`> **NOTE:** This is part 1 of 3. See "## Workflow Catalog (continued)" and "## Workflow Catalog (part 3)" below for the remaining ${allEntries.length - thirdCount} workflows.`);
     lines.push('');
 
-    lines.push(buildWorkflowCatalog(config));
+    lines.push(buildWorkflowCatalog(config, 0, thirdCount));
     lines.push('');
 
     lines.push('## Workflow Detection Instructions');
@@ -73,7 +85,7 @@ function buildCatalogInjection(config, quickMode) {
         lines.push('> **Quick mode active** - Skip confirmation, execute workflow directly.');
         lines.push('');
     }
-    lines.push('1. **MATCH:** Compare the user\'s prompt against EVERY "Use" field. Match semantics, not exact keywords.');
+    lines.push('1. **MATCH:** Compare the user\'s prompt against EVERY "Use" field across ALL THREE catalog parts. Match semantics, not exact keywords.');
     lines.push('2. **SELECT:** Pick the single best-matching workflow, or NONE only if genuinely no entry matches');
     lines.push('3. **ASK:** Use `AskUserQuestion` to present: "Activate [Workflow] (Recommended)" vs "Execute directly"');
     lines.push('4. **ACTIVATE (if confirmed):** Call `/workflow-start <workflowId>`');
@@ -243,20 +255,6 @@ function wasCatalogRecentlyInjected(transcriptPath) {
     }
 }
 
-/**
- * Get path for the session startup catalog flag file.
- * Prevents double-injection: SessionStart writes it, first UserPromptSubmit consumes it.
- * Root cause: SessionStart output goes into system-reminder context, not the transcript
- * that wasCatalogRecentlyInjected() reads — so transcript dedup fails on the first prompt.
- */
-function getStartupFlagPath(sessionId) {
-    const tmpDir = path.join(os.tmpdir(), 'ck', 'markers');
-    try {
-        fs.mkdirSync(tmpDir, { recursive: true });
-    } catch {}
-    return path.join(tmpDir, `${sessionId}-startup-catalog`);
-}
-
 async function main() {
     try {
         const stdin = fs.readFileSync(0, 'utf-8').trim();
@@ -283,21 +281,11 @@ async function main() {
         const config = loadWorkflowConfig();
         if (!config.settings?.enabled) process.exit(0);
 
-        if (!isSessionStart) {
-            // UserPromptSubmit: consume startup flag to prevent SessionStart double-injection.
-            // On fresh sessions the transcript is empty so transcript-based dedup misses the
-            // SessionStart injection — this flag file bridges that gap.
-            const flagPath = getStartupFlagPath(sessionId);
-            if (fs.existsSync(flagPath)) {
-                try {
-                    fs.unlinkSync(flagPath);
-                } catch {}
-                process.exit(0);
-            }
+        // SessionStart output is truncated at ~2KB by the harness — skip injection entirely.
+        // Full catalog is injected on first UserPromptSubmit where there is no size limit.
+        if (isSessionStart) process.exit(0);
 
-            // Subsequent prompts: use transcript dedup
-            if (wasCatalogRecentlyInjected(payload.transcript_path)) process.exit(0);
-        }
+        if (wasCatalogRecentlyInjected(payload.transcript_path)) process.exit(0);
 
         // Parse quick mode:
         // - "never" confirmationMode forces quickMode globally (auto-execute without asking)
@@ -331,14 +319,6 @@ async function main() {
             // No active workflow: inject full catalog
             const output = buildCatalogInjection(config, quickMode);
             console.log(output);
-        }
-
-        // Write startup flag so first UserPromptSubmit knows to skip catalog injection
-        if (isSessionStart) {
-            const flagPath = getStartupFlagPath(sessionId);
-            try {
-                fs.writeFileSync(flagPath, '1');
-            } catch {}
         }
 
         process.exit(0);

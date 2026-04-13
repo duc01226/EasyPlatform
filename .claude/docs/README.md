@@ -7,9 +7,9 @@
 | Goal                         | Document                                                                                        |
 | ---------------------------- | ----------------------------------------------------------------------------------------------- |
 | **New to Claude Code?**      | [quick-start.md](./quick-start.md) - 5-minute onboarding                                        |
-| **Need a skill?**            | [skills/README.md](./skills/README.md) - 246 skills catalog                                     |
+| **Need a skill?**            | [skills/README.md](./skills/README.md) - 258 skills catalog                                     |
 | **Building a feature?**      | [skills/README.md](./skills/README.md) + `docs/project-reference/` patterns                     |
-| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 41 hooks deep-dive                                       |
+| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 37 hooks deep-dive                                       |
 | **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 48 workflows                                      |
 | **Configuring Claude?**      | [configuration/README.md](./configuration/README.md)                                            |
 | **Team collaboration?**      | [team-collaboration-guide.md](./team-collaboration-guide.md) - PO, BA, QA, QC, UX, PM workflows |
@@ -23,11 +23,11 @@
 |-- README.md                 <- You are here (Navigation hub)
 |-- quick-start.md            5-minute onboarding guide
 |
-|-- skills/                   246 skills across 15+ domains
+|-- skills/                   258 skills across 15+ domains
 |   |-- README.md             Skills overview + full catalog
 |   +-- (patterns)           → docs/project-reference/
 |
-|-- hooks/                    41 hooks, 27 lib modules
+|-- hooks/                    ~37 logical hooks (53 files), 27 lib modules
 |   |-- README.md             Hooks overview, lessons system, session lifecycle
 |   |-- architecture.md       System architecture with diagrams
 |   |-- external-memory-swap.md  Post-compaction recovery via swap files
@@ -35,6 +35,8 @@
 |
 |-- code-graph-mechanism.md  How the structural knowledge graph works
 |-- code-graph-setup.md      Setup guide for Python + Tree-sitter
+|-- development-rules.md     Dev rules extracted from CLAUDE.md (hook-injected)
+|-- anti-hallucination-patterns.md  AI failure mode catalog + remediation patterns
 |
 |-- agents/                   Subagent configurations
 |   |-- README.md             Agents overview
@@ -52,23 +54,27 @@
 
 ### "I need to..."
 
-| Task                 | Command               | Skill                   |
-| -------------------- | --------------------- | ----------------------- |
-| Implement a feature  | `/cook`               | `feature`               |
-| Fix a bug            | `/fix`                | `debug-investigate`     |
-| Create a PR          | `/git/pr`             | `commit`                |
-| Understand code      | `/scout`              | `feature-investigation` |
-| Plan implementation  | `/plan`               | `planning`              |
-| Run tests            | `/test`               | `test-spec`             |
-| Review code          | `/review`             | `code-review`           |
-| Debug issues         | `/debug-investigate`  | `debug-investigate`     |
-| Create user story    | `/story`              | `business-analyst`      |
-| Prioritize backlog   | `/prioritize`         | `product-owner`         |
-| Create test cases    | `/test-spec`          | `test-spec`             |
-| Quality checkpoint   | `/quality-gate`       | `qc-specialist`         |
-| Create design spec   | `/design-spec`        | `ux-designer`           |
-| Analyze blast radius | `/graph-blast-radius` | `graph-blast-radius`    |
-| Build code graph     | `/graph-build`        | `graph-build`           |
+| Task                     | Command                    | Skill                     |
+| ------------------------ | -------------------------- | ------------------------- |
+| Implement a feature      | `/cook`                    | `feature`                 |
+| Fix a bug                | `/fix`                     | `debug-investigate`       |
+| Create a PR              | `/git/pr`                  | `commit`                  |
+| Understand code          | `/scout`                   | `feature-investigation`   |
+| Plan implementation      | `/plan`                    | `planning`                |
+| Run tests                | `/test`                    | `test-spec`               |
+| Review code              | `/review`                  | `code-review`             |
+| Debug issues             | `/debug-investigate`       | `debug-investigate`       |
+| Create user story        | `/story`                   | `business-analyst`        |
+| Prioritize backlog       | `/prioritize`              | `product-owner`           |
+| Create test cases        | `/test-spec`               | `test-spec`               |
+| Quality checkpoint       | `/quality-gate`            | `qc-specialist`           |
+| Create design spec       | `/design-spec`             | `ux-designer`             |
+| Analyze blast radius     | `/graph-blast-radius`      | `graph-blast-radius`      |
+| Build code graph         | `/graph-build`             | `graph-build`             |
+| Review integration tests | `/integration-test-review` | `integration-test-review` |
+| Verify test traceability | `/integration-test-verify` | `integration-test-verify` |
+| Enhance AI prompts       | `/prompt-enhance`          | `prompt-enhance`          |
+| Create PBI visual mockup | `/pbi-mockup`              | `pbi-mockup`              |
 
 ### "I want to learn about..."
 
@@ -141,17 +147,18 @@
 
 ## Statistics
 
-| Category            | Count |
-| ------------------- | ----- |
-| Skills              | 245   |
-| Hooks               | 41    |
-| Lib Modules         | 27    |
-| Hook Events         | 9     |
-| Agents              | 28    |
-| Workflows           | 48    |
-| Tests               | 300   |
-| Documentation Files | 27    |
+| Category                 | Count |
+| ------------------------ | ----- |
+| Skills                   | 258   |
+| Hooks (logical)          | ~37   |
+| Hook files (incl. parts) | 53    |
+| Lib Modules              | 27    |
+| Hook Events              | 9     |
+| Agents                   | 28    |
+| Workflows                | 48    |
+| Tests                    | 300   |
+| Documentation Files      | 30    |
 
 ---
 
-_Last updated: 2026-03-21 | Source: `.claude/` directory analysis_
+_Last updated: 2026-04-13 | Source: `.claude/` directory analysis_

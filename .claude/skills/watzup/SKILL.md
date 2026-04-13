@@ -58,14 +58,14 @@ Analyze the overall impact and quality of the changes.
 
 After the change summary, run `git diff --name-only` (against base branch or recent commits) and cross-reference changed files against relevant documentation:
 
-| Changed file pattern    | Docs to check for staleness                                                             |
-| ----------------------- | --------------------------------------------------------------------------------------- |
-| `.claude/hooks/**`      | `.claude/docs/hooks/README.md`, hook count tables in `.claude/docs/hooks/*.md`          |
-| `.claude/skills/**`     | `.claude/docs/skills/README.md`, skill count/catalog tables                             |
-| `.claude/workflows/**`  | `CLAUDE.md` workflow catalog table, `.claude/docs/` workflow references                 |
-| `src/Services/**`       | `docs/business-features/` doc for the affected service                                  |
-| `src/{frontend-dir}/**` | `docs/project-reference/frontend-patterns-reference.md`, relevant business-feature docs |
-| `CLAUDE.md`             | `.claude/docs/README.md` (navigation hub must stay in sync)                             |
+| Changed file pattern    | Docs to check for staleness                                                                   |
+| ----------------------- | --------------------------------------------------------------------------------------------- |
+| `.claude/hooks/**`      | `.claude/docs/hooks/README.md`, hook count tables in `.claude/docs/hooks/*.md`                |
+| `.claude/skills/**`     | `.claude/docs/skills/README.md`, skill count/catalog tables                                   |
+| `.claude/workflows/**`  | `CLAUDE.md` workflow catalog table, `.claude/docs/` workflow references                       |
+| `src/{services-dir}/**` | `docs/business-features/` doc for the affected service (path from `docs/project-config.json`) |
+| `src/{frontend-dir}/**` | `docs/project-reference/frontend-patterns-reference.md`, relevant business-feature docs       |
+| `CLAUDE.md`             | `.claude/docs/README.md` (navigation hub must stay in sync)                                   |
 
 **Output one of:**
 
@@ -78,34 +78,60 @@ After the change summary, run `git diff --name-only` (against base branch or rec
 
 ## AI Mistake & Lesson Learned Analysis (REQUIRED)
 
-After the doc staleness check, review the entire session for AI mistakes and lessons learned:
+After the doc staleness check, review the entire session for AI mistakes and lessons learned.
 
-1. **Analyze mistakes** — Did AI make any errors during this task? Examples:
-    - Wrong assumptions about code behavior
-    - Incorrect pattern usage (violated project conventions)
-    - Missing edge cases or validation
-    - Hallucinated APIs, methods, or file paths
-    - Over-engineering or unnecessary complexity
-    - Missed existing code that should have been reused
-    - Wrong architectural layer placement
+### Step 1 — Surface all mistakes
 
-2. **Identify lessons** — For each mistake found, formulate a concise lesson:
-    - What went wrong (specific, with file:line if applicable)
-    - Why it happened (root cause)
-    - How to prevent it next time (actionable rule)
+List every error made during this session. For each, note:
 
-3. **Ask user to persist** — If any lesson exists, ask the user:
+- What happened (observable symptom — build fail, test fail, wrong output)
+- Where it happened (file:line if applicable)
 
-    > "Found [N] lesson(s) learned during this task. Should I use `/learn` to remember them for future sessions?"
+Common mistake categories:
 
-    Wait for user confirmation before invoking `/learn`.
+- Assumed an API/type/enum value existed without reading the source
+- Assumed infrastructure availability without checking requirements
+- Conflated "code exists" with "code executes" — missed path tracing
+- Used a pattern without verifying the new context has the same preconditions
+- Reported "done" without verifying ALL affected outputs across all stacks
+- Hallucinated method names, class names, or file paths
+
+### Step 2 — Extract root-cause lessons (NOT symptom fixes)
+
+For each mistake, apply this 3-step extraction:
+
+**2a. Name the failure mode** — NOT the symptom, the reasoning failure:
+
+| Symptom (BAD lesson)                       | Failure mode (GOOD lesson)                                                             |
+| ------------------------------------------ | -------------------------------------------------------------------------------------- |
+| "Used wrong enum value"                    | "Generated code using an assumed API without verifying it exists in the source"        |
+| "Wrong namespace in using"                 | "Assumed project setup without reading project-specific configuration files first"     |
+| "Happy-path assertion failed in CI"        | "Wrote assertions without tracing what infrastructure the handler requires at runtime" |
+| "Set properties that don't exist on query" | "Assumed all types in a hierarchy share the same interface without reading base class" |
+
+**2b. Find the class** — Where else could this SAME failure mode strike?
+
+If the failure mode only applies in one specific file or case → go up one abstraction level until it generalizes. A good lesson applies to ≥3 different contexts.
+
+**2c. Write as a universal rule** — Strip ALL project-specific names:
+
+- No file paths, class names specific to this codebase, or tool names
+- Must read as useful advice on a completely different codebase in a different language
+- If multiple mistakes share the same failure mode → consolidate into ONE lesson
+- Test: "Would this prevent the same class of mistake in a Java, Go, or Python project?" If yes → good. If no → rewrite.
+
+### Step 3 — Ask user to persist
+
+> "Found [N] root-cause lesson(s). Should I use `/learn` to save them for future sessions?"
+
+Wait for user confirmation before invoking `/learn`.
 
 **Output one of:**
 
-- A numbered list of lessons with the `/learn` prompt above
+- A numbered list: failure mode → universal lesson → proposed `/learn` text
 - `No AI mistakes identified in this session` — if genuinely none found
 
-**Be honest and self-critical.** The purpose is continuous improvement, not self-congratulation.
+**Be honest and self-critical.** Surface-level symptom fixes ("always check file X") that only apply to this codebase are NOT lessons — they are noise. The purpose is root-cause prevention that compounds across sessions.
 
 ---
 
@@ -127,5 +153,5 @@ After the doc staleness check, review the entire session for AI mistakes and les
   <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
 - **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting

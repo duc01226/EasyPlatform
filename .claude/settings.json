@@ -200,27 +200,17 @@
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-review-rules-injector.cjs",
                         "type": "command"
-                    }
-                ],
-                "matcher": "Skill"
-            },
-            {
-                "hooks": [
+                    },
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dev-rules-injector.cjs",
                         "type": "command"
-                    }
-                ],
-                "matcher": "Skill"
-            },
-            {
-                "hooks": [
+                    },
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mindset-injector.cjs",
                         "type": "command"
                     }
                 ],
-                "matcher": "Skill"
+                "matcher": "Skill|Edit|Write|MultiEdit"
             },
             {
                 "hooks": [
@@ -254,18 +244,6 @@
                     },
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mindset-injector.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dev-rules-injector.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-review-rules-injector.cjs",
                         "type": "command"
                     }
                 ],
@@ -438,7 +416,35 @@
                         "type": "command"
                     },
                     {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router-p2.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router-p3.cjs",
+                        "type": "command"
+                    },
+                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-p2.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-docs.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-docs-p2.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-claude.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-claude-p2.cjs",
                         "type": "command"
                     }
                 ]

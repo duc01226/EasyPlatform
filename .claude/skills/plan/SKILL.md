@@ -86,10 +86,30 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 
 **Workflow:**
 
-1. **Analyze** — Understand task, ask clarifying questions via AskUserQuestion
+1. **Analyze** — Surface ambiguity BEFORE planning (protocol below), then ask clarifying questions via `AskUserQuestion`.
 2. **Route** — Decide `/plan-fast` (simple) or `/plan-hard` (complex) based on scope
 3. **Create** — Execute chosen plan variant, write plan to `plans/` directory
 4. **Validate** — Offer `/plan-review` and `/plan-validate` for quality assurance
+
+> **Ambiguity Protocol — MUST ATTENTION run before writing any plan:**
+>
+> | Dimension       | Ask                                                                          |
+> | --------------- | ---------------------------------------------------------------------------- |
+> | **Scope**       | All records or filtered? What's included/excluded? Any privacy implications? |
+> | **Format**      | File? API? Background job? UI change? What does "done" look like?            |
+> | **Volume**      | How many entities/files affected? (drives approach: in-memory vs paged)      |
+> | **Constraints** | Performance targets? Security boundaries? Patterns already in use?           |
+>
+> If multiple interpretations exist, present with effort estimates before planning:
+>
+> ```
+> "[Request]" could mean:
+> 1. [Interpretation A] — [approach] — ~[Nh] effort
+> 2. [Interpretation B] — [approach] — ~[Nh] effort
+> Simplest approach: [X]. Which direction?
+> ```
+>
+> NEVER pick silently. If a simpler approach exists than implied, say so first.
 
 **Key Rules:**
 
@@ -159,29 +179,11 @@ Check the `## Plan Context` section in the injected context:
 - Activate `planning` skill.
 - Note: `detailed-instructions-prompt` is **an enhanced prompt** that describes the task in detail based on the provided task description.
 
-## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
+**MANDATORY FINAL TASKS** — After all planning tasks, ALWAYS add these three:
 
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
-- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these three final tasks:
-    1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
-    2. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-    3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
-
-## Important Notes
-
-**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
-**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-**IMPORTANT:** Ensure token efficiency while maintaining high quality.
-**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
-
-## REMINDER — Planning-Only Command
-
-> **DO NOT** use `EnterPlanMode` tool.
-> **DO NOT** start implementing.
-> **ALWAYS** use `AskUserQuestion` tool to offer `/plan-review` validation after plan creation.
-> **ASK** user to confirm the plan before any implementation begins.
-> **ASK** user decision questions using `AskUserQuestion` tool when multiple approaches exist.
+1. **"Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. `Evidence: TBD` for TDD-first mode.
+2. **"Run /plan-validate"** — Interview user to validate plan assumptions
+3. **"Run /plan-review"** — Auto-review plan for validity and best practices
 
 ---
 

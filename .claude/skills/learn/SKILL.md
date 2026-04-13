@@ -136,7 +136,7 @@ After generalizing a lesson, evaluate whether it qualifies as a **System Lesson*
 3. **Silent failure** — The mistake produces no error/warning; it silently degrades output quality
 4. **Not already covered** — No existing System Lesson addresses the same root cause
 
-> **System Lessons** — Universal AI mistake prevention rules injected into EVERY prompt. Stored in `injectLessonReminder()` → "Common AI Mistake Prevention" array. Each must be universal, high-recurrence, and silent-failure.
+> **System Lessons** — Universal AI mistake prevention rules injected into EVERY prompt. Stored in `injectAiMistakePrevention()` → "Common AI Mistake Prevention" array. Each must be universal, high-recurrence, and silent-failure.
 > READ `.claude/hooks/lib/prompt-injections.cjs` to check for duplicates before adding.
 
 **If qualified:** Recommend "Doc + System Lesson" option. On user approval, append the lesson as a new bullet to the System Lessons array in `prompt-injections.cjs` following the existing format: `` `- **Bold title.** Explanation sentence.` ``
@@ -145,11 +145,30 @@ After generalizing a lesson, evaluate whether it qualifies as a **System Lesson*
 
 ### Lesson Quality Gate (MANDATORY before saving)
 
-Every lesson MUST ATTENTION be **generic and reusable across any project**. Before saving:
+Every lesson MUST be **root-cause level and generic across any codebase**. Apply this 3-step extraction before saving:
 
-1. **Analyze root cause** — Why did this mistake happen? What is the underlying pattern?
-2. **Generalize** — Strip project-specific names, file paths, and tool names. Express the lesson as a universal principle.
-3. **Verify universality** — Would this lesson help an AI working on a completely different codebase? If no → rewrite until yes.
+**Step 1 — Name the FAILURE MODE, not the symptom:**
+
+The failure mode is the reasoning or assumption that broke — not what the output looked like.
+
+| Symptom (BAD — reject this)       | Failure mode (GOOD — save this)                                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| "Used wrong enum value"           | "Generated code using an assumed API without verifying it exists in source"                                      |
+| "Wrong namespace/import"          | "Assumed project setup from convention without reading project-specific config files first"                      |
+| "Happy-path test failed in CI"    | "Wrote assertions without tracing what runtime infrastructure the code path requires"                            |
+| "Set properties that don't exist" | "Assumed all types in a hierarchy share the same interface without reading the base class"                       |
+| "Always read file X before Y"     | "Assumed execution context without reading the owning layer's contract — fixed at symptom site instead of cause" |
+
+**Step 2 — Verify generality:**
+
+Does this failure mode apply to ≥3 different contexts or codebases? If only one file or one specific case → go up one abstraction level. A good lesson prevents an entire _class_ of mistakes.
+
+**Step 3 — Write as a universal rule:**
+
+- Strip ALL project-specific names, file paths, class names, and tool names
+- Must be useful on any codebase, any language, any task type
+- If multiple mistakes share the same failure mode → consolidate to ONE lesson, not many
+- Test: "Would an AI working in Java, Go, or Python on a different project benefit from this?" If yes → good. If no → rewrite.
 
 **Anti-pattern examples:**
 
@@ -157,6 +176,8 @@ Every lesson MUST ATTENTION be **generic and reusable across any project**. Befo
 - GOOD: "When consolidating modules, ensure shared constants are imported from a single source of truth — never define inline duplicates."
 - BAD: "Update `.claude/docs/hooks/README.md` after deleting hooks" → project-specific file
 - GOOD: "Deleting components causes documentation staleness cascades — map all referencing docs before removal."
+- BAD: "Read GlobalUsings.cs before adding usings in \*.IntegrationTests" → project-specific file
+- GOOD: "Before generating code that uses project conventions (imports, namespaces, annotations), read the project's bootstrap/configuration files for that layer — convention files override framework defaults silently."
 
 ### Routing Decision Process
 
@@ -187,12 +208,12 @@ Every lesson MUST ATTENTION be **generic and reusable across any project**. Befo
 
 `docs/project-reference/lessons.md` is injected into EVERY prompt and EVERY file edit. Token budget must be controlled.
 
-**Hard limit:** 3000 characters (~1000 tokens). Check BEFORE saving any new lesson.
+**Hard limit:** 10000 characters (~3333 tokens). Check BEFORE saving any new lesson.
 
 **Workflow when adding to `docs/project-reference/lessons.md`:**
 
 1. Read file, count characters (`wc -c docs/project-reference/lessons.md`)
-2. If current + new lesson > 3000 chars → trigger **Budget Trim** before saving
+2. If current + new lesson > 10000 chars → trigger **Budget Trim** before saving
 3. If under budget → save normally
 
 **Budget Trim process:**

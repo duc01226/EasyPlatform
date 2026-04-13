@@ -12,6 +12,8 @@ Activate the `bugfix` workflow. Run `/workflow-start bugfix` with the user's pro
 
 **Steps:** /scout → /investigate → /debug-investigate → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /integration-test → /fix → /prove-fix → /integration-test → /integration-test-review → /workflow-review-changes → /changelog → /test → /docs-update → /watzup → /workflow-end
 
+> **[PERFORMANCE EXCEPTION]** If this bug fix is performance-related (latency, throughput, memory, query speed), skip `/tdd-spec`, `/tdd-spec-review`, `/integration-test` (both occurrences), `/integration-test-review`, and `/integration-test-verify`. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead when the primary goal is performance optimization.
+
 > **[TDD-FIRST BUG FIX]** The two `/integration-test` occurrences are intentional and serve distinct purposes:
 >
 > - **First `/integration-test` (RED phase):** Write a regression test that REPRODUCES the bug. Run it — it MUST FAIL. If it passes, the test does not catch the bug. Never proceed to fix until the test fails.

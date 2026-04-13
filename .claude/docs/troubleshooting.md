@@ -352,7 +352,6 @@ await foreach (var entity in repository.AsAsyncEnumerable(expr))
 | Topic             | Documentation                                           |
 | ----------------- | ------------------------------------------------------- |
 | Skills            | [skills/README.md](./skills/README.md)                  |
-| Skills            | [skills/README.md](./skills/README.md)                  |
 | Hooks             | [hooks/README.md](./hooks/README.md)                    |
 | Agents            | [agents/README.md](./agents/README.md)                  |
 | Configuration     | [configuration/README.md](./configuration/README.md)    |

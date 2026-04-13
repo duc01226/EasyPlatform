@@ -39,18 +39,18 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate, AskUserQue
 
 > **CRITICAL: NO Smoke/Fake/Useless Tests.** Every test MUST execute actual commands/handlers and verify data state in the database — like a QC tester testing the real system. NO DI-resolution-only tests (`GetRequiredService + NotBeNull`). NO exception-check-only tests (`exception.Should().BeNull()` alone). Before writing assertions: READ the handler/entity/event source to understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assert specific field values in the database.
 
-> **CRITICAL: WaitUntilAsync for ALL Data Assertions.** ALWAYS wrap data state assertions in `WaitUntilAsync()`. This is the DEFAULT for ALL data verification — not just "async event handlers". Data persistence may be delayed by entity event handlers, message bus consumers, background jobs, or DB write latency. `WaitUntilAsync` retries with polling and is always safe. **Rule: If you assert data in the database, use `WaitUntilAsync`. No exceptions.**
+> **CRITICAL: Async Polling for ALL Data Assertions.** ALWAYS wrap data state assertions in the project's async polling/retry helper. This is the DEFAULT for ALL data verification — not just "async event handlers". Data persistence may be delayed by entity event handlers, message bus consumers, background jobs, or DB write latency. Async polling retries with timeout and is always safe. **Rule: If you assert data in the database, use async polling. No exceptions.**
 
 <!-- SYNC:repeatable-test-principle -->
 
 > **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data.
 >
-> 1. **Unique data per run:** Use `Ulid.NewUlid()` or `Guid.NewGuid()` for ALL entity IDs created in tests. NEVER hardcode IDs.
+> 1. **Unique data per run:** Use the project's unique ID generator for ALL entity IDs created in tests. NEVER hardcode IDs.
 > 2. **Additive only:** Tests create data, never delete/reset. Prior test runs MUST NOT interfere with current run.
-> 3. **No migration Down() dependency:** Tests work with current schema only. Never rely on rollback.
+> 3. **No schema rollback dependency:** Tests work with current schema only. Never rely on schema rollback or migration reversals.
 > 4. **Idempotent seeders:** Fixture-level seeders use create-if-missing pattern (check existence before insert). Test-level data uses unique IDs per execution.
 > 5. **No cleanup required:** No teardown, no database reset between runs. Each test is isolated by unique seed data, not by cleanup.
-> 6. **Unique names/codes:** When entities require unique names/codes, append `Ulid.NewUlid()` suffix (e.g., `$"TestGoal-{Ulid.NewUlid()}"`).
+> 6. **Unique names/codes:** When entities require unique names/codes, append a unique suffix using the project's ID generator.
 
 <!-- /SYNC:repeatable-test-principle -->
 
@@ -120,14 +120,14 @@ Before implementation, search your codebase for project-specific patterns:
 
 - MUST ATTENTION search for existing test patterns in the same service BEFORE generating
 - MUST ATTENTION READ `references/integration-test-patterns.md` before writing any test
-- **Organize by domain feature, NOT by type** — command and query tests for the same domain go in the same folder (e.g., `Orders/OrderCommandIntegrationTests.cs` + `Orders/OrderQueryIntegrationTests.cs`). NEVER create a `Queries/` or `Commands/` folder.
-- Use `IntegrationTestHelper.UniqueName()` for ALL string test data
-- Use `AssertEntityMatchesAsync<T>` for DB verification (built-in WaitUntil polling)
-- **CRITICAL MUST ATTENTION ENSURE:** ALWAYS wrap ALL data state assertions in `WaitUntilAsync()`. This is the DEFAULT — not just for "async" handlers. Data may be delayed by entity event handlers, message bus consumers, or background jobs. `WaitUntilAsync` retries with polling and is always safe. **If you assert data in DB → use WaitUntilAsync. No exceptions.**
+- **Organize by domain feature, NOT by type** — command and query tests for the same domain go in the same folder (e.g., `Orders/OrderCommandIntegrationTests.*` + `Orders/OrderQueryIntegrationTests.*`). NEVER create a `Queries/` or `Commands/` folder.
+- Use the project's unique name generator for ALL string test data (search test utilities for unique name helpers)
+- Use the project's entity assertion helpers for DB verification with built-in async polling (search test base classes for `AssertEntity*` or equivalent patterns)
+- **CRITICAL MUST ATTENTION ENSURE:** ALWAYS wrap ALL data state assertions in the project's async polling/retry helper. This is the DEFAULT — not just for "async" handlers. Data may be delayed by entity event handlers, message bus consumers, or background jobs. Async polling retries with timeout and is always safe. **If you assert data in DB → use async polling. No exceptions.**
 - **CRITICAL MUST ATTENTION ENSURE:** Before writing assertions, READ the handler/entity/event source code. Understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assert specific field values, not just non-null. Smoke-only is FORBIDDEN unless side effect is truly unobservable.
 - Minimum 3 test methods: happy path, validation failure, DB state check
-- **Authorization tests:** Include tests with multiple user contexts (`TestUserContextFactory.CreateAdmin()`, `CreateRegularUser()`, etc.) — verify authorized access succeeds AND unauthorized access is rejected
-- Every test method MUST ATTENTION have `// TC-{FEATURE}-{NNN}: Description` comment AND `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` — placed **before** `[Fact]`, outside method body
+- **Authorization tests:** Include tests with multiple user contexts (use the project's user context factory) — verify authorized access succeeds AND unauthorized access is rejected
+- Every test method MUST ATTENTION have `// TC-{FEATURE}-{NNN}: Description` comment AND a test-spec annotation (e.g., `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` in xUnit — adapt to your framework) — placed before the test method, outside method body
 - If no TC exists in feature docs, **auto-create** it in Section 15 before generating the test
 - For comprehensive test spec generation before coding, use `/tdd-spec` first
 
@@ -147,17 +147,17 @@ When generating integration tests, ALWAYS create and execute tasks in this exact
 
 2. **MIDDLE tasks: Implement integration tests**
     - Generate test files using the TC mapping from task 1
-    - Each `[Fact]` method gets annotation before it (outside method body):
+    - Each test method gets a TC annotation before it (outside method body) — **adapt to your test framework** (C#/xUnit example):
         ```csharp
         // TC-OM-001: Create valid order — happy path
         [Trait("TestSpec", "TC-OM-001")]
         [Fact]
         public async Task CreateOrder_WhenValidData_ShouldCreateSuccessfully()
         ```
-    - Follow all existing patterns (Collection, Trait("Category"), UniqueName, AssertEntity\*, etc.)
+    - Follow all existing patterns from the project's test base classes (collection/group, category, unique data helpers, assertion helpers, etc.)
 
 3. **FINAL task: Verify bidirectional traceability**
-    - Grep all `[Trait("TestSpec", ...)]` in the test project
+    - Grep for test-spec annotations in the test project (e.g., `[Trait("TestSpec", ...)]` in xUnit, `@Tag` in JUnit — adapt to your framework)
     - Grep all `TC-{FEATURE}-{NNN}` in feature doc Section 15 / test-specs doc
     - Verify every test method links to a doc TC, and every doc TC links back to a test
     - Flag orphans: tests without doc TCs, or doc TCs without matching tests
@@ -181,8 +181,8 @@ When creating new `TC-{FEATURE}-{NNN}` codes:
 
 1. **Always check the feature doc's first** — `docs/business-features/{App}/detailed-features/` contains existing TC codes. New codes must not collide.
 2. **Existing docs use decade-based grouping** — e.g., OM: 001-004 (CRUD), 011-013 (validation), 021-023 (permissions), 031-033 (events). Find the next free decade.
-3. **If a collision is unavoidable** — renumber in the doc side only (e.g., TC-OM-031 → TC-OM-034). Keep `[Trait("TestSpec")]` in the .cs file unchanged and add a renumbering note in the doc.
-4. **Feature doc is the canonical registry** — the `[Trait("TestSpec")]` in test files is for traceability, not the source of truth for numbering.
+3. **If a collision is unavoidable** — renumber in the doc side only (e.g., TC-OM-031 → TC-OM-034). Keep the test-spec annotation in the test file unchanged and add a renumbering note in the doc.
+4. **Feature doc is the canonical registry** — the test-spec annotation in test files is for traceability, not the source of truth for numbering.
 
 # Integration Test Generation
 
@@ -215,13 +215,13 @@ Run via Bash tool:
 git diff --name-only; git diff --cached --name-only
 ```
 
-Filter for `*Command.cs` or `*Query.cs` under `src/Services/`. Extract service from path:
+Filter for command/query files using the project's naming conventions (e.g., `*Command.*`, `*Query.*`). Path patterns for services and test projects come from `docs/project-config.json` → `modules` or `backendServices`. Extract service from path:
 
-| Path pattern                                       | Service   | Test project                 |
-| -------------------------------------------------- | --------- | ---------------------------- |
-| `src/Services/{ServiceDir}/{Service}.Application/` | {Service} | `{Service}.IntegrationTests` |
+| Path pattern                                        | Service   | Test project                                         |
+| --------------------------------------------------- | --------- | ---------------------------------------------------- |
+| Per `docs/project-config.json` service path pattern | {Service} | `{Service}.IntegrationTests` (or project equivalent) |
 
-Search your codebase for existing `*.IntegrationTests` projects to find the correct mapping.
+Search your codebase for existing `*.IntegrationTests.*` projects to find the correct mapping.
 
 If no test project exists: inform user "No integration test project for {service}. See CLAUDE.md Integration Testing section to create one."
 
@@ -232,7 +232,7 @@ If test file already exists: ask user overwrite or skip.
 User specifies command/query name. Use Grep tool (NOT bash grep):
 
 ```
-Grep pattern="class {CommandName}" path="src/Services/" glob="*.cs"
+Grep pattern="class {CommandName}" path="." glob="*.cs" (adapt path and extension to your project)
 ```
 
 ## Step 2: Gather Context
@@ -240,7 +240,7 @@ Grep pattern="class {CommandName}" path="src/Services/" glob="*.cs"
 For each target, read these files (in parallel):
 
 1. **Command/query file** — extract: class name, result type, DTO property, entity type
-2. **Existing test files in same service** — use Glob `{Service}.IntegrationTests/**/*IntegrationTests.cs`, read 1+ for conventions (collection name, trait, namespace, usings, base class)
+2. **Existing test files in same service** — use Glob `{Service}.IntegrationTests/**/*IntegrationTests.*`, read 1+ for conventions (collection name, trait, namespace, usings, base class)
 3. **Service integration test base class** — grep: `class.*ServiceIntegrationTestBase`
 4. **`references/integration-test-patterns.md`** — canonical templates (adapt {Service} placeholders)
 
@@ -259,11 +259,11 @@ If no TC exists and feature doc Section 15 is missing, run `/tdd-spec` first to 
 
 ## Step 3: Generate Test File
 
-**File path:** `src/Services/{ServiceDir}/{Service}.IntegrationTests/{Domain}/{CommandName}IntegrationTests.cs`
+**File path:** `{project-test-dir}/{Service}.IntegrationTests/{Domain}/{CommandName}IntegrationTests{ext}` (adapt path and extension to your project's conventions — see `docs/project-config.json` → `integrationTestVerify.testProjectPattern`)
 
 > **Folder = domain feature.** `{Domain}` is the business domain (Orders, Inventory, Notifications, UserProfiles, etc.), NOT the CQRS type. Both command and query tests for the same domain live in the same folder.
 
-**Structure:**
+**Structure (C#/xUnit example — adapt namespace, collection/group attribute, category annotation, and base class to your framework):**
 
 ```csharp
 #region
@@ -294,37 +294,35 @@ public class {CommandName}IntegrationTests : {Service}ServiceIntegrationTestBase
 
 ## Step 4: Verify
 
-```bash
-dotnet build {test-project-path}
-```
+Build the test project using your project's build tool (see `/integration-test-verify` for config-driven build and run).
 
 Check:
 
-- [ ] `[Collection]` attribute present with correct collection name
-- [ ] `[Trait("Category", ...)]` present
-- [ ] All string test data uses `IntegrationTestHelper.UniqueName()`
-- [ ] User context via `TestUserContextFactory.Create*()`
-- [ ] DB assertions use `AssertEntityMatchesAsync` or `AssertEntityDeletedAsync`
+- [ ] Test collection/group attribute present with correct collection name (framework-specific: `[Collection]`, `@Nested`, etc.)
+- [ ] Test category annotation present (framework-specific: `[Trait("Category", ...)]`, `@Tag`, `@Category`, etc.)
+- [ ] All string test data uses the project's unique name generator
+- [ ] User context created via the project's user context factory
+- [ ] DB assertions use the project's entity assertion helpers with async polling
 - [ ] No mocks — real DI only
-- [ ] Every `[Fact]` method has `// TC-{FEATURE}-{NNN}: Description` comment + `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]`
+- [ ] Every test method has `// TC-{FEATURE}-{NNN}: Description` comment + test-spec annotation (adapt to your framework)
 
 ## Example Files to Study
 
-Search your codebase for existing integration test files to use as reference:
+Search your codebase for existing integration test files to use as reference (adapt file extension to your project):
 
 ```bash
-# Find existing integration test files
-find src/Services -name "*IntegrationTests.cs" -type f
-find src/Services -name "*IntegrationTestBase.cs" -type f
-find src/Services -name "*IntegrationTestFixture.cs" -type f
+# Find existing integration test files (adapt path and extension to your project)
+find . -name "*IntegrationTests.*" -type f
+find . -name "*IntegrationTestBase.*" -type f
+find . -name "*IntegrationTestFixture.*" -type f
 ```
 
-| Pattern                                                             | Shows                        |
-| ------------------------------------------------------------------- | ---------------------------- |
-| `{Service}.IntegrationTests/{Domain}/*CommandIntegrationTests.cs`   | Create + update + validation |
-| `{Service}.IntegrationTests/{Domain}/*QueryIntegrationTests.cs`     | Query with create-then-query |
-| `{Service}.IntegrationTests/{Domain}/Delete*IntegrationTests.cs`    | Delete + cascade             |
-| `{Service}.IntegrationTests/{Service}ServiceIntegrationTestBase.cs` | Service base class pattern   |
+| Pattern                                                            | Shows                        |
+| ------------------------------------------------------------------ | ---------------------------- |
+| `{Service}.IntegrationTests/{Domain}/*CommandIntegrationTests.*`   | Create + update + validation |
+| `{Service}.IntegrationTests/{Domain}/*QueryIntegrationTests.*`     | Query with create-then-query |
+| `{Service}.IntegrationTests/{Domain}/Delete*IntegrationTests.*`    | Delete + cascade             |
+| `{Service}.IntegrationTests/{Service}ServiceIntegrationTestBase.*` | Service base class pattern   |
 
 ## Related
 
@@ -404,11 +402,11 @@ When mode = REVIEW, audit existing integration tests for quality, flaky patterns
 
 These patterns cause intermittent failures — flag as HIGH severity:
 
-- [ ] **Missing async polling** — DB assertions after async event handlers without `WaitUntilAsync()` or equivalent retry/polling. Direct assertions on state changed by background threads WILL flake.
+- [ ] **Missing async polling** — DB assertions after async event handlers without async polling/retry (e.g., `WaitUntilAsync()` or equivalent). Direct assertions on state changed by background threads WILL flake.
 - [ ] **Missing retry for eventual consistency** — Any assertion that checks state modified by message bus consumers, event handlers, or background jobs without polling/retry wrapper
 - [ ] **Hardcoded delays** — `Thread.Sleep()`, `Task.Delay()` instead of condition-based polling (`WaitUntil`, retry loops with timeout)
 - [ ] **Race conditions** — Multiple tests modifying shared state without isolation (e.g., same entity ID, same user context)
-- [ ] **Non-unique test data** — Hardcoded strings/IDs instead of unique generators (e.g., `IntegrationTestHelper.UniqueName()` or equivalent)
+- [ ] **Non-unique test data** — Hardcoded strings/IDs instead of unique generators (search your test utilities for a unique name helper, e.g., `IntegrationTestHelper.UniqueName()` or equivalent)
 - [ ] **Time-dependent assertions** — Tests that depend on `DateTime.Now` without time abstraction
 
 ### Best Practice Checks
@@ -443,9 +441,9 @@ These patterns cause intermittent failures — flag as HIGH severity:
 
 ## HIGH Severity Issues (Flaky Risk)
 
-| Test         | Issue                                            | Fix                      |
-| ------------ | ------------------------------------------------ | ------------------------ |
-| {MethodName} | DB assertion without polling after async handler | Wrap in WaitUntilAsync() |
+| Test         | Issue                                            | Fix                                    |
+| ------------ | ------------------------------------------------ | -------------------------------------- |
+| {MethodName} | DB assertion without polling after async handler | Wrap in project's async polling helper |
 
 ## MEDIUM Severity Issues (Best Practice)
 
@@ -496,8 +494,8 @@ Test fails
 │   │   ├── Entity not found → Check if create step succeeded → TEST BUG (setup) or CODE BUG (handler)
 │   │   └── Query returns empty → Check filters/predicates → CODE BUG
 │   ├── Intermittent (passes sometimes)?
-│   │   ├── Async assertion without polling → TEST BUG (add WaitUntilAsync)
-│   │   ├── Non-unique test data collision → TEST BUG (use UniqueName)
+│   │   ├── Async assertion without polling → TEST BUG (add async polling/retry)
+│   │   ├── Non-unique test data collision → TEST BUG (use unique name generator)
 │   │   └── Race condition in handler → CODE BUG
 │   └── Wrong count/order?
 │       ├── Test data leak from other tests → TEST BUG (isolation)
@@ -635,7 +633,7 @@ When test code and spec disagree, determine which is correct:
 **Rules:**
 
 - Every test creates its own data — no shared mutable state between tests
-- Use unique identifiers for ALL string data (`IntegrationTestHelper.UniqueName()`)
+- Use unique identifiers for ALL string data (search your test utilities for a unique name/data generator helper)
 - Factory methods return valid entities by default — tests override only what they test
 - Cross-entity dependencies: create parent first, then child (e.g., create User, then create Order for that User)
 - **Seed data:** If the feature requires reference/lookup data, set up seed data in the collection fixture or per-test preconditions
@@ -655,7 +653,7 @@ When test code and spec disagree, determine which is correct:
 
 > **IMPORTANT MUST ATTENTION:** After generating/modifying integration tests, you MUST:
 >
-> 1. **Run tests:** `dotnet test` on the test project
+> 1. **Run tests:** Use `/integration-test-verify` (reads `quickRunCommand` from `docs/project-config.json`)
 > 2. **If tests fail:** Diagnose root cause — is the failure because (a) test code has wrong setup/assertions → fix test code, or (b) actual service code has a bug → report as finding
 > 3. **Never mark done until tests pass.** Unrun tests have zero value.
 > 4. **Iterate:** Fix → rerun → verify until all tests pass or failures are confirmed as service bugs
@@ -664,7 +662,7 @@ When test code and spec disagree, determine which is correct:
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/test (Recommended)"** — Run full test suite to verify integration tests pass
+- **"/integration-test-verify (Recommended)"** — Run integration tests to verify they all pass
 - **"/workflow-review-changes"** — Review all changes before committing
 - **"Skip, continue manually"** — user decides
 
@@ -678,14 +676,14 @@ When test code and spec disagree, determine which is correct:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:graph-impact-analysis:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:graph-impact-analysis:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-  <!-- /SYNC:graph-impact-analysis:reminder -->
-  <!-- SYNC:red-flag-stop-conditions:reminder -->
+    <!-- /SYNC:graph-impact-analysis:reminder -->
+    <!-- SYNC:red-flag-stop-conditions:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-  <!-- /SYNC:red-flag-stop-conditions:reminder -->
-  <!-- SYNC:rationalization-prevention:reminder -->
+    <!-- /SYNC:red-flag-stop-conditions:reminder -->
+    <!-- SYNC:rationalization-prevention:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
+  <!-- /SYNC:rationalization-prevention:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** READ `references/integration-test-patterns.md` before starting

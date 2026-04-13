@@ -1,45 +1,56 @@
 {
-  "_description": "Project-specific configuration consumed by .claude hooks at runtime. Update when adding services/apps.",
-  "schemaVersion": 2,
-  "project": {
-    "name": "",
-    "description": "",
-    "languages": [],
-    "packageManagers": []
-  },
-  "framework": {
-    "name": "",
-    "backendPatternsDoc": "docs/project-reference/backend-patterns-reference.md",
-    "frontendPatternsDoc": "docs/project-reference/frontend-patterns-reference.md",
-    "codeReviewDoc": "docs/project-reference/code-review-rules.md",
-    "integrationTestDoc": "docs/project-reference/integration-test-reference.md",
-    "searchPatternKeywords": []
-  },
-  "modules": [],
-  "contextGroups": [],
-  "designSystem": {
-    "docsPath": "docs/project-reference/design-system",
-    "appMappings": []
-  },
-  "styling": {
-    "fileExtensions": [],
-    "guideDoc": "",
-    "appMap": {},
-    "patterns": []
-  },
-  "componentSystem": {
-    "selectorPrefixes": ["app-"],
-    "layerClassification": {}
-  },
-  "testing": {
-    "frameworks": [],
-    "filePatterns": {},
-    "commands": {}
-  },
-  "databases": {},
-  "messaging": {},
-  "api": {},
-  "infrastructure": {},
-  "referenceDocs": [],
-  "custom": {}
+    "_description": "Project-specific configuration consumed by .claude hooks at runtime. Update when adding services/apps.",
+    "schemaVersion": 2,
+    "project": {
+        "name": "",
+        "description": "",
+        "languages": [],
+        "packageManagers": []
+    },
+    "framework": {
+        "name": "",
+        "backendPatternsDoc": "docs/project-reference/backend-patterns-reference.md",
+        "frontendPatternsDoc": "docs/project-reference/frontend-patterns-reference.md",
+        "codeReviewDoc": "docs/project-reference/code-review-rules.md",
+        "integrationTestDoc": "docs/project-reference/integration-test-reference.md",
+        "searchPatternKeywords": []
+    },
+    "modules": [],
+    "contextGroups": [],
+    "designSystem": {
+        "docsPath": "docs/project-reference/design-system",
+        "appMappings": []
+    },
+    "styling": {
+        "fileExtensions": [],
+        "guideDoc": "",
+        "appMap": {},
+        "patterns": []
+    },
+    "componentSystem": {
+        "selectorPrefixes": ["app-"],
+        "layerClassification": {}
+    },
+    "testing": {
+        "frameworks": [],
+        "filePatterns": {},
+        "commands": {}
+    },
+    "databases": {},
+    "messaging": {},
+    "api": {},
+    "infrastructure": {},
+    "referenceDocs": [],
+    "workflowPatterns": {
+        "_description": "Project-specific context consumed by AI at workflow start. Fill in for your project.",
+        "architectureStyle": "",
+        "codeHierarchy": "",
+        "cssMethodology": "",
+        "stateManagement": "",
+        "crossModuleValidation": "",
+        "featureDocPath": "docs/business-features/",
+        "featureDocTemplate": "",
+        "reviewRulesDoc": ""
+    },
+    "custom": {}
 }

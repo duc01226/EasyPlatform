@@ -27,7 +27,7 @@ internal sealed class DemoSendFreeFormatEventBusMessageCommandEventBusConsumer
             Logger.LogInformation(
                 "Message {Message} by {TargetName} has been handled",
                 nameof(DemoSendFreeFormatEventBusMessage),
-                GetType().Name);
+                nameof(DemoSendFreeFormatEventBusMessageCommandEventBusConsumer));
         });
     }
 
