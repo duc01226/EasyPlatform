@@ -184,7 +184,7 @@ function resolveSection(v2Name, v1Name) {
 
 /**
  * Aggregate all file extensions from contextGroups + styling into a single array.
- * Useful for hooks that need to know ALL code file extensions (e.g., search-before-code).
+ * Useful for hooks that need to know ALL code file extensions.
  * @returns {string[]} e.g., ['.cs', '.ts', '.tsx', '.html', '.scss', '.css', '.sass', '.less']
  */
 function getAllFileExtensions() {

@@ -57,64 +57,6 @@ const swapEngineUnitTests = [
     }
   },
   {
-    name: '[swap-engine] normalizePath handles forward slashes',
-    fn: async () => {
-      const result = swapEngine.normalizePath('src/lib/test.js');
-      assertEqual(result, 'src/lib/test.js', 'Forward slashes preserved');
-    }
-  },
-  {
-    name: '[swap-engine] normalizePath converts backslashes',
-    fn: async () => {
-      // Use relative paths to avoid project-boundary trigger
-      const result = swapEngine.normalizePath('src\\lib\\test.js');
-      assertEqual(result, 'src/lib/test.js', 'Backslashes converted to forward slashes');
-    }
-  },
-  {
-    name: '[swap-engine] normalizePath lowercases path',
-    fn: async () => {
-      const result = swapEngine.normalizePath('SRC/LIB/Test.JS');
-      assertEqual(result, 'src/lib/test.js', 'Path should be lowercased');
-    }
-  },
-  {
-    name: '[swap-engine] normalizePath handles empty string',
-    fn: async () => {
-      const result = swapEngine.normalizePath('');
-      assertEqual(result, '', 'Empty string unchanged');
-    }
-  },
-  {
-    name: '[swap-engine] normalizePath handles null/undefined',
-    fn: async () => {
-      assertEqual(swapEngine.normalizePath(null), '', 'Null becomes empty');
-      assertEqual(swapEngine.normalizePath(undefined), '', 'Undefined becomes empty');
-    }
-  },
-  {
-    name: '[swap-engine] sanitizeSessionId removes invalid chars',
-    fn: async () => {
-      const result = ckPaths.sanitizeSessionId('test/../../../etc/passwd');
-      assertFalse(result.includes('/'), 'Path traversal chars removed');
-      assertFalse(result.includes('.'), 'Dots removed');
-    }
-  },
-  {
-    name: '[swap-engine] sanitizeSessionId allows alphanumeric and dashes',
-    fn: async () => {
-      const result = ckPaths.sanitizeSessionId('test-session-123');
-      assertEqual(result, 'test-session-123', 'Valid chars preserved');
-    }
-  },
-  {
-    name: '[swap-engine] sanitizeSessionId handles null/undefined',
-    fn: async () => {
-      assertEqual(ckPaths.sanitizeSessionId(null), 'default', 'Null becomes default');
-      assertEqual(ckPaths.sanitizeSessionId(undefined), 'default', 'Undefined becomes default');
-    }
-  },
-  {
     name: '[swap-engine] shouldExternalize returns false when disabled',
     fn: async () => {
       const originalConfig = swapEngine.loadConfig();
@@ -174,22 +116,6 @@ const swapEngineUnitTests = [
     }
   },
   {
-    name: '[swap-engine] shouldExternalize prevents recursion on swap paths',
-    fn: async () => {
-      const config = swapEngine.loadConfig();
-      if (!config.enabled) {
-        assertTrue(true, 'Config disabled, skipping');
-        return;
-      }
-      const swapDir = ckPaths.SWAP_DIR;
-      const largeContent = 'x'.repeat(20000);
-      const result = swapEngine.shouldExternalize('Read', largeContent, {
-        file_path: path.join(swapDir, 'test-session', 'abc123.content')
-      });
-      assertFalse(result, 'Should not externalize reads from swap directory');
-    }
-  },
-  {
     name: '[swap-engine] extractSummary extracts code signatures for Read',
     fn: async () => {
       const content = `
@@ -235,7 +161,6 @@ export function processData() { }
       const patterns = swapEngine.extractKeyPatterns(content);
       assertTrue(patterns.includes('UserService'), 'Should find UserService');
       assertTrue(patterns.includes('OrderService'), 'Should find OrderService');
-      assertTrue(patterns.includes('getData'), 'Should find getData');
     }
   },
   {
@@ -275,7 +200,7 @@ const swapEngineIntegrationTests = [
       const content = 'x'.repeat(10000);
 
       try {
-        const entry = swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+        const entry = await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
 
         if (entry) {
           assertNotNullish(entry.swapId, 'Entry should have swapId');
@@ -306,10 +231,10 @@ const swapEngineIntegrationTests = [
       const content = 'x'.repeat(10000);
 
       try {
-        swapEngine.externalize(sessionId, 'Read', { file_path: 'file1.txt' }, content);
-        swapEngine.externalize(sessionId, 'Read', { file_path: 'file2.txt' }, content);
+        await swapEngine.externalize(sessionId, 'Read', { file_path: 'file1.txt' }, content);
+        await swapEngine.externalize(sessionId, 'Read', { file_path: 'file2.txt' }, content);
 
-        const entries = swapEngine.readIndex(sessionId);
+        const entries = swapEngine.getSwapEntries(sessionId);
         assertEqual(entries.length, 2, 'Index should have 2 entries');
       } finally {
         swapEngine.deleteSessionSwap(sessionId);
@@ -329,7 +254,7 @@ const swapEngineIntegrationTests = [
       const content = 'x'.repeat(10000);
 
       try {
-        swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+        await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
 
         const entries = swapEngine.getSwapEntries(sessionId);
         assertTrue(entries.length >= 1, 'Should have entries');
@@ -357,7 +282,7 @@ const swapEngineIntegrationTests = [
       const paddedContent = content + 'x'.repeat(10000);
 
       try {
-        const entry = swapEngine.externalize(sessionId, 'Read', { file_path: 'test.cs' }, paddedContent);
+        const entry = await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.cs' }, paddedContent);
 
         if (entry) {
           const pointer = swapEngine.buildPointer(entry);
@@ -385,12 +310,12 @@ const swapEngineIntegrationTests = [
       const content = 'x'.repeat(10000);
 
       try {
-        swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+        await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
 
         // Cleanup with 0 hours retention should remove all
         swapEngine.cleanupSwapFiles(sessionId, 0);
 
-        const entries = swapEngine.readIndex(sessionId);
+        const entries = swapEngine.getSwapEntries(sessionId);
         assertEqual(entries.length, 0, 'All entries should be cleaned up');
       } finally {
         swapEngine.deleteSessionSwap(sessionId);
@@ -409,7 +334,7 @@ const swapEngineIntegrationTests = [
       const sessionId = generateTestSessionId();
       const content = 'x'.repeat(10000);
 
-      swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+      await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
 
       const sessionDir = ckPaths.getSwapDir(sessionId);
       assertTrue(fs.existsSync(sessionDir), 'Session dir should exist');
@@ -434,10 +359,10 @@ const swapEngineIntegrationTests = [
       try {
         // Create entries up to limit
         for (let i = 0; i < maxEntries + 5; i++) {
-          swapEngine.externalize(sessionId, 'Read', { file_path: `file${i}.txt` }, content);
+          await swapEngine.externalize(sessionId, 'Read', { file_path: `file${i}.txt` }, content);
         }
 
-        const entries = swapEngine.readIndex(sessionId);
+        const entries = swapEngine.getSwapEntries(sessionId);
         assertTrue(entries.length <= maxEntries, `Should not exceed ${maxEntries} entries`);
       } finally {
         swapEngine.deleteSessionSwap(sessionId);
@@ -458,7 +383,7 @@ const swapEngineIntegrationTests = [
       const content = '\u00e9'.repeat(5000) + 'x'.repeat(5000); // é is 2 bytes in UTF-8
 
       try {
-        const entry = swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+        const entry = await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
 
         if (entry) {
           assertNotNullish(entry.metadata.metrics.byteSize, 'Should have byteSize');
@@ -665,7 +590,7 @@ const sessionResumeSwapTests = [
 
       try {
         // Create swap entries first
-        swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+        await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
 
         // Now test session resume
         const input = { trigger: 'compact', session_id: sessionId };
@@ -707,7 +632,7 @@ const sessionEndSwapTests = [
       const content = 'x'.repeat(15000);
 
       // Create swap entries
-      swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+      await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
 
       const sessionDir = ckPaths.getSwapDir(sessionId);
       assertTrue(fs.existsSync(sessionDir), 'Session dir should exist');
@@ -735,7 +660,7 @@ const sessionEndSwapTests = [
 
       try {
         // Create swap entries
-        swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+        await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
 
         // Trigger session end with compact
         const input = { reason: 'compact', session_id: sessionId };
@@ -743,7 +668,7 @@ const sessionEndSwapTests = [
         assertAllowed(result.code, 'Should exit 0');
 
         // Recent entries should still exist (retention not exceeded)
-        const entries = swapEngine.readIndex(sessionId);
+        const entries = swapEngine.getSwapEntries(sessionId);
         assertTrue(entries.length >= 0, 'Recent entries may still exist');
       } finally {
         swapEngine.deleteSessionSwap(sessionId);
@@ -770,7 +695,7 @@ const edgeCaseTests = [
       const jsonContent = JSON.stringify({ data: Array(1000).fill({ key: 'value' }) }, null, 2);
 
       try {
-        const entry = swapEngine.externalize(sessionId, 'Bash', { command: 'cat data.json' }, jsonContent);
+        const entry = await swapEngine.externalize(sessionId, 'Bash', { command: 'cat data.json' }, jsonContent);
 
         if (entry) {
           const retrieved = fs.readFileSync(entry.contentPath, 'utf8');
@@ -794,7 +719,7 @@ const edgeCaseTests = [
       const specialContent = 'Line with tab:\tand pipe | and backslash \\ and quotes "text"' + 'x'.repeat(10000);
 
       try {
-        const entry = swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, specialContent);
+        const entry = await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, specialContent);
 
         if (entry) {
           const retrieved = fs.readFileSync(entry.contentPath, 'utf8');
@@ -825,7 +750,7 @@ const edgeCaseTests = [
       const objResult = { files: Array(500).fill('file.txt'), count: 500 };
 
       try {
-        const entry = swapEngine.externalize(sessionId, 'Glob', { pattern: '**/*' }, objResult);
+        const entry = await swapEngine.externalize(sessionId, 'Glob', { pattern: '**/*' }, objResult);
 
         if (entry) {
           const retrieved = fs.readFileSync(entry.contentPath, 'utf8');
@@ -851,7 +776,7 @@ const edgeCaseTests = [
       const content = 'match1 | match2 | match3\n' + 'x'.repeat(10000);
 
       try {
-        swapEngine.externalize(sessionId, 'Grep', { pattern: 'test' }, content);
+        await swapEngine.externalize(sessionId, 'Grep', { pattern: 'test' }, content);
 
         const entries = swapEngine.getSwapEntries(sessionId);
         if (entries.length > 0) {

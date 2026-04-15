@@ -4,10 +4,10 @@ description: >-
     Use this agent to investigate issues, diagnose errors, analyze system behavior,
     examine logs and CI/CD pipelines, debug test failures, or identify performance
     bottlenecks. Produces diagnostic reports with root cause analysis.
-tools: Read, Grep, Glob, Bash, Write, TaskCreate
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: opus
 memory: project
-maxTurns: 30
+maxTurns: 200
 ---
 
 ## Role

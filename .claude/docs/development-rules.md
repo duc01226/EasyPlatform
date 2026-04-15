@@ -266,15 +266,6 @@ For multi-step tasks, each step in `TaskCreate` must carry an explicit verify cr
 - **DO NOT** commit confidential information (dotenv files, API keys, credentials) to git
 - Clean, professional commit messages — conventional commit format
 
-## Git Worktree Best Practices
-
-When using `isolation: "worktree"` or manual git worktrees:
-
-1. **Verify ignored** — Project-local worktree directories must be in `.gitignore`. Use `git check-ignore -q <dir>` to verify.
-2. **Baseline tests** — Run tests in new worktree before changes. If tests fail, report and ask before proceeding.
-3. **Project setup** — Auto-detect and run setup commands (`npm install`, `dotnet restore`, etc.)
-4. **Report location** — Report worktree path, baseline test results, and readiness status.
-
 ## Bulk Edit Safety (MANDATORY for multi-file replacements)
 
 When performing bulk find/replace across 3+ files:

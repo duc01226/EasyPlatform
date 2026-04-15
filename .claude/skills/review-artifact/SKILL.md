@@ -1,12 +1,29 @@
 ---
 name: review-artifact
-version: 1.0.0
+version: 1.2.0
 description: '[Code Quality] Review artifact quality before handoff. Use to verify PBIs, designs, stories meet quality standards.'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 **Prerequisites:** **MUST ATTENTION READ** before executing:
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** Evidence file path (`file:line`) provided; Grep search performed; 3+ similar patterns found; Confidence level stated.
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because".
+>
+> **If incomplete → output:** "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+<!-- /SYNC:evidence-based-reasoning -->
 
 <!-- SYNC:understand-code-first -->
 
@@ -252,40 +269,93 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+## Adversarial Review Mindset (NON-NEGOTIABLE)
+
+**Default stance: SKEPTIC challenging artifact quality and completeness, not confirming presence of sections.**
+
+> **Presence-quality confusion trap:** An artifact with all required sections LOOKS complete. But sections that exist but contain weak, ambiguous, or untestable content are worse than missing sections — they create false confidence. This section forces quality challenge beyond existence checks.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Steel-Man the Alternatives**
+Before accepting the chosen approach in any design artifact: argue FOR the strongest rejected alternative as vigorously as possible. Would a senior domain expert seriously consider it? If yes — the artifact's dismissal needs stronger justification.
+
+**2. Assumption Stress Test**
+List the 3 biggest assumptions embedded in the artifact. For each: "What if this is wrong?" An artifact that breaks when 2 of its 3 core assumptions fail is fragile. Flag unaddressed failure modes.
+
+**3. Acceptance Criteria Testability**
+For each acceptance criterion: "Can a QA engineer write a specific automated test for this — without asking clarifying questions?" If not — the AC is ambiguous. Flag it. Vague ACs ("the feature works correctly") are NOT acceptance criteria.
+
+**4. Pre-Mortem**
+Assume the artifact is implemented exactly as written and the feature fails in production within 3 months. Write the most plausible failure scenario. If you can't find one, look harder — every implementation has a failure mode.
+
+**5. Unseen Alternatives**
+Identify 1-2 approaches NOT mentioned in the artifact. Were they genuinely not considered, or considered and excluded without documented reasoning? Missing alternatives without exclusion reasoning = incomplete analysis.
+
+**6. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger based on evidence.
+
+### Forbidden Patterns
+
+- **"Required sections present"** → Presence ≠ quality. What's IN them?
+- **"Acceptance criteria are defined"** → Are they TESTABLE? Name the automated test for each.
+- **"Scope is well-defined"** → What is explicitly OUT of scope? If nothing is out of scope, the scope is undefined.
+- **"Alternatives were considered"** → Were they real alternatives, or strawmen set up to lose?
+- **"Looks complete"** → What specific failure mode is NOT addressed?
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+- [ ] Steel-manned at least one rejected alternative
+- [ ] Identified 3 hidden assumptions and stress-tested them
+- [ ] Verified each AC is unambiguously testable (can write automated test without clarification)
+- [ ] Ran pre-mortem (one concrete production failure scenario)
+- [ ] Identified at least 1 unexamined alternative (not in artifact)
+- [ ] Generated at least 2 sentences arguing the opposite verdict
+
+If any box is unchecked → adversarial review incomplete. Go back.
+
 ## Type-Specific Checklists
 
 ### PBI Review
 
-- [ ] Problem statement is clear
-- [ ] Acceptance criteria are testable and measurable
-- [ ] Scope is well-defined (what's in and out)
-- [ ] Dependencies are identified
-- [ ] Business value is articulated
-- [ ] Priority is assigned
+| #   | Check                                                                                                      | Presence                                                  | Quality Depth                                                                                                                                                                                  |
+| --- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Problem statement is clear** — the problem being solved is described in concrete terms                   | Is a problem statement present? Is it 2+ sentences?       | Is the problem scoped correctly? Could it be framed differently to lead to a different (simpler) solution? Are symptoms confused with root cause?                                              |
+| 2   | **Acceptance criteria are testable and measurable** — each AC can be verified by a test                    | Are ACs present? Do they use measurable language?         | Can a QA engineer write an automated test for EACH AC without clarification? Are they specific enough to catch regressions? Vague ACs ("feature works correctly") are not acceptance criteria. |
+| 3   | **Scope is well-defined (what's in and out)** — both in-scope and out-of-scope items are explicitly listed | Is an in/out scope list present? Does it have both sides? | Are out-of-scope items specific enough to prevent scope creep? Is anything ambiguously in/out? A scope that says nothing is out of scope is an undefined scope.                                |
+| 4   | **Dependencies are identified** — all external dependencies the PBI relies on are listed                   | Is a dependencies section present? Does it list items?    | Are ALL dependencies listed (technical, data, service, team)? Are "can-parallel" items truly safe to parallelize, or do they share a shared resource?                                          |
+| 5   | **Business value is articulated** — the why behind the PBI is stated in terms of user or business outcome  | Is business value described?                              | Is the value quantified or just stated? Does it connect to a user outcome, not just a feature delivery? "Users can now do X" is better than "we implemented feature Y".                        |
+| 6   | **Priority is assigned** — the PBI has an explicit priority level                                          | Is a priority level assigned?                             | Is priority justified with data (RICE/MoSCoW), or arbitrary? Is it consistent with other PBIs in the same sprint? A PBI that is "high priority" without justification is unranked.             |
 
 ### User Story Review
 
-- [ ] Follows GIVEN/WHEN/THEN format
-- [ ] Is independent (not dependent on other stories)
-- [ ] Is estimable (team can size it)
-- [ ] Is small enough for one sprint
-- [ ] Has acceptance criteria
+| #   | Check                                                                                                                    | Presence                                                       | Quality Depth                                                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Follows GIVEN/WHEN/THEN format** — the story uses the structured BDD format                                            | Are all three parts (GIVEN, WHEN, THEN) present?               | Are all 3 parts present AND meaningful? Or is GIVEN trivial ("Given a user exists")? A GIVEN that describes no precondition adds no value.                    |
+| 2   | **Is independent (not dependent on other stories)** — the story can be implemented without requiring another story first | Is independence stated or inferable?                           | Would descoping other stories prevent this story from being implemented? Implicit dependencies are as blocking as explicit ones.                              |
+| 3   | **Is estimable (team can size it)** — the team has enough information to assign story points                             | Is the story sized or estimable based on content?              | Does the team have enough info to estimate? Is "can't estimate" a sign of missing AC? If it can't be sized, it's not ready for sprint.                        |
+| 4   | **Is small enough for one sprint** — the story fits within a single sprint's capacity                                    | Is the story sized at ≤8 story points or scoped to one sprint? | Could this be split further? Stories >8SP should always be split. A story that "could fit" in a sprint but requires multiple sub-systems is likely too large. |
+| 5   | **Has acceptance criteria** — the story defines measurable conditions for completion                                     | Are acceptance criteria present?                               | Are criteria testable? Would they catch a bug if the feature works in 9/10 cases? ACs that only describe the happy path are incomplete.                       |
 
 ### Design Spec Review
 
-- [ ] All component states covered (default, hover, active, disabled, error, loading)
-- [ ] Design tokens specified (colors, spacing, typography)
-- [ ] Responsive behavior defined
-- [ ] Accessibility requirements noted
-- [ ] Interaction patterns documented
+| #   | Check                                                                                                                                         | Presence                                            | Quality Depth                                                                                                                                                                                   |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **All component states covered (default, hover, active, disabled, error, loading)** — spec defines visual behavior for all interaction states | Are all 6 states defined?                           | Are edge-case states (error, loading) as fully designed as the default state, or sketched? An undesigned error state will be improvised in implementation.                                      |
+| 2   | **Design tokens specified (colors, spacing, typography)** — specific token values are called out, not ad-hoc values                           | Are token references present instead of raw values? | Are tokens from the project's token system, or are new values introduced? New values outside the token system break design consistency silently.                                                |
+| 3   | **Responsive behavior defined** — how the component adapts across breakpoints is documented                                                   | Are breakpoint behaviors defined?                   | Are ALL breakpoints covered, or only desktop and mobile? Tablet-specific layouts are the most frequently omitted. Are content truncation / overflow behaviors specified?                        |
+| 4   | **Accessibility requirements noted** — WCAG-relevant requirements (color contrast, keyboard nav, ARIA) are documented                         | Are accessibility notes present?                    | Are requirements specific (WCAG level, contrast ratio) or vague ("should be accessible")? Vague accessibility notes produce non-compliant implementations. Is keyboard navigation flow defined? |
+| 5   | **Interaction patterns documented** — animations, transitions, and user interaction flows are specified                                       | Are interaction behaviors described?                | Are timing and easing values specified? Is behavior defined for both forward and reverse interactions (e.g., open AND close)? Unspecified interactions are implemented inconsistently.          |
 
 ### Test Spec Review
 
-- [ ] Coverage adequate for acceptance criteria
-- [ ] Edge cases included
-- [ ] Test data requirements specified
-- [ ] GIVEN/WHEN/THEN format used
-- [ ] Negative test cases included
+| #   | Check                                                                                                | Presence                                    | Quality Depth                                                                                                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Coverage adequate for acceptance criteria** — each AC maps to at least one test case               | Is there a test for each AC?                | Is coverage 1:1 (each AC has one test) or is each AC covered by multiple test angles (boundary, happy path, error)? Single-test-per-AC misses edge cases.                    |
+| 2   | **Edge cases included** — boundary conditions and atypical inputs are tested                         | Are edge case tests present?                | Are edge cases derived from the AC boundaries (min/max values, empty inputs, nulls), or are they generic? Edge cases that aren't tied to actual boundaries are noise.        |
+| 3   | **Test data requirements specified** — the data setup needed to run each test is documented          | Are test data requirements stated per test? | Is test data specific enough to create fixtures without guessing? Vague data requirements ("a valid user") will cause test setup divergence across environments.             |
+| 4   | **GIVEN/WHEN/THEN format used** — tests follow the structured BDD format                             | Are all tests written in GIVEN/WHEN/THEN?   | Are the THEN clauses assertions on observable outcomes, or on internal state? Tests asserting on internal state are brittle and break on refactoring.                        |
+| 5   | **Negative test cases included** — tests cover rejection, failure, and unauthorized access scenarios | Are negative tests present?                 | Do negative tests assert on specific error conditions (error code, message) or just that an error occurred? Unspecific negative tests don't verify correct failure behavior. |
 
 ## Readability Checklist (MUST ATTENTION evaluate)
 

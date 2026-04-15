@@ -497,6 +497,243 @@ const settingsTests = [
 ];
 
 // ============================================================================
+// notify-waiting.js Tests (standalone desktop notification hook)
+// Covers: Stop, SubagentStop, AskUserPrompt, AskUserQuestion tool, idle_prompt,
+//         permission_prompt (field + heuristic), SessionEnd, default, empty stdin
+// ============================================================================
+
+const NOTIFY_WAITING_SCRIPT = path.join(HOOKS_DIR, 'notify-waiting.js');
+// Use test mode to suppress actual OS notifications during tests
+const testEnvWaiting = { ...process.env, CLAUDE_HOOK_TEST_MODE: '1' };
+
+const notifyWaitingFileTests = [
+    {
+        name: '[notify-waiting] notify-waiting.js exists',
+        fn: () => {
+            assertTrue(fs.existsSync(NOTIFY_WAITING_SCRIPT), `Script not found: ${NOTIFY_WAITING_SCRIPT}`);
+        }
+    }
+];
+
+const notifyWaitingContentTests = [
+    {
+        name: '[notify-waiting] has getNotificationContent function',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, 'function getNotificationContent', 'Should have getNotificationContent function');
+        }
+    },
+    {
+        name: '[notify-waiting] has isPermissionPrompt function',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, 'function isPermissionPrompt', 'Should have isPermissionPrompt function');
+        }
+    },
+    {
+        name: '[notify-waiting] has getProjectName function',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, 'function getProjectName', 'Should have getProjectName function');
+        }
+    },
+    {
+        name: '[notify-waiting] Stop case returns showDialog true',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, "case 'Stop':", 'Should have Stop case');
+            assertContains(content, 'showDialog: true', 'Stop should trigger blocking dialog');
+        }
+    },
+    {
+        name: '[notify-waiting] SubagentStop case returns showDialog false (toast only)',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, "case 'SubagentStop':", 'Should have SubagentStop case');
+            assertContains(content, 'showDialog: false', 'SubagentStop should use toast (not dialog)');
+        }
+    },
+    {
+        name: '[notify-waiting] SessionEnd case returns null (no notification)',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, "case 'SessionEnd':", 'Should have SessionEnd case');
+        }
+    },
+    {
+        name: '[notify-waiting] isPermissionPrompt checks notification_type field',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, "notification_type === 'permission_prompt'", 'Should check notification_type for permission');
+        }
+    },
+    {
+        name: '[notify-waiting] isPermissionPrompt has message heuristic fallback',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            // Fallback: checks both 'permission' and 'use' in message text
+            assertContains(content, "message.includes('permission')", 'Should check message for permission keyword');
+            assertContains(content, "message.includes('use')", 'Should check message for "use" keyword');
+        }
+    },
+    {
+        name: '[notify-waiting] AskUserQuestion tool_name path is handled',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, "toolName === 'AskUserQuestion'", 'Should check for AskUserQuestion tool');
+        }
+    },
+    {
+        name: '[notify-waiting] supports test mode (CLAUDE_HOOK_TEST_MODE)',
+        fn: () => {
+            const content = fs.readFileSync(NOTIFY_WAITING_SCRIPT, 'utf8');
+            assertContains(content, 'CLAUDE_HOOK_TEST_MODE', 'Should support test mode env var to suppress OS notifications');
+        }
+    }
+];
+
+const notifyWaitingExecutionTests = [
+    {
+        name: '[notify-waiting] exits 0 on empty stdin',
+        fn: async () => {
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, undefined, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should exit cleanly on empty input');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on Stop event',
+        fn: async () => {
+            const input = { hook_event_name: 'Stop', cwd: '/test/project', session_id: 'stop-' + Date.now() };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle Stop event');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on SubagentStop event',
+        fn: async () => {
+            const input = { hook_event_name: 'SubagentStop', cwd: '/test/project', agent_type: 'scout' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle SubagentStop event');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on AskUserPrompt event',
+        fn: async () => {
+            const input = { hook_event_name: 'AskUserPrompt', cwd: '/test/project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle AskUserPrompt event');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on PreToolUse with AskUserQuestion tool',
+        fn: async () => {
+            const input = { hook_event_name: 'PreToolUse', tool_name: 'AskUserQuestion', cwd: '/test/project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle PreToolUse/AskUserQuestion');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on permission_prompt via notification_type',
+        fn: async () => {
+            const input = { hook_event_name: 'Notification', notification_type: 'permission_prompt', cwd: '/test/project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle permission_prompt via notification_type field');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on permission_prompt via message heuristic',
+        fn: async () => {
+            const input = { hook_event_name: 'Notification', message: 'Claude needs permission to use Bash', cwd: '/test/project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should detect permission_prompt from message content heuristic');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on idle_prompt Notification',
+        fn: async () => {
+            const input = { hook_event_name: 'Notification', notification_type: 'idle_prompt', cwd: '/test/project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle idle_prompt notification');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on SessionEnd event (no notification sent)',
+        fn: async () => {
+            const input = { hook_event_name: 'SessionEnd', cwd: '/test/project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'SessionEnd should exit cleanly without sending notification');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 on unknown event (default case)',
+        fn: async () => {
+            const input = { hook_event_name: 'UnknownEvent', cwd: '/test/project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle unknown events via default case');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 with project name in cwd path',
+        fn: async () => {
+            const input = { hook_event_name: 'Stop', cwd: '/home/user/projects/my-cool-project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle project name extraction from cwd');
+        }
+    },
+    {
+        name: '[notify-waiting] exits 0 with Windows-style cwd path',
+        fn: async () => {
+            const input = { hook_event_name: 'Stop', cwd: 'C:\\Users\\user\\projects\\my-project' };
+            const result = await runHook(NOTIFY_WAITING_SCRIPT, input, { timeout: 5000, env: testEnvWaiting });
+            assertEqual(result.code, 0, 'Should handle Windows backslash paths');
+        }
+    }
+];
+
+const notifyWaitingSettingsTests = [
+    {
+        name: '[notify-waiting] settings.json has Stop hook pointing to notify-waiting.js',
+        fn: () => {
+            const settingsPath = path.join(HOOKS_DIR, '..', 'settings.json');
+            const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+            const stopHooks = settings.hooks?.Stop;
+            assertTrue(Array.isArray(stopHooks) && stopHooks.length > 0, 'Stop hooks must be configured');
+            const hasNotifyWaiting = stopHooks.some(h =>
+                h.hooks?.some(hook => hook.command?.includes('notify-waiting.js'))
+            );
+            assertTrue(hasNotifyWaiting, 'Stop hook should include notify-waiting.js');
+        }
+    },
+    {
+        name: '[notify-waiting] settings.json has PreToolUse/AskUserQuestion pointing to notify-waiting.js',
+        fn: () => {
+            const settingsPath = path.join(HOOKS_DIR, '..', 'settings.json');
+            const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+            const preToolHooks = settings.hooks?.PreToolUse;
+            assertTrue(Array.isArray(preToolHooks), 'PreToolUse hooks must be configured');
+            const hasNotifyWaiting = preToolHooks.some(h =>
+                h.matcher === 'AskUserQuestion' &&
+                h.hooks?.some(hook => hook.command?.includes('notify-waiting.js'))
+            );
+            assertTrue(hasNotifyWaiting, 'PreToolUse/AskUserQuestion hook should include notify-waiting.js');
+        }
+    },
+    {
+        name: '[notify-waiting] settings.json has SessionEnd hook pointing to notify-waiting.js',
+        fn: () => {
+            const settingsPath = path.join(HOOKS_DIR, '..', 'settings.json');
+            const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+            const sessionEndHooks = settings.hooks?.SessionEnd;
+            assertTrue(Array.isArray(sessionEndHooks) && sessionEndHooks.length > 0, 'SessionEnd hooks must be configured');
+            const hasNotifyWaiting = sessionEndHooks.some(h =>
+                h.hooks?.some(hook => hook.command?.includes('notify-waiting.js'))
+            );
+            assertTrue(hasNotifyWaiting, 'SessionEnd hook should include notify-waiting.js');
+        }
+    }
+];
+
+// ============================================================================
 // Export All Tests
 // ============================================================================
 
@@ -510,6 +747,10 @@ module.exports = {
         ...libTests,
         ...eventConfigTests,
         ...desktopBehaviorTests,
-        ...settingsTests
+        ...settingsTests,
+        ...notifyWaitingFileTests,
+        ...notifyWaitingContentTests,
+        ...notifyWaitingExecutionTests,
+        ...notifyWaitingSettingsTests
     ]
 };

@@ -29,7 +29,7 @@ async function main() {
         const payload = JSON.parse(stdin);
 
         // Extract skill name from tool input
-        // PostToolUse payload structure: { tool_name, tool_input, tool_response }
+        // PostToolUse payload structure: { tool_name, tool_input, tool_result }
         const toolName = payload.tool_name || '';
         const toolInput = payload.tool_input || {};
 

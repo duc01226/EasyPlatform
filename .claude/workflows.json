@@ -476,6 +476,8 @@
                 "refine-review",
                 "story",
                 "story-review",
+                "pbi-challenge",
+                "dor-gate",
                 "pbi-mockup",
                 "tdd-spec",
                 "tdd-spec-review",
@@ -560,6 +562,7 @@
                 "integration-test-verify",
                 "plan",
                 "plan-validate",
+                "why-review",
                 "cook",
                 "workflow-review-changes",
                 "docs-update",
@@ -585,6 +588,7 @@
                 "integration-test-verify",
                 "plan",
                 "plan-validate",
+                "why-review",
                 "cook",
                 "workflow-review",
                 "docs-update",
@@ -854,35 +858,6 @@
             "whenNotToUse": "Implementing new security features, fixing known security bugs (use bugfix workflow)",
             "whenToUse": "User wants a security audit: vulnerability assessment, OWASP check, security review, penetration test analysis, or security compliance check"
         },
-        "hotfix": {
-            "confirmFirst": false,
-            "description": "Fast-path production fix with lightweight planning — for P0/P1 urgent issues",
-            "name": "Hotfix",
-            "preActions": {
-                "injectContext": "HOTFIX PROTOCOL (URGENT — TDD-FIRST):\n1. Scout: Find affected code immediately\n2. Plan: Lightweight plan — document what you will fix and why\n3. Plan-review: Quick sanity check on approach\n4. Write test specs (/tdd-spec REGRESSION mode): Create a spec that reproduces the production bug. Keep it minimal but precise.\n5. Review test specs (/tdd-spec-review): Quick review for correctness\n6. WRITE INTEGRATION TEST — RED phase: Implement the regression test. Run it — MUST FAIL. If it passes, it does NOT catch the bug. Do NOT skip even in emergencies — an untested hotfix is a future incident.\n7. Fix: Apply minimal, targeted fix\n8. PROVE FIX: Build code proof traces per change, confidence scores. MANDATORY even for hotfixes.\n9. RE-RUN INTEGRATION TESTS — GREEN phase: Run tests — expect PASS. Confirms fix resolves the bug AND regression guard is in place.\n10. Review integration tests (/integration-test-review): Verify test has real assertion value, not smoke-only.\n11. Run full test suite — confirm no regressions\n12. SRE review for blast radius and rollback plan\n13. Update docs"
-            },
-            "sequence": [
-                "scout",
-                "plan",
-                "plan-review",
-                "tdd-spec",
-                "tdd-spec-review",
-                "integration-test",
-                "fix",
-                "prove-fix",
-                "integration-test",
-                "integration-test-review",
-                "integration-test-verify",
-                "test",
-                "workflow-review-changes",
-                "sre-review",
-                "docs-update",
-                "watzup",
-                "workflow-end"
-            ],
-            "whenNotToUse": "Non-urgent bugs (use bugfix), new features, refactoring",
-            "whenToUse": "Production emergency, P0/P1 urgent fix, hotfix, service down, critical bug in production"
-        },
         "tdd-feature": {
             "confirmFirst": false,
             "description": "Test-driven feature: write test specs first, then implement, then verify with integration tests",
@@ -1014,6 +989,8 @@
                 "refine-review",
                 "story",
                 "story-review",
+                "pbi-challenge",
+                "dor-gate",
                 "pbi-mockup",
                 "plan-validate",
                 "tdd-spec",
@@ -1053,6 +1030,67 @@
             "sequence": ["scout", "investigate", "excalidraw-diagram", "workflow-end"],
             "whenNotToUse": "Text-only documentation, code implementation, bug fixes, non-visual outputs",
             "whenToUse": "User wants to visualize, diagram, draw, or create visual representation of workflows, architectures, concepts, systems, or research findings"
+        },
+        "idea-to-pbi": {
+            "confirmFirst": true,
+            "description": "PO/BA workflow: capture or review idea/artifact, optional PO→BA handoff, refine to PBI, create user stories, challenge review, DoR gate, mockup, prioritize",
+            "name": "Idea to PBI",
+            "preActions": {
+                "injectContext": "IDEA TO PBI PROTOCOL:\nCapture and refine a raw idea — or a PO-handed artifact/ticket/brief — into a grooming-ready PBI with stories, Dev BA PIC review, and DoR validation.\n\nMANDATORY IMPORTANT MUST ATTENTION RULES:\n1. Each step must invoke its Skill tool — never batch-complete or skip steps\n2. review-artifact and handoff are CONDITIONAL — skip both if no existing PO artifact or no formal handoff needed; proceed straight to refine\n3. pbi-challenge is run by Dev BA PIC (not the drafter) — confirm reviewer identity before that step\n4. dor-gate must pass before pbi-mockup is finalized\n5. Save artifacts at every step to plans/ or team-artifacts/pbis/"
+            },
+            "sequence": [
+                "idea",
+                "review-artifact",
+                "handoff",
+                "refine",
+                "refine-review",
+                "story",
+                "story-review",
+                "pbi-challenge",
+                "dor-gate",
+                "pbi-mockup",
+                "prioritize",
+                "workflow-end"
+            ],
+            "whenNotToUse": "Already have a drafted PBI (use pbi-challenge standalone), implementing a feature (use feature or big-feature)",
+            "whenToUse": "PO or BA wants to take a raw idea — OR PO is handing off an existing artifact/ticket/brief to BA — through to a grooming-ready PBI with user stories, Dev BA PIC challenge review, DoR validation, wireframes, and backlog prioritization"
+        },
+        "full-feature-lifecycle": {
+            "confirmFirst": true,
+            "description": "Complete feature from idea to PO acceptance — PO→BA→Designer→Dev→QA→PO with formal role handoffs at every stage",
+            "name": "Full Feature Lifecycle",
+            "preActions": {
+                "injectContext": "FULL FEATURE LIFECYCLE PROTOCOL:\nEnd-to-end feature delivery with formal role handoffs: idea capture → PBI refinement → story creation → Dev BA PIC challenge → DoR gate → design → implementation → testing → acceptance.\n\nMANDATORY IMPORTANT MUST ATTENTION RULES:\n1. Each step must invoke its Skill tool — never batch-complete or skip steps\n2. pbi-challenge requires Dev BA PIC (different person from drafter)\n3. dor-gate must pass (PASS or WARN) before design steps\n4. plan-validate confirms implementation plan with user before cook\n5. workflow-review-changes is the consolidated review + fix loop (code-simplifier → review-changes → review-architecture → code-review → performance, recursive until PASS)\n6. acceptance is PO final sign-off — must have test evidence and docs-update completed first\n7. Save artifacts at every step to plans/ and team-artifacts/"
+            },
+            "sequence": [
+                "idea",
+                "refine",
+                "refine-review",
+                "story",
+                "story-review",
+                "pbi-challenge",
+                "dor-gate",
+                "pbi-mockup",
+                "design-spec",
+                "interface-design",
+                "frontend-design",
+                "plan",
+                "plan-review",
+                "plan-validate",
+                "cook",
+                "integration-test",
+                "integration-test-review",
+                "workflow-review-changes",
+                "sre-review",
+                "test-spec",
+                "quality-gate",
+                "docs-update",
+                "watzup",
+                "acceptance",
+                "workflow-end"
+            ],
+            "whenNotToUse": "PBI-only work (use idea-to-pbi), implementation-only work (use feature or big-feature), research-heavy new product (use big-feature or greenfield-init), bug fixes (use bugfix)",
+            "whenToUse": "Full end-to-end feature delivery requiring idea → PBI → stories → design → implementation → testing → PO acceptance with all formal role handoffs"
         }
     }
 }

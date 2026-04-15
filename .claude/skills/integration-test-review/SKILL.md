@@ -1,5 +1,6 @@
 ---
 name: integration-test-review
+version: 1.0.0
 description: '[Code Quality] Review integration tests for assertion quality, bug protection, repeatability, and test-spec traceability. Use in review workflows or standalone.'
 ---
 
@@ -8,6 +9,23 @@ description: '[Code Quality] Review integration tests for assertion quality, bug
 > Every finding requires `file:line` proof with confidence >80%.
 
 - `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing)
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** Evidence file path (`file:line`) provided; Grep search performed; 3+ similar patterns found; Confidence level stated.
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because".
+>
+> **If incomplete → output:** "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+<!-- /SYNC:evidence-based-reasoning -->
 
 <!-- SYNC:double-round-trip-review -->
 

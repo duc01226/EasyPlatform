@@ -260,10 +260,11 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
-- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these three final tasks:
+- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these final tasks:
     1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
     2. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
     3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill with deep 3-round protocol (R1: checklist, R2: code-proof trace, R3: adversarial simulation). Review depth based on SP: ≤3 → 2 rounds min, 4-8 → 3 rounds, >8 → 3 rounds + code-proof mandatory.
+    4. **Task: "Run /why-review (standalone only)"** — If NOT inside a workflow, trigger `/why-review` to validate design rationale, alternatives considered, and risk assessment in the plan. Skip if a workflow already includes `/why-review` in its sequence.
 
 ## Important Notes
 
@@ -293,6 +294,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
+- **"/why-review"** — Validate design rationale in the plan before implementation (standalone only — skipped when workflow includes it)
 - **"/plan-review"** — Validate plan before implementation
 - **"/plan-validate"** — Interview user to confirm plan decisions
 - **"Skip, continue manually"** — user decides

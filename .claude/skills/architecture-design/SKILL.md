@@ -388,7 +388,7 @@ After completing code quality research, produce this handoff table in the archit
 | Docker         | {compose pattern} | {files}     | {why}     |
 ```
 
-**Also include:** Error handling strategy (4-layer pattern), loading state approach (global vs per-component), and Docker profile structure. See protocol for framework-specific options.
+**Also include:** Error handling strategy (4-layer pattern), loading state approach (global vs per-component), and Docker profile structure. Specific tool choices → `docs/project-reference/` or `project-config.json`.
 
 ---
 

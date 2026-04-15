@@ -537,35 +537,6 @@ async function main() {
       );
     }
 
-    // Check for GitHub Copilot instructions (first startup only)
-    if (source === "startup") {
-      const copilotPath = path.join(
-        process.cwd(),
-        ".github",
-        "copilot-instructions.md",
-      );
-      if (!fs.existsSync(copilotPath)) {
-        console.log("\n## GitHub Copilot Setup");
-        console.log("");
-        console.log(
-          "⚠️  **Copilot instructions not found:** `.github/copilot-instructions.md`",
-        );
-        console.log("");
-        console.log(
-          "To enable better Copilot support (sync Claude Code protocols):",
-        );
-        console.log("");
-        console.log("**Run:** `/sync-to-copilot`");
-        console.log("");
-        console.log("This will sync to `.github/copilot-instructions.md`:");
-        console.log("  • Workflow catalog & detection protocol");
-        console.log("  • Edit enforcement & task tracking rules");
-        console.log("  • Pattern reference doc paths");
-        console.log("  • Search-before-code protocol");
-        console.log("");
-      }
-    }
-
     // Python prerequisite check (first startup only)
     if (source === "startup" && !staticEnv.pythonVersion) {
       console.log("\n## Python Not Found");

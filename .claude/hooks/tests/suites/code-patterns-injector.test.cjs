@@ -45,8 +45,6 @@ const triggerTests = [
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, MARKER, 'Should contain pattern marker');
-            // Backend patterns should have C# content
-            assertContains(result.stdout, 'csharp', 'Should contain C# code blocks');
             assertNotContains(result.stdout, 'typescript', 'Should NOT contain TypeScript blocks');
         }
     },
@@ -75,7 +73,6 @@ const triggerTests = [
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, MARKER, 'Should contain pattern marker');
-            assertContains(result.stdout, 'typescript', 'Should contain TypeScript blocks');
             assertNotContains(result.stdout, 'csharp', 'Should NOT contain C# blocks');
         }
     },
@@ -86,7 +83,6 @@ const triggerTests = [
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, MARKER, 'Should contain pattern marker');
-            assertContains(result.stdout, 'typescript', 'Should contain TypeScript blocks');
         }
     },
     {

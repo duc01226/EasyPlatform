@@ -114,7 +114,7 @@ function buildWorkflowCatalog(config) {
     const { workflows, commandMapping, settings } = config;
     const lines = [];
 
-    const handoffIds = new Set(['po-ba-handoff', 'ba-dev-handoff', 'dev-qa-handoff', 'qa-po-acceptance', 'design-dev-handoff', 'sprint-retro']);
+    const handoffIds = new Set(['ba-dev-handoff', 'dev-qa-handoff', 'qa-po-acceptance', 'design-dev-handoff', 'sprint-retro']);
 
     const standardEntries = [];
     const handoffEntries = [];

@@ -123,20 +123,19 @@ All workflows are defined in `.claude/workflows.json`. Each workflow composes a 
 
 ### Role-Based Handoff Workflows
 
-| Workflow               | Flow                                     |
-| ---------------------- | ---------------------------------------- |
-| **idea-to-pbi**        | PO: idea → refine → stories → prioritize |
-| **idea-to-tdd**        | PO: idea → refine → TDD specs            |
-| **po-ba-handoff**      | PO → BA: idea → refine → stories         |
-| **ba-dev-handoff**     | BA → Dev: quality gate → plan            |
-| **design-dev-handoff** | Designer → Dev: design spec → plan       |
-| **dev-qa-handoff**     | Dev → QA: handoff → test spec            |
-| **qa-po-acceptance**   | QA → PO: quality gate → acceptance       |
-| **sprint-planning**    | PO: prioritize → dependency → team-sync  |
-| **sprint-retro**       | PM: status → retrospective               |
-| **pre-development**    | QC: quality gate → plan → validate       |
-| **pbi-to-tests**       | QA: generate TDD specs from PBI          |
-| **pm-reporting**       | PM: status report → dependency analysis  |
+| Workflow               | Flow                                                                  |
+| ---------------------- | --------------------------------------------------------------------- |
+| **idea-to-pbi**        | PO/BA: idea (or PO artifact) → review → refine → stories → prioritize |
+| **idea-to-tdd**        | PO: idea → refine → TDD specs                                         |
+| **ba-dev-handoff**     | BA → Dev: quality gate → plan                                         |
+| **design-dev-handoff** | Designer → Dev: design spec → plan                                    |
+| **dev-qa-handoff**     | Dev → QA: handoff → test spec                                         |
+| **qa-po-acceptance**   | QA → PO: quality gate → acceptance                                    |
+| **sprint-planning**    | PO: prioritize → dependency → team-sync                               |
+| **sprint-retro**       | PM: status → retrospective                                            |
+| **pre-development**    | QC: quality gate → plan → validate                                    |
+| **pbi-to-tests**       | QA: generate TDD specs from PBI                                       |
+| **pm-reporting**       | PM: status report → dependency analysis                               |
 
 ### Content & Research Workflows
 

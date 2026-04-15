@@ -10,11 +10,36 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 
 ## Quick Summary
 
-**Goal:** Help Dev BA PIC review BA drafters' PBI drafts by generating specific, actionable challenge prompts. AI provides analysis; human makes the decision.
+**Goal:** Help **Dev BA PIC** (Person In Charge — the development Business Analyst responsible for technical review sign-off per squad) review BA drafters' PBI drafts by generating specific, actionable challenge prompts. AI provides analysis; human makes the decision.
 
 **Key distinction:** Collaborative review tool (drafter → reviewer flow), NOT self-review (use `/refine-review` for AI self-review).
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+## Why This Skill Exists
+
+PBI drafts routinely pass informal review without being challenged on architectural feasibility, vague AC, missing auth scenarios, or cross-service impact. The `/refine` skill generates PBIs but does not adversarially challenge them — it is a creation tool, not a review tool. The `/refine-review` skill provides AI self-review for the drafter, but the drafter has inherent blind spots about their own assumptions. A separate reviewer (Dev BA PIC) applying AI-assisted challenge prompts breaks the drafter's confirmation bias before grooming. This skill exists to catch gaps the drafter cannot catch themselves.
+
+**Why not just use `/refine-review`?** `/refine-review` is run by the drafter on their own work. Even with adversarial prompts, the drafter rationalizes their own choices. `pbi-challenge` is invoked by a different person with a different mandate — external skepticism requires a different author, not a different tool on the same author.
+
+## Alternatives Considered
+
+| Approach                                                                      | Pros                                                                     | Cons                                                                                                                | Decision                                                                                         |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Extend `/refine-review` with a reviewer-role flag                             | No new skill, single codebase                                            | Drafter runs it themselves in practice; role separation breaks down without enforcement                             | Rejected — role separation requires a distinct invocation point owned by a different person      |
+| Fully autonomous AI verdict (no human decision)                               | Faster, no Dev BA PIC scheduling needed                                  | Automation bias: AI wrong on domain specifics propagates unchecked; no human accountability for false APPROVE       | Rejected — cost of false APPROVE on infeasible PBIs exceeds review time saved                    |
+| Static DoR checklist given to Dev BA PIC (no AI)                              | Simple, no AI dependency                                                 | No domain entity context loading, no AC vagueness flagging; manual effort is high and inconsistent across reviewers | Rejected — AI domain lookup provides non-trivial value for cross-service entity detection        |
+| Async comment-thread model (AI generates questions posted as ticket comments) | Eliminates scheduling bottleneck; drafter can research before responding | Slower feedback loop; requires external ticket integration                                                          | Valid alternative for async teams; prefer if Dev BA PIC availability is chronically a bottleneck |
+
+## Risk Assessment
+
+| Risk                                                                                                                 | Likelihood | Impact | Mitigation                                                                                                               |
+| -------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
+| **Automation bias** — Dev BA PIC rubber-stamps AI verdict without independent assessment                             | High       | High   | Workflow Step 7 shows challenge prompts BEFORE the verdict — Dev BA PIC forms their own view first                       |
+| **Module misdetection** — AI loads wrong domain context, produces entity conflict analysis for wrong service         | Medium     | High   | Workflow Step 2 confirms detected module with Dev BA PIC via AskUserQuestion before proceeding                           |
+| **Challenge prompts ignored** — Drafter revises PBI superficially to satisfy reviewer without resolving root gaps    | Medium     | Medium | Decision Record includes drafter-response field; Dev BA PIC re-runs skill on revision, not just reads revised PBI        |
+| **Suggested answers create adoption pressure** — Drafter adopts suggested answer rather than reasoning independently | Medium     | Medium | Suggested answers framed as "consider whether X" options, not corrections; language review in challenge prompt templates |
+| **3-way BA vote deadlock** — UX BA, Designer BA, Dev BA PIC all disagree                                             | Low        | Medium | Escalation path per `ba-team-decision-model`: Engineering Manager for tech uncertainty, PO for business value            |
 
 ### Frontend/UI Context (if applicable)
 
@@ -68,7 +93,7 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 ## Workflow
 
 1. **Locate PBI draft** — Find BA drafters' draft PBI in `team-artifacts/pbis/` or path provided by user
-2. **Load domain context** — Auto-detect module from PBI content, load:
+2. **Load domain context** — Auto-detect module from PBI content. **MANDATORY: Use `AskUserQuestion` to confirm detected module with Dev BA PIC before loading domain docs.** Wrong module = wrong entity context = false APPROVE risk. Then load:
     - `docs/project-reference/domain-entities-reference.md` (entity definitions)
     - Relevant feature docs from `docs/business-features/{App}/`
     - Existing business rules (BR-{MOD}-XXX) from feature docs
@@ -90,8 +115,10 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 6. **Generate Challenge Prompts** — Output specific, actionable questions:
     - NOT vague: "needs work" or "improve AC"
     - SPECIFIC: "AC #2 says 'user can filter results' — which filters exactly? Suggest: status, date range, priority"
-7. **Provide AI Verdict** — APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD
-8. **AskUserQuestion** — Dev BA PIC reviews AI analysis and makes final human decision
+7. **Present Challenge Prompts first, then AI Verdict** — Output challenge prompts BEFORE the verdict to prevent automation bias. Dev BA PIC reads and forms their preliminary view, THEN sees: APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD
+    - **Technical decisions** (feasibility, dependencies, cross-service impact, security): Dev BA PIC has unilateral veto power — no 2/3 vote needed
+    - **Non-technical decisions** (UI/UX design, visual design, business value): 2/3 majority vote required (Dev BA PIC + UX BA + Designer BA per `ba-team-decision-model`)
+8. **AskUserQuestion** — Dev BA PIC records their FINAL decision (APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD) in the Decision Record. This is the human decision step — NOT the workflow routing step (handled separately in Next Steps)
 
 ## Output
 
@@ -142,6 +169,9 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 **Dev BA PIC Decision:** {filled after human review via AskUserQuestion}
 **Vote:** {approve / request-revision / escalate}
 **Conditions:** {if any}
+**Drafter Response (on revision):** {drafter's response to each challenge prompt — filled when Dev BA PIC re-runs on revised PBI}
+**Resolution:** {how each challenge prompt was addressed, deferred, or accepted as known risk}
+**Stored at:** `plans/reports/pbi-challenge-{YYMMDD}-{pbi-id}.md` (save output there for audit trail)
 ```
 
 ## Key Rules
@@ -174,4 +204,4 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
+    <!-- /SYNC:ui-system-context:reminder -->

@@ -1,12 +1,29 @@
 ---
 name: review-post-task
-version: 1.0.0
+version: 1.1.0
 description: '[Code Quality] Two-pass code review for task completion'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 **Prerequisites:** **MUST ATTENTION READ** before executing:
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** Evidence file path (`file:line`) provided; Grep search performed; 3+ similar patterns found; Confidence level stated.
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because".
+>
+> **If incomplete → output:** "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+<!-- /SYNC:evidence-based-reasoning -->
 
 <!-- SYNC:understand-code-first -->
 

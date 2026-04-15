@@ -54,7 +54,7 @@ const unitTests = [
                     // Filenames no longer have project-reference/ prefix — base dir handles it
                     assertEqual(docs[0].filename, 'project-structure-reference.md', 'First doc is project-structure');
                 } finally {
-                    process.env.CLAUDE_PROJECT_DIR = origDir;
+                    if (origDir === undefined) { delete process.env.CLAUDE_PROJECT_DIR; } else { process.env.CLAUDE_PROJECT_DIR = origDir; }
                     delete require.cache[modulePath];
                     delete require.cache[loaderPath];
                     delete require.cache[helpersPath];
@@ -95,7 +95,7 @@ const unitTests = [
                     assertEqual(docs[0].filename, 'custom-guide.md', 'First custom doc');
                     assertEqual(docs[1].filename, 'api-docs.md', 'Second custom doc');
                 } finally {
-                    process.env.CLAUDE_PROJECT_DIR = origDir;
+                    if (origDir === undefined) { delete process.env.CLAUDE_PROJECT_DIR; } else { process.env.CLAUDE_PROJECT_DIR = origDir; }
                     delete require.cache[modulePath];
                     delete require.cache[loaderPath];
                     delete require.cache[helpersPath];

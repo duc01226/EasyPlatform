@@ -103,14 +103,15 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 ## Documentation
 
-| Skill           | Triggers                                     | Description                                    |
-| --------------- | -------------------------------------------- | ---------------------------------------------- |
-| `documentation` | document, API docs, comments, README         | General documentation                          |
-| `docs-seeker`   | find docs, library docs                      | Documentation search                           |
-| `feature-docs`  | business docs, module docs, feature docs     | Business documentation (includes feature-docs) |
-| `feature-docs`  | quick feature docs, feature readme           | Single-file feature documentation              |
-| `changelog`     | changelog, version history, update changelog | Changelog generation                           |
-| `release-notes` | release notes, git history                   | Release notes from git commits                 |
+| Skill           | Triggers                                                           | Description                                                                      |
+| --------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `documentation` | document, API docs, comments, README                               | General documentation                                                            |
+| `docs-seeker`   | find docs, library docs                                            | Documentation search                                                             |
+| `feature-docs`  | business docs, module docs, feature docs                           | Business documentation (includes feature-docs)                                   |
+| `feature-docs`  | quick feature docs, feature readme                                 | Single-file feature documentation                                                |
+| `changelog`     | changelog, version history, update changelog                       | Changelog generation                                                             |
+| `release-notes` | release notes, git history                                         | Release notes from git commits (tag-to-tag)                                      |
+| `release-doc`   | release doc, what changed in the last N days, changes last 30 days | AI-analyzed release doc from time range or custom prompt — dumps artifacts first |
 
 ---
 

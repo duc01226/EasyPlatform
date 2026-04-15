@@ -96,8 +96,8 @@ function generateTestFixtures() {
     const framework = findModule(modules, 'framework');
     const example = findModule(modules, 'example');
 
-    // Domain library (second library if available)
-    const domainLib = modules.find(m => m.kind === 'library' && m !== library && m !== coreLib) || library;
+    // Domain library (second library distinct from library and coreLib, e.g. a libs/domain style module)
+    const domainLib = modules.find(m => m.kind === 'library' && m !== library && m !== coreLib);
 
     // Build src/ prefixes from config modules
     const srcPrefixes = buildSrcPrefixes(modules);
@@ -107,7 +107,13 @@ function generateTestFixtures() {
     const modernAppBase = frontendModern ? ensureSrcPrefix(regexToSamplePath(frontendModern.pathRegex), srcPrefixes) : 'src/Frontend/apps/example-app';
     const legacyAppBase = frontendLegacy ? ensureSrcPrefix(regexToSamplePath(frontendLegacy.pathRegex), srcPrefixes) : 'src/Web/ExampleClient';
     const libraryBase = library ? regexToSamplePath(library.pathRegex) : 'libs/shared-ui';
-    const domainLibBase = domainLib ? regexToSamplePath(domainLib.pathRegex) : 'libs/domain';
+    // Only use the resolved path when it's a typical frontend library path (starts with src/ or libs/).
+    // Paths starting with '.' or '/' indicate hidden/root-relative dirs (e.g. .claude/hooks/lib/) that
+    // won't match the FRONTEND_REGEX fallback — use the hardcoded default instead.
+    const rawDomainLibBase = domainLib ? regexToSamplePath(domainLib.pathRegex) : null;
+    const domainLibBase = (rawDomainLibBase && /^(?:src|libs)\//i.test(rawDomainLibBase))
+        ? rawDomainLibBase
+        : 'libs/domain';
     const coreLibBase = coreLib ? regexToSamplePath(coreLib.pathRegex) : 'libs/platform-core';
     const frameworkBase = framework ? ensureSrcPrefix(regexToSamplePath(framework.pathRegex), srcPrefixes) : 'src/Framework';
     const exampleBase = example ? ensureSrcPrefix(regexToSamplePath(example.pathRegex), srcPrefixes) : 'src/ExampleApp';
@@ -160,10 +166,11 @@ function generateTestFixtures() {
         integrationTestDoc: config.framework?.integrationTestDoc || config.testing?.guideDoc || null,
 
         // E2E test paths (from e2eTesting config or fallbacks)
-        e2eBddCs: (config.e2eTesting?.bddProject || 'src/AutomationTest/BDD/').replace(/\\/g, '/') + 'StepDefinitions/LoginSteps.cs',
-        e2eSharedCs: (config.e2eTesting?.sharedProject || 'src/AutomationTest/Shared/').replace(/\\/g, '/') + 'Pages/LoginPage.cs',
-        e2ePlatformCs: (config.e2eTesting?.platformProject || 'src/Platform/AutomationTest/').replace(/\\/g, '/') + 'Pages/Page.cs',
-        e2eFeature: (config.e2eTesting?.bddProject || 'src/AutomationTest/BDD/').replace(/\\/g, '/') + 'Features/Login.feature',
+        // Fallback paths use '/e2e/' directory so E2E_FALLBACK_RE matches when no e2eTesting config is set
+        e2eBddCs: (config.e2eTesting?.bddProject || 'src/e2e/bdd/').replace(/\\/g, '/') + 'StepDefinitions/LoginSteps.cs',
+        e2eSharedCs: (config.e2eTesting?.sharedProject || 'src/e2e/shared/').replace(/\\/g, '/') + 'Pages/LoginPage.cs',
+        e2ePlatformCs: (config.e2eTesting?.platformProject || 'src/e2e/platform/').replace(/\\/g, '/') + 'Pages/Page.cs',
+        e2eFeature: (config.e2eTesting?.bddProject || 'src/e2e/bdd/').replace(/\\/g, '/') + 'Features/Login.feature',
         e2eFallbackSpec: 'src/tests/e2e/login.spec.ts',
         e2eFallbackAutomation: 'src/automation/tests/smoke.cs',
         e2eGuideDoc: config.e2eTesting?.guideDoc || 'docs/project-reference/e2e-test-reference.md',

@@ -81,59 +81,9 @@ Links or concepts to explore for deeper understanding.
 
 ---
 
-## Example Response Pattern
+## Closing Reminders
 
-**Question:** "How do I make an API call?"
-
-**Response:**
-
-### Context
-
-When your app needs data from another service (like weather data or user info), you make an API call. Think of it as your app asking another computer for information.
-
-### Approach
-
-We'll use the `fetch` API because it's built into modern browsers and Node.js 18+. It returns a Promise, which lets us handle the response when it arrives.
-
-### Implementation
-
-```javascript
-// fetch returns a Promise - we use async/await to wait for the response
-async function getUser(userId) {
-    try {
-        // Make the request to the API
-        const response = await fetch(`https://api.example.com/users/${userId}`);
-
-        // Check if the request was successful (status 200-299)
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // Parse the JSON body - this is also async
-        const user = await response.json();
-        return user;
-    } catch (error) {
-        // Always handle errors - network can fail, API can be down
-        console.error('Failed to fetch user:', error);
-        throw error;
-    }
-}
-```
-
-### Common Pitfalls
-
-- **Forgetting `await`**: Without it, you get a Promise object instead of the data
-- **Not checking `response.ok`**: fetch doesn't throw on 404 or 500 errors
-- **Skipping error handling**: Network requests can fail - always use try/catch
-
-### Key Takeaways
-
-- Use `async/await` for cleaner Promise handling
-- Always check `response.ok` before parsing
-- Always wrap API calls in try/catch
-- Parse JSON with `response.json()` (also returns a Promise)
-
-### Learn More
-
-- [MDN: Using Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
-- [JavaScript.info: Async/Await](https://javascript.info/async-await)
+- **MUST ATTENTION** ALWAYS explain WHY before HOW — never skip reasoning
+- **MUST ATTENTION** include a "Key Takeaways" section for significant explanations
+- **MUST ATTENTION** NEVER assume they know advanced patterns — always build up to complexity
+- **MUST ATTENTION** NEVER ignore error handling — always show proper try/catch

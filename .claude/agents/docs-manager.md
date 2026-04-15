@@ -4,11 +4,11 @@ description: >-
     Use this agent to manage technical documentation -- detect impacted docs from
     code changes, update project and business feature docs, maintain doc-code
     synchronization, and produce documentation summary reports.
-tools: Read, Write, Edit, Grep, Glob, Bash, TaskCreate
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 skills: docs-update
 memory: project
-maxTurns: 30
+maxTurns: 200
 ---
 
 ## Role

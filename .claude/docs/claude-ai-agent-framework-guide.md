@@ -275,7 +275,7 @@ HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
 │   ├── session-resume.cjs ────────── Restore todos from checkpoints
 │   ├── npm-auto-install.cjs ──────── Install missing npm packages
 │   ├── session-end.cjs ──────────── Cleanup swap files, save state
-│   └── subagent-init.cjs ─────────── Inject context into subagents
+│   └── subagent-init-*.cjs ──────── Inject context into subagents (13 part-hooks)
 │
 ├── PROMPT PROCESSING (3 hooks)
 │   ├── init-prompt-gate.cjs ──────── Block until project-config exists
@@ -288,10 +288,9 @@ HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
 │   ├── scout-block.cjs ──────────── Block node_modules, dist, obj
 │   └── windows-command-detector ──── Block Windows CMD in Git Bash
 │
-├── QUALITY ENFORCEMENT (3 hooks)
+├── QUALITY ENFORCEMENT (2 hooks)
 │   ├── edit-enforcement.cjs ──────── Require tasks before edits
-│   ├── skill-enforcement.cjs ─────── Require tasks before skills
-│   └── search-before-code.cjs ────── Require Grep/Glob before Edit
+│   └── skill-enforcement.cjs ─────── Require tasks before skills
 │
 ├── CONTEXT INJECTION (10 hooks)
 │   ├── backend-context.cjs ───────── Backend patterns for server files
@@ -329,7 +328,7 @@ Large hooks are split into chained **part-files** (`-p2.cjs`, `-p3.cjs`) to stay
 
 ```
 prompt-context-assembler.cjs      ← Main: dev rules + workflow catalog
-prompt-context-assembler-p2.cjs   ← Part 2: project config summary + CLAUDE.md re-injection
+prompt-context-assembler-closers.cjs   ← Closers: project config summary + CLAUDE.md re-injection
 prompt-context-assembler-docs.cjs ← Docs variant: reference doc injection
 prompt-context-assembler-docs-p2.cjs ← Docs part 2: staleness gate + graph gate
 
@@ -356,7 +355,6 @@ graph TB
         BC[backend-context.cjs]
         CP[code-patterns-injector.cjs]
         LI[lessons-injector.cjs]
-        SBC[search-before-code.cjs]
         EE[edit-enforcement.cjs]
     end
 
@@ -364,7 +362,6 @@ graph TB
         P1[backend-patterns-reference.md<br/>Architecture patterns, repository rules]
         P2[Code patterns from similar files]
         P3[docs/project-reference/lessons.md<br/>Past mistakes to avoid]
-        P4[Recent search evidence check]
         P5[Task existence verification]
     end
 
@@ -372,16 +369,14 @@ graph TB
         PC[pathRegexes: src/Services/<br/>fileExtensions: project-specific<br/>patternsDoc: backend-patterns-reference.md]
     end
 
-    E --> BC & CP & LI & SBC & EE
+    E --> BC & CP & LI & EE
     BC --> PC
     PC --> P1
     CP --> P2
     LI --> P3
-    SBC --> P4
     EE --> P5
 
     P1 & P2 & P3 --> INJ[Injected into LLM context<br/>before edit executes]
-    P4 -->|No evidence?| BLOCK1[❌ Block: Search first]
     P5 -->|No task?| BLOCK2[❌ Block: Create task first]
 ```
 
@@ -401,7 +396,6 @@ Hooks check the last N lines of the conversation transcript for dedup markers be
 │  frontend-context.cjs    │ ## Frontend Context│ 300  │
 │  code-patterns-injector  │ ## Code Patterns  │  300  │
 │  lessons-injector (prompt)│ ## Learned Lessons│   50  │
-│  search-before-code      │ Recent Grep/Glob │  100  │
 │                                                      │
 │  IF marker found in last N lines → SKIP injection    │
 │  IF not found → INJECT (context was compacted away)  │
@@ -421,7 +415,6 @@ FEATURE BLOCKS (Exit 1) — User can override
 ├── privacy-block: .env, credentials (override: APPROVED: prefix)
 ├── edit-enforcement: No active task (override: create task first)
 ├── skill-enforcement: No active task for implementation skills
-└── search-before-code: No recent Grep/Glob evidence
 
 ADVISORY (Exit 0) — Context injection, no blocking
 ├── All context injection hooks
@@ -708,7 +701,7 @@ Three new review skills create quality checkpoints between artifact-producing st
 | `story-review`    | `/story` (stories)  | Vertical slicing quality, dependency tables, SPIDR      |
 | `tdd-spec-review` | `/tdd-spec` (specs) | TC coverage, traceability to ACs, boundary cases        |
 
-**Added to workflows:** idea-to-pbi, po-ba-handoff, full-feature-lifecycle, idea-to-tdd, pbi-to-tests, big-feature, greenfield-init
+**Added to workflows:** idea-to-pbi, full-feature-lifecycle, idea-to-tdd, pbi-to-tests, big-feature, greenfield-init
 
 **Why this matters:** Without review gates, artifacts flow through workflows unchecked. A vague PBI becomes vague stories which become vague tests. Review gates catch quality issues early when they're cheapest to fix.
 
@@ -840,9 +833,8 @@ WORKFLOW CATALOG
 │   ├── sprint-retro ────── status→retro
 │   └── pm-reporting ────── status→dependency
 │
-├── PROCESS & HANDOFFS (7)
+├── PROCESS & HANDOFFS (6)
 │   ├── full-feature-lifecycle ── idea→refine→design→plan→cook→test→accept (21 steps)
-│   ├── po-ba-handoff ─── idea→review→handoff→refine→story
 │   ├── ba-dev-handoff ── review→quality-gate→handoff→plan
 │   ├── design-dev-handoff ── design→review→handoff→plan
 │   ├── dev-qa-handoff ── handoff→test-spec
@@ -1236,35 +1228,7 @@ If Wrong: Build error in consuming services
 Mitigation: Grep for all references before changing
 ```
 
-### 8.7 Search Before Code — Preventing Pattern Invention
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  BEST PRACTICE: Search Before Create                             │
-│                                                                   │
-│  HOOK: search-before-code.cjs                                    │
-│  TRIGGER: PreToolUse on Edit|Write|MultiEdit                     │
-│  BEHAVIOR: Blocks edit if no Grep/Glob in last 100 transcript   │
-│            lines (unless file < 20 lines or "skip search")      │
-│                                                                   │
-│  WHY:                                                             │
-│  AI generating code without searching first leads to:            │
-│  ❌ Inventing new patterns when project has established ones      │
-│  ❌ Wrong constructor signatures (hallucinated from training data)│
-│  ❌ Missing DI registrations (guessed instead of verified)        │
-│  ❌ Duplicate implementations (didn't know similar code exists)   │
-│                                                                   │
-│  FLOW:                                                            │
-│  1. AI tries to Write new command handler                        │
-│  2. Hook checks: was there a recent Grep for similar handlers?   │
-│  3. If NO → ❌ Block: "Search for existing patterns first"       │
-│  4. If YES → ✅ Allow: AI has evidence                           │
-│                                                                   │
-│  EXCEPTION: Trivial files (< 20 lines) skip the check           │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 8.8 Lessons System — Learning From Mistakes
+### 8.7 Lessons System — Learning From Mistakes
 
 ```mermaid
 flowchart TB
@@ -1281,7 +1245,7 @@ flowchart TB
     subgraph "Lesson Persisted"
         P1[lessons-injector.cjs<br/>Injects on EVERY prompt]
         P2[lessons-injector.cjs<br/>Injects on EVERY edit]
-        P3[subagent-init.cjs<br/>Injects into subagents]
+        P3[subagent-init-*.cjs (13 part-hooks)<br/>Injects into subagents]
     end
 
     subgraph "Mistake Prevented"
@@ -1302,7 +1266,7 @@ flowchart TB
 - Injected with dedup on prompt (checks last 50 transcript lines)
 - Injected WITHOUT dedup on edit (performance: avoids I/O per edit)
 - Persists across sessions (stored in `docs/project-reference/lessons.md`)
-- Shared with subagents (via `subagent-init.cjs`)
+- Shared with subagents (via 13 `subagent-init-*.cjs` part-hooks)
 
 ### 8.9 TDD Workflow & Unified Test Specification System
 
@@ -2705,7 +2669,7 @@ This section maps **established prompt engineering techniques** to specific fram
 | ----------------------------- | ----------------------------------------------------------------------------- |
 | **Role prompting**            | Workflow preActions, agent definitions, hook-injected personas                |
 | **Chain-of-thought**          | Workflow step sequences, /sequential-thinking, /debug-investigate, /prove-fix |
-| **Few-shot examples**         | Context injection hooks, search-before-code, reference doc scans              |
+| **Few-shot examples**         | Context injection hooks, reference doc scans                                  |
 | **Structured output**         | Confidence declarations, risk matrices, TC format, plan templates             |
 | **Negative prompting**        | Forbidden phrases, anti-pattern lists, NEVER rules, lessons system            |
 | **Iterative refinement**      | Multi-pass review (cook→simplify→review→code-review→sre→security)             |
@@ -2800,7 +2764,6 @@ Context engineering is the discipline of **managing what information reaches the
 │  • backend-context: marker "## Backend Context", window 300      │
 │  • frontend-context: marker "## Frontend Context", window 300    │
 │  • lessons-injector (prompt): marker "## Learned Lessons", 50    │
-│  • search-before-code: marker "Recent Grep/Glob", 100           │
 │                                                                   │
 │  WHY VARIABLE WINDOWS: Lessons (small, 50 lines) need frequent   │
 │  re-injection. Backend patterns (large, 300 lines) stay longer.  │
@@ -2931,7 +2894,7 @@ Context engineering is the discipline of **managing what information reaches the
 │  └────────────────────┘           └────────────────────┘        │
 │                                                                   │
 │  28 agents × isolated contexts = no cross-contamination          │
-│  Each agent inherits: CLAUDE.md + lessons (via subagent-init)   │
+│  Each agent inherits: CLAUDE.md + lessons (via subagent-init-*) │
 │  Each agent ignores: unrelated session state                     │
 │                                                                   │
 │  PARALLEL BENEFIT: 4 code-reviewer agents reviewing different    │
@@ -3250,9 +3213,7 @@ flowchart TB
     I3 --> I4[path-boundary-block]
     I4 --> I5[edit-enforcement<br/>Task exists?]
     I5 -->|No task| BLOCK2[❌ Block: Create task first]
-    I5 -->|Task exists| I6[search-before-code<br/>Evidence exists?]
-    I6 -->|No search| BLOCK3[❌ Block: Search first]
-    I6 -->|Evidence found| I7[Context injection:<br/>backend/frontend/design/patterns/lessons]
+    I5 -->|Task exists| I7[Context injection:<br/>backend/frontend/design/patterns/lessons]
     I7 --> EXEC[Tool executes]
 
     EXEC --> J[PostToolUse pipeline]
@@ -3270,46 +3231,45 @@ flowchart TB
 
 ### AI Best Practice → Framework Mapping
 
-| AI Agent Best Practice                         | Framework Mechanism                                        | Layer     |
-| ---------------------------------------------- | ---------------------------------------------------------- | --------- |
-| **Context injection at decision points**       | 10 context injector hooks, auto-triggered by file path     | Hooks     |
-| **Reminder rules prevent forgetting**          | 3 UserPromptSubmit hooks re-inject on every prompt         | Hooks     |
-| **Generic & configurable via config**          | project-config.json drives all context injection           | Config    |
-| **Prompt engineering quality**                 | 258 skills with YAML frontmatter + behavior protocols      | Skills    |
-| **Confirm workflow before acting**             | workflow-router.cjs → AskUserQuestion → confirm            | Workflows |
-| **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation    | Skills    |
-| **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill      | Skills    |
-| **Code proof tracing prevents hallucination**  | evidence-based-reasoning-protocol + /prove-fix             | Skills    |
-| **Search before create**                       | search-before-code.cjs blocks edits without evidence       | Hooks     |
-| **State survives context compaction**          | Swap engine + todo-tracker + compact-recovery              | State     |
-| **Lessons persist across sessions**            | docs/project-reference/lessons.md + lessons-injector.cjs   | Hooks     |
-| **Subagents inherit project context**          | subagent-init.cjs injects CLAUDE.md + lessons              | Hooks     |
-| **Safety boundaries**                          | path-boundary, privacy, scout blocks (exit code 2)         | Hooks     |
-| **Task-gated edits**                           | edit-enforcement.cjs requires TaskCreate before edits      | Hooks     |
-| **Auto-formatting**                            | post-edit-prettier.cjs runs formatter after every edit     | Hooks     |
-| **Doc staleness detection**                    | /watzup skill cross-references changes vs. docs/           | Skills    |
-| **Unified test specification**                 | /tdd-spec writes TCs to feature doc Section 15             | Skills    |
-| **TDD-first workflow**                         | tdd-feature: spec→plan→implement→test→verify               | Workflows |
-| **Interactive requirement capture**            | /idea discovery interview + /refine testability check      | Skills    |
-| **Test-to-code traceability**                  | TC-{FEATURE}-{NNN} → test annotation linking to TC ID      | Skills    |
-| **E2E from browser recordings**                | /e2e-test + Chrome DevTools Recorder → Playwright          | Skills    |
-| **Screenshot assertion baselines**             | e2e-update-ui workflow + toHaveScreenshot()                | Workflows |
-| **Greenfield project inception**               | isGreenfieldProject() detection → solution-architect agent | Hooks     |
-| **AI as solution architect**                   | /greenfield skill + greenfield-init workflow (waterfall)   | Workflows |
-| **Research-driven big features**               | big-feature workflow with step-selection gate              | Workflows |
-| **DDD domain modeling**                        | /domain-analysis skill: bounded contexts, ERD, aggregates  | Skills    |
-| **Tech stack comparison with evidence**        | /tech-stack-research: top 3 per layer, confidence %        | Skills    |
-| **Step-selection gate for long workflows**     | big-feature + greenfield preActions let user deselect      | Workflows |
-| **Workflow trigger shortcuts**                 | 19 workflow-\* skills for instant activation via /command  | Skills    |
-| **Prompt engineering (role + CoT + evidence)** | Skills use role prompting, chain-of-thought, few-shot      | Skills    |
-| **Context engineering (JIT + dedup + budget)** | Hooks manage context window with precision injection       | Hooks     |
-| **Skill chain navigation (Next Steps)**        | AskUserQuestion recommends logical next skill per step     | Skills    |
-| **Plan-aware skills (Step 0)**                 | Skills read prior workflow outputs before starting work    | Skills    |
-| **Review gates between artifacts**             | refine-review, story-review, tdd-spec-review checkpoints   | Skills    |
-| **Agent negative-prompting guardrails**        | NEVER/ALWAYS rules per agent prevent role overstepping     | Agents    |
-| **Dual-tool knowledge sharing**                | .github/instructions/\*.md syncs to GitHub Copilot         | Config    |
-| **Dual planning rounds**                       | High-level arch plan → sprint-ready plan after stories     | Workflows |
-| **Conditional architecture scaffolding**       | /scaffold auto-skips when existing abstractions found      | Skills    |
+| AI Agent Best Practice                         | Framework Mechanism                                           | Layer     |
+| ---------------------------------------------- | ------------------------------------------------------------- | --------- |
+| **Context injection at decision points**       | 10 context injector hooks, auto-triggered by file path        | Hooks     |
+| **Reminder rules prevent forgetting**          | 3 UserPromptSubmit hooks re-inject on every prompt            | Hooks     |
+| **Generic & configurable via config**          | project-config.json drives all context injection              | Config    |
+| **Prompt engineering quality**                 | 258 skills with YAML frontmatter + behavior protocols         | Skills    |
+| **Confirm workflow before acting**             | workflow-router.cjs → AskUserQuestion → confirm               | Workflows |
+| **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation       | Skills    |
+| **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill         | Skills    |
+| **Code proof tracing prevents hallucination**  | evidence-based-reasoning-protocol + /prove-fix                | Skills    |
+| **State survives context compaction**          | Swap engine + todo-tracker + compact-recovery                 | State     |
+| **Lessons persist across sessions**            | docs/project-reference/lessons.md + lessons-injector.cjs      | Hooks     |
+| **Subagents inherit project context**          | 13 subagent-init-\*.cjs part-hooks inject CLAUDE.md + lessons | Hooks     |
+| **Safety boundaries**                          | path-boundary, privacy, scout blocks (exit code 2)            | Hooks     |
+| **Task-gated edits**                           | edit-enforcement.cjs requires TaskCreate before edits         | Hooks     |
+| **Auto-formatting**                            | post-edit-prettier.cjs runs formatter after every edit        | Hooks     |
+| **Doc staleness detection**                    | /watzup skill cross-references changes vs. docs/              | Skills    |
+| **Unified test specification**                 | /tdd-spec writes TCs to feature doc Section 15                | Skills    |
+| **TDD-first workflow**                         | tdd-feature: spec→plan→implement→test→verify                  | Workflows |
+| **Interactive requirement capture**            | /idea discovery interview + /refine testability check         | Skills    |
+| **Test-to-code traceability**                  | TC-{FEATURE}-{NNN} → test annotation linking to TC ID         | Skills    |
+| **E2E from browser recordings**                | /e2e-test + Chrome DevTools Recorder → Playwright             | Skills    |
+| **Screenshot assertion baselines**             | e2e-update-ui workflow + toHaveScreenshot()                   | Workflows |
+| **Greenfield project inception**               | isGreenfieldProject() detection → solution-architect agent    | Hooks     |
+| **AI as solution architect**                   | /greenfield skill + greenfield-init workflow (waterfall)      | Workflows |
+| **Research-driven big features**               | big-feature workflow with step-selection gate                 | Workflows |
+| **DDD domain modeling**                        | /domain-analysis skill: bounded contexts, ERD, aggregates     | Skills    |
+| **Tech stack comparison with evidence**        | /tech-stack-research: top 3 per layer, confidence %           | Skills    |
+| **Step-selection gate for long workflows**     | big-feature + greenfield preActions let user deselect         | Workflows |
+| **Workflow trigger shortcuts**                 | 19 workflow-\* skills for instant activation via /command     | Skills    |
+| **Prompt engineering (role + CoT + evidence)** | Skills use role prompting, chain-of-thought, few-shot         | Skills    |
+| **Context engineering (JIT + dedup + budget)** | Hooks manage context window with precision injection          | Hooks     |
+| **Skill chain navigation (Next Steps)**        | AskUserQuestion recommends logical next skill per step        | Skills    |
+| **Plan-aware skills (Step 0)**                 | Skills read prior workflow outputs before starting work       | Skills    |
+| **Review gates between artifacts**             | refine-review, story-review, tdd-spec-review checkpoints      | Skills    |
+| **Agent negative-prompting guardrails**        | NEVER/ALWAYS rules per agent prevent role overstepping        | Agents    |
+| **Dual-tool knowledge sharing**                | .github/instructions/\*.md syncs to GitHub Copilot            | Config    |
+| **Dual planning rounds**                       | High-level arch plan → sprint-ready plan after stories        | Workflows |
+| **Conditional architecture scaffolding**       | /scaffold auto-skips when existing abstractions found         | Skills    |
 
 ### File Structure
 
@@ -3415,7 +3375,7 @@ Agents solve two critical problems:
 
 2. **Parallel execution** — Multiple agents can run simultaneously (e.g., 4 code-reviewer agents reviewing different file categories in parallel), dramatically reducing time for large tasks.
 
-**Key design:** Agents inherit project context via `subagent-init.cjs` — they automatically receive CLAUDE.md instructions, learned lessons, and active workflow state.
+**Key design:** Agents inherit project context via 13 `subagent-init-*.cjs` part-hooks — they automatically receive CLAUDE.md instructions, learned lessons, and active workflow state.
 
 ### 12.3 Agent Behavioral Rules (NEW)
 
@@ -3479,7 +3439,6 @@ This framework answers that question with **defense in depth**: multiple indepen
 | **Convention over configuration** | `project-config.json` centralizes all project-specific knowledge. Hooks read it at runtime — no hardcoded assumptions.                                                                                                                         |
 | **Enforce at the boundary**       | Hooks run as separate processes at lifecycle boundaries. The AI can't bypass them because they execute outside the LLM's control loop.                                                                                                         |
 | **Learn from mistakes**           | The `/learn` skill captures AI errors into `lessons.md`. The `lessons-injector.cjs` hook re-injects them on every prompt and edit. Past mistakes become future guardrails.                                                                     |
-| **Search before create**          | `search-before-code.cjs` blocks file creation/modification until evidence of codebase search exists. This prevents pattern invention and ensures code follows established conventions.                                                         |
 | **Plan before implement**         | `edit-enforcement.cjs` requires `TaskCreate` before any file edit. Combined with workflow step tracking, this ensures AI doesn't skip from question to code without a plan.                                                                    |
 | **State survives amnesia**        | External state files (todo, workflow progress, swap) persist to disk. After context compaction, `post-compact-recovery.cjs` restores progress — the AI resumes where it left off.                                                              |
 | **Stateless-per-turn invariants** | Rules are re-injected at every `UserPromptSubmit` via `mindset-injector` and `prompt-context-assembler`. The framework never trusts the AI to remember rules from prior turns — they are re-stated as invariants at each interaction boundary. |
@@ -3537,7 +3496,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 
 **~37 hooks** (53 files), **258 skills**, **48 workflows**, and **28 specialized agents** working in concert to deliver:
 
-- **Fewer hallucinations** — Evidence gates, search-before-code, and proof traces catch AI fabrications before they reach files
+- **Fewer hallucinations** — Evidence gates and proof traces catch AI fabrications before they reach files
 - **Better code quality** — Pattern injection ensures AI follows project conventions, not generic training data
 - **Full lifecycle coverage** — From greenfield inception through idea capture, test specification, implementation, code review, and documentation
 - **Consistent adherence** — Programmatic enforcement means quality doesn't degrade in long sessions or complex tasks

@@ -10,7 +10,7 @@
 | **Need a skill?**            | [skills/README.md](./skills/README.md) - 258 skills catalog                                     |
 | **Building a feature?**      | [skills/README.md](./skills/README.md) + `docs/project-reference/` patterns                     |
 | **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 37 hooks deep-dive                                       |
-| **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 48 workflows                                      |
+| **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 34 workflows                                      |
 | **Configuring Claude?**      | [configuration/README.md](./configuration/README.md)                                            |
 | **Team collaboration?**      | [team-collaboration-guide.md](./team-collaboration-guide.md) - PO, BA, QA, QC, UX, PM workflows |
 | **Graph intelligence?**      | [code-graph-mechanism.md](./code-graph-mechanism.md) - How structural code analysis works       |

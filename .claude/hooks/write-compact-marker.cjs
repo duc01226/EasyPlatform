@@ -13,14 +13,42 @@
  */
 
 const fs = require('fs');
+const { execSync } = require('child_process');
 const {
   MARKERS_DIR,
   CALIBRATION_PATH,
   DEBUG_DIR,
+  SESSION_ID_DEFAULT,
   ensureDir,
   getMarkerPath,
   getDebugLogPath
 } = require('./lib/ck-paths.cjs');
+
+const CALIBRATION_LOCK_PATH = CALIBRATION_PATH.replace('.json', '.lock');
+const LOCK_TIMEOUT_MS = 5000;
+
+function acquireCalibrationLock() {
+  try {
+    if (fs.existsSync(CALIBRATION_LOCK_PATH)) {
+      const stat = fs.statSync(CALIBRATION_LOCK_PATH);
+      if (Date.now() - stat.mtimeMs > LOCK_TIMEOUT_MS) {
+        try { fs.unlinkSync(CALIBRATION_LOCK_PATH); } catch (e) {}
+        if (fs.existsSync(CALIBRATION_LOCK_PATH)) return false;
+      } else {
+        return false; // lock held
+      }
+    }
+    fs.writeFileSync(CALIBRATION_LOCK_PATH, String(process.pid), { flag: 'wx' });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function releaseCalibrationLock() {
+  try { if (fs.existsSync(CALIBRATION_LOCK_PATH)) fs.unlinkSync(CALIBRATION_LOCK_PATH); }
+  catch (e) {}
+}
 
 /**
  * Read existing calibration data
@@ -62,35 +90,41 @@ function updateCalibration(contextWindowSize, tokensAtCompact) {
     return;
   }
 
-  const calibration = readCalibration();
-  const key = String(contextWindowSize);
+  if (!acquireCalibrationLock()) return; // skip if lock unavailable — calibration is optional
 
-  // EMA alpha: 0.3 gives 70% weight to historical average, 30% to new observation
-  // Chosen to smooth out variations while adapting to pattern changes within ~3-4 observations
-  const CALIBRATION_ALPHA = 0.3;
+  try {
+    const calibration = readCalibration();
+    const key = String(contextWindowSize);
 
-  if (calibration[key]) {
-    const alpha = CALIBRATION_ALPHA;
-    const oldThreshold = calibration[key].threshold;
-    const newThreshold = Math.floor(alpha * tokensAtCompact + (1 - alpha) * oldThreshold);
+    // EMA alpha: 0.3 gives 70% weight to historical average, 30% to new observation
+    // Chosen to smooth out variations while adapting to pattern changes within ~3-4 observations
+    const CALIBRATION_ALPHA = 0.3;
 
-    calibration[key] = {
-      threshold: newThreshold,
-      samples: calibration[key].samples + 1,
-      lastUpdated: Date.now(),
-      lastObserved: tokensAtCompact
-    };
-  } else {
-    // First observation for this window size
-    calibration[key] = {
-      threshold: tokensAtCompact,
-      samples: 1,
-      lastUpdated: Date.now(),
-      lastObserved: tokensAtCompact
-    };
+    if (calibration[key]) {
+      const alpha = CALIBRATION_ALPHA;
+      const oldThreshold = calibration[key].threshold;
+      const newThreshold = Math.floor(alpha * tokensAtCompact + (1 - alpha) * oldThreshold);
+
+      calibration[key] = {
+        threshold: newThreshold,
+        samples: calibration[key].samples + 1,
+        lastUpdated: Date.now(),
+        lastObserved: tokensAtCompact
+      };
+    } else {
+      // First observation for this window size
+      calibration[key] = {
+        threshold: tokensAtCompact,
+        samples: 1,
+        lastUpdated: Date.now(),
+        lastObserved: tokensAtCompact
+      };
+    }
+
+    writeCalibration(calibration);
+  } finally {
+    releaseCalibrationLock();
   }
-
-  writeCalibration(calibration);
 }
 
 /**
@@ -107,6 +141,33 @@ function debugLog(sessionId, message) {
   }
 }
 
+/**
+ * Capture git status --short for post-compact re-verify context.
+ * Returns null on failure (non-git dir, timeout, etc.) — fail silently.
+ * @param {string} cwd - Project directory
+ * @returns {string|null}
+ */
+function captureGitStatus(cwd) {
+  try {
+    const output = execSync('git status --short', {
+      cwd,
+      timeout: 3000,
+      encoding: 'utf8'
+    }).trim();
+    // Truncate to 50 lines max to keep marker file small
+    const lines = output.split('\n');
+    return lines.length > 50
+      ? lines.slice(0, 50).join('\n') + '\n[...truncated]'
+      : output;
+  } catch (_e) {
+    return null; // non-git dir, git not found, or timeout
+  }
+}
+
+// COMPACT INVARIANT: This hook must fire BEFORE post-compact-recovery sees the marker.
+// The marker file + calibration snapshot provide the state needed for full recovery.
+// Workflow state is separately managed by todo-tracker.cjs and workflow-step-tracker.cjs.
+
 // Read JSON from stdin (PreCompact payload)
 let input = '';
 process.stdin.setEncoding('utf8');
@@ -115,8 +176,8 @@ process.stdin.on('end', () => {
   try {
     const data = JSON.parse(input);
 
-    // Use 'default' as fallback (must match statusline.cjs)
-    const sessionId = data.session_id || 'default';
+    // Use SESSION_ID_DEFAULT as fallback (shared constant — must match all marker readers)
+    const sessionId = data.session_id || SESSION_ID_DEFAULT;
 
     // Log received payload for debugging
     debugLog(sessionId, `PreCompact payload: ${JSON.stringify(data)}`);
@@ -127,13 +188,16 @@ process.stdin.on('end', () => {
     // Write session-specific marker for statusline detection
     // baselineRecorded: false means statusline should record cumulative baseline on first read
     const markerPath = getMarkerPath(sessionId);
+    const cwd = data.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
+    const gitStatus = captureGitStatus(cwd);
     const marker = {
       sessionId: sessionId,
       trigger: data.trigger || 'unknown',
       baselineRecorded: false,  // Statusline will record cumulative total as baseline
       baseline: 0,              // Will be set by statusline on first read
       lastTokenTotal: 0,        // For token drop detection
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      ...(gitStatus ? { compactState: { gitStatus, warningShown: false } } : {})
     };
     fs.writeFileSync(markerPath, JSON.stringify(marker));
 

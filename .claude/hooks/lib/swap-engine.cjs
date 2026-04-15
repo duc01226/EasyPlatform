@@ -226,7 +226,7 @@ async function externalize(sessionId, toolName, toolInput, toolResult) {
       id: swapId,
       tool: toolName,
       input: toolInput,
-      metrics: { charCount: content.length, lineCount: content.split('\n').length, tokenEstimate: Math.ceil(content.length / 4) },
+      metrics: { charCount: content.length, lineCount: content.split('\n').length, tokenEstimate: Math.ceil(content.length / 4), byteSize: Buffer.byteLength(content, 'utf8') },
       summary: extractSummary(content, toolName),
       keyPatterns: extractKeyPatterns(content, toolName),
       timestamps: { capturedAt: now, expiresAt: new Date(Date.now() + MS_PER_DAY).toISOString() }

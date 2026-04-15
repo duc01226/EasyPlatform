@@ -18,28 +18,12 @@
 const fs = require('fs');
 const path = require('path');
 const {
-    DEDUP_LINES,
-    TOP_DEDUP_LINES
+    DEDUP_LINES
 } = require('./lib/dedup-constants.cjs');
+const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-utils.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 const PROJECT_STRUCTURE_P2_MARKER = '## [Injected: Project Structure Reference (part 2)]';
-
-function isMarkerInContext(lines, marker, bottomWindow, topWindow = TOP_DEDUP_LINES) {
-    if (!lines || lines.length === 0) return false;
-    if (lines.slice(-bottomWindow).some(l => l.includes(marker))) return true;
-    if (lines.slice(0, topWindow).some(l => l.includes(marker))) return true;
-    return false;
-}
-
-function loadTranscriptLines(transcriptPath) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return null;
-        return fs.readFileSync(transcriptPath, 'utf-8').split('\n');
-    } catch {
-        return null;
-    }
-}
 
 async function main() {
     try {

@@ -4,10 +4,10 @@ description: >-
     Use this agent when working with product ideas, backlog management,
     prioritization decisions, sprint planning, or stakeholder communication.
     Specializes in value-driven decision making and requirement clarification.
-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 22
+maxTurns: 200
 ---
 
 ## Role

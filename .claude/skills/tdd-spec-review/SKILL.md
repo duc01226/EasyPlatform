@@ -1,6 +1,6 @@
 ---
 name: tdd-spec-review
-version: 1.0.0
+version: 1.1.0
 description: '[Code Quality] Review test specifications for coverage, completeness, and correctness before implementation. AI self-review gate after /tdd-spec.'
 ---
 
@@ -232,6 +232,51 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+## Adversarial Review Mindset (NON-NEGOTIABLE)
+
+**Default stance: SKEPTIC probing test coverage gaps, not confirming coverage completeness.**
+
+> **Coverage illusion trap:** A spec with many TCs feels complete. But TCs that test implementation details, trivial happy paths, or vague outcomes provide false coverage confidence. This section forces quality challenge beyond count.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Mutation Analysis Mindset**
+For each TC: "If I changed ONE line of the implementation this TC is testing, would this TC fail?" If the TC would still pass after a subtle bug is introduced — it is not testing behavior, it is testing presence. Flag it.
+
+**2. Negative Test Adequacy**
+List the 3 most likely production failures for this feature (invalid input, service timeout, data corruption, race condition). Does at least one TC cover each failure mode? If a production failure has no corresponding TC, it will not be caught until production.
+
+**3. TC Quality Challenge**
+For each TC, check its assertion: "Could this TC PASS even if the feature is broken?" (e.g., "Response is 200 OK" without checking response body). Flag TCs where the assertion is too coarse to catch regressions.
+
+**4. Coverage Gap Hunt**
+Identify code paths that EXIST but have NO corresponding TC. Common gaps: admin/superuser paths, concurrent access, partial data states, idempotency, rollback behavior. If a gap exists — flag it, don't rationalize it.
+
+**5. Boundary Condition Probe**
+For each TC that tests a value (count, length, amount): "Is there a TC for the value-1, value, value+1 boundary?" Off-by-one errors are the most common business logic bug. If boundary TCs are missing, flag them.
+
+**6. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
+
+### Forbidden Patterns
+
+- **"Coverage looks complete"** → Count is NOT quality. Would a mutation pass these TCs?
+- **"Happy path is tested"** → The happy path is the least likely failure mode in production.
+- **"Edge cases included"** → Are they the RIGHT edge cases? Name the 3 most likely production failures.
+- **"Assertions are clear"** → Can the feature be broken while the assertion still passes?
+- **Approving test specs without adversarial quality challenge** → Forbidden.
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+- [ ] Applied mutation analysis to at least 1 TC per feature area
+- [ ] Listed 3 production failure modes and verified TCs cover them
+- [ ] Checked TC assertion specificity (can it pass even if feature breaks?)
+- [ ] Identified at least 1 coverage gap (code path with no TC)
+- [ ] Verified boundary TCs exist for value-based assertions
+- [ ] Generated at least 2 sentences arguing the opposite verdict
+
+If any box is unchecked → adversarial review incomplete. Go back.
+
 ## Workflow
 
 1. **Locate test specs** — Find TCs in feature doc Section 15 or `docs/test-specs/`
@@ -245,23 +290,27 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ### Required (all must pass)
 
-- [ ] **TC ID format** — All TCs follow `TC-{FEATURE}-{NNN}` format
-- [ ] **Story coverage** — Every user story has at least one corresponding TC
-- [ ] **AC coverage** — Every acceptance criterion has a test case
-- [ ] **Happy path** — Each story has at least one happy path TC
-- [ ] **Error path** — Each story has at least one error/failure TC
-- [ ] **No duplicates** — No duplicate TCs testing the same scenario
-- [ ] **Testable assertions** — Each TC has clear expected result (not vague "should work")
-- [ ] **Authorization TCs** — At least 1 TC per story verifying unauthorized access is rejected
+| #   | Check                                                                                     | Presence                                         | Quality Depth                                                                                               |
+| --- | ----------------------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| 1   | **TC ID format** — All TCs follow `TC-{FEATURE}-{NNN}` format                             | Do all TCs use the `TC-{FEATURE}-{NNN}` pattern? | Are IDs unique per TC? Does the FEATURE code match the actual feature?                                      |
+| 2   | **Story coverage** — Every user story has at least one corresponding TC                   | Does every story ID appear in at least one TC?   | Does each TC actually test the story behavior, or does it just reference the story ID in a comment?         |
+| 3   | **AC coverage** — Every acceptance criterion has a test case                              | Is every AC traceable to at least one TC?        | Does each AC have a TC that would FAIL if the AC is violated?                                               |
+| 4   | **Happy path** — Each story has at least one happy path TC                                | Is a happy path TC present per story?            | Does the happy path TC verify the full end-to-end scenario, or just a happy-path stub?                      |
+| 5   | **Error path** — Each story has at least one error/failure TC                             | Is an error/failure TC present per story?        | Does the error TC verify the exact error response (code + message), not just that an error occurred?        |
+| 6   | **No duplicates** — No duplicate TCs testing the same scenario                            | Are all TC IDs unique with distinct scenarios?   | Are there TCs that test the same scenario with slightly different input? Flag near-duplicates.              |
+| 7   | **Testable assertions** — Each TC has clear expected result (not vague "should work")     | Does each TC have a specific expected result?    | Is each assertion specific enough to catch regressions? Would it pass if the return value is wrong?         |
+| 8   | **Authorization TCs** — At least 1 TC per story verifying unauthorized access is rejected | Is an authorization TC present per story?        | Does the authorization TC test a realistic access scenario, not just "wrong role → 403 without body check"? |
 
 ### Recommended (>=50% should pass)
 
-- [ ] **Edge cases** — Boundary values, empty inputs, max limits tested
-- [ ] **Integration points** — Cross-service scenarios covered
-- [ ] **Performance TCs** — Response time or throughput expectations where relevant; production-like data volume TCs if >1000 records expected (ref: protocol §4)
-- [ ] **Security TCs** — Auth, authorization, input validation tested
-- [ ] **Seed data TCs** — If feature needs reference data, TCs verify data exists and seeder runs correctly (ref: protocol §2)
-- [ ] **Data migration TCs** — If schema changes exist, TCs verify data transforms correctly, rollback works, no data loss (ref: protocol §5)
+| #   | Check                                                                                                                                                       | Presence                                                                 | Quality Depth                                                                                                               |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Edge cases** — Boundary values, empty inputs, max limits tested                                                                                           | Are edge case TCs listed?                                                | Are these the RIGHT edge cases? Do they cover the 3 most likely production failure modes for this feature?                  |
+| 2   | **Integration points** — Cross-service scenarios covered                                                                                                    | Are cross-service TCs present where applicable?                          | Do integration TCs verify actual data flow across services, or just that a downstream call was made?                        |
+| 3   | **Performance TCs** — Response time or throughput expectations where relevant; production-like data volume TCs if >1000 records expected (ref: protocol §4) | Are performance TCs present where data volume or SLA expectations exist? | Do performance TCs use production-like data volumes, not toy datasets that trivially pass?                                  |
+| 4   | **Security TCs** — Auth, authorization, input validation tested                                                                                             | Are security TCs present for auth, authz, and input validation?          | Do security TCs attempt realistic attack vectors (SQLi, over-posting, privilege escalation) not just "invalid token → 401"? |
+| 5   | **Seed data TCs** — If feature needs reference data, TCs verify data exists and seeder runs correctly (ref: protocol §2)                                    | If reference data is needed, does a seed data TC exist (or N/A)?         | If present, does the TC assert the exact seeded data shape, not just that the seeder ran without error?                     |
+| 6   | **Data migration TCs** — If schema changes exist, TCs verify data transforms correctly, rollback works, no data loss (ref: protocol §5)                     | If schema changes exist, does a migration TC exist (or N/A)?             | If present, does the TC verify rollback behavior and zero data loss, not just forward migration success?                    |
 
 ## Output
 
@@ -294,22 +343,26 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 {PROCEED | REVISE_FIRST}
 ```
 
-## Round 2: Focused Re-Review (MANDATORY)
+## Round 2+ : Fresh Sub-Agent Re-Review (MANDATORY)
 
-> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
+> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
 
-After completing Round 1 checklist evaluation, execute a **second full review round**:
+After completing Round 1 checklist evaluation, spawn a **fresh `general-purpose` sub-agent** for Round 2 using the canonical Agent template from `SYNC:review-protocol-injection` above. Test specification reviews are NOT code reviews — use `subagent_type: "general-purpose"`. When constructing the Agent call prompt:
 
-1. **Re-read** the Round 1 verdict and checklist results
-2. **Re-evaluate** ALL checklist items — do NOT rely on Round 1 memory
-3. **Challenge** Round 1 PASS items: "Is this really PASS? Did I verify with evidence?"
-4. **Focus on** what Round 1 typically misses:
-    - Implicit assumptions that weren't validated
-    - Missing acceptance criteria coverage
-    - Edge cases not addressed in the artifact
-    - Cross-references that weren't verified
-5. **Update verdict** if Round 2 found new issues
-6. **Final verdict** must incorporate findings from BOTH rounds
+1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
+2. Set `subagent_type: "general-purpose"`
+3. Embed the full verbatim body of these SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:fix-layer-accountability` which are not applicable to test specification artifacts)
+4. Set the Task as `"Review the test specification artifacts for coverage completeness and quality. Focus on: implicit assumptions not validated, missing story/AC coverage, edge cases not addressed, cross-references not verified, vague expected results, duplicate TCs, missing authorization TCs."`
+5. Set Target Files as the explicit test specification file paths being reviewed
+6. Set report path as `plans/reports/tdd-spec-review-round{N}-{date}.md`
+
+After sub-agent returns:
+
+1. **Read** the sub-agent's report
+2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
+3. **If FAIL:** fix issues in the specs, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
+4. **Max 3 fresh rounds** — escalate to user via `AskUserQuestion` if still failing after 3 rounds
+5. **Final verdict** must incorporate findings from ALL rounds
 
 ## Key Rules
 

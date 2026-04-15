@@ -4,10 +4,10 @@ description: >-
     Use this agent to verify an implementation matches its specification — nothing
     more, nothing less. Dispatched BEFORE code-reviewer. Catches spec drift,
     missing requirements, extra features, and misunderstandings.
-tools: Read, Grep, Glob, Bash, Write, TaskCreate
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: opus
 memory: project
-maxTurns: 20
+maxTurns: 200
 ---
 
 ## Role

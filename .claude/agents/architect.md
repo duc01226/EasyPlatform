@@ -6,11 +6,11 @@ description: >-
     comprehensive cross-service, security, and performance analysis. Invoke when
     designing new services, major service modifications, cross-service communication
     changes, database technology selection, or significant architectural decisions.
-tools: Read, Write, Edit, Grep, Glob, Bash, TaskCreate, WebSearch
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: opus
 memory: project
 skills: arch-cross-service-integration, arch-security-review, arch-performance-optimization
-maxTurns: 38
+maxTurns: 200
 ---
 
 ## Role

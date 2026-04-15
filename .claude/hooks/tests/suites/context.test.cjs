@@ -470,8 +470,38 @@ const scssContextTests = [
     }
 ];
 
+// TC-SUBCTX-010 / 011 / 012 — buildContextGuardContext() output contract
+const { buildContextGuardContext } = require('../../lib/subagent-context-builders.cjs');
+
+const contextGuardBuilderTests = [
+    {
+        name: 'TC-SUBCTX-010: context-guard output contains ck-agent- filename convention',
+        fn: () => {
+            const output = buildContextGuardContext().join('\n');
+            assertContains(output, 'ck-agent-', 'Should contain ck-agent- naming scheme');
+            assertContains(output, '.progress.md', 'Should contain .progress.md extension');
+        }
+    },
+    {
+        name: 'TC-SUBCTX-011: context-guard output contains step status markers',
+        fn: () => {
+            const output = buildContextGuardContext().join('\n');
+            assertContains(output, '[partial]', 'Should contain [partial] status marker');
+            assertContains(output, '[done]', 'Should contain [done] status marker');
+        }
+    },
+    {
+        name: 'TC-SUBCTX-012: context-guard output contains Report path instruction',
+        fn: () => {
+            const output = buildContextGuardContext().join('\n');
+            assertContains(output, 'Report:', 'Should contain Report: declaration example');
+            assertContains(output, 'plans/reports/', 'Should contain plans/reports/ path');
+        }
+    }
+];
+
 // Export test suite
 module.exports = {
     name: 'Context Injection Hooks',
-    tests: [...designSystemContextTests, ...backendCsharpContextTests, ...frontendTypescriptContextTests, ...scssContextTests]
+    tests: [...designSystemContextTests, ...backendCsharpContextTests, ...frontendTypescriptContextTests, ...scssContextTests, ...contextGuardBuilderTests]
 };

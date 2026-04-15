@@ -24,14 +24,15 @@ description: '[Architecture] Scaffold project architecture with OOP/SOLID base c
 
 <!-- SYNC:scaffold-production-readiness -->
 
-> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 4 foundations:
+> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 5 foundations:
 >
-> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates
-> 2. **Error Handling Foundation** — HTTP error interception, classification, user notification patterns
-> 3. **Loading State Management** — request counter tracking, loading indicators, skip tokens
-> 4. **Docker Development Environment** — compose profiles, multi-stage Dockerfile, health checks
+> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates. Specific tool choices → `docs/project-reference/` or `project-config.json`.
+> 2. **Error Handling Foundation** — HTTP interceptor, error classification (4xx/5xx taxonomy), user notification, global uncaught handler.
+> 3. **Loading State Management** — counter-based tracker (not boolean toggle), skip-token for background requests, 300ms flicker guard.
+> 4. **Docker Development Environment** — compose profiles (`dev`/`test`/`infra`), multi-stage Dockerfile, health checks on all services, non-root production user.
+> 5. **Integration Points** — document each outbound boundary; configure retry + circuit breaker + timeout; integration tests for happy path and failure path.
 >
-> Present 2-3 options per concern via AskUserQuestion. Verify each checklist before marking scaffold complete.
+> **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
 
 <!-- /SYNC:scaffold-production-readiness -->
 
@@ -296,7 +297,7 @@ Run ALL verification checklists from the production readiness protocol:
   <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:scaffold-production-readiness:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:scaffold-production-readiness:reminder -->
 - **IMPORTANT MUST ATTENTION** verify all 4 production readiness foundations (quality tooling, error handling, loading state, Docker) before marking scaffold complete.
-    <!-- /SYNC:scaffold-production-readiness:reminder -->
+      <!-- /SYNC:scaffold-production-readiness:reminder -->

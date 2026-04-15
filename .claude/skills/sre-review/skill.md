@@ -1,6 +1,6 @@
 ---
 name: sre-review
-version: 1.0.0
+version: 1.3.0
 description: '[Code Quality] Production readiness review for service-layer and API changes'
 ---
 
@@ -325,9 +325,9 @@ Review the changed files and score each criterion 0-2:
 
 | Score | Verdict        | Recommendation                                                                            |
 | ----- | -------------- | ----------------------------------------------------------------------------------------- |
-| 15-20 | **PASS**       | Production-ready. Proceed to commit.                                                      |
-| 10-14 | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
-| 0-9   | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
+| 19-24 | **PASS**       | Production-ready. Proceed to commit.                                                      |
+| 13-18 | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
+| 0-12  | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
 
 <!-- SYNC:graph-assisted-investigation -->
 
@@ -391,7 +391,7 @@ After completing Round 1 scoring, execute a **second full review round**:
 
 **Scope:** {files reviewed}
 **Date:** {date}
-**Score:** {X}/16
+**Score:** {X}/24
 **Verdict:** PASS / NEEDS WORK / NOT READY
 
 ### Observability ({X}/8)
@@ -419,6 +419,13 @@ After completing Round 1 scoring, execute a **second full review round**:
 | 9   | Seed vs Migration  | 0/1/2 | ...      |
 | 10  | Seeder Idempotency | 0/1/2 | ...      |
 
+### Database Performance ({X}/4)
+
+| #   | Criterion        | Score | Evidence |
+| --- | ---------------- | ----- | -------- |
+| 11  | Pagination       | 0/1/2 | ...      |
+| 12  | Database Indexes | 0/1/2 | ...      |
+
 ### Gaps to Address
 
 - {specific actionable item}
@@ -430,9 +437,9 @@ After completing Round 1 scoring, execute a **second full review round**:
 
 ## Important Notes
 
-- Advisory only — provides awareness, does not block commits
+- Advisory only (final VERDICT) — the score and verdict inform the team but do not block commits; the PROCESS steps (graph gate, Round 2, Database Performance Protocol) remain MANDATORY and are not advisory
 - Evidence-based — cite specific file:line for each score
-- Proportional — small bug fixes need less rigor than new endpoints
+- Proportional — small bug fixes need less rigor than new endpoints (applies to VERDICT interpretation, not to skipping MANDATORY process steps)
 - Check for project framework patterns (background job handlers, base controller error handling)
 
 ---

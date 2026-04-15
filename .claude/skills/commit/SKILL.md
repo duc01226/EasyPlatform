@@ -38,13 +38,13 @@ Stage changes and create well-structured git commits following Conventional Comm
 Before running any `git add` or `git commit` commands, create the marker file to bypass the `git-commit-block` hook:
 
 ```bash
-mkdir -p "$CLAUDE_PROJECT_DIR/tmp/claude-temp" && touch "$CLAUDE_PROJECT_DIR/tmp/claude-temp/.commit-skill-active"
+PROJ=$(git rev-parse --show-toplevel) && mkdir -p "$PROJ/tmp/claude-temp" && touch "$PROJ/tmp/claude-temp/.commit-skill-active"
 ```
 
 After committing (success or failure), **always** clean up the marker:
 
 ```bash
-rm -f "$CLAUDE_PROJECT_DIR/tmp/claude-temp/.commit-skill-active"
+rm -f "$(git rev-parse --show-toplevel)/tmp/claude-temp/.commit-skill-active"
 ```
 
 ## Workflow

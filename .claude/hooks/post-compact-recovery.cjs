@@ -23,6 +23,7 @@ const path = require('path');
 const { loadConfig, readSessionState, getReportsPath, resolvePlanPath } = require('./lib/ck-config-utils.cjs');
 const { loadState: loadWorkflowState, getCurrentStepInfo, getRecoveryContext } = require('./lib/workflow-state.cjs');
 const { getSwapEntries } = require('./lib/swap-engine.cjs');
+const { getMarkerPath, SESSION_ID_DEFAULT } = require('./lib/ck-paths.cjs');
 
 /**
  * Find most recent checkpoint file (within time limit)
@@ -53,6 +54,138 @@ function findRecentCheckpoint(reportsPath, maxAgeMinutes = 1440) {
     } catch (e) {
         return null;
     }
+}
+
+/**
+ * Find partial subagent progress files written under tmp/ck-agent-*.progress.md.
+ * Returns only files whose content contains [partial] AND whose mtime is within maxAgeMinutes.
+ * When sessionId is provided, files with a "Session: <id>" first-line header are filtered to
+ * match only the current session. Files without a Session header are included for all sessions
+ * (backward-compatible with agents that did not write the header).
+ * @param {number} maxAgeMinutes - Maximum age in minutes (default: 120 = 2h)
+ * @param {string|null} sessionId - Current session ID for isolation (optional)
+ * @returns {Array<{name:string, path:string, mtime:Date}>} Sorted newest-first
+ */
+function findPartialProgressFiles(maxAgeMinutes = 120, sessionId = null) {
+    try {
+        const tmpPath = path.resolve(process.cwd(), 'tmp');
+        if (!fs.existsSync(tmpPath)) return [];
+
+        const entries = fs.readdirSync(tmpPath, { withFileTypes: true });
+        return entries
+            .filter(e => e.isFile() && e.name.startsWith('ck-agent-') && e.name.endsWith('.progress.md'))
+            .map(e => {
+                const filePath = path.join(tmpPath, e.name);
+                // TOCTOU: file may be deleted between readdirSync and statSync — per-file try/catch
+                try {
+                    const stat = fs.statSync(filePath);
+                    return { name: e.name, path: filePath, mtime: stat.mtime };
+                } catch (e) {
+                    return null;
+                }
+            })
+            .filter(f => {
+                if (!f) return false;
+                const ageMinutes = (Date.now() - f.mtime.getTime()) / 60000;
+                if (ageMinutes > maxAgeMinutes) return false;
+                try {
+                    const content = fs.readFileSync(f.path, 'utf8');
+                    if (!content.includes('[partial]')) return false;
+                    // Session filtering: if sessionId provided, check Session: header
+                    if (sessionId) {
+                        const firstLine = content.split('\n')[0].trim();
+                        if (firstLine.startsWith('Session:')) {
+                            const fileSession = firstLine.slice('Session:'.length).trim();
+                            return fileSession === sessionId;
+                        }
+                        // No Session header — backward-compatible, include for all sessions
+                    }
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            })
+            .sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+    } catch (e) {
+        return [];
+    }
+}
+
+/**
+ * Build a markdown recovery block listing each [partial] progress file.
+ * Extracts up to 3 lines per [partial] section as an excerpt.
+ * @param {Array<{name:string, path:string}>} files
+ * @returns {string}
+ */
+function buildPartialRecoveryBlock(files) {
+    const lines = ['', '## Partial Subagent Work Found', ''];
+    lines.push('> The following subagent progress files contain unfinished `[partial]` work.');
+    lines.push('> Review these files and decide whether to re-spawn the subagent to complete the task.');
+    lines.push('');
+
+    for (const file of files) {
+        lines.push(`### \`${file.name}\``);
+        lines.push('');
+        try {
+            const contentLines = fs.readFileSync(file.path, 'utf8').split('\n');
+            const excerpts = [];
+            for (let i = 0; i < contentLines.length; i++) {
+                if (contentLines[i].includes('[partial]')) {
+                    excerpts.push(...contentLines.slice(i, Math.min(i + 3, contentLines.length)));
+                }
+                if (excerpts.length >= 6) break;
+            }
+            if (excerpts.length > 0) {
+                lines.push('```');
+                lines.push(...excerpts.map(l => l.trimEnd()));
+                lines.push('```');
+            }
+        } catch (e) {
+            lines.push('_(could not read file)_');
+        }
+        lines.push('');
+    }
+
+    lines.push(`> **Action:** Read the progress file(s) above with the Read tool for full context.`);
+    lines.push('');
+    return lines.join('\n');
+}
+
+/**
+ * Delete done-only progress files older than maxAgeHours (best-effort, silent fail).
+ * Never deletes files containing [partial] — only fully-done files.
+ * When sessionId is provided, skips files belonging to OTHER sessions (Session: header mismatch)
+ * to prevent cross-session cleanup of live progress files.
+ * Files without a Session header are cleaned up unconditionally (backward-compatible).
+ * @param {number} maxAgeHours - Minimum age before deletion (default: 24h)
+ * @param {string|null} sessionId - Current session ID for isolation (optional)
+ */
+function cleanupDoneProgressFiles(maxAgeHours = 24, sessionId = null) {
+    try {
+        const tmpPath = path.resolve(process.cwd(), 'tmp');
+        if (!fs.existsSync(tmpPath)) return;
+
+        for (const entry of fs.readdirSync(tmpPath, { withFileTypes: true })) {
+            if (!entry.isFile() || !entry.name.startsWith('ck-agent-') || !entry.name.endsWith('.progress.md')) continue;
+            const filePath = path.join(tmpPath, entry.name);
+            try {
+                const stat = fs.statSync(filePath);
+                const ageHours = (Date.now() - stat.mtime.getTime()) / 3600000;
+                if (ageHours <= maxAgeHours) continue;
+                const content = fs.readFileSync(filePath, 'utf8');
+                if (content.includes('[partial]')) continue;
+                // Session safety: skip files that belong to a different session
+                if (sessionId) {
+                    const firstLine = content.split('\n')[0].trim();
+                    if (firstLine.startsWith('Session:')) {
+                        const fileSession = firstLine.slice('Session:'.length).trim();
+                        if (fileSession !== sessionId) continue;
+                    }
+                }
+                fs.unlinkSync(filePath);
+            } catch (e) { /* silent fail per file */ }
+        }
+    } catch (e) { /* silent fail */ }
 }
 
 /**
@@ -202,13 +335,13 @@ async function main() {
         }
 
         const payload = JSON.parse(stdin);
-        const sessionId = payload.session_id || process.env.CK_SESSION_ID;
+        const sessionId = payload.session_id || process.env.CK_SESSION_ID || SESSION_ID_DEFAULT;
 
-        if (!sessionId) {
-            process.exit(0);
-        }
-
-        // Load workflow state from temp file
+        // RECOVERY INVARIANT: Full todo/step recovery requires workflow state persisted by
+        // write-compact-marker.cjs at compact time. If workflow state is absent (fresh install,
+        // hook ordering gap, or session started without workflow), recovery falls back to
+        // checkpoint-only mode. This is expected behavior — the invariant is: if you need
+        // full recovery, a compact event MUST have fired with write-compact-marker active.
         const workflowState = loadWorkflowState(sessionId);
 
         // Check if there's an active workflow to recover
@@ -220,7 +353,18 @@ async function main() {
 
             const checkpointPath = findRecentCheckpoint(reportsPath);
             if (!checkpointPath) {
-                // No workflow and no recent checkpoint - nothing to recover
+                // Phase 03: scan for partial subagent progress files (session-scoped)
+                // ONLY surface after a compact event — check for compact marker
+                const markerExists = fs.existsSync(getMarkerPath(sessionId));
+                if (markerExists) {
+                    const partialFiles = findPartialProgressFiles(120, sessionId);
+                    if (partialFiles.length > 0) {
+                        console.log(buildPartialRecoveryBlock(partialFiles));
+                    }
+                    // Delete marker so second resume after same compact doesn't re-surface
+                    try { fs.unlinkSync(getMarkerPath(sessionId)); } catch (e) {}
+                    try { cleanupDoneProgressFiles(24, sessionId); } catch (e) {} // best-effort cleanup
+                }
                 process.exit(0);
             }
 

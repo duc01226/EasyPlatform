@@ -164,7 +164,7 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 
 **Copilot can't enforce protocols like Claude Code hooks:**
 
-- No blocking operations (edit-enforcement, search-before-code)
+- No blocking operations (edit-enforcement)
 - Relies on LLM instruction-following (not guaranteed)
 - Protocols are advisory, not enforced
 - No runtime context injection — all context must be in instruction files

@@ -2,10 +2,10 @@
 name: git-manager
 description: Stage, commit, and push code changes with conventional commits. Use when user says "commit", "push", or finishes a feature/fix.
 model: inherit
-tools: Glob, Grep, Read, Bash, Write
+tools: Read, Write, Edit, MultiEdit, Glob, Grep, Bash, TaskCreate
 skills: commit
 memory: project
-maxTurns: 30
+maxTurns: 200
 ---
 
 ## Role

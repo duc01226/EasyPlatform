@@ -7,10 +7,10 @@ description: >-
     issues, performance bottlenecks significantly impact UX, security vulnerabilities
     are identified, database migrations fail, CI/CD pipelines break unexpectedly,
     integration conflicts arise, or architectural decisions prove problematic.
-tools: Read, Write, Grep, Glob, TaskCreate
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 30
+maxTurns: 200
 ---
 
 ## Role

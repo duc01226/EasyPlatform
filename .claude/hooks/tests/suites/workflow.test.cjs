@@ -15,6 +15,9 @@ const { runHook, getHookPath, createPreToolUseInput, createPostToolUseInput, cre
 const { assertEqual, assertContains, assertBlocked, assertAllowed, assertNotContains, assertTrue } = require('../lib/assertions.cjs');
 const { createTempDir, cleanupTempDir, setupTodoState, readStateFile } = require('../lib/test-utils.cjs');
 
+// Project root (4 levels up from suites/)
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+
 // Hook paths
 const TODO_ENFORCEMENT = getHookPath('skill-enforcement.cjs');
 const TODO_TRACKER = getHookPath('todo-tracker.cjs');
@@ -67,6 +70,22 @@ function cleanupCkTodoState(sessionId) {
         if (fs.existsSync(stateFile)) fs.unlinkSync(stateFile);
     } catch (_) {
         /* ignore */
+    }
+}
+
+/**
+ * Read todo state from the /tmp/ck/todo/ path for a given session ID.
+ * todo-tracker.cjs writes to this path — use this instead of readStateFile().
+ * @param {string} sessionId - Session ID to read state for
+ * @returns {object|null} Parsed state or null if not found
+ */
+function readCkTodoState(sessionId) {
+    const stateFile = path.join(os.tmpdir(), 'ck', 'todo', `todo-state-${sessionId}.json`);
+    if (!fs.existsSync(stateFile)) return null;
+    try {
+        return JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+    } catch (_) {
+        return null;
     }
 }
 
@@ -358,6 +377,7 @@ const todoTrackerTests = [
     {
         name: '[todo-tracker] records todos on TaskCreate',
         fn: async () => {
+            const sessionId = `test-tracker-create-${Date.now()}`;
             const tmpDir = createTempDir();
             try {
                 const input = createPostToolUseInput('TaskCreate', {
@@ -365,21 +385,23 @@ const todoTrackerTests = [
                     description: 'Task description',
                     activeForm: 'Creating task'
                 });
-                const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir });
+                const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir, env: { CK_SESSION_ID: sessionId } });
                 assertAllowed(result.code, 'Should not block');
 
-                const state = readStateFile(tmpDir, '.todo-state.json');
+                const state = readCkTodoState(sessionId);
                 assertTrue(state !== null, 'State file should exist');
                 assertTrue(state.hasTodos, 'Should have todos');
-                assertEqual(state.taskCount, 1, 'Should have 1 task');
+                assertEqual(state.pendingCount, 1, 'Should have 1 pending task');
             } finally {
                 cleanupTempDir(tmpDir);
+                cleanupCkTodoState(sessionId);
             }
         }
     },
     {
         name: '[todo-tracker] counts statuses correctly',
         fn: async () => {
+            const sessionId = `test-tracker-counts-${Date.now()}`;
             const tmpDir = createTempDir();
             try {
                 const input = createPostToolUseInput('TodoWrite', {
@@ -391,15 +413,16 @@ const todoTrackerTests = [
                         { content: 'Task 5', status: 'completed' }
                     ]
                 });
-                const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir });
+                const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir, env: { CK_SESSION_ID: sessionId } });
                 assertAllowed(result.code);
 
-                const state = readStateFile(tmpDir, '.todo-state.json');
+                const state = readCkTodoState(sessionId);
                 assertEqual(state.pendingCount, 2, 'Should have 2 pending');
                 assertEqual(state.inProgressCount, 1, 'Should have 1 in_progress');
                 assertEqual(state.completedCount, 2, 'Should have 2 completed');
             } finally {
                 cleanupTempDir(tmpDir);
+                cleanupCkTodoState(sessionId);
             }
         }
     },
@@ -438,13 +461,14 @@ const todoTrackerTests = [
     {
         name: '[todo-tracker] updates existing state',
         fn: async () => {
+            const sessionId = `test-tracker-update-${Date.now()}`;
             const tmpDir = createTempDir();
             try {
                 // First write
                 const input1 = createPostToolUseInput('TodoWrite', {
                     todos: [{ content: 'Task 1', status: 'pending' }]
                 });
-                await runHook(TODO_TRACKER, input1, { cwd: tmpDir });
+                await runHook(TODO_TRACKER, input1, { cwd: tmpDir, env: { CK_SESSION_ID: sessionId } });
 
                 // Second write with more todos
                 const input2 = createPostToolUseInput('TodoWrite', {
@@ -453,13 +477,15 @@ const todoTrackerTests = [
                         { content: 'Task 2', status: 'pending' }
                     ]
                 });
-                await runHook(TODO_TRACKER, input2, { cwd: tmpDir });
+                await runHook(TODO_TRACKER, input2, { cwd: tmpDir, env: { CK_SESSION_ID: sessionId } });
 
-                const state = readStateFile(tmpDir, '.todo-state.json');
-                assertEqual(state.taskCount, 2, 'Should have 2 tasks');
+                const state = readCkTodoState(sessionId);
+                assertTrue(state !== null, 'State file should exist after second write');
+                assertEqual(state.pendingCount, 1, 'Should have 1 pending');
                 assertEqual(state.completedCount, 1, 'Should have 1 completed');
             } finally {
                 cleanupTempDir(tmpDir);
+                cleanupCkTodoState(sessionId);
             }
         }
     }
@@ -489,20 +515,15 @@ const workflowRouterTests = [
     {
         name: '[workflow-router] catalog contains workflow entries with descriptions',
         fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('implement a dark mode toggle');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                const output = result.stdout;
-                // Default config has feature, bugfix, documentation
-                assertContains(output, 'Feature Implementation', 'Should list feature workflow');
-                assertContains(output, 'Bug Fix', 'Should list bugfix workflow');
-                assertContains(output, 'Use:', 'Should include whenToUse description');
-                assertContains(output, 'Not for:', 'Should include whenNotToUse description');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+            const input = createUserPromptInput('implement a dark mode toggle');
+            const result = await runHook(WORKFLOW_ROUTER, input, { cwd: PROJECT_ROOT });
+            assertAllowed(result.code, 'Should not block');
+            const output = result.stdout;
+            // Real workflows.json: 'feature' (index 9) and 'bugfix' (index 2) are both in part 1
+            assertContains(output, 'Feature Implementation', 'Should list feature workflow');
+            assertContains(output, 'Bug Fix', 'Should list bugfix workflow');
+            assertContains(output, 'Use:', 'Should include whenToUse description');
+            assertContains(output, 'Not for:', 'Should include whenNotToUse description');
         }
     },
     {
@@ -521,29 +542,30 @@ const workflowRouterTests = [
         }
     },
     {
-        name: '[workflow-router] skips catalog for short prompts',
+        name: '[workflow-router] injects catalog even for short prompts',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createUserPromptInput('yes');
                 const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should not block');
-                assertNotContains(result.stdout, 'Workflow Catalog', 'Should skip catalog for short prompts');
+                // Short-prompt filtering was removed — catalog always injected for non-empty prompts
+                assertContains(result.stdout, 'Workflow Catalog', 'Should inject catalog even for short prompts');
             } finally {
                 cleanupTempDir(tmpDir);
             }
         }
     },
     {
-        name: '[workflow-router] skips catalog for explicit commands',
+        name: '[workflow-router] injects catalog for explicit commands',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createUserPromptInput('/plan implement dark mode');
                 const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should not block');
-                const output = result.stdout;
-                assertTrue(output.trim() === '' || !output.includes('Workflow Catalog'), 'Should skip catalog for explicit commands');
+                // Slash-command filtering was removed — catalog always injected so user can switch workflows
+                assertContains(result.stdout, 'Workflow Catalog', 'Should inject catalog for explicit commands');
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -603,17 +625,12 @@ const catalogStructureTests = [
     {
         name: '[workflow-router] catalog shows confirm marker for confirmFirst workflows',
         fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('how does the authentication system work?');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                const output = result.stdout;
-                // Default feature workflow has confirmFirst: true, should show Confirm marker
-                assertContains(output, 'Confirm', 'Should show confirm marker for confirmFirst workflows');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+            const input = createUserPromptInput('how does the authentication system work?');
+            const result = await runHook(WORKFLOW_ROUTER, input, { cwd: PROJECT_ROOT });
+            assertAllowed(result.code, 'Should not block');
+            const output = result.stdout;
+            // big-feature has confirmFirst: true and is at index 1 (part 1) in real workflows.json
+            assertContains(output, 'Confirm', 'Should show confirm marker for confirmFirst workflows');
         }
     },
     {

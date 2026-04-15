@@ -8,7 +8,7 @@
  * Split into two hooks so each stays under the harness per-hook 10,000 character
  * limit — CLAUDE.md grows over time so splitting adds a permanent safety margin.
  *
- * Companion: prompt-context-assembler-claude-p2.cjs injects project-config-summary.
+ * Companion: prompt-context-assembler-project-config.cjs injects project-config-summary.
  *
  * Dedup marker: CLAUDE_MD → '## [Re-Injected: CLAUDE.md Key Rules]'
  *
@@ -22,27 +22,11 @@ const fs = require('fs');
 const path = require('path');
 const {
     CLAUDE_MD: CLAUDE_MD_MARKER,
-    DEDUP_LINES,
-    TOP_DEDUP_LINES
+    DEDUP_LINES
 } = require('./lib/dedup-constants.cjs');
+const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-utils.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-
-function isMarkerInContext(lines, marker, bottomWindow, topWindow = TOP_DEDUP_LINES) {
-    if (!lines || lines.length === 0) return false;
-    if (lines.slice(-bottomWindow).some(l => l.includes(marker))) return true;
-    if (lines.slice(0, topWindow).some(l => l.includes(marker))) return true;
-    return false;
-}
-
-function loadTranscriptLines(transcriptPath) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return null;
-        return fs.readFileSync(transcriptPath, 'utf-8').split('\n');
-    } catch {
-        return null;
-    }
-}
 
 async function main() {
     try {
@@ -85,7 +69,7 @@ async function main() {
             } catch { /* non-blocking */ }
         }
 
-        // NOTE: project-config-summary is injected by prompt-context-assembler-claude-p2.cjs
+        // NOTE: project-config-summary is injected by prompt-context-assembler-project-config.cjs
         // (a separate hook registered after this one). Split to keep each hook under the
         // harness per-hook 10,000 character limit.
 

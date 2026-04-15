@@ -189,7 +189,7 @@ Task({
 
 ### SubagentStart Hook
 
-The `subagent-init.cjs` hook injects context into all spawned agents:
+The 13 `subagent-init-*.cjs` hooks inject context into all spawned agents:
 
 ```
 ## Subagent: [agent_type]

@@ -788,6 +788,16 @@
   has_scripts: false
   name: scaffold
   path: scaffold\SKILL.md
+- category: documentation
+  description: "[Documentation] Generate a detailed, AI-analyzed release document
+    from git history over a time range or custom prompt. Dumps git artifacts to external
+    files first to prevent context loss, then analyzes themes across hooks, skills,
+    agents, workflows, and principles. Triggers: release doc, release document, what
+    changed in the last N days, changes last 30 days."
+  has_references: false
+  has_scripts: false
+  name: release-doc
+  path: release-doc\SKILL.md
 - category: other
   description: "[Git] Generate professional release notes from git commits between
     two refs with automated categorization. Use when creating release notes from git

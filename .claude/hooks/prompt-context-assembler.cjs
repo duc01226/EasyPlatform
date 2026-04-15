@@ -20,15 +20,17 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { loadConfig, resolvePlanPath, getReportsPath, resolveNamingPattern, normalizePath } = require('./lib/ck-config-utils.cjs');
 const { injectLessons, injectCriticalContext, injectWorkflowProtocol } = require('./lib/prompt-injections.cjs');
+const { readMarker, writeMarker } = require('./lib/context-tracker.cjs');
+const { SESSION_ID_DEFAULT } = require('./lib/ck-paths.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DEDUPLICATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 const {
-    DEDUP_LINES,
-    TOP_DEDUP_LINES
+    DEDUP_LINES
 } = require('./lib/dedup-constants.cjs');
+const { isMarkerInContext } = require('./lib/transcript-utils.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -119,22 +121,6 @@ function wasRecentlyInjected(transcriptPath) {
     } catch (e) {
         return false;
     }
-}
-
-/**
- * Check if marker exists in cached transcript lines — bottom (recency) OR top (primacy).
- * Prevents duplicate injection when content is at top of context from earlier prompts.
- * @param {string[]} lines - Pre-split transcript lines
- * @param {string} marker - Marker string to search for
- * @param {number} bottomWindow - Number of trailing lines to check
- * @param {number} [topWindow=50] - Number of leading lines to check
- * @returns {boolean}
- */
-function isMarkerInContext(lines, marker, bottomWindow, topWindow = TOP_DEDUP_LINES) {
-    if (!lines || lines.length === 0) return false;
-    if (lines.slice(-bottomWindow).some(l => l.includes(marker))) return true;
-    if (lines.slice(0, topWindow).some(l => l.includes(marker))) return true;
-    return false;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -250,6 +236,45 @@ function buildReminder({
     ];
 }
 
+/**
+ * Build post-compact re-verify warning block.
+ * Fires once per compact event (warningShown dedup), then silences.
+ * @param {string|null} sessionId - Session ID from payload.session_id
+ * @returns {string|null} Warning block or null if no compact pending
+ */
+function buildPostCompactWarning(sessionId) {
+    if (!sessionId) return null;
+    try {
+        const marker = readMarker(sessionId);
+        if (!marker?.compactState?.gitStatus || marker.compactState.warningShown) {
+            return null;
+        }
+        // Mark as shown before injecting (prevents repeat on this and future prompts)
+        marker.compactState.warningShown = true;
+        writeMarker(sessionId, marker);
+
+        const lines = `\`\`\`\n${marker.compactState.gitStatus}\n\`\`\``;
+
+        return [
+            `## ⚠️ CONTEXT COMPACTED — Re-verify before continuing`,
+            ``,
+            `Context was compacted since your last prompt. The summary may not reflect what`,
+            `actually persisted in the environment.`,
+            ``,
+            `**Git status at compact time:**`,
+            lines,
+            ``,
+            `**MANDATORY:** Before resuming any in-progress task:`,
+            `1. Run \`git status\` — compare against snapshot above`,
+            `2. Re-read any files you were editing`,
+            `3. Treat all "completed" claims in the summary as UNVERIFIED HYPOTHESES`,
+            ``
+        ].join('\n');
+    } catch (_e) {
+        return null; // fail-open — never block on a warning injection
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN EXECUTION
 // ═══════════════════════════════════════════════════════════════════════════
@@ -284,6 +309,13 @@ async function main() {
             const workflowProtocol = injectWorkflowProtocol(payload.transcript_path, confirmationMode);
             if (workflowProtocol) console.log(workflowProtocol);
         }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // POST-COMPACT RE-VERIFY WARNING (fires once per compact event)
+        // Placed after workflow protocol (primacy #1) but before other context.
+        // ═══════════════════════════════════════════════════════════════════════════
+        const postCompactWarning = buildPostCompactWarning(payload.session_id || SESSION_ID_DEFAULT);
+        if (postCompactWarning) console.log(postCompactWarning);
 
         // ═══════════════════════════════════════════════════════════════════════════
         // ALWAYS INJECT: Critical context (skipDedup on UserPromptSubmit — always visible)
@@ -340,14 +372,14 @@ async function main() {
         if (lessons) console.log(lessons);
 
         // NOTE: Graph protocol, workflow-gate compact reminder, and lesson-learned reminder
-        // are injected by prompt-context-assembler-p2.cjs (a separate hook in the same UPS
+        // are injected by prompt-context-assembler-closers.cjs (a separate hook in the same UPS
         // array, registered after this file). Split to keep each hook under the harness
         // per-hook 10,000 character limit — content is dynamic so splitting adds safety margin.
 
         // NOTE: project-structure-reference.md, CLAUDE.md TL;DR re-injection, and
         // project-config-summary are injected by separate hooks later in the same UPS array:
         //   prompt-context-assembler-docs.cjs / prompt-context-assembler-docs-p2.cjs
-        //   prompt-context-assembler-claude.cjs / prompt-context-assembler-claude-p2.cjs
+        //   prompt-context-assembler-claude.cjs / prompt-context-assembler-project-config.cjs
 
         // AI Mistake Prevention: REMOVED from UserPromptSubmit (Phase 1 — attention optimization).
         // Now injected ONLY via mindset-injector.cjs on PreToolUse (Edit|Write|MultiEdit|Skill).

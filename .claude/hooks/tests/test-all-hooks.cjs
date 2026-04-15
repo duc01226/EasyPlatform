@@ -584,13 +584,13 @@ async function testSessionEnd() {
 // Test Cases: Subagent
 // ============================================================================
 
-async function testSubagentInit() {
-    logSection('SubagentStart: subagent-init.cjs');
+async function testSubagentInitIdentity() {
+    logSection('SubagentStart: subagent-init-identity.cjs (identity + config + rules)');
 
     const subagentTypes = ['scout', 'Explore', 'planner', 'researcher', 'debugger', 'tester', 'code-reviewer', 'fullstack-developer'];
 
     for (const subagentType of subagentTypes) {
-        const result = await runHook('subagent-init.cjs', {
+        const result = await runHook('subagent-init-identity.cjs', {
             subagent_type: subagentType,
             prompt: `Test prompt for ${subagentType}`
         });
@@ -608,13 +608,13 @@ async function testSubagentInit() {
 
     // Empty input
     {
-        const result = await runHook('subagent-init.cjs', null);
+        const result = await runHook('subagent-init-identity.cjs', null);
         logResult('Empty input exits 0', result.code === 0);
     }
 
     // Unknown subagent type
     {
-        const result = await runHook('subagent-init.cjs', {
+        const result = await runHook('subagent-init-identity.cjs', {
             subagent_type: 'unknown-type',
             prompt: 'test'
         });
@@ -623,7 +623,7 @@ async function testSubagentInit() {
 
     // Empty prompt
     {
-        const result = await runHook('subagent-init.cjs', {
+        const result = await runHook('subagent-init-identity.cjs', {
             subagent_type: 'scout',
             prompt: ''
         });
@@ -632,6 +632,325 @@ async function testSubagentInit() {
 }
 
 // testSubagentCleanupReminder removed — hook deleted in P1 optimization
+
+async function testSubagentInitPatterns() {
+    logSection('SubagentStart: subagent-init-patterns-p1..p5.cjs (paged coding patterns + agent docs)');
+
+    // TC-PA-001: p1 fires for code-reviewer with Part 1/5 meta, ≤9000 chars
+    {
+        const result = await runHook('subagent-init-patterns-p1.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-PA-001][p1] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-PA-001][p1] Contains Part 1/5 meta', ctx.includes('Part 1/5'));
+                logResult('[TC-PA-001][p1] Contains Code Patterns heading', ctx.includes('## Code Patterns'));
+                logResult('[TC-PA-001][p1] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-PA-002: p2 fires for code-reviewer with Part 2/5 meta, ≤9000 chars
+    {
+        const result = await runHook('subagent-init-patterns-p2.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-PA-002][p2] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-PA-002][p2] Contains Part 2/5 meta', ctx.includes('Part 2/5'));
+                logResult('[TC-PA-002][p2] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-PA-003: p3 fires for code-reviewer with Part 3/5 meta, ≤9000 chars
+    {
+        const result = await runHook('subagent-init-patterns-p3.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-PA-003][p3] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-PA-003][p3] Contains Part 3/5 meta', ctx.includes('Part 3/5'));
+                logResult('[TC-PA-003][p3] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-PA-004: p4 fires for code-reviewer with Part 4/5 meta, ≤9000 chars
+    {
+        const result = await runHook('subagent-init-patterns-p4.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-PA-004][p4] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-PA-004][p4] Contains Part 4/5 meta', ctx.includes('Part 4/5'));
+                logResult('[TC-PA-004][p4] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-PA-005: p5 fires for code-reviewer — silent OR ≤9000 chars (safety buffer)
+    {
+        const result = await runHook('subagent-init-patterns-p5.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-PA-005][p5] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-PA-005][p5] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-PA-006: p1 fires for planner (backend patterns present)
+    {
+        const result = await runHook('subagent-init-patterns-p1.cjs', { agent_type: 'planner', prompt: 'test' });
+        logResult('[TC-PA-006][p1] planner exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-PA-006][p1] planner has patterns content', ctx.length > 0);
+            }
+        }
+    }
+
+    logSubsection('TC-PA-007..010: Edge Cases');
+
+    // TC-PA-007: all 5 hooks silent for general-purpose (not in PATTERN_AWARE or AGENT_DOC_MAP)
+    for (const p of ['p1', 'p2', 'p3', 'p4', 'p5']) {
+        const result = await runHook(`subagent-init-patterns-${p}.cjs`, { agent_type: 'general-purpose', prompt: 'test' });
+        logResult(`[TC-PA-007][${p}] general-purpose exits 0 (silent)`, result.code === 0);
+        logResult(`[TC-PA-007][${p}] general-purpose no stdout`, !result.stdout);
+    }
+
+    // TC-PA-008: malformed JSON → exit 0 for all 5 hooks
+    for (const p of ['p1', 'p2', 'p3', 'p4', 'p5']) {
+        const result = await runHook(`subagent-init-patterns-${p}.cjs`, 'not-json');
+        logResult(`[TC-PA-008][${p}] malformed JSON exits 0`, result.code === 0);
+    }
+
+    // TC-PA-009: null stdin → exit 0 for all 5 hooks
+    for (const p of ['p1', 'p2', 'p3', 'p4', 'p5']) {
+        const result = await runHook(`subagent-init-patterns-${p}.cjs`, null);
+        logResult(`[TC-PA-009][${p}] null stdin exits 0`, result.code === 0);
+    }
+}
+
+async function testSubagentInitDevRules() {
+    logSection('SubagentStart: subagent-init-dev-rules-p1/p2/p3.cjs (paged development rules)');
+
+    // TC-DR-001: p1 fires for code-reviewer with Part 1/3 meta, ≤9000 chars
+    {
+        const result = await runHook('subagent-init-dev-rules-p1.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-DR-001][p1] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-DR-001][p1] Contains Development Rules heading', ctx.includes('## Development Rules'));
+                logResult('[TC-DR-001][p1] Contains Part 1/3 meta', ctx.includes('Part 1/3'));
+                logResult('[TC-DR-001][p1] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-DR-002: p2 fires for code-reviewer with Part 2/3 meta, ≤9000 chars (no overflow warning)
+    {
+        const result = await runHook('subagent-init-dev-rules-p2.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-DR-002][p2] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-DR-002][p2] Contains Part 2/3 meta', ctx.includes('Part 2/3'));
+                logResult('[TC-DR-002][p2] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-DR-001b: p3 fires for code-reviewer with Part 3/3 meta, ≤9000 chars
+    {
+        const result = await runHook('subagent-init-dev-rules-p3.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-DR-001b][p3] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-DR-001b][p3] Contains Part 3/3 meta', ctx.includes('Part 3/3'));
+                logResult('[TC-DR-001b][p3] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-DR-003..004: p1 + p2 + p3 all silent for general-purpose
+    for (const p of ['p1', 'p2', 'p3']) {
+        const result = await runHook(`subagent-init-dev-rules-${p}.cjs`, { agent_type: 'general-purpose', prompt: 'test' });
+        logResult(`[TC-DR-003/004][${p}] general-purpose exits 0 (silent)`, result.code === 0);
+        logResult(`[TC-DR-003/004][${p}] general-purpose no stdout`, !result.stdout);
+    }
+
+    // TC-DR-005: p1 fires for planner (in DEV_RULES_AGENT_TYPES)
+    {
+        const result = await runHook('subagent-init-dev-rules-p1.cjs', { agent_type: 'planner', prompt: 'test' });
+        logResult('[TC-DR-005][p1] planner exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-DR-005][p1] planner has dev-rules content', ctx.includes('## Development Rules'));
+            }
+        }
+    }
+
+    // TC-DR-006: malformed JSON → exit 0 for all three hooks
+    for (const p of ['p1', 'p2', 'p3']) {
+        const result = await runHook(`subagent-init-dev-rules-${p}.cjs`, 'not-json');
+        logResult(`[TC-DR-006][${p}] malformed JSON exits 0`, result.code === 0);
+    }
+
+    // TC-DR-007: null stdin → exit 0 for all three hooks
+    for (const p of ['p1', 'p2', 'p3']) {
+        const result = await runHook(`subagent-init-dev-rules-${p}.cjs`, null);
+        logResult(`[TC-DR-007][${p}] null stdin exits 0`, result.code === 0);
+    }
+}
+
+async function testSubagentInitLessons() {
+    logSection('SubagentStart: subagent-init-lessons.cjs (lessons + AI mistake prevention)');
+
+    // Any agent type produces lessons/AI-mistake output (if lessons.md exists)
+    {
+        const result = await runHook('subagent-init-lessons.cjs', {
+            agent_type: 'general-purpose',
+            prompt: 'test'
+        });
+        logResult('Exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            logOutputValidation('Output valid hookSpecificOutput', parsed.valid || !result.stdout.includes('{'));
+        }
+    }
+
+    logSubsection('Edge Cases');
+
+    {
+        const result = await runHook('subagent-init-lessons.cjs', 'not-json');
+        logResult('Malformed JSON exits 0', result.code === 0);
+    }
+
+    {
+        const result = await runHook('subagent-init-lessons.cjs', null);
+        logResult('Empty input exits 0', result.code === 0);
+    }
+}
+
+async function testSubagentInitAiMistakes() {
+    logSection('SubagentStart: subagent-init-ai-mistakes.cjs (AI mistake prevention)');
+
+    // TC-SUBAGENT-002: fires for code-reviewer, output ≤9000 chars, contains prevention bullet
+    {
+        const result = await runHook('subagent-init-ai-mistakes.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        logResult('[TC-SUBAGENT-002] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-SUBAGENT-002] Output under 9000 chars', ctx.length <= 9000);
+                logResult('[TC-SUBAGENT-002] Contains AI mistake prevention bullet', ctx.includes('fabricat') || ctx.includes('invent') || ctx.includes('halluc'));
+            }
+        }
+    }
+
+    // TC-SUBAGENT-002b: general-purpose → also receives ai-mistakes (universal injection)
+    {
+        const result = await runHook('subagent-init-ai-mistakes.cjs', { agent_type: 'general-purpose', prompt: 'test' });
+        logResult('[TC-SUBAGENT-002b] general-purpose exits 0', result.code === 0);
+    }
+
+    logSubsection('Edge Cases');
+
+    {
+        const result = await runHook('subagent-init-ai-mistakes.cjs', 'not-json');
+        logResult('[TC-SUBAGENT-002c] malformed JSON exits 0', result.code === 0);
+    }
+
+    {
+        const result = await runHook('subagent-init-ai-mistakes.cjs', null);
+        logResult('[TC-SUBAGENT-002d] null stdin exits 0', result.code === 0);
+    }
+}
+
+async function testSubagentInitContextGuard() {
+    logSection('SubagentStart: subagent-init-context-guard.cjs (context-overflow guard)');
+
+    // TC-CG-001: code-reviewer → stdout with context-guard content, ≤9000 chars
+    {
+        const result = await runHook('subagent-init-context-guard.cjs', {
+            agent_type: 'code-reviewer',
+            prompt: 'test'
+        });
+        logResult('[TC-CG-001] code-reviewer exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-CG-001] Contains Context Guard', ctx.includes('Context Guard'));
+                logResult('[TC-CG-001] Output under 9000 chars', ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-CG-002: general-purpose → stdout present (universal — no agent filtering)
+    {
+        const result = await runHook('subagent-init-context-guard.cjs', {
+            agent_type: 'general-purpose',
+            prompt: 'test'
+        });
+        logResult('[TC-CG-002] general-purpose exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-CG-002] Universal injection — general-purpose gets context-guard', ctx.includes('Context Guard'));
+            }
+        }
+    }
+
+    // TC-CG-003: planner → stdout present
+    {
+        const result = await runHook('subagent-init-context-guard.cjs', {
+            agent_type: 'planner',
+            prompt: 'test'
+        });
+        logResult('[TC-CG-003] planner exits 0', result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult('[TC-CG-003] Universal injection — planner gets context-guard', ctx.includes('Context Guard'));
+            }
+        }
+    }
+
+    logSubsection('Edge Cases');
+
+    // TC-CG-004: malformed JSON → exit 0 (fail-open)
+    {
+        const result = await runHook('subagent-init-context-guard.cjs', 'not-json');
+        logResult('[TC-CG-004] Malformed JSON exits 0', result.code === 0);
+    }
+
+    // TC-CG-005: empty stdin → exit 0 (fail-open)
+    {
+        const result = await runHook('subagent-init-context-guard.cjs', null);
+        logResult('[TC-CG-005] Empty input exits 0', result.code === 0);
+    }
+}
 
 // ============================================================================
 // Test Cases: User Input
@@ -1849,6 +2168,8 @@ async function testContextInjectors() {
 async function testPreCompactHooks() {
     logSection('PreCompact Hooks');
 
+    const { getMarkerPath, SESSION_ID_DEFAULT, ensureDir, MARKERS_DIR } = require(path.join(HOOKS_DIR, 'lib', 'ck-paths.cjs'));
+
     // write-compact-marker.cjs
     logSubsection('write-compact-marker.cjs');
     const triggers = ['manual', 'auto', 'forced'];
@@ -1856,6 +2177,118 @@ async function testPreCompactHooks() {
     for (const trigger of triggers) {
         const result = await runHook('write-compact-marker.cjs', { trigger });
         logResult(`write-compact-marker (${trigger})`, result.code === 0);
+    }
+
+    // Test: compactState.gitStatus written to marker file (in git repo)
+    {
+        const testSessionId = `test-compact-state-${Date.now()}`;
+        const result = await runHook('write-compact-marker.cjs', {
+            session_id: testSessionId,
+            trigger: 'manual'
+        });
+        logResult('write-compact-marker exits 0 with session_id', result.code === 0);
+
+        try {
+            const markerPath = getMarkerPath(testSessionId);
+            const marker = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
+            // In a git repo: compactState should be present with non-null gitStatus
+            // In a non-git dir: compactState should be absent (gitStatus === null → truthy guard)
+            const hasValidStructure = (
+                marker.sessionId === testSessionId &&
+                (marker.compactState === undefined ||
+                    (typeof marker.compactState.gitStatus === 'string' &&
+                     marker.compactState.gitStatus.length > 0 &&
+                     marker.compactState.warningShown === false))
+            );
+            logResult('write-compact-marker: marker has valid compactState structure', hasValidStructure);
+        } catch (_e) {
+            logResult('write-compact-marker: marker file readable', false);
+        }
+    }
+
+    // Test: buildPostCompactWarning fires once, deduplicates on second call
+    logSubsection('prompt-context-assembler.cjs — post-compact dedup');
+    {
+        const testSessionId = `test-compact-dedup-${Date.now()}`;
+        ensureDir(MARKERS_DIR);
+        const markerPath = getMarkerPath(testSessionId);
+        // Write a marker with compactState to simulate a post-compact state
+        fs.writeFileSync(markerPath, JSON.stringify({
+            sessionId: testSessionId,
+            trigger: 'manual',
+            baselineRecorded: false,
+            baseline: 0,
+            lastTokenTotal: 0,
+            timestamp: Date.now(),
+            compactState: { gitStatus: 'M  .claude/hooks/write-compact-marker.cjs', warningShown: false }
+        }));
+
+        // First call: warning should appear
+        const result1 = await runHook('prompt-context-assembler.cjs', {
+            session_id: testSessionId,
+            prompt: 'continue'
+        });
+        logResult('buildPostCompactWarning: warning appears on first call', result1.stdout.includes('CONTEXT COMPACTED'));
+
+        // Second call: warning should be suppressed (warningShown dedup)
+        const result2 = await runHook('prompt-context-assembler.cjs', {
+            session_id: testSessionId,
+            prompt: 'continue'
+        });
+        logResult('buildPostCompactWarning: warning suppressed on second call (dedup)', !result2.stdout.includes('CONTEXT COMPACTED'));
+    }
+
+    // Test: SESSION_ID_DEFAULT fallback — warning fires when session_id absent
+    {
+        ensureDir(MARKERS_DIR);
+        const markerPath = getMarkerPath(SESSION_ID_DEFAULT);
+        // Write marker at 'default' path
+        fs.writeFileSync(markerPath, JSON.stringify({
+            sessionId: SESSION_ID_DEFAULT,
+            trigger: 'manual',
+            baselineRecorded: false,
+            baseline: 0,
+            lastTokenTotal: 0,
+            timestamp: Date.now(),
+            compactState: { gitStatus: 'M  test.txt', warningShown: false }
+        }));
+
+        // Run without session_id — should fall back to SESSION_ID_DEFAULT
+        const result = await runHook('prompt-context-assembler.cjs', {
+            prompt: 'continue'
+            // no session_id — tests fallback to SESSION_ID_DEFAULT
+        });
+        logResult('buildPostCompactWarning: fires when session_id absent (SESSION_ID_DEFAULT fallback)', result.stdout.includes('CONTEXT COMPACTED'));
+
+        // Clean up 'default' marker to avoid interference with other test runs
+        try { fs.unlinkSync(markerPath); } catch (_e) { /* ignore */ }
+    }
+
+    // TC-CMP-006: write-compact-marker with context_window → calibration.json updated with EMA threshold
+    logSubsection('TC-CMP-006: calibration EMA update');
+    {
+        const { CALIBRATION_PATH } = require(path.join(HOOKS_DIR, 'lib', 'ck-paths.cjs'));
+        const testSessionId = `test-cmp-006-${Date.now()}`;
+        const contextWindowSize = 200000;
+        const result = await runHook('write-compact-marker.cjs', {
+            session_id: testSessionId,
+            trigger: 'manual',
+            context_window: {
+                total_input_tokens: 100000,
+                total_output_tokens: 20000,
+                context_window_size: contextWindowSize
+            }
+        });
+        logResult('TC-CMP-006: write-compact-marker exits 0 with context_window', result.code === 0);
+
+        try {
+            const calibration = JSON.parse(fs.readFileSync(CALIBRATION_PATH, 'utf8'));
+            const key = String(contextWindowSize);
+            const hasEntry = key in calibration && typeof calibration[key].threshold === 'number' && calibration[key].samples >= 1;
+            logResult('TC-CMP-006: calibration.json updated with EMA threshold', hasEntry);
+        } catch (_e) {
+            logResult('TC-CMP-006: calibration.json readable with threshold', false);
+        }
     }
 }
 
@@ -2287,7 +2720,13 @@ async function runAllTests() {
 
     // Subagent
     if (!FILTER || 'subagent'.includes(FILTER)) {
-        await testSubagentInit();
+        await testSubagentInitIdentity();
+        await testSubagentInitPatterns();
+        await testSubagentInitDevRules();
+        // testSubagentInitClaudeMd removed — hooks deleted (redundant with native claudeMd injection)
+        await testSubagentInitLessons();
+        await testSubagentInitAiMistakes();
+        await testSubagentInitContextGuard();
         // testSubagentCleanupReminder removed — hook deleted
     }
 

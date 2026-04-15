@@ -1,6 +1,6 @@
 ---
 name: why-review
-version: 1.0.0
+version: 1.1.0
 description: '[Code Quality] Validate design rationale completeness in plan files before implementation'
 ---
 
@@ -255,16 +255,55 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 $ARGUMENTS
 </task>
 
-## Review Mindset (NON-NEGOTIABLE)
+## Adversarial Review Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+**Default stance: SKEPTIC, not validator. Your job is to find what's wrong, not confirm what's right.**
 
-- Do NOT accept plan rationale at face value — verify alternatives were genuinely considered
-- Every pass/fail must include evidence (section reference, specific text quoted)
-- If rationale is vague or hand-wavy, flag it — "we chose X" without WHY is a fail
-- Question assumptions: "Is this really the best approach?" → check if alternatives have real trade-offs listed
-- Challenge completeness: "Are all risks identified?" → think about what could go wrong that isn't mentioned
-- No "looks fine" without proof — state what you verified and how
+> **Confirmation bias trap:** After reading a coherent plan, AI naturally finds reasons to agree. The current context (post-plan, post-fix) amplifies this — you've already seen the reasoning and rationalized it. This section exists to break that loop.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Steel-Man Protocol**
+Before dismissing any rejected alternative, argue FOR it as strongly as possible. Ask: "Would a senior engineer with 10 years of experience in this domain actually choose this alternative?" If yes — the plan's dismissal needs stronger justification.
+
+**2. Why NOT? Inversion**
+For every stated reason ("We chose X because Y"), ask: "Why NOT X? What does X sacrifice?" The plan must acknowledge what the chosen approach gives up, not just what it gains.
+
+**3. What If? Assumption Stress Test**
+List the top 3 assumptions in the plan. For each: "What if this assumption is wrong?" A good plan survives at least 2 of its 3 assumptions being false.
+
+**4. Pre-Mortem**
+Assume the plan ships and fails in production within 3 months. Write one concrete failure scenario that is plausible given the current plan. If you can't find one, you haven't looked hard enough.
+
+**5. Unseen Alternatives**
+Identify 1-2 approaches NOT mentioned in the plan at all. Did the author genuinely not consider them, or did they consider and consciously exclude them? Missing alternatives without exclusion reasoning = weak coverage.
+
+**6. Pros/Cons Symmetry Check**
+Count the pros listed for the chosen approach. Count the cons. If pros > cons by more than 2:1, the analysis is likely biased. Real trade-offs have roughly equal weight on both sides.
+
+**7. Contrarian Pass**
+Before writing any finding, generate at least 2 sentences arguing the OPPOSITE conclusion. If you're about to write PASS — argue for NEEDS WORK. If about to write NEEDS WORK — argue for PASS. Then decide which argument is stronger.
+
+### Forbidden Patterns
+
+- **Leading with confirmation:** "This looks good because..." → STOP. Lead with challenges first.
+- **Presence = quality:** "Alternatives section exists ✅" → presence is NOT quality. Were they real alternatives?
+- **Vague rationale:** "We chose X because it's better" → What metric? Better at what cost?
+- **Asymmetric trade-offs:** Listing 3 pros and 1 con → the analysis is likely incomplete.
+- **"Looks fine"** without evidence of adversarial challenge
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+Complete this checklist before writing the final verdict:
+
+- [ ] Steel-manned at least one rejected alternative (argued FOR it)
+- [ ] Identified at least 1 alternative NOT in the plan
+- [ ] Listed 2-3 arguments AGAINST the chosen approach
+- [ ] Surfaced 2-3 hidden assumptions with stress tests
+- [ ] Ran the pre-mortem (one concrete failure scenario)
+- [ ] Checked pros/cons symmetry
+
+If any box is unchecked → you have NOT completed the adversarial review. Go back.
 
 ## Plan Resolution
 
@@ -274,25 +313,27 @@ $ARGUMENTS
 
 ## Validation Checklist
 
-Read the plan's `plan.md` and all `phase-*.md` files. Check each item below. Report pass/fail for each.
+Read the plan's `plan.md` and all `phase-*.md` files. Check each item below. **Two dimensions per check: presence AND quality depth.**
+
+> **Rule:** Presence alone is NOT a pass. A section that exists but contains weak, asymmetric, or unverified reasoning FAILS quality depth.
 
 ### Required Sections (in plan.md or phase files)
 
-| #   | Section                     | What to Check                                  | Pass Criteria                                     |
-| --- | --------------------------- | ---------------------------------------------- | ------------------------------------------------- |
-| 1   | **Problem Statement**       | Clearly states WHAT problem is being solved    | 2-3 sentences describing the problem              |
-| 2   | **Alternatives Considered** | 2+ approaches with pros/cons                   | Minimum 2 alternatives with trade-offs            |
-| 3   | **Design Rationale**        | Explains WHY chosen approach over alternatives | Explicit reasoning linking decision to trade-offs |
-| 4   | **Risk Assessment**         | Risks identified with likelihood and impact    | At least 1 risk per phase                         |
-| 5   | **Ownership**               | Clear who maintains code post-merge            | Implicit OK (author owns), explicit better        |
+| #   | Section                     | Presence Check                                    | Quality Depth Check (adversarial)                                                                                                                                                  |
+| --- | --------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Problem Statement**       | 2-3 sentences describing the problem              | Is the problem scoped correctly? Could it be framed differently to lead to a different solution? Are symptoms confused with root cause?                                            |
+| 2   | **Alternatives Considered** | Minimum 2 alternatives listed with pros/cons      | Are alternatives real (not strawmen)? Would a domain expert seriously consider each? Are the cons of the CHOSEN approach listed, not just cons of the others?                      |
+| 3   | **Design Rationale**        | Explicit reasoning linking decision to trade-offs | Is reasoning causal (X leads to Y) or just descriptive (X is better)? Are hidden assumptions surfaced? Does it address failure modes, not just success modes?                      |
+| 4   | **Risk Assessment**         | At least 1 risk per phase                         | Are risks ranked by severity? Are mitigations concrete actions or vague intentions ("monitor closely")? Is there at least one risk about the approach itself (not just execution)? |
+| 5   | **Ownership**               | Clear who maintains code post-merge               | Implicit OK (author owns), explicit better                                                                                                                                         |
 
 ### Optional (Flag if Missing, Don't Fail)
 
-| #   | Section                  | When Required                           |
-| --- | ------------------------ | --------------------------------------- |
-| 6   | **Operational Impact**   | Service-layer or API changes            |
-| 7   | **Cross-Service Impact** | Changes touching multiple microservices |
-| 8   | **Migration Strategy**   | Database schema or data changes         |
+| #   | Section                  | When Required                           | Quality Depth Check                                                |
+| --- | ------------------------ | --------------------------------------- | ------------------------------------------------------------------ |
+| 6   | **Operational Impact**   | Service-layer or API changes            | Are rollback steps defined? What breaks if this is reverted?       |
+| 7   | **Cross-Service Impact** | Changes touching multiple microservices | Are all downstream consumers identified? Who needs to be notified? |
+| 8   | **Migration Strategy**   | Database schema or data changes         | Is there a rollback plan? Is it tested on a data sample?           |
 
 ## Output Format
 
@@ -305,13 +346,39 @@ Read the plan's `plan.md` and all `phase-*.md` files. Check each item below. Rep
 
 ### Checklist
 
-| #   | Check                   | Status | Notes     |
-| --- | ----------------------- | ------ | --------- |
-| 1   | Problem Statement       | ✅/❌  | {details} |
-| 2   | Alternatives Considered | ✅/❌  | {details} |
-| 3   | Design Rationale        | ✅/❌  | {details} |
-| 4   | Risk Assessment         | ✅/❌  | {details} |
-| 5   | Ownership               | ✅/❌  | {details} |
+| #   | Check                   | Presence | Quality Depth | Notes                            |
+| --- | ----------------------- | -------- | ------------- | -------------------------------- |
+| 1   | Problem Statement       | ✅/❌    | ✅/⚠️/❌      | {what's strong / what's weak}    |
+| 2   | Alternatives Considered | ✅/❌    | ✅/⚠️/❌      | {are they real or strawmen?}     |
+| 3   | Design Rationale        | ✅/❌    | ✅/⚠️/❌      | {causal or just descriptive?}    |
+| 4   | Risk Assessment         | ✅/❌    | ✅/⚠️/❌      | {concrete mitigations or vague?} |
+| 5   | Ownership               | ✅/❌    | ✅/⚠️/❌      | {details}                        |
+
+> ✅ Strong ⚠️ Weak/Partial ❌ Missing
+
+### Adversarial Analysis
+
+**Strongest arguments AGAINST the chosen approach:**
+
+1. {argument 1 — cite specific plan text that weakens under this pressure}
+2. {argument 2}
+3. {argument 3 if applicable}
+
+**Unexamined alternatives** (not mentioned in the plan):
+
+- {alternative A} — why it might be worth considering
+- {alternative B if applicable}
+
+**Weakest assumptions** (if wrong, the plan breaks):
+
+1. {assumption} — impact if false: {consequence}
+2. {assumption} — impact if false: {consequence}
+
+**Pre-mortem** (assume it ships and fails in 3 months):
+
+> {One concrete, plausible failure scenario based on the plan's approach}
+
+**Pros/Cons symmetry:** Pros listed: {N} | Cons listed: {N} | Bias: {balanced / leans toward pros / leans toward cons}
 
 ### Missing Items (if any)
 
@@ -319,25 +386,31 @@ Read the plan's `plan.md` and all `phase-*.md` files. Check each item below. Rep
 
 ### Recommendation
 
-{Proceed to /cook | Add missing sections first}
+{Proceed to /cook | Add missing sections first | Add adversarial analysis to plan before proceeding}
 ```
 
-## Round 2: Focused Re-Review (MANDATORY)
+## Round 2: Adversarial Re-Review (MANDATORY)
 
 > **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
 
-After completing Round 1 checklist evaluation, execute a **second full review round**:
+After completing Round 1 checklist evaluation, execute a **second full review round using adversarial mode**:
 
-1. **Re-read** the Round 1 verdict and checklist results
-2. **Re-evaluate** ALL checklist items — do NOT rely on Round 1 memory
-3. **Challenge** Round 1 PASS items: "Is this really PASS? Did I verify with evidence?"
-4. **Focus on** what Round 1 typically misses:
-    - Implicit assumptions that weren't validated
-    - Missing acceptance criteria coverage
-    - Edge cases not addressed in the artifact
-    - Cross-references that weren't verified
-5. **Update verdict** if Round 2 found new issues
-6. **Final verdict** must incorporate findings from BOTH rounds
+1. **Assume Round 1 was wrong** — start with: "Round 1 missed something. Find it."
+2. **Challenge every PASS item** from Round 1 — generate at least 2 sentences arguing the opposite for each
+3. **Complete the Anti-Bias Gate** (all 6 boxes from Adversarial Review Mindset section)
+4. **Populate the Adversarial Analysis section** in the output — this is MANDATORY:
+    - At least 2 arguments against the chosen approach
+    - At least 1 unexamined alternative
+    - At least 2 hidden assumptions with failure consequences
+    - Pre-mortem scenario
+    - Pros/Cons symmetry count
+5. **Focus on** what Round 1 typically misses:
+    - Alternatives that are strawmen (too easy to dismiss)
+    - Risks stated vaguely without concrete mitigations
+    - Assumptions embedded in the problem statement itself
+    - Scope creep disguised as "related improvements"
+6. **Update verdict** if Round 2 found new issues
+7. **Final verdict** must incorporate findings from BOTH rounds AND the Adversarial Analysis
 
 ## Scope
 
@@ -349,7 +422,7 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 
 - Review only — do NOT modify plan files or implement changes
 - Keep output concise — actionable in <2 minutes
-- If plan is simple and clear, a short "PASS" is sufficient
+- Simple plans still require the Anti-Bias Gate — findings may be brief ("No real alternatives found — approach is the only viable path given X constraint"), but the gate cannot be skipped
 
 ---
 
@@ -368,13 +441,6 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
-<!-- SYNC:evidence-based-reasoning:reminder -->
-
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:double-round-trip-review:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
 - **MANDATORY IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context) — never skip or combine with Round 1.
-  <!-- /SYNC:double-round-trip-review:reminder -->
-  <!-- SYNC:graph-impact-analysis:reminder -->
-- **IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-    <!-- /SYNC:graph-impact-analysis:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).

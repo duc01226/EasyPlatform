@@ -74,8 +74,6 @@ const ALLOWED_GIT_COMMANDS = new Set([
 const ALLOWED_COMPOUND_PATTERNS = [/(?:^|&&|\|\||;)\s*git\s+reset\s+HEAD\b/m, /(?:^|&&|\|\||;)\s*git\s+add\s+--dry-run\b/m];
 
 function formatBlockMessage(match) {
-    const markerPath = COMMIT_SKILL_MARKER.replace(/\\/g, '/');
-
     // --amend is NEVER allowed, no bypass
     if (match.name === 'git commit --amend') {
         return [
@@ -86,13 +84,15 @@ function formatBlockMessage(match) {
         ].join('\n');
     }
 
+    // Use a portable git-based path so the command works regardless of env vars
+    const markerRelPath = 'tmp/claude-temp/.commit-skill-active';
     return [
         `[BLOCKED] ${match.name} — ${match.reason}`,
         '',
         'If the user EXPLICITLY asked you to commit/push in their prompt, activate the bypass first:',
-        `  1. Run: touch "${markerPath}"`,
+        `  1. Run: PROJ=$(git rev-parse --show-toplevel) && mkdir -p "$PROJ/tmp/claude-temp" && touch "$PROJ/${markerRelPath}"`,
         '  2. Then retry your git command',
-        `  3. After done, run: rm -f "${markerPath}"`,
+        `  3. After done, run: rm -f "$(git rev-parse --show-toplevel)/${markerRelPath}"`,
         '',
         'If the user did NOT ask you to commit — do NOT create the bypass. Report your changes and wait.',
         '',

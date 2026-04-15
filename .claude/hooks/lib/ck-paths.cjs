@@ -24,6 +24,10 @@ const fs = require('fs');
 // Root directory for all ClaudeKit temp files (OS temp — session-scoped)
 const CK_TMP_DIR = path.join(os.tmpdir(), 'ck');
 
+// Shared fallback session ID — MUST match across all hooks that read/write markers
+// Used when session_id is absent from hook payload (e.g., in tests or older clients)
+const SESSION_ID_DEFAULT = 'default';
+
 // Project-scoped runtime data (ephemeral flags, markers — NOT in .claude/ to keep it portable)
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 const PROJECT_TMP_DIR = path.join(PROJECT_DIR, 'tmp', 'claude-temp');
@@ -179,5 +183,6 @@ module.exports = {
     ensureSwapDir,
     getSessionStatePath,
     initDirs,
-    cleanAll
+    cleanAll,
+    SESSION_ID_DEFAULT
 };

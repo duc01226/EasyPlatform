@@ -1,5 +1,6 @@
 ---
 name: review-changes
+version: 1.0.0
 description: '[Code Quality] Review all uncommitted changes before commit'
 ---
 
@@ -499,7 +500,7 @@ After sub-agent returns:
 - [ ] **KISS:** Any unnecessarily complex solution? Could this be simpler while meeting same requirement?
 - [ ] **Function complexity:** Methods >30 lines? Nesting >3 levels? Multiple responsibilities in one function?
 - [ ] **Over-engineering:** Abstractions for single-use cases? Generic where specific suffices? Feature flags for things that could just be changed?
-- [ ] **Readability:** Would a new team member understand this in <2 minutes? Are names self-documenting?
+- [ ] **Readability:** Would a new team member understand this without reading more than the function signature and 1-2 inline comments? Are names self-documenting?
 
 **Documentation Staleness Check (REQUIRED):**
 

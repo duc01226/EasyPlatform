@@ -101,6 +101,15 @@
                     }
                 ],
                 "matcher": "Skill"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-agent-validator.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Agent"
             }
         ],
         "PreCompact": [
@@ -216,10 +225,6 @@
                 "hooks": [
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/knowledge-context.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/search-before-code.cjs",
                         "type": "command"
                     },
                     {
@@ -393,7 +398,55 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-identity.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-patterns-p1.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-patterns-p2.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-patterns-p3.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-patterns-p4.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-patterns-p5.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-dev-rules-p1.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-dev-rules-p2.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-dev-rules-p3.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-lessons.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-ai-mistakes.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-context-guard.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-todos.cjs",
                         "type": "command"
                     }
                 ],
@@ -428,7 +481,7 @@
                         "type": "command"
                     },
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-p2.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-closers.cjs",
                         "type": "command"
                     },
                     {
@@ -444,7 +497,7 @@
                         "type": "command"
                     },
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-claude-p2.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-project-config.cjs",
                         "type": "command"
                     }
                 ]

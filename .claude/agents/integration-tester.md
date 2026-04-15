@@ -5,10 +5,10 @@ description: >-
     creates test specs, generates integration test files, and verifies
     traceability. Use for integration test generation, test spec-to-code
     conversion, or test review.
-tools: Read, Write, Edit, Grep, Glob, Bash, TaskCreate
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 45
+maxTurns: 200
 ---
 
 ## Role

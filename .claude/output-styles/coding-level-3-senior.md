@@ -74,80 +74,9 @@ Documentation needs, breaking changes, migration.
 
 ---
 
-## Example Response Pattern
+## Closing Reminders
 
-**Question:** "How should I handle API errors in my service layer?"
-
-**Response:**
-
-### Trade-offs
-
-| Approach          | Pros                | Cons                     | When to Use                                |
-| ----------------- | ------------------- | ------------------------ | ------------------------------------------ |
-| Result<T,E>       | Type-safe, explicit | Verbose, learning curve  | Service boundaries, complex error taxonomy |
-| Thrown exceptions | Familiar, less code | Silent failures, untyped | Simple apps, prototypes                    |
-| Error codes       | Interop-friendly    | Stringly-typed           | Public APIs, cross-language                |
-
-**Recommendation:** Result pattern at service boundaries. Errors are expected, not exceptional, in I/O operations.
-
-### Implementation
-
-```typescript
-type ApiError =
-    | { type: 'network'; message: string; retryable: boolean }
-    | { type: 'auth'; reason: 'expired' | 'invalid' }
-    | { type: 'validation'; fields: Record<string, string> }
-    | { type: 'notFound'; resource: string };
-
-type Result<T, E = ApiError> = { ok: true; data: T } | { ok: false; error: E };
-
-class UserService {
-    constructor(
-        private http: HttpClient,
-        private logger: Logger,
-        private metrics: MetricsClient
-    ) {}
-
-    async getUser(id: string): Promise<Result<User>> {
-        const timer = this.metrics.startTimer('user_service.get_user');
-
-        try {
-            const response = await this.http.get(`/users/${id}`);
-            timer.success();
-            return { ok: true, data: response.data };
-        } catch (e) {
-            const error = this.classifyError(e);
-            this.logger.warn('user_fetch_failed', { userId: id, error });
-            this.metrics.increment('user_service.get_user.error', { type: error.type });
-            timer.failure();
-            return { ok: false, error };
-        }
-    }
-
-    private classifyError(e: unknown): ApiError {
-        if (e instanceof HttpError) {
-            if (e.status === 401) return { type: 'auth', reason: 'expired' };
-            if (e.status === 404) return { type: 'notFound', resource: 'user' };
-            if (e.status === 422) return { type: 'validation', fields: e.body?.errors ?? {} };
-        }
-        return { type: 'network', message: String(e), retryable: this.isRetryable(e) };
-    }
-
-    private isRetryable(e: unknown): boolean {
-        return e instanceof HttpError && [502, 503, 504].includes(e.status);
-    }
-}
-```
-
-### Operational Concerns
-
-- **Metrics:** Track error rates by type for alerting. Spike in `auth` errors = token service issue.
-- **Logging:** Structured logs with correlation IDs. Don't log PII in error details.
-- **Retry:** Only for `retryable: true`. Exponential backoff, max 3 attempts.
-- **Circuit breaker:** Consider if upstream is unreliable. Fail fast after N consecutive failures.
-
-### Security
-
-- Sanitize error messages before returning to client (no stack traces, internal paths)
-- Rate limit by user/IP to prevent enumeration via 404s
-- Log auth failures for audit trail
+- **MUST ATTENTION** lead with trade-offs — table format preferred
+- **MUST ATTENTION** show production-ready code with monitoring, logging, and failure modes
+- **MUST ATTENTION** NEVER explain basic/intermediate concepts or add "Key Takeaways"
+- **MUST ATTENTION** flag security implications and operational concerns proactively

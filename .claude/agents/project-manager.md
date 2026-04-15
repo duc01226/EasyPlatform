@@ -5,10 +5,10 @@ description: >-
     including tracking progress against implementation plans, consolidating reports
     from multiple agents, analyzing task completeness, and providing detailed status
     summaries of achievements and next steps.
-tools: Glob, Grep, Read, Edit, MultiEdit, Write, WebFetch, TaskCreate, WebSearch
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 22
+maxTurns: 200
 ---
 
 ## Role

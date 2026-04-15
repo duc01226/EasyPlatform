@@ -1,14 +1,16 @@
 ---
 name: workflow-idea-to-pbi
-version: 1.0.0
-description: '[Workflow] Trigger Idea to PBI workflow — po/ba workflow: capture idea, refine to pbi, create stories, prioritize.'
+version: 1.1.0
+description: '[Workflow] Trigger Idea to PBI workflow — po/ba workflow: capture or review idea/artifact, optional PO handoff, refine to pbi, create stories, prioritize.'
 ---
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
 
-**Steps:** /idea → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /workflow-end
+**Steps:** /idea → /review-artifact (conditional) → /handoff (conditional) → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /workflow-end
+
+> **Note:** `/review-artifact` and `/handoff` are conditional — skip both when starting from a raw idea without a PO artifact. Use them when a PO is handing off an existing ticket, PRD, or brief to the BA team.
 
 ---
 

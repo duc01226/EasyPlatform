@@ -1,6 +1,6 @@
 ---
 name: plan-review
-version: 1.0.0
+version: 1.1.0
 description: '[Planning] Auto-review plan for validity, correctness, and best practices — recursive: review, fix issues, re-review until PASS (max 3 iterations)'
 ---
 
@@ -240,6 +240,56 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+## Adversarial Review Mindset (NON-NEGOTIABLE)
+
+**Default stance: SKEPTIC, not validator. Your job is to find what cannot work, not confirm what looks right.**
+
+> **Confirmation bias trap:** After reading a well-structured plan, AI naturally finds reasons to agree. This section exists to break that loop before it produces a rubber-stamp approval.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Implementation Reality Check**
+For every phase, ask: "If a developer started implementing this right now, what is the first thing that would break?" Walk through the critical path concretely. Vague phases ("implement the service layer") that can't be traced to specific files/classes fail this check.
+
+**2. Assumption Stress Test**
+List the top 3 implicit assumptions embedded in the plan. For each: "What if this assumption is wrong?" A valid plan survives at least 2 of its 3 assumptions being false. Common hidden assumptions: "existing code is in a known state," "no external API changes," "team has this domain knowledge."
+
+**3. Effort Reality Check**
+For each phase marked with effort estimates: "Has similar work in this codebase been done in this timeframe? What slowed it down last time?" Plans that underestimate by 2x or more are not valid plans — they are optimistic guesses.
+
+**4. Pre-Mortem**
+Assume the plan is implemented exactly as written and the feature is in production after 1 month. Write one concrete failure scenario that is plausible given the current plan. If you can't find one, you haven't looked hard enough.
+
+**5. Scope Creep Detector**
+Identify any task in the plan that is NOT directly required to deliver the stated feature. "While we're here, let's also refactor X" is scope creep. Flag it.
+
+**6. Dependency Blindspot**
+List 2-3 external dependencies (other services, APIs, data sources) the plan assumes are stable. For each: "What breaks in this plan if this dependency changes or is unavailable?" If a dependency failure is not addressed anywhere in the plan, it is a risk gap.
+
+**7. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. If you're about to write PASS — argue for NEEDS WORK. If about to write NEEDS WORK — argue for PASS. Then decide which argument is stronger based on evidence.
+
+### Forbidden Patterns
+
+- **"Structure looks good"** → Structure is NOT quality. Can it be implemented?
+- **"Phases are well-defined"** → Presence of phases is NOT correctness. What's in them?
+- **"Alternatives were considered"** → Were they real alternatives or strawmen set up to fail?
+- **"Risk is managed"** → Mitigation of "monitor closely" is NOT a mitigation. What action, by whom, triggered by what?
+- **"Looks achievable"** without tracing the critical path → Not a valid assessment.
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+Complete this checklist before writing the final verdict:
+
+- [ ] Ran Implementation Reality Check on the highest-risk phase
+- [ ] Identified 3 implicit assumptions and stress-tested them
+- [ ] Checked effort estimates against codebase complexity
+- [ ] Ran pre-mortem (one concrete production failure scenario)
+- [ ] Scanned for scope creep (tasks not required for stated feature)
+- [ ] Verified dependency blindspots are addressed
+
+If any box is unchecked → you have NOT completed the adversarial review. Go back.
+
 ## Your mission
 
 Perform automatic self-review of an implementation plan to ensure it's valid, correct, follows best practices, and identify anything needing fixes before proceeding.
@@ -266,10 +316,12 @@ Read the plan directory:
 
 #### Validity (Required - all must pass)
 
-- [ ] Has executive summary (clear 1-2 sentence description)
-- [ ] Has defined requirements section
-- [ ] Has implementation steps (actionable tasks)
-- [ ] Has files to create/modify listing
+| #   | Check                                                               | Presence                           | Quality Depth                                                                     |
+| --- | ------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------- |
+| 1   | **Has executive summary** — clear 1-2 sentence description          | Does a summary section exist?      | Is it accurate? Does it scope the work or conceal complexity?                     |
+| 2   | **Has defined requirements section** — explicit requirements listed | Does a requirements section exist? | Are requirements concrete user needs or vague technical goals?                    |
+| 3   | **Has implementation steps** — actionable tasks                     | Are implementation steps present?  | Are steps specific (file names, method names) or vague actions?                   |
+| 4   | **Has files to create/modify listing** — file inventory present     | Is a file listing present?         | Are file paths real (verified via glob/grep)? Do they follow project conventions? |
 
 #### Correctness (Required - all must pass)
 
@@ -328,18 +380,22 @@ PASSES after split: `"Phase 2A: Database Schema (1h, 3 files) — Create src/mod
 
 #### Best Practices (Required - all must pass)
 
-- [ ] YAGNI: No unnecessary features or over-engineering
-- [ ] KISS: Simplest viable solution chosen
-- [ ] DRY: No planned duplication of logic
-- [ ] Architecture: Follows project patterns from `.claude/docs/`
+| #   | Check                                                            | Presence                                                        | Quality Depth                                                                                                                           |
+| --- | ---------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **YAGNI** — No unnecessary features or over-engineering          | Is every planned component traceable to a stated requirement?   | Flag anything described as "might be useful" or added for future flexibility without a current requirement.                             |
+| 2   | **KISS** — Simplest viable solution chosen                       | Is there a stated approach for each major step?                 | Could any planned abstraction be simpler with the same effect? Are there unnecessary layers, indirections, or framework choices?        |
+| 3   | **DRY** — No planned duplication of logic                        | Are there similar patterns described more than once?            | Does the plan introduce new patterns when existing ones work? Are there repeated steps that suggest duplication at implementation time? |
+| 4   | **Architecture** — Follows project patterns from `.claude/docs/` | Does the plan reference or align with `.claude/docs/` patterns? | Does it follow established patterns or deviate? Any deviations need explicit justification with rationale.                              |
 
 #### Completeness (Recommended - ≥50% should pass)
 
-- [ ] Risk assessment present with mitigations
-- [ ] Testing strategy defined
-- [ ] Success criteria per phase
-- [ ] Security considerations addressed
-- [ ] **Graph dependency check:** If `.code-graph/graph.db` exists, for each file in the plan's "files to modify" list, run `python .claude/scripts/code_graph query importers_of <file> --json`. Flag any importer NOT listed in the plan as "potentially missed dependent". Also run `tests_for` on key functions to verify test coverage is planned.
+| #   | Check                                                                          | Presence                                                                                 | Quality Depth                                                                                                                      |
+| --- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Risk assessment present with mitigations** — risks identified with responses | Is there a risk section with at least one item?                                          | Are mitigations specific actions (who, when, triggered by what) or vague intentions ("monitor closely")?                           |
+| 2   | **Testing strategy defined** — test approach outlined                          | Is there a testing section or test references per phase?                                 | Does it cover unit, integration, and edge case paths, or just "write tests"? Is the approach traceable to acceptance criteria?     |
+| 3   | **Success criteria per phase** — measurable outcomes defined                   | Does each phase have stated success criteria?                                            | Are criteria measurable? Would failing them trigger a rollback, or are they aspirational targets?                                  |
+| 4   | **Security considerations addressed** — security concerns noted                | Is there a security section or inline security notes?                                    | Are security concerns specific to this feature's attack surface, or generic boilerplate (e.g., "use HTTPS", "validate inputs")?    |
+| 5   | **Graph dependency check** — importers of modified files are checked           | If `.code-graph/graph.db` exists: are `importers_of` queries run for each modified file? | Are ALL importers checked, not just direct callers? Is the graph.db prerequisite explicitly stated? Are missed dependents flagged? |
 
 ### Step 3: Score and Classify
 
@@ -551,7 +607,7 @@ After the sub-agent returns:
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
       <!-- /SYNC:understand-code-first:reminder -->
       <!-- SYNC:double-round-trip-review:reminder -->
-- **IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone.
+- **IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone. Note: Round 3 (adversarial simulation) is MANDATORY even on PASS — it is not triggered only by FAIL. The SYNC:double-round-trip-review protocol describes a 2-round minimum; plan-review extends this to 3 rounds. Round 3 = the adversarial sub-agent from the Adversarial Review Mindset section above.
       <!-- /SYNC:double-round-trip-review:reminder -->
       <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.

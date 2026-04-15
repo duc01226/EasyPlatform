@@ -1,6 +1,6 @@
 ---
 name: refine-review
-version: 1.0.0
+version: 1.1.0
 description: '[Code Quality] Review PBI artifact for completeness, missing concerns, and quality before proceeding to story creation. AI self-review gate after /refine.'
 ---
 
@@ -251,6 +251,53 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
+## Adversarial Review Mindset (NON-NEGOTIABLE)
+
+**Default stance: SKEPTIC reviewing your own work. You just produced this PBI. Your natural bias is to find it acceptable. Break that bias deliberately.**
+
+> **Self-review trap:** The AI wrote this PBI moments ago. Every reasoning chain you used to WRITE it is still active in this context. You will find it coherent because YOU made it coherent — not because it is correct. This section forces adversarial challenge.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Scope Creep Detector**
+Read each acceptance criterion. Ask: "Is this required for the core user value, or is it a 'nice to have' that grew in during writing?" Flag any AC that is NOT directly traceable to the problem statement. A PBI with 8 ACs for a simple feature is almost certainly over-scoped.
+
+**2. Assumption Stress Test**
+List the 3 biggest assumptions embedded in the acceptance criteria. For each: "What if this assumption is wrong?" Common hidden assumptions: "users will provide valid input," "the data is in the expected format," "the system is in a known state." If any AC fails when an assumption breaks, it needs a corresponding error-path AC.
+
+**3. Missing Stakeholder Check**
+Ask: "Who else uses this feature who was NOT the primary user in the problem statement?" (e.g., admins, support staff, other services). Does any missing stakeholder have a use case the PBI does NOT cover? Flag gaps.
+
+**4. Pre-Mortem**
+Assume this PBI is implemented exactly as written and deployed. In 3 months, a user files a critical support ticket. Write the most plausible complaint — the gap the PBI failed to address. If you can't find one, you wrote too safe a PBI.
+
+**5. Testability Challenge**
+For each acceptance criterion: "Can a QA engineer write an automated test for this AC without asking any clarifying questions?" If not — the AC is ambiguous or unmeasurable. Flag it.
+
+**6. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
+
+### Forbidden Patterns (self-review specific)
+
+- **"ACs look comprehensive"** — You wrote them. Of course they look comprehensive to you. Challenge each one.
+- **"Scope is well-defined"** — Did you REDUCE scope during writing? What did you cut? Was cutting justified?
+- **"Problem statement is clear"** — Could it be framed differently to lead to a different (better) solution?
+- **"Ready for story creation"** — Have you checked with INVEST? Would a developer estimate this in < 1 sprint?
+- **Confirming your own work without adversarial challenge** — Forbidden. Find at least one thing to question.
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+Complete this checklist before writing the final verdict:
+
+- [ ] Checked each AC for scope creep (traceable to problem statement)
+- [ ] Identified 3 hidden assumptions and stress-tested them
+- [ ] Checked for missing stakeholders
+- [ ] Ran pre-mortem (most plausible support complaint in 3 months)
+- [ ] Verified all ACs are unambiguously testable
+- [ ] Generated at least 2 sentences arguing the opposite verdict
+
+If any box is unchecked — you have NOT completed the adversarial review. Go back.
+
 ## Workflow
 
 1. **Locate PBI** — Find latest PBI artifact in `team-artifacts/pbis/` or active plan context
@@ -262,25 +309,29 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ### Required (all must pass)
 
-- [ ] **Problem statement** — Clear problem defined (not just solution description)
-- [ ] **Acceptance criteria** — Minimum 3 GIVEN/WHEN/THEN scenarios
-- [ ] **Story points + complexity** — Both fields present with valid values
-- [ ] **Dependencies table** — Has dependency table with must-before/can-parallel/blocked-by types
-- [ ] **Stakeholder validation** — User interview was conducted (validation section present)
-- [ ] **No vague language** — No "should work", "might need", "TBD" in acceptance criteria
-- [ ] **Scope boundary** — Clear "out of scope" or "not included" section
-- [ ] **Authorization defined** — PBI has "Authorization & Access Control" section with roles × CRUD table
-- [ ] **UI Layout section** — If PBI involves UI changes: has `## UI Layout` section per UI wireframe protocol (wireframe + components with tiers + states + design tokens). If backend-only: explicit "N/A"
+| #   | Check                                                                                                             | Presence                                               | Quality Depth                                                                                                                                             |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Problem statement** — Clear problem defined (not just solution description)                                     | Is a problem statement section present?                | Is the problem scoped correctly? Does it confuse symptoms with root cause? Is it framed to lead to only one solution, or is the solution space left open? |
+| 2   | **Acceptance criteria** — Minimum 3 GIVEN/WHEN/THEN scenarios                                                     | Are at least 3 GIVEN/WHEN/THEN ACs present?            | Are they realistic scenarios, not trivial? Do they cover error paths? Are edge cases specified, or only the happy path?                                   |
+| 3   | **Story points + complexity** — Both fields present with valid values                                             | Are story points and complexity both filled in?        | Do both values match the scope of work? Is complexity above 5 justified with a rationale, or just assigned arbitrarily?                                   |
+| 4   | **Dependencies table** — Has dependency table with must-before/can-parallel/blocked-by types                      | Is a dependencies table present with typed rows?       | Are ALL dependencies captured (technical, data, service)? Are "can-parallel" items truly safe to parallelize, or do they share a resource?                |
+| 5   | **Stakeholder validation** — User interview was conducted (validation section present)                            | Is a stakeholder/validation section present?           | Was the interview substantive? Does the validation section show actual user responses and insights, or just "interviewed on [date]"?                      |
+| 6   | **No vague language** — No "should work", "might need", "TBD" in acceptance criteria                              | Are all ACs free of vague terms?                       | Are "should work"/"TBD"/"might need" absent from ALL acceptance criteria, including edge cases and error paths?                                           |
+| 7   | **Scope boundary** — Clear "out of scope" or "not included" section                                               | Is an out-of-scope section present?                    | Are out-of-scope items specific enough to prevent scope creep during implementation? Is anything ambiguously in/out?                                      |
+| 8   | **Authorization defined** — PBI has "Authorization & Access Control" section with roles × CRUD table              | Is an authorization section with a CRUD table present? | Does the CRUD table cover ALL PBI-relevant roles? Are there roles (admin, support, service account) that are missing or not addressed?                    |
+| 9   | **UI Layout section** — If UI: has `## UI Layout` section per wireframe protocol. If backend-only: explicit "N/A" | Is a UI Layout section or explicit N/A present?        | If UI: does the wireframe have component tree + states + design tokens? If backend-only: is the N/A explicit and justified, not just omitted?             |
 
 ### Recommended (>=50% should pass)
 
-- [ ] **RICE/MoSCoW score** — Prioritization applied
-- [ ] **Domain vocabulary** — Uses project-specific terms from domain-entities-reference.md
-- [ ] **Risk assessment** — Risks identified with mitigations
-- [ ] **Non-functional requirements** — Performance, security, accessibility considered
-- [ ] **Production readiness concerns** — PBI includes "Production Readiness Concerns" table with Yes/No/Existing for: code linting, error handling, loading indicators, Docker integration, CI/CD quality gates
-- [ ] **Seed data assessed** — PBI addresses seed data needs (reference data, config data, test data) or explicitly states "N/A"
-- [ ] **Data migration assessed** — PBI addresses schema changes and data migration needs or explicitly states "N/A"
+| #   | Check                                                                                                          | Presence                                                            | Quality Depth                                                                                                                                                |
+| --- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **RICE/MoSCoW score** — Prioritization applied                                                                 | Is a RICE or MoSCoW prioritization score present?                   | Is the scoring justified with data or reasoning, or assigned arbitrarily without rationale?                                                                  |
+| 2   | **Domain vocabulary** — Uses project-specific terms from domain-entities-reference.md                          | Are domain-specific terms used in the PBI?                          | Is domain language consistent with `domain-entities-reference.md`, or are new terms introduced without definition?                                           |
+| 3   | **Risk assessment** — Risks identified with mitigations                                                        | Is a risk section present with at least one item?                   | Are risks specific to this PBI, or generic "technical risk"? Are mitigations actionable (who does what, when triggered)?                                     |
+| 4   | **Non-functional requirements** — Performance, security, accessibility considered                              | Is an NFR section or NFR notes present?                             | Are perf/security/accessibility numbers specified (e.g., "< 200ms response time", "WCAG AA"), not just "considered" or "addressed"?                          |
+| 5   | **Production readiness concerns** — PBI includes "Production Readiness Concerns" table with Yes/No/Existing    | Is the Production Readiness Concerns table present with all 5 rows? | Are all 5 table rows meaningfully filled — not just "Yes" for all? Are gaps called out with rationale?                                                       |
+| 6   | **Seed data assessed** — PBI addresses seed data needs or explicitly states "N/A"                              | Is seed data addressed or explicitly marked N/A?                    | If "N/A" is used, is it justified? Is it the right N/A (no new reference data needed), or is seed data actually required and skipped?                        |
+| 7   | **Data migration assessed** — PBI addresses schema changes and data migration needs or explicitly states "N/A" | Is data migration addressed or explicitly marked N/A?               | If "N/A" is used, is it justified? Are there hidden schema implications (added columns, changed constraints) that require migration even if "no new tables"? |
 
 ## Output
 
@@ -335,6 +386,7 @@ After sub-agent returns:
 - **WARN allows proceeding** — Note gaps but continue.
 - **No guessing** — Every check must reference specific content in the PBI artifact.
 - **Constructive** — Focus on implementation-blocking issues, not pedantic details.
+- **Production Readiness** — When reviewing production readiness concerns in a PBI, verify coverage of: Code Quality Tooling, Error Handling Foundation, Loading State Management, Docker Development Environment, Integration Points (see `SYNC:scaffold-production-readiness` for definitions).
 
 ---
 

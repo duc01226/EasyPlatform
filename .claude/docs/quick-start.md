@@ -110,18 +110,18 @@ Searches codebase for relevant files and explains functionality.
 
 Claude Code intercepts 9 event types:
 
-| Event                   | When It Fires             | Example Hook                   |
-| ----------------------- | ------------------------- | ------------------------------ |
-| `SessionStart`          | Claude Code starts        | `session-init.cjs`             |
-| `SessionEnd`            | Claude Code exits         | `session-end.cjs`              |
-| `UserPromptSubmit`      | Before each user message  | `prompt-context-assembler.cjs` |
-| `PostToolUse`           | After tool execution      | `tool-output-swap.cjs`         |
-| `PreToolUse`            | Before tool execution     | `privacy-block.cjs`            |
-| `PreCompact`            | Before context compaction | `write-compact-marker.cjs`     |
-| `SessionStart` (resume) | After compaction recovery | `post-compact-recovery.cjs`    |
-| `SubagentStart`         | Subagent initialization   | `subagent-init.cjs`            |
-| `Stop`                  | Response complete         | `notify-waiting.js`            |
-| `Notification`          | Idle/waiting events       | `notify-waiting.js`            |
+| Event                   | When It Fires             | Example Hook                     |
+| ----------------------- | ------------------------- | -------------------------------- |
+| `SessionStart`          | Claude Code starts        | `session-init.cjs`               |
+| `SessionEnd`            | Claude Code exits         | `session-end.cjs`                |
+| `UserPromptSubmit`      | Before each user message  | `prompt-context-assembler.cjs`   |
+| `PostToolUse`           | After tool execution      | `tool-output-swap.cjs`           |
+| `PreToolUse`            | Before tool execution     | `privacy-block.cjs`              |
+| `PreCompact`            | Before context compaction | `write-compact-marker.cjs`       |
+| `SessionStart` (resume) | After compaction recovery | `post-compact-recovery.cjs`      |
+| `SubagentStart`         | Subagent initialization   | `subagent-init-*.cjs` (13 hooks) |
+| `Stop`                  | Response complete         | `notify-waiting.js`              |
+| `Notification`          | Idle/waiting events       | `notify-waiting.js`              |
 
 See [hooks/README.md](./hooks/README.md) for detailed explanations.
 

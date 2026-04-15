@@ -113,7 +113,7 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
     ```
     Creates structured handoff record with context for developers
 
-**Workflow trigger:** Say "refine this idea" → activates **idea-to-pbi** or **po-ba-handoff** workflow
+**Workflow trigger:** Say "refine this idea" → activates **idea-to-pbi** workflow
 
 ---
 
@@ -374,7 +374,7 @@ Claude provides structured handoff workflows to ensure clean transitions between
 
 | Workflow                 | From → To | Trigger                 | Steps                                                                                         |
 | ------------------------ | --------- | ----------------------- | --------------------------------------------------------------------------------------------- |
-| `po-ba-handoff`          | PO → BA   | "hand off to BA"        | `/idea` → `/review-artifact` → `/handoff` → `/refine` → `/story`                              |
+| `idea-to-pbi` (PO→BA)    | PO → BA   | "hand off to BA"        | `/idea` → `/review-artifact` → `/handoff` → `/refine` → `/story` (conditional first 2 steps)  |
 | `ba-dev-handoff`         | BA → Dev  | "ready for development" | `/review-artifact` → `/quality-gate` → `/handoff` → `/plan` → `/plan-review`                  |
 | `design-dev-handoff`     | UX → Dev  | "design ready for dev"  | `/design-spec` → `/review-artifact` → `/handoff` → `/plan`                                    |
 | `dev-qa-handoff`         | Dev → QA  | "ready for testing"     | `/handoff` → `/test-spec`                                                                     |
@@ -546,7 +546,7 @@ PLANNING
 | Role | Primary Skills                                   | Workflow         |
 | ---- | ------------------------------------------------ | ---------------- |
 | PO   | `/idea`, `/prioritize`, `/acceptance`            | idea-to-pbi      |
-| BA   | `/refine`, `/story`, `/handoff`                  | po-ba-handoff    |
+| BA   | `/refine`, `/story`, `/handoff`                  | idea-to-pbi      |
 | QA   | `/tdd-spec`, `/integration-test`, `/test`        | pbi-to-tests     |
 | QC   | `/quality-gate`, `/review-artifact`              | qa-po-acceptance |
 | UX   | `/design-spec`, `/frontend-design`               | design-workflow  |

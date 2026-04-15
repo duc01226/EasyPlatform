@@ -221,15 +221,19 @@ function createSessionStartInput(source, sessionId = null) {
 
 /**
  * Create a mock hook input for SubagentStart event
- * @param {string} subagent - Subagent type
+ * @param {string} agentType - Subagent type (maps to agent_type field)
  * @param {string} [prompt] - Optional subagent prompt
+ * @param {string|null} [sessionId] - Optional parent session ID
+ * @param {string|null} [agentId] - Optional agent ID
  * @returns {object} Complete hook input object
  */
-function createSubagentStartInput(subagent, prompt = '') {
+function createSubagentStartInput(agentType, prompt = '', sessionId = null, agentId = null) {
   return {
     event: 'SubagentStart',
-    subagent,
-    prompt
+    agent_type: agentType,
+    prompt,
+    ...(sessionId && { session_id: sessionId }),
+    ...(agentId && { agent_id: agentId })
   };
 }
 

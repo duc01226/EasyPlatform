@@ -1,6 +1,6 @@
 ---
 name: knowledge-review
-version: 1.0.0
+version: 1.1.0
 description: '[Research] Review knowledge artifacts for completeness, citation quality, confidence accuracy, and template compliance.'
 allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 ---
@@ -46,53 +46,112 @@ allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+## Adversarial Review Mindset (NON-NEGOTIABLE)
+
+**Default stance: SKEPTIC challenging research quality, not confirming research completeness.**
+
+> **Source confirmation bias trap:** AI naturally gravitates toward sources that confirm its working hypothesis. The knowledge artifact was built iteratively — by the time it's complete, the framing is locked in. This section forces challenge of both the sources AND the framing.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Source Bias Detection**
+For the top 3 claims in the artifact: "What sources CONTRADICT this claim?" If no contradicting source is cited — either the reviewer didn't look, or the evidence is truly one-sided. Ask: "What would a skeptic of this conclusion cite?" If no counterevidence is addressed, the confidence score is inflated.
+
+**2. Confidence Calibration Challenge**
+For each confidence score ≥ 80%: "What would need to be true for this confidence to be wrong?" High confidence is only warranted when: (a) multiple independent sources agree, (b) contradicting evidence is addressed, (c) the methodology is sound. Challenge any score that rests on a single source or on undisclosed assumptions.
+
+**3. Alternative Conclusion Check**
+Given the same evidence, what DIFFERENT conclusion could a reasonable expert reach? If the artifact does not address at least one credible alternative interpretation, the analysis is incomplete. State the strongest alternative conclusion.
+
+**4. Cherry-Picking Detection**
+Count the sources that support the main conclusion vs. sources that challenge it. If the ratio is > 3:1 in favor of supporting sources without explicit explanation of why contradicting sources were discounted — flag cherry-picking.
+
+**5. Pre-Mortem**
+Assume the recommendation in this artifact is implemented and fails. Write the most plausible failure scenario given the research limitations. If the artifact doesn't acknowledge this failure mode — it's missing a risk section.
+
+**6. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion about the artifact's quality. Then decide which argument is stronger.
+
+### Forbidden Patterns
+
+- **"Sources are cited"** → Presence of citations ≠ quality. Do they actually support the claim?
+- **"Confidence scores look reasonable"** → What would LOWER the confidence score? Name it.
+- **"Comprehensive coverage"** → What perspective is MISSING from this research?
+- **"Recommendations are actionable"** → On what evidence? What's the confidence of the evidence chain?
+- **Approving a knowledge artifact without challenging the evidence quality** → Forbidden.
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+- [ ] Found at least 1 contradicting source per major claim (or flagged its absence)
+- [ ] Challenged at least 1 confidence score ≥ 80% with a stress test
+- [ ] Stated the strongest alternative conclusion from the same evidence
+- [ ] Checked source balance (supporting vs. contradicting ratio)
+- [ ] Ran pre-mortem on the main recommendation
+- [ ] Generated at least 2 sentences arguing the opposite verdict
+
+If any box is unchecked → adversarial review incomplete. Go back.
+
 # Knowledge Review
 
 ## Review Checklist
 
 ### 1. Template Compliance
 
-- [ ] All enforced sections present
-- [ ] No sections are empty placeholders
-- [ ] Section order matches template
+| #   | Check                                                                                                     | Presence                                                                                 | Quality Depth                                                                                                                                                       |
+| --- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **All enforced sections present** — every required section from the template exists in the artifact       | Are ALL required sections present (not just most)? Is any section empty vs. placeholder? | Does each section contain substantive content, or is it a heading with nothing beneath it? A partially-filled section is as dangerous as a missing one.             |
+| 2   | **No sections are empty placeholders** — section bodies contain real content, not "TBD" or "to be filled" | Are section bodies substantive or just "TBD / to be filled"?                             | Is the content specific to this artifact, or generic filler? A section that says "risks will be identified later" has negative value — it creates false confidence. |
+| 3   | **Section order matches template** — sections appear in prescribed sequence                               | Do sections appear in the prescribed order?                                              | Does reordering break any cross-references between sections? If section 3 references section 2, out-of-order placement creates reading confusion.                   |
 
 ### 2. Citation Audit
 
-- [ ] Every factual claim has inline citation `[N]`
-- [ ] Every source in Sources table is referenced in text
-- [ ] No orphan citations
-- [ ] Sources table has: Title, URL, Author, Date, Tier
+| #   | Check                                                                                                                            | Presence                                                                                                                  | Quality Depth                                                                                                                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Every factual claim has inline citation `[N]`** — all assertions are backed by a numbered source reference                     | Are ALL claims cited, or only the obvious ones? Uncited claims are assertions, not findings.                              | Do the cited sources actually say what the text claims? A source cited for a paraphrase is different from a source cited for a direct claim.                        |
+| 2   | **Every source in Sources table is referenced in text** — no source appears in the table without a corresponding `[N]` reference | Are all table sources referenced in the text body? Orphan sources = sources added for credibility, not used for evidence. | Are sources cited at the most specific claim they support, or cited vaguely at section level? Section-level citation hides which sub-claims are actually supported. |
+| 3   | **No orphan citations** — every `[N]` reference in the text matches a Sources table row                                          | Are there `[N]` references that don't match any Sources table row?                                                        | Are citation numbers consistent throughout (no gaps, no duplicates)? Broken citation numbering signals the artifact was edited without maintaining integrity.       |
+| 4   | **Sources table has: Title, URL, Author, Date, Tier** — all five fields present for every source                                 | Are ALL 5 fields filled? Is Tier assigned (not just blank)?                                                               | Are the Tier assignments accurate? A blog post assigned Tier 1 inflates perceived source quality. Is the Date current enough for the topic?                         |
 
 ### 3. Confidence Accuracy
 
-- [ ] Per-finding confidence scores declared
-- [ ] Overall confidence declared
-- [ ] Scores match evidence basis (not inflated)
-- [ ] Findings <60% flagged prominently
+| #   | Check                                                                                                                     | Presence                                                                                         | Quality Depth                                                                                                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **Per-finding confidence scores declared** — each finding has its own explicit confidence percentage                      | Does EACH finding have its own score, or is one artifact-level score applied everywhere?         | Are scores at the finding level, not the section level? A single score per section hides that some findings within it may be poorly supported.                                             |
+| 2   | **Overall confidence declared** — an aggregate confidence score for the artifact is stated                                | Is the overall score present and explicitly stated?                                              | Is the overall score a reasoned aggregate, or just the highest per-finding score? An average of 85%, 60%, and 40% is NOT 85%.                                                              |
+| 3   | **Scores match evidence basis (not inflated)** — confidence percentages are calibrated to actual source count and quality | Is each score justified by the number and quality of independent sources? A single source ≠ 80%. | What would LOWER this confidence score? If no answer exists, the score is likely inflated. Are scores above 80% supported by 2+ independent sources with contradicting evidence addressed? |
+| 4   | **Findings <60% flagged prominently** — low-confidence findings are visually distinct from high-confidence ones           | Are low-confidence findings visually distinct (e.g., ⚠️ prefix), not buried in body text?        | Are low-confidence findings positioned to prevent downstream misuse? A low-confidence finding mentioned once in passing will be treated as fact by readers who skim.                       |
 
 ### 4. Source Quality
 
-- [ ] Tier distribution appropriate (not all Tier 4)
-- [ ] At least 50% Tier 1-2 sources for key claims
-- [ ] Recency appropriate for topic type
+| #   | Check                                                                                                    | Presence                                                               | Quality Depth                                                                                                                                                                   |
+| --- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Tier distribution appropriate (not all Tier 4)** — source tiers are spread across quality levels       | Is the Tier distribution recorded? Are Tier 4 sources a minority?      | Does Tier distribution match the claim importance? A Tier 4 source for a core claim is a risk regardless of how many Tier 1 sources exist elsewhere.                            |
+| 2   | **At least 50% Tier 1-2 sources for key claims** — high-stakes conclusions rest on authoritative sources | Do key claims cite Tier 1-2 sources? Is the 50% threshold met overall? | Are the Tier 1-2 sources actually authoritative for THIS specific claim domain, or just prestigious in a different domain? Domain mismatch inflates perceived authority.        |
+| 3   | **Recency appropriate for topic type** — sources are current relative to how fast the topic evolves      | Are sources dated? Is recency assessed for each source?                | Is "recency" calibrated to the topic's rate of change? A 2019 source on cloud pricing is stale; a 2019 source on database theory may be fine. Are any outdated sources flagged? |
 
 ### 5. Knowledge Gaps
 
-- [ ] Gaps section is present and honest
-- [ ] Known limitations declared
-- [ ] Suggestions for further research included
+| #   | Check                                                                                                     | Presence                                                                                   | Quality Depth                                                                                                                                                                                                                        |
+| --- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **Gaps section is present and honest** — a dedicated section describes what the research did NOT find     | Is a Gaps section present? Does it list specific gaps, not just "more research needed"?    | Are the gaps specific enough to guide follow-up research? "Unknown pricing" is actionable; "some uncertainty exists" is not. Are gaps ranked by impact on the artifact's conclusions?                                                |
+| 2   | **Known limitations declared** — methodological or coverage limitations are explicitly stated             | Are limitations listed (not inferred)? Does the section distinguish limitations from gaps? | Are limitations acknowledged BEFORE they are used to discount findings, or only in a footnote after conclusions are stated? A limitation that invalidates a key finding must appear near that finding, not only in the Gaps section. |
+| 3   | **Suggestions for further research included** — the artifact proposes next steps to close identified gaps | Are 1+ follow-up research suggestions present? Are they tied to specific gaps?             | Are suggestions actionable (specific query + source type) or vague ("investigate further")? Do suggestions address the gaps that most affect decision-making?                                                                        |
 
 ### 6. Cross-Validation
 
-- [ ] Key claims verified by 2+ sources
-- [ ] Discrepancies noted where sources conflict
-- [ ] Single-source claims marked as unverified
+| #   | Check                                                                                                           | Presence                                                                       | Quality Depth                                                                                                                                                               |
+| --- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Key claims verified by 2+ sources** — core conclusions are supported by multiple independent sources          | Are 2+ sources cited for each key claim?                                       | Are the sources truly independent, or do they cite each other (amplification, not validation)? Two sources from the same original study do not constitute cross-validation. |
+| 2   | **Discrepancies noted where sources conflict** — when sources contradict each other, the conflict is documented | Are source conflicts recorded in the artifact?                                 | Are conflicts resolved or just noted? If sources conflict, the artifact should explain which source was weighted more and why — not just acknowledge the conflict exists.   |
+| 3   | **Single-source claims marked as unverified** — any finding backed by only one source is explicitly labeled     | Are single-source claims identified with an "unverified" marker or equivalent? | Are single-source claims given confidence scores below 60% as required? A single source labeled "unverified" but assigned 75% confidence is self-contradictory.             |
 
 ### 7. Actionability
 
-- [ ] Recommendations are concrete (not vague)
-- [ ] Next steps are evidence-based
-- [ ] Executive summary captures key findings
+| #   | Check                                                                                                                   | Presence                                                                     | Quality Depth                                                                                                                                                                               |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Recommendations are concrete (not vague)** — each recommendation specifies who should do what                         | Are recommendations present? Do they name an action (not just "consider X")? | Are recommendations actionable enough to assign to a specific role without further clarification? "Improve monitoring" is not actionable; "add P99 latency alert at 500ms threshold" is.    |
+| 2   | **Next steps are evidence-based** — proposed actions are traceable to findings in the artifact                          | Are next steps present and linked to specific findings?                      | Is each next step traceable to a specific finding and confidence score? A next step driven by a 40%-confidence finding should be labeled speculative, not presented as a directive.         |
+| 3   | **Executive summary captures key findings** — the summary conveys findings accurately without omitting critical caveats | Is an executive summary present? Does it list key findings?                  | Does the summary preserve confidence caveats and limitations, or does it strip them out for readability? A summary that presents 60%-confidence findings as facts is worse than no summary. |
 
 ## Output Format
 

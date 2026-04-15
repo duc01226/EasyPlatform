@@ -4,7 +4,7 @@
  * Tests for:
  * - dev-rules-injector.cjs: Injects development-rules.md before code-editing operations
  * - dedup-constants.cjs: Correct path in DEV_RULES config
- * - subagent-init.cjs: Correct path in Rules section
+ * - subagent-init-identity.cjs: Correct path in Rules section (replaces removed subagent-init.cjs)
  *
  * Context: development-rules.md was moved from .claude/workflows/ to .claude/docs/
  * These tests verify the new path is resolved correctly.
@@ -308,9 +308,9 @@ const pathReferenceTests = [
         }
     },
     {
-        name: '[subagent-init] Rules section references .claude/docs/ path',
+        name: '[subagent-init-identity] Rules section references .claude/docs/ path',
         fn: () => {
-            const subagentPath = path.resolve(__dirname, '..', '..', 'subagent-init.cjs');
+            const subagentPath = path.resolve(__dirname, '..', '..', 'subagent-init-identity.cjs');
             const content = fs.readFileSync(subagentPath, 'utf-8');
             assertContains(content, '.claude/docs/development-rules.md', 'Should reference new docs/ path');
             assertNotContains(content, '.claude/workflows/development-rules.md', 'Should not reference old workflows/ path');

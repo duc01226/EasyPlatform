@@ -4,10 +4,10 @@ description: >-
     General-purpose agent for web research, knowledge synthesis, and
     structured report generation. Use for research tasks, course material
     creation, marketing analysis, and business evaluation.
-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, TaskCreate, Bash
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: opus
 memory: project
-maxTurns: 30
+maxTurns: 200
 ---
 
 ## Role

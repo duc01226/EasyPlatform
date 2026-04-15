@@ -1,6 +1,6 @@
 ---
 name: review-architecture
-version: 1.0.0
+version: 1.1.0
 description: '[Code Quality] Review architecture compliance — clean architecture layers, messaging patterns, service boundaries, CQRS, v1/v2 service patterns, repository usage, entity event handlers. Default: changed files only.'
 allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, TaskUpdate, Agent, AskUserQuestion
 ---

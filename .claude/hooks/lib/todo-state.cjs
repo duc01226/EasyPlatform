@@ -93,7 +93,19 @@ function setTodoState(sessionId, state) {
             lastUpdated: new Date().toISOString()
         };
         fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
-        fs.renameSync(tmpFile, statePath);
+        try {
+            fs.renameSync(tmpFile, statePath);
+        } catch (renameErr) {
+            // Windows: renameSync fails with EEXIST/EPERM when destination is locked
+            // by a concurrent process. Fall back to copy+delete which is safe enough
+            // for non-critical session state (fail-open design).
+            if (renameErr.code === 'EEXIST' || renameErr.code === 'EPERM') {
+                fs.copyFileSync(tmpFile, statePath);
+                try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore cleanup failure */ }
+            } else {
+                throw renameErr;
+            }
+        }
         return true;
     } catch (e) {
         try {

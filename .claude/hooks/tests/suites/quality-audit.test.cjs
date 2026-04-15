@@ -45,7 +45,7 @@ const configTests = [
         }
     },
     {
-        name: '[quality-audit] has correct sequence of 10 steps',
+        name: '[quality-audit] has correct sequence of 14 steps',
         fn: async () => {
             const expected = [
                 'workflow-review-changes',
@@ -55,7 +55,11 @@ const configTests = [
                 'code',
                 'tdd-spec',
                 'tdd-spec-review',
+                'integration-test',
+                'integration-test-review',
+                'integration-test-verify',
                 'test',
+                'docs-update',
                 'watzup',
                 'workflow-end'
             ];
@@ -174,7 +178,7 @@ const integrationTests = [
             assertAllowed(result.code, 'Should not block');
             const output = result.stdout;
             assertContains(output, 'Workflow Catalog', 'Should inject workflow catalog');
-            assertContains(output, 'quality-audit', 'Catalog should include quality-audit workflow');
+            // quality-audit is in part 2 (index 21 of 34) — injected by workflow-router-p2.cjs, not workflow-router.cjs
         }
     },
     {

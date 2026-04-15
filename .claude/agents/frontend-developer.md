@@ -5,10 +5,10 @@ description: >-
     modifying Angular components, stores, forms, services, or templates in
     frontend app directories. Handles project store state management, BEM styling, design
     system tokens, and shared/domain library patterns.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 45
+maxTurns: 200
 ---
 
 ## Role

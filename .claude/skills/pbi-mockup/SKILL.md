@@ -47,7 +47,7 @@ Generate visual HTML mockup reports from PBI and user story artifacts.
 - After PBI and stories are finalized (reviewed, challenged, gated)
 - Before moving to implementation planning or design spec
 - When stakeholders need a visual preview of the feature
-- As the final step in `idea-to-pbi`, `po-ba-handoff`, and similar workflows
+- As the final step in `idea-to-pbi` and similar workflows
 
 **NOT for**: Implementing production UI (use `/cook`), creating design specs (use `/design-spec`), or wireframing from scratch (use `/wireframe-to-spec`).
 

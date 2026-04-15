@@ -21,7 +21,7 @@
         "injectOnSkills": ["code-review", "review-pr", "review-changes", "code-reviewer", "review"],
         "rulesPath": "docs/project-reference/code-review-rules.md"
     },
-    "codingLevel": 4,
+    "codingLevel": 3,
     "locale": {
         "responseLanguage": null,
         "thinkingLanguage": null

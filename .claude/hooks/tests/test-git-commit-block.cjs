@@ -257,6 +257,32 @@ async function testEdgeCases() {
 }
 
 // ============================================================================
+// TC-COMMIT-BYPASS-001: Bypass instructions use portable git-based path
+// TC-COMMIT-BYPASS-002: Block message does NOT contain hardcoded OS paths
+// Regression for: $CLAUDE_PROJECT_DIR being empty in bash (fix: use git rev-parse)
+// ============================================================================
+
+async function testPortableBypassInstructions() {
+    log('\n--- Portable Bypass Instructions (TC-COMMIT-BYPASS-001, TC-COMMIT-BYPASS-002) ---');
+
+    // Run hook with CLAUDE_PROJECT_DIR explicitly unset to simulate bash env
+    const result = await runHook(bashInput('git commit -m "test"'), { CLAUDE_PROJECT_DIR: '' });
+    logResult('TC-COMMIT-BYPASS-001: blocked when CLAUDE_PROJECT_DIR unset', result.code === 2);
+
+    if (result.code === 2) {
+        // Error message must instruct use of git rev-parse, not a hardcoded path
+        const hasGitRevParse = result.stderr.includes('git rev-parse');
+        logResult('TC-COMMIT-BYPASS-001: error msg uses git rev-parse --show-toplevel', hasGitRevParse);
+
+        // Must NOT contain hardcoded drive/path separators (Windows C:/ or D:/)
+        const hasHardcodedPath = /[A-Z]:[/\\]/.test(result.stderr);
+        logResult('TC-COMMIT-BYPASS-002: error msg has no hardcoded Windows path', !hasHardcodedPath);
+
+        if (verbose && !hasGitRevParse) log(`    stderr: ${result.stderr}`);
+    }
+}
+
+// ============================================================================
 // Main
 // ============================================================================
 
@@ -272,6 +298,7 @@ async function main() {
     await testMarkerFileBypass();
     await testNonBashToolIgnored();
     await testEdgeCases();
+    await testPortableBypassInstructions();
 
     log(`\n=== Results: ${passed} passed, ${failed} failed ===`);
     process.exit(failed > 0 ? 1 : 0);

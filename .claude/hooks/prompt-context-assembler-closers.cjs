@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Prompt Context Assembler - Part 2 (Closers) - UserPromptSubmit Hook
+ * Prompt Context Assembler - Closing Gates (UserPromptSubmit Hook)
  *
- * Injects the "closing gates" that must appear AFTER main context (part 1):
+ * Injects the "closing gates" that must appear AFTER main context:
  *   1. Graph protocol tier 1 — full reference with dedup (deduped per session)
  *   2. Graph compact mandatory reminder — always injected, no dedup (~30 tokens)
  *   3. Workflow gate compact reminder — always injected, no dedup (~40 tokens)
- *   4. Lesson-learned reminder — always injected, no dedup (absolute last)
+ *   4. Lesson-learned reminder — always injected, no dedup
+ *   5. Workflow-detect closer — ABSOLUTE LAST: workflow selection reminder
  *
  * Split from prompt-context-assembler.cjs to keep each hook's output under the
  * harness per-hook size limit. Register this AFTER prompt-context-assembler.cjs
@@ -23,15 +24,7 @@ const fs = require('fs');
 const path = require('path');
 const { loadConfig } = require('./lib/ck-config-loader.cjs');
 const { injectLessonReminder } = require('./lib/prompt-injections.cjs');
-
-const TOP_DEDUP_LINES = 50;
-
-function isMarkerInContext(lines, marker, bottomWindow, topWindow = TOP_DEDUP_LINES) {
-    if (!lines || lines.length === 0) return false;
-    if (lines.slice(-bottomWindow).some(l => l.includes(marker))) return true;
-    if (lines.slice(0, topWindow).some(l => l.includes(marker))) return true;
-    return false;
-}
+const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-utils.cjs');
 
 async function main() {
     try {
@@ -45,12 +38,7 @@ async function main() {
         if (!userPrompt.trim()) process.exit(0);
 
         // Load transcript lines once for all dedup checks
-        let transcriptLines = null;
-        try {
-            if (payload.transcript_path && fs.existsSync(payload.transcript_path)) {
-                transcriptLines = fs.readFileSync(payload.transcript_path, 'utf-8').split('\n');
-            }
-        } catch { /* non-blocking */ }
+        const transcriptLines = loadTranscriptLines(payload.transcript_path);
 
         // Read confirmation mode for workflow gate
         const wfConfig = loadConfig({ includeProject: false, includeAssertions: false });
@@ -109,16 +97,31 @@ async function main() {
         }
 
         // ═══════════════════════════════════════════════════════════════════════
-        // LESSON REMINDER — ABSOLUTE LAST output in this hook.
-        // "Check lessons learned" prompt at recency position ensures AI always
-        // evaluates session mistakes before finishing.
+        // LESSON REMINDER — injected before workflow-detect closer.
         // ═══════════════════════════════════════════════════════════════════════
         const reminder = injectLessonReminder(payload.transcript_path);
         if (reminder) console.log(reminder);
 
+        // ═══════════════════════════════════════════════════════════════════════
+        // WORKFLOW DETECT — ABSOLUTE LAST: Ensures workflow selection is always
+        // the most recent instruction before Claude acts on the prompt.
+        // Only fires when confirmationMode === 'always'.
+        // ═══════════════════════════════════════════════════════════════════════
+        if (!isMarkerInContext(transcriptLines, '[WORKFLOW-DETECT]', 10)) {
+            if (confirmationMode === 'always') {
+                console.log(
+                    `**[WORKFLOW-DETECT] Before acting: find the best-fit workflow or custom pipeline for this prompt. Present all options via \`AskUserQuestion\` and await user confirmation.**`
+                );
+            } else if (confirmationMode === 'never') {
+                console.log(
+                    `**[WORKFLOW-DETECT] Auto-detect the best-fit workflow or custom pipeline for this prompt and activate it immediately via \`/workflow-start\` — no confirmation needed.**`
+                );
+            }
+        }
+
         process.exit(0);
     } catch (error) {
-        console.error(`<!-- Assembler p2 error: ${error.message} -->`);
+        console.error(`<!-- Assembler closers error: ${error.message} -->`);
         process.exit(0);
     }
 }

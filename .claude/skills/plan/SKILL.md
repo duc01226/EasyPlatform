@@ -179,11 +179,12 @@ Check the `## Plan Context` section in the injected context:
 - Activate `planning` skill.
 - Note: `detailed-instructions-prompt` is **an enhanced prompt** that describes the task in detail based on the provided task description.
 
-**MANDATORY FINAL TASKS** — After all planning tasks, ALWAYS add these three:
+**MANDATORY FINAL TASKS** — After all planning tasks, ALWAYS add these final tasks:
 
 1. **"Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. `Evidence: TBD` for TDD-first mode.
 2. **"Run /plan-validate"** — Interview user to validate plan assumptions
 3. **"Run /plan-review"** — Auto-review plan for validity and best practices
+4. **"Run /why-review (standalone only)"** — If NOT inside a workflow, trigger `/why-review` to validate design rationale, alternatives considered, and risk assessment in the plan. Skip if a workflow already includes `/why-review` in its sequence.
 
 ---
 
@@ -231,6 +232,7 @@ After creating all phase files, run the **recursive decomposition loop**:
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
+- **"/why-review"** — Validate design rationale in the plan before implementation (standalone only — skipped when workflow includes it)
 - **"/plan-review"** — Auto-review plan for validity and best practices
 - **"/plan-validate"** — Interview user to confirm plan decisions
 - **"Skip, continue manually"** — user decides

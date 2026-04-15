@@ -13,7 +13,7 @@
  *   BACKEND_CONTEXT     → backend-context
  *   FRONTEND_CONTEXT    → frontend-context
  *   STYLING_CONTEXT     → scss-styling-context
- *   LESSON_LEARNED      → prompt-context-assembler-p2 (via lib/prompt-injections)
+ *   LESSON_LEARNED      → prompt-context-assembler-closers (via lib/prompt-injections)
  *   CODE_REVIEW_RULES   → code-review-rules-injector
  *   DEV_RULES           → dev-rules-injector (PreToolUse: Edit|Write|MultiEdit|Skill)
  *   KNOWLEDGE_CONTEXT   → knowledge-context
@@ -26,7 +26,7 @@
  *   FEATURE_DOCS_CONTEXT     → code-patterns-injector
  *   PROJECT_STRUCTURE    → prompt-context-assembler-docs (p1), prompt-context-assembler-docs-p2 (p2)
  *   CLAUDE_MD            → prompt-context-assembler-claude
- *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler-claude-p2
+ *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler-project-config
  *   DESIGN_SYSTEM        → design-system-context
  *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
  *

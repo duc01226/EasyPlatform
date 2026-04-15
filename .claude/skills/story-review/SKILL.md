@@ -1,6 +1,6 @@
 ---
 name: story-review
-version: 1.0.0
+version: 1.1.0
 description: '[Code Quality] Review user stories for completeness, coverage, dependencies, and quality before implementation. AI self-review gate after /story.'
 ---
 
@@ -251,6 +251,51 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
+## Adversarial Review Mindset (NON-NEGOTIABLE)
+
+**Default stance: SKEPTIC challenging story quality, not confirming it.**
+
+> **Self-review trap:** You wrote these stories. You will find them coherent because you made them coherent. This section forces deliberate challenge before rubber-stamping.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Strawman AC Check**
+For each acceptance criterion: "Is this AC so obvious it was only included to pad coverage?" (e.g., "User can see the page" — trivially true and tests nothing meaningful). Flag trivial ACs that would pass even if the feature is completely broken.
+
+**2. Vertical Slice Challenge**
+For each story: "Can a stakeholder demo THIS STORY ALONE to a real user and get useful feedback?" If the story only delivers a backend endpoint, a DB migration, or a UI component in isolation — it is a horizontal layer, not a vertical slice. Flag it.
+
+**3. Dependency Challenge**
+If story B is blocked by story A: "What happens to the sprint if story A is descoped or delayed?" A story set with rigid sequential dependencies is fragile. Are dependencies truly required, or can stories be resequenced?
+
+**4. INVEST Violation Hunt**
+Deliberately look for the WEAKEST INVEST criterion for each story. Ask: "Which of I/N/V/E/S/T does this story fail most obviously?" If a story is not Estimable — why not? If not Independent — can it be split?
+
+**5. Pre-Mortem**
+Assume all stories in this set are implemented exactly as written. The feature ships and fails. Write the most plausible failure scenario. Which story was the gap?
+
+**6. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
+
+### Forbidden Patterns
+
+- **"Stories follow GIVEN/WHEN/THEN"** → Format is NOT quality. Are the scenarios meaningful?
+- **"Coverage looks complete"** → What failure mode is NOT covered by any story?
+- **"Dependencies are identified"** → Are they truly required, or is there a split that removes them?
+- **"Vertical slices"** → Can you actually demo each story independently? Prove it.
+- **Confirming story set without adversarial challenge** → Forbidden.
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+- [ ] Identified at least 1 trivial/strawman AC across the story set
+- [ ] Verified each story delivers a demeable vertical slice
+- [ ] Checked dependency chain — fragile if >2 sequential dependencies
+- [ ] Found the weakest INVEST criterion per story
+- [ ] Ran pre-mortem (plausible failure scenario)
+- [ ] Generated at least 2 sentences arguing the opposite verdict
+
+If any box is unchecked → adversarial review incomplete. Go back.
+
 ## Workflow
 
 1. **Locate stories** — Find story artifacts in `team-artifacts/stories/` or plan context
@@ -263,24 +308,28 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ### Required (all must pass)
 
-- [ ] **AC coverage** — Every acceptance criterion from PBI has at least one corresponding story
-- [ ] **GIVEN/WHEN/THEN** — Each story has minimum 3 BDD scenarios (happy, edge, error)
-- [ ] **INVEST criteria** — Stories are Independent, Negotiable, Valuable, Estimable, Small, Testable
-- [ ] **Story points** — All stories have SP <=8 (>8 must be split)
-- [ ] **Dependency table** — Story set includes dependency ordering table (must-after, can-parallel, independent)
-- [ ] **No overlapping scope** — Stories don't duplicate functionality
-- [ ] **Vertical slices** — Each story delivers end-to-end value (not horizontal layers)
-- [ ] **Authorization scenarios** — Every story includes at least 1 authorization scenario (unauthorized access → rejection) per PBI roles table
-- [ ] **UI Wireframe section** — If story involves UI: has `## UI Wireframe` section per UI wireframe protocol (wireframe + component tree + interaction flow + states + responsive). If backend-only: explicit "N/A"
+| #   | Check                                                                                                                                                                                                           | Presence                                                          | Quality Depth                                                                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | **AC coverage** — Every acceptance criterion from PBI has at least one corresponding story                                                                                                                      | Does every PBI AC have a story?                                   | Does every PBI AC have a story? Or are some ACs split across multiple stories in ways that create coverage gaps?       |
+| 2   | **GIVEN/WHEN/THEN** — Each story has minimum 3 BDD scenarios (happy, edge, error)                                                                                                                               | Are all 3 BDD parts present per scenario?                         | Are all 3 BDD parts present per scenario? Are scenarios testing REAL user behavior or just "the system does X"?        |
+| 3   | **INVEST criteria** — Stories are Independent, Negotiable, Valuable, Estimable, Small, Testable                                                                                                                 | Are all 6 INVEST criteria named or implied?                       | Are stories genuinely Independent (no hidden chains), Valuable (real user impact), Testable (automatable)?             |
+| 4   | **Story points** — All stories have SP <=8 (>8 must be split)                                                                                                                                                   | Are SP assigned and all <=8?                                      | Do SP reflect actual complexity? Is <=8 justified, or is the story undersized to pass the gate?                        |
+| 5   | **Dependency table** — Story set includes dependency ordering table (must-after, can-parallel, independent)                                                                                                     | Does a dependency ordering table exist?                           | Does the ordering reflect ACTUAL dependencies, not just arbitrary sequencing?                                          |
+| 6   | **No overlapping scope** — Stories don't duplicate functionality                                                                                                                                                | Do any 2 stories reference the same AC?                           | Do any 2 stories claim the same AC? Would implementing both create duplication?                                        |
+| 7   | **Vertical slices** — Each story delivers end-to-end value (not horizontal layers)                                                                                                                              | Does each story touch more than one layer (UI + API or API + DB)? | Can a stakeholder demo EACH story to a real user independently? Or do some deliver only infrastructure?                |
+| 8   | **Authorization scenarios** — Every story includes at least 1 authorization scenario (unauthorized access → rejection) per PBI roles table                                                                      | Is an authorization scenario present per story?                   | Is the unauthorized-access scenario testing a realistic attack vector, not just "wrong role → 403"?                    |
+| 9   | **UI Wireframe section** — If story involves UI: has `## UI Wireframe` section per UI wireframe protocol (wireframe + component tree + interaction flow + states + responsive). If backend-only: explicit "N/A" | Does the section exist (or explicit N/A for backend-only)?        | If UI: does the wireframe show interaction flow + states + responsive breakpoints? If backend-only: is "N/A" explicit? |
 
 ### Recommended (>=50% should pass)
 
-- [ ] **Edge cases** — Boundary values, empty states, max limits addressed
-- [ ] **Error scenarios** — Failure paths explicitly covered in stories
-- [ ] **API contract** — If API changes needed, story specifies contract
-- [ ] **UI/UX visualization** — Frontend stories have component decomposition tree with EXISTING/NEW classification, design token mapping, and responsive breakpoint behavior per UI wireframe protocol
-- [ ] **Seed data stories** — If PBI has seed data requirements, Sprint 0 seed data story exists
-- [ ] **Data migration stories** — If PBI has schema changes, data migration story exists
+| #   | Check                                                                                                                                                                                             | Presence                                                         | Quality Depth                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Edge cases** — Boundary values, empty states, max limits addressed                                                                                                                              | Are edge case scenarios listed?                                  | Are boundary values story-specific (not generic "empty state")? Do they include concurrency or partial-data scenarios? |
+| 2   | **Error scenarios** — Failure paths explicitly covered in stories                                                                                                                                 | Are error path scenarios present?                                | Do error stories specify the exact error message/code returned, or just "shows error"?                                 |
+| 3   | **API contract** — If API changes needed, story specifies contract                                                                                                                                | Is a request/response contract defined?                          | Does the contract specify request/response schema fully? Are breaking vs non-breaking changes distinguished?           |
+| 4   | **UI/UX visualization** — Frontend stories have component decomposition tree with EXISTING/NEW classification, design token mapping, and responsive breakpoint behavior per UI wireframe protocol | Is a component decomposition tree present?                       | Are components EXISTING vs NEW classified? Are design token names (not just colors) specified?                         |
+| 5   | **Seed data stories** — If PBI has seed data requirements, Sprint 0 seed data story exists                                                                                                        | Does a seed data story exist (or N/A if not required)?           | If present, does the seed data story specify the exact data shape needed?                                              |
+| 6   | **Data migration stories** — If PBI has schema changes, data migration story exists                                                                                                               | Does a data migration story exist (or N/A if no schema changes)? | If present, does it specify rollback behavior?                                                                         |
 
 ## Output
 
@@ -317,22 +366,26 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 {PROCEED | REVISE_FIRST}
 ```
 
-## Round 2: Focused Re-Review (MANDATORY)
+## Round 2+ : Fresh Sub-Agent Re-Review (MANDATORY)
 
-> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
+> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
 
-After completing Round 1 checklist evaluation, execute a **second full review round**:
+After completing Round 1 checklist evaluation, spawn a **fresh `general-purpose` sub-agent** for Round 2 using the canonical Agent template from `SYNC:review-protocol-injection` above. Story artifact reviews are NOT code reviews — use `subagent_type: "general-purpose"`. When constructing the Agent call prompt:
 
-1. **Re-read** the Round 1 verdict and checklist results
-2. **Re-evaluate** ALL checklist items — do NOT rely on Round 1 memory
-3. **Challenge** Round 1 PASS items: "Is this really PASS? Did I verify with evidence?"
-4. **Focus on** what Round 1 typically misses:
-    - Implicit assumptions that weren't validated
-    - Missing acceptance criteria coverage
-    - Edge cases not addressed in the artifact
-    - Cross-references that weren't verified
-5. **Update verdict** if Round 2 found new issues
-6. **Final verdict** must incorporate findings from BOTH rounds
+1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
+2. Set `subagent_type: "general-purpose"`
+3. Embed the full verbatim body of these SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:fix-layer-accountability` which are not applicable to story artifacts)
+4. Set the Task as `"Review the user story artifacts for completeness and quality. Focus on: implicit assumptions not validated, missing acceptance criteria coverage, edge cases not addressed in BDD scenarios, cross-references not verified, vague language, authorization gaps, INVEST violations."`
+5. Set Target Files as the explicit story file paths being reviewed
+6. Set report path as `plans/reports/story-review-round{N}-{date}.md`
+
+After sub-agent returns:
+
+1. **Read** the sub-agent's report
+2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
+3. **If FAIL:** fix issues in the stories, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
+4. **Max 3 fresh rounds** — escalate to user via `AskUserQuestion` if still failing after 3 rounds
+5. **Final verdict** must incorporate findings from ALL rounds
 
 ## Key Rules
 

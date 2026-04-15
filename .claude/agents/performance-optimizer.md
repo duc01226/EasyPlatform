@@ -5,10 +5,10 @@ description: >-
     slow queries, N+1 patterns, bundle size issues, lazy loading opportunities,
     memory leaks, or API latency bottlenecks. Covers both backend (.NET/MongoDB/SQL)
     and frontend (Angular bundle, change detection, RxJS) performance.
-tools: Read, Grep, Glob, Bash, WebSearch, TaskCreate, Write
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 30
+maxTurns: 200
 ---
 
 ## Role

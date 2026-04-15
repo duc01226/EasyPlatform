@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Prompt Context Assembler - Project Config Summary Hook (UserPromptSubmit)
+ * Prompt Context Assembler - Project Config Summary (UserPromptSubmit Hook)
  *
  * Injects project-config-summary (~3.2KB) for context recovery after long
  * sessions — project modules, framework, context groups.
@@ -24,25 +24,9 @@ const path = require('path');
 const { generateProjectSummary } = require('./lib/project-config-loader.cjs');
 const {
     PROJECT_CONFIG_SUMMARY: PROJECT_CONFIG_SUMMARY_MARKER,
-    DEDUP_LINES,
-    TOP_DEDUP_LINES
+    DEDUP_LINES
 } = require('./lib/dedup-constants.cjs');
-
-function isMarkerInContext(lines, marker, bottomWindow, topWindow = TOP_DEDUP_LINES) {
-    if (!lines || lines.length === 0) return false;
-    if (lines.slice(-bottomWindow).some(l => l.includes(marker))) return true;
-    if (lines.slice(0, topWindow).some(l => l.includes(marker))) return true;
-    return false;
-}
-
-function loadTranscriptLines(transcriptPath) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return null;
-        return fs.readFileSync(transcriptPath, 'utf-8').split('\n');
-    } catch {
-        return null;
-    }
-}
+const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-utils.cjs');
 
 async function main() {
     try {
@@ -76,7 +60,7 @@ async function main() {
 
         process.exit(0);
     } catch (error) {
-        console.error(`<!-- Assembler claude p2 error: ${error.message} -->`);
+        console.error(`<!-- Assembler project-config error: ${error.message} -->`);
         process.exit(0);
     }
 }

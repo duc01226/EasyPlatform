@@ -57,20 +57,19 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
 - Use project domain-specific vocabulary when available
 - MUST ATTENTION include `story_points` and `complexity` in PBI output
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
-- <!-- SYNC:scaffold-production-readiness -->
+  <!-- SYNC:scaffold-production-readiness -->
 
-    > **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 4 foundations:
-    >
-    > 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates
-    > 2. **Error Handling Foundation** — HTTP error interception, classification, user notification patterns
-    > 3. **Loading State Management** — request counter tracking, loading indicators, skip tokens
-    > 4. **Docker Development Environment** — compose profiles, multi-stage Dockerfile, health checks
-    >
-    > Present 2-3 options per concern via AskUserQuestion. Verify each checklist before marking scaffold complete.
+> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 5 foundations:
+>
+> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates. Specific tool choices → `docs/project-reference/` or `project-config.json`.
+> 2. **Error Handling Foundation** — HTTP interceptor, error classification (4xx/5xx taxonomy), user notification, global uncaught handler.
+> 3. **Loading State Management** — counter-based tracker (not boolean toggle), skip-token for background requests, 300ms flicker guard.
+> 4. **Docker Development Environment** — compose profiles (`dev`/`test`/`infra`), multi-stage Dockerfile, health checks on all services, non-root production user.
+> 5. **Integration Points** — document each outbound boundary; configure retry + circuit breaker + timeout; integration tests for happy path and failure path.
+>
+> **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
 
-                    <!-- /SYNC:scaffold-production-readiness -->
-
-    — for Production Readiness Concerns table in PBI output
+<!-- /SYNC:scaffold-production-readiness -->
 
 - <!-- SYNC:cross-cutting-quality -->
 
@@ -632,6 +631,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 - **Input:** `/idea` output
 - **Next Step:** `/story`, `/tdd-spec` (Recommended for TDD), `/test-spec`, `/design-spec`
 - **Prioritization:** `/prioritize`
+- **Production Readiness:** See `SYNC:scaffold-production-readiness` block for foundation requirements referenced in Production Readiness Concerns table.
 
 ---
 
@@ -639,7 +639,8 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/story (Recommended)"** — Break PBI into implementable user stories
+- **"/why-review (Recommended)"** — Validate design rationale, alternatives considered, and risk assessment in the PBI before moving to story or implementation
+- **"/story"** — Break PBI into implementable user stories
 - **"/pbi-mockup"** — Generate HTML mockup report from PBI
 - **"/tdd-spec"** — If using TDD approach
 - **"Skip, continue manually"** — user decides
@@ -649,6 +650,8 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final todo task: **"Run /why-review"** — validate PBI design rationale (Problem Hypothesis, alternatives, risk) before proceeding to /story or /tdd-spec.
+**MANDATORY IMPORTANT MUST ATTENTION** add a final todo task: **"Run /pbi-challenge"** — Dev BA PIC collaborative review of the drafted PBI (challenge prompts, AC quality, feasibility) before proceeding to /dor-gate or /story.
 **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:ui-system-context:reminder -->
