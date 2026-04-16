@@ -6,10 +6,8 @@ description: >-
     wants to plan a new project from scratch. Performs market research, tech stack
     evaluation, DDD domain modeling, and waterfall-style planning with user
     validation at every stage.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: opus
 memory: project
-maxTurns: 200
 ---
 
 ## Role

@@ -4,10 +4,8 @@ description: >-
     Implement backend features using project-specific patterns.
     Handles commands, queries, entities, event handlers, migrations, and background
     jobs. Use for backend-only implementation tasks requiring full pattern knowledge.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 200
 ---
 
 ## Role

@@ -5,11 +5,9 @@ description: >-
     tasks using project-specific patterns. Designed for parallel execution with
     strict file ownership boundaries. Use when implementing a specific phase from
     /plan-parallel output.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 skills: code
 memory: project
-maxTurns: 200
 ---
 
 ## Role

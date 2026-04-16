@@ -2,7 +2,6 @@
 name: test-spec
 version: 2.1.0
 description: '[Testing] Generate test specifications, test cases, and coverage analysis from PBIs or codebase. Comprehensive test planning with GWT format, evidence requirements, and traceability. Triggers on: test spec, test cases, qa, test plan, test coverage, test matrix, test strategy, what to test, Given When Then, BDD.'
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

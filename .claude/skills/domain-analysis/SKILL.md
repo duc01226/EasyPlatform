@@ -2,7 +2,6 @@
 name: domain-analysis
 version: 1.0.0
 description: '[Architecture] Analyze business domain: bounded contexts, aggregates, entities, ERD, domain events, and cross-context integration. Generate domain model report with user validation.'
-allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, TaskCreate, AskUserQuestion, Bash
 ---
 
 **MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.

@@ -2,7 +2,6 @@
 name: pbi-mockup
 version: 1.0.0
 description: "[Project Management] Generate an HTML mockup report from PBI and story artifacts. Creates a self-contained HTML file visualizing the UI described in the PBI, styled to match the project's design system. Use after PBI/story finalization, before implementation. Triggers on 'mockup', 'html mockup', 'pbi mockup', 'visual mockup', 'generate mockup'."
-allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

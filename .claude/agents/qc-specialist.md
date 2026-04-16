@@ -4,10 +4,8 @@ description: >-
     Use this agent when running quality gates, verifying compliance with
     standards, creating audit trails, tracking quality metrics, or
     generating review checklists.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 200
 ---
 
 ## Role

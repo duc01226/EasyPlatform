@@ -3,7 +3,6 @@ name: web-design-guidelines
 version: 2.0.0
 description: '[Code Quality] Review UI code for web design best practices including WCAG 2.2 accessibility, responsive design, Core Web Vitals performance, and modern UX patterns. Review-only skill. Triggers on design guidelines review, accessibility audit, visual review, UI compliance check, WCAG check.'
 argument-hint: <file-or-pattern>
-allowed-tools: Read, Grep, Glob, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

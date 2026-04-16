@@ -2,7 +2,6 @@
 name: feature-docs
 version: 3.0.0
 description: '[Documentation] Create or update business feature documentation in docs/business-features/{Module}/. Generates 17-section docs (no code details, business logic only) with verified test case evidence. Triggers on: feature docs, business feature documentation, module documentation, document feature, update feature docs, quick feature docs, feature readme, single file docs, verified documentation.'
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

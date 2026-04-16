@@ -2,7 +2,6 @@
 name: graph-trace
 description: '[Code Intelligence] Trace full system flow from a target file or function through all edge types (CALLS, events, bus messages, API endpoints). Supports downstream, upstream, or bidirectional tracing. Use when investigating what happens when code executes, understanding blast radius, or tracing frontend-to-backend flows.'
 version: 1.0.0
-allowed-tools: Bash, Read, Grep, AskUserQuestion
 ---
 
 # Graph Trace — Full System Flow

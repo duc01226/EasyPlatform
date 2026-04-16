@@ -5,10 +5,8 @@ description: >-
     plans for new features, system architectures, or complex technical solutions.
     Invoke before starting significant implementation work or when evaluating
     technical trade-offs.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: opus
 memory: project
-maxTurns: 200
 ---
 
 ## Role

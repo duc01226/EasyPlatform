@@ -4,10 +4,8 @@ description: >-
     Use this agent when refining requirements, writing user stories,
     creating acceptance criteria, analyzing business processes, or
     bridging technical and non-technical stakeholders.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: opus
 memory: project
-maxTurns: 200
 ---
 
 ## Role

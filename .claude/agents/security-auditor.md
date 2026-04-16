@@ -4,10 +4,8 @@ description: >-
     Security review agent. Use when reviewing authentication flows,
     authorization patterns, secret management, API input validation, dependency
     vulnerabilities, or OWASP compliance. Performs read-only security analysis.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 200
 ---
 
 ## Role

@@ -2,7 +2,6 @@
 name: strategy-builder
 version: 1.0.0
 description: '[Content] Build marketing strategy: positioning, channels, messaging, campaigns, budget, KPIs. Follows market-analysis.'
-allowed-tools: Read, Write, Edit, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

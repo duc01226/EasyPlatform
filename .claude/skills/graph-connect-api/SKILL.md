@@ -2,7 +2,6 @@
 name: graph-connect-api
 description: '[Code Intelligence] Detect frontend-to-backend API connections using the knowledge graph. Matches HTTP calls (Angular, React, Vue, fetch, axios) with backend routes (.NET, Spring, Express, FastAPI) via project-config.json configuration.'
 version: 2.0.0
-allowed-tools: Bash, Read, AskUserQuestion
 ---
 
 # Connect API

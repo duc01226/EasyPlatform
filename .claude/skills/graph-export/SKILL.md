@@ -2,7 +2,6 @@
 name: graph-export
 description: '[Code Intelligence] Export the code review knowledge graph to a JSON file. Dumps all nodes (functions, classes, files) and edges (calls, imports, inheritance) from graph.db for external analysis or inspection.'
 version: 1.0.0
-allowed-tools: Bash, Read
 ---
 
 # Export Graph

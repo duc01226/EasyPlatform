@@ -2,8 +2,6 @@
 name: claude-code
 version: 2.0.0
 description: '[Utilities] Claude Code CLI setup, configuration, troubleshooting, and feature guidance. Triggers on claude code setup, hook not firing, MCP connection, context limit, skill creation, slash command setup.'
-
-allowed-tools: Read, Bash, Grep, Glob
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

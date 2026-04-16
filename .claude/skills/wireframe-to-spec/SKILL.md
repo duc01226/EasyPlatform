@@ -2,7 +2,6 @@
 name: wireframe-to-spec
 version: 1.0.0
 description: '[Frontend] Convert hand-drawn wireframes, digital wireframes, or UI sketches into structured design specifications. Accepts image inputs and produces ui-wireframe-protocol-formatted specs. Triggers on wireframe, sketch, hand-drawn, mockup image, wireframe to spec, sketch to code.'
-allowed-tools: Read, Write, Grep, Glob, AskUserQuestion, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
@@ -108,10 +107,10 @@ Output as `team-artifacts/design-specs/{YYMMDD}-wireframe-spec-{slug}.md`
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-  <!-- SYNC:ui-system-context:reminder -->
+    <!-- SYNC:ui-system-context:reminder -->
 - **IMPORTANT MUST ATTENTION** read frontend pattern docs, SCSS guide, and design system tokens BEFORE any UI implementation.
-  <!-- /SYNC:ui-system-context:reminder -->
-  <!-- SYNC:ui-wireframe-protocol:reminder -->
+    <!-- /SYNC:ui-system-context:reminder -->
+    <!-- SYNC:ui-wireframe-protocol:reminder -->
 - **IMPORTANT MUST ATTENTION** follow wireframe protocol: ASCII wireframe, component inventory with tiers, states table, design tokens, responsive breakpoints.
-  <!-- /SYNC:ui-wireframe-protocol:reminder -->
+    <!-- /SYNC:ui-wireframe-protocol:reminder -->
 - **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting

@@ -2,7 +2,6 @@
 name: graph-blast-radius
 description: '[Code Intelligence] Analyze the blast radius of current code changes using the structural knowledge graph. Shows impacted files, functions, test coverage gaps, and risk level. Requires graph to be built first via /graph-build.'
 version: 1.0.0
-allowed-tools: Bash, Read, Grep
 ---
 
 # Blast Radius

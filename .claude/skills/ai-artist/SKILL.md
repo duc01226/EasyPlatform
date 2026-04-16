@@ -3,7 +3,6 @@ name: ai-artist
 version: 1.0.0
 description: '[AI & Tools] Write and optimize prompts for AI-generated outcomes across text and image models. Use when crafting prompts for LLMs (Claude, GPT, Gemini), image generators (Midjourney, DALL-E, Stable Diffusion, Imagen, Flux), or video generators (Veo, Runway). Covers prompt structure, style keywords, negative prompts, chain-of-thought, few-shot examples, iterative refinement, and domain-specific patterns for marketing, code, and creative writing.'
 
-allowed-tools: NONE
 license: MIT
 ---
 

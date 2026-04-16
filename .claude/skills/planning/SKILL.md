@@ -2,7 +2,6 @@
 name: planning
 version: 2.0.0
 description: "[Planning] Use when you need to research, analyze, investigate, plan, design, or architect technical solutions. Includes comprehensive research phase with Gemini CLI, WebSearch, and 5-research limit. Triggers on keywords like "research", "analyze", "investigate options", "explore solutions", "compare approaches", "evaluate alternatives", "plan", "design", "architect"."
-allowed-tools: NONE
 license: MIT
 ---
 
@@ -1217,18 +1216,18 @@ After creating all phase files, run the **recursive decomposition loop**:
 - **IMPORTANT MUST ATTENTION** include Test Specifications section and story_points in plan frontmatter
 - **IMPORTANT MUST ATTENTION** verify all phases pass granularity check
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-    <!-- SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:evidence-based-reasoning:reminder -->
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
 - **IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-    <!-- /SYNC:estimation-framework:reminder -->
-    <!-- SYNC:plan-quality:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
+  <!-- SYNC:plan-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-    <!-- /SYNC:plan-quality:reminder -->
-    <!-- SYNC:iterative-phase-quality:reminder -->
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:iterative-phase-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-    <!-- /SYNC:iterative-phase-quality:reminder -->
-    <!-- SYNC:plan-granularity:reminder -->
+  <!-- /SYNC:iterative-phase-quality:reminder -->
+  <!-- SYNC:plan-granularity:reminder -->
 - **IMPORTANT MUST ATTENTION** pass 5-point granularity check: specific files, no planning verbs, <=30min steps, <=5 files, zero TBDs.
-  <!-- /SYNC:plan-granularity:reminder -->
+      <!-- /SYNC:plan-granularity:reminder -->

@@ -286,15 +286,15 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:integration-test-sync-check -->
 
-> **Integration Test Sync Check** — Verify changed handlers have corresponding integration tests.
+> **Integration Test Sync Check** — Verify changed business logic files have corresponding tests.
 >
-> 1. From changed files → find `*Command.cs`, `*Query.cs`, `*Handler.cs` under `src/Services/`
-> 2. For each changed handler → search for matching `*IntegrationTests.cs` in same service's test project
-> 3. If integration test EXISTS → check if test methods cover changed behavior (new methods/parameters)
-> 4. If integration test MISSING → flag as advisory: "Changed handler `{file}` has no integration tests. Consider `/integration-test`."
-> 5. Severity: **MEDIUM** (advisory, not blocking)
+> 1. From changed files → identify **business logic files**: handlers, commands, queries, services, controllers, resolvers, event processors. Naming varies by stack — infer from project conventions (e.g., `*Service.*`, `*Handler.*`, `*Controller.*`, `*Command.*`, `*Query.*`, `*Resolver.*`).
+> 2. For each identified file → search for a corresponding test file. Infer test naming from existing tests in the project (e.g., `*.test.ts`, `*Tests.java`, `*_test.py`, `*.spec.js`, `*Tests.cs`). Check standard test directories (`tests/`, `spec/`, `__tests__/`, or adjacent test projects/packages).
+> 3. If test EXISTS → check if test methods cover changed behavior (new methods/parameters/logic paths)
+> 4. If test MISSING → **MANDATORY**: use `AskUserQuestion`: "Business logic file `{file}` has no integration tests — run `/integration-test` before proceeding, or confirm tests already written?" Options: "Run `/integration-test` first" (Recommended) | "Tests already written/updated — proceed"
+> 5. Severity: **HIGH** — missing tests for changed business logic MUST be surfaced to the user; do NOT silently flag and continue
 >
-> **This is advisory — do NOT block the review for missing integration tests.**
+> **Do NOT silently skip. Business logic changes without test coverage require an explicit user decision via `AskUserQuestion`.**
 
 <!-- /SYNC:integration-test-sync-check -->
 
@@ -544,9 +544,9 @@ Cross-reference changed files against related documentation using this mapping:
 
 **Integration Test Sync (per integration-test-sync-check protocol):**
 
-- [ ] **Locate changed handlers:** Grep `*Command.cs`, `*Query.cs` in changed files
-- [ ] **Match to tests:** For each handler, check `{Service}.IntegrationTests/` for corresponding test file
-- [ ] **Flag gaps:** Missing integration tests flagged as MEDIUM advisory finding
+- [ ] **Locate changed business logic files:** Identify handlers, commands, queries, services, controllers, resolvers in changed files — infer naming from project conventions
+- [ ] **Match to tests:** For each file, search project test directories for corresponding test file (infer naming from existing tests in the project)
+- [ ] **Surface gaps:** Missing tests → `AskUserQuestion` with options "Run `/integration-test` first" (Recommended) | "Tests already written — proceed". No silent skip.
 - [ ] **Flag stale tests:** If handler behavior changed, verify test assertions still match
 
 **Phase 4: Generate Final Review Result**
@@ -741,8 +741,8 @@ Group all changed files into logical categories (e.g., by directory, concern, or
 | **Root docs & instructions**    | `CLAUDE.md`, `README.md`, `.github/`                          |
 | **System docs**                 | `.claude/docs/**`                                             |
 | **Project docs & biz features** | `docs/business-features/`, `docs/*-reference.md`              |
-| **Backend code**                | `src/Services/**/*.cs`                                        |
-| **Frontend code**               | `src/{frontend}/**/*.ts`, `src/{legacy-frontend}/**/*.ts`     |
+| **Backend code**                | service/handler/controller source dirs (varies by stack)      |
+| **Frontend code**               | frontend source dirs (varies by stack)                        |
 
 ### Step 2: Fire Parallel Sub-Agents
 
@@ -837,22 +837,22 @@ If `architectureRules` is not present in project-config.json, skip this check si
   <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:design-patterns-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:design-patterns-quality:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:logic-and-intention-review:reminder -->
+  <!-- /SYNC:graph-assisted-investigation:reminder -->
+  <!-- SYNC:logic-and-intention-review:reminder -->
 - **IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-      <!-- /SYNC:logic-and-intention-review:reminder -->
-      <!-- SYNC:bug-detection:reminder -->
+  <!-- /SYNC:logic-and-intention-review:reminder -->
+  <!-- SYNC:bug-detection:reminder -->
 - **IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
-      <!-- /SYNC:bug-detection:reminder -->
-      <!-- SYNC:test-spec-verification:reminder -->
+  <!-- /SYNC:bug-detection:reminder -->
+  <!-- SYNC:test-spec-verification:reminder -->
 - **IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
-      <!-- /SYNC:test-spec-verification:reminder -->
-      <!-- SYNC:integration-test-sync-check:reminder -->
-- **IMPORTANT MUST ATTENTION** check changed handlers for matching integration tests. Flag missing tests as advisory.
-      <!-- /SYNC:integration-test-sync-check:reminder -->
+  <!-- /SYNC:test-spec-verification:reminder -->
+  <!-- SYNC:integration-test-sync-check:reminder -->
+- **IMPORTANT MUST ATTENTION** check changed handlers for matching integration tests. Surface missing tests via `AskUserQuestion` — mandatory, not advisory.
+  <!-- /SYNC:integration-test-sync-check:reminder -->

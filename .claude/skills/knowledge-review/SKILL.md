@@ -2,7 +2,6 @@
 name: knowledge-review
 version: 1.1.0
 description: '[Research] Review knowledge artifacts for completeness, citation quality, confidence accuracy, and template compliance.'
-allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
@@ -406,9 +405,9 @@ After completing Round 1 evaluation, execute a **second full review round**:
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
 - **IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-      <!-- SYNC:web-research:reminder -->
+  <!-- SYNC:web-research:reminder -->
 - **IMPORTANT MUST ATTENTION** cite 2+ independent sources per claim. NEVER fabricate — "No evidence found" is valid output.
-      <!-- /SYNC:web-research:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
+  <!-- /SYNC:web-research:reminder -->
+  <!-- SYNC:double-round-trip-review:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context) — never skip or combine with Round 1.
-      <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- /SYNC:double-round-trip-review:reminder -->

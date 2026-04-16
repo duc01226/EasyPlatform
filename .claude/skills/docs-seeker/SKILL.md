@@ -2,8 +2,6 @@
 name: docs-seeker
 version: 3.1.0
 description: '[Documentation] Search technical documentation using executable scripts to detect query type, fetch from llms.txt sources (context7.com), and analyze results. Use when user needs topic-specific documentation, library/framework documentation, GitHub repository analysis, or documentation discovery with automated agent distribution strategy.'
-
-allowed-tools: NONE
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

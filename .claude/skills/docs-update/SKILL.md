@@ -2,7 +2,6 @@
 name: docs-update
 version: 3.0.0
 description: '[Documentation] Holistic documentation orchestrator — detects impacted docs from git changes, then delegates to /feature-docs (business docs), /tdd-spec (test specifications), and /test-specs-docs (dashboard sync). Single entry point for all post-change documentation updates.'
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQuestion
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each phase. For simple tasks, AI MUST ATTENTION ask user whether to skip.

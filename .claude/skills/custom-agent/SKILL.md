@@ -73,9 +73,6 @@ model: inherit # inherit | sonnet | opus | haiku
 # OPTIONAL — Permissions
 permissionMode: default # default | acceptEdits | dontAsk | bypassPermissions | plan
 
-# OPTIONAL — Limits
-maxTurns: 30 # Prevents runaway agents
-
 # OPTIONAL — Skills (content injected at startup)
 skills:
     - skill-name
@@ -144,7 +141,6 @@ description: >-
 | No tool restrictions               | Add `tools` allowlist                     |
 | Vague description                  | Write specific trigger conditions         |
 | Giant system prompt                | Keep concise, use `skills` for detail     |
-| No `maxTurns`                      | Set 20-30 to prevent runaway              |
 | Recursive subagents                | Restrict `Task` in tools                  |
 | Windows long prompts (>8191 chars) | Use file-based agents, not `--agents` CLI |
 
@@ -166,9 +162,8 @@ description: >-
 | 6   | Tools minimal        | Only what agent needs          | Warning  |
 | 7   | Prompt structure     | Has `## Role` + `## Workflow`  | Warning  |
 | 8   | Model set            | When task differs from default | Info     |
-| 9   | maxTurns set         | Recommended 20-30              | Info     |
 
-**Quality Score:** Valid frontmatter (20) + Description >50 chars (20) + Tools restricted (15) + Role section (15) + Workflow section (10) + Model set (10) + maxTurns set (10) = 100. Rating: 80+ Excellent, 60-79 Good, 40-59 Needs Work, <40 Poor.
+**Quality Score:** Valid frontmatter (20) + Description >50 chars (20) + Tools restricted (15) + Role section (15) + Workflow section (10) + Model set (10) = 90. Rating: 80+ Excellent, 60-79 Good, 40-59 Needs Work, <40 Poor.
 
 ## File Priority (highest first)
 

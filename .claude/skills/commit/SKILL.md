@@ -3,7 +3,6 @@ name: commit
 version: 2.0.0
 description: "[Git] Stage changes and create git commits with conventional commit messages. Use when asked to "commit", "stage and commit", "save changes", or after completing implementation tasks. Alias for /git/cm."
 
-allowed-tools: Bash, Read, Glob, Grep, Skill
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

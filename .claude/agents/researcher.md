@@ -6,10 +6,8 @@ description: >-
     documentation, exploring best practices, or gathering information about
     plugins, packages, and open source projects. Excels at synthesizing information
     from multiple sources to produce detailed research reports.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 200
 ---
 
 ## Role

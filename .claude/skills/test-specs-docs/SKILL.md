@@ -2,8 +2,6 @@
 name: test-specs-docs
 version: 1.1.0
 description: '[Documentation] Sync test specifications between feature docs and docs/test-specs/ dashboard (bidirectional). Use when syncing test specs, updating indexes, reverse-syncing to feature docs, or maintaining cross-module views. Triggers on "test specs", "sync test specs", "test specifications", "reverse sync", "update dashboard", "QA documentation".'
-
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

@@ -2,8 +2,6 @@
 name: markdown-to-pdf
 version: 1.0.0
 description: '[Document Processing] Convert markdown files to PDF with syntax highlighting and custom CSS support. Cross-platform (Windows, macOS, Linux).'
-
-allowed-tools: NONE
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

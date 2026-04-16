@@ -68,7 +68,6 @@ user-invocable: true # false = hidden from / menu, Claude-only auto-invoke
 context: inline # inline (default) or fork (isolated subagent)
 agent: general-purpose # Subagent type when context: fork
 model: opus-4-5 # Model override. Default: session model
-allowed-tools: 'Read, Grep, Glob' # Comma-separated tool restrictions
 version: 1.0.0 # Project convention (non-official)
 ---
 ```
@@ -199,9 +198,9 @@ node .claude/skills/skill-create/scripts/validate-skills.cjs --fix    # Report +
 - **IMPORTANT MUST ATTENTION** include `## Quick Summary` within first 30 lines of every SKILL.md
 - **IMPORTANT MUST ATTENTION** add Closing Reminders section with `:reminder` SYNC blocks at bottom of every skill
 - **IMPORTANT MUST ATTENTION** follow SKILL.md Schema Reference (inlined above) for official frontmatter fields
-  <!-- SYNC:shared-protocol-duplication-policy:reminder -->
+    <!-- SYNC:shared-protocol-duplication-policy:reminder -->
 - **IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
-  <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
-  <!-- SYNC:output-quality-principles:reminder -->
+    <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
+    <!-- SYNC:output-quality-principles:reminder -->
 - **IMPORTANT MUST ATTENTION** follow output quality principles: token efficiency, lead with answer, no filler
-  <!-- /SYNC:output-quality-principles:reminder -->
+    <!-- /SYNC:output-quality-principles:reminder -->

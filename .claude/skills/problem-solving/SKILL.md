@@ -2,8 +2,6 @@
 name: problem-solving
 version: 2.0.0
 description: '[Utilities] Apply systematic problem-solving techniques for complexity spirals (simplification cascades), innovation blocks (collision-zone thinking), recurring patterns (meta-pattern recognition), assumption constraints (inversion exercise), and scale uncertainty (scale game). Triggers: problem-solving, structured thinking, decision framework, simplification cascade, collision-zone thinking, meta-pattern, inversion exercise, scale game.'
-
-allowed-tools: NONE
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

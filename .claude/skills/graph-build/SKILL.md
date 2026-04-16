@@ -2,7 +2,6 @@
 name: graph-build
 description: '[Code Intelligence] Build or update the code review knowledge graph. Parses codebase with Tree-sitter into a structural graph (functions, classes, imports, calls, tests) stored in SQLite. Enables blast-radius analysis and graph-powered code review.'
 version: 1.0.0
-allowed-tools: Bash, Read, AskUserQuestion
 ---
 
 # Build Graph

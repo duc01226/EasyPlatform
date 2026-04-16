@@ -2,7 +2,6 @@
 name: design-spec
 version: 2.0.0
 description: '[Project Management] Create UI/UX design specifications from requirements, PBIs, or user stories. Produces structured design spec documents with layout, typography, colors, interactions, and responsive breakpoints. Triggers on design spec, design specification, UI specification, component spec, layout spec, wireframe, mockup.'
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
@@ -215,6 +214,6 @@ Read before executing:
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-      <!-- SYNC:ui-system-context:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
+  <!-- /SYNC:ui-system-context:reminder -->

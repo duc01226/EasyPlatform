@@ -4,11 +4,9 @@ description: >-
     Simplifies and refines code for clarity, consistency, and maintainability
     while preserving all functionality. Focuses on recently modified code unless
     instructed otherwise. Use after implementing features or fixes to clean up code.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: opus
 skills: code-simplifier
 memory: project
-maxTurns: 200
 ---
 
 ## Role

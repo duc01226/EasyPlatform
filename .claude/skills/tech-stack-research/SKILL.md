@@ -2,7 +2,6 @@
 name: tech-stack-research
 version: 1.0.0
 description: '[Architecture] Research, analyze, and compare tech stack options as a solution architect. Evaluate top 3 choices per stack layer with detailed pros/cons, team-fit scoring, and market analysis. Generate comparison report.'
-allowed-tools: Read, Write, Edit, WebSearch, WebFetch, TaskCreate, AskUserQuestion, Bash
 ---
 
 **MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.

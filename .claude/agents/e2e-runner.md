@@ -4,10 +4,8 @@ description: >-
     E2E testing agent for any test framework (Playwright, Selenium, Cypress, etc.).
     Use for generating E2E tests from recordings or specs, updating visual baselines,
     or maintaining test-to-spec traceability. Auto-detects project's E2E stack.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: sonnet
 memory: project
-maxTurns: 200
 ---
 
 ## ⚠️ MANDATORY: Read Project E2E Reference (FIRST)

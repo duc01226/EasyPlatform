@@ -2,8 +2,6 @@
 name: markdown-novel-viewer
 version: 1.0.0
 description: '[Content] Background HTTP server rendering markdown files with calm, book-like reading experience.'
-
-allowed-tools: NONE
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

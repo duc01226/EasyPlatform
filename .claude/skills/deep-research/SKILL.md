@@ -2,7 +2,6 @@
 name: deep-research
 version: 1.0.0
 description: '[Research] Deep-dive into top sources from web-research. Extract key findings, cross-validate claims, build evidence base.'
-allowed-tools: Read, Write, WebFetch, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

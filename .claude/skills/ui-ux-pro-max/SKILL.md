@@ -2,7 +2,6 @@
 name: ui-ux-pro-max
 version: 1.0.0
 description: '[Frontend] Frontend UI/UX design intelligence - activate FIRST when user requests beautiful, stunning, gorgeous, or aesthetic interfaces. 50 styles, 21 palettes, 50 font pairings, 20 charts, 8 stacks. Triggers on ui design, ux design, design system, color palette, typography, glassmorphism, claymorphism, neumorphism, bento grid, font pairing, ui-ux-pro-max, stunning interface, beautiful ui.'
-allowed-tools: NONE
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

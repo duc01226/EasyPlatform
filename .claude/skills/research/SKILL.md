@@ -2,7 +2,6 @@
 name: research
 version: 1.0.0
 description: '[Planning] Use when you need to research, analyze, and plan technical solutions that are scalable, secure, and maintainable. For implementation planning, see also `planning` skill.'
-allowed-tools: NONE
 license: MIT
 ---
 

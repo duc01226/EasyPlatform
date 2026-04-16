@@ -3,7 +3,6 @@ name: webapp-testing
 version: 1.0.0
 description: '[Testing] Individual page/component testing with Python Playwright scripts. Use for dev debugging, automation, and verifying specific UI behaviors.'
 
-allowed-tools: NONE
 license: Complete terms in LICENSE.txt
 ---
 

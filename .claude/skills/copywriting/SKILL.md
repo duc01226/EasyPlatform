@@ -2,7 +2,6 @@
 name: copywriting
 version: 1.0.0
 description: '[Content] Create high-converting copy for marketing materials, social media, landing pages, email campaigns, and product descriptions. Triggers on: copywriting, marketing copy, social media post, landing page copy, email campaign, product description.'
-allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

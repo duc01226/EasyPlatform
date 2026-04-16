@@ -2,8 +2,6 @@
 name: release-notes
 version: 1.0.0
 description: '[Git] Generate professional release notes from git commits between two refs with automated categorization. Use when creating release notes from git history.'
-
-allowed-tools: NONE
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

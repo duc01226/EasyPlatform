@@ -7,7 +7,6 @@ description: >-
     Triggers on "who calls", "what imports", "related files", "connections of",
     "depends on", "tests for", "inherits from", "file structure", "graph query".
 version: 1.0.0
-allowed-tools: Bash, Read, Grep, AskUserQuestion
 ---
 
 # Graph Query

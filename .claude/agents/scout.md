@@ -6,10 +6,8 @@ description: >-
     spanning multiple directories, searching for files, debugging sessions
     requiring file relationship understanding, or before making changes that
     might affect multiple parts of the codebase.
-tools: Read, Write, Edit, Glob, Grep, Bash, TaskCreate, WebFetch, WebSearch
 model: inherit
 memory: project
-maxTurns: 200
 ---
 
 ## Role

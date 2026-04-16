@@ -2,7 +2,6 @@
 name: context-optimization
 version: 1.0.0
 description: "[Utilities] Use when managing context window usage, compressing long sessions, or optimizing token usage. Triggers on keywords like "context", "memory", "tokens", "compress", "summarize session", "context limit", "optimize context"."
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TaskCreate, mcp__memory__*
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.

@@ -2,7 +2,6 @@
 name: course-builder
 version: 1.0.0
 description: '[Content] Build structured learning/teaching course material with Bloom taxonomy objectives, modules, lessons, exercises, and assessments.'
-allowed-tools: Read, Write, Edit, WebSearch, WebFetch, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

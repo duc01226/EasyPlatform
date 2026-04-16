@@ -2,7 +2,6 @@
 name: knowledge-synthesis
 version: 1.0.0
 description: '[Research] Synthesize research findings into structured report using template. Final step of research workflow.'
-allowed-tools: Read, Write, Edit, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

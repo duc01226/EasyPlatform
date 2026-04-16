@@ -2,7 +2,6 @@
 name: graph-export-mermaid
 description: "[Code Intelligence] Export a single file's knowledge graph as a Mermaid flowchart diagram in markdown. Shows functions, classes, and internal call relationships. Requires graph to be built first via /graph-build."
 version: 1.0.0
-allowed-tools: Bash, Read
 ---
 
 # Export Graph as Mermaid Diagram

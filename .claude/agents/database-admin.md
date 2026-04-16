@@ -7,10 +7,8 @@ description: >-
     setting up replication, configuring monitoring, managing user permissions,
     or when you need comprehensive database health assessments and optimization
     recommendations.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 memory: project
-maxTurns: 200
 ---
 
 ## Role

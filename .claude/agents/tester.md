@@ -4,11 +4,9 @@ description: >-
     Use this agent to validate code quality through testing -- running unit and
     integration tests, analyzing results, checking coverage, and verifying builds.
     Call after implementing features or making significant code changes.
-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, WebSearch, WebFetch
 model: inherit
 skills: test
 memory: project
-maxTurns: 200
 ---
 
 ## Role

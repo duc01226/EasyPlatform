@@ -2,7 +2,6 @@
 name: arch-cross-service-integration
 version: 1.1.0
 description: '[Architecture] Use when designing or implementing cross-service communication, data synchronization, or service boundary patterns.'
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
@@ -300,6 +299,6 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-  <!-- SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->

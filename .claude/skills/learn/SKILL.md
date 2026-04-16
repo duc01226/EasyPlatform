@@ -3,10 +3,11 @@ name: learn
 version: 4.0.0
 description: "[Utilities] Teach Claude lessons that persist across sessions. Triggers on 'remember this', 'always do', 'never do', 'learn this', 'from now on'. Smart routing to all 12 project-reference docs with /prompt-enhance finalization."
 disable-model-invocation: false
-allowed-tools: Read, Write, Edit, Glob, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+>
+> **Final task is ALWAYS:** "Run `/prompt-enhance <modified-file>` to optimize lesson content for AI attention anchoring." Do NOT mark the skill complete until this runs.
 
 ## Quick Summary
 
@@ -23,6 +24,7 @@ allowed-tools: Read, Write, Edit, Glob, Bash
 **Key Rules:**
 
 - Triggers on "remember this", "always do X", "never do Y"
+- **Triage first:** pass Recurrence gate + Auto-fix gate BEFORE routing or saving
 - Smart-route to the most relevant file, NOT always `docs/project-reference/lessons.md`
 - Check for existing entries before creating duplicates
 - Confirm target file with user before writing
@@ -82,7 +84,20 @@ Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cj
 
 ## Smart File Routing (CRITICAL)
 
-When saving a lesson, analyze its content and route to the **most relevant file**:
+### Lesson Triage Gate (MANDATORY — run FIRST, before routing or saving)
+
+| Gate           | Question                                                                               | Pass           | Fail → Action                                        |
+| -------------- | -------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------- |
+| **Recurrence** | "Would this mistake recur in a future session WITHOUT this reminder?"                  | Yes → continue | No → skip `/learn`; mistake is situational           |
+| **Auto-fix**   | "Could `/code-review`, `/simplify`, `/security`, or `/lint` catch this automatically?" | No → continue  | Yes → skip `/learn`; update the review skill instead |
+
+**Both gates must pass.** A lesson review skills already catch adds noise without value. A one-off situational mistake won't be prevented by a persisted rule.
+
+---
+
+### Routing Table
+
+Route to the **most relevant file** based on lesson content:
 
 | If lesson is about...                                                                                                                    | Route to                                                | Section hint                                                    |
 | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- |
@@ -98,6 +113,8 @@ When saving a lesson, analyze its content and route to the **most relevant file*
 | Feature documentation, doc templates, doc structure conventions, app-to-service doc mapping                                              | `docs/project-reference/feature-docs-reference.md`      | Add to relevant conventions section                             |
 | Documentation indexing, doc organization, doc-to-code relationships, doc lookup patterns                                                 | `docs/project-reference/docs-index-reference.md`        | Add to relevant section                                         |
 | General lessons, workflow tips, tooling, AI behavior, project conventions, anything not matching above                                   | `docs/project-reference/lessons.md`                     | Append as dated list entry                                      |
+
+---
 
 ### Prevention Depth Assessment (MANDATORY before saving)
 
@@ -181,13 +198,14 @@ Does this failure mode apply to ≥3 different contexts or codebases? If only on
 
 ### Routing Decision Process
 
-1. **Read the lesson text** — identify keywords and domain
-2. **Apply Lesson Quality Gate** — analyze root cause, generalize, verify universality
-3. **Run Prevention Depth Assessment** — determine if doc-only or deeper prevention needed
-4. **Match against routing table** — pick the best-fit file
-5. **Tell the user:** "This lesson fits best in `docs/{file}`. Confirm? [Y/n]"
-6. **On confirm** — read target file, find the right section, append the lesson
-7. **On reject** — ask user which file to use instead
+1. **Run Triage Gate** — recurrence + auto-fix filters; stop here if either fails
+2. **Read the lesson text** — identify keywords and domain
+3. **Apply Lesson Quality Gate** — analyze root cause, generalize, verify universality
+4. **Run Prevention Depth Assessment** — determine if doc-only or deeper prevention needed
+5. **Match against Routing Table** — pick the best-fit file
+6. **Tell the user:** "This lesson fits best in `docs/{file}`. Confirm? [Y/n]"
+7. **On confirm** — read target file, find the right section, append the lesson
+8. **On reject** — ask user which file to use instead
 
 ### Format by Target File
 
@@ -248,25 +266,6 @@ Does this failure mode apply to ≥3 different contexts or codebases? If only on
 
 When Claude detects correction phrases in conversation (e.g., "always use X", "remember this", "never do Y", "from now on"), this skill auto-activates. When auto-inferred (not explicit `/learn`), **confirm with the user before saving**: "Save this as a lesson? [Y/n]"
 
-## Storage
-
-Lessons are distributed across all `docs/project-reference/` files (12 targets):
-
-| File                                                    | Content type                             | Auto-injected?               |
-| ------------------------------------------------------- | ---------------------------------------- | ---------------------------- |
-| `docs/project-reference/code-review-rules.md`           | Review rules, anti-patterns, conventions | Yes (review skills)          |
-| `docs/project-reference/backend-patterns-reference.md`  | Backend/hook patterns and rules          | Yes (backend edits)          |
-| `docs/project-reference/frontend-patterns-reference.md` | Frontend patterns and rules              | Yes (frontend edits)         |
-| `docs/project-reference/integration-test-reference.md`  | Integration test patterns and rules      | Config-driven                |
-| `docs/project-reference/e2e-test-reference.md`          | E2E test patterns and rules              | Yes (E2E edits)              |
-| `docs/project-reference/domain-entities-reference.md`   | Entity models, DTOs, relationships       | Yes (backend/frontend edits) |
-| `docs/project-reference/project-structure-reference.md` | Architecture, modules, tech stack        | Yes (agent spawn)            |
-| `docs/project-reference/scss-styling-guide.md`          | SCSS/CSS styling rules                   | Yes (styling edits)          |
-| `docs/project-reference/design-system/README.md`        | Design tokens, UI kit conventions        | Yes (design edits)           |
-| `docs/project-reference/feature-docs-reference.md`      | Feature doc templates, conventions       | On-demand                    |
-| `docs/project-reference/docs-index-reference.md`        | Doc organization, lookup patterns        | On-demand                    |
-| `docs/project-reference/lessons.md`                     | General lessons (fallback catch-all)     | Yes (EVERY prompt)           |
-
 ## Injection
 
 Lessons are injected by `lessons-injector.cjs` hook on:
@@ -305,9 +304,8 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 
 ## Closing Reminders
 
+- **IMPORTANT MUST ATTENTION** run Triage Gate FIRST — if recurrence is low OR review skills can catch it, skip `/learn` entirely
 - **IMPORTANT MUST ATTENTION** check Reference Doc Catalog to find the best target file — NOT always `lessons.md`
-- **IMPORTANT MUST ATTENTION** run `/prompt-enhance` on modified file(s) after saving (unless skip conditions met)
+- **IMPORTANT MUST ATTENTION** final task is ALWAYS: run `/prompt-enhance <modified-file>` — do NOT mark complete until this runs
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **IMPORTANT MUST ATTENTION** prefer auto-injected files for high-recurrence lessons (higher visibility)

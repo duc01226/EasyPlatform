@@ -157,7 +157,9 @@ function injectLessonReminder(transcriptPath) {
         `2. Test generality: does this failure mode apply to ≥3 different contexts or codebases? If not, go up one abstraction level.`,
         `3. Write as a universal rule — strip ALL project-specific names, file paths, class names. Must be useful on any codebase.`,
         `4. Consolidate: if multiple mistakes share one failure mode → ONE lesson, not many.`,
-        `5. If lessons found, ask user to run \`/learn\`.`,
+        `5. **Recurrence gate:** "Would this mistake recur in a future session WITHOUT this reminder?" — if No → skip \`/learn\`.`,
+        `6. **Auto-fix gate:** "Could an existing review skill (\`/code-review\`, \`/simplify\`, \`/security\`, \`/lint\`) catch this automatically?" — if Yes → skip \`/learn\`, improve the review skill instead.`,
+        `7. Only if BOTH gates pass → ask user to run \`/learn\`.`,
         ``
     ].join('\n');
 }

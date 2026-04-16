@@ -3,7 +3,6 @@ name: media-processing
 version: 1.0.0
 description: '[AI & Tools] Use when processing multimedia files with FFmpeg (video/audio encoding, conversion, streaming), ImageMagick (image manipulation, batch processing), or RMBG (AI background removal). Covers format conversion, resizing, filtering, thumbnails, and media pipelines.'
 
-allowed-tools: NONE
 license: MIT
 ---
 

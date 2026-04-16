@@ -3,7 +3,6 @@ name: chrome-devtools
 version: 1.1.0
 description: '[AI & Tools] Browser automation, debugging, and performance analysis using Puppeteer CLI scripts. Use for automating browsers, taking screenshots, analyzing performance, monitoring network traffic, web scraping, form automation, and JavaScript debugging.'
 
-allowed-tools: NONE
 license: Apache-2.0
 ---
 

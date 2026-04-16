@@ -2,7 +2,6 @@
 name: web-research
 version: 1.0.0
 description: '[Research] Broad web search on a topic. Collect sources, validate credibility, build source map. Use when starting any research task.'
-allowed-tools: Read, Write, Grep, Glob, WebSearch, WebFetch, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
