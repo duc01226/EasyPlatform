@@ -207,11 +207,7 @@ If you're thinking:
 - "The error message is misleading" — Read it again carefully. Error messages are usually right.
 - "It works on my machine" — Reproduce in the failing environment. Your environment hides bugs.
 - "This can't be the cause" — Verify with evidence, not intuition. Unlikely causes are still causes.
-
-## IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)
-
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
+- "It's OOM, must be a large object" — For memory exhaustion, check row count BEFORE row size. An unbounded query loading thousands of records is the more common cause. Triage: (1) Is there a missing DB-level filter for the triggering condition? (2) Is each row excessively large?
 
 ---
 
@@ -249,16 +245,16 @@ If you're thinking:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:red-flag-stop-conditions:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
+  <!-- SYNC:red-flag-stop-conditions:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-    <!-- /SYNC:red-flag-stop-conditions:reminder -->
-    <!-- SYNC:fix-layer-accountability:reminder -->
-- **IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+  <!-- /SYNC:red-flag-stop-conditions:reminder -->
+  <!-- SYNC:fix-layer-accountability:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
   <!-- /SYNC:fix-layer-accountability:reminder -->

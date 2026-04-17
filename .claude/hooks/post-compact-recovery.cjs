@@ -24,6 +24,7 @@ const { loadConfig, readSessionState, getReportsPath, resolvePlanPath } = requir
 const { loadState: loadWorkflowState, getCurrentStepInfo, getRecoveryContext } = require('./lib/workflow-state.cjs');
 const { getSwapEntries } = require('./lib/swap-engine.cjs');
 const { getMarkerPath, SESSION_ID_DEFAULT } = require('./lib/ck-paths.cjs');
+const { injectCriticalContext, injectAiMistakePrevention } = require('./lib/prompt-injections.cjs');
 
 /**
  * Find most recent checkpoint file (within time limit)
@@ -364,6 +365,15 @@ async function main() {
                     // Delete marker so second resume after same compact doesn't re-surface
                     try { fs.unlinkSync(getMarkerPath(sessionId)); } catch (e) {}
                     try { cleanupDoneProgressFiles(24, sessionId); } catch (e) {} // best-effort cleanup
+
+                    // Re-anchor AI principles even for non-workflow compacts.
+                    // prompt-context-assembler injects injectCriticalContext at top (primacy),
+                    // but injectAiMistakePrevention is never called on SessionStart — inject it
+                    // here at the bottom (recency) so the full lesson list survives compact.
+                    try {
+                        const aiMistake = injectAiMistakePrevention(null, true);
+                        if (aiMistake) console.log(aiMistake);
+                    } catch { /* silent */ }
                 }
                 process.exit(0);
             }
@@ -371,6 +381,7 @@ async function main() {
             // Found checkpoint but no workflow state - extract metadata
             const metadata = extractRecoveryMetadata(checkpointPath);
             if (!metadata || !metadata.pendingTodos || metadata.pendingTodos.length === 0) {
+                try { const aiMistake = injectAiMistakePrevention(null, true); if (aiMistake) console.log(aiMistake); } catch { /* silent */ }
                 process.exit(0);
             }
 
@@ -382,6 +393,7 @@ async function main() {
             console.log('');
             console.log('**⚠️ MUST ATTENTION READ** this file if you need to recover context from a previous session.');
             console.log('');
+            try { const aiMistake = injectAiMistakePrevention(null, true); if (aiMistake) console.log(aiMistake); } catch { /* silent */ }
             process.exit(0);
         }
 
@@ -398,6 +410,16 @@ async function main() {
         // Build and output recovery injection
         const recoveryContent = buildRecoveryInjection(workflowState, stepInfo, sessionState, checkpointPath, sessionId);
         console.log(recoveryContent);
+
+        // Re-anchor critical principles after compact — skipDedup=true because context is fresh.
+        // Placed at the bottom (recency position) so they land near the AI's attention boundary.
+        // Full AI mistake list is worth the token cost here: compact is a full context reset.
+        try {
+            const critical = injectCriticalContext(null, true);
+            if (critical) console.log(critical);
+            const aiMistake = injectAiMistakePrevention(null, true);
+            if (aiMistake) console.log(aiMistake);
+        } catch { /* silent */ }
 
         process.exit(0);
     } catch (error) {

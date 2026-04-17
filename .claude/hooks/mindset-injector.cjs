@@ -13,6 +13,8 @@
  * Triggers:
  *   - PreToolUse → Edit|Write|MultiEdit (before code modifications)
  *   - PreToolUse → Skill (before plan/cook/code/fix/feature skills)
+ *   - PreToolUse → TaskCreate (on task creation — compact critical context, recency anchor)
+ *   - PreToolUse → TaskUpdate with status=in_progress (on task start — recency anchor)
  *
  * Exit Codes:
  *   0 - Success (non-blocking, allows continuation)
@@ -93,8 +95,23 @@ function main() {
         const toolName = payload.tool_name || '';
         const transcriptPath = payload.transcript_path || '';
 
-        // Gate: only fire for Edit|Write|MultiEdit or matching Skill
+        // Gate: only fire for Edit|Write|MultiEdit, matching Skill, or Task operations
         const isSkill = toolName === 'Skill';
+        const isTaskOp = toolName === 'TaskCreate' || toolName === 'TaskUpdate';
+
+        if (isTaskOp) {
+            // TaskUpdate: only fire when transitioning to in_progress (task starts)
+            if (toolName === 'TaskUpdate') {
+                const status = payload.tool_input?.status;
+                if (status !== 'in_progress') process.exit(0);
+            }
+            // Compact injection: critical context only (3 lines) for recency anchor
+            // Full AI mistake list would waste tokens on every task op — skip it here
+            const critical = injectCriticalContext(transcriptPath);
+            if (critical) console.log(critical);
+            process.exit(0);
+        }
+
         if (isSkill) {
             const skillName = normalizeSkill(payload.tool_input?.skill);
             if (!MINDSET_SKILLS.has(skillName)) process.exit(0);

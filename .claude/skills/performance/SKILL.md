@@ -40,8 +40,6 @@ description: '[Debugging] Analyze and optimize performance bottlenecks'
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 ## Quick Summary
@@ -77,6 +75,7 @@ description: '[Debugging] Analyze and optimize performance bottlenecks'
 >
 > 1. **Paging Required** — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
 > 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+> 3. **OOM/Memory: Row Count Before Projection** — MUST ATTENTION: diagnose unbounded row count BEFORE document size. Triage: (1) Is there a missing DB-level filter for the triggering condition? Push it to the DB — eliminates OOM absolutely. (2) Is each row excessively large (unbounded arrays, blobs)? Apply projection — reduces severity proportionally. Row reduction has higher ROI than projection.
 
 ## ⚠️ MANDATORY: Confidence & Evidence Gate
 
@@ -107,22 +106,14 @@ Activate `arch-performance-optimization` skill and follow its workflow.
 
 <!-- /SYNC:graph-assisted-investigation -->
 
-> Run `python .claude/scripts/code_graph query callers_of <function> --json` on hot functions to understand call frequency.
+## Graph Intelligence — Performance-Specific
 
-## Graph Intelligence (RECOMMENDED if graph.db exists)
+In addition to the SYNC block above, for hot-path analysis:
 
-If `.code-graph/graph.db` exists, enhance analysis with structural queries:
-
-- **Identify hot paths calling bottleneck:** `python .claude/scripts/code_graph query callers_of <function> --json`
-- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
-
-### Graph-Trace for Hot Path Analysis
-
-When graph DB is available, use `trace` to map execution paths for performance analysis:
-
-- `python .claude/scripts/code_graph trace <bottleneck-file> --direction both --json` — full call chain: what triggers this code + what it triggers downstream
+- `python .claude/scripts/code_graph query callers_of <function> --json` — call frequency + who triggers the bottleneck
 - `python .claude/scripts/code_graph trace <bottleneck-file> --direction downstream --json` — downstream cascade (N+1 queries, excessive event handlers)
-- Cross-service MESSAGE_BUS edges reveal distributed performance bottlenecks
+- `python .claude/scripts/code_graph batch-query file1 file2 --json` — multi-hotspot analysis
+- Cross-service MESSAGE_BUS edges in trace output reveal distributed performance bottlenecks
 
 ---
 
@@ -153,10 +144,10 @@ When graph DB is available, use `trace` to map execution paths for performance a
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
   <!-- /SYNC:graph-assisted-investigation:reminder -->

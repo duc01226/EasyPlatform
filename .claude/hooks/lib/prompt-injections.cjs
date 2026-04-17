@@ -88,9 +88,11 @@ function injectCriticalContext(transcriptPath, skipDedup = false) {
         return null;
     }
 
-    return [`**${CRITICAL_THINKING_MARKER}** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.`, ``].join(
-        '\n'
-    );
+    return [
+        `**${CRITICAL_THINKING_MARKER}** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.`,
+        `**Anti-hallucination principle:** Never present a guess as fact — cite sources for every claim, admit uncertainty freely, self-check your output for errors, cross-reference independently, and stay skeptical of your own confidence — certainty without evidence is the root of all hallucination.`,
+        ``
+    ].join('\n');
 }
 
 /**
@@ -133,6 +135,7 @@ function injectAiMistakePrevention(transcriptPath, skipDedup = false) {
         `- **Why-Review adversarial mindset — apply when reviewing any plan, decision, or design.** Default to SKEPTIC not VALIDATOR: steel-man at least one rejected alternative (argue FOR it before dismissing), invert every stated reason ("Why NOT this choice — what does it sacrifice?"), stress-test the top 2-3 assumptions ("What if this is wrong?"), run a pre-mortem ("It ships and fails in 3 months — what breaks?"), identify 1-2 alternatives the author never mentioned, and generate contrarian arguments BEFORE finalizing any verdict; presence of a section is NOT quality — quality requires causal reasoning ("X leads to Y"), concrete mitigations, and evidence, not vague descriptions like "it's better" or "monitor closely".`,
         `- **Front-load report-write in sub-agent prompts for large reviews.** Sub-agents reviewing many files hit their token/step budget before writing the final report — all findings are lost. Design sub-agent prompts so: (1) the report-write step is the explicit first deliverable, (2) findings are appended per-file/section immediately (not batched at the end), and (3) the target file scope is bounded so the agent doesn't exhaust budget on reads alone. If a sub-agent returns truncated mid-sentence output and no report file, spawn a new one with a narrower scope rather than retrying the same prompt.`,
         `- **After context compaction, re-verify all prior phase outcomes before continuing.** Session summaries describe what the AI intended — not what actually persisted in the environment (git index, filesystem, running processes). When resuming a multi-phase task after compaction, the FIRST action must be a state audit: re-check git status, re-read modified files, verify filesystem state. Treat every "completed" phase claim as an untested hypothesis until confirmed by evidence.`,
+        `- **OOM/memory: check row count before row size.** Triage: (1) Is the query unbounded — no DB-level filter for the triggering condition? Push the filter to the DB — eliminates OOM absolutely. (2) Is each row excessively large? Apply projection — reduces severity proportionally. DB-level row reduction has higher ROI than projection.`,
         ``
     ].join('\n');
 }

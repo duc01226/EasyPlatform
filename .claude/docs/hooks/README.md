@@ -69,23 +69,23 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 
 ### Context Injection (PreToolUse)
 
-| Hook                             | Matcher                           | Purpose                                                            |
-| -------------------------------- | --------------------------------- | ------------------------------------------------------------------ |
-| `backend-context.cjs`            | `Edit\|Write\|MultiEdit`          | Inject C#/CQRS patterns when editing backend files                 |
-| `frontend-context.cjs`           | `Edit\|Write\|MultiEdit`          | Inject Angular/TS patterns when editing frontend files             |
-| `design-system-context.cjs`      | `Edit\|Write\|MultiEdit`          | Inject design tokens when editing UI components                    |
-| `scss-styling-context.cjs`       | `Edit\|Write\|MultiEdit`          | Inject BEM/SCSS patterns when editing style files                  |
-| `code-patterns-injector.cjs`     | `Edit\|Write\|MultiEdit`          | Inject discovered codebase patterns before edits                   |
-| `role-context-injector.cjs`      | `Write`                           | Inject role-specific context (PO, BA, QA, etc.)                    |
-| `figma-context-extractor.cjs`    | `Read`                            | Extract and inject Figma design context                            |
-| `code-review-rules-injector.cjs` | `Skill`                           | Inject YourProject code review rules on review skill activation    |
-| `dev-rules-injector.cjs`         | `Edit\|Write\|MultiEdit`, `Skill` | Inject development-rules.md before edits and review/coding skills  |
-| `knowledge-context.cjs`          | `Edit\|Write\|MultiEdit`          | Inject knowledge work guidelines for docs/knowledge/ files         |
-| `ba-refinement-context.cjs`      | `Write\|Edit`                     | Inject BA team refinement context when editing PBI artifacts       |
-| `artifact-path-resolver.cjs`     | `Write`                           | Resolve correct artifact output paths (plans/, reports/)           |
-| `graph-context-injector.cjs`     | `Skill`                           | Auto-inject blast radius when review/debug skills invoked          |
-| `mindset-injector.cjs`           | `Edit\|Write\|MultiEdit`, `Skill` | Inject critical thinking mindset + AI mistake prevention reminders |
-| `git-commit-block.cjs`           | `Bash`                            | Block git commit/push unless /commit skill is active               |
+| Hook                             | Matcher                                                                          | Purpose                                                                                         |
+| -------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `backend-context.cjs`            | `Edit\|Write\|MultiEdit`                                                         | Inject C#/CQRS patterns when editing backend files                                              |
+| `frontend-context.cjs`           | `Edit\|Write\|MultiEdit`                                                         | Inject Angular/TS patterns when editing frontend files                                          |
+| `design-system-context.cjs`      | `Edit\|Write\|MultiEdit`                                                         | Inject design tokens when editing UI components                                                 |
+| `scss-styling-context.cjs`       | `Edit\|Write\|MultiEdit`                                                         | Inject BEM/SCSS patterns when editing style files                                               |
+| `code-patterns-injector.cjs`     | `Edit\|Write\|MultiEdit`                                                         | Inject discovered codebase patterns before edits                                                |
+| `role-context-injector.cjs`      | `Write`                                                                          | Inject role-specific context (PO, BA, QA, etc.)                                                 |
+| `figma-context-extractor.cjs`    | `Read`                                                                           | Extract and inject Figma design context                                                         |
+| `code-review-rules-injector.cjs` | `Skill`                                                                          | Inject YourProject code review rules on review skill activation                                 |
+| `dev-rules-injector.cjs`         | `Edit\|Write\|MultiEdit`, `Skill`                                                | Inject development-rules.md before edits and review/coding skills                               |
+| `knowledge-context.cjs`          | `Edit\|Write\|MultiEdit`                                                         | Inject knowledge work guidelines for docs/knowledge/ files                                      |
+| `ba-refinement-context.cjs`      | `Write\|Edit`                                                                    | Inject BA team refinement context when editing PBI artifacts                                    |
+| `artifact-path-resolver.cjs`     | `Write`                                                                          | Resolve correct artifact output paths (plans/, reports/)                                        |
+| `graph-context-injector.cjs`     | `Skill`                                                                          | Auto-inject blast radius when review/debug skills invoked                                       |
+| `mindset-injector.cjs`           | `Edit\|Write\|MultiEdit`, `Skill`, `TaskCreate`, `TaskUpdate` (in_progress only) | Inject critical thinking mindset + AI mistake prevention reminders; compact context on task ops |
+| `git-commit-block.cjs`           | `Bash`                                                                           | Block git commit/push unless /commit skill is active                                            |
 
 ### Lessons Injection
 
