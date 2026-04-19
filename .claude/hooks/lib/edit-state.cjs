@@ -92,7 +92,16 @@ function setEditState(sessionId, state) {
             lastUpdated: new Date().toISOString()
         };
         fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
-        fs.renameSync(tmpFile, statePath);
+        try {
+            fs.renameSync(tmpFile, statePath);
+        } catch (renameErr) {
+            if (renameErr.code === 'EEXIST' || renameErr.code === 'EPERM') {
+                fs.copyFileSync(tmpFile, statePath);
+                try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore cleanup failure */ }
+            } else {
+                throw renameErr;
+            }
+        }
         return true;
     } catch (e) {
         try {

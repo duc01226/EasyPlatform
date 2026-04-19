@@ -57,6 +57,8 @@ const { TEMP_FILE_PATTERN, cleanupAll } = require('../../lib/temp-file-cleanup.c
 const { writeSessionState, readSessionState, deleteSessionState } = require('../../lib/ck-session-state.cjs');
 const { setTodoState, getTodoState, clearTodoState } = require('../../lib/todo-state.cjs');
 const { MARKERS_DIR, getMarkerPath, ensureDir } = require('../../lib/ck-paths.cjs');
+const { saveState, loadState, clearState } = require('../../lib/workflow-state.cjs');
+const { setEditState, getEditState, clearEditState } = require('../../lib/edit-state.cjs');
 
 // Hook paths
 const BASH_CLEANUP = getHookPath('bash-cleanup.cjs');
@@ -547,6 +549,115 @@ const tests = [
             } finally {
                 try { if (fs.existsSync(markerA)) fs.unlinkSync(markerA); } catch (_) {}
                 try { if (fs.existsSync(markerB)) fs.unlinkSync(markerB); } catch (_) {}
+            }
+        }
+    },
+
+    // -------------------------------------------------------------------------
+    // TC-SUBCTX-072: saveState() Windows-safe fallback (workflow-state.cjs)
+    // Parity with TC-SUBCTX-055 for todo-state.cjs
+    // -------------------------------------------------------------------------
+    {
+        name: 'TC-SUBCTX-072: saveState() Windows-safe fallback preserves valid JSON on sequential writes',
+        fn() {
+            const sessionId = 'sess-072-wf-rename';
+            try {
+                const ok1 = saveState(sessionId, {
+                    workflowType: 'bugfix',
+                    workflowSteps: ['scout', 'fix'],
+                    currentStepIndex: 0,
+                    completedSteps: [],
+                    activePlan: null,
+                    todos: [],
+                    metadata: {}
+                });
+                assertTrue(ok1, 'First saveState must succeed');
+
+                const ok2 = saveState(sessionId, {
+                    workflowType: 'bugfix',
+                    workflowSteps: ['scout', 'fix'],
+                    currentStepIndex: 1,
+                    completedSteps: ['scout'],
+                    activePlan: null,
+                    todos: [],
+                    metadata: {}
+                });
+                assertTrue(ok2, 'Second saveState must succeed (Windows-safe fallback)');
+
+                const finalState = loadState(sessionId);
+                assertTrue(finalState !== null, 'Final state must not be null');
+                assertEqual(finalState.workflowType, 'bugfix', 'workflowType must be preserved');
+                assertEqual(finalState.currentStepIndex, 1, 'currentStepIndex from second write must win');
+                assertEqual(finalState.completedSteps.length, 1, 'completedSteps from second write must be preserved');
+            } finally {
+                try { clearState(sessionId); } catch (_) {}
+            }
+        }
+    },
+
+    // -------------------------------------------------------------------------
+    // TC-SUBCTX-073: setEditState() Windows-safe fallback (edit-state.cjs)
+    // Parity with TC-SUBCTX-055 for todo-state.cjs
+    // -------------------------------------------------------------------------
+    {
+        name: 'TC-SUBCTX-073: setEditState() Windows-safe fallback preserves valid JSON on sequential writes',
+        fn() {
+            const sessionId = 'sess-073-edit-rename';
+            try {
+                const ok1 = setEditState(sessionId, {
+                    editCount: 3,
+                    writeCount: 1,
+                    filesModified: ['src/a.ts', 'src/b.ts', 'src/c.ts'],
+                    planWarningShown: false,
+                    planWarningShown8: false,
+                    projectCodeChecked: false,
+                    projectHasCode: true
+                });
+                assertTrue(ok1, 'First setEditState must succeed');
+
+                const ok2 = setEditState(sessionId, {
+                    editCount: 7,
+                    writeCount: 2,
+                    filesModified: ['src/a.ts', 'src/b.ts', 'src/c.ts', 'src/d.ts'],
+                    planWarningShown: true,
+                    planWarningShown8: false,
+                    projectCodeChecked: true,
+                    projectHasCode: true
+                });
+                assertTrue(ok2, 'Second setEditState must succeed (Windows-safe fallback)');
+
+                const finalState = getEditState(sessionId);
+                assertTrue(finalState !== null, 'Final state must not be null');
+                assertEqual(finalState.editCount, 7, 'editCount from second write must win');
+                assertEqual(finalState.planWarningShown, true, 'planWarningShown from second write must be preserved');
+                assertEqual(finalState.filesModified.length, 4, 'filesModified from second write must be preserved');
+            } finally {
+                try { clearEditState(sessionId); } catch (_) {}
+            }
+        }
+    },
+
+    // -------------------------------------------------------------------------
+    // TC-SUBCTX-074: writeSessionState() Windows-safe fallback (ck-session-state.cjs)
+    // Parity with TC-SUBCTX-055 for todo-state.cjs
+    // -------------------------------------------------------------------------
+    {
+        name: 'TC-SUBCTX-074: writeSessionState() Windows-safe fallback preserves valid JSON on sequential writes',
+        fn() {
+            const sessionId = 'sess-074-ck-rename';
+            try {
+                const ok1 = writeSessionState(sessionId, { phase: 'init', count: 1 });
+                assertTrue(ok1, 'First writeSessionState must succeed');
+
+                const ok2 = writeSessionState(sessionId, { phase: 'active', count: 2 });
+                assertTrue(ok2, 'Second writeSessionState must succeed (Windows-safe fallback)');
+
+                const finalState = readSessionState(sessionId);
+                assertTrue(finalState !== null, 'Final state must not be null');
+                assertEqual(finalState.phase, 'active', 'phase from second write must win');
+                assertEqual(finalState.count, 2, 'count from second write must be preserved');
+            } finally {
+                try { deleteSessionState(sessionId); } catch (_) {}
             }
         }
     }

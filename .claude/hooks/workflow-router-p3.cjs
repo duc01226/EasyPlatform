@@ -16,7 +16,6 @@
 'use strict';
 
 const fs = require('fs');
-const path = require('path');
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
 const { loadConfig } = require('./lib/ck-config-loader.cjs');
 

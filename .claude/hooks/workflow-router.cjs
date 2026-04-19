@@ -93,7 +93,7 @@ function buildCatalogInjection(config, quickMode) {
     lines.push('   - "Activate custom workflow: **[step1 → step2 → ...]**" — AI-composed hybrid; include 1-line rationale');
     lines.push('   - "Execute directly (no workflow)"');
     lines.push('5. **ACTIVATE (if confirmed):** Call `/workflow-start <workflowId>` for standard; sequence custom steps manually');
-    lines.push('6. **TaskCreate:** Create tasks for each step BEFORE any other action');
+    lines.push('6. **TaskCreate:** Create `[Workflow]` tasks for each step BEFORE any other action');
     lines.push('');
 
     if (config.settings.allowOverride && config.settings.overridePrefix) {

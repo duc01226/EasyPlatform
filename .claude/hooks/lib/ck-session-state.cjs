@@ -49,7 +49,16 @@ function writeSessionState(sessionId, state) {
   const tmpFile = tempPath + '.' + Math.random().toString(36).slice(2);
   try {
     fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2));
-    fs.renameSync(tmpFile, tempPath);
+    try {
+      fs.renameSync(tmpFile, tempPath);
+    } catch (renameErr) {
+      if (renameErr.code === 'EEXIST' || renameErr.code === 'EPERM') {
+        fs.copyFileSync(tmpFile, tempPath);
+        try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore cleanup failure */ }
+      } else {
+        throw renameErr;
+      }
+    }
     return true;
   } catch (e) {
     try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore */ }
