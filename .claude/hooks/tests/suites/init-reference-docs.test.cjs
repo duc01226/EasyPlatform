@@ -144,6 +144,200 @@ const unitTests = [
 
             delete require.cache[modulePath];
         }
+    },
+    // ============================================================================
+    // Design System init gaps regression suite (Phase 5: tests a-g)
+    // ============================================================================
+    {
+        // Test (a) — Phase 1: .scss placeholder uses /* */ comments, not <!-- -->
+        name: '[init-reference-docs] generatePlaceholderContent emits SCSS-style comments for .scss',
+        fn: async () => {
+            const modulePath = path.resolve(__dirname, '../../session-init-docs.cjs');
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[modulePath];
+            delete require.cache[helpersPath];
+
+            const { generatePlaceholderContent } = require(modulePath);
+            const content = generatePlaceholderContent({
+                filename: 'design-system/design-tokens.scss',
+                purpose: 'Design tokens',
+                sections: ['Colors', 'Spacing']
+            });
+
+            assertContains(content, '/* Design Tokens */', 'Has SCSS-style title comment');
+            assertContains(content, '/* @claude:placeholder', 'Has Claude sentinel');
+            assertContains(content, '/* Colors */', 'First section as block comment (valid in both SCSS and CSS)');
+            assertContains(content, '/* Spacing */', 'Second section as block comment');
+            assertTrue(!content.includes('<!--'), 'Must NOT contain HTML comments');
+            assertTrue(!content.includes('# '), 'Must NOT contain Markdown heading');
+
+            delete require.cache[modulePath];
+            delete require.cache[helpersPath];
+        }
+    },
+    {
+        // Test (b) — Phase 1: .css placeholder uses /* */ comments, not <!-- -->
+        name: '[init-reference-docs] generatePlaceholderContent emits SCSS-style comments for .css',
+        fn: async () => {
+            const modulePath = path.resolve(__dirname, '../../session-init-docs.cjs');
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[modulePath];
+            delete require.cache[helpersPath];
+
+            const { generatePlaceholderContent } = require(modulePath);
+            const content = generatePlaceholderContent({
+                filename: 'design-system/design-tokens.css',
+                purpose: 'Design tokens',
+                sections: ['Colors']
+            });
+
+            assertContains(content, '/* Design Tokens */', 'Has CSS-style title comment');
+            assertContains(content, '/* @claude:placeholder', 'Has Claude sentinel');
+            assertContains(content, '/* Colors */', 'Section as block comment (// is invalid in CSS spec)');
+            assertTrue(!content.includes('// '), 'Must NOT use line comments — invalid in CSS spec');
+            assertTrue(!content.includes('<!--'), 'Must NOT contain HTML comments');
+
+            delete require.cache[modulePath];
+            delete require.cache[helpersPath];
+        }
+    },
+    {
+        // Test (c) — Phase 1: .md regression — Markdown branch unchanged
+        name: '[init-reference-docs] generatePlaceholderContent preserves Markdown branch for .md',
+        fn: async () => {
+            const modulePath = path.resolve(__dirname, '../../session-init-docs.cjs');
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[modulePath];
+            delete require.cache[helpersPath];
+
+            const { generatePlaceholderContent } = require(modulePath);
+            const content = generatePlaceholderContent({
+                filename: 'example.md',
+                purpose: 'Example',
+                sections: ['Overview']
+            });
+
+            assertContains(content, '# Example', 'Has Markdown title');
+            assertContains(content, "<!-- Fill in your project's details below. -->", 'Has Markdown placeholder marker');
+            assertContains(content, '## Overview', 'Has Markdown section heading');
+            assertTrue(!content.includes('/* '), 'Must NOT contain SCSS comments');
+            assertTrue(!content.includes('@claude:placeholder'), 'Must NOT contain SCSS sentinel');
+
+            delete require.cache[modulePath];
+            delete require.cache[helpersPath];
+        }
+    },
+    {
+        // Test (d) — Phase 1: isPlaceholderFile recognises SCSS sentinel
+        name: '[init-reference-docs] isPlaceholderFile detects SCSS sentinel and returns false for real tokens',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            try {
+                const modulePath = path.resolve(__dirname, '../../session-init-docs.cjs');
+                const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+                delete require.cache[modulePath];
+                delete require.cache[helpersPath];
+
+                const { generatePlaceholderContent, isPlaceholderFile } = require(modulePath);
+                const filePath = path.join(tmpDir, 'design-tokens.scss');
+
+                fs.writeFileSync(filePath, generatePlaceholderContent({
+                    filename: 'design-tokens.scss',
+                    purpose: 'tokens',
+                    sections: ['Colors']
+                }));
+                assertEqual(isPlaceholderFile(filePath), true, 'SCSS placeholder file detected');
+
+                fs.writeFileSync(filePath, '$primary: #fff;\n$secondary: #000;\n');
+                assertEqual(isPlaceholderFile(filePath), false, 'Real SCSS file not flagged as placeholder');
+
+                delete require.cache[modulePath];
+                delete require.cache[helpersPath];
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
+        // Test (e) — Phase 2: SCAN_SKILL_MAP routes canonical + token filenames
+        name: '[init-reference-docs] SCAN_SKILL_MAP routes design-system canonical and token files',
+        fn: async () => {
+            const modulePath = path.resolve(__dirname, '../../session-init-docs.cjs');
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[modulePath];
+            delete require.cache[helpersPath];
+
+            const { SCAN_SKILL_MAP } = require(modulePath);
+
+            assertEqual(SCAN_SKILL_MAP['design-system/README.md'], 'scan-design-system', 'README still routes (no regression)');
+            assertEqual(SCAN_SKILL_MAP['design-system/design-system-canonical.md'], 'scan-design-system', 'Canonical doc routes');
+            assertEqual(SCAN_SKILL_MAP['design-system/design-tokens.scss'], 'scan-design-system', 'SCSS tokens route');
+            assertEqual(SCAN_SKILL_MAP['design-system/design-tokens.css'], 'scan-design-system', 'CSS tokens route');
+
+            delete require.cache[modulePath];
+            delete require.cache[helpersPath];
+        }
+    },
+    {
+        // Test (f) — Phase 3: schema declares canonicalDoc + tokenFiles, validator clean on real config
+        name: '[init-reference-docs] schema declares designSystem.canonicalDoc + tokenFiles, validator clean',
+        fn: async () => {
+            const schemaPath = path.resolve(__dirname, '../../lib/project-config-schema.cjs');
+            delete require.cache[schemaPath];
+
+            const { SCHEMA, validateConfig } = require(schemaPath);
+
+            const props = SCHEMA.designSystem && SCHEMA.designSystem.properties;
+            assertTrue(!!props, 'designSystem.properties exists');
+            assertEqual(props.canonicalDoc.type, 'string', 'canonicalDoc declared as string');
+            assertEqual(props.canonicalDoc.required, false, 'canonicalDoc not required');
+            assertEqual(props.tokenFiles.type, 'array', 'tokenFiles declared as array');
+            assertEqual(props.tokenFiles.required, false, 'tokenFiles not required');
+
+            // Validate the live repo config — schema must accept it cleanly
+            const repoConfigPath = path.resolve(__dirname, '../../../../docs/project-config.json');
+            if (fs.existsSync(repoConfigPath)) {
+                const config = JSON.parse(fs.readFileSync(repoConfigPath, 'utf-8'));
+                const result = validateConfig(config);
+                const dsWarnings = (result.warnings || []).filter(w => /designSystem/.test(w));
+                assertEqual(dsWarnings.length, 0, `No designSystem warnings (got: ${JSON.stringify(dsWarnings)})`);
+            }
+
+            delete require.cache[schemaPath];
+        }
+    },
+    {
+        // Test (g) — Phase 1: sentinel false-positive defense (line-anchored detection)
+        name: '[init-reference-docs] isPlaceholderFile sentinel must not match real prose containing similar text',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            try {
+                const modulePath = path.resolve(__dirname, '../../session-init-docs.cjs');
+                const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+                delete require.cache[modulePath];
+                delete require.cache[helpersPath];
+
+                const { isPlaceholderFile } = require(modulePath);
+                const filePath = path.join(tmpDir, 'tokens.scss');
+
+                // Real authored file with prose comment that LOOKS like a placeholder marker
+                fs.writeFileSync(filePath, "/* Fill in your project's design tokens below. */\n$primary: #fff;\n");
+                assertEqual(isPlaceholderFile(filePath), false, 'Real prose must NOT be flagged as placeholder');
+
+                // Actual Claude sentinel — must match
+                fs.writeFileSync(filePath, '/* @claude:placeholder — do not commit */\n$primary: #fff;\n');
+                assertEqual(isPlaceholderFile(filePath), true, 'Actual sentinel detected');
+
+                // Sentinel as substring inside another line must NOT match (line-anchored)
+                fs.writeFileSync(filePath, '// docs say: /* @claude:placeholder — do not commit */ for new files\n$primary: #fff;\n');
+                assertEqual(isPlaceholderFile(filePath), false, 'Substring occurrence must NOT match (line-anchored)');
+
+                delete require.cache[modulePath];
+                delete require.cache[helpersPath];
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
     }
 ];
 

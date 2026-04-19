@@ -31,6 +31,7 @@ const {
     checkProjectConfig,
     DEFAULT_REFERENCE_DOCS,
     PLACEHOLDER_MARKER,
+    PLACEHOLDER_MARKER_SCSS,
     hasProjectContent,
     REFERENCE_DOCS_DIR,
     getStaleReferenceDocs
@@ -196,7 +197,8 @@ module.exports = {
     isPlaceholderFile,
     DEFAULT_REFERENCE_DOCS,
     SCAN_SKILL_MAP,
-    PLACEHOLDER_MARKER
+    PLACEHOLDER_MARKER,
+    PLACEHOLDER_MARKER_SCSS
 };
 
 // Run if executed directly (not required as module)

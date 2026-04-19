@@ -668,7 +668,7 @@ Task({ subagent_type: 'scout', prompt: 'Find B' });
 
 - [README.md](./README.md) - Agent overview and catalog
 - [../skills/README.md](../skills/README.md) - Skills that enhance agents
-- [../hooks/architecture.md](../hooks/architecture.md) - SubagentStart hook
+- [../hooks/README.md](../hooks/README.md) - SubagentStart hook
 
 ---
 

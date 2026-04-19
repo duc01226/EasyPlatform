@@ -133,7 +133,7 @@ npx -y @modelcontextprotocol/server-github --help
 ```javascript
 // Problem: Spawned agents don't have correct context
 
-// Solution: subagent-init-*.cjs hooks (13) inject context
+// Solution: subagent-init-*.cjs hooks (18) inject context
 // Verify hook is registered for SubagentStart event
 
 // Check agent receives:

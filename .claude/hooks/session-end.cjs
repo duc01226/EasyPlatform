@@ -3,7 +3,7 @@
  * SessionEnd Hook - Cleanup on session end
  *
  * Fires: When session ends (clear, compact, user exit)
- * Purpose: Delete compact marker files to reset context baseline on /clear
+ * Purpose: Delete compact marker files to reset compact-tracking state on /clear
  *          Clean up tmpclaude temp files on any session end
  *          Write pending-tasks warning for next session (exit/clear only)
  *
@@ -56,7 +56,7 @@ runHookSync('session-end', event => {
     // Clean up tmpclaude temp files (project root + .claude/ recursively)
     cleanupAll();
 
-    // Delete marker on /clear to reset context baseline
+    // Delete marker on /clear to reset compact-tracking state
     // SessionEnd fires with OLD session_id before new session starts
     // This ensures clean slate for the next session
     if (reason === 'clear' && sessionId) {

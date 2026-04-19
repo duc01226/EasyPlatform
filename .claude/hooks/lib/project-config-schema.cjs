@@ -92,7 +92,9 @@ const SCHEMA = {
                     description: { type: 'string', required: false },
                     quickTips: { type: 'array', required: false }
                 }
-            }
+            },
+            canonicalDoc: { type: 'string', required: false },
+            tokenFiles: { type: 'array', required: false }
         }
     },
     scss: {

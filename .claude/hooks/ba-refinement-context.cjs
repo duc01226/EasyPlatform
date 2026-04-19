@@ -33,7 +33,7 @@ const BA_CONTEXT = `
 
 **Decision Model:** 2/3 majority vote (UX BA + Designer BA + Dev BA PIC). Dev BA PIC has technical veto.
 **Disagree-and-Commit:** Once decided, everyone commits. No re-litigating.
-**Grooming Override:** BA team decision changes only if >75% of remaining team votes to override.
+**Grooming Override:** BA team decision changes only if >75% remaining team votes to override.
 
 **Role Scopes:**
 - **UX BA:** UI/UX flows, wireframes, interaction AC, user research

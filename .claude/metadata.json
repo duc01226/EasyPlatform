@@ -3533,24 +3533,6 @@
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "statusline.cjs",
-                    "checksum": "ea47e7bb66a2db484f5f65367b94688ddca3ea691171c4baee87d31a4d3f1e51",
-                    "ownership": "user",
-                    "installedVersion": "v2.1.0"
-                },
-                {
-                    "path": "statusline.ps1",
-                    "checksum": "22f4e45126fd16ccf36b48460a0702dbfd5377e3382fded32a0e732194e16b0d",
-                    "ownership": "user",
-                    "installedVersion": "v2.1.0"
-                },
-                {
-                    "path": "statusline.sh",
-                    "checksum": "ae722e1f30949556b161db692b55adde388f8fa2c1dc8720286f8f5eac3bc64a",
-                    "ownership": "user",
-                    "installedVersion": "v2.1.0"
-                },
-                {
                     "path": "docs/development-rules.md",
                     "checksum": "a44d4971435f80f1b6b9cd37b7def764bb8c8f19b065a6fcd59984e2f7619fcf",
                     "ownership": "user",

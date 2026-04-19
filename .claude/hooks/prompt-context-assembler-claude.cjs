@@ -22,7 +22,8 @@ const fs = require('fs');
 const path = require('path');
 const {
     CLAUDE_MD: CLAUDE_MD_MARKER,
-    DEDUP_LINES
+    DEDUP_LINES,
+    FRESH_SESSION_THRESHOLD
 } = require('./lib/dedup-constants.cjs');
 const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-utils.cjs');
 
@@ -41,8 +42,13 @@ async function main() {
 
         const transcriptLines = loadTranscriptLines(payload.transcript_path);
 
+        // Skip fresh sessions — CLAUDE.md is already at maximum recency in project instructions.
+        // Context-recovery injection only makes sense when the session is long enough for
+        // the project instructions to have drifted from the AI's recency attention window.
+        const isFreshSession = !transcriptLines || transcriptLines.length < FRESH_SESSION_THRESHOLD;
+
         // 1. CLAUDE.md TL;DR section (~5.5KB)
-        if (!isMarkerInContext(transcriptLines, CLAUDE_MD_MARKER, DEDUP_LINES.CLAUDE_MD)) {
+        if (!isFreshSession && !isMarkerInContext(transcriptLines, CLAUDE_MD_MARKER, DEDUP_LINES.CLAUDE_MD)) {
             const filePath = path.join(PROJECT_DIR, 'CLAUDE.md');
             try {
                 if (fs.existsSync(filePath)) {
@@ -57,7 +63,7 @@ async function main() {
                         console.log([
                             '',
                             CLAUDE_MD_MARKER,
-                            '> Key rules re-injected for context recovery. Full CLAUDE.md is always loaded as project instructions.',
+                            '> Key rules re-injected for context recovery. Full CLAUDE.md always loaded as project instructions.',
                             '',
                             tldrContent,
                             '',

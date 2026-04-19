@@ -4,10 +4,12 @@
         "commit": "Generated with [Claude Code](https://claude.com/claude-code)",
         "pr": "Generated with [Claude Code](https://claude.com/claude-code)"
     },
+    "autoMemoryEnabled": false,
     "cleanupPeriodDays": 30,
+    "disabledMcpjsonServers": ["chrome-devtools", "mongodb", "postgres", "figma", "memory", "sequential-thinking"],
     "effortLevel": "high",
-    "enableAllProjectMcpServers": true,
-    "enabledMcpjsonServers": ["context7", "memory", "sequential-thinking", "github"],
+    "enableAllProjectMcpServers": false,
+    "enabledMcpjsonServers": ["context7", "github"],
     "enabledPlugins": {
         "code-review@claude-plugins-official": false,
         "code-simplifier@claude-plugins-official": false,
@@ -21,7 +23,9 @@
     },
     "env": {
         "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1",
-        "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
+        "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "250000",
+        "CLAUDE_CODE_DISABLE_1M_CONTEXT": "0",
+        "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000",
         "CLAUDE_CODE_USE_POWERSHELL_TOOL": "1",
         "MCP_TIMEOUT": "30000"
@@ -219,7 +223,16 @@
                         "type": "command"
                     }
                 ],
-                "matcher": "Skill|Edit|Write|MultiEdit|TaskCreate|TaskUpdate"
+                "matcher": "Skill|Agent|Edit|Write|MultiEdit|TaskCreate|TaskUpdate"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mindset-compact-injector.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Read|Grep|Glob|Bash"
             },
             {
                 "hooks": [
@@ -434,6 +447,26 @@
                         "type": "command"
                     },
                     {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-code-review-rules-p1.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-code-review-rules-p2.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-code-review-rules-p3.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-code-review-rules-p4.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-code-review-rules-p5.cjs",
+                        "type": "command"
+                    },
+                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init-lessons.cjs",
                         "type": "command"
                     },
@@ -465,23 +498,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router-p2.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router-p3.cjs",
-                        "type": "command"
-                    },
-                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-closers.cjs",
                         "type": "command"
                     },
                     {
@@ -498,6 +515,22 @@
                     },
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-project-config.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router-p2.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router-p3.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler-closers.cjs",
                         "type": "command"
                     }
                 ]
@@ -574,7 +607,7 @@
         ]
     },
     "statusLine": {
-        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/statusline.cjs",
+        "command": "npx -y ccstatusline@latest --config .claude/ccstatusline.json",
         "padding": 0,
         "type": "command"
     }

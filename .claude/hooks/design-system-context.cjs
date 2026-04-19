@@ -32,6 +32,8 @@ const config = loadProjectConfig();
 const DESIGN_SYSTEM_DOCS_PATH =
   config.designSystem?.docsPath || "docs/project-reference/design-system";
 const APP_PATTERNS = buildPatternList(config.designSystem?.appMappings);
+const CANONICAL_DOC = config.designSystem?.canonicalDoc;
+const TOKEN_FILES = config.designSystem?.tokenFiles || [];
 
 // File extensions that indicate frontend files
 const FRONTEND_EXTENSIONS = [
@@ -110,7 +112,7 @@ function buildInjection(app, filePath) {
     "",
   ];
 
-  // Inject primary design system doc directly
+  // Inject primary design system doc directly (per-app inventory)
   const primaryContent = readAndInjectDoc(docPath);
   if (primaryContent) {
     lines.push(primaryContent);
@@ -120,10 +122,23 @@ function buildInjection(app, filePath) {
   if (indexContent) {
     lines.push(indexContent);
   }
-  // Fallback if neither file found
-  if (!primaryContent && !indexContent) {
+  // Inject canonical/target doc — single source of truth for new code
+  let canonicalContent = null;
+  if (CANONICAL_DOC) {
+    canonicalContent = readAndInjectDoc(
+      `${DESIGN_SYSTEM_DOCS_PATH}/${CANONICAL_DOC}`,
+    );
+    if (canonicalContent) lines.push(canonicalContent);
+  }
+  // Inject drop-in token files (SCSS/CSS) so AI uses real var names, not guesses
+  for (const tf of TOKEN_FILES) {
+    const tokenContent = readAndInjectDoc(`${DESIGN_SYSTEM_DOCS_PATH}/${tf}`);
+    if (tokenContent) lines.push(tokenContent);
+  }
+  // Fallback if no design-system content was found
+  if (!primaryContent && !indexContent && !canonicalContent) {
     lines.push(
-      `### ⚠️ Design system docs not found at \`${DESIGN_SYSTEM_DOCS_PATH}\``,
+      `### ⚠️ Design system docs not found at \`${DESIGN_SYSTEM_DOCS_PATH}\` (checked per-app, README, canonical)`,
       "",
     );
   }

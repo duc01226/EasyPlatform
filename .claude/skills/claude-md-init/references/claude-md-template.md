@@ -65,7 +65,7 @@
 ## FIRST ACTION DECISION (Before ANY tool call)
 
 ```
-1. Explicit slash command? (e.g., /plan, /cook) -> Execute it
+1. Explicit slash command invocation — message STARTS with /command-name as first token (e.g. `/plan do X`). Skill names referenced as nouns (e.g. "update /skill-a") are NOT slash commands — workflow detection required.
 2. Detect nearest matching workflow from the Workflow Catalog
 3. ALWAYS ask user via AskUserQuestion to confirm: activate workflow or execute directly
 4. FALLBACK -> MUST ATTENTION invoke /plan <prompt> FIRST

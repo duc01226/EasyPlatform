@@ -43,9 +43,6 @@ const PENDING_TASKS_PATH = path.join(PROJECT_TMP_DIR, 'pending-tasks-warning.jso
 // Session-specific marker files (per-session, no race conditions)
 const MARKERS_DIR = path.join(CK_TMP_DIR, 'markers');
 
-// Global calibration data (shared by design - records compact thresholds)
-const CALIBRATION_PATH = path.join(CK_TMP_DIR, 'calibration.json');
-
 // Debug logs directory
 const DEBUG_DIR = path.join(CK_TMP_DIR, 'debug');
 
@@ -162,9 +159,6 @@ module.exports = {
     SWAP_DIR,
     SESSION_STATE_DIR,
     PROJECT_TMP_DIR,
-
-    // Files (OS temp)
-    CALIBRATION_PATH,
 
     // Files (project-scoped runtime)
     INIT_DISMISSED_PATH,

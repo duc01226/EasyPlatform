@@ -36,7 +36,7 @@ const {
     DEDUP_LINES
 } = require('./lib/dedup-constants.cjs');
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const ROOT_CAUSE_PRINCIPLE = '> **[ROOT-CAUSE-FIX]** Never patch symptoms. Trace the full call chain to find WHO is responsible. Fix at the correct layer (Entity > Service > Handler). If a fix feels like a workaround, it IS — find the real root cause first.';
+const ROOT_CAUSE_PRINCIPLE = '> **[ROOT-CAUSE-FIX]** Never patch symptoms. Trace full call chain to find WHO responsible. Fix at correct layer (Entity > Service > Handler). If fix feels like workaround, it IS — find real root cause first.';
 
 const config = loadProjectConfig();
 const e2eConfig = config.e2eTesting || {};

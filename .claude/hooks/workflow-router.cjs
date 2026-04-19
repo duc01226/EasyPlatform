@@ -69,8 +69,8 @@ function buildCatalogInjection(config, quickMode) {
     lines.push('## Workflow Catalog');
     lines.push('');
     lines.push('> **MANDATORY:** You MUST ATTENTION check every prompt against this catalog before responding.');
-    lines.push('> Always detect the nearest matching workflow, then use `AskUserQuestion` to ask the user');
-    lines.push('> whether to activate the detected workflow (Recommended) or execute directly without workflow.');
+    lines.push('> Detect the best-match workflow AND evaluate if a custom step combination fits better. Use `AskUserQuestion` to');
+    lines.push('> present all options (standard workflow, custom workflow, execute directly) with your recommendation.');
     lines.push('');
     lines.push('> **IMPORTANT:** MUST ATTENTION create todo tasks for ALL steps. Do NOT skip any steps in the selected workflow.');
     lines.push(`> **NOTE:** This is part 1 of 3. See "## Workflow Catalog (continued)" and "## Workflow Catalog (part 3)" below for the remaining ${allEntries.length - thirdCount} workflows.`);
@@ -82,14 +82,18 @@ function buildCatalogInjection(config, quickMode) {
     lines.push('## Workflow Detection Instructions');
     lines.push('');
     if (quickMode) {
-        lines.push('> **Quick mode active** - Skip confirmation, execute workflow directly.');
+        lines.push('> **Quick mode active** - Skip confirmation, execute best-match or custom workflow directly.');
         lines.push('');
     }
     lines.push('1. **MATCH:** Compare the user\'s prompt against EVERY "Use" field across ALL THREE catalog parts. Match semantics, not exact keywords.');
-    lines.push('2. **SELECT:** Pick the single best-matching workflow, or NONE only if genuinely no entry matches');
-    lines.push('3. **ASK:** Use `AskUserQuestion` to present: "Activate [Workflow] (Recommended)" vs "Execute directly"');
-    lines.push('4. **ACTIVATE (if confirmed):** Call `/workflow-start <workflowId>`');
-    lines.push('5. **TaskCreate:** Create `[Workflow]` tasks for each step BEFORE any other action');
+    lines.push('2. **ANALYZE:** Identify the best-matching workflow. Then assess: would a custom step combination fit the prompt better? A custom workflow is appropriate when no single workflow fits cleanly, the task spans multiple workflow boundaries, or trimming/reordering standard steps improves fit.');
+    lines.push('3. **COMPOSE (if custom):** Select steps from existing workflow step libraries. Propose the sequence with a 1-line rationale (e.g. `scout → plan → fix → test → docs-update — skipping cook since plan is already defined`).');
+    lines.push('4. **ASK:** Use `AskUserQuestion` to present ALL options with your recommendation:');
+    lines.push('   - "Activate **[BestMatch Workflow]** (Recommended)" — if a clear standard match exists');
+    lines.push('   - "Activate custom workflow: **[step1 → step2 → ...]**" — AI-composed hybrid; include 1-line rationale');
+    lines.push('   - "Execute directly (no workflow)"');
+    lines.push('5. **ACTIVATE (if confirmed):** Call `/workflow-start <workflowId>` for standard; sequence custom steps manually');
+    lines.push('6. **TaskCreate:** Create tasks for each step BEFORE any other action');
     lines.push('');
 
     if (config.settings.allowOverride && config.settings.overridePrefix) {

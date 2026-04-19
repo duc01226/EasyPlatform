@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Development Rules page 3/3 (fires 9th of 13)
+ * SubagentStart Hook — Development Rules page 3/3 (fires 9th of 18)
  *
  * Outputs: development-rules.md page 3 of 3 (max 8,500 chars).
  * Silent if dev-rules content fits in p1+p2 (page 3 is empty for small files).

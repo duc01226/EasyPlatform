@@ -297,7 +297,7 @@ Custom status line command for terminal display.
 {
     "statusLine": {
         "type": "command",
-        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/statusline.cjs",
+        "command": "npx -y ccstatusline@latest",
         "padding": 0
     }
 }

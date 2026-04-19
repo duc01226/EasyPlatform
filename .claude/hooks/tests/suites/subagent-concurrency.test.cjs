@@ -313,56 +313,6 @@ const tests = [
     },
 
     // -------------------------------------------------------------------------
-    // TC-SUBCTX-065: stale calibration lock auto-cleared, marker still created
-    // -------------------------------------------------------------------------
-    {
-        name: 'TC-SUBCTX-065: stale calibration lock auto-cleared, marker written with correct sessionId',
-        async fn() {
-            const sessionId = 'sess-065-lock';
-            const markerPath = getMarkerPath(sessionId);
-
-            // Ensure markers dir exists
-            ensureDir(MARKERS_DIR);
-
-            // Remove any pre-existing marker for this session
-            try { if (fs.existsSync(markerPath)) fs.unlinkSync(markerPath); } catch (_) {}
-
-            // Write a stale lock file (mtime > 5 seconds ago)
-            const { CALIBRATION_PATH } = require('../../lib/ck-paths.cjs');
-            const lockPath = CALIBRATION_PATH.replace('.json', '.lock');
-            try {
-                ensureDir(path.dirname(lockPath)); // ensure /tmp/ck/ exists before lock write
-                fs.writeFileSync(lockPath, '99999'); // stale PID
-                // Backdate the lock file by setting mtime to 10 seconds ago
-                const staleTime = new Date(Date.now() - 10000);
-                fs.utimesSync(lockPath, staleTime, staleTime);
-            } catch (_) { /* skip if lock creation fails */ }
-
-            try {
-                const input = createPreCompactInput({
-                    session_id: sessionId,
-                    trigger: 'manual',
-                    context_window: {
-                        total_input_tokens: 50000,
-                        total_output_tokens: 5000,
-                        context_window_size: 200000
-                    }
-                });
-                const result = await runHook(WRITE_COMPACT_MARKER, input);
-                assertEqual(result.code, 0, 'Should exit 0 even with stale lock');
-
-                // Marker must be created with correct sessionId
-                assertTrue(fs.existsSync(markerPath), 'Marker file must exist after compact');
-                const marker = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
-                assertEqual(marker.sessionId, sessionId, 'Marker sessionId must match input session_id');
-            } finally {
-                try { if (fs.existsSync(markerPath)) fs.unlinkSync(markerPath); } catch (_) {}
-                try { if (fs.existsSync(lockPath)) fs.unlinkSync(lockPath); } catch (_) {}
-            }
-        }
-    },
-
-    // -------------------------------------------------------------------------
     // TC-SUBCTX-066: idempotent cleanup — own-session done deleted, other-session done survives
     // -------------------------------------------------------------------------
     {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Coding Patterns & Agent-Specific Docs page 2/5 (fires 3rd of 13)
+ * SubagentStart Hook — Coding Patterns & Agent-Specific Docs page 2/5 (fires 3rd of 18)
  *
  * Outputs: patterns page 2 of 5. Exits silently if content fits in page 1.
  *

@@ -147,6 +147,9 @@ const SCAN_SKILL_MAP = {
     'code-review-rules.md': 'scan-code-review-rules',
     'scss-styling-guide.md': 'scan-scss-styling',
     'design-system/README.md': 'scan-design-system',
+    'design-system/design-system-canonical.md': 'scan-design-system',
+    'design-system/design-tokens.scss': 'scan-design-system',
+    'design-system/design-tokens.css': 'scan-design-system',
     'e2e-test-reference.md': 'scan-e2e-tests',
     'domain-entities-reference.md': 'scan-domain-entities',
     'docs-index-reference.md': 'scan-docs-index'
@@ -233,13 +236,23 @@ const DEFAULT_REFERENCE_DOCS = [
 // Placeholder marker — present in all generated placeholder docs
 const PLACEHOLDER_MARKER = "<!-- Fill in your project's details below. -->";
 
+// Claude-only sentinel for SCSS/CSS placeholders — non-prose so a real authored
+// token file cannot collide with this string by accident. Detection in
+// isPlaceholderFile is LINE-ANCHORED (full-line equality, not substring).
+// MUST be removed by /scan-design-system Phase 3 authoring step.
+const PLACEHOLDER_MARKER_SCSS = "/* @claude:placeholder — do not commit */";
+
 // =============================================================================
 // Helper functions — from init-reference-docs.cjs
 // =============================================================================
 
 /**
  * Check if a file is still a placeholder (not yet populated with real content).
- * Reads first 512 bytes and checks for the placeholder marker comment.
+ * Reads first 512 bytes and checks for the placeholder marker as a full line.
+ * Marker is selected by file extension: SCSS/CSS uses PLACEHOLDER_MARKER_SCSS,
+ * everything else uses the Markdown PLACEHOLDER_MARKER.
+ * Detection is LINE-ANCHORED — substring .includes() would false-positive on
+ * docs that quote the sentinel literally (e.g., a README explaining placeholders).
  * @param {string} filePath
  * @returns {boolean}
  */
@@ -250,7 +263,10 @@ function isPlaceholderFile(filePath) {
         const buf = Buffer.alloc(512);
         fs.readSync(fd, buf, 0, 512, 0);
         fs.closeSync(fd);
-        return buf.toString('utf-8').includes(PLACEHOLDER_MARKER);
+        const head = buf.toString('utf-8');
+        const ext = path.extname(filePath).toLowerCase();
+        const marker = (ext === '.scss' || ext === '.css') ? PLACEHOLDER_MARKER_SCSS : PLACEHOLDER_MARKER;
+        return head.split('\n').some(line => line.trim() === marker);
     } catch {
         return false;
     }
@@ -291,29 +307,45 @@ function getReferenceDocs() {
 }
 
 /**
- * Generate placeholder markdown content from a doc definition.
+ * Generate placeholder content from a doc definition.
+ * Branches on file extension: .scss/.css → SCSS-style body using
+ * PLACEHOLDER_MARKER_SCSS sentinel; everything else (default .md) → Markdown
+ * body using PLACEHOLDER_MARKER. Title transform strips .md/.scss/.css.
  * @param {{filename: string, purpose: string, sections?: string[]}} doc
  * @returns {string}
  */
 function generatePlaceholderContent(doc) {
-    const title = doc.filename
-        .replace(/\.md$/, '')
-        .replace(/.*\//, '') // strip directory prefix for title
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, c => c.toUpperCase());
+    const ext = path.extname(doc.filename).toLowerCase();
+    const baseName = doc.filename
+        .replace(/\.(md|scss|css)$/, '')
+        .replace(/.*\//, ''); // strip directory prefix for title
+    const title = baseName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const sections = doc.sections || [];
 
+    if (ext === '.scss' || ext === '.css') {
+        const lines = [
+            `/* ${title} */`,
+            '',
+            `/* This file is referenced by Claude skills and agents for project-specific design tokens. */`,
+            PLACEHOLDER_MARKER_SCSS
+        ];
+        // .scss accepts both // and /* */; .css spec only accepts /* */. Use /* */ for both.
+        for (const section of sections) {
+            lines.push('', `/* ${section} */`, `/* Document your ${section.toLowerCase()} here */`);
+        }
+        return lines.join('\n') + '\n';
+    }
+
+    // Markdown default (preserves existing behaviour; literal marker → constant)
     const lines = [
         `# ${title}`,
         '',
         `<!-- This file is referenced by Claude skills and agents for project-specific context. -->`,
-        `<!-- Fill in your project's details below. -->`
+        PLACEHOLDER_MARKER
     ];
-
-    const sections = doc.sections || [];
     for (const section of sections) {
         lines.push('', `## ${section}`, '', `<!-- Document your ${section.toLowerCase()} here -->`);
     }
-
     return lines.join('\n') + '\n';
 }
 
@@ -587,6 +619,7 @@ module.exports = {
     SCAN_SKILL_MAP,
     DEFAULT_REFERENCE_DOCS,
     PLACEHOLDER_MARKER,
+    PLACEHOLDER_MARKER_SCSS,
     isPlaceholderFile,
     checkProjectConfig,
     getReferenceDocs,

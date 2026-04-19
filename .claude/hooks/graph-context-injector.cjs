@@ -102,11 +102,11 @@ runHook(
                         `  python .claude/scripts/code_graph search <keyword> --kind Function --json`,
                         `  python .claude/scripts/code_graph find-path <source> <target> --json`,
                         `  python .claude/scripts/code_graph batch-query <f1> <f2> --json`,
-                        `  TIP: grep/glob/search first to find entry files, then trace for full system flow including MESSAGE_BUS cross-service edges`
+                        `  TIP: grep/glob/search first to find entry files, then trace full system flow including MESSAGE_BUS cross-service edges`
                     ].join('\n')
                 );
             } else {
-                console.log(`[code-graph] No changed files detected. Graph is up to date.`);
+                console.log(`[code-graph] No changed files detected. Graph up to date.`);
             }
             return;
         }

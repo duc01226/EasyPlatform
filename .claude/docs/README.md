@@ -29,8 +29,6 @@
 |
 |-- hooks/                    ~37 logical hooks (53 files), 27 lib modules
 |   |-- README.md             Hooks overview, lessons system, session lifecycle
-|   |-- architecture.md       System architecture with diagrams
-|   |-- external-memory-swap.md  Post-compaction recovery via swap files
 |   +-- extending-hooks.md    How to create custom hooks
 |
 |-- code-graph-mechanism.md  How the structural knowledge graph works
@@ -83,10 +81,9 @@
 | How skills work                             | [skills/README.md](./skills/README.md)                                        |
 | How skills are activated                    | [skills/README.md](./skills/README.md)                                        |
 | How lessons system works                    | [hooks/README.md](./hooks/README.md) — `/learn` skill + lessons-injector hook |
-| How hooks intercept events                  | [hooks/architecture.md](./hooks/architecture.md)                              |
+| How hooks intercept events                  | [hooks/README.md](./hooks/README.md) — hook catalog + lifecycle               |
 | Hook execution order by event               | [hooks/README.md](./hooks/README.md) — hook catalog + execution order         |
 | Session lifecycle (init → compact → resume) | [hooks/README.md#session-lifecycle](./hooks/README.md#session-lifecycle)      |
-| External Memory Swap system                 | [hooks/external-memory-swap.md](./hooks/external-memory-swap.md)              |
 | Workflow detection and routing              | `CLAUDE.md` workflow catalog (project root)                                   |
 | How to create custom hooks                  | [hooks/extending-hooks.md](./hooks/extending-hooks.md)                        |
 | How to configure output                     | [configuration/output-styles.md](./configuration/output-styles.md)            |
@@ -101,7 +98,6 @@
 | skills/README.md                    | ~350  | ~900          | Fast      |
 | _(see docs/project-reference/)_     |       |               |           |
 | hooks/README.md                     | ~310  | ~800          | Fast      |
-| hooks/architecture.md               | ~310  | ~800          | Fast      |
 | configuration/settings-reference.md | ~390  | ~1000         | Moderate  |
 | troubleshooting.md                  | ~415  | ~1100         | Moderate  |
 

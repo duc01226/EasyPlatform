@@ -1,0 +1,83 @@
+{
+    "version": 3,
+    "lines": [
+        [
+            {
+                "id": "1",
+                "type": "model",
+                "color": "cyan"
+            },
+            {
+                "id": "2",
+                "type": "separator"
+            },
+            {
+                "id": "3",
+                "type": "context-length",
+                "color": "brightBlack"
+            },
+            {
+                "id": "4",
+                "type": "separator"
+            },
+            {
+                "id": "5",
+                "type": "block-timer",
+                "color": "yellow"
+            },
+            {
+                "id": "6",
+                "type": "separator"
+            },
+            {
+                "id": "7",
+                "type": "session-usage",
+                "color": "brightBlue"
+            },
+            {
+                "id": "8",
+                "type": "separator"
+            },
+            {
+                "id": "9",
+                "type": "weekly-usage",
+                "color": "brightMagenta"
+            },
+            {
+                "id": "10",
+                "type": "separator"
+            },
+            {
+                "id": "11",
+                "type": "weekly-reset-timer",
+                "color": "magenta"
+            },
+            {
+                "id": "12",
+                "type": "separator"
+            },
+            {
+                "id": "13",
+                "type": "git-changes",
+                "color": "yellow"
+            }
+        ],
+        [],
+        []
+    ],
+    "flexMode": "full-minus-40",
+    "compactThreshold": 60,
+    "colorLevel": 2,
+    "inheritSeparatorColors": false,
+    "globalBold": false,
+    "minimalistMode": false,
+    "powerline": {
+        "enabled": false,
+        "separators": [""],
+        "separatorInvertBackground": [false],
+        "startCaps": [],
+        "endCaps": [],
+        "autoAlign": false,
+        "continueThemeAcrossLines": false
+    }
+}

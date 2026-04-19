@@ -993,18 +993,6 @@
   name: ux-designer
   path: ux-designer\SKILL.md
 - category: other
-  description: "[Frontend] Auto-activated visual-to-code component finder. Matches
-    screenshots to Angular components with >=85% confidence using BEM classes, route
-    paths, text content, and component selectors. Also supports index refresh/sync.
-    Triggers on: screenshot, find component, find page, where is this, fix ui, update
-    ui, fix screen, this page, this component, which component, locate component,
-    visual match, find code for, match screenshot, refresh component index, update
-    component index, sync component index, rebuild index."
-  has_references: true
-  has_scripts: true
-  name: visual-component-finder
-  path: visual-component-finder\SKILL.md
-- category: other
   description: "[Utilities] Review recent changes and wrap up the work"
   has_references: false
   has_scripts: false

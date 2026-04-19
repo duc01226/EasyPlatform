@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Coding Patterns & Agent-Specific Docs page 1/5 (fires 2nd of 13)
+ * SubagentStart Hook — Coding Patterns & Agent-Specific Docs page 1/5 (fires 2nd of 18)
  *
  * Outputs: backend/frontend patterns + agent-specific docs page 1 of 5 (max 8,500 chars).
  * Content is built dynamically at runtime for the agent type, then paginated.

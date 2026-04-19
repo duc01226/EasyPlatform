@@ -13,6 +13,16 @@
 const fs = require('fs');
 const path = require('path');
 
+// Ensure CLAUDE_PROJECT_DIR is set BEFORE any suite/library is required.
+// Suite-load-time code (test-fixture-generator, dedup-constants) reads project
+// config from this env var; without it they fall back to generic paths and
+// stale dedup windows that diverge from the hook subprocess (which receives
+// the env), producing false-negative test failures (e.g. fixture path doesn't
+// match real config regex; transcript-window math doesn't match real file size).
+if (!process.env.CLAUDE_PROJECT_DIR) {
+  process.env.CLAUDE_PROJECT_DIR = path.resolve(__dirname, '..', '..', '..');
+}
+
 // ANSI color codes
 const COLORS = {
   reset: '\x1b[0m',

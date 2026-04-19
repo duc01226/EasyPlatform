@@ -178,20 +178,20 @@ function buildReminder({
         // RULES
         // ─────────────────────────────────────────────────────────────────────────
         `## Rules`,
-        `- Markdown files are organized in: Plans → "plans/" directory, Docs → "docs/" directory`,
-        `- **IMPORTANT:** DO NOT create markdown files out of "plans/" or "docs/" directories UNLESS the user explicitly requests it.`,
+        `- Markdown files organized in: Plans → "plans/" directory, Docs → "docs/" directory`,
+        `- **IMPORTANT:** DO NOT create markdown files out of "plans/" or "docs/" directories UNLESS user explicitly requests it.`,
         ...(catalogScript
             ? [
-                  `- Activate skills: Run \`python ${catalogScript} --skills\` to generate a skills catalog and analyze it, then activate the relevant skills that are needed for the task during the process.`,
-                  `- Execute commands: Run \`python ${catalogScript} --commands\` to generate a commands catalog and analyze it, then execute the relevant SlashCommands that are needed for the task during the process.`
+                  `- Activate skills: Run \`python ${catalogScript} --skills\` to generate skills catalog and analyze, then activate relevant skills needed for task.`,
+                  `- Execute commands: Run \`python ${catalogScript} --commands\` to generate commands catalog and analyze, then execute relevant SlashCommands needed for task.`
               ]
             : []),
         ...(skillsVenv ? [`- Python scripts in .claude/skills/: Use \`${skillsVenv}\``] : []),
-        `- When skills' scripts are failed to execute, always fix them and run again, repeat until success.`,
+        `- When skills' scripts fail, fix and run again, repeat until success.`,
         `- Follow **YAGNI (You Aren't Gonna Need It) - KISS (Keep It Simple, Stupid) - DRY (Don't Repeat Yourself)** principles`,
         `- **Class Responsibility Rule:** Logic belongs in LOWEST layer (Entity/Model > Service > Component/Handler). Backend: mapping → Command/DTO, not Handler. Frontend: constants/columns/roles → Model class, not Component.`,
-        `- Sacrifice grammar for the sake of concision when writing reports.`,
-        `- In reports, list any unresolved questions at the end, if any.`,
+        `- Sacrifice grammar for concision in reports.`,
+        `- In reports, list unresolved questions at end, if any.`,
         `- **After context compaction:** Call \`TaskList\` before \`TaskCreate\` — resume existing tasks, do NOT create duplicates.`,
         `- Ensure token consumption efficiency while maintaining high quality.`,
         ``,
@@ -202,7 +202,7 @@ function buildReminder({
         `## **[IMPORTANT] Consider Modularization:**`,
         `- Check existing modules before creating new`,
         `- Analyze logical separation boundaries (functions, classes, concerns)`,
-        `- Use kebab-case naming with descriptive names, it's fine if the file name is long because this ensures file names are self-documenting for LLM tools (Grep, Glob, Search)`,
+        `- Use kebab-case naming with descriptive names — long file names fine, ensures self-documenting for LLM tools (Grep, Glob, Search)`,
         `- Write descriptive code comments`,
         `- After modularization, continue with main task`,
         `- When not to modularize: Markdown files, plain text files, bash scripts, configuration files, environment variables files, etc.`,
@@ -258,16 +258,16 @@ function buildPostCompactWarning(sessionId) {
         return [
             `## ⚠️ CONTEXT COMPACTED — Re-verify before continuing`,
             ``,
-            `Context was compacted since your last prompt. The summary may not reflect what`,
-            `actually persisted in the environment.`,
+            `Context compacted since last prompt. Summary may not reflect what`,
+            `actually persisted in environment.`,
             ``,
             `**Git status at compact time:**`,
             lines,
             ``,
-            `**MANDATORY:** Before resuming any in-progress task:`,
+            `**MANDATORY:** Before resuming in-progress task:`,
             `1. Run \`git status\` — compare against snapshot above`,
-            `2. Re-read any files you were editing`,
-            `3. Treat all "completed" claims in the summary as UNVERIFIED HYPOTHESES`,
+            `2. Re-read files you were editing`,
+            `3. Treat all "completed" claims in summary as UNVERIFIED HYPOTHESES`,
             ``
         ].join('\n');
     } catch (_e) {
@@ -294,8 +294,10 @@ async function main() {
 
         // ═══════════════════════════════════════════════════════════════════════════
         // WORKFLOW PROTOCOL — ABSOLUTE FIRST (primacy position #1)
-        // Injected BEFORE everything else for maximum primacy attention.
-        // Bottom bookend is the compact [WORKFLOW-GATE] at the very end of this hook.
+        // Two-tier injection:
+        //   Tier 1 (compact, no dedup) — always fires, anchors TOP attention
+        //   Tier 2 (full protocol, deduped) — fires when not recently injected
+        // Bottom bookend mirrors Tier 1 in prompt-context-assembler-closers.cjs.
         // "always" → ask user via AskUserQuestion before activating
         // "never"  → auto-execute workflow directly (no confirmation)
         // "off"    → skip entirely (no workflow detection)
@@ -306,6 +308,12 @@ async function main() {
         });
         const confirmationMode = wfConfig.workflow?.confirmationMode || 'always';
         if (confirmationMode !== 'off') {
+            // Tier 1: compact gate — no dedup, always at top (primacy anchor)
+            console.log(confirmationMode === 'never'
+                ? `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First action: workflow detection. Find best-match or compose custom workflow \u2192 \`/workflow-start\` or custom steps \u2192 then proceed.**`
+                : `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Find best-match OR compose custom workflow \u2192 present all options with recommendation \u2192 ask user \u2192 then proceed.**`
+            );
+            // Tier 2: full protocol — deduped (100-line window)
             const workflowProtocol = injectWorkflowProtocol(payload.transcript_path, confirmationMode);
             if (workflowProtocol) console.log(workflowProtocol);
         }

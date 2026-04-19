@@ -45,7 +45,7 @@ const ROLE_PATH_MAPPINGS = {
         role: 'qa-engineer',
         skill: 'test-spec',
         template: '.claude/docs/team-artifacts/templates/test-spec-template.md',
-        context: 'TEST SPEC: TC-{FEATURE}-{NNN} IDs required, Evidence field mandatory with file:line format.'
+        context: 'TEST SPEC: TC-{FEATURE}-{NNN} IDs required, Evidence field mandatory, file:line format.'
     },
     'team-artifacts/design-specs/': {
         role: 'ux-designer',
@@ -74,9 +74,9 @@ const NAMING_CONVENTIONS = {
 // Quality checklists by role
 const QUALITY_CHECKLISTS = {
     'product-owner': [
-        '- [ ] Problem statement is user-focused',
+        '- [ ] Problem statement user-focused',
         '- [ ] Value proposition quantified',
-        '- [ ] Priority is numeric (not High/Med/Low)',
+        '- [ ] Priority numeric (not High/Med/Low)',
         '- [ ] Dependencies listed'
     ],
     'business-analyst': [

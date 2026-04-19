@@ -322,33 +322,6 @@ function setupCompactMarker(tmpDir, sessionId, data) {
 }
 
 /**
- * Read calibration data from temp directory
- * @param {string} tmpDir - Temp directory path
- * @returns {object|null} Parsed calibration or null
- */
-function readCalibration(tmpDir) {
-  const calibrationFile = path.join(tmpDir, '.claude', 'memory', 'calibration.json');
-  if (fs.existsSync(calibrationFile)) {
-    return JSON.parse(fs.readFileSync(calibrationFile, 'utf8'));
-  }
-  return null;
-}
-
-/**
- * Setup mock calibration data for testing
- * @param {string} tmpDir - Temp directory path
- * @param {object} calibration - Calibration data
- * @returns {string} Path to the calibration file
- */
-function setupCalibration(tmpDir, calibration) {
-  const memoryDir = path.join(tmpDir, '.claude', 'memory');
-  fs.mkdirSync(memoryDir, { recursive: true });
-  const calibrationFile = path.join(memoryDir, 'calibration.json');
-  fs.writeFileSync(calibrationFile, JSON.stringify(calibration, null, 2));
-  return calibrationFile;
-}
-
-/**
  * Setup mock metrics data for testing
  * @param {string} tmpDir - Temp directory path
  * @param {object} metrics - Metrics data
@@ -408,8 +381,6 @@ module.exports = {
   setupWorkflowState,
   setupWorkflowConfig,
   setupCompactMarker,
-  readCalibration,
-  setupCalibration,
   setupMetrics,
   readMetrics,
   createDaysAgoTimestamp

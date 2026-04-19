@@ -82,7 +82,7 @@ And {additional verification}
 
 Organize TCs into categories. Minimum 3 categories:
 
-```markdown
+````markdown
 ### CRUD Tests
 
 (Create, Read, Update, Delete — happy path operations)
@@ -103,9 +103,29 @@ Organize TCs into categories. Minimum 3 categories:
 
 (Boundary conditions, concurrent operations, data migration scenarios)
 
+### Preservation Tests (MANDATORY for bugfix specs)
+
+(Regression tests that verify PRE-EXISTING good behavior is UNCHANGED after the fix.)
+
+**Authoring rule:** Write the test from the OLD code's semantics **BEFORE the fix lands**. The test MUST pass against pre-fix code AND post-fix code. If the fix changes behavior on the preserved input, the assertion fails → the fix has regressed a preserved invariant.
+
+**Required template (GWT):**
+
+```gherkin
+Given {input state the CURRENT code handles correctly}
+And {concrete preserved-state assertion — e.g., "ExternalId = X", "Status = Y"}
+When {the fix-triggering operation runs}
+Then {preserved state MUST match pre-fix snapshot — assert exact field values}
+And {no orphan/side-effect created in downstream store}
+```
+````
+
+**Trigger:** every bugfix spec MUST ATTENTION have ≥1 Preservation TC per "Healthy input" enumerated in the plan's Preservation Inventory (see `SYNC:preservation-inventory`).
+
 ### Integration Tests
 
 (Cross-service message bus flows, event handler chains)
+
 ```
 
 ---
@@ -129,3 +149,4 @@ When generating TCs before implementation:
 - Use descriptive command/entity names as placeholders in Related Files
 - Focus on WHAT the behavior should be, not HOW it's implemented
 - After implementation, run `/tdd-spec update` to fill in evidence
+```

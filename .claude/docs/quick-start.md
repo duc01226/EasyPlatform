@@ -119,7 +119,7 @@ Claude Code intercepts 9 event types:
 | `PreToolUse`            | Before tool execution     | `privacy-block.cjs`              |
 | `PreCompact`            | Before context compaction | `write-compact-marker.cjs`       |
 | `SessionStart` (resume) | After compaction recovery | `post-compact-recovery.cjs`      |
-| `SubagentStart`         | Subagent initialization   | `subagent-init-*.cjs` (13 hooks) |
+| `SubagentStart`         | Subagent initialization   | `subagent-init-*.cjs` (18 hooks) |
 | `Stop`                  | Response complete         | `notify-waiting.js`              |
 | `Notification`          | Idle/waiting events       | `notify-waiting.js`              |
 
@@ -131,7 +131,7 @@ See [hooks/README.md](./hooks/README.md) for detailed explanations.
 | ----------------- | ---------------------------------------------------- |
 | Browse all skills | [skills/README.md](./skills/README.md)               |
 | Understand skills | [skills/README.md](./skills/README.md)               |
-| Deep-dive hooks   | [hooks/architecture.md](./hooks/architecture.md)     |
+| Deep-dive hooks   | [hooks/README.md](./hooks/README.md)                 |
 | Configure Claude  | [configuration/README.md](./configuration/README.md) |
 
 ## Troubleshooting First Run

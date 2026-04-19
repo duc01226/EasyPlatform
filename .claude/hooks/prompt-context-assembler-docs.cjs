@@ -54,7 +54,7 @@ async function main() {
                         console.log([
                             '',
                             PROJECT_STRUCTURE_MARKER,
-                            '> Content auto-injected for context recovery (part 1 of 2). See part 2 below for the remainder.',
+                            '> Auto-injected for context recovery (part 1 of 2). See part 2 below for remainder.',
                             '',
                             firstHalf,
                             '',

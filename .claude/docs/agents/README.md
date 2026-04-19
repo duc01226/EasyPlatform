@@ -189,7 +189,7 @@ Task({
 
 ### SubagentStart Hook
 
-The 13 `subagent-init-*.cjs` hooks inject context into all spawned agents:
+The 18 `subagent-init-*.cjs` hooks inject context into all spawned agents:
 
 ```
 ## Subagent: [agent_type]
@@ -355,7 +355,7 @@ Task({
 
 - [agent-patterns.md](./agent-patterns.md) - Detailed agent usage patterns
 - [../skills/README.md](../skills/README.md) - Skills that enhance agent capabilities
-- [../hooks/architecture.md](../hooks/architecture.md) - SubagentStart hook details
+- [../hooks/README.md](../hooks/README.md) - SubagentStart hook details
 - [../configuration/README.md](../configuration/README.md) - Agent configuration options
 
 ---

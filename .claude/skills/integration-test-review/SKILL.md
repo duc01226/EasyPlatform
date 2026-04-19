@@ -8,6 +8,30 @@ description: '[Code Quality] Review integration tests for assertion quality, bug
 > **A test that cannot fail is not a test. It is decoration.** Every test must earn its existence by proving it would FAIL if the bug it guards were reintroduced.
 > Every finding requires `file:line` proof with confidence >80%.
 
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 - `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing)
 
 <!-- SYNC:evidence-based-reasoning -->
@@ -83,9 +107,9 @@ description: '[Code Quality] Review integration tests for assertion quality, bug
 
 <!-- SYNC:review-protocol-injection -->
 
-> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 9 protocol blocks VERBATIM. The template below has ALL 9 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
+> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
 >
-> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 9 protocol bodies pre-embedded.
+> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 10 protocol bodies pre-embedded.
 
 ### Subagent Type Selection
 
@@ -220,7 +244,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ### Rules
 
-- DO copy the template wholesale — including all 9 embedded protocol sections
+- DO copy the template wholesale — including all 10 embedded protocol sections
 - DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
 - DO choose `code-reviewer` subagent_type for code reviews and `general-purpose` for plan / doc / artifact reviews
 - DO NOT paraphrase, summarize, or skip any protocol section
@@ -498,3 +522,9 @@ After sub-agents return:
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER fix a test to match broken code — that hides the bug; docs + code must agree first
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER self-resolve a three-way conflict — always escalate via `AskUserQuestion` with evidence from all three sources
 - **MANDATORY IMPORTANT MUST ATTENTION** "stale docs" verdict requires BOTH implementation code AND test code to agree — one source is never enough to declare docs wrong
+      <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
+- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+      <!-- /SYNC:ai-mistake-prevention:reminder -->

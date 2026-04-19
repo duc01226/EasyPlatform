@@ -8,6 +8,30 @@ description: '[Planning] Validate plan with critical questions interview'
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 <!-- SYNC:understand-code-first -->
 
 > **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
@@ -96,15 +120,16 @@ Read the plan directory:
 
 Scan plan content for:
 
-| Category         | Keywords to detect                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------------------- |
-| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"                                         |
-| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"                                                 |
-| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"                                        |
-| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern"                                       |
-| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"                                                |
-| **New Tech/Lib** | "install", "add package", "new dependency", "npm install", "dotnet add", framework names not in project |
-| **Test Specs**   | "TC-", "test case", "coverage", "TDD", "test specification", "test spec"                                |
+| Category         | Keywords to detect                                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"                                                                                         |
+| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"                                                                                                 |
+| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"                                                                                        |
+| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern"                                                                                       |
+| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"                                                                                                |
+| **New Tech/Lib** | "install", "add package", "new dependency", "npm install", "dotnet add", framework names not in project                                                 |
+| **Test Specs**   | "TC-", "test case", "coverage", "TDD", "test specification", "test spec"                                                                                |
+| **Preservation** | (auto-trigger on bugfix keywords in plan title/frontmatter: "fix", "bug", "regression", "broken", "defect"; always scan Preservation Inventory section) |
 
 ### Step 3: Generate Questions
 
@@ -136,6 +161,22 @@ Options:
 2. No, add basic rate limiting now (Recommended)
 3. Defer to Phase 2
 ```
+
+```
+Category: Preservation (MANDATORY when plan title/frontmatter contains: fix, bug, regression, broken, defect)
+Question: "List 2-3 inputs where the CURRENT code is correct. Will your fix change behavior on any of them? If yes, why is that correct?"
+Options (multi-select):
+1. "Current code correct on: {input A}. Fix preserves behavior on A." (Recommended — no behavior change on preserved input)
+2. "Current code correct on: {input B}. Fix CHANGES behavior on B because: {justification}"
+3. "Current code has NO preserved-correctness inputs — every input was broken" (rare; requires user confirmation)
+4. "Unsure — need to investigate before answering" (STOP: run /plan-hard preservation analysis)
+```
+
+**Follow-up rules:**
+
+- If option 2 is selected, the `plan.md` Preservation Inventory section MUST cite a TC (Preservation TC from Phase 5) asserting option 2's new behavior is intended.
+- If option 4 is selected, `plan-validate` returns BLOCKED status — recommend `/plan-hard` to re-investigate current code before proceeding.
+- If option 3 is selected, `AskUserQuestion` follow-up: "Confirm: current code has NO preserved invariant on any input? [Yes, every input was broken / No, I missed some — re-investigate]"
 
 ### Step 4: Interview User
 
@@ -219,3 +260,10 @@ After validation completes, provide summary:
       <!-- SYNC:plan-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
     <!-- /SYNC:plan-quality:reminder -->
+- **IMPORTANT MUST ATTENTION** for bugfix plans, trigger Preservation question (keywords: fix, bug, regression, broken, defect)
+      <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
+- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+      <!-- /SYNC:ai-mistake-prevention:reminder -->

@@ -56,12 +56,12 @@ async function main() {
                     console.log(
                         [
                             `${graphMarker}. **ACTION REQUIRED for investigation/scout/review/fix/debug tasks:**`,
-                            `- **Grep/Glob/Search-first:** When query is semantic (not file-specific), grep/glob/search for key terms FIRST to find entry point files`,
+                            `- **Grep/Glob/Search-first:** When query semantic (not file-specific), grep/glob/search key terms FIRST to find entry point files`,
                             `- **Graph expand:** Run \`python .claude/scripts/code_graph connections <file> --json\` on discovered files`,
                             `- **Full system trace:** Run \`python .claude/scripts/code_graph trace <file> --direction both --json\` to see full upstream (callers, frontend) + downstream (events, bus messages, consumers) flow. Use \`--direction downstream\` for impact-only analysis.`,
                             `- For frontend\u2194backend API tracing \u2192 run \`/graph-connect-api\` skill to match HTTP calls with backend routes`,
-                            `- **After Grep/Search finds key files:** Run \`python .claude/scripts/code_graph trace <found-file> --direction both --json\` on the most important 2-3 files from search results to discover full system flow instantly.`,
-                            `- **Required for sub-agents:** Include this in sub-agent prompts involving code investigation:\n> "**Graph DB active.** After grep finds key files, run graph trace to discover callers, bus consumers, event chains. Commands: python .claude/scripts/code_graph trace <file> --direction both --json | connections <file> --json. Pattern: grep \u2192 trace \u2192 grep."`,
+                            `- **After Grep/Search finds key files:** Run \`python .claude/scripts/code_graph trace <found-file> --direction both --json\` on most important 2-3 files from search results to discover full system flow instantly.`,
+                            `- **Required for sub-agents:** Include in sub-agent prompts involving code investigation:\n> "**Graph DB active.** After grep finds key files, run graph trace to discover callers, bus consumers, event chains. Commands: python .claude/scripts/code_graph trace <file> --direction both --json | connections <file> --json. Pattern: grep \u2192 trace \u2192 grep."`,
                             `- Graph finds structural + implicit relationships (MESSAGE_BUS, events, API endpoints) instantly vs grepping 15K files.`,
                             `- Run at least ONE graph command on key files before concluding any investigation, fix, review, or plan.`
                         ].join('\n')
@@ -88,11 +88,11 @@ async function main() {
         // ═══════════════════════════════════════════════════════════════════════
         if (confirmationMode === 'always') {
             console.log(
-                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Match prompt against catalog \u2192 ask user \u2192 then proceed.**`
+                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Find best-match OR compose custom workflow \u2192 present all options with recommendation \u2192 ask user \u2192 then proceed.**`
             );
         } else if (confirmationMode === 'never') {
             console.log(
-                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First action: workflow detection. Match prompt against catalog \u2192 \`/workflow-start\` \u2192 then proceed.**`
+                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First action: workflow detection. Find best-match or compose custom workflow \u2192 \`/workflow-start\` or custom steps \u2192 then proceed.**`
             );
         }
 
@@ -110,11 +110,11 @@ async function main() {
         if (!isMarkerInContext(transcriptLines, '[WORKFLOW-DETECT]', 10)) {
             if (confirmationMode === 'always') {
                 console.log(
-                    `**[WORKFLOW-DETECT] Before acting: find the best-fit workflow or custom pipeline for this prompt. Present all options via \`AskUserQuestion\` and await user confirmation.**`
+                    `**[WORKFLOW-DETECT] Before acting: find best-fit workflow or compose custom step pipeline. Present all options with your recommendation via \`AskUserQuestion\` and await user confirmation.**`
                 );
             } else if (confirmationMode === 'never') {
                 console.log(
-                    `**[WORKFLOW-DETECT] Auto-detect the best-fit workflow or custom pipeline for this prompt and activate it immediately via \`/workflow-start\` — no confirmation needed.**`
+                    `**[WORKFLOW-DETECT] Auto-detect best-fit workflow or compose custom step pipeline for prompt and activate immediately via \`/workflow-start\` — no confirmation needed.**`
                 );
             }
         }

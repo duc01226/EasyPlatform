@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Identity + Config + Rules (fires 1st of 13)
+ * SubagentStart Hook — Identity + Config + Rules (fires 1st of 18)
  *
  * Outputs: subagent identity, plan context, language, rules, naming,
  *          trust verification, agent instructions.
- *          (Parent task state moved to subagent-init-todos.cjs, hook 13.)
+ *          (Parent task state moved to subagent-init-todos.cjs, hook 18.)
  *
  * Execution order: identity → patterns-p1..p5 → dev-rules-p1..p3
  *   → lessons → ai-mistakes → context-guard → todos (last)
  *
- * Split into 13 named hooks to avoid the Claude Code per-hook output size limit
+ * Split into 18 named hooks to avoid the Claude Code per-hook output size limit
  * (9,000 chars enforced). Exceeding this causes silent tail truncation — large
  * sections like CLAUDE.md (~13KB), dev-rules (~18KB), and patterns (~36KB for
  * code-reviewer) get cut. Each hook is registered sequentially in settings.json;
@@ -60,7 +60,7 @@ async function main() {
         const lines = [
             ...buildCriticalContextSection(), // critical thinking mindset (was in deleted claude-md-p1)
             ``,
-            `**IMPORTANT: You are a sub-agent. Run autonomously until task is fully complete. Do NOT stop to ask the user anything — make decisions independently and keep working.**`,
+            `**IMPORTANT: Sub-agent. Run autonomously until task fully complete. Do NOT stop to ask user anything — make decisions independently and keep working.**`,
             ``,
             `## Subagent: ${agentType}`,
             `ID: ${agentId} | CWD: ${payload.cwd || process.cwd()}`,

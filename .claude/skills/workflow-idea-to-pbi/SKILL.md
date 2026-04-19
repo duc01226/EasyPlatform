@@ -1,22 +1,175 @@
 ---
 name: workflow-idea-to-pbi
-version: 1.1.0
-description: '[Workflow] Trigger Idea to PBI workflow — po/ba workflow: capture or review idea/artifact, optional PO handoff, refine to pbi, create stories, prioritize.'
+version: 2.0.0
+description: '[Workflow] Trigger Idea to PBI workflow — capture or review idea/artifact, optional handoff, refine to PBI, validate design rationale, create stories, challenge review, DoR gate, mockup, prioritize.'
+disable-model-invocation: true
 ---
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
 
-**Steps:** /idea → /review-artifact (conditional) → /handoff (conditional) → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /workflow-end
+**Steps:**
+/idea → /review-artifact (conditional) → /handoff (conditional) → /refine → /refine-review → /why-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /watzup → /workflow-end
 
-> **Note:** `/review-artifact` and `/handoff` are conditional — skip both when starting from a raw idea without a PO artifact. Use them when a PO is handing off an existing ticket, PRD, or brief to the BA team.
+> **Conditional steps:**
+>
+> - `/review-artifact` — skip if no existing artifact/ticket/PRD; proceed straight to `/refine`
+> - `/handoff` — skip if no formal PO→BA handoff needed
+> - `/pbi-mockup` — skip if PBI is backend-only (no UI changes)
+
+---
+
+## When to Use
+
+- PO or BA has a raw idea and needs to shape it into a grooming-ready PBI
+- PO is handing off an existing ticket, PRD, or brief to the BA team for refinement
+- Single-PBI refinement with stories, challenge review, and DoR validation
+- Feature needs a structured PBI before entering a sprint
+
+## When NOT to Use
+
+- Multiple opportunities from a discovery sprint → use `product-discovery`
+- Full feature lifecycle including implementation → use `full-feature-lifecycle`
+- Implementation-only (PBI already exists and is DoR-ready) → use `feature` or `big-feature`
+- Bug fixes → use `bugfix`
+
+## Key Mechanics
+
+### 1. Step Selection Gate
+
+After confirming the workflow, present the full step list and let the user deselect irrelevant steps:
+
+```
+- [x] Idea capture (idea)
+- [ ] Review existing artifact (review-artifact)   — CONDITIONAL
+- [ ] PO → BA handoff (handoff)                    — CONDITIONAL
+- [x] Refine to PBI (refine)
+- [x] PBI review (refine-review)
+- [x] Design rationale review (why-review)
+- [x] User stories (story)
+- [x] Story review (story-review)
+- [x] Dev BA PIC challenge (pbi-challenge)
+- [x] Definition of Ready gate (dor-gate)
+- [x] PBI mockup/wireframe (pbi-mockup)            — CONDITIONAL
+- [x] Backlog prioritization (prioritize)
+```
+
+Mark skipped steps as completed immediately.
+
+### 2. TaskCreate Before Starting
+
+**MANDATORY IMPORTANT MUST ATTENTION** — Call `TaskCreate` for every step before beginning any work:
+
+```
+TaskCreate: "Idea capture"
+TaskCreate: "Refine to PBI"
+TaskCreate: "PBI review (refine-review)"
+TaskCreate: "Design rationale review (why-review)"
+TaskCreate: "User stories (story)"
+TaskCreate: "Story review"
+TaskCreate: "Dev BA PIC challenge"
+TaskCreate: "Definition of Ready gate"
+TaskCreate: "PBI mockup" [if UI]
+TaskCreate: "Prioritize"
+TaskCreate: "Session summary (watzup)"
+```
+
+One task per step. Mark each completed immediately when done — never batch.
+
+### 3. Why-Review Gate (After refine-review, Before story)
+
+This is the adversarial design rationale check. Purpose: validate the **WHY** of this PBI before investing in stories.
+
+**Challenge prompts:**
+
+- Is this the right solution to the stated problem? What was rejected and why?
+- Are the acceptance criteria constraints justified? What happens if any constraint is removed?
+- Pre-mortem: if this PBI ships and fails in 3 months, what breaks?
+- Are there simpler alternatives not yet considered?
+- Does the scope align with the stated business value?
+
+**Output:** Why-Review checklist with PASS / WARN / FAIL.
+
+| Result | Action                                          |
+| ------ | ----------------------------------------------- |
+| PASS   | Proceed to `/story`                             |
+| WARN   | Document risk, proceed with user acknowledgment |
+| FAIL   | Revise PBI in `/refine` before continuing       |
+
+### 4. PBI Output Format
+
+Each PBI artifact must contain:
+
+| Section             | Content                                     |
+| ------------------- | ------------------------------------------- |
+| Title               | Clear, actionable                           |
+| Problem Statement   | Why this needs to exist                     |
+| Hypothesis          | If we build X, users will Y, which drives Z |
+| Acceptance Criteria | GIVEN / WHEN / THEN format                  |
+| RICE Score          | Reach × Impact × Confidence / Effort        |
+| User Stories        | Who / What / Why                            |
+| DoR Status          | PASS / WARN / FAIL                          |
+| Mockup              | ASCII wireframe (if UI)                     |
+
+### 5. Artifact Locations
+
+| Step           | Output Path                                       |
+| -------------- | ------------------------------------------------- |
+| Idea           | `team-artifacts/ideas/{date}-idea-{slug}.md`      |
+| PBI            | `team-artifacts/pbis/{date}-pbi-{slug}.md`        |
+| Stories        | Added to PBI artifact                             |
+| DoR result     | Added to PBI artifact                             |
+| Mockup         | Added to PBI artifact                             |
+| Prioritization | `team-artifacts/backlog/{date}-backlog-update.md` |
+
+Write output IMMEDIATELY after each step — never batch across steps.
+
+### 6. Conditional Skip Rules
+
+| Step               | Skip When                             |
+| ------------------ | ------------------------------------- |
+| `/review-artifact` | No existing artifact — raw idea input |
+| `/handoff`         | No formal PO→BA handoff needed        |
+| `/pbi-mockup`      | Backend-only PBI — no UI changes      |
 
 ---
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — one task per step
+- **MANDATORY IMPORTANT MUST ATTENTION** why-review runs after refine-review — FAIL blocks story writing, WARN requires user acknowledgment
+- **MANDATORY IMPORTANT MUST ATTENTION** pbi-challenge must be run by a reviewer different from the drafter
+- **MANDATORY IMPORTANT MUST ATTENTION** dor-gate must pass (PASS or WARN) before pbi-mockup is finalized
+- **MANDATORY IMPORTANT MUST ATTENTION** write each artifact immediately — never batch output across steps
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final watzup summary: PBI title, DoR result, any blocking items, recommended next step
+  <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
+- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+  <!-- /SYNC:ai-mistake-prevention:reminder -->

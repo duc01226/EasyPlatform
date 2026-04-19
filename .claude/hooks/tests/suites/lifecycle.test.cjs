@@ -5,7 +5,7 @@
  * - session-init.cjs: Session initialization and project detection
  * - session-resume.cjs: Checkpoint restoration
  * - session-end.cjs: Session cleanup
- * - subagent-init-identity.cjs: Subagent context injection (Part 1 of 14 — replaces removed subagent-init.cjs)
+ * - subagent-init-identity.cjs: Subagent context injection (Part 1 of 18 — replaces removed subagent-init.cjs)
  */
 
 const path = require('path');
@@ -297,7 +297,7 @@ const sessionEndTests = [
 ];
 
 // ============================================================================
-// subagent-init-identity.cjs Tests (Part 1 of 13 — replaces removed subagent-init.cjs)
+// subagent-init-identity.cjs Tests (Part 1 of 18 — replaces removed subagent-init.cjs)
 // ============================================================================
 
 const subagentInitTests = [
@@ -431,7 +431,7 @@ const subagentInitTests = [
         }
     },
     {
-        // TC-SUBCTX-045: identity hook output stays under 9000 chars after H5 fix (todos moved to hook 14)
+        // TC-SUBCTX-045: identity hook output stays under 9000 chars after H5 fix (todos moved to hook 18)
         name: 'TC-SUBCTX-045: subagent-init-identity output < 9000 chars (H5 fix)',
         fn: async () => {
             const tmpDir = createTempDir();
@@ -1458,15 +1458,15 @@ const newConcurrencyTests = [
         }
     },
     {
-        // settings.json must have exactly 13 SubagentStart hooks:
-        // identity + patterns-p1..p5 + dev-rules-p1..p3 + lessons + ai-mistakes + context-guard + todos
-        name: 'TC-DEDUP-005: settings.json SubagentStart has exactly 13 hook commands',
+        // settings.json must have exactly 18 SubagentStart hooks:
+        // identity + patterns-p1..p5 + dev-rules-p1..p3 + code-review-rules-p1..p5 + lessons + ai-mistakes + context-guard + todos
+        name: 'TC-DEDUP-005: settings.json SubagentStart has exactly 18 hook commands',
         fn() {
             const settingsPath = path.resolve(__dirname, '../../../..', '.claude', 'settings.json');
             const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
             const hookCount = settings.hooks.SubagentStart[0].hooks.length;
-            assertEqual(hookCount, 13,
-                `SubagentStart must have 13 hooks (identity + patterns-p1..p5 + dev-rules-p1..p3 + lessons + ai-mistakes + context-guard + todos) (got ${hookCount})`);
+            assertEqual(hookCount, 18,
+                `SubagentStart must have 18 hooks (identity + patterns-p1..p5 + dev-rules-p1..p3 + code-review-rules-p1..p5 + lessons + ai-mistakes + context-guard + todos) (got ${hookCount})`);
         }
     },
     {

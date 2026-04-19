@@ -6,6 +6,30 @@ version: 2.1.0
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
@@ -93,7 +117,6 @@ version: 2.1.0
 - Evidence-based: every claim needs `file:line` proof (grep results, read confirmations)
 - Mark unverified claims as "inferred" with low confidence
 - Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`
-- For UI investigation, activate `visual-component-finder` skill FIRST
 
 <!-- SYNC:root-cause-debugging -->
 
@@ -118,8 +141,6 @@ version: 2.1.0
 - MUST ATTENTION include `file:line` evidence for every finding; unproven claims MUST ATTENTION be marked "inferred" with low confidence
 - ALWAYS grep for related usages, consumers, and cross-service references — NEVER assume completeness
 - ALWAYS trace actual call paths with evidence — NEVER rely on signatures alone
-
-> **UI Investigation?** Activate `visual-component-finder` skill FIRST for screenshot/visual-based investigation. Uses `docs/component-index.json` to match visuals to Angular components with >=85% confidence.
 
 ## Workflow
 
@@ -149,7 +170,7 @@ version: 2.1.0
 
 - <!-- SYNC:knowledge-graph-template -->
     > **Knowledge Graph Template** — For each analyzed file, document: filePath, type (Entity/Command/Query/EventHandler/Controller/Consumer/Component/Store/Service), architecturalPattern, content summary, symbols, dependencies, businessContext, referenceFiles, relevanceScore (1-10), evidenceLevel (verified/inferred), frameworkAbstractions, serviceContext. Investigation fields: entryPoints, outputPoints, dataTransformations, errorScenarios. Consumer/bus fields: messageBusMessage, messageBusProducers, crossServiceIntegration. Frontend fields: componentHierarchy, stateManagementStores, dataBindingPatterns, validationStrategies.
-                            <!-- /SYNC:knowledge-graph-template -->
+                                        <!-- /SYNC:knowledge-graph-template -->
 
 **If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files first.
 
@@ -298,3 +319,9 @@ Find working reference → compare implementations → identify differences → 
   <!-- SYNC:fix-layer-accountability:reminder -->
 - **IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
     <!-- /SYNC:fix-layer-accountability:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
+- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+  <!-- /SYNC:ai-mistake-prevention:reminder -->

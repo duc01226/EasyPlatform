@@ -52,7 +52,7 @@ async function main() {
                             console.log([
                                 '',
                                 PROJECT_STRUCTURE_P2_MARKER,
-                                '> Content auto-injected for context recovery (part 2 of 2, continuation of Project Structure Reference).',
+                                '> Auto-injected for context recovery (part 2 of 2, continuation of Project Structure Reference).',
                                 '',
                                 secondHalf,
                                 '',

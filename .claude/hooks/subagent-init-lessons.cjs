@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Lessons Learned (fires 10th of 13)
+ * SubagentStart Hook — Lessons Learned (fires 15th of 18)
  *
  * Outputs: lessons learned from docs/project-reference/lessons.md (~1,500 chars).
  * AI mistake prevention is split into subagent-init-ai-mistakes.cjs (fires 11th)

@@ -21,7 +21,6 @@ const {
   getReportsPath,
   resolveNamingPattern,
 } = require("./lib/ck-config-utils.cjs");
-const { writeResetMarker } = require("./lib/context-tracker.cjs");
 const { cleanupAll } = require("./lib/temp-file-cleanup.cjs");
 const {
   loadState: loadWorkflowState,
@@ -360,10 +359,7 @@ async function main() {
 
     const config = loadConfig();
 
-    // Layer 3: Write reset marker on /clear to signal statusline to reset baseline
-    // This ensures context window percentage resets to 0% on fresh sessions
     if (source === "clear" && sessionId) {
-      writeResetMarker(sessionId, "clear");
       // Clear workflow state on fresh session (user explicitly cleared)
       clearWorkflowState(sessionId);
     }
@@ -542,7 +538,7 @@ async function main() {
       console.log("\n## Python Not Found");
       console.log("");
       console.log(
-        "\u26a0\ufe0f  **Python is not installed or not in PATH.** Some skills require Python:",
+        "\u26a0\ufe0f  **Python not installed or not in PATH.** Skills requiring Python:",
       );
       console.log(
         "  \u2022 `generate_catalogs.py` \u2014 Skills/commands catalog generation",
@@ -570,7 +566,7 @@ async function main() {
       }
       console.log("");
       console.log(
-        "**Override:** Set `PYTHON_PATH` env var to your Python binary path.",
+        "**Override:** Set `PYTHON_PATH` env var to Python binary path.",
       );
       console.log("");
     }

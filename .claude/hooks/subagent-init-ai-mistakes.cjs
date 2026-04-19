@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — AI Mistake Prevention (fires 11th of 13)
+ * SubagentStart Hook — AI Mistake Prevention (fires 16th of 18)
  *
  * Outputs: AI mistake prevention bullets (system lessons — hardcoded in
  * prompt-injections.cjs:injectAiMistakePrevention()).

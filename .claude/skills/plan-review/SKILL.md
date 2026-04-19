@@ -8,6 +8,30 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 <!-- SYNC:understand-code-first -->
 
 > **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
@@ -55,9 +79,9 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 <!-- SYNC:review-protocol-injection -->
 
-> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 9 protocol blocks VERBATIM. The template below has ALL 9 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
+> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
 >
-> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 9 protocol bodies pre-embedded.
+> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 10 protocol bodies pre-embedded.
 
 ### Subagent Type Selection
 
@@ -192,7 +216,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ### Rules
 
-- DO copy the template wholesale — including all 9 embedded protocol sections
+- DO copy the template wholesale — including all 10 embedded protocol sections
 - DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
 - DO choose `code-reviewer` subagent_type for code reviews and `general-purpose` for plan / doc / artifact reviews
 - DO NOT paraphrase, summarize, or skip any protocol section
@@ -279,16 +303,32 @@ Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE c
 
 ### Anti-Bias Gate (MANDATORY before finalizing verdict)
 
-Complete this checklist before writing the final verdict:
+Complete ALL checks before writing the final verdict:
 
-- [ ] Ran Implementation Reality Check on the highest-risk phase
-- [ ] Identified 3 implicit assumptions and stress-tested them
-- [ ] Checked effort estimates against codebase complexity
-- [ ] Ran pre-mortem (one concrete production failure scenario)
-- [ ] Scanned for scope creep (tasks not required for stated feature)
-- [ ] Verified dependency blindspots are addressed
+- MUST ATTENTION run Implementation Reality Check on the highest-risk phase
+- MUST ATTENTION identify 3 implicit assumptions and stress-test them
+- MUST ATTENTION check effort estimates against codebase complexity
+- MUST ATTENTION run pre-mortem (one concrete production failure scenario)
+- MUST ATTENTION scan for scope creep (tasks not required for stated feature)
+- MUST ATTENTION verify dependency blindspots are addressed
 
-If any box is unchecked → you have NOT completed the adversarial review. Go back.
+If any check is incomplete → you have NOT completed the adversarial review. Go back.
+
+## Behavioral Delta Matrix (MANDATORY for bugfixes)
+
+<!-- SYNC:behavioral-delta-matrix -->
+
+> **Behavioral Delta Matrix** — MANDATORY for bugfix reviews. Produce this table BEFORE PASS/FAIL verdict. Narrative descriptions don't substitute.
+>
+> | Input state | Pre-fix behavior   | Post-fix behavior | Delta                                |
+> | ----------- | ------------------ | ----------------- | ------------------------------------ |
+> | {condition} | {current behavior} | {fixed behavior}  | Preserved ✓ / Fixed ✓ / REGRESSION ✗ |
+>
+> **Rules:** ≥3 rows · ≥1 row the bug report did NOT mention · REGRESSION delta → FAIL until a preservation test covers it (`tdd-spec-template.md#preservation-tests-mandatory-for-bugfix-specs`)
+>
+> **BLOCKED until:** ≥3 rows · ≥1 row outside bug report · no unmitigated REGRESSION
+
+<!-- /SYNC:behavioral-delta-matrix -->
 
 ## Your mission
 
@@ -612,3 +652,9 @@ After the sub-agent returns:
       <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
     <!-- /SYNC:graph-assisted-investigation:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
+- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+      <!-- /SYNC:ai-mistake-prevention:reminder -->

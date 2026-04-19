@@ -2216,9 +2216,6 @@ async function testPreCompactHooks() {
         fs.writeFileSync(markerPath, JSON.stringify({
             sessionId: testSessionId,
             trigger: 'manual',
-            baselineRecorded: false,
-            baseline: 0,
-            lastTokenTotal: 0,
             timestamp: Date.now(),
             compactState: { gitStatus: 'M  .claude/hooks/write-compact-marker.cjs', warningShown: false }
         }));
@@ -2246,9 +2243,6 @@ async function testPreCompactHooks() {
         fs.writeFileSync(markerPath, JSON.stringify({
             sessionId: SESSION_ID_DEFAULT,
             trigger: 'manual',
-            baselineRecorded: false,
-            baseline: 0,
-            lastTokenTotal: 0,
             timestamp: Date.now(),
             compactState: { gitStatus: 'M  test.txt', warningShown: false }
         }));
@@ -2264,32 +2258,6 @@ async function testPreCompactHooks() {
         try { fs.unlinkSync(markerPath); } catch (_e) { /* ignore */ }
     }
 
-    // TC-CMP-006: write-compact-marker with context_window → calibration.json updated with EMA threshold
-    logSubsection('TC-CMP-006: calibration EMA update');
-    {
-        const { CALIBRATION_PATH } = require(path.join(HOOKS_DIR, 'lib', 'ck-paths.cjs'));
-        const testSessionId = `test-cmp-006-${Date.now()}`;
-        const contextWindowSize = 200000;
-        const result = await runHook('write-compact-marker.cjs', {
-            session_id: testSessionId,
-            trigger: 'manual',
-            context_window: {
-                total_input_tokens: 100000,
-                total_output_tokens: 20000,
-                context_window_size: contextWindowSize
-            }
-        });
-        logResult('TC-CMP-006: write-compact-marker exits 0 with context_window', result.code === 0);
-
-        try {
-            const calibration = JSON.parse(fs.readFileSync(CALIBRATION_PATH, 'utf8'));
-            const key = String(contextWindowSize);
-            const hasEntry = key in calibration && typeof calibration[key].threshold === 'number' && calibration[key].samples >= 1;
-            logResult('TC-CMP-006: calibration.json updated with EMA threshold', hasEntry);
-        } catch (_e) {
-            logResult('TC-CMP-006: calibration.json readable with threshold', false);
-        }
-    }
 }
 
 // ============================================================================

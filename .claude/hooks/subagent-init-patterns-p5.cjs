@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Coding Patterns & Agent-Specific Docs page 5/5 (fires 6th of 13)
+ * SubagentStart Hook — Coding Patterns & Agent-Specific Docs page 5/5 (fires 6th of 18)
  *
  * Outputs: patterns page 5 of 5 (safety buffer for large pattern sets).
  * Appends overflow notice if patterns content exceeds 5 × 8,500 chars.

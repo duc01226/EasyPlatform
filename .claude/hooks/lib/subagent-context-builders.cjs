@@ -2,25 +2,30 @@
 /**
  * Subagent Context Builders — shared lib for subagent-init part hooks.
  *
- * Motivation: subagent-init is split into 13 named hooks to avoid the Claude Code
+ * Motivation: subagent-init is split into 18 named hooks to avoid the Claude Code
  * per-hook output size limit (9,000 chars enforced). When a single hook exceeds this
  * limit, the tail is silently truncated — large sections like dev-rules (~18KB) and
- * patterns (~36KB for code-reviewer) get cut. Splitting across 13 hooks ("inject paging")
+ * patterns (~36KB for code-reviewer) get cut. Splitting across 18 hooks ("inject paging")
  * keeps each hook's output small enough that no content is lost.
  * CLAUDE.md is injected natively by Claude Code's claudeMd mechanism — no hook needed.
- *    1. subagent-init-identity.cjs       — identity, config, rules, plan context, critical thinking
- *    2. subagent-init-patterns-p1.cjs    — coding patterns + agent-specific docs page 1/5
- *    3. subagent-init-patterns-p2.cjs    — patterns page 2/5 (silent if empty)
- *    4. subagent-init-patterns-p3.cjs    — patterns page 3/5 (silent if empty)
- *    5. subagent-init-patterns-p4.cjs    — patterns page 4/5 (silent if empty)
- *    6. subagent-init-patterns-p5.cjs    — patterns page 5/5 (silent if empty; overflow hint)
- *    7. subagent-init-dev-rules-p1.cjs   — development-rules.md page 1/3 (code/review agents only)
- *    8. subagent-init-dev-rules-p2.cjs   — dev-rules page 2/3 (silent if fits in p1)
- *    9. subagent-init-dev-rules-p3.cjs   — dev-rules page 3/3 (silent if fits in p1+p2)
- *   10. subagent-init-lessons.cjs        — lessons learned (~1,560 chars)
- *   11. subagent-init-ai-mistakes.cjs    — AI mistake prevention bullets (~8,200 chars; split from lessons to stay under 9,000-char limit)
- *   12. subagent-init-context-guard.cjs  — context-overflow guard reminder
- *   13. subagent-init-todos.cjs          — active task state (fires last)
+ *    1. subagent-init-identity.cjs                — identity, config, rules, plan context, critical thinking
+ *    2. subagent-init-patterns-p1.cjs             — coding patterns + agent-specific docs page 1/5
+ *    3. subagent-init-patterns-p2.cjs             — patterns page 2/5 (silent if empty)
+ *    4. subagent-init-patterns-p3.cjs             — patterns page 3/5 (silent if empty)
+ *    5. subagent-init-patterns-p4.cjs             — patterns page 4/5 (silent if empty)
+ *    6. subagent-init-patterns-p5.cjs             — patterns page 5/5 (silent if empty; overflow hint)
+ *    7. subagent-init-dev-rules-p1.cjs            — development-rules.md page 1/3 (code/review agents only)
+ *    8. subagent-init-dev-rules-p2.cjs            — dev-rules page 2/3 (silent if fits in p1)
+ *    9. subagent-init-dev-rules-p3.cjs            — dev-rules page 3/3 (silent if fits in p1+p2)
+ *   10. subagent-init-code-review-rules-p1.cjs    — code-review-rules.md page 1/5 (code-review agents only)
+ *   11. subagent-init-code-review-rules-p2.cjs    — code-review-rules page 2/5 (silent if fits earlier)
+ *   12. subagent-init-code-review-rules-p3.cjs    — code-review-rules page 3/5 (silent if fits earlier)
+ *   13. subagent-init-code-review-rules-p4.cjs    — code-review-rules page 4/5 (silent if fits earlier)
+ *   14. subagent-init-code-review-rules-p5.cjs    — code-review-rules page 5/5 (silent if fits earlier; overflow hint)
+ *   15. subagent-init-lessons.cjs                 — lessons learned (~1,560 chars)
+ *   16. subagent-init-ai-mistakes.cjs             — AI mistake prevention bullets (~8,200 chars; split from lessons to stay under 9,000-char limit)
+ *   17. subagent-init-context-guard.cjs           — context-overflow guard reminder
+ *   18. subagent-init-todos.cjs                   — active task state (fires last)
  * This lib centralizes all builder functions so each hook stays thin and DRY.
  */
 
@@ -62,10 +67,9 @@ const AGENT_DOC_MAP = {
     'solution-architect': ['docs/project-reference/project-structure-reference.md', 'docs/project-reference/domain-entities-reference.md'],
     scout: ['docs/project-reference/project-structure-reference.md'],
 
-    // Review agents need code review rules
-    'code-reviewer': ['docs/project-reference/code-review-rules.md'],
-    'code-simplifier': ['docs/project-reference/code-review-rules.md'],
-    'spec-compliance-reviewer': ['docs/project-reference/code-review-rules.md'],
+    // Review agents: code-review-rules.md injected via dedicated subagent-init-code-review-rules-p*.cjs hooks
+    // (removed from AGENT_DOC_MAP: backend+frontend patterns exhaust the 5-page patterns budget,
+    //  leaving code-review-rules.md silently uninjected via the patterns overflow path)
 
     // Test agents need test references
     'integration-tester': ['docs/project-reference/integration-test-reference.md'],
@@ -78,9 +82,21 @@ const AGENT_DOC_MAP = {
 };
 
 /**
+ * Agent types that receive code-review-rules.md injection via dedicated hooks.
+ * Separated from AGENT_DOC_MAP/patterns pipeline because backend+frontend patterns
+ * exhaust all 5 × 8,500-char pattern pages, silently dropping code-review-rules.md.
+ * Injected by subagent-init-code-review-rules-p1.cjs … p5.cjs (after dev-rules hooks).
+ */
+const CODE_REVIEW_RULES_AGENT_TYPES = new Set([
+    'code-reviewer',
+    'code-simplifier',
+    'spec-compliance-reviewer'
+]);
+
+/**
  * Agent types that receive development-rules.md injection.
  * These agents produce or review code and need full dev rules for quality enforcement.
- * Injected by subagent-init-dev-rules-p1.cjs + p2.cjs + p3.cjs (7th–9th of 13).
+ * Injected by subagent-init-dev-rules-p1.cjs + p2.cjs + p3.cjs (7th–9th of 18).
  */
 const DEV_RULES_AGENT_TYPES = new Set([
     'code-reviewer',
@@ -287,6 +303,43 @@ function buildDevRulesContextPart(partIndex, totalParts = 3, agentType) {
 }
 
 /**
+ * Build one page of code-review-rules.md for subagent context injection.
+ * Dynamic paging: reads file at runtime, splits at line boundaries.
+ * Returns [] if agentType not in CODE_REVIEW_RULES_AGENT_TYPES, or page is empty (silent exit).
+ * 5 pages × 8,500 chars = 42,500-char budget — sufficient for the 38 KB rules file.
+ *
+ * @param {number} partIndex   - 0-based page index (0=p1 … 4=p5)
+ * @param {number} totalParts  - Total pages (default 5, handles up to ~42.5KB)
+ * @param {string} agentType   - From SubagentStart payload
+ * @returns {string[]} Lines array, empty if agent type excluded or page is empty
+ */
+function buildCodeReviewRulesContextPart(partIndex, totalParts = 5, agentType) {
+    if (!CODE_REVIEW_RULES_AGENT_TYPES.has(agentType)) return [];
+    try {
+        const rulesPath = path.resolve(PROJECT_DIR, 'docs', 'project-reference', 'code-review-rules.md');
+        if (!fs.existsSync(rulesPath)) return [];
+        const content = fs.readFileSync(rulesPath, 'utf-8').trim();
+        if (!content) return [];
+
+        const { content: partContent, meta, overflow } = splitContentIntoPart(content, partIndex, totalParts, 8500);
+        if (!partContent) return [];
+
+        const lines = ['', `## Code Review Rules (docs/project-reference/code-review-rules.md) — ${meta}`, '', partContent];
+
+        if (overflow) {
+            lines.push(
+                '',
+                `> **[CODE-REVIEW-RULES OVERFLOW]** ${overflow.remainingLines} lines (~${overflow.remainingChars} chars) not injected.`,
+                `> Read \`docs/project-reference/code-review-rules.md\` from line ${overflow.fromLine} for remaining content.`
+            );
+        }
+        return lines;
+    } catch {
+        return []; /* fail-open */
+    }
+}
+
+/**
  * Build the full concatenated patterns content for an agent type.
  * Combines: CODE_PATTERNS_MARKER + backend + frontend + styling + design + agent-specific docs.
  * Returns '' if agent type is not in PATTERN_AWARE_AGENT_TYPES AND not in AGENT_DOC_MAP.
@@ -390,11 +443,11 @@ function buildContextGuardContext(sessionId = null) {
         '',
         'MUST ATTENTION if task > 5 files or > 3 steps:',
         `- **On start:** create \`tmp/ck-agent-${tsExample}-a3f9d2.progress.md\` (ts=17-char ms, rnd=6-char hex)`,
-        `  ⚠️ REPLACE the example values — do NOT copy literally. Use current timestamp in \`YYYYMMDDHHmmssSSS\` format (17 digits) and generate a RANDOM 6-char hex suffix.`,
+        `  ⚠️ REPLACE example values — do NOT copy literally. Use current timestamp in \`YYYYMMDDHHmmssSSS\` format (17 digits) and generate a RANDOM 6-char hex suffix.`,
         `  First line: \`Session: ${sessionId_}\``,
         '- **After each step:** append findings — mark `[done]` / `[partial]` / `[pending]`',
         '- **Context running out?** Write `[partial]` to file FIRST — NEVER summarize before writing.',
-        '- **Producing a report?** Start your final message with: `Report: plans/reports/<name>.md`',
+        '- **Producing a report?** Start final message with: `Report: plans/reports/<name>.md`',
     ].join('\n');
 
     return ['', block];
@@ -402,7 +455,7 @@ function buildContextGuardContext(sessionId = null) {
 
 /**
  * Emit SubagentStart context to stdout and exit 0.
- * Shared by all 13 subagent-init-*.cjs hooks — avoids repeating the output
+ * Shared by all 18 subagent-init-*.cjs hooks — avoids repeating the output
  * wrapping structure in each hook file.
  * @param {string[]} lines - Content lines to emit (exits silently if empty)
  */
@@ -422,6 +475,7 @@ module.exports = {
     PROJECT_DIR,
     PATTERN_AWARE_AGENT_TYPES,
     DEV_RULES_AGENT_TYPES,
+    CODE_REVIEW_RULES_AGENT_TYPES,
     AGENT_DOC_MAP,
     getAgentContext,
     buildTrustVerification,
@@ -435,6 +489,7 @@ module.exports = {
     buildAiMistakePreventionContext,
     buildContextGuardContext,
     buildDevRulesContextPart,
+    buildCodeReviewRulesContextPart,
     buildParentTodoSection,
     emitSubagentContext,
     MAX_HOOK_OUTPUT_BYTES: 8500  // 500-char headroom below 9000-char harness limit

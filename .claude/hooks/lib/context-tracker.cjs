@@ -2,34 +2,25 @@
 'use strict';
 
 /**
- * Context Window Tracker - Self-healing context reset detection
+ * Context Marker Infrastructure
  *
- * Fixes #177: Race condition from shared global state file
- * Fixes #178: Consolidates temp files to /tmp/ck/ namespace
+ * Session-scoped marker read/write used by compaction hooks.
  *
  * Architecture:
- * - NO global state file (was causing race conditions in concurrent sessions)
- * - All state embedded in session-specific marker files
- * - Each session is completely isolated (no shared state)
+ * - No global state — each session has its own marker file
+ * - Marker file consumed by `prompt-context-assembler.cjs` to emit the
+ *   post-compact "CONTEXT COMPACTED" re-verify warning using `compactState.gitStatus`
+ * - Markers deleted on session-end to prevent cross-session leakage
  *
- * Detection layers:
- * - Layer 1: Hook markers (explicit reset signal from PreCompact/SessionStart)
- * - Layer 2: Token drop detection (50% threshold fallback for hook failures)
- *
- * Removed:
- * - Old Layer 1 (session ID change detection) - was the BUG source
- * - Global STATE_FILE - caused race conditions in concurrent sessions
- *
- * Marker schema:
+ * Marker schema (current):
  * {
  *   sessionId: string,
- *   trigger: string,           // 'session_start_clear', 'manual', 'auto', 'new_session', 'token_drop'
- *   baselineRecorded: boolean,
- *   baseline: number,          // Token count at baseline
- *   lastTokenTotal: number,    // For token drop detection (replaces global state)
- *   toolCallCount: number,     // Tool calls since last reset (for compact suggestions)
- *   lastToolCountWarned: number, // Last count at which we showed warning (prevent spam)
- *   timestamp: number
+ *   trigger: string,                   // 'manual' | 'auto' | 'unknown'
+ *   timestamp: number,
+ *   compactState?: {
+ *     gitStatus: string,               // captured by write-compact-marker.cjs
+ *     warningShown: boolean            // flipped by prompt-context-assembler.cjs after display
+ *   }
  * }
  *
  * @module context-tracker
@@ -38,72 +29,9 @@
 const fs = require('fs');
 const {
   MARKERS_DIR,
-  CALIBRATION_PATH,
   ensureDir,
   getMarkerPath
 } = require('./ck-paths.cjs');
-
-// Token drop threshold for Layer 2 detection (50%)
-// Rationale: /compact typically reduces tokens by 60-80%, so 50% catches
-// context resets while avoiding false positives from normal token accumulation.
-// Exclusive: drops below (<) 50% trigger reset
-const TOKEN_DROP_THRESHOLD = 0.5;
-
-/**
- * Get smart default compact threshold based on context window size
- * Research-based defaults:
- * - 200k window: ~77.5% (155k) - confirmed from GitHub issues
- * - 1M window: ~33% (330k) - derived from user observations
- *
- * @param {number} contextWindowSize - Model's context window size
- * @returns {number} Estimated compact threshold in tokens
- */
-function getDefaultCompactThreshold(contextWindowSize) {
-  const KNOWN_THRESHOLDS = {
-    200000: 155000,   // 77.5% - confirmed via /context showing 45k buffer
-    1000000: 330000,  // 33% - 1M beta window
-  };
-
-  if (KNOWN_THRESHOLDS[contextWindowSize]) {
-    return KNOWN_THRESHOLDS[contextWindowSize];
-  }
-
-  // Tiered defaults based on window size
-  if (contextWindowSize >= 1000000) {
-    return Math.floor(contextWindowSize * 0.33);
-  }
-  return Math.floor(contextWindowSize * 0.775);
-}
-
-/**
- * Read calibration data from file (recorded by PreCompact hook)
- * @returns {Object} Calibration data keyed by context window size
- */
-function readCalibration() {
-  try {
-    if (fs.existsSync(CALIBRATION_PATH)) {
-      return JSON.parse(fs.readFileSync(CALIBRATION_PATH, 'utf8'));
-    }
-  } catch (err) {
-    // Silent fail - use defaults
-  }
-  return {};
-}
-
-/**
- * Get compact threshold, preferring calibrated value over default
- * @param {number} contextWindowSize - Model's context window size
- * @returns {number} Compact threshold in tokens
- */
-function getCompactThreshold(contextWindowSize) {
-  const calibration = readCalibration();
-  const key = String(contextWindowSize);
-
-  if (calibration[key] && calibration[key].threshold > 0) {
-    return calibration[key].threshold;
-  }
-  return getDefaultCompactThreshold(contextWindowSize);
-}
 
 /**
  * Read marker file for a session
@@ -160,161 +88,6 @@ function deleteMarker(sessionId) {
 }
 
 /**
- * Layer 2: Detect significant token drop (50%+ reduction)
- * Uses session-specific lastTokenTotal from marker (no global state)
- * @param {number} currentTotal - Current cumulative token total
- * @param {Object|null} marker - Session marker with lastTokenTotal
- * @returns {boolean} True if token drop detected
- */
-function detectTokenDrop(currentTotal, marker) {
-  if (!marker || !marker.lastTokenTotal || marker.lastTokenTotal <= 0 || currentTotal <= 0) {
-    return false;
-  }
-
-  // Token total dropped by more than 50%
-  const dropRatio = currentTotal / marker.lastTokenTotal;
-  return dropRatio < TOKEN_DROP_THRESHOLD;
-}
-
-/**
- * Layer 1: Check for explicit reset marker from hooks
- * @param {Object|null} marker - Session marker
- * @returns {{ shouldReset: boolean, trigger: string|null }}
- */
-function checkResetMarker(marker) {
-  if (!marker) {
-    return { shouldReset: false, trigger: null };
-  }
-
-  // Check if marker indicates a reset (clear/compact)
-  const resetTriggers = ['clear', 'session_start_clear'];
-  if (resetTriggers.includes(marker.trigger)) {
-    return { shouldReset: true, trigger: marker.trigger };
-  }
-
-  return { shouldReset: false, trigger: marker.trigger };
-}
-
-/**
- * Main context tracking function with 2-layer self-healing detection
- *
- * Layer 1: Hook markers (explicit reset from PreCompact/SessionStart)
- * Layer 2: Token drop detection (50% threshold fallback)
- *
- * NO global state - all state is session-specific in marker files
- *
- * @param {Object} params - Tracking parameters
- * @param {string} params.sessionId - Current session ID
- * @param {number} params.contextInput - Input tokens
- * @param {number} params.contextOutput - Output tokens
- * @param {number} params.contextWindowSize - Model's context window size
- * @returns {Object} { percentage, baseline, showCompactIndicator, resetLayer }
- */
-function trackContext({ sessionId, contextInput, contextOutput, contextWindowSize }) {
-  const currentTotal = contextInput + contextOutput;
-  const compactThreshold = getCompactThreshold(contextWindowSize);
-  const effectiveSessionId = sessionId || 'default';
-
-  // Read session-specific marker (no global state!)
-  let marker = readMarker(effectiveSessionId);
-
-  // Track which layer triggered reset (for debugging)
-  let resetLayer = null;
-  let baseline = 0;
-  let showCompactIndicator = false;
-
-  // --- Layer 1: Hook marker system ---
-  // Markers from PreCompact/SessionStart hooks are explicit signals
-  const { shouldReset, trigger } = checkResetMarker(marker);
-  if (shouldReset) {
-    resetLayer = `marker_${trigger}`;
-    baseline = currentTotal;
-    // Clear the reset trigger after processing
-    marker = null; // Force fresh marker creation below
-  }
-
-  // --- Layer 2: Token drop detection (fallback for hook failures) ---
-  if (!resetLayer && detectTokenDrop(currentTotal, marker)) {
-    resetLayer = 'token_drop';
-    baseline = currentTotal;
-    marker = null; // Force fresh marker creation below
-  }
-
-  // --- No reset triggered - use existing marker/baseline ---
-  if (!resetLayer && marker) {
-    if (!marker.baselineRecorded) {
-      // Marker exists but baseline not recorded yet (from PreCompact)
-      marker.baselineRecorded = true;
-      marker.baseline = currentTotal;
-      marker.lastTokenTotal = currentTotal;
-      writeMarker(effectiveSessionId, marker);
-      baseline = currentTotal;
-      // PreCompact triggers: "manual" (from /compact) or "auto" (from auto-compact)
-      showCompactIndicator = ['compact', 'manual', 'auto'].includes(marker.trigger);
-    } else {
-      // Use stored baseline
-      baseline = marker.baseline || 0;
-    }
-  }
-
-  // --- Create fresh marker if needed ---
-  if (!marker || resetLayer) {
-    const newMarker = {
-      sessionId: effectiveSessionId,
-      trigger: resetLayer || 'new_session',
-      baselineRecorded: true,
-      baseline: currentTotal,
-      lastTokenTotal: currentTotal,
-      timestamp: Date.now()
-    };
-    writeMarker(effectiveSessionId, newMarker);
-    if (!resetLayer) {
-      baseline = currentTotal;
-    }
-  } else {
-    // Update lastTokenTotal for next token drop detection
-    marker.lastTokenTotal = currentTotal;
-    writeMarker(effectiveSessionId, marker);
-  }
-
-  // Calculate effective tokens (since baseline)
-  let effectiveTotal = baseline > 0 ? currentTotal - baseline : currentTotal;
-  if (effectiveTotal < 0) effectiveTotal = 0;
-
-  // Calculate percentage against compact threshold (not model limit)
-  const percentage = Math.min(100, Math.floor(effectiveTotal * 100 / compactThreshold));
-
-  return {
-    percentage,
-    baseline,
-    effectiveTotal,
-    compactThreshold,
-    showCompactIndicator,
-    resetLayer
-  };
-}
-
-/**
- * Write reset marker for session (called by SessionStart hook on /clear)
- * @param {string} sessionId - Session ID
- * @param {string} trigger - Reset trigger ('clear', 'compact', etc.)
- */
-function writeResetMarker(sessionId, trigger = 'clear') {
-  const effectiveSessionId = sessionId || 'default';
-  ensureDir(MARKERS_DIR);
-  writeMarker(effectiveSessionId, {
-    sessionId: effectiveSessionId,
-    trigger: `session_start_${trigger}`,
-    baselineRecorded: false,
-    baseline: 0,
-    lastTokenTotal: 0,
-    toolCallCount: 0,
-    lastToolCountWarned: 0,
-    timestamp: Date.now()
-  });
-}
-
-/**
  * Clear all markers (for testing/cleanup)
  * Uses new /tmp/ck/ namespace
  */
@@ -323,132 +96,9 @@ function clearAllState() {
   cleanAll();
 }
 
-// ============================================================================
-// Tool Call Counting (for /compact suggestions)
-// ============================================================================
-
-// Tool call thresholds for compact suggestions
-const TOOL_COUNT_INITIAL_THRESHOLD = 50;  // First suggestion at 50 calls
-const TOOL_COUNT_REMINDER_INTERVAL = 20;  // Remind every 20 calls after
-
-/**
- * Increment tool call count for a session
- * @param {string} sessionId - Session ID
- * @returns {number} New tool call count
- */
-function incrementToolCount(sessionId) {
-  const effectiveSessionId = sessionId || 'default';
-  let marker = readMarker(effectiveSessionId);
-
-  if (!marker) {
-    // Create new marker if doesn't exist
-    marker = {
-      sessionId: effectiveSessionId,
-      trigger: 'tool_count_init',
-      baselineRecorded: false,
-      baseline: 0,
-      lastTokenTotal: 0,
-      toolCallCount: 1,
-      lastToolCountWarned: 0,
-      timestamp: Date.now()
-    };
-  } else {
-    // Increment existing count (default to 0 if not present)
-    marker.toolCallCount = (marker.toolCallCount || 0) + 1;
-  }
-
-  writeMarker(effectiveSessionId, marker);
-  return marker.toolCallCount;
-}
-
-/**
- * Get current tool call count for a session
- * @param {string} sessionId - Session ID
- * @returns {number} Current tool call count
- */
-function getToolCount(sessionId) {
-  const effectiveSessionId = sessionId || 'default';
-  const marker = readMarker(effectiveSessionId);
-  return marker?.toolCallCount || 0;
-}
-
-/**
- * Check if we should suggest /compact based on tool call count
- * Returns true at 50 calls, then every 20 calls thereafter (70, 90, 110...)
- * Only returns true once per threshold (tracks lastToolCountWarned)
- * @param {string} sessionId - Session ID
- * @returns {{ shouldSuggest: boolean, count: number }}
- */
-function shouldSuggestCompact(sessionId) {
-  const effectiveSessionId = sessionId || 'default';
-  let marker = readMarker(effectiveSessionId);
-
-  if (!marker) {
-    return { shouldSuggest: false, count: 0 };
-  }
-
-  const count = marker.toolCallCount || 0;
-  const lastWarned = marker.lastToolCountWarned || 0;
-
-  // Calculate the threshold we've crossed
-  let currentThreshold = 0;
-  if (count >= TOOL_COUNT_INITIAL_THRESHOLD) {
-    // Initial threshold or reminder interval
-    const countAfterInitial = count - TOOL_COUNT_INITIAL_THRESHOLD;
-    if (countAfterInitial <= 0) {
-      currentThreshold = TOOL_COUNT_INITIAL_THRESHOLD;
-    } else {
-      // Calculate which reminder threshold we're at
-      const reminderNumber = Math.floor(countAfterInitial / TOOL_COUNT_REMINDER_INTERVAL);
-      currentThreshold = TOOL_COUNT_INITIAL_THRESHOLD + (reminderNumber * TOOL_COUNT_REMINDER_INTERVAL);
-    }
-  }
-
-  // Should suggest if we crossed a threshold we haven't warned about
-  const shouldSuggest = currentThreshold > 0 && currentThreshold > lastWarned;
-
-  if (shouldSuggest) {
-    // Update lastToolCountWarned to prevent repeated suggestions
-    marker.lastToolCountWarned = currentThreshold;
-    writeMarker(effectiveSessionId, marker);
-  }
-
-  return { shouldSuggest, count };
-}
-
-/**
- * Reset tool call count for a session (called on /compact)
- * @param {string} sessionId - Session ID
- */
-function resetToolCount(sessionId) {
-  const effectiveSessionId = sessionId || 'default';
-  let marker = readMarker(effectiveSessionId);
-
-  if (marker) {
-    marker.toolCallCount = 0;
-    marker.lastToolCountWarned = 0;
-    writeMarker(effectiveSessionId, marker);
-  }
-}
-
 module.exports = {
-  trackContext,
-  writeResetMarker,
-  clearAllState,
-  getCompactThreshold,
-  // Tool call counting
-  incrementToolCount,
-  getToolCount,
-  shouldSuggestCompact,
-  resetToolCount,
-  TOOL_COUNT_INITIAL_THRESHOLD,
-  TOOL_COUNT_REMINDER_INTERVAL,
-  // Export for testing
-  detectTokenDrop,
-  checkResetMarker,
   readMarker,
   writeMarker,
   deleteMarker,
-  TOKEN_DROP_THRESHOLD,
-  MARKERS_DIR
+  clearAllState
 };

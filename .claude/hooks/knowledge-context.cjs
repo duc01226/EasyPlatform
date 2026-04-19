@@ -106,7 +106,7 @@ function buildInjection(filePath) {
   lines.push(
     "### Knowledge Work Rules",
     "",
-    "> **Web Research Protocol** — Every factual claim needs 2+ independent sources. Source tiers: Tier 1 (authoritative .gov/.edu/official docs), Tier 2 (industry reports), Tier 3 (credible blogs — cross-validate), Tier 4 (unverified — NEVER cite as fact). Declare confidence level for all findings.",
+    "> **Web Research Protocol** — Every factual claim needs 2+ independent sources. Source tiers: Tier 1 (authoritative .gov/.edu/official docs), Tier 2 (industry reports), Tier 3 (credible blogs — cross-validate), Tier 4 (unverified — NEVER cite as fact). Declare confidence for all findings.",
     "",
     "1. Follow source hierarchy (official docs > peer-reviewed > industry blogs > forums) for all factual claims",
     "2. Include source citations with Tier classification (inline `[N]`)",

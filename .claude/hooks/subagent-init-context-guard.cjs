@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Context-Overflow Guard (fires 12th of 13)
+ * SubagentStart Hook — Context-Overflow Guard (fires 17th of 18)
  *
  * Outputs: context window exhaustion warning + accumulative-write pattern
  *          + resume guidance + Output Contract (write-before-summary rule)
@@ -11,7 +11,7 @@
  * Execution order: identity → patterns-p1..p5 → dev-rules-p1..p3
  *   → lessons → ai-mistakes → context-guard (this, 12th) → todos (last)
  *
- * Split into 13 named hooks to avoid the Claude Code per-hook output size limit
+ * Split into 18 named hooks to avoid the Claude Code per-hook output size limit
  * (9,000 chars enforced). This hook fires last to ensure the guard reminder is
  * at the tail of the injected context — AI models attend strongly to the last
  * ~100 lines of their context window.

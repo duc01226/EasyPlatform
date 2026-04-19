@@ -275,7 +275,7 @@ HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
 │   ├── session-resume.cjs ────────── Restore todos from checkpoints
 │   ├── npm-auto-install.cjs ──────── Install missing npm packages
 │   ├── session-end.cjs ──────────── Cleanup swap files, save state
-│   └── subagent-init-*.cjs ──────── Inject context into subagents (13 part-hooks)
+│   └── subagent-init-*.cjs ──────── Inject context into subagents (18 part-hooks)
 │
 ├── PROMPT PROCESSING (3 hooks)
 │   ├── init-prompt-gate.cjs ──────── Block until project-config exists
@@ -726,7 +726,7 @@ Bottom of each skill has condensed `:reminder` variants:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 ```
 
 **Update workflow:** Edit `sync-inline-versions.md` (canonical) → `grep SYNC:tag-name` → update all copies. The `SYNC:shared-protocol-duplication-policy` tag in `code-simplifier` and `development-rules.md` prevents AI from "helpfully" extracting inline content back to file references.
@@ -1245,7 +1245,7 @@ flowchart TB
     subgraph "Lesson Persisted"
         P1[lessons-injector.cjs<br/>Injects on EVERY prompt]
         P2[lessons-injector.cjs<br/>Injects on EVERY edit]
-        P3[subagent-init-*.cjs (13 part-hooks)<br/>Injects into subagents]
+        P3[subagent-init-*.cjs (18 part-hooks)<br/>Injects into subagents]
     end
 
     subgraph "Mistake Prevented"
@@ -1266,7 +1266,7 @@ flowchart TB
 - Injected with dedup on prompt (checks last 50 transcript lines)
 - Injected WITHOUT dedup on edit (performance: avoids I/O per edit)
 - Persists across sessions (stored in `docs/project-reference/lessons.md`)
-- Shared with subagents (via 13 `subagent-init-*.cjs` part-hooks)
+- Shared with subagents (via 18 `subagent-init-*.cjs` part-hooks)
 
 ### 8.9 TDD Workflow & Unified Test Specification System
 
@@ -3243,7 +3243,7 @@ flowchart TB
 | **Code proof tracing prevents hallucination**  | evidence-based-reasoning-protocol + /prove-fix                | Skills    |
 | **State survives context compaction**          | Swap engine + todo-tracker + compact-recovery                 | State     |
 | **Lessons persist across sessions**            | docs/project-reference/lessons.md + lessons-injector.cjs      | Hooks     |
-| **Subagents inherit project context**          | 13 subagent-init-\*.cjs part-hooks inject CLAUDE.md + lessons | Hooks     |
+| **Subagents inherit project context**          | 18 subagent-init-\*.cjs part-hooks inject CLAUDE.md + lessons | Hooks     |
 | **Safety boundaries**                          | path-boundary, privacy, scout blocks (exit code 2)            | Hooks     |
 | **Task-gated edits**                           | edit-enforcement.cjs requires TaskCreate before edits         | Hooks     |
 | **Auto-formatting**                            | post-edit-prettier.cjs runs formatter after every edit        | Hooks     |
@@ -3375,7 +3375,7 @@ Agents solve two critical problems:
 
 2. **Parallel execution** — Multiple agents can run simultaneously (e.g., 4 code-reviewer agents reviewing different file categories in parallel), dramatically reducing time for large tasks.
 
-**Key design:** Agents inherit project context via 13 `subagent-init-*.cjs` part-hooks — they automatically receive CLAUDE.md instructions, learned lessons, and active workflow state.
+**Key design:** Agents inherit project context via 18 `subagent-init-*.cjs` part-hooks — they automatically receive CLAUDE.md instructions, learned lessons, and active workflow state.
 
 ### 12.3 Agent Behavioral Rules (NEW)
 

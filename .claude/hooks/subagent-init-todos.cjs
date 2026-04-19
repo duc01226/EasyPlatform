@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Parent Task State (fires 13th of 13)
+ * SubagentStart Hook — Parent Task State (fires 18th of 18)
  * Outputs parent todo list so subagents know active task context.
  * Split to keep subagent-init-identity.cjs within 9,000-char harness limit.
  */

@@ -302,9 +302,16 @@ const DEDUP_LINES = computeDedupLines();
 /** Number of leading transcript lines to check for primacy dedup (top-of-context) */
 const TOP_DEDUP_LINES = 50;
 
+/**
+ * Minimum transcript line count before context-recovery injections fire.
+ * Fresh sessions already have project instructions at maximum recency — skip.
+ */
+const FRESH_SESSION_THRESHOLD = 200;
+
 module.exports = {
     DEDUP_LINES,
     TOP_DEDUP_LINES,
+    FRESH_SESSION_THRESHOLD,
     // Expose internals for testing
     computeDedupLines,
     CONTENT_SOURCES,

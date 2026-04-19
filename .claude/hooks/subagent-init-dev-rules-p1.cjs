@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Development Rules page 1/3 (fires 7th of 13)
+ * SubagentStart Hook — Development Rules page 1/3 (fires 7th of 18)
  *
  * Outputs: development-rules.md page 1 of 3 (max 8,500 chars).
  * .claude/docs/development-rules.md is split dynamically at runtime.

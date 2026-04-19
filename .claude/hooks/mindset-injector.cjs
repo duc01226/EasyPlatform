@@ -13,6 +13,7 @@
  * Triggers:
  *   - PreToolUse → Edit|Write|MultiEdit (before code modifications)
  *   - PreToolUse → Skill (before plan/cook/code/fix/feature skills)
+ *   - PreToolUse → Agent (before sub-agent spawn — full re-anchor in parent context)
  *   - PreToolUse → TaskCreate (on task creation — compact critical context, recency anchor)
  *   - PreToolUse → TaskUpdate with status=in_progress (on task start — recency anchor)
  *
@@ -23,7 +24,7 @@
 const fs = require('fs');
 const path = require('path');
 const { injectCriticalContext, injectAiMistakePrevention, injectLessons } = require('./lib/prompt-injections.cjs');
-const { TOP_DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-utils.cjs');
 
 // Skills that benefit from mindset reminders before execution
 const MINDSET_SKILLS = new Set([
@@ -95,8 +96,9 @@ function main() {
         const toolName = payload.tool_name || '';
         const transcriptPath = payload.transcript_path || '';
 
-        // Gate: only fire for Edit|Write|MultiEdit, matching Skill, or Task operations
+        // Gate: only fire for Edit|Write|MultiEdit, matching Skill, Agent, or Task operations
         const isSkill = toolName === 'Skill';
+        const isAgent = toolName === 'Agent';
         const isTaskOp = toolName === 'TaskCreate' || toolName === 'TaskUpdate';
 
         if (isTaskOp) {
@@ -115,7 +117,7 @@ function main() {
         if (isSkill) {
             const skillName = normalizeSkill(payload.tool_input?.skill);
             if (!MINDSET_SKILLS.has(skillName)) process.exit(0);
-        } else if (!['Edit', 'Write', 'MultiEdit'].includes(toolName)) {
+        } else if (!isAgent && !['Edit', 'Write', 'MultiEdit'].includes(toolName)) {
             process.exit(0);
         }
 
@@ -128,19 +130,15 @@ function main() {
 
         // Golden Rules from CLAUDE.md — re-inject on Edit|Write|MultiEdit to maintain
         // attention after long planning/investigation phases. Generic: extracts dynamically.
-        if (!isSkill) {
+        if (!isSkill && !isAgent) {
             try {
                 const goldenMarker = '[Golden Rules Reminder]';
                 // Top+bottom dedup — skip if recently injected or still at top of context
-                const goldenAlreadyInjected = (() => {
-                    try {
-                        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
-                        const lines = fs.readFileSync(transcriptPath, 'utf-8').split('\n');
-                        return lines.slice(-100).some(l => l.includes(goldenMarker)) || lines.slice(0, TOP_DEDUP_LINES).some(l => l.includes(goldenMarker));
-                    } catch {
-                        return false;
-                    }
-                })();
+                const goldenAlreadyInjected = isMarkerInContext(
+                    loadTranscriptLines(transcriptPath),
+                    goldenMarker,
+                    100
+                );
 
                 if (!goldenAlreadyInjected) {
                     const claudeMdPath = path.resolve(process.env.CLAUDE_PROJECT_DIR || '.', 'CLAUDE.md');
@@ -191,9 +189,9 @@ function main() {
                     if (fs.existsSync(graphDbPath)) {
                         console.log(
                             `\n<HARD-GATE>\n` +
-                                `[GRAPH MANDATORY for /${skillName}] You MUST ATTENTION run at least ONE graph trace on key files before concluding this task.\n` +
+                                `[GRAPH MANDATORY for /${skillName}] MUST ATTENTION run at least ONE graph trace on key files before concluding task.\n` +
                                 `Command: python .claude/scripts/code_graph trace <key-file> --direction both --json\n` +
-                                `Skip ONLY if .code-graph/graph.db does not exist. It EXISTS — so graph trace is REQUIRED.\n` +
+                                `Skip ONLY if .code-graph/graph.db does not exist. It EXISTS — graph trace REQUIRED.\n` +
                                 `</HARD-GATE>`
                         );
                     }

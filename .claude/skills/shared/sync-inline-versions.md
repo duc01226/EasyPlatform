@@ -210,6 +210,20 @@
 
 ---
 
+## SYNC:behavioral-delta-matrix
+
+> **Behavioral Delta Matrix** — MANDATORY for bugfix reviews. Produce this table BEFORE PASS/FAIL verdict. Narrative descriptions don't substitute.
+>
+> | Input state | Pre-fix behavior   | Post-fix behavior | Delta                                |
+> | ----------- | ------------------ | ----------------- | ------------------------------------ |
+> | {condition} | {current behavior} | {fixed behavior}  | Preserved ✓ / Fixed ✓ / REGRESSION ✗ |
+>
+> **Rules:** ≥3 rows · ≥1 row the bug report did NOT mention · REGRESSION delta → FAIL until a preservation test covers it (`tdd-spec-template.md#preservation-tests-mandatory-for-bugfix-specs`)
+>
+> **BLOCKED until:** ≥3 rows · ≥1 row outside bug report · no unmitigated REGRESSION
+
+---
+
 ## SYNC:bug-detection
 
 > **Bug Detection** — MUST ATTENTION check categories 1-4 for EVERY review. Never skip.
@@ -296,6 +310,16 @@
 >
 > **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
 > **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
+
+---
+
+## SYNC:preservation-inventory
+
+> **Preservation Inventory** — MANDATORY for bugfix plans. Trigger keywords in plan title/frontmatter: `fix`, `bug`, `regression`, `broken`, `defect`. Author MUST produce this table BEFORE writing implementation steps.
+>
+> **Columns:** `Invariant | file:line | Why (data consequence if broken) | Verification (TC-ID or grep)`
+>
+> **BLOCKED until:** ≥3 rows · every File cell has `file:line` · every Verification cell has TC-ID or grep (not "manually verify")
 
 ---
 
@@ -478,9 +502,9 @@
 
 ## SYNC:review-protocol-injection
 
-> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 9 protocol blocks VERBATIM. The template below has ALL 9 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
+> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
 >
-> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 9 protocol bodies pre-embedded.
+> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 10 protocol bodies pre-embedded.
 
 ### Subagent Type Selection
 
@@ -549,6 +573,17 @@ Map changed code to test specifications.
 6. If no specs exist → log gap and recommend /tdd-spec.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
 
+### Behavioral Delta Matrix
+MANDATORY for any bugfix review. Produce input-state × pre-fix × post-fix × delta table BEFORE writing verdict.
+- Minimum 3 rows; include at least one row OUTSIDE the original bug report.
+- Any "REGRESSION" delta → review returns FAIL until a preservation test is added.
+- Narrative descriptions do NOT substitute for the matrix.
+Example rows (external-record sync fix):
+| Input | Pre-fix | Post-fix | Delta |
+|-------|---------|----------|-------|
+| Record exists (valid) | Reused | Always recreated → orphan | REGRESSION |
+| Record missing (404) | Error | Recreated | Fixed |
+
 ### Fix-Layer Accountability
 NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
 MANDATORY before ANY fix:
@@ -615,7 +650,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ### Rules
 
-- DO copy the template wholesale — including all 9 embedded protocol sections
+- DO copy the template wholesale — including all 10 embedded protocol sections
 - DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
 - DO choose `code-reviewer` subagent_type for code reviews and `general-purpose` for plan / doc / artifact reviews
 - DO NOT paraphrase, summarize, or skip any protocol section
@@ -658,3 +693,113 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
 > - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
 > - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
+
+---
+
+## SYNC:context-engineering-principles
+
+> **Context Engineering Principles** — Research-backed principles for prompt quality. Source: Anthropic prompt engineering guide, Stanford "lost-in-the-middle" research, 2025-2026 LLM context optimization studies.
+>
+> 1. **Primacy-Recency Effect** — LLM performance drops 15-47% for middle-context information (Stanford). AI attention peaks at first/last 10% of text. **Action:** Place the 3 most critical rules in both the first 5 lines AND the last 5 lines of every prompt. Queries at end improve quality by up to 30% (Anthropic).
+> 2. **High-Signal Density** — Anthropic: _"Identify the smallest collection of high-signal tokens that maximize the probability of the desired outcome."_ **Action:** Every line should change AI behavior. If removing a line doesn't change output → cut it. Target ≥8 rules (MUST ATTENTION/NEVER/ALWAYS) per 100 lines.
+> 3. **Context Rot** — LLM performance degrades as context length grows — even when all content is relevant. Compression (5-20x) maintains or improves accuracy while saving 70-94% tokens. **Action:** Compress aggressively. Shorter, denser prompts outperform longer, diluted ones.
+> 4. **Structured > Prose** — Tables, bullets, XML/markdown parse faster than paragraphs. Constrained formats reduce error rates vs free-text. **Action:** Convert narrative to tables/bullets. Use markdown headers for semantic sections.
+> 5. **RCCF Framework** — Modern LLMs (2025+) already know how to reason. What they need: **R**ole (personality), **C**ontext (grounding), **C**onstraints (guardrails), **F**ormat (structure). Constraints and format matter more than verbose instructions.
+> 6. **Checkbox Avoidance** — `[ ]` syntax triggers mechanical compliance — AI ticks boxes without reasoning. Bullet rules force reading and evaluation. **Action:** Replace `- [ ] Check X` with `- MUST ATTENTION verify X`.
+> 7. **Example Economy** — 3-5 examples optimal for few-shot; diminishing returns after. **Action:** 1 best example per pattern. Use BAD→GOOD pairs (2-3 lines each) for anti-patterns.
+> 8. **Deferred Tool Loading** — Claude Code delays loading tool definitions when they exceed 10% of context window. **Action:** Keep injected docs well under 10% of context budget. Docs exceeding ~3,000 lines are too large for injection — split or compress.
+> 9. **Rule Density Verification** — Post-optimization rule count (MUST ATTENTION/NEVER/ALWAYS) must be ≥ pre-optimization count. Compression should preserve or increase density, never decrease it. **Action:** Count before and after every optimization pass.
+
+---
+
+## SYNC:prompt-enhancement-transforms-base
+
+> **Prompt Enhancement Transforms (Base)** — Transforms 1-3 are identical across `prompt-enhance` / `prompt-expand`. Transform 4 is per-skill (conciseness pass for enhance; structural clarity pass for expand) and stays local to each skill.
+>
+> ### Transform 1: Inline Summaries for READ References
+>
+> **Problem:** AI sees `MUST ATTENTION READ file.md` and skips it.
+> **Solution:** Add a 2-3 line summary of key rules BEFORE the read instruction.
+>
+> **Before:**
+>
+> ```
+> MUST ATTENTION READ .claude/protocols/evidence.md
+> ```
+>
+> **After:**
+>
+> ```
+> > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim requires `file:line` proof.
+> > Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend.
+>
+> MUST ATTENTION READ .claude/protocols/evidence.md for full details.
+> ```
+>
+> **Scope rules:**
+>
+> - `.claude/` protocol files → always add an inline summary (stable, belongs to framework)
+> - `docs/project-reference/` files → NO inline summary (varies per project, auto-injected by hooks). Add: `(content auto-injected by hook — check for [Injected: ...] header before reading)`
+>
+> ### Transform 2: Top Summary Section
+>
+> Required structure (first 20 lines after frontmatter):
+>
+> ```markdown
+> > **[IMPORTANT]** TaskCreate instruction...
+>
+> > **Protocol Name** — [inline summary]. MUST ATTENTION READ `path` for details.
+>
+> ## Quick Summary
+>
+> **Goal:** [One sentence — what this skill achieves]
+>
+> **Workflow:**
+>
+> 1. **[Step]** — [description]
+>
+> **Key Rules:**
+>
+> - [Most critical constraint]
+> ```
+>
+> ### Transform 3: Bottom Closing Reminders
+>
+> Add at the very end of the file:
+>
+> ```markdown
+> ---
+>
+> ## Closing Reminders
+>
+> - **IMPORTANT MUST ATTENTION** [echo rule #1 from the top section]
+> - **IMPORTANT MUST ATTENTION** [echo rule #2]
+> - **IMPORTANT MUST ATTENTION** [echo rule #3]
+> - **IMPORTANT MUST ATTENTION** add a final review task to verify work quality
+> ```
+>
+> Pick 3-5 rules AI most commonly violates. Bottom section re-anchors attention after the long middle.
+
+---
+
+## SYNC:critical-thinking-mindset
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+---
+
+## SYNC:ai-mistake-prevention
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
