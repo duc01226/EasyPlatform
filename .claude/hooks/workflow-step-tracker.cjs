@@ -16,9 +16,36 @@ const { loadState, markStepComplete, getCurrentStepInfo, initWorkflow, clearStat
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
 const { buildWorkflowInstructions } = require('./workflow-router.cjs');
 
-// Get session ID from environment
+// Steps that ARE full workflows — MUST run as sub-agent when invoked inside a parent workflow
+// Only step IDs that appear in workflow sequences AND activate their own multi-step workflow
+const WORKFLOW_IN_WORKFLOW_STEPS = new Set([
+    'workflow-review-changes', // activates review-changes workflow (16 steps)
+    'workflow-review',         // activates review workflow (14 steps)
+]);
+
+// Read skill front matter fields (context-budget, execution-mode) for advisory output
+function getSkillMeta(skillName) {
+    try {
+        const skillPath = `.claude/skills/${skillName}/SKILL.md`;
+        const content = fs.readFileSync(skillPath, 'utf-8');
+        const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+        if (!match) return {};
+        const fm = match[1];
+        return {
+            executionMode: (fm.match(/execution-mode:\s*(\S+)/) || [])[1],
+            contextBudget: (fm.match(/context-budget:\s*(\S+)/) || [])[1],
+        };
+    } catch {
+        return {};
+    }
+}
+
 function getSessionId() {
     return process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID || 'default';
+}
+
+function resolveCmd(stepId, config) {
+    return config.commandMapping?.[stepId]?.claude || `/${stepId}`;
 }
 
 async function main() {
@@ -98,43 +125,53 @@ async function main() {
             process.exit(0);
         }
 
-        // Get current step info before marking complete
-        const info = getCurrentStepInfo(sessionId);
-
         // Mark the step as complete
         const updated = markStepComplete(sessionId, stepId);
 
         if (updated && updated.currentStepIndex < updated.workflowSteps.length) {
             const nextInfo = getCurrentStepInfo(sessionId);
-            const nextCmd = config.commandMapping?.[nextInfo.currentStep]?.claude || `/${nextInfo.currentStep}`;
+            const nextCmd = resolveCmd(nextInfo.currentStep, config);
 
             console.log(`\n## Workflow Step Completed\n`);
-            console.log(`✓ Completed: \`${config.commandMapping?.[stepId]?.claude || `/${stepId}`}\``);
+            console.log(`✓ Completed: \`${resolveCmd(stepId, config)}\``);
             console.log(`\n**Next step:** \`${nextCmd}\` (${nextInfo.currentStepIndex + 1}/${nextInfo.totalSteps})`);
 
-            if (nextInfo.remainingSteps.length > 0) {
+            // Workflow-in-workflow hard gate
+            if (WORKFLOW_IN_WORKFLOW_STEPS.has(nextInfo.currentStep)) {
                 console.log(
-                    `\n**Remaining:** ${nextInfo.remainingSteps
-                        .map(s => {
-                            const cmd = config.commandMapping?.[s];
-                            return cmd?.claude || `/${s}`;
-                        })
-                        .join(' → ')}`
+                    `\n> ⚠️ **[WORKFLOW-IN-WORKFLOW GATE]** \`${nextCmd}\` is a full workflow (activates its own multi-step sequence).` +
+                    ` MUST execute via \`Agent\` tool (\`subagent_type: "code-reviewer"\`) — NEVER as an inline \`Skill\` tool call.` +
+                    ` Inline execution absorbs the entire nested workflow's context into this session.` +
+                    `\n> Sub-agent prompt must include: current git diff context + task description.` +
+                    ` Return only SYNC:subagent-return-contract summary; write full findings to \`plans/reports/\`.`
                 );
+            } else {
+                // Context-budget advisory for heavy non-workflow steps
+                // Merge SKILL.md front matter with workflow-level stepMeta (workflow overrides skill)
+                const skillMeta = getSkillMeta(nextInfo.currentStep);
+                const workflowStepMeta = config.workflows?.[state.workflowType]?.stepMeta?.[nextInfo.currentStep] || {};
+                const effectiveMeta = { ...skillMeta, ...workflowStepMeta };
+                if (effectiveMeta.executionMode === 'subagent' || ['critical', 'high'].includes(effectiveMeta.contextBudget)) {
+                    const budgetLabel = effectiveMeta.contextBudget
+                        ? `context-budget: ${effectiveMeta.contextBudget}`
+                        : `execution-mode: subagent`;
+                    console.log(
+                        `\n> 💡 **[SUB-AGENT RECOMMENDED]** \`${nextCmd}\` is marked \`${budgetLabel}\`.` +
+                        ` Strongly recommended: execute via \`Agent\` tool to preserve main session context.` +
+                        ` Return only SYNC:subagent-return-contract summary.`
+                    );
+                }
+            }
+
+            if (nextInfo.remainingSteps.length > 0) {
+                console.log(`\n**Remaining:** ${nextInfo.remainingSteps.map(s => resolveCmd(s, config)).join(' → ')}`);
             }
             console.log(`\n---\n**IMPORTANT:** Execute \`${nextCmd}\` to continue the workflow.\n`);
         } else if (updated) {
             // Workflow complete — clear state so next prompt gets fresh catalog
             console.log(`\n## Workflow Complete\n`);
             console.log(`All steps in **${state.workflowType}** workflow have been completed successfully!`);
-            console.log(
-                `\n✓ Completed steps: ${state.workflowSteps
-                    .map(s => {
-                        const cmd = config.commandMapping?.[s];
-                        return cmd?.claude || `/${s}`;
-                    })
-                    .join(', ')}`
-            );
+            console.log(`\n✓ Completed steps: ${state.workflowSteps.map(s => resolveCmd(s, config)).join(', ')}`);
             clearState(sessionId);
         }
 

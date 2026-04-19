@@ -920,10 +920,10 @@
                 "review-changes",
                 "review-architecture",
                 "review-domain-entities",
-                "code-simplifier",
-                "code-review",
                 "performance",
                 "integration-test-review",
+                "code-simplifier",
+                "code-review",
                 "integration-test-verify",
                 "plan",
                 "plan-validate",
@@ -934,6 +934,12 @@
                 "watzup",
                 "workflow-end"
             ],
+            "stepMeta": {
+                "review-architecture": { "executionMode": "subagent", "contextBudget": "high" },
+                "review-domain-entities": { "executionMode": "subagent", "contextBudget": "high" },
+                "performance": { "executionMode": "subagent", "contextBudget": "high" },
+                "integration-test-review": { "executionMode": "subagent", "contextBudget": "high" }
+            },
             "whenNotToUse": "PR reviews, codebase reviews, branch comparisons",
             "whenToUse": "User wants to review current uncommitted, staged, or unstaged changes before committing"
         },

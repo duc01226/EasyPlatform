@@ -4,6 +4,12 @@ version: 4.0.0
 description: '[Workflow] Trigger Code Review workflow — review, fix, and re-review recursively until all issues resolved.'
 ---
 
+> **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review` workflow (14 steps). When invoked as a step inside a parent workflow, it MUST execute via `Agent` tool (`subagent_type: "code-reviewer"`) — NEVER as an inline `Skill` tool call. Inline execution absorbs the entire nested workflow context into the parent session.
+>
+> **Sub-agent prompt must include:** target files or git diff context, task description, instruction to return SYNC:subagent-return-contract summary and write full findings to `plans/reports/`.
+>
+> **Standalone invocation** (not inside a workflow): inline execution is fine — no sub-agent required.
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 > **[FRESH SUB-AGENT RE-REVIEW]** After fixes in `/cook`, spawn a fresh sub-agent per `SYNC:fresh-context-review` for unbiased re-review. Max 3 fresh rounds per conversation.
 > **[ITERATION CAP]** Max 3 fresh-subagent re-review rounds per conversation (tracked in conversation context, not persistent files). PASS = zero Critical/High without fixes.
@@ -38,7 +44,7 @@ Activate the `review` workflow. Run `/workflow-start review` with the user's pro
 
 **Goal:** Review codebase or specific scope, fix issues found, then spawn a **fresh code-reviewer sub-agent** for unbiased re-review — repeat until clean.
 
-**Sequence:** /review-architecture → /code-simplifier → /code-review → /performance → /plan → /plan-validate → /why-review → /cook → **fresh sub-agent re-review gate** → /docs-update → /watzup → /workflow-end
+**Sequence:** /review-architecture → /code-simplifier → /code-review → /performance → /integration-test-review → /integration-test-verify → /plan → /plan-validate → /why-review → /cook → **fresh sub-agent re-review gate (/workflow-review WIW)** → /docs-update → /watzup → /workflow-end
 
 **Key Rules:**
 
@@ -51,22 +57,24 @@ Activate the `review` workflow. Run `/workflow-start review` with the user's pro
 
 ## Mandatory Task Creation (ZERO TOLERANCE)
 
-Create EXACTLY these 12 tasks (source: `workflows.json` → `review.sequence`):
+Create EXACTLY these 14 tasks (source: `workflows.json` → `review.sequence`):
 
-| #   | Task Subject                                                                                | Conditional?                |
-| --- | ------------------------------------------------------------------------------------------- | --------------------------- |
-| 1   | `[Workflow] /review-architecture — Architecture compliance review`                          | No                          |
-| 2   | `[Workflow] /code-simplifier — Simplify and refine code`                                    | No                          |
-| 3   | `[Workflow] /code-review — Comprehensive code review`                                       | No                          |
-| 4   | `[Workflow] /performance — Performance analysis`                                            | No                          |
-| 5   | `[Workflow] /plan — Consolidate review findings into fix plan`                              | Skip if all reviews PASS    |
-| 6   | `[Workflow] /plan-validate — Critical questions on fix plan`                                | Skip if all reviews PASS    |
-| 7   | `[Workflow] /why-review — Sanity-check that proposed fixes are warranted`                   | Skip if all reviews PASS    |
-| 8   | `[Workflow] /cook — Implement fixes from plan`                                              | Skip if all reviews PASS    |
-| 9   | `[Workflow] Fresh sub-agent re-review gate — spawn new Agent per SYNC:fresh-context-review` | Skip if all reviews PASS    |
-| 10  | `[Workflow] /docs-update — Update impacted documentation`                                   | Skip if PASS + no staleness |
-| 11  | `[Workflow] /watzup — Wrap up and summarize`                                                | No                          |
-| 12  | `[Workflow] /workflow-end — End workflow`                                                   | No                          |
+| #   | Task Subject                                                                                         | Conditional?                                          |
+| --- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1   | `[Workflow] /review-architecture — Architecture compliance review`                                   | No                                                    |
+| 2   | `[Workflow] /code-simplifier — Simplify and refine code`                                             | No                                                    |
+| 3   | `[Workflow] /code-review — Comprehensive code review`                                                | No                                                    |
+| 4   | `[Workflow] /performance — Performance analysis`                                                     | No                                                    |
+| 5   | `[Workflow] /integration-test-review — Integration test quality review`                              | No                                                    |
+| 6   | `[Workflow] /integration-test-verify — Verify integration tests pass`                                | No                                                    |
+| 7   | `[Workflow] /plan — Consolidate review findings into fix plan`                                       | Skip if all reviews PASS                              |
+| 8   | `[Workflow] /plan-validate — Critical questions on fix plan`                                         | Skip if all reviews PASS                              |
+| 9   | `[Workflow] /why-review — Sanity-check that proposed fixes are warranted`                            | Skip if all reviews PASS                              |
+| 10  | `[Workflow] /cook — Implement fixes from plan`                                                       | Skip if all reviews PASS                              |
+| 11  | `[Workflow] /workflow-review — Fresh sub-agent re-review gate (WIW: spawns code-reviewer sub-agent)` | Skip if all reviews PASS                              |
+| 12  | `[Workflow] /docs-update — Update impacted documentation`                                            | Always run (fast-exits when no business code changed) |
+| 13  | `[Workflow] /watzup — Wrap up and summarize`                                                         | No                                                    |
+| 14  | `[Workflow] /workflow-end — End workflow`                                                            | No                                                    |
 
 NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional tasks `completed` with note "Skipped — all reviews passed".
 
@@ -99,15 +107,60 @@ NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional task
 
 <!-- /SYNC:fresh-context-review -->
 
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
 ### Decision Logic
 
 ```
-Reviews (steps 1-4) → ALL PASS?
-  YES → skip steps 5-9, proceed to /watzup → /workflow-end → DONE
-  NO  → /plan → /plan-validate → /why-review → /cook → FRESH SUB-AGENT RE-REVIEW GATE (step 9)
+Reviews (steps 1-6) → ALL PASS?
+  YES → skip steps 7-11, proceed to /docs-update → /watzup → /workflow-end → DONE
+  NO  → /plan → /plan-validate → /why-review → /cook → FRESH SUB-AGENT RE-REVIEW GATE (step 11)
 ```
 
-### Fresh Sub-Agent Re-Review Gate (Step 9) — After `/cook` Applies Fixes
+### Fresh Sub-Agent Re-Review Gate (Step 11) — After `/cook` Applies Fixes
 
 1. **DO NOT** attempt main-agent re-review (main agent has confirmation bias from its own fixes)
 2. **DO** spawn a NEW `Agent` tool call with `subagent_type: "code-reviewer"` using the canonical template from `SYNC:review-protocol-injection` in `.claude/skills/shared/sync-inline-versions.md`. Inject all 9 required SYNC protocol blocks verbatim (`SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`). Target files = `"run git diff to see all uncommitted changes"`. Report path = `plans/reports/workflow-review-round{N}-{date}.md`.
@@ -144,15 +197,15 @@ Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-ag
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — create ALL 12 tasks immediately
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — create ALL 14 tasks immediately
 - **IMPORTANT MUST ATTENTION** after fixes in `/cook`, spawn a NEW `code-reviewer` sub-agent via the `Agent` tool per `SYNC:fresh-context-review` — NEVER re-review with the main agent
 - **IMPORTANT MUST ATTENTION** track fresh-subagent round count via conversation context (session-scoped) — max 3 rounds, escalate via `AskUserQuestion` if exceeded
 - **IMPORTANT MUST ATTENTION** PASS means a fresh sub-agent round finds ZERO Critical/High issues WITHOUT needing fixes — only then are changes ready to commit
-- **IMPORTANT MUST ATTENTION** skip steps 5-9 when all reviews PASS (no fixes needed)
+- **IMPORTANT MUST ATTENTION** skip steps 7-11 when all reviews PASS (no fixes needed)
 - **IMPORTANT MUST ATTENTION** each step MUST invoke its `Skill` tool — marking completed without invocation is a violation
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->

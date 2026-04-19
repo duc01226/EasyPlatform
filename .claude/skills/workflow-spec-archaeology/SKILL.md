@@ -31,124 +31,162 @@ disable-model-invocation: true
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-Activate the `spec-archaeology` workflow. Run `/workflow-start spec-archaeology` with the user's prompt as context.
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
+## Quick Summary
+
+**Goal:** Reverse-engineer tech-agnostic spec bundle from existing codebase — reimplementation-ready output for any AI agent or engineering team.
+
+**Workflow:** `/scout` → `/plan` (N×M tasks) → `/plan-review` → `/why-review` → `/plan-validate` → `/spec-archaeology` (+ Phase F) → `/review-artifact` → `/watzup` → `/workflow-end`
+
+**Key Rules:**
+
+- MUST ATTENTION TaskCreate one task per module × phase BEFORE extraction — verify TaskList count ≥ N×M
+- 4+ modules → BLOCKING: spawn all sub-agents in ONE message — NEVER inline single-session
+- Context compaction/session resume → `TaskList` FIRST, read completeness tracker, NEVER re-scout/re-plan
+- All output tech-agnostic — NEVER framework names, language constructs, class names
+- Every claim cites `[Source: file:line]` — mark `[UNVERIFIED]` not blank
+
+---
+
+Activate spec-archaeology workflow via `/workflow-start spec-archaeology`.
 
 **Steps:**
 
 ```
 /scout             → holistic codebase map — module registry, entry points, integration boundaries
+                     (instruct /scout: produce Module Registry per spec-archaeology Step 1 format —
+                      NOT a task-file list; output: specs/{date}-{system-name}/00-module-registry.md)
 /plan              → decompose into per-module per-phase tasks (N modules × M phases = N×M tasks)
-/plan-review       → validate task breakdown and coverage completeness
-/plan-validate     → user confirms scope, module list, and extraction phases
+                     → verify TaskList count ≥ N×M before proceeding (task count gate)
+/plan-review       → validate task breakdown and coverage completeness (N×M task count confirmed?)
 /why-review        → validate approach: is spec-archaeology the right tool? any simpler path?
+/plan-validate     → user confirms scope, module list, extraction phases, and task count
 /spec-archaeology  → execute tasks: per-task investigate deeply → extract → write immediately
-/review-artifact   → quality review of generated spec files (source citations, tech-agnostic, completeness)
-/docs-update       → assemble final spec bundle README and completeness index
+                     → includes Phase F: spec bundle assembly + README completeness index
+/review-artifact   → quality review: source citations, tech-agnostic, completeness
+                     → fresh sub-agent re-review gate after any gap found (max 2 rounds)
 /watzup            → session summary: modules covered, files generated, open questions
 /workflow-end
 ```
 
-> **Scale routing (auto-applied during /plan):**
+> **Scale routing (enforced during /plan):**
 >
 > - 1–3 modules → single-session extraction (all steps in one context)
-> - 4–10 modules → sub-agent parallel extraction (one sub-agent per module)
+> - 4–10 modules → sub-agent parallel extraction (one sub-agent per module, spawned in ONE message)
 > - 10+ modules → incremental coverage (one module-group per session, completeness tracker maintained)
+
+> **[BLOCKING SCALE GATE]** If `module_count ≥ 4` at the end of `/plan`: you **MUST** spawn sub-agents. Single-session inline extraction with 4+ modules is a workflow violation — do NOT proceed to `/spec-archaeology` without spawning module sub-agents.
+
+> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction:
+>
+> 1. `TaskList` FIRST — resume existing tasks, NEVER create duplicates
+> 2. Read `specs/{date}-{system-name}/README.md` completeness table — skip already-extracted modules (✅)
+> 3. NEVER re-run `/scout` or `/plan` in a resumed session
 
 ## When to Use
 
-- You want to **re-implement the same product on a new tech stack** — need the full spec to brief any AI agent
-- You need to **onboard a new team** with zero knowledge of the existing codebase — spec bundle is the handoff artifact
-- You are doing **compliance documentation** — need to prove what the system does in plain language
-- You are doing a **tech migration** — need a tech-agnostic spec before writing any new code
-- You want to **generate a future-state backlog from an existing system** — spec bundle → PBIs via `product-discovery` workflow
-- You want to **verify the system matches its intended design** — compare spec bundle against original product vision
-- An AI agent needs to **build a clone or fork** of the system's business logic
+- **Re-implement on new tech stack** — full spec to brief any AI agent
+- **Onboard new team** — spec bundle as knowledge handoff artifact
+- **Compliance documentation** — prove system behavior in plain language
+- **Tech migration** — tech-agnostic spec before writing new code
+- **Generate future backlog** — spec bundle → PBIs via `product-discovery`
+- **Verify design intent** — compare spec bundle against original vision
+- **Clone/fork business logic** — AI agent needs reimplementation spec
 
 ## When NOT to Use
 
-- You want to understand one specific feature → use `investigation` workflow
-- You want to write test cases for existing code → use `write-integration-test` workflow
-- You want to update existing documentation → use `documentation` workflow
-- You want to refactor or optimize the code → use `refactor` or `performance` workflow
-- You have NO existing codebase → use `greenfield-init` or `product-discovery` instead
+| Goal                            | Use Instead                             |
+| ------------------------------- | --------------------------------------- |
+| Understand one specific feature | `investigation`                         |
+| Write tests for existing code   | `write-integration-test`                |
+| Update existing docs            | `documentation`                         |
+| Refactor or optimize            | `refactor` / `performance`              |
+| No existing codebase            | `greenfield-init` / `product-discovery` |
 
 ## Key Mechanics
 
-### 1. Scout First — Holistic Codebase Map
+### 1. Scout → Module Registry
 
-The `/scout` step maps the entire codebase at a high level before any module is read in detail:
+`/scout` maps entire codebase high-level before any module read. Capture: directory structure + layer boundaries; entry points (bootstrap, router, DI container); module catalog + responsibilities + file counts; cross-cutting concerns (auth, logging, error handling); data store ownership; integration boundaries (message bus, external clients, webhooks, scheduled jobs).
 
-- Directory structure and layer boundaries
-- Entry points (bootstrap, router/handler registration, DI container)
-- Module/service enumeration with responsibilities and file counts
-- Cross-cutting concerns (auth, logging, error handling)
-- Data store access points and ownership
-- Integration boundaries (message bus, external clients, webhook handlers, scheduled jobs)
+Output: `specs/{date}-{system-name}/00-module-registry.md` — mandatory plan foundation. **No plan without it.**
 
-**Output:** `specs/{date}-{system-name}/00-module-registry.md`
+### 2. Plan → N×M Task Decomposition
 
-This registry is the mandatory foundation for the plan. No plan without it.
+`/plan` converts module registry → concrete task breakdown. `TaskCreate` EVERY task before extraction begins.
 
-### 2. Plan = Task Decomposition (Big → Small)
+- **One task per module × phase** — 10 modules × 5 phases = 50 tasks minimum
+- **≤50 files per task** — split large modules: "Business Rules: Orders (Part 1: Commands)", "(Part 2: Event Handlers)"
+- **Dependency order** — Phase A (domain model) before Phase B (business rules) per module
+- **Priority** — core domain modules first, infrastructure last
 
-The `/plan` step converts the module registry into a concrete task breakdown:
-
-- **One task per module per extraction phase** — for a 10-module system with 5 phases: 50 tasks
-- **Scope each task to ≤50 files** — large modules split into sub-parts (e.g., "Business Rules: Orders (Part 1: Commands)", "Part 2: Event Handlers")
-- **Dependency-order tasks** — Phase A (domain model) before Phase B (business rules) for the same module
-- **Priority order** — core domain modules first, infrastructure/utility last
-
-`TaskCreate` is called for EVERY task before extraction begins. The `/plan-review` confirms no modules are missing from the registry. `/plan-validate` gets user confirmation.
-
-**Output:** `specs/{date}-{system-name}/extraction-plan.md`
+Output: `specs/{date}-{system-name}/extraction-plan.md`
 
 ### 3. Per-Task Deep Investigation
 
-Each task follows a strict protocol:
+READ (grep → narrow → read) → TRACE (call chain, validators, triggers) → EXTRACT (this phase/module only) → WRITE (`[Source: file:line]` every claim) → VERIFY (mark `[UNVERIFIED]` without source) → COMPLETE
 
-1. **Read** — grep to narrow file set, then read all files in scope
-2. **Trace** — trace code paths: what calls what, what validates what, what triggers what
-3. **Extract** — extract spec content for this phase/module only
-4. **Write** — write immediately to spec file with `[Source: file:line]` on every claim
-5. **Verify** — re-read spec against source; mark `[UNVERIFIED]` for anything without a traceable source
-6. **Complete** — mark task done, move to next
+NEVER accumulate across tasks — write output after each. Primary safeguard against context overflow on large codebases.
 
-**Never accumulate across tasks.** Write output after each task. This is the primary safeguard against context window overrun on large codebases.
+### 4. Sub-Agent Parallel Extraction (4+ modules)
 
-### 4. Sub-Agent Parallel Extraction (4+ Modules)
+4+ modules → spawn one sub-agent per module in ONE message. Each receives: Module Registry + task list + output path. Sub-agents run phases A–E in parallel. Main context assembles final bundle.
 
-When the plan identifies 4+ modules, spawn sub-agents:
-
-- One sub-agent per module (or group of closely related small modules)
-- Each sub-agent receives: Module Registry, its assigned task list, output path
-- Sub-agents run phases A–E in parallel
-- Main context assembles the final bundle from sub-agent outputs
-
-Each sub-agent prompt includes: assigned module name, task list, output file path, and the tech-agnostic output contract.
+Each sub-agent prompt MUST include: module name, task list, output path, tech-agnostic contract, SYNC protocols (critical-thinking, evidence-based, incremental-persistence, cross-scope boundary).
 
 ### 5. Quality Review Loop
 
-After all extraction tasks complete, `/review-artifact` runs a quality pass:
+`/review-artifact` checks: `[Source: file:line]` on every entity/operation/rule; zero tech-specific terms; complete state machine transitions; ≥1 error case per operation; all registry modules present.
 
-- Every entity/operation/rule has a `[Source: file:line]`
-- No tech-specific terms in any spec document
-- All state machines have complete transitions
-- All operations have at least one error case documented
-- All modules from registry are present in the spec
-
-Any failure creates a fix task → re-investigate → fix → re-check. Loop continues until all checks pass.
+Gap found → fix task → re-investigate ��� fix → spawn **fresh `code-reviewer` sub-agent** (max 2 rounds). PASS = zero `[UNVERIFIED]` without exclusion reason + zero tech terms. NEVER inline re-review — main agent rationalizes its own output.
 
 ### 6. Handoff at /workflow-end
 
-AI presents:
-
-- Spec bundle summary: N spec files, X modules covered, Y extraction phases completed
-- Completeness matrix: which phases ran for which modules
-- Open questions: anything that couldn't be extracted with confidence ≥80%
-- Recommended next steps:
-    - `/product-discovery` — use spec bundle as input to generate a future-state backlog
-    - `/greenfield-init` — start re-implementation planning from the spec bundle
-    - `/feature-docs` — expand individual features into full detailed docs
+Presents: spec bundle summary (N files, X modules, Y phases); completeness matrix; open questions (confidence <80%); next steps: `/product-discovery` (future backlog from spec), `/greenfield-init` (re-implementation plan), `/feature-docs` (expand individual features).
 
 ## Conditional Skip Rules
 
@@ -163,17 +201,20 @@ AI presents:
 
 ## Closing Reminders
 
-- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — created at plan time, one task per module per phase
-- **MANDATORY IMPORTANT MUST ATTENTION** scout holistically FIRST — module registry MUST exist before plan creation
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — one task per module per phase; verify TaskList count ≥ N×M before proceeding
+- **MANDATORY IMPORTANT MUST ATTENTION** scout holistically FIRST — Module Registry MUST exist before plan creation
 - **MANDATORY IMPORTANT MUST ATTENTION** plan decomposes big→small — every task ≤50 files in scope
 - **MANDATORY IMPORTANT MUST ATTENTION** each task: read files → trace paths → extract → write output immediately (never batch)
 - **MANDATORY IMPORTANT MUST ATTENTION** all output tech-agnostic — no framework names, no language constructs
 - **MANDATORY IMPORTANT MUST ATTENTION** every claim cites `[Source: file:line]` — mark `[UNVERIFIED]` not blank
+- **MANDATORY IMPORTANT MUST ATTENTION** 4+ modules → BLOCKING: must spawn sub-agents in ONE message; never inline single-session for 4+ modules
+- **MANDATORY IMPORTANT MUST ATTENTION** context compaction / session resume → `TaskList` first, read completeness tracker, NEVER re-run scout or plan
+- **MANDATORY IMPORTANT MUST ATTENTION** after any fix in `/review-artifact` → spawn fresh `code-reviewer` sub-agent — NEVER inline re-review
 
-        <!-- SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->

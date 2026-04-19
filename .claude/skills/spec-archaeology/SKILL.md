@@ -58,6 +58,8 @@ Before reading any code, use `AskUserQuestion` to confirm:
 
 > **Scale routing:** If scope is 1–3 modules → single-session extraction. If scope is 4+ modules → MUST use sub-agent parallel extraction (see Sub-Agent Pattern). If scope is entire large system → MUST use incremental coverage: one module per session.
 
+> **[BLOCKING SCALE GATE]** If `module_count ≥ 4` at the end of Step 2 (Plan): you **MUST** use sub-agent parallel extraction. Attempting single-session inline extraction with 4+ modules is a workflow violation. Do NOT proceed past Step 2 without spawning sub-agents.
+
 ---
 
 ## Step 1 — Holistic Scout (MANDATORY BEFORE ANY EXTRACTION)
@@ -168,6 +170,17 @@ Phase 2 (Business Rules) — {N} tasks
 | ---- | ------ | ----------- | -------------- |
 ```
 
+### Task Count Verification Gate
+
+> **[BLOCKING GATE]** Before proceeding to `/plan-review`:
+>
+> 1. Run `TaskList` — count all created extraction tasks
+> 2. Compute expected minimum: `module_count × phase_count`
+> 3. If `TaskList` count < expected: plan is **INCOMPLETE** — create missing tasks before continuing
+> 4. If `TaskList` count ≥ expected: proceed to `/plan-review`
+>
+> An incomplete task list is not a plan — it is a guarantee of missing spec sections.
+
 ---
 
 ## Step 3 — Per-Task Deep Investigation + Extraction
@@ -210,6 +223,18 @@ Rules:
 - **If a task's scope is still too large** — split it further (e.g., one file per sub-task if necessary)
 - **Use Grep first** to narrow the file set before reading: `grep` for the entity name → read only the files that match
 - **Each task is a fresh investigation** — never rely on memory from a previous task
+
+### Context Compaction / Session Resume Guard
+
+> **[BLOCKING — MANDATORY at every session start or after context compaction]**
+>
+> 1. Run `TaskList` BEFORE any other action — identify `in_progress` or `pending` tasks; NEVER create duplicates
+> 2. Read `specs/{date}-{system-name}/README.md` completeness table — identify already-extracted modules (marked ✅)
+> 3. Skip re-extraction for any module marked ✅ complete — append only to incomplete sections
+> 4. Continue from the first non-completed task in the task list
+> 5. NEVER re-run Step 1 (Scout) or Step 2 (Plan) in a resumed session — the Module Registry and task list already exist
+>
+> This guard is the primary safeguard against wasted re-extraction and duplicate spec sections on large systems.
 
 ---
 
@@ -395,24 +420,51 @@ When the codebase has 4 or more modules to extract, use sub-agents for parallel 
 4. Sub-agents run in parallel, each writing to their module's spec file
 5. Main context assembles the final spec bundle from all sub-agent outputs
 
+> **[BLOCKING — PARALLEL SPAWN PROTOCOL]** Spawn ALL module sub-agents in a **SINGLE response** with multiple `Agent` tool calls. Never spawn module sub-agents one at a time sequentially — that eliminates the parallelism benefit and extends wall-clock time by N× for an N-module system.
+>
+> ```
+> Agent(module=Orders, ...)   ← all in ONE message
+> Agent(module=Users, ...)    ← same response
+> Agent(module=Billing, ...)  ← same response
+> ```
+>
+> Each sub-agent is independent — no shared mutable state, no ordering dependency between modules.
+
 **Sub-Agent Prompt Template:**
 
 ```
 You are extracting the spec for module: {ModuleName}.
 
-Module Registry: [path to 00-module-registry.md]
-Your tasks: [list of TaskCreate IDs for this module]
-Output path: specs/{date}-{system-name}/
+Module Registry: specs/{date}-{system-name}/00-module-registry.md — read this FIRST to understand your module's boundaries and the full system context.
+Your assigned tasks: {list of TaskUpdate IDs for this module — call TaskList to confirm}
+Output path: specs/{date}-{system-name}/{module-name}-spec.md
 
-Follow the per-task protocol:
-1. READ all files listed in your task's scope
-2. TRACE code paths
-3. EXTRACT spec content
-4. WRITE to output file with [Source: file:line] on every claim
-5. Mark [UNVERIFIED] for anything you cannot trace to source
+---
 
-Do NOT read files outside your module's scope.
-Write output immediately after each task — do not batch.
+MANDATORY PROTOCOLS — apply throughout your entire execution:
+
+> Critical Thinking & Anti-Hallucination — every claim needs traced proof. Confidence >80% → write with [Source]. 60-80% → mark [NEEDS-VERIFY]. <60% → mark [UNVERIFIED]. Never present a guess as fact. Never invent field names, method signatures, or business rules.
+
+> Evidence-Based Reasoning — BLOCKED until: source file read AND file:line citation exists. Forbidden words without proof: "obviously", "I think", "should be", "probably". If you cannot find evidence: write "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+> Incremental Persistence — MANDATORY: after EACH task completes, append findings to your output file immediately. Never hold content in memory across tasks. Context cutoff loses all in-memory work — disk writes survive.
+
+> Cross-Scope Boundary — HARD GATE: Do NOT read files outside your assigned module's scope. If you discover a dependency on an unlisted module, note it as [CROSS-REF: {module-name} — not in scope] in the spec output and stop — do not follow the reference into that module.
+
+> Tech-Agnostic Output — FORBIDDEN in all spec output: framework names (e.g., Entity Framework, Django), ORM types, language generics (List<T>), nullable annotations (string?), file paths or class names from source, architectural pattern names (CQRS, middleware). Use business-meaning descriptions only.
+
+---
+
+Per-task execution protocol — follow in order for EACH assigned task:
+
+1. READ   — grep to narrow file set to this task's scope; read only matching files
+2. TRACE  — trace code paths: what calls what, what validates what, what triggers what
+3. EXTRACT — extract spec content for this phase/module only
+4. WRITE  — append to output file immediately with [Source: file:line] on every claim
+5. VERIFY — re-read written spec vs source; mark [UNVERIFIED] for any claim without traceable source
+6. COMPLETE — call TaskUpdate to mark task completed; move to next task
+
+Never skip ahead. Never accumulate across tasks. Each task is a fresh investigation.
 ```
 
 ---
@@ -440,6 +492,22 @@ If any check fails:
 2. Re-investigate the relevant source file
 3. Either add the citation or mark `[UNVERIFIED]`
 4. Re-run the review checklist for the fixed section
+
+### Fresh Sub-Agent Re-Review Gate (After Any Fix)
+
+> **[BLOCKING]** After any fix loop iteration, the main agent has rationalization bias toward its own output. Do NOT re-review inline.
+>
+> **Spawn a NEW `Agent` tool call** (`subagent_type: "code-reviewer"`) with:
+>
+> - Target: all generated spec files in `specs/{date}-{system-name}/`
+> - Protocol: re-read ALL spec files from scratch; check every `[UNVERIFIED]` item; flag any tech-specific term; verify every entity/operation has at least one `[Source: file:line]`
+> - Report path: `plans/reports/spec-archaeology-review-round{N}-{date}.md`
+>
+> **Rules:**
+>
+> - Max 2 fresh sub-agent rounds — if still failing after round 2, surface remaining gaps via `AskUserQuestion` with explicit list
+> - PASS = fresh sub-agent finds zero `[UNVERIFIED]` items without an explicit exclusion reason AND zero tech-specific terms
+> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW `Agent` call
 
 ---
 
@@ -508,19 +576,21 @@ Track completeness in `specs/{date}-{system-name}/README.md` completeness table.
 
 ## Closing Reminders
 
-- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — one task per module per phase, created at plan time
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — one task per module per phase; verify TaskList count ≥ N×M (task count gate) before proceeding to `/plan-review`
 - **MANDATORY IMPORTANT MUST ATTENTION** scout the FULL codebase holistically BEFORE creating the plan — the plan requires complete module registry
 - **MANDATORY IMPORTANT MUST ATTENTION** each task must deeply investigate its scope: read files → trace paths → extract → write output immediately
 - **MANDATORY IMPORTANT MUST ATTENTION** write spec output after EACH task — never accumulate; large codebases will overflow context
 - **MANDATORY IMPORTANT MUST ATTENTION** all output must be tech-agnostic — no framework names, no language constructs
 - **MANDATORY IMPORTANT MUST ATTENTION** every claim must cite `[Source: file:line]` — mark `[UNVERIFIED]` rather than guessing
-- **MANDATORY IMPORTANT MUST ATTENTION** for 4+ modules, use the sub-agent parallel extraction pattern
+- **MANDATORY IMPORTANT MUST ATTENTION** 4+ modules → BLOCKING: spawn all sub-agents in ONE message; inline extraction with 4+ modules is a violation
 - **MANDATORY IMPORTANT MUST ATTENTION** confirm scope with user via `AskUserQuestion` BEFORE Step 1 — never auto-start
+- **MANDATORY IMPORTANT MUST ATTENTION** context compaction / session resume → `TaskList` FIRST, read completeness tracker, NEVER re-run scout or plan
+- **MANDATORY IMPORTANT MUST ATTENTION** after any fix in spec quality review → spawn fresh `code-reviewer` sub-agent (max 2 rounds) — NEVER inline re-review
 
-        <!-- SYNC:critical-thinking-mindset:reminder -->
+          <!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->

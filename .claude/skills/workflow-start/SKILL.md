@@ -32,6 +32,51 @@ description: "[Skill Management] Activate a workflow from the injected catalog. 
 
 <!-- /SYNC:ai-mistake-prevention -->
 
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
 ## Quick Summary
 
 **Goal:** Detect user intent → present catalog/custom options → activate with full TaskCreate plan.
@@ -238,6 +283,30 @@ Per step: `TaskUpdate in_progress` → **invoke `Skill` tool** → complete skil
 
 ---
 
+## Workflow-in-Workflow Gate (HARD GATE — NO EXCEPTIONS)
+
+Some workflow steps ARE themselves full workflows. Running them inline causes the parent session to absorb the entire nested workflow's tool calls, file reads, and sub-agent reports — guaranteed context overflow on long sequences.
+
+**Steps requiring sub-agent delegation (hard gate):**
+
+| Step                       | Workflow activated | Steps | Agent type      |
+| -------------------------- | ------------------ | ----- | --------------- |
+| `/workflow-review-changes` | `review-changes`   | 16    | `code-reviewer` |
+| `/workflow-review`         | `review`           | 14    | `code-reviewer` |
+
+**Protocol when these steps appear in the active workflow sequence:**
+
+1. NEVER invoke via inline `Skill` tool call
+2. Spawn via `Agent` tool: `subagent_type: "code-reviewer"`
+3. Agent prompt must include: current git diff context + feature/task description
+4. Sub-agent runs the full nested workflow in its isolated context
+5. Return ONLY SYNC:subagent-return-contract summary — write full findings to `plans/reports/`
+6. Main agent reads `plans/reports/` file only when resolving specific blockers
+
+> The `workflow-step-tracker.cjs` PostToolUse hook injects the ⚠️ **[WORKFLOW-IN-WORKFLOW GATE]** warning automatically when the next step is one of the above.
+
+---
+
 ## Closing Reminders
 
 - **MUST ATTENTION** call `AskUserQuestion` BEFORE activating — present all THREE options (catalog | custom pipeline | execute directly). Never auto-activate.
@@ -246,9 +315,9 @@ Per step: `TaskUpdate in_progress` → **invoke `Skill` tool** → complete skil
 - **MUST ATTENTION** never mark a task `completed` without invoking its `Skill` tool — skip means comment + completed, not delete
 - **MUST ATTENTION** custom pipeline steps must be valid `commandMapping` keys — never invent step names
 - **MUST ATTENTION** use Tier 1 context parse FIRST — check `## Workflow Catalog` in context before any file read
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
