@@ -4,6 +4,15 @@ version: 1.1.0
 description: '[Planning] Auto-review plan for validity, correctness, and best practices — recursive: review, fix issues, re-review until PASS (max 3 iterations)'
 ---
 
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
 > **[BLOCKING]** This is a validation gate. MUST ATTENTION use `AskUserQuestion` to present review findings and get user confirmation. Completing without asking at least one question is a violation.
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
@@ -85,8 +94,17 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 ### Subagent Type Selection
 
-- `code-reviewer` — for code reviews (reviewing source files, git diffs, implementation)
-- `general-purpose` — for plan / doc / artifact reviews (reviewing markdown plans, docs, specs)
+Choose sub-agent type based on plan type detected in Phase 0:
+
+| Plan type                             | Sub-agent type          | Rationale                                  |
+| ------------------------------------- | ----------------------- | ------------------------------------------ |
+| Code review (source files, git diffs) | `code-reviewer`         | Purpose-built for code analysis            |
+| Feature / Bugfix / Refactor plan      | `general-purpose`       | Plan/doc/artifact review                   |
+| Security-sensitive plan               | `security-auditor`      | Threat modeling, trust boundary analysis   |
+| Performance plan                      | `performance-optimizer` | Baseline, bottleneck, measurement strategy |
+| Infrastructure / CI-CD plan           | `general-purpose`       | Infra plans are doc artifacts              |
+
+**Default:** `general-purpose` for any plan review not matching the above specializations.
 
 ### Canonical Agent Call Template (Copy Verbatim)
 
@@ -120,12 +138,12 @@ MUST check categories 1-4 for EVERY review. Never skip.
 3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
 4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
 5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
-6. Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
+6. Language-Idiomatic Traps: Based on the languages/runtimes visible in the plan's file list — apply your knowledge of common idiomatic pitfalls for those languages. Do NOT enumerate a fixed list; derive concerns from the actual tech stack present.
 Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
 
 ### Design Patterns Quality
 Priority checks for every code change:
-1. DRY via OOP: Same-suffix classes (*Entity, *Dto, *Service) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+1. DRY via OOP: Identify same-purpose classes (same naming pattern, same lifecycle, same data shape). 3+ similar patterns → extract to shared abstraction. Apply your knowledge of the project's language/framework to determine the idiomatic base class / mixin / trait / protocol pattern.
 2. Right Responsibility: Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
 3. SOLID: Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
 4. After extraction/move/rename: Grep ENTIRE scope for dangling references. Zero tolerance.
@@ -140,14 +158,13 @@ Verify WHAT code does matches WHY it was changed.
 4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
 NEVER mark review PASS without completing both traces (happy + error path).
 
-### Test Spec Verification
-Map changed code to test specifications.
-1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
-2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
-3. New functions/endpoints/handlers → flag for test spec creation.
-4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
-6. If no specs exist → log gap and recommend /tdd-spec.
+### Test Coverage Verification
+Map changed code to test coverage.
+1. Identify the project's test spec format and location — search for test files, spec docs, or test catalogs near the changed files.
+2. Every changed code path MUST map to a corresponding test (or flag as "needs test").
+3. New functions/endpoints/handlers → flag for test creation.
+4. Verify test references point to actual code (file:line, not stale).
+5. If no tests exist → log gap and recommend creating tests.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
 
 ### Fix-Layer Accountability
@@ -193,8 +210,10 @@ HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
 BLOCKED until: Read target files; Grep 3+ patterns; Graph trace (if graph.db exists); Assumptions verified with evidence.
 
 ## Reference Docs (READ before reviewing)
-- docs/project-reference/code-review-rules.md
-- {skill-specific reference docs — e.g., integration-test-reference.md for integration-test-review; backend-patterns-reference.md for backend reviews; frontend-patterns-reference.md for frontend reviews}
+Search the repository for:
+- Project coding standards or review rules docs (search: "code-review-rules", "coding-standards", "style-guide", "contributing")
+- Architecture documentation relevant to the plan's domain (search: "patterns-reference", "architecture", "adr")
+- If none found, rely on your knowledge of the project's tech stack inferred from file extensions and directory structure.
 
 ## Target Files
 {explicit file list OR "run git diff to see uncommitted changes" OR "read all files under {plan-dir}"}
@@ -232,7 +251,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group (same suffix, same lifecycle, same purpose) MUST ATTENTION share a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 ## Quick Summary
 
@@ -314,6 +333,70 @@ Complete ALL checks before writing the final verdict:
 
 If any check is incomplete → you have NOT completed the adversarial review. Go back.
 
+## Plan Dimension Thinking Framework
+
+After plan-type detection (Phase 0), evaluate each dimension below using this reasoning pattern:
+
+> **For each dimension:** (1) Understand its role in the plan's domain, (2) Read the plan's claims about it, (3) Derive the actual concerns from first principles — what could go wrong if this dimension is weak? (4) Apply your knowledge of the plan's tech stack to find stack-specific gaps.
+
+### Dimension 1: Scope Integrity
+
+**Think:** Does the plan's scope match the stated goal exactly — not broader, not narrower?
+
+- What's the minimal set of changes needed to deliver the stated goal?
+- What does the plan add that's NOT in the goal? → Scope creep.
+- What's in the goal that the plan doesn't address? → Scope gap.
+- Stress test: "If we skip phase X, does the feature still work?" → If yes, that phase is out of scope.
+
+### Dimension 2: Data Flow Correctness
+
+**Think:** Can I trace how data moves through every phase of this plan?
+
+- Where does data originate? Where does it end up?
+- What transforms it in between? Are those transforms described in the plan?
+- What happens to data at system boundaries (API, message bus, storage, UI)? Does the plan address each boundary?
+- What data states are invalid? Does the plan guard against them?
+
+### Dimension 3: Dependency Chain Completeness
+
+**Think:** Does the plan account for everything its changes affect?
+
+- Every file/module the plan touches: what imports it? what calls it? what depends on its contract?
+- If the plan changes an interface/contract, are ALL consumers listed?
+- External dependencies (third-party services, shared infra): are they stable? If they break, what's the fallback?
+- Run graph trace if graph.db exists — compare plan's file list against downstream impact.
+
+### Dimension 4: Failure Mode Coverage
+
+**Think:** What does the plan say about when things go wrong?
+
+- For each external call, async operation, or state change: what's the error behavior?
+- Does the plan include a rollback strategy for irreversible operations?
+- What's the partial failure state? (half-migrated, half-deployed, race condition) Is it addressable?
+- Is there a monitoring/alerting plan for the new code paths?
+
+### Dimension 5: Test Observability
+
+**Think:** How will a developer know if this plan's implementation is correct?
+
+- Can the stated acceptance criteria be mechanically verified by a test?
+- Are there behaviors that are only observable via logs/traces (not unit tests)?
+- Which phase introduces the risk? Does a test exist in that phase?
+- "Tests pass" is NOT a success criterion — name the specific behaviors being tested.
+
+### Dimension 6: Knowledge Prerequisites
+
+**Think:** Does implementing this plan require knowledge the plan doesn't surface?
+
+- Domain knowledge: Are business rules spelled out, or does the implementer need to already know them?
+- System knowledge: Are integration points documented, or does the implementer need tribal knowledge?
+- Tooling knowledge: Does the plan assume setup steps that aren't listed?
+- If any prerequisite is unstated → the plan is not implementation-ready.
+
+**Use these dimensions to generate targeted, evidence-backed questions — not generic "add more detail" suggestions.**
+
+---
+
 ## Behavioral Delta Matrix (MANDATORY for bugfixes)
 
 <!-- SYNC:behavioral-delta-matrix -->
@@ -343,6 +426,31 @@ Perform automatic self-review of an implementation plan to ensure it's valid, co
 3. If no plan found -> Error: "No plan to review. Run /plan first."
 
 ## Workflow
+
+### Phase 0: Detect Plan Type
+
+Before applying any checklist, read `plan.md` and classify the plan:
+
+| Signal in plan                                               | Type                      | Additional review focus                                                                     |
+| ------------------------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------- |
+| "fix", "bug", "regression", "defect" in title/description    | **Bugfix**                | Behavioral Delta Matrix (MANDATORY), preservation inventory, regression tests               |
+| "migrate", "schema", "database", "index"                     | **Data/Schema**           | Rollback path, zero-downtime strategy, data preservation, migration idempotency             |
+| "auth", "permission", "security", "encrypt", "token", "RBAC" | **Security**              | Threat modeling, attack surface, trust boundary changes, sub-agent: `security-auditor`      |
+| "performance", "latency", "cache", "N+1", "throughput"       | **Performance**           | Baseline metrics, regression risk, measurement strategy, sub-agent: `performance-optimizer` |
+| "refactor", "extract", "rename", "restructure"               | **Refactor**              | Behavior preservation, blast radius, dangling references                                    |
+| "API", "contract", "endpoint", "consumer", "event"           | **Contract/Integration**  | Backward compatibility, consumer impact, versioning strategy                                |
+| "infra", "CI", "pipeline", "deploy"                          | **Infrastructure/DevOps** | Rollback plan, environment parity, secrets handling                                         |
+| None of the above                                            | **Feature**               | Standard checklist, acceptance criteria mapping, YAGNI                                      |
+
+**If multiple signals match**, list all types and apply ALL their focus areas.
+
+**Plan type drives:**
+
+- Which sub-agent type to use (see "Subagent Type Selection" above)
+- Which sections of the Adversarial Review Mindset to emphasize
+- Whether Behavioral Delta Matrix is mandatory (bugfix only)
+
+---
 
 ### Step 1: Read Plan Files
 
@@ -514,6 +622,25 @@ When graph DB is available, verify the plan covers all affected files:
 - Flag any downstream file NOT listed in the plan as "potentially missed"
 - This catches cross-service impact (MESSAGE_BUS consumers, event handlers) that the plan author may have overlooked
 
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
+
 <!-- SYNC:fresh-context-review -->
 
 > **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
@@ -640,21 +767,40 @@ After the sub-agent returns:
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST ATTENTION** run `/why-review` after completing this skill to validate design rationale, alternatives considered, and risk assessment.
 **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
+    <!-- SYNC:double-round-trip-review:reminder -->
 - **IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone. Note: Round 3 (adversarial simulation) is MANDATORY even on PASS — it is not triggered only by FAIL. The SYNC:double-round-trip-review protocol describes a 2-round minimum; plan-review extends this to 3 rounds. Round 3 = the adversarial sub-agent from the Adversarial Review Mindset section above.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+    <!-- /SYNC:double-round-trip-review:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+  <!-- /SYNC:graph-assisted-investigation:reminder -->
+  <!-- SYNC:cross-service-check:reminder -->
+- **IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
+  <!-- /SYNC:cross-service-check:reminder -->
+  <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

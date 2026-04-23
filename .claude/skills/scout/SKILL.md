@@ -1,10 +1,19 @@
 ---
 name: scout
-version: 1.0.0
-description: "[Investigation] Fast codebase file discovery for task-related files. Use when quickly locating relevant files across a large codebase, beginning work on features spanning multiple directories, or before making changes that might affect multiple parts. Triggers on "find files", "locate", "scout", "search codebase", "what files"."
+version: 1.1.0
+description: '[Investigation] Fast codebase file discovery for task-related files. Use when quickly locating relevant files across a large codebase, beginning work on features spanning multiple directories, or before making changes that might affect multiple parts. Triggers on "find files", "locate", "scout", "search codebase", "what files".'
 execution-mode: subagent
 context-budget: medium
 ---
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
@@ -48,6 +57,25 @@ context-budget: medium
 
 <!-- /SYNC:evidence-based-reasoning -->
 
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
+
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 <!-- SYNC:rationalization-prevention -->
@@ -89,9 +117,9 @@ context-budget: medium
 
 <!-- /SYNC:fix-layer-accountability -->
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **External Memory:** Complex/lengthy work → write findings incrementally to `plans/reports/`. Prevents context loss.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof with confidence % (>80% act, <80% verify first).
 
 ## Quick Summary
 
@@ -99,46 +127,46 @@ context-budget: medium
 
 **Workflow:**
 
-1. **Analyze Request** — Extract entity names, feature keywords, file types from prompt
-2. **Parallel Search** — Spawn 3 agents searching backend core, backend infra, and frontend paths
-3. **Graph Expand (MANDATORY — DO NOT SKIP)** — **YOU MUST ATTENTION** run `/graph-query` on 2-3 key files found in Step 2. This is NOT optional. Graph reveals the complete dependency network that grep alone CANNOT find. Use `/graph-connect-api` for frontend↔backend API tracing. Without this step, investigation results are incomplete.
-4. **Synthesize** — Combine grep + graph results into numbered, prioritized file list with suggested starting points
+1. **Phase 0: Classify** — Detect search scope (backend/frontend/both) + keyword type
+2. **Analyze Request** — Extract entity names, feature keywords, file types from prompt
+3. **Parallel Search** — Spawn agents searching backend core, backend infra, frontend paths
+4. **Graph Expand (MANDATORY — DO NOT SKIP)** — **MUST ATTENTION** run graph commands on 2-3 key files. Graph reveals complete dependency network grep CANNOT find.
+5. **Low-Result Check** — If <5 files returned, re-examine keywords and run second pass
+6. **Synthesize** — Combine grep + graph into numbered, prioritized file list
 
 **Key Rules:**
 
-- Speed over depth -- return file paths only, no content analysis
-- Target 3-5 minutes total completion time
-- 3-minute timeout per agent; skip agents that don't return in time
+- Speed over depth — return file paths only, no content analysis
+- Target 3-5 minutes total; 3-minute timeout per agent
+- NEVER skip graph expansion when `.code-graph/graph.db` exists
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+# Scout — Fast Codebase File Discovery
 
-# Scout - Fast Codebase File Discovery
+---
 
-Fast codebase search to locate files needed for a task. Token-efficient, parallel execution.
+## Phase 0: Classify Search Scope
 
-**KEY PRINCIPLE**: Speed over depth. Return file paths only - no content analysis. Target 3-5 minutes total.
+**Before spawning agents**, classify the request:
+
+| Scope         | Detection                                     | Agent Strategy           |
+| ------------- | --------------------------------------------- | ------------------------ |
+| Backend-only  | C# class names, domain entities, API handlers | Agents 1+2, skip Agent 3 |
+| Frontend-only | Component names, TypeScript, Angular features | Agent 3 only             |
+| Full-stack    | Feature name spanning both layers             | All 3 agents             |
+| Unknown       | Ambiguous prompt                              | Default to all 3 agents  |
+
+**Think:** Does prompt mention a specific layer? Does entity exist in backend, frontend, or both? Adjust agent count — avoid spawning unnecessary agents.
 
 ---
 
 ## When to Use
 
-- Quickly locating relevant files across a large codebase
+- Quickly locating relevant files across large codebase
 - Beginning work on features spanning multiple directories
-- Before making changes that might affect multiple parts
+- Before changes affecting multiple parts
 - Mapping file landscape before investigation or implementation
-- Finding all files related to an entity, feature, or keyword
 
-**NOT for**: Deep code analysis (use `feature-investigation`), debugging (use `debug-investigate`), or implementation (use `feature-implementation`).
-
----
-
-## Quick Reference
-
-| Input               | Description                                         |
-| ------------------- | --------------------------------------------------- |
-| `USER_PROMPT`       | What to search for (entity names, feature keywords) |
-| `SCALE`             | Number of parallel agents (default: 3)              |
-| `REPORT_OUTPUT_DIR` | Use `Report:` path from `## Naming` section         |
+**NOT for:** Deep code analysis (→ `feature-investigation`), debugging (→ `debug-investigate`), implementation (→ `feature-implementation`).
 
 ---
 
@@ -146,70 +174,79 @@ Fast codebase search to locate files needed for a task. Token-efficient, paralle
 
 ### Step 1: Analyze Search Request
 
-Extract keywords from USER_PROMPT to identify:
+Extract from USER_PROMPT:
 
-- Entity names (e.g., User, Customer, Order)
-- Feature names (e.g., authentication, notification)
+- Entity names (User, Customer, Order)
+- Feature names (authentication, notification)
 - File types needed (backend, frontend, or both)
 
 ### Step 2: Execute Parallel Search
 
-Spawn SCALE number of `scout` subagents in parallel using Agent tool (`subagent_type: "scout"`).
+Spawn SCALE number of `scout` subagents in parallel via Agent tool (`subagent_type: "scout"`).
 
-**WHY `scout` not `Explore`:** Custom `scout` agents read `.claude/agents/scout.md` which includes graph CLI knowledge and Bash access. Built-in `Explore` agents have NO graph awareness.
+**WHY `scout` not `Explore`:** Custom `scout` agents read `.claude/agents/scout.md` — includes graph CLI knowledge + Bash access. Built-in `Explore` agents have NO graph awareness.
 
-#### Agent Distribution Strategy
+#### Agent Distribution
 
 - **Agent 1 - Backend Core**: `src/Services/*/Domain/`, `src/Services/*/UseCaseCommands/`, `src/Services/*/UseCaseQueries/`
 - **Agent 2 - Backend Infra**: `src/Services/*/UseCaseEvents/`, `src/Services/*/Controllers/`, `src/Services/*/BackgroundJobs/`
 - **Agent 3 - Frontend**: `{frontend-apps-dir}/`, `{frontend-libs-dir}/{domain-lib}/`, `{frontend-libs-dir}/{common-lib}/`
 
-#### Agent Instructions
-
-- **Timeout**: 3 minutes per agent
-- Skip agents that don't return within timeout
-- Use Glob for file patterns, Grep for content search, Bash for graph CLI
-- Return only file paths, no content
+Per agent: 3-minute timeout. Return file paths only — no content analysis. Use Glob (patterns), Grep (content), Bash (graph CLI).
 
 ### Step 3: Graph Expand (MANDATORY — DO NOT SKIP)
 
-**YOU (the main agent) MUST ATTENTION run these graph commands YOURSELF after sub-agents return.** This step is NOT optional — without graph, results are incomplete. Sub-agents cannot use graph — only you can.
+**YOU (main agent) MUST ATTENTION run graph commands YOURSELF after sub-agents return.** NOT optional — without graph, results are incomplete. Sub-agents cannot use graph — only main agent can.
 
 ```bash
 # Check graph exists
 ls .code-graph/graph.db 2>/dev/null && echo "GRAPH_AVAILABLE" || echo "NO_GRAPH"
 ```
 
-If GRAPH_AVAILABLE, pick 2-3 key files from sub-agent results (entities, commands, bus messages) and run:
+If GRAPH_AVAILABLE, pick 2-3 key files from sub-agent results (entities, commands, bus messages):
 
 ```bash
-# Get full dependency network of a key file
+# Full dependency network of key file
 python .claude/scripts/code_graph connections <key_file> --json
 
-# Find ALL callers of a key command/handler
+# All callers of key command/handler
 python .claude/scripts/code_graph query callers_of <FunctionName> --json
 
-# Find ALL importers of a bus message class
+# All importers of bus message class
 python .claude/scripts/code_graph query importers_of <file_path> --json
 
-# Batch query multiple files at once
+# Batch query multiple files (most efficient)
 python .claude/scripts/code_graph batch-query <file1> <file2> <file3> --json
 
-# If graph returns "ambiguous" — search to disambiguate, then retry with qualified name
+# If graph returns "ambiguous" — disambiguate first
 python .claude/scripts/code_graph search <keyword> --kind Function --json
 
-# Find shortest path between two nodes (trace how A connects to B)
+# Trace shortest path between two nodes
 python .claude/scripts/code_graph find-path <source_qn> <target_qn> --json
 
-# Filter results by service and limit count
+# Filter by service, limit results
 python .claude/scripts/code_graph query callers_of <name> --limit 5 --filter "ServiceName" --json
 ```
 
-Merge graph results with sub-agent grep results. Graph discovers files that grep missed (structural relationships).
+**Grep-First Discovery (semantic queries):** When prompt describes behavior/flow (not specific file), grep key terms FIRST to discover entry files, then use those as graph input:
 
-### Step 4: Synthesize Results
+1. Grep class names, commands, handlers, endpoints
+2. Use discovered files as input to `connections`, `batch-query`, or `trace`
+3. Use `trace --direction both` on middle files (controllers, commands) for full upstream + downstream
 
-Combine grep + graph results into a **numbered, prioritized file list** (see Results Format below).
+Graph results get HIGHER priority than grep — structural relationships > text matches. After graph expansion, grep again to verify content in discovered files.
+
+### Step 4: Low-Result Check
+
+If total files found <5 after Steps 2-3:
+
+1. Re-examine keywords — too specific? Try broader synonyms
+2. Spawn second scout agent with alternate search terms
+3. Try `python .claude/scripts/code_graph search <keyword> --json` to find nodes by name
+
+### Step 5: Synthesize Results
+
+Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 ---
 
@@ -305,37 +342,6 @@ Combine grep + graph results into a **numbered, prioritized file list** (see Res
 
 <!-- /SYNC:subagent-return-contract -->
 
-If `.code-graph/graph.db` exists, **orchestrate grep ↔ graph ↔ glob** to find files faster:
-
-### Grep-First Discovery (When Query is Semantic)
-
-When the user's prompt describes a behavior or flow (not a specific file), use Grep/Glob/Search FIRST to discover entry point files before using graph tools:
-
-1. Grep for key terms from the user's query (class names, commands, handlers, endpoints)
-2. Use discovered files as input to `connections`, `batch-query`, or `trace` commands
-3. Use `trace --direction both` on middle files (controllers, commands) to see full upstream + downstream flow
-
-### After grep/glob finds entry files, use graph to expand the network:
-
-```bash
-# Check graph exists
-ls .code-graph/graph.db 2>/dev/null && echo "AVAILABLE" || echo "MISSING"
-
-# Full picture of a key file (callers + importers + tests in one call)
-python .claude/scripts/code_graph connections <file> --json
-
-# Find all callers of a function/command (e.g., after finding a handler)
-python .claude/scripts/code_graph query callers_of <name> --json
-
-# Find all importers of a module/entity (e.g., after finding a BusMessage)
-python .claude/scripts/code_graph query importers_of <file> --json
-
-# Batch query multiple files at once (most efficient)
-python .claude/scripts/code_graph batch-query <f1> <f2> <f3> --json
-```
-
-**Key:** Graph results get HIGHER priority than grep (structural relationships > text matches). After graph expansion, grep again to verify content in discovered files.
-
 ---
 
 ## Results Format
@@ -392,29 +398,9 @@ python .claude/scripts/code_graph batch-query <f1> <f2> <f3> --json
 
 ---
 
-## Report Output
-
-Use naming pattern: `plans/reports/scout-{date}-{slug}.md`
-
-**Output Standards:**
-
-- Sacrifice grammar for concision
-- List unresolved questions at end
-- Always provide numbered file list with priority ordering
-
----
-
-## See Also
-
-- `feature-investigation` skill - Deep analysis of discovered files
-- `feature-implementation` skill - Implementing features after scouting
-- `planning` skill - Creating implementation plans from scouted files
-
----
-
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY MUST ATTENTION — NO EXCEPTIONS:** If NOT already in workflow, MUST ATTENTION use `AskUserQuestion` to ask user:
 >
 > 1. **Activate `investigation` workflow** (Recommended) — scout → investigate
 > 2. **Execute `/scout` directly** — run this skill standalone
@@ -423,35 +409,63 @@ Use naming pattern: `plans/reports/scout-{date}-{slug}.md`
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY MUST ATTENTION — NO EXCEPTIONS** after completing, MUST ATTENTION use `AskUserQuestion` to present:
 
-- **"/investigate (Recommended)"** — Deep-dive into discovered files to understand logic and relationships
-- **"/plan"** — If scouted files are sufficient to start planning implementation
+- **"/investigate (Recommended)"** — Deep-dive into discovered files
+- **"/plan"** — If scouted files sufficient to start planning
 - **"Skip, continue manually"** — user decides
+
+---
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **MUST ATTENTION** run Phase 0 classification BEFORE spawning agents — scope determines agent count
+- **MUST ATTENTION** graph expand is NOT optional — run at least ONE graph command on key files when `.code-graph/graph.db` exists
+- **MUST ATTENTION** if <5 files found, re-check keywords and run second pass with alternates
+- **MUST ATTENTION** use `AskUserQuestion` after completing — NEVER auto-proceed to next step
+- **MUST ATTENTION** break work into `TaskCreate` tasks BEFORE starting
+- **MUST ATTENTION** write incremental findings to `plans/reports/` — NEVER hold all results in memory
+- **MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = DO NOT recommend.
+
+**Anti-Rationalization:**
+
+| Evasion                                | Rebuttal                                                   |
+| -------------------------------------- | ---------------------------------------------------------- |
+| "Graph step too slow, skip it"         | Graph finds what 50 greps miss. NEVER skip.                |
+| "Only 2 files, no need for report"     | Incremental write costs nothing. Skip = context loss risk. |
+| "Scope obvious, skip Phase 0"          | Wrong agent set = missed files. Always classify first.     |
+| "Already searched, results complete"   | Show grep + graph evidence. No proof = incomplete.         |
+| "Simple scout, skip workflow question" | User decides scope. NEVER assume standalone is acceptable. |
 
   <!-- SYNC:evidence-based-reasoning:reminder -->
 
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
-- **IMPORTANT MUST ATTENTION** never skip steps via evasions. Plan anyway. Test first. Show grep evidence with `file:line`.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
-- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding when `.code-graph/graph.db` exists.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:fix-layer-accountability:reminder -->
-- **IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
-      <!-- /SYNC:fix-layer-accountability:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:rationalization-prevention:reminder -->
+- **MUST ATTENTION** never skip steps via evasions. Plan anyway. Test first. Show grep evidence with `file:line`.
+    <!-- /SYNC:rationalization-prevention:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
+- **MUST ATTENTION** run at least ONE graph command on key files before concluding when `.code-graph/graph.db` exists.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->
+    <!-- SYNC:fix-layer-accountability:reminder -->
+- **MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+    <!-- /SYNC:fix-layer-accountability:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
     <!-- /SYNC:critical-thinking-mindset:reminder -->
     <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
     <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

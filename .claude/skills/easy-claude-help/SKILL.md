@@ -212,7 +212,7 @@ Controls how old reference docs can be before the staleness gate activates.
 3. On next prompt, blocks until you run `/scan-all`, `/scan-*`, or type `skip scan`
 4. `skip scan` dismisses the gate for 24 hours
 
-> **Tip:** Run `/scan-all` to refresh all 10 reference docs at once.
+> **Tip:** Run `/scan-all` to refresh all scanned reference docs at once.
 
 ---
 
@@ -345,3 +345,5 @@ Optional feature that builds a knowledge graph of your codebase for graph-blast-
   <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
   <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

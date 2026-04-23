@@ -41,8 +41,8 @@ Research, analyze, and create implementation plans.
 Debug technical issues and provide solutions.
 
 ```bash
-/debug the API returns 500 errors intermittently
-/debug authentication flow not working
+/debug-investigate the API returns 500 errors intermittently
+/debug-investigate authentication flow not working
 ```
 
 **When to use**: Investigating and diagnosing problems

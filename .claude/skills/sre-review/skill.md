@@ -1,10 +1,19 @@
 ---
 name: sre-review
-version: 1.3.0
+version: 1.4.0
 description: '[Code Quality] Production readiness review for service-layer and API changes'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -251,27 +260,25 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:review-protocol-injection -->
 
-> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
+> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify code AND documentation.
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **External Memory:** Complex/lengthy work → write intermediate findings + final results to `plans/reports/` — prevents context loss, serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% verify first).
 
 ## Quick Summary
 
-**Goal:** Assess production readiness of service-layer and API changes by scoring observability, reliability, and operational preparedness.
+**Goal:** Assess production readiness of service-layer and API changes — score observability, reliability, data integrity, and database performance.
 
-**When to use:** After implementing backend service or API changes, before committing.
+**When to use:** After implementing backend service or API changes, before committing. Frontend-only changes exempt.
 
-**Scope:** Service-layer and API changes only — frontend-only changes exempt.
+**Why:** Working code that can't be debugged, monitored, or rolled back is technical debt in disguise.
 
-**Why this exists:** Code that works but can't be debugged, monitored, or rolled back is technical debt in disguise.
+**Deployment context:** Read `docs/project-config.json` → `infrastructure` section:
 
-> **Deployment Context:** Read `docs/project-config.json` → `infrastructure` section for deployment platform:
->
-> - `containerization` — e.g., "docker" → check Dockerfiles, docker-compose
-> - `orchestration` — e.g., "kubernetes" → check K8s manifests, Helm charts
-> - `cicd.tool` — e.g., "azure-devops" → check pipeline configs
+- `containerization` → check Dockerfiles, docker-compose
+- `orchestration` → check K8s manifests, Helm charts
+- `cicd.tool` → check pipeline configs
 
 ## Your Mission
 
@@ -281,32 +288,28 @@ $ARGUMENTS
 
 ## Review Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+**Be skeptical. Every claim needs traced proof, confidence >80%.**
 
-- Do NOT accept operational readiness at face value — verify by reading actual implementations
-- Every score must include `file:line` evidence (grep results, read confirmations)
-- If you cannot prove a score with a code trace, score it 0
-- Question assumptions: "Is this really handled?" → trace the error/retry/timeout path to confirm
-- Challenge completeness: "Are all failure modes covered?" → check what happens when dependencies fail
-- Verify observability: "Can we actually debug this in production?" → check logging, correlation, metrics
-- No "looks fine" without proof — state what you verified and how
+- NEVER accept operational readiness at face value — verify by reading actual implementations
+- Every score MUST have `file:line` evidence — unprovable score = 0
+- Question: "Is this really handled?" → trace error/retry/timeout path to confirm
+- Challenge: "Are ALL failure modes covered?" → check what happens when dependencies fail
+- Verify: "Can we debug this in production?" → check logging, correlation, metrics
 
 ## Scope Resolution
 
-1. If arguments specify files/directories → review those
-2. Else review uncommitted changes (`git diff --name-only`)
-3. Focus on: `*.cs` files in `src/Services/`, API controllers, service classes
-4. Skip: frontend files, test files, documentation, configuration-only changes
+1. Arguments specify files/directories → review those
+2. Else → review uncommitted changes (`git diff --name-only`)
+3. Focus: `*.cs` in `src/Services/`, API controllers, service classes
+4. Skip: frontend files, test files, documentation, config-only changes
 
-## Production Readiness Checklist
+## Production Readiness Scoring
 
-Review the changed files and score each criterion 0-2:
+Score each criterion 0-2: **0** = not addressed, **1** = partially, **2** = fully.
 
-- **0** = Not addressed
-- **1** = Partially addressed
-- **2** = Fully addressed
+### Observability (max 8)
 
-### Observability (max 8 points)
+> **Think:** If this service errors at 3am, can on-call engineer diagnose root cause from logs alone — without reproducing?
 
 | #   | Criterion              | What to Check                                                                                                 |
 | --- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -315,25 +318,31 @@ Review the changed files and score each criterion 0-2:
 | 3   | **Metrics Awareness**  | Operations >100ms consider tracking duration. New endpoints consider latency monitoring                       |
 | 4   | **Correlation**        | Cross-service calls include or propagate correlation IDs for distributed tracing                              |
 
-### Reliability (max 8 points)
+### Reliability (max 8)
 
-| #   | Criterion                 | What to Check                                                                                                 |
-| --- | ------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 5   | **Retry Strategy**        | Transient failures (HTTP, DB timeouts) have retry logic or documented reason for not retrying                 |
-| 6   | **Timeout Configuration** | HTTP clients and external calls have explicit timeout (not relying on defaults)                               |
-| 7   | **Error Handling**        | Errors handled gracefully — no swallowed exceptions, no generic catch-all without logging                     |
-| 8   | **Fallback Behavior**     | Critical paths define what happens when dependencies fail (degraded mode, cached response, user-facing error) |
+> **Think:** If the downstream dependency is down or slow, does this service degrade gracefully or cascade-fail?
 
-### Data Integrity (max 4 points)
+| #   | Criterion                 | What to Check                                                                                             |
+| --- | ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 5   | **Retry Strategy**        | Transient failures (HTTP, DB timeouts) have retry logic or documented reason for not retrying             |
+| 6   | **Timeout Configuration** | HTTP clients and external calls have explicit timeout (not relying on defaults)                           |
+| 7   | **Error Handling**        | Errors handled gracefully — no swallowed exceptions, no generic catch-all without logging                 |
+| 8   | **Fallback Behavior**     | Critical paths define behavior when dependencies fail (degraded mode, cached response, user-facing error) |
+
+### Data Integrity (max 4)
+
+> **Think:** If database wiped and reseeded from scratch, does system still reach a valid state?
 
 | #   | Criterion              | What to Check                                                                                                 |
 | --- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
 | 9   | **Seed vs Migration**  | Seed data (default records, system config) lives in startup data seeders, NOT in one-time migration executors |
 | 10  | **Seeder Idempotency** | Data seeders use check-then-create pattern (query before insert) — safe for repeated runs on any environment  |
 
-**Decision test for reviewers:** _"If the database is reset, does this data still need to exist?"_ Yes → must be in a seeder. No → migration is acceptable.
+**Decision test:** _"If the database is reset, does this data still need to exist?"_ Yes → must be in seeder. No → migration acceptable.
 
-### Database Performance (max 4 points)
+### Database Performance (max 4)
+
+> **Think:** At 10x current data volume, do these queries still complete in <1s?
 
 > **[IMPORTANT] Database Performance Protocol (MANDATORY):**
 >
@@ -407,36 +416,31 @@ Review the changed files and score each criterion 0-2:
 
 ## Structural Impact Analysis (RECOMMENDED if graph.db exists)
 
-If `.code-graph/graph.db` exists, include structural impact in production readiness assessment:
+- `python .claude/scripts/code_graph graph-blast-radius --json` → blast radius >20 nodes = high-risk deployment
+- `python .claude/scripts/code_graph query tests_for <function_name> --json` → verify test coverage on changed functions
+- `python .claude/scripts/code_graph trace <service-file> --direction downstream --json` → verify all downstream event handlers, bus consumers, cross-service calls have error handling
 
-- Run: `python .claude/scripts/code_graph graph-blast-radius --json`
-- High blast radius (>20 impacted nodes) --> flag as high-risk deployment
-- Check if changed functions have test coverage via `python .claude/scripts/code_graph query tests_for <function_name> --json`
+## Round 2: Fresh Sub-Agent Review (MANDATORY)
 
-### Graph-Trace for Production Flow
+NEVER declare PASS after Round 1 alone. Round 2 MUST spawn a fresh sub-agent with ZERO Round 1 memory — NEVER re-review in the same session.
 
-When graph DB is available, use `trace` to verify production readiness:
+**Spawn via canonical template in `SYNC:review-protocol-injection`:**
 
-- `python .claude/scripts/code_graph trace <service-file> --direction downstream --json` — verify all downstream dependencies are accounted for (event handlers, bus consumers, cross-service calls)
-- `python .claude/scripts/code_graph trace <service-file> --direction both --json` — full flow: entry points + downstream cascade
-- Flag any cross-service MESSAGE_BUS consumer that lacks error handling or monitoring
+1. `subagent_type`: `code-reviewer`
+2. Task: `"SRE production readiness review — score all 12 criteria (0-2) for {files reviewed in Round 1}"`
+3. Round: `"Round 2. Zero memory of prior rounds. Re-read ALL target files from scratch."`
+4. Reference Docs: `docs/project-reference/code-review-rules.md`
+5. Target Files: same files from Scope Resolution
+6. Integrate sub-agent report findings — DO NOT filter or override
 
-## Round 2: Focused Re-Review (MANDATORY)
+**Round 2 focus** (what Round 1 typically misses):
 
-> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
+- Operational concerns spanning multiple services
+- Subtle reliability gaps (retry, circuit breakers, timeout handling)
+- Missing observability (structured logging, correlation IDs, metrics)
+- Data integrity edge cases under concurrent load
 
-After completing Round 1 scoring, execute a **second full review round**:
-
-1. **Re-read** the Round 1 score and findings
-2. **Re-evaluate** ALL scoring criteria — do NOT rely on Round 1 memory
-3. **Focus on** what Round 1 typically misses:
-    - Operational concerns that span multiple services
-    - Subtle reliability gaps (retry logic, circuit breakers, timeout handling)
-    - Missing observability (structured logging, correlation IDs, metrics)
-    - Data integrity edge cases under concurrent load
-4. **Re-score** all criteria — verify Round 1 scoring accuracy
-5. **Update report** with `## Round 2 Findings (Fresh-Context)` section
-6. **Final score** must incorporate findings from BOTH rounds
+**Final verdict = Round 1 + Round 2 combined.**
 
 ## Output Format
 
@@ -491,50 +495,75 @@ After completing Round 1 scoring, execute a **second full review round**:
 
 ## Important Notes
 
-- Advisory only (final VERDICT) — the score and verdict inform the team but do not block commits; the PROCESS steps (graph gate, Round 2, Database Performance Protocol) remain MANDATORY and are not advisory
-- Evidence-based — cite specific file:line for each score
-- Proportional — small bug fixes need less rigor than new endpoints (applies to VERDICT interpretation, not to skipping MANDATORY process steps)
-- Check for project framework patterns (background job handlers, base controller error handling)
+- Advisory (final VERDICT only) — score/verdict inform team but don't block commits; MANDATORY process steps (graph gate, Round 2, Database Performance Protocol) are NEVER advisory
+- Evidence-based — cite `file:line` for every score; unprovable score = 0
+- Proportional — small bug fixes need less rigor than new endpoints (applies to VERDICT interpretation, NOT to skipping MANDATORY steps)
+- Check framework patterns — background job base handlers, base controller error handling
 
 ---
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in workflow, MUST ATTENTION use `AskUserQuestion` to ask user:
 >
 > 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → sre-review → test → docs
-> 2. **Execute `/sre-review` directly** — run this skill standalone
+> 2. **Execute `/sre-review` directly** — run standalone
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** — after completing, MUST ATTENTION use `AskUserQuestion`:
 
-- **"/watzup (Recommended)"** — Wrap up and check for doc staleness
-- **"/test"** — Run tests before wrapping up
+- **"/watzup (Recommended)"** — wrap up + check doc staleness
+- **"/test"** — run tests before wrapping up
 - **"Skip, continue manually"** — user decides
+
+---
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks via `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER declare PASS after Round 1 alone — Round 2 MUST spawn fresh sub-agent with zero prior context
+- **MANDATORY IMPORTANT MUST ATTENTION** every score requires `file:line` evidence — unprovable score = 0
+- **MANDATORY IMPORTANT MUST ATTENTION** ALL list queries MUST use pagination; ALL filter fields MUST have indexes
+- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding (when graph.db exists)
+- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide
+
+**Anti-Rationalization:**
+
+| Evasion                                       | Rebuttal                                                                     |
+| --------------------------------------------- | ---------------------------------------------------------------------------- |
+| "Round 1 was thorough, skip Round 2"          | NEVER — fresh sub-agent catches what you rationalized away                   |
+| "Small change, skip graph gate"               | HARD-GATE applies regardless of size — run one command                       |
+| "No explicit paging but it looks fine"        | Score 0 until proven with `file:line`. Assume worst without evidence         |
+| "Already checked observability"               | Show `file:line` proof. No proof = no check                                  |
+| "VERDICT is advisory so skip MANDATORY steps" | Advisory = VERDICT only. Graph gate, Round 2, DB Protocol are NEVER advisory |
 
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:double-round-trip-review:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context) — never skip or combine with Round 1.
-    <!-- /SYNC:double-round-trip-review:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding (when graph.db exists).
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+  <!-- /SYNC:graph-assisted-investigation:reminder -->
+  <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
   <!-- /SYNC:critical-thinking-mindset:reminder -->
   <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

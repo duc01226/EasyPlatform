@@ -163,7 +163,6 @@ function getStepDescription(step) {
         dependency: 'Analyze dependencies',
         'team-sync': 'Generate team sync agenda',
         'quality-gate': 'Run quality gate checklist',
-        'test-spec': 'Generate test specification and test cases',
         'design-spec': 'Create design specification',
         status: 'Generate status report',
         handoff: 'Create role-to-role handoff record',

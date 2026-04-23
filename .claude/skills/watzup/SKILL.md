@@ -4,6 +4,15 @@ version: 1.1.0
 description: '[Utilities] Review recent changes and wrap up the work'
 ---
 
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -100,6 +109,51 @@ After the change summary, run `git diff --name-only` (against base branch or rec
 
 ---
 
+## Spec-Driven Development Health Check (REQUIRED when business code changed)
+
+Run this check when `git diff --name-only` includes ANY `src/Services/**` or frontend app/domain files.
+
+### Step 1 — Engineering Spec Bundle Check
+
+```bash
+ls docs/specs/ 2>/dev/null
+```
+
+> **Note:** Results are **app-bucket** names (e.g., `bravoTALENTS`, `bravoGROWTH`, `bravoSURVEYS`), not service names. Exception: `accounts/` is flat. To find a specific service spec, probe `ls docs/specs/{app-bucket}/`.
+
+| Result                     | Action                                                                                                                                                                |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Directory missing or empty | ⚠️ Flag: `"No engineering spec bundle found. Consider running /workflow-spec-driven-dev (mode: init-full) to bootstrap spec-driven documentation for this codebase."` |
+| Bundle exists              | Proceed to Step 2                                                                                                                                                     |
+
+### Step 2 — Spec Staleness Check (only if bundle exists)
+
+For each spec file in `docs/specs/`:
+
+```bash
+git log --since="30 days ago" --name-only -- docs/specs/ | head -10
+```
+
+| Result                                                               | Action                                                                                                                                                    |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No commits in last 30 days AND business code changed in this session | ⚠️ Flag: `"Engineering spec bundle may be stale (no updates in >30 days). Consider running /workflow-spec-driven-dev (mode: audit) to verify freshness."` |
+| Recent commits found                                                 | ✅ Spec bundle is being maintained                                                                                                                        |
+
+### Step 3 — Feature Docs Freshness Check
+
+```bash
+git log --since="30 days ago" --name-only -- docs/business-features/ | head -10
+```
+
+| Result                                               | Action                                                                                  |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| No commits in last 30 days AND business code changed | ⚠️ Flag: `"Business feature docs may be stale. Consider running /docs-update to sync."` |
+| Recent commits found                                 | ✅ Feature docs are being maintained                                                    |
+
+**Output only flags that apply. Skip this section entirely if no business code changed.**
+
+---
+
 ## AI Mistake & Lesson Learned Analysis (REQUIRED)
 
 After the doc staleness check, review the entire session for AI mistakes and lessons learned.
@@ -185,3 +239,18 @@ Wait for user confirmation before invoking `/learn`.
       <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

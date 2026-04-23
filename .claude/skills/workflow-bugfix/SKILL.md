@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Bug Fix workflow — systematic debugging with 
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /debug-investigate -> /plan -> /plan-review -> /plan-validate -> /why-review -> /tdd-spec -> /tdd-spec-review -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 > **[CRITICAL] Plan Before Fix Gate:** The `/plan → /plan-review → /plan-validate` steps are MANDATORY before `/fix`. You MUST ATTENTION create todo tasks for these plan steps AND complete them before proceeding to fix. Never skip planning — fixes without validated plans lead to incomplete root cause analysis and regressions.
@@ -80,7 +82,9 @@ disable-model-invocation: true
 
 Activate the `bugfix` workflow. Run `/workflow-start bugfix` with the user's prompt as context.
 
-**Steps:** /scout → /feature-investigation → /debug-investigate → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /integration-test → /fix → /prove-fix → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /changelog → /test → /docs-update → /watzup → /workflow-end
+> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets (e.g., `bravoTALENTS`, `bravoGROWTH`); then `ls docs/specs/{app-bucket}/` to find the specific service spec. Exception: `accounts` is flat at `docs/specs/accounts/`.
+
+**Steps:** /scout → /feature-investigation → /debug-investigate → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /integration-test → /fix → /prove-fix → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /workflow-review-changes → /changelog → /test → /docs-update → /watzup → /workflow-end
 
 > **[PERFORMANCE EXCEPTION]** If this bug fix is performance-related (latency, throughput, memory, query speed), skip `/tdd-spec`, `/tdd-spec-review`, `/integration-test` (both occurrences), `/integration-test-review`, and `/integration-test-verify`. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead when the primary goal is performance optimization.
 
@@ -96,3 +100,9 @@ Activate the `bugfix` workflow. Run `/workflow-start bugfix` with the user's pro
 | ------------------- | ---------- | --------------------------------------------------------- |
 | `/integration-test` | 1st        | INT-TEST₁ — RED phase: write regression test, expect FAIL |
 | `/integration-test` | 2nd        | INT-TEST₂ — GREEN phase: re-run after fix, expect PASS    |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /debug-investigate -> /plan -> /plan-review -> /plan-validate -> /why-review -> /tdd-spec -> /tdd-spec-review -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end

@@ -1,10 +1,19 @@
 ---
 name: review-architecture
-version: 1.1.0
-description: '[Code Quality] Review architecture compliance — clean architecture layers, messaging patterns, service boundaries, CQRS, v1/v2 service patterns, repository usage, entity event handlers. Default: changed files only.'
+version: 1.2.0
+description: '[Code Quality] Architecture compliance review — clean architecture layers, messaging, service boundaries, CQRS, v1/v2, repos, entity event handlers. Default: changed files only.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. Simple tasks: ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -75,7 +84,7 @@ description: '[Code Quality] Review architecture compliance — clean architectu
 
 <!-- /SYNC:double-round-trip-review -->
 
-<!-- SYNC:fresh-context-review -->
+<!-- OVERRIDE:fresh-context-review -->
 
 > **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
 >
@@ -85,7 +94,7 @@ description: '[Code Quality] Review architecture compliance — clean architectu
 >
 > **How:**
 >
-> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 1. Spawn a NEW `Agent` tool call — use `architect` subagent_type for architecture reviews (see Sub-Agent Type Override above)
 > 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
 > 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
 > 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
@@ -98,9 +107,22 @@ description: '[Code Quality] Review architecture compliance — clean architectu
 > - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
 > - Track iteration count in conversation context (session-scoped, no persistent files)
 
-<!-- /SYNC:fresh-context-review -->
+<!-- /OVERRIDE:fresh-context-review -->
 
-<!-- SYNC:review-protocol-injection -->
+## Sub-Agent Type Override
+
+> **MANDATORY:** Architecture reviews spawn `architect` sub-agent, NOT `code-reviewer`.
+> The canonical template below uses `subagent_type: "architect"` — do NOT revert to `code-reviewer`.
+> **Rationale:** `architect` carries cross-service impact analysis, ADR creation, and comprehensive multi-service security/performance context that `code-reviewer` lacks for architecture-level decisions.
+
+<!-- SYNC:sub-agent-selection -->
+
+> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
+> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+
+<!-- /SYNC:sub-agent-selection -->
+
+<!-- OVERRIDE:review-protocol-injection -->
 
 > **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
 >
@@ -108,15 +130,15 @@ description: '[Code Quality] Review architecture compliance — clean architectu
 
 ### Subagent Type Selection
 
-- `code-reviewer` — for code reviews (reviewing source files, git diffs, implementation)
-- `general-purpose` — for plan / doc / artifact reviews (reviewing markdown plans, docs, specs)
+- `architect` — ALWAYS for architecture reviews (cross-service, ADR, security/performance at system level)
+- `code-reviewer` — for code quality reviews only (NOT architecture)
 
 ### Canonical Agent Call Template (Copy Verbatim)
 
 ```
 Agent({
   description: "Fresh Round {N} review",
-  subagent_type: "code-reviewer",
+  subagent_type: "architect",
   prompt: `
 ## Task
 {review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
@@ -241,54 +263,50 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 - DO copy the template wholesale — including all 10 embedded protocol sections
 - DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
-- DO choose `code-reviewer` subagent_type for code reviews and `general-purpose` for plan / doc / artifact reviews
+- DO choose `architect` subagent_type for architecture reviews — do NOT revert to `code-reviewer` (see Sub-Agent Type Override above)
 - DO NOT paraphrase, summarize, or skip any protocol section
 - DO NOT pass file contents inline — the sub-agent reads via its own tool calls so it has a fresh context
 - DO NOT reference protocols by file path or tag name — the bodies are already embedded above
 - DO NOT introduce placeholder markers for the protocols — they must stay literally expanded
 
-<!-- /SYNC:review-protocol-injection -->
+<!-- /OVERRIDE:review-protocol-injection -->
 
-> **Critical Purpose:** Ensure architecture compliance — no layer violations, no messaging anti-patterns, no service boundary breaches, no pattern drift.
+> **Critical Purpose:** Architecture compliance — no layer violations, no messaging anti-patterns, no service boundary breaches, no pattern drift.
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **External Memory:** Complex/lengthy work → write findings to `plans/reports/`. Prevents context loss, serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY MUST ATTENTION — every finding requires `file:line` proof + confidence percentage (>80% act, <80% verify first).
 
 ## Quick Summary
 
-**Goal:** Validate that code changes comply with project architecture rules — clean architecture, messaging, service boundaries, CQRS, v1/v2, repositories, entity event handlers.
+**Goal:** Validate code changes comply with project architecture — clean architecture, messaging, service boundaries, CQRS, v1/v2, repositories, entity event handlers.
 
-**Default scope:** All uncommitted changes (staged + unstaged). User can override scope via prompt (e.g., specific files, directories, services, or full codebase).
+**Default scope:** All uncommitted changes (staged + unstaged). Override: specify files, directories, services, or full codebase.
 
-> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs BEFORE reviewing:
+> **MANDATORY MUST ATTENTION** Plan tasks to READ architecture docs BEFORE reviewing:
 >
-> 1. `docs/project-reference/backend-patterns-reference.md` — CQRS, messaging, repositories, validation, entity events, layer rules **(READ FIRST — primary architecture rules source)**
-> 2. `docs/project-reference/project-structure-reference.md` — service map, layer structure, database ownership
-> 3. `docs/project-reference/adr-service-pattern-v1-v2-split.md` — v1 legacy vs v2 standard (Growth), auth/permissions/observability differences
-> 4. `docs/project-reference/frontend-patterns-reference.md` — component hierarchy, store, API service patterns **(READ only if frontend files in scope)**
-> 5. `docs/project-reference/code-review-rules.md` — anti-patterns, conventions **(content may be auto-injected by hook — check for [Injected: ...] header before reading)**
+> 1. `docs/project-reference/backend-patterns-reference.md` — CQRS, messaging, repos, validation, entity events, layer rules **(READ FIRST — primary rules source)**
+> 2. `docs/project-reference/project-structure-reference.md` — service map, layer structure, DB ownership
+> 3. `docs/project-reference/adr-service-pattern-v1-v2-split.md` — v1/v2 auth/permissions/observability differences
+> 4. `docs/project-reference/frontend-patterns-reference.md` — component hierarchy, store, API patterns **(frontend files only)**
+> 5. `docs/project-reference/code-review-rules.md` — anti-patterns, conventions **(may be auto-injected by hook — check [Injected: ...] header first)**
 >
-> If any file not found, search for: architecture documentation, service patterns, messaging patterns.
->
-> These docs contain the **project-specific** architecture rules. This skill is a generic checklist — the rules come from the docs above.
+> Not found → search: "architecture documentation", "service patterns", "messaging patterns". Rules come from docs — NOT general knowledge.
 
 **Workflow:**
 
-1. **Phase 0: Load Architecture Rules** — Read project-specific architecture docs listed above
-2. **Phase 1: Determine Scope** — Get changed files (default) or use user-specified scope
+1. **Phase 0: Load Architecture Rules** — Read project architecture docs
+2. **Phase 1: Determine Scope** — Changed files (default) or user-specified scope
 3. **Phase 2: Blast Radius** — Run `/graph-blast-radius` if graph.db exists
-4. **Phase 3: Architecture Review** — Check each file against architecture rules
-5. **Phase 4: Finalize** — Generate architecture compliance report with PASS/BLOCKED/WARN verdicts
+4. **Phase 3: Architecture Review** — Check each file against all applicable categories
+5. **Phase 4: Finalize** — Generate compliance report with PASS/BLOCKED/WARN verdicts
 
 **Key Rules:**
 
-- Report-driven: write findings to `plans/reports/arch-review-{date}-{slug}.md`
-- BLOCKED = hard stop (must fix before merge)
-- WARN = flag for attention (review and decide)
-- PASS = compliant
-- Be skeptical — every violation needs `file:line` proof + grep for 3+ counterexamples before flagging
-- This skill does NOT fix code — it only reviews and reports
+- Write findings to `plans/reports/arch-review-{date}-{slug}.md`
+- BLOCKED = must fix before merge | WARN = review and decide | PASS = compliant
+- Every violation needs `file:line` proof + grep 3+ counterexamples before flagging
+- Skill reviews only — NEVER fixes code
 
 ## Your Mission
 
@@ -298,28 +316,26 @@ $ARGUMENTS
 
 ## Review Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+Skeptical. Every claim needs traced proof, confidence >80%.
 
-- Do NOT flag violations without reading the actual code and tracing the dependency
-- Every finding must include `file:line` evidence
-- Before flagging a pattern violation, grep for 3+ existing examples — the codebase convention wins
-- Question: "Is this actually a violation, or is it an established exception?"
+- NEVER flag violations without reading actual code + tracing the dependency
+- Every finding MUST include `file:line` evidence
+- Before flagging pattern violation: grep 3+ existing examples — codebase convention wins
+- Question: "Is this actually a violation, or an established exception?"
 
 ## Phase 0: Load Architecture Rules (MANDATORY FIRST)
 
-> **IMPORTANT MANDATORY MUST ATTENTION:** Read project-specific architecture docs BEFORE reviewing any code. The rules come from these docs, not from general knowledge.
+> **MUST ATTENTION:** Read project docs BEFORE reviewing. Rules come from docs, not general knowledge.
 
-- [ ] Read `docs/project-reference/backend-patterns-reference.md` — extract messaging naming conventions, layer rules, CQRS patterns, repository rules, entity event handler patterns, validation patterns
-- [ ] Read `docs/project-reference/project-structure-reference.md` — extract service map, layer structure, database ownership
-- [ ] Read `docs/project-reference/adr-service-pattern-v1-v2-split.md` — extract v1/v2 differences, which services are v1 vs v2
-- [ ] If frontend files in scope: Read `docs/project-reference/frontend-patterns-reference.md`
-- [ ] Note: `code-review-rules.md` is auto-injected by hook on Skill invocation — check conversation context before reading
-
-After reading, you now have the **project-specific rules** to validate against. Do NOT rely on general architecture knowledge — use what the docs say.
+- MUST ATTENTION read `docs/project-reference/backend-patterns-reference.md` — extract messaging naming, layer rules, CQRS patterns, repo rules, entity event handler patterns, validation patterns
+- MUST ATTENTION read `docs/project-reference/project-structure-reference.md` — extract service map, layer structure, DB ownership
+- MUST ATTENTION read `docs/project-reference/adr-service-pattern-v1-v2-split.md` — extract v1/v2 differences, which services are v1 vs v2
+- If frontend files in scope: MUST ATTENTION read `docs/project-reference/frontend-patterns-reference.md`
+- `code-review-rules.md` auto-injected by hook — check conversation context before reading
 
 ## Phase 1: Determine Scope
 
-**Default (no user override):** Review all uncommitted changes.
+**Default (no override):** Review all uncommitted changes.
 
 ```bash
 git status          # List changed files
@@ -327,11 +343,9 @@ git diff            # Staged + unstaged changes
 git diff --cached   # Staged only
 ```
 
-**User-specified scope:** If user specifies files, directories, services, or "full codebase" — use that instead.
-
-- [ ] Collect list of files to review
-- [ ] Categorize files: backend (.cs), frontend (.ts/.html), config, docs, other
-- [ ] Filter to architecture-relevant files only (skip pure docs, configs, tests unless architecture-relevant)
+- Collect file list to review
+- Categorize: backend (.cs), frontend (.ts/.html), config, docs, other
+- Filter to architecture-relevant files (skip pure docs, configs, tests unless architecture-relevant)
 
 ## Phase 2: Blast Radius (if graph.db exists)
 
@@ -355,10 +369,10 @@ git diff --cached   # Staged only
 
 <!-- /SYNC:graph-assisted-investigation -->
 
-- [ ] If `.code-graph/graph.db` exists: Call `/graph-blast-radius` skill
-- [ ] Record: impacted files count, cross-service impact, risk level
-- [ ] Use results to prioritize review (highest-impact files first)
-- [ ] If graph not available: note "Graph not available — skipping blast radius" and proceed
+- If `.code-graph/graph.db` exists: call `/graph-blast-radius` skill
+- Record: impacted file count, cross-service impact, risk level
+- Prioritize review by highest-impact files first
+- Graph unavailable: note "Graph not available — skipping blast radius" and proceed
 
 For each changed file with downstream impact:
 
@@ -366,26 +380,26 @@ For each changed file with downstream impact:
 python .claude/scripts/code_graph trace <changed-file> --direction downstream --json
 ```
 
-Flag any MESSAGE_BUS consumers or event handlers impacted by changes.
+Flag MESSAGE_BUS consumers or event handlers impacted by changes.
 
 ## Phase 3: Architecture Review
 
-Create report file: `plans/reports/arch-review-{date}-{slug}.md`
+Create report: `plans/reports/arch-review-{date}-{slug}.md`
 
-For EACH file in scope, evaluate against ALL applicable categories below. Skip categories that don't apply to the file type.
+For EACH file in scope, evaluate against ALL applicable categories. Skip categories not applicable to the file type.
 
 ---
 
 ### Category 1: Clean Architecture Layers — Severity: BLOCKED
 
-**What to check:** Dependency direction violations. Dependencies MUST ATTENTION flow inward only: Service/API → Application → Domain ← Persistence.
+**Think:** What layer is this file in? What layers can it legally import from? Does any import break the inward-only flow (Service/API → Application → Domain ← Persistence)?
 
-**How to check:**
-
-1. Read `docs/project-config.json` → `architectureRules.layerBoundaries` for project-specific layer rules
-2. For each file, determine its layer from path (Domain/, Application/, Persistence/, Service/)
-3. Scan `using` (C#) or `import` (TS) statements
-4. Flag any import from a layer that is forbidden for the current layer
+- Read `docs/project-config.json` → `architectureRules.layerBoundaries` for project-specific rules
+- Determine layer from file path: Domain/, Application/, Persistence/, Service/
+- Scan `using` (C#) or `import` (TS) — flag imports from forbidden layers
+- MUST ATTENTION verify business logic in correct layer: Entity/Domain > Service/Application > Controller/Component
+- NEVER allow direct infrastructure access from Domain (repo interfaces in Domain, implementations in Persistence)
+- NEVER allow business logic in API/Controller layer
 
 **Violation format:**
 
@@ -393,73 +407,63 @@ For EACH file in scope, evaluate against ALL applicable categories below. Skip c
 BLOCKED: {layer} layer file {filePath}:{line} imports from {forbiddenLayer} layer ({importStatement})
 ```
 
-**Also check:**
-
-- [ ] Business logic in correct layer? (Entity/Domain > Service/Application > Controller/Component)
-- [ ] No business logic in API/Controller layer (should delegate to Application layer)
-- [ ] No direct infrastructure access from Domain layer (repositories are interfaces in Domain, implementations in Persistence)
-
 ---
 
 ### Category 2: Message Bus Patterns — Severity: BLOCKED/WARN
 
-**What to check:** Naming conventions, base classes, producer/consumer patterns, upstream/downstream rules.
+**Think:** Does this message correctly name its type (event vs request)? Does it extend the right base class? Is the producer/consumer relationship correctly oriented — does the leader service own the event?
 
-**How to check (rules from backend-patterns-reference.md):**
-
-**Naming (BLOCKED if wrong):**
+**Naming (BLOCKED):**
 
 - Event messages: `{ServiceName}{Feature}{Action}EventBusMessage`
 - Request messages: `{ConsumerServiceName}{Feature}RequestBusMessage`
-- Grep for existing examples to verify naming convention: `grep -r "EventBusMessage" --include="*.cs"`
+- Grep existing examples before flagging: `grep -r "EventBusMessage" --include="*.cs"`
 
-**Base classes (BLOCKED if wrong):**
+**Base classes (BLOCKED):**
 
-- All bus messages MUST ATTENTION extend `PlatformTrackableBusMessage` or `PlatformBusMessage<TPayload>`
-- Consumers MUST ATTENTION extend `PlatformApplicationMessageBusConsumer<TMessage>`
-- Producers MUST ATTENTION extend `PlatformCqrsEventBusMessageProducer<TEvent, TMessage>`
+- Bus messages MUST extend `PlatformTrackableBusMessage` or `PlatformBusMessage<TPayload>`
+- Consumers MUST extend `PlatformApplicationMessageBusConsumer<TMessage>`
+- Producers MUST extend `PlatformCqrsEventBusMessageProducer<TEvent, TMessage>`
 
-**Upstream/Downstream (BLOCKED if violated):**
+**Upstream/Downstream (BLOCKED):**
 
-- Leader service owns entity data and defines EventBusMessage
-- Follower services consume events — they do NOT produce events about data they don't own
-- NO circular listening: if A→B events exist, B→A events for same data = boundary violation
-- Consumers MUST ATTENTION implement dependency waiting with `TryWaitUntilAsync` when depending on data from other messages
+- Leader service owns entity data → defines EventBusMessage
+- Follower services consume events — NEVER produce events about data they don't own
+- NO circular listening: A→B + B→A for same data = boundary violation
+- Consumers MUST implement dependency waiting with `TryWaitUntilAsync` for cross-message data dependencies
 
-**SubQueuePrefix (WARN if missing for ordered messages):**
+**SubQueuePrefix (WARN):**
 
-- Messages requiring ordered processing MUST ATTENTION override `SubQueuePrefix()` with a meaningful key
-- Messages not requiring ordering should return `null`
+- Ordered messages MUST override `SubQueuePrefix()` with meaningful key
+- Unordered messages return `null`
 
-**Also check:**
+**Also verify:**
 
-- [ ] No direct cross-service database access (MUST ATTENTION use message bus)
-- [ ] `LastMessageSyncDate` used for conflict resolution in consumers
-- [ ] Inbox/Outbox pattern used for reliable delivery (check `EnableInboxEventBusMessage`)
+- NEVER direct cross-service DB access — MUST use message bus
+- `LastMessageSyncDate` used for conflict resolution in consumers
+- Inbox/Outbox pattern for reliable delivery (check `EnableInboxEventBusMessage`)
 
 ---
 
 ### Category 3: CQRS Compliance — Severity: BLOCKED/WARN
 
-**What to check:** Command/Query handler patterns, validation, DTO mapping.
-
-**How to check (rules from backend-patterns-reference.md):**
+**Think:** Is Command+Result+Handler in one file? Is validation using fluent API (not exceptions)? Does DTO own mapping, not the handler? Are side effects in event handlers, not command handlers?
 
 **File organization (BLOCKED):**
 
-- Command + Result + Handler MUST ATTENTION be in ONE file under `UseCaseCommands/{Feature}/`
-- Query + Result + Handler MUST ATTENTION be in ONE file under `UseCaseQueries/{Feature}/`
+- Command + Result + Handler MUST be in ONE file under `UseCaseCommands/{Feature}/`
+- Query + Result + Handler MUST be in ONE file under `UseCaseQueries/{Feature}/`
 
 **Validation (BLOCKED):**
 
-- MUST ATTENTION use `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`)
+- MUST use `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`)
 - NEVER throw exceptions for validation — return validation result
-- Sync validation in `command.Validate()`, async validation in `ValidateRequestAsync()`
+- Sync validation in `command.Validate()`, async in `ValidateRequestAsync()`
 
 **DTO mapping (BLOCKED):**
 
-- DTOs MUST ATTENTION own mapping via `MapToEntity()` or `MapToObject()`
-- NEVER map in command handlers — mapping belongs in DTO/Command class
+- DTOs MUST own mapping via `MapToEntity()` or `MapToObject()`
+- NEVER map in command handlers
 
 **Side effects (BLOCKED):**
 
@@ -471,14 +475,12 @@ BLOCKED: {layer} layer file {filePath}:{line} imports from {forbiddenLayer} laye
 
 ### Category 4: Repository Patterns — Severity: BLOCKED
 
-**What to check:** Service-specific repository usage.
+**Think:** Is this using a service-specific repo interface, not the generic one? Are complex queries extracted to RepositoryExtensions?
 
-**How to check (rules from backend-patterns-reference.md):**
-
-- MUST ATTENTION use service-specific repository: `I{ServiceName}PlatformRootRepository<TEntity>` (e.g., `IGrowthRootRepository<T>`, `ICandidatePlatformRootRepository<T>`)
+- MUST use service-specific repo: `I{ServiceName}PlatformRootRepository<TEntity>` (e.g., `IGrowthRootRepository<T>`, `ICandidatePlatformRootRepository<T>`)
 - NEVER use generic `IPlatformRootRepository<T>` directly
-- Complex queries MUST ATTENTION use `RepositoryExtensions` with static expressions
-- All query filter/FK/sort columns MUST ATTENTION have database indexes
+- Complex queries MUST use `RepositoryExtensions` with static expressions
+- All query filter/FK/sort columns MUST have database indexes
 
 **Violation format:**
 
@@ -490,71 +492,61 @@ BLOCKED: {filePath}:{line} uses generic IPlatformRootRepository instead of servi
 
 ### Category 5: V1/V2 Service Pattern — Severity: BLOCKED (new services) / WARN (existing)
 
-**What to check:** Service startup patterns, auth, permissions, observability.
+**Think:** Is this a new service (must be v2) or existing v1 service (expect v1 patterns)? Is v2 pattern being partially mixed into v1 without full migration?
 
-**How to check (rules from adr-service-pattern-v1-v2-split.md):**
+**New services (BLOCKED if v1 pattern used):**
 
-**For NEW services (BLOCKED if v1 pattern used):**
+- MUST use multi-scheme auth (JWT Bearer + Azure AD Teams)
+- MUST use `UsePermissionProviderClaimGenerationByProductScope()`
+- MUST use OpenTelemetry via Aspire (NO ApplicationInsights)
+- MUST use modern C# collection syntax `[...]`
 
-- MUST ATTENTION use multi-scheme auth (JWT Bearer + Azure AD Teams)
-- MUST ATTENTION use `UsePermissionProviderClaimGenerationByProductScope()`
-- MUST ATTENTION use OpenTelemetry via Aspire (NO ApplicationInsights)
-- MUST ATTENTION use modern C# collection syntax `[...]`
+**Existing v1 services (WARN if new v2 patterns mixed without full migration):**
 
-**For EXISTING v1 services (WARN if new v2 patterns mixed in without full migration):**
+- Single JWT Bearer expected — don't flag as violation
+- `UsePermissionProviderClaimGeneration()` without params expected
+- Warn if ApplicationInsights still present (being deprecated)
 
-- Single JWT Bearer is expected — don't flag as violation
-- `UsePermissionProviderClaimGeneration()` without params is expected
-- Warn if ApplicationInsights is still present (being deprecated)
-
-**How to determine v1 vs v2:**
-
-- Growth service = v2 standard
-- All other services = v1 legacy
-- Check `project-structure-reference.md` for service list
+**Determine v1 vs v2:** Growth = v2 standard. All other services = v1 legacy. Check `project-structure-reference.md`.
 
 ---
 
 ### Category 6: Entity Event Handlers — Severity: BLOCKED/WARN
 
-**What to check:** Side effect implementation patterns.
-
-**How to check (rules from backend-patterns-reference.md):**
+**Think:** Are side effects defined inline in command handlers (wrong) or in UseCaseEvents/ (correct)? Does each handler have a single concern?
 
 **Location (BLOCKED):**
 
-- Entity event handlers MUST ATTENTION be in `UseCaseEvents/` directory
+- Entity event handlers MUST be in `UseCaseEvents/` directory
 - NEVER inline side effects in command handlers
 
 **Implementation (BLOCKED):**
 
-- MUST ATTENTION extend `PlatformCqrsEntityEventApplicationHandler<TEntity>`
-- MUST ATTENTION implement `HandleWhen()` to filter by CRUD action
+- MUST extend `PlatformCqrsEntityEventApplicationHandler<TEntity>`
+- MUST implement `HandleWhen()` to filter by CRUD action
 - One handler = one independent concern
 
 **Naming (WARN):**
 
 - Convention: `{Action}On{Trigger}EntityEventHandler`
-- Grep for existing examples before flagging
+- Grep existing examples before flagging
 
 **Producer patterns (BLOCKED):**
 
-- Entity event bus message producers MUST ATTENTION extend `PlatformCqrsEventBusMessageProducer<TEvent, TMessage>`
-- MUST ATTENTION implement `BuildMessage()` and `HandleWhen()`
+- Bus message producers MUST extend `PlatformCqrsEventBusMessageProducer<TEvent, TMessage>`
+- MUST implement `BuildMessage()` and `HandleWhen()`
 
 ---
 
 ### Category 7: Service Boundaries — Severity: BLOCKED
 
-**What to check:** Cross-service isolation.
+**Think:** Does any code reach directly into another service's database or project reference? All cross-service data flow MUST go through the message bus.
 
-**How to check:**
-
-- [ ] No direct database access to another service's database (BLOCKED)
-- [ ] No direct `using` reference to another service's domain/persistence project (BLOCKED)
-- [ ] Cross-service communication via message bus only (event bus or request bus)
-- [ ] Shared data goes through shared message projects, not direct references
-- [ ] Each service owns its own database — verify from `project-structure-reference.md` service-to-DB mapping
+- NEVER direct DB access to another service's database
+- NEVER `using` reference to another service's domain/persistence project
+- Cross-service communication via message bus only (event bus or request bus)
+- Shared data through shared message projects, not direct references
+- Verify service-to-DB mapping from `project-structure-reference.md`
 
 **Violation format:**
 
@@ -566,16 +558,14 @@ BLOCKED: {filePath}:{line} references {otherService} domain/persistence directly
 
 ### Category 8: Frontend Architecture (if frontend files in scope) — Severity: BLOCKED/WARN
 
-**What to check:** Component hierarchy, state management, API patterns.
+**Think:** Are components extending the right base class? Is state going through the store? Are subscriptions properly cleaned up?
 
-**How to check (rules from frontend-patterns-reference.md):**
-
-- [ ] Components MUST ATTENTION extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` (BLOCKED)
-- [ ] State management MUST ATTENTION use `PlatformVmStore` + `effectSimple()` — no manual signals or direct HttpClient (BLOCKED)
-- [ ] API services MUST ATTENTION extend `PlatformApiService` (BLOCKED)
-- [ ] All subscriptions MUST ATTENTION use `.pipe(this.untilDestroyed())` — no manual unsubscribe (BLOCKED)
-- [ ] All template elements MUST ATTENTION have BEM classes (WARN)
-- [ ] Logic in lowest layer: Model > Service > Component (WARN)
+- Components MUST extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` (BLOCKED)
+- State MUST use `PlatformVmStore` + `effectSimple()` — NEVER manual signals or direct HttpClient (BLOCKED)
+- API services MUST extend `PlatformApiService` (BLOCKED)
+- All subscriptions MUST use `.pipe(this.untilDestroyed())` — NEVER manual unsubscribe (BLOCKED)
+- All template elements MUST have BEM classes (WARN)
+- Logic in lowest layer: Model > Service > Component (WARN)
 
 ---
 
@@ -584,8 +574,6 @@ BLOCKED: {filePath}:{line} references {otherService} domain/persistence directly
 Update report with final sections:
 
 ### Verdict Scoring
-
-Count findings by severity:
 
 | Verdict     | Condition                                       |
 | ----------- | ----------------------------------------------- |
@@ -644,25 +632,23 @@ Count findings by severity:
 
 ## Architecture Boundary Check (Automated)
 
-For each changed file, verify it does not import from a forbidden layer:
+For each changed file:
 
-1. **Read rules** from `docs/project-config.json` → `architectureRules.layerBoundaries`
-2. **Determine layer** — For each changed file, match its path against each rule's `paths` glob patterns
-3. **Scan imports** — Grep the file for `using` (C#) or `import` (TS) statements
-4. **Check violations** — If any import path contains a layer name listed in `cannotImportFrom`, it is a violation
-5. **Exclude framework** — Skip files matching any pattern in `architectureRules.excludePatterns`
-6. **BLOCK on violation** — Report as critical: `"BLOCKED: {layer} layer file {filePath} imports from {forbiddenLayer} layer ({importStatement})"`
+1. Read `docs/project-config.json` → `architectureRules.layerBoundaries`
+2. Determine layer — match file path against each rule's `paths` glob patterns
+3. Scan imports — grep for `using` (C#) or `import` (TS) statements
+4. Check violations — import path contains layer name in `cannotImportFrom` = violation
+5. Exclude framework — skip files matching `architectureRules.excludePatterns`
+6. BLOCK on violation: `"BLOCKED: {layer} layer file {filePath} imports from {forbiddenLayer} layer ({importStatement})"`
 
-If `architectureRules` is not present in project-config.json, skip this check silently.
+If `architectureRules` absent from project-config.json: skip silently.
 
 ---
 
-## Systematic Review Protocol (for 10+ changed files)
-
-> When 10+ files in scope, switch to parallel review:
+## Systematic Review Protocol (10+ changed files)
 
 1. **Categorize** — Group files by service/layer/concern
-2. **Parallel Sub-Agents** — Launch one `code-reviewer` sub-agent per category with architecture-specific checklist
+2. **Parallel Sub-Agents** — Launch one `architect` sub-agent per category with architecture-specific checklist
 3. **Synchronize** — Collect findings, cross-reference service boundaries
 4. **Consolidate** — Single holistic report with per-category verdicts
 
@@ -670,7 +656,7 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY MUST ATTENTION — NO EXCEPTIONS:** After completing, use `AskUserQuestion` to present:
 
 - **"/code-simplifier" (Recommended)** — Simplify and refine code
 - **"/code-review"** — Deep code quality review
@@ -678,32 +664,56 @@ If `architectureRules` is not present in project-config.json, skip this check si
 
 ## AI Agent Integrity Gate (NON-NEGOTIABLE)
 
-> **Completion ≠ Correctness.** Before reporting ANY work done, prove it:
->
-> 1. **Grep every removed name.** Extraction/rename/delete touched N files? Grep confirms 0 dangling refs across ALL file types.
-> 2. **Ask WHY before changing.** Existing values are intentional until proven otherwise. No "fix" without traced rationale.
-> 3. **Verify ALL outputs.** One build passing ≠ all builds passing. Check every affected stack.
-> 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
-> 5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, and reachable by all consumers.
+Before reporting ANY work done:
+
+1. **Grep every removed name.** Extraction/rename/delete → grep confirms 0 dangling refs across ALL file types
+2. **Ask WHY before changing.** Existing values intentional until proven otherwise — no "fix" without traced rationale
+3. **Verify ALL outputs.** One build passing ≠ all builds passing — check every affected stack
+4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints
+5. **New artifact = wired artifact.** Created something? Prove registered, imported, reachable by all consumers
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** read project-specific architecture docs BEFORE reviewing — rules come from docs, not general knowledge.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **MUST ATTENTION** break work into small tasks using `TaskCreate` BEFORE starting
+- **MUST ATTENTION** read project architecture docs BEFORE reviewing — rules come from docs, not general knowledge
+- **MUST ATTENTION** every violation requires `file:line` proof — NEVER speculate
+- **MUST ATTENTION** grep 3+ counterexamples before flagging any pattern violation
+- **MUST ATTENTION** run at least ONE graph command on key files when graph.db exists
+- **MUST ATTENTION** NEVER fix code — review and report only
+- **MUST ATTENTION** apply `Think:` reasoning prompt before checking each category — derive violations, don't recite checklists
+- **MUST ATTENTION** use `AskUserQuestion` to present next steps after completing review
 
-  <!-- SYNC:evidence-based-reasoning:reminder -->
+**Anti-Rationalization:**
+
+| Evasion                              | Rebuttal                                                           |
+| ------------------------------------ | ------------------------------------------------------------------ |
+| "Too simple for architecture review" | Simple code hides layer violations. Apply all phases.              |
+| "Already read the docs"              | Show the extracted rule — no recall = no read.                     |
+| "Just flag obvious violations"       | Gray areas matter most. Apply `Think:` prompt to all 8 categories. |
+| "Graph not needed here"              | Run ONE trace. 5 seconds → full blast radius revealed.             |
+| "Skill reviews only changed files"   | Default scope, not a limit. User can override.                     |
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- SYNC:graph-assisted-investigation:reminder -->
 - **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+    <!-- /SYNC:graph-assisted-investigation:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

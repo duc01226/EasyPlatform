@@ -1,14 +1,23 @@
 ---
 name: refine
-version: 2.2.0
-description: "[Project Management] Transform ideas into Product Backlog Items using BA best practices, hypothesis validation, and domain research. Use when converting ideas to PBIs, validating problem hypotheses, adding acceptance criteria, or refining requirements. Triggers on "create pbi", "refine idea", "convert to pbi", "acceptance criteria", "make actionable", "validate hypothesis"."
+version: 2.3.0
+description: '[Project Management] Transform ideas into Product Backlog Items using BA best practices, hypothesis validation, and domain research. Use when converting ideas to PBIs, validating problem hypotheses, adding acceptance criteria, or refining requirements. Triggers on "create pbi", "refine idea", "convert to pbi", "acceptance criteria", "make actionable", "validate hypothesis".'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. Simple tasks: ask user whether to skip.
+
+> **External Memory:** Complex/lengthy work → write findings to `plans/reports/` — prevents context loss.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim requires `file:line` proof or traced evidence, confidence >80% to act.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -34,28 +43,36 @@ description: "[Project Management] Transform ideas into Product Backlog Items us
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-- `docs/test-specs/` — Test specifications by module (read existing TCs for related features; recommend test spec generation for new PBIs)
-
 ## Quick Summary
 
-**Goal:** Transform raw ideas into actionable Product Backlog Items using BA best practices, hypothesis validation, and domain research.
+**Goal:** Transform raw ideas into actionable PBIs using BA best practices, hypothesis validation, domain research.
 
 **Workflow:**
 
-1. **Idea Intake** — Load artifact, detect project module
-2. **Domain Research** — WebSearch for market/competitor context
-3. **Problem Hypothesis** — Validate problem exists before building
-4. **Elicitation** — Apply BABOK techniques to extract requirements
-5. **Acceptance Criteria** — Write BDD GIVEN/WHEN/THEN scenarios (min 3)
-6. **Prioritization** — Apply RICE/MoSCoW scoring
-7. **Validation Interview** — MANDATORY user interview to confirm assumptions
-8. **PBI Generation** — Save artifact to `team-artifacts/pbis/`
+| Phase | Name                | Key Activity                     | Output                 |
+| ----- | ------------------- | -------------------------------- | ---------------------- |
+| 1     | Idea Intake         | Load artifact, detect module     | Context loaded         |
+| 2     | Domain Research     | WebSearch market/competitors     | Research summary       |
+| 3     | Problem Hypothesis  | Validate problem exists          | Confirmed hypothesis   |
+| 4     | Elicitation         | Apply BABOK techniques           | Requirements extracted |
+| 5     | Acceptance Criteria | Write BDD scenarios              | GIVEN/WHEN/THEN        |
+| 6     | Prioritization      | Apply RICE/MoSCoW + Story Points | Priority + estimate    |
+| 7     | Validation          | Interview user (MANDATORY)       | Assumptions confirmed  |
+| 8     | PBI Generation      | Create artifact                  | PBI file saved         |
 
 **Key Rules:**
 
-### Frontend/UI Context (if applicable)
+- NEVER skip hypothesis validation for new features
+- Validation interview NOT optional — always ask 3-5 questions
+- Use project domain-specific vocabulary when available
+- MUST ATTENTION include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in PBI frontmatter
+- Every PBI MUST ATTENTION include Dependencies table — types: `must-before` | `can-parallel` | `blocked-by` | `independent`
+- `docs/specs/` — read existing TCs for related features; recommend test spec generation for new PBIs
+- `docs/project-reference/domain-entities-reference.md` — read when task involves business entities/models
 
-> When this task involves frontend or UI changes,
+---
+
+## Frontend/UI Context (if applicable)
 
 <!-- SYNC:ui-system-context -->
 
@@ -75,102 +92,41 @@ description: "[Project Management] Transform ideas into Product Backlog Items us
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
-- Never skip hypothesis validation for new features
-- Validation interview is NOT optional — always ask 3-5 questions
-- Use project domain-specific vocabulary when available
-- MUST ATTENTION include `story_points` and `complexity` in PBI output
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
-    <!-- SYNC:scaffold-production-readiness -->
-
-> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 5 foundations:
->
-> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates. Specific tool choices → `docs/project-reference/` or `project-config.json`.
-> 2. **Error Handling Foundation** — HTTP interceptor, error classification (4xx/5xx taxonomy), user notification, global uncaught handler.
-> 3. **Loading State Management** — counter-based tracker (not boolean toggle), skip-token for background requests, 300ms flicker guard.
-> 4. **Docker Development Environment** — compose profiles (`dev`/`test`/`infra`), multi-stage Dockerfile, health checks on all services, non-root production user.
-> 5. **Integration Points** — document each outbound boundary; configure retry + circuit breaker + timeout; integration tests for happy path and failure path.
->
-> **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
-
-<!-- /SYNC:scaffold-production-readiness -->
-
-- <!-- SYNC:cross-cutting-quality -->
-
-    > **Cross-Cutting Quality** — Check across all changed files:
-    >
-    > 1. **Error handling consistency** — same error patterns across related files
-    > 2. **Logging** — structured logging with correlation IDs for traceability
-    > 3. **Security** — no hardcoded secrets, input validation at boundaries, auth checks present
-    > 4. **Performance** — no N+1 queries, unnecessary allocations, or blocking calls in async paths
-    > 5. **Observability** — health checks, metrics, tracing spans for new endpoints
-
-                                  <!-- /SYNC:cross-cutting-quality -->
-
-    — for Authorization, Seed Data, Data Migration concerns in PBI output
+---
 
 ## Greenfield Mode
 
-> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+> **Auto-detected:** No code directories (`src/`, `app/`, `lib/`, `server/`, `packages/`, etc.) and no manifest files (`package.json`/`*.sln`/`go.mod`) found. Planning artifacts (docs/, plans/, .claude/) don't count.
 
-**When greenfield is detected:**
+**When greenfield detected:**
 
-1. Skip existing backlog item refinement (no backlog exists yet)
+1. Skip existing backlog refinement (no backlog exists)
 2. Enable DDD domain modeling: bounded contexts, aggregates, entities, value objects
-3. Enable constraint capture: team skills, expected scale, hosting preferences, budget — as input signals for later tech stack research
-4. Use WebSearch for market research and competitor analysis
+3. Capture constraints: team skills, expected scale, hosting preferences, budget — as input signals only
+4. Use WebSearch for market research + competitor analysis
 5. Output domain model artifact alongside PBI artifact
 6. Increase AskUserQuestion frequency — validate domain boundaries, entity relationships, business rules
-7. **[CRITICAL] DO NOT ask about tech stack during refinement.** Tech stack is a research-driven decision that comes in a dedicated phase after business analysis. Capture team skills and scale expectations as input signals only.
+7. **[CRITICAL] NEVER ask about tech stack during refinement.** Tech stack decided after business analysis. Capture team skills + scale expectations as signals only.
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-# Idea Refinement to PBI
-
-Transform captured ideas into actionable Product Backlog Items using Business Analysis best practices, Hypothesis-Driven Development, and domain research.
-
-## When to Use
-
-- Idea artifact ready for refinement
-- Need to validate problem hypothesis before building
-- Converting concept to implementable item
-- Adding acceptance criteria to requirements
-- Researching domain/market context for new features
-
-## Workflow Overview
-
-| Phase | Name                | Key Activity                 | Output                 |
-| ----- | ------------------- | ---------------------------- | ---------------------- |
-| 1     | Idea Intake         | Load artifact, detect module | Context loaded         |
-| 2     | Domain Research     | WebSearch market/competitors | Research summary       |
-| 3     | Problem Hypothesis  | Validate problem exists      | Confirmed hypothesis   |
-| 4     | Elicitation         | Apply BABOK techniques       | Requirements extracted |
-| 5     | Acceptance Criteria | Write BDD scenarios          | GIVEN/WHEN/THEN        |
-| 6     | Prioritization      | Apply RICE/MoSCoW            | Priority assigned      |
-| 7     | Validation          | Interview user (MANDATORY)   | Assumptions confirmed  |
-| 8     | PBI Generation      | Create artifact              | PBI file saved         |
-
-### Output
-
-- **Path:** `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md`
-- **ID Pattern:** `PBI-{YYMMDD}-{NNN}`
+**Be skeptical. Every claim needs traced proof, confidence >80%.**
 
 ---
 
 ## Phase 0: Locate Active Plan (if in workflow)
 
-If running within a workflow (big-feature, greenfield-init, etc.):
+If running in workflow (big-feature, greenfield-init, etc.):
 
-1. **Search for active plan** — Glob `plans/*/plan.md` sorted by modification time, or check `TaskList` for plan context
-2. **Read `plan.md`** — understand project scope, goals, architecture decisions, domain model
-3. **Read existing research** — `{plan-dir}/research/*.md` for business evaluation, domain analysis, architecture design
-4. **Read `docs/project-reference/domain-entities-reference.md`** (if exists) — understand existing domain entities
-5. Use plan context to inform PBI refinement (don't re-ask questions already answered in prior steps)
+1. Glob `plans/*/plan.md` sorted by modification time, or check `TaskList` for plan context
+2. Read `plan.md` — project scope, goals, architecture decisions, domain model
+3. Read existing research — `{plan-dir}/research/*.md` for business evaluation, domain analysis
+4. Read `docs/project-reference/domain-entities-reference.md` (if exists) — existing domain entities
+5. Use plan context — don't re-ask questions already answered in prior steps
 
 ## Phase 1: Idea Intake & Context Loading
 
 1. Read idea artifact from path or find by ID in `team-artifacts/ideas/`
 2. Extract: problem statement, value proposition, target users, scope
-3. Check `module` field for project domain; if absent, detect via keywords or prompt user
+3. Check `module` field; if absent, detect via keywords or prompt user
 
 ---
 
@@ -185,7 +141,7 @@ Use WebSearch with domain terms. Summarize in max 3 bullets (market context, com
 
 ## Phase 3: Problem Hypothesis Validation
 
-Draft and validate hypothesis with user via AskUserQuestion. 42% of startups fail due to no market need - validate before building.
+Validate hypothesis with user via AskUserQuestion. 42% of startups fail due to no market need — validate before building.
 
 **Skip:** `--skip-hypothesis`, validated hypothesis exists, bug fix/tech debt.
 
@@ -214,52 +170,34 @@ Draft and validate hypothesis with user via AskUserQuestion. 42% of startups fai
     - "Is this the core problem we're solving?"
     - "Who exactly experiences this? How often?"
     - "What evidence do we have this problem exists?"
-3. If validated, proceed to elicitation
-4. If invalidated, return idea for clarification
+3. Validated → proceed to elicitation
+4. Invalidated → return idea for clarification
 
 ---
 
 ## Phase 4: Requirements Elicitation (BABOK Core 5)
 
-Select technique based on context:
+**Think:** What information gaps exist? Which technique fills them with least effort + highest confidence?
 
-### 1. Interviews
+| Technique             | When to Choose                                      | What to Extract                                 |
+| --------------------- | --------------------------------------------------- | ----------------------------------------------- |
+| **Interviews**        | Deep insights needed, stakeholder perspectives vary | Stakeholder needs, pain points, constraints     |
+| **Workshops**         | Group consensus needed, multiple stakeholders       | Prioritized requirements, consensus decisions   |
+| **Document Analysis** | Existing systems/processes, regulatory requirements | As-is state, compliance requirements, gaps      |
+| **Observation**       | Users can't articulate needs, workflow unclear      | Actual vs stated workflow, hidden requirements  |
+| **Prototyping**       | Visual validation needed, UI/UX requirements vague  | Validated UI requirements, interaction patterns |
 
-**When:** Deep individual insights needed, stakeholder perspectives vary
-**Process:** Prepare open-ended questions (why, how, what-if) → active listening → follow-up on unexpected answers → document verbatim quotes
-**Output:** Stakeholder needs, pain points, constraints
+**Technique notes:**
 
-### 2. Workshops
-
-**When:** Group consensus needed, complex requirements, multiple stakeholders
-**Process:** Define agenda + timebox (90 min max) → neutral facilitator → capture all voices (round-robin, silent voting) → document decisions and dissent
-**Output:** Prioritized requirements, consensus decisions
-
-### 3. Document Analysis
-
-**When:** Existing systems/processes to understand, regulatory requirements
-**Process:** Gather artifacts (specs, manuals, code) → extract implicit requirements → note gaps → cross-reference with stakeholder input
-**Output:** As-is state, compliance requirements, gaps
-
-### 4. Observation (Job Shadowing)
-
-**When:** Understand real workflow, users can't articulate needs
-**Process:** Shadow users → note workarounds/pain points → don't interrupt → ask clarifying questions afterward
-**Output:** Actual vs stated workflow, hidden requirements
-
-### 5. Prototyping
-
-**When:** Visual validation needed, UI/UX requirements unclear
-**Process:** Start low-fidelity (sketches, wireframes) → iterate on feedback → increase fidelity as requirements stabilize → document design decisions
-**Output:** Validated UI requirements, interaction patterns
+- Interviews: Open-ended questions (why, how, what-if) → active listening → follow-up on unexpected → document verbatim quotes
+- Workshops: Define agenda + 90 min timebox → neutral facilitator → round-robin/silent voting → document decisions AND dissent
+- Observation: Shadow users → note workarounds/pain points → don't interrupt → ask clarifying questions afterward
 
 ---
 
 ## Phase 5: Acceptance Criteria (BDD Format)
 
 Write GIVEN/WHEN/THEN scenarios. Minimum 3: happy path, edge case, error case.
-
-### Standard BDD Format
 
 ```gherkin
 Scenario: {Descriptive title}
@@ -271,13 +209,11 @@ Scenario: {Descriptive title}
     And {additional verification}
 ```
 
-### Best Practices
-
-| Practice                  | Description                       |
+| Practice                  | Rule                              |
 | ------------------------- | --------------------------------- |
 | Single trigger            | "When" clause has ONE action      |
 | 3 scenarios minimum       | Happy path, edge case, error case |
-| No implementation details | Focus on behavior, not how        |
+| No implementation details | Behavior, not how                 |
 | Testable outcomes         | "Then" must be verifiable         |
 | Stakeholder language      | No technical jargon               |
 
@@ -326,16 +262,14 @@ Use `AskUserQuestion` with 2-3 questions:
     - Integration + E2E
     - Unit + Integration + E2E
 
-For EACH acceptance criterion, generate a corresponding test case outline:
+For EACH acceptance criterion, generate corresponding test case outline:
 
-| AC                         | Test Outline                                            | Priority |
-| -------------------------- | ------------------------------------------------------- | -------- |
-| AC-1: User can create goal | TC: Create goal with valid data → verify persisted      | P0       |
-| AC-2: Goal requires title  | TC: Create goal without title → verify validation error | P1       |
+| AC   | Test Outline                                            | Priority |
+| ---- | ------------------------------------------------------- | -------- |
+| AC-1 | TC: Create goal with valid data → verify persisted      | P0       |
+| AC-2 | TC: Create goal without title → verify validation error | P1       |
 
-This table becomes the seed for `/tdd-spec` if the user chooses TDD-first.
-
-Document in PBI under `## Testability Assessment`.
+Seed for `/tdd-spec` if user chooses TDD-first. Document in PBI under `## Testability Assessment`.
 
 ---
 
@@ -343,15 +277,25 @@ Document in PBI under `## Testability Assessment`.
 
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation Framework** — Story Points (Modified Fibonacci) + Man-Days for 3-5yr dev (6 productive hrs/day, .NET + Angular stack). AI estimate assumes Claude Code with good project context (code graph, patterns, hooks active).
+>
+> | SP  | Complexity | Description                                    | Traditional (code + test) | AI-Assisted (code+rev + test+rev) |
+> | --- | ---------- | ---------------------------------------------- | ------------------------- | --------------------------------- |
+> | 1   | Low        | Trivial: single field, config flag, CSS fix    | 0.5d (0.3d+0.2d)          | 0.25d (0.15d+0.1d)                |
+> | 2   | Low        | Small: simple CRUD endpoint OR basic component | 1d (0.6d+0.4d)            | 0.35d (0.2d+0.15d)                |
+> | 3   | Medium     | Medium: form + API + validation                | 2d (1.3d+0.7d)            | 0.65d (0.4d+0.25d)                |
+> | 5   | Medium     | Large: multi-layer feature (BE + FE)           | 4d (2.5d+1.5d)            | 1.0d (0.6d+0.4d)                  |
+> | 8   | High       | Very large: complex feature + migration        | 6d (4d+2d)                | 1.5d (1.0d+0.5d)                  |
+> | 13  | Critical   | Epic: cross-service — SHOULD split             | 10d (6.5d+3.5d)           | 2.0d (1.3d+0.7d)                  |
+> | 21  | Critical   | MUST split — not sprint-ready                  | >15d                      | ~3d                               |
+>
+> **AI speedup grows with task size:** SP 1 ≈ 2x · SP 2-3 ≈ 3x · SP 5-8 ≈ 4x · SP 13+ ≈ 5x. Pattern-heavy CQRS/Angular boilerplate eliminated in hours at any scale. Fixed overhead: human review.
+> **AI column breakdown:** `(code_gen × 1.3) + (test_gen × 1.3)` — each artifact adds 30% human review overhead. Test writing with AI = few hours generation + 30% review, same model as coding.
+> Output `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in plan/PBI frontmatter.
 
 <!-- /SYNC:estimation-framework -->
 
-Apply RICE score or MoSCoW for priority. Estimate using **Story Points (Modified Fibonacci 1-21)** for complexity measurement.
-
-### Story Points (Primary Estimation)
-
-Use SP reference table from estimation framework (already embedded above).
+Apply RICE score or MoSCoW for priority. Estimate using **Story Points (Modified Fibonacci 1-21)**.
 
 ### Quick RICE Score
 
@@ -377,9 +321,7 @@ Effort: Story points (1, 2, 3, 5, 8, 13, 21)
 
 ## Phase 7: Validation Interview (MANDATORY)
 
-Generate 3-5 questions covering assumptions, scope, dependencies, edge cases. Use AskUserQuestion. Document in PBI. This step is NOT optional.
-
-### Question Categories
+Generate 3-5 questions covering assumptions, scope, dependencies, edge cases. Use AskUserQuestion. Document in PBI. **NOT optional.**
 
 | Category            | Example Question                                                            |
 | ------------------- | --------------------------------------------------------------------------- |
@@ -394,10 +336,8 @@ Generate 3-5 questions covering assumptions, scope, dependencies, edge cases. Us
 | **Seed Data**       | "Does this feature need reference/lookup data to function?"                 |
 | **Data Migration**  | "Does this change entity schema? Is data transformation needed?"            |
 
-### Process
-
 1. Generate 3-5 questions from assumptions, scope, dependencies
-2. Use `AskUserQuestion` tool to interview
+2. Use `AskUserQuestion` to interview
 3. Document in PBI under `## Validation Summary`
 4. Update PBI based on answers
 
@@ -423,9 +363,41 @@ Generate 3-5 questions covering assumptions, scope, dependencies, edge cases. Us
 
 ---
 
+## Cross-Cutting & Production Readiness
+
+> Capture in PBI template sections: Production Readiness Concerns, Authorization & Access Control, Seed Data, Data Migration.
+
+<!-- SYNC:scaffold-production-readiness -->
+
+> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 5 foundations:
+>
+> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates. Specific tool choices → `docs/project-reference/` or `project-config.json`.
+> 2. **Error Handling Foundation** — HTTP interceptor, error classification (4xx/5xx taxonomy), user notification, global uncaught handler.
+> 3. **Loading State Management** — counter-based tracker (not boolean toggle), skip-token for background requests, 300ms flicker guard.
+> 4. **Docker Development Environment** — compose profiles (`dev`/`test`/`infra`), multi-stage Dockerfile, health checks on all services, non-root production user.
+> 5. **Integration Points** — document each outbound boundary; configure retry + circuit breaker + timeout; integration tests for happy path and failure path.
+>
+> **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
+
+<!-- /SYNC:scaffold-production-readiness -->
+
+<!-- SYNC:cross-cutting-quality -->
+
+> **Cross-Cutting Quality** — Check across all changed files:
+>
+> 1. **Error handling consistency** — same error patterns across related files
+> 2. **Logging** — structured logging with correlation IDs for traceability
+> 3. **Security** — no hardcoded secrets, input validation at boundaries, auth checks present
+> 4. **Performance** — no N+1 queries, unnecessary allocations, or blocking calls in async paths
+> 5. **Observability** — health checks, metrics, tracing spans for new endpoints
+
+<!-- /SYNC:cross-cutting-quality -->
+
+---
+
 ## Phase 8: PBI Artifact Generation
 
-Save to `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md`.
+**Path:** `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md` | **ID Pattern:** `PBI-{YYMMDD}-{NNN}`
 
 ### PBI Template
 
@@ -437,6 +409,8 @@ module: '{ModuleName — detect from project-config.json modules[]}'
 priority: Must Have | Should Have | Could Have | Won't Have
 story_points: 1 | 2 | 3 | 5 | 8 | 13 | 21
 complexity: Low | Medium | High | Very High
+man_days_traditional: '{ Xd (Yd code + Zd test) — from SP table }'
+man_days_ai: '{ Xd (Yd code + Zd test) — from SP table with AI }'
 status: draft | refined | ready | in_progress | done
 rice_score: { calculated }
 created: '{YYYY-MM-DD}'
@@ -622,8 +596,8 @@ Then error "{message}"
 
 ## Key Rules
 
-- **Every PBI MUST ATTENTION include a Dependencies table** — with types: `must-before`, `can-parallel`, `blocked-by`, `independent`. This enables `/prioritize` and `/plan` to respect ordering.
-- **No vague dependency descriptions** — Each dependency must specify the concrete PBI, service, or feature and WHY the relationship exists.
+- **Every PBI MUST ATTENTION include Dependencies table** — types: `must-before`, `can-parallel`, `blocked-by`, `independent`. Enables `/prioritize` and `/plan` to respect ordering.
+- **No vague dependency descriptions** — Each dependency must specify concrete PBI, service, or feature and WHY relationship exists.
 
 ## Definition of Ready (INVEST)
 
@@ -652,48 +626,71 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 - **Role Skill:** `business-analyst` (detailed patterns)
 - **Input:** `/idea` output
-- **Next Step:** `/story`, `/tdd-spec` (Recommended for TDD), `/test-spec`, `/design-spec`
+- **Next Step:** `/story`, `/tdd-spec` (Recommended for TDD), `/design-spec`
 - **Prioritization:** `/prioritize`
-- **Production Readiness:** See `SYNC:scaffold-production-readiness` block for foundation requirements referenced in Production Readiness Concerns table.
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION** after completing this skill, use `AskUserQuestion` to present these options. NEVER skip because task seems "simple" or "obvious":
 
-- **"/why-review (Recommended)"** — Validate design rationale, alternatives considered, and risk assessment in the PBI before moving to story or implementation
-- **"/domain-analysis"** — If PBI creates/modifies domain entities, model bounded contexts and aggregates before writing stories
+- **"/why-review (Recommended)"** — Validate design rationale, alternatives, risk assessment before `/story` or implementation
+- **"/domain-analysis"** — If PBI creates/modifies domain entities, model bounded contexts before writing stories
 - **"/story"** — Break PBI into implementable user stories
-- **"/pbi-mockup"** — Generate HTML mockup report from PBI
+- **"/pbi-mockup"** — Generate HTML mockup from PBI
 - **"/tdd-spec"** — If using TDD approach
 - **"Skip, continue manually"** — user decides
 
+---
+
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final todo task: **"Run /why-review"** — validate PBI design rationale (Problem Hypothesis, alternatives, risk) before proceeding to /story or /tdd-spec.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final todo task: **"Run /pbi-challenge"** — Dev BA PIC collaborative review of the drafted PBI (challenge prompts, AC quality, feasibility) before proceeding to /dor-gate or /story.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small tasks via `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
+- **MANDATORY IMPORTANT MUST ATTENTION** add final review task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** add task: run `/why-review` — validate PBI design rationale before `/story` or `/tdd-spec`
+- **MANDATORY IMPORTANT MUST ATTENTION** add task: run `/pbi-challenge` — Dev BA PIC review before `/dor-gate` or `/story`
 
 <!-- SYNC:ui-system-context:reminder -->
 
 - **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:scaffold-production-readiness:reminder -->
-- **IMPORTANT MUST ATTENTION** verify 4 production-readiness foundations (code quality, error handling, loading state, Docker) for scaffold PBIs.
+    <!-- /SYNC:ui-system-context:reminder -->
+    <!-- SYNC:scaffold-production-readiness:reminder -->
+- **IMPORTANT MUST ATTENTION** verify 5 production-readiness foundations (code quality, error handling, loading state, Docker, integration points) for scaffold PBIs.
     <!-- /SYNC:scaffold-production-readiness:reminder -->
     <!-- SYNC:cross-cutting-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** check error handling, logging, security, performance, and observability across changed files.
     <!-- /SYNC:cross-cutting-quality:reminder -->
     <!-- SYNC:estimation-framework:reminder -->
-- **IMPORTANT MUST ATTENTION** estimate story points using Modified Fibonacci (1-21). SP >8 MUST ATTENTION split, >5 SHOULD split.
+- **IMPORTANT MUST ATTENTION** estimate story points using Modified Fibonacci (1-21). Output `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`. SP 13 SHOULD split, SP 21 MUST split.
     <!-- /SYNC:estimation-framework:reminder -->
     <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
   <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**Anti-Rationalization:**
+
+| Evasion                                   | Rebuttal                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------ |
+| "Simple PBI, skip hypothesis validation"  | Wrong assumption wastes more time than validation check. Apply always.         |
+| "Validation interview is optional here"   | NEVER optional — user decides assumptions, AI doesn't                          |
+| "Skip Dependencies table, no blockers"    | Unknown blockers exist. Always fill table — even if `independent`              |
+| "Skip story points, just write ACs"       | `story_points`, `man_days_traditional`, `man_days_ai` mandatory in frontmatter |
+| "Domain context not needed for small PBI" | Small PBIs touch entities. Read domain-entities-reference first                |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

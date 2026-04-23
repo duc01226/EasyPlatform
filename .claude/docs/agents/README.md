@@ -33,12 +33,12 @@ Main Claude Session
 
 ### Planning & Design
 
-| Agent                | Purpose                                                                 | Tools                     |
-| -------------------- | ----------------------------------------------------------------------- | ------------------------- |
-| `architect`          | System design decisions, ADR creation (Opus)                            | All tools                 |
-| `solution-architect` | Greenfield project inception: tech stack, DDD, project structure (Opus) | All + WebSearch, WebFetch |
-| `planner`            | Create comprehensive implementation plans                               | All tools                 |
-| `Plan`               | Software architect for implementation strategy                          | All tools                 |
+| Agent                | Purpose                                                          | Tools                     |
+| -------------------- | ---------------------------------------------------------------- | ------------------------- |
+| `architect`          | System design decisions, ADR creation                            | All tools                 |
+| `solution-architect` | Greenfield project inception: tech stack, DDD, project structure | All + WebSearch, WebFetch |
+| `planner`            | Create comprehensive implementation plans                        | All tools                 |
+| `Plan`               | Software architect for implementation strategy                   | All tools                 |
 
 ### Development & Implementation
 
@@ -155,8 +155,8 @@ Task({
 | Research new technology       | `researcher`          | Web search + documentation synthesis              |
 | Plan feature implementation   | `planner`             | Creates structured implementation plans           |
 | Evaluate architecture options | `planner`             | Creates structured plans with trade-off analysis  |
-| Design system architecture    | `architect`           | ADR creation, Opus model                          |
-| Greenfield project inception  | `solution-architect`  | Tech stack, DDD, project structure (Opus)         |
+| Design system architecture    | `architect`           | ADR creation, cross-service analysis              |
+| Greenfield project inception  | `solution-architect`  | Tech stack, DDD, project structure                |
 | Plan E2E test structure       | `e2e-runner`          | Playwright patterns, BEM selectors                |
 | Implement from plan           | `fullstack-developer` | Executes implementation phases                    |
 | Debug failing tests           | `debugger`            | Systematic issue investigation                    |

@@ -57,6 +57,7 @@ Optional scans (run if applicable):
 /scan-domain-entities      # Domain entity catalog, relationships
 /scan-integration-tests    # Integration test patterns
 /scan-e2e-tests            # E2E test patterns, page objects
+/scan-seed-test-data       # Seeder/dev-data patterns, idempotency, DI scope
 /scan-scss-styling         # SCSS/CSS methodology
 /scan-feature-docs         # Business feature documentation index
 ```

@@ -952,15 +952,6 @@
   has_scripts: false
   name: tdd-spec-review
   path: tdd-spec-review\SKILL.md
-- category: other
-  description: '[Documentation] Create or update test specifications in docs/test-specs/{Module}/.
-    Use when asked to create test specs, write test cases, document test scenarios,
-    or generate Given-When-Then specifications. Triggers on "test specs", "test specifications",
-    "test cases", "test scenarios", "QA documentation", "Given-When-Then".'
-  has_references: true
-  has_scripts: false
-  name: test-specs-docs
-  path: test-specs-docs\SKILL.md
 - category: frontend
   description: "[Testing] Full-site QA audit (accessibility, performance, security,
     SEO) with visual reports. Use for comprehensive QA audits of deployed sites."

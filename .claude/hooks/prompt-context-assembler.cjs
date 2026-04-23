@@ -332,6 +332,13 @@ async function main() {
         if (criticalTop) console.log(criticalTop);
 
         // ═══════════════════════════════════════════════════════════════════════════
+        // TASK-PLANNING REMINDER — always injected at top (primacy anchor, no dedup)
+        // ═══════════════════════════════════════════════════════════════════════════
+        console.log(
+            `**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.`
+        );
+
+        // ═══════════════════════════════════════════════════════════════════════════
         // MAIN BLOCK: Session context, rules, modularization, dev rules
         // Skipped when recently injected (dedup), but critical context always runs
         // ═══════════════════════════════════════════════════════════════════════════

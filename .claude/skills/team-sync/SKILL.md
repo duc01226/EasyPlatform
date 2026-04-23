@@ -1,7 +1,7 @@
 ---
 name: team-sync
 version: 1.0.0
-description: "[Project Management] Generate meeting agendas and facilitate team coordination. Use when preparing standups, sprint reviews, retros, weekly syncs, or team meetings. Triggers on keywords like "standup", "team sync", "meeting agenda", "daily", "sprint review", "retro", "weekly sync"."
+description: '[Project Management] Generate meeting agendas and facilitate team coordination. Use when preparing standups, sprint reviews, retros, weekly syncs, or team meetings. Triggers on keywords like "standup", "team sync", "meeting agenda", "daily", "sprint review", "retro", "weekly sync".'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
@@ -140,3 +140,5 @@ Generate meeting agendas and action item tracking.
       <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

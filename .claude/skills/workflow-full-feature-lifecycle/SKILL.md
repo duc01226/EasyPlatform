@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Full Feature Lifecycle workflow — complete fe
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /idea -> /refine -> /refine-review -> /domain-analysis -> /story -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /design-spec -> /interface-design -> /frontend-design -> /plan -> /plan-review -> /plan-validate -> /cook -> /review-domain-entities -> /tdd-spec -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /sre-review -> /quality-gate -> /docs-update -> /watzup -> /acceptance -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -78,7 +80,7 @@ disable-model-invocation: true
 
 Activate the `full-feature-lifecycle` workflow. Run `/workflow-start full-feature-lifecycle` with the user's prompt as context.
 
-**Steps:** /idea → /refine → /refine-review → /domain-analysis (if entity changes) → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /design-spec → /interface-design → /frontend-design → /plan → /plan-review → /plan-validate → /cook → /review-domain-entities (if entity changes) → /integration-test → /integration-test-review → /workflow-review-changes → /sre-review → /test-spec → /quality-gate → /docs-update → /watzup → /acceptance → /workflow-end
+**Steps:** /idea → /refine → /refine-review → /domain-analysis (if entity changes) → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /design-spec → /interface-design → /frontend-design → /plan → /plan-review → /plan-validate → /cook → /review-domain-entities (if entity changes) → /tdd-spec → /tdd-spec-review → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /workflow-review-changes → /sre-review → /quality-gate → /docs-update → /watzup → /acceptance → /workflow-end
 
 ## Closing Rule
 
@@ -86,15 +88,21 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /idea -> /refine -> /refine-review -> /domain-analysis -> /story -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /design-spec -> /interface-design -> /frontend-design -> /plan -> /plan-review -> /plan-validate -> /cook -> /review-domain-entities -> /tdd-spec -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /sre-review -> /quality-gate -> /docs-update -> /watzup -> /acceptance -> /workflow-end
+
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

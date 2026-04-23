@@ -20,7 +20,7 @@ async function main() {
         emitSubagentContext(buildCodeReviewRulesContextPart(4, 5, agentType));
     } catch (error) {
         console.error(`SubagentStart code-review-rules-p5 error: ${error.message}`);
-        process.exit(0);
+        process.exit(0); // fail-open
     }
 }
 

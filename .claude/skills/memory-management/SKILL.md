@@ -1,7 +1,7 @@
 ---
 name: memory-management
 version: 1.0.0
-description: "[Utilities] Use when saving or retrieving important patterns, decisions, and learnings across sessions. Also use for external memory checkpoints during long-running tasks to prevent context loss. Triggers on keywords like "remember", "save pattern", "recall", "memory", "persist", "knowledge base", "learnings", "checkpoint", "save context", "preserve progress"."
+description: '[Utilities] Use when saving or retrieving important patterns, decisions, and learnings across sessions. Also use for external memory checkpoints during long-running tasks to prevent context loss. Triggers on keywords like "remember", "save pattern", "recall", "memory", "persist", "knowledge base", "learnings", "checkpoint", "save context", "preserve progress".'
 disable-model-invocation: true
 ---
 
@@ -514,3 +514,5 @@ All long-running workflows should follow this pattern:
   <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
   <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

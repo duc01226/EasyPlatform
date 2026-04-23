@@ -59,12 +59,12 @@
 | Create a PR              | `/git/pr`                  | `commit`                  |
 | Understand code          | `/scout`                   | `feature-investigation`   |
 | Plan implementation      | `/plan`                    | `planning`                |
-| Run tests                | `/test`                    | `test-spec`               |
+| Run tests                | `/test`                    | `tdd-spec`                |
 | Review code              | `/review`                  | `code-review`             |
 | Debug issues             | `/debug-investigate`       | `debug-investigate`       |
 | Create user story        | `/story`                   | `business-analyst`        |
 | Prioritize backlog       | `/prioritize`              | `product-owner`           |
-| Create test cases        | `/test-spec`               | `test-spec`               |
+| Create test cases        | `/tdd-spec`                | `tdd-spec`                |
 | Quality checkpoint       | `/quality-gate`            | `qc-specialist`           |
 | Create design spec       | `/design-spec`             | `ux-designer`             |
 | Analyze blast radius     | `/graph-blast-radius`      | `graph-blast-radius`      |

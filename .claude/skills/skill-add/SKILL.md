@@ -85,12 +85,14 @@ Add new reference files or scripts to `.claude/skills/$1` directory.
 - **IMPORTANT MUST ATTENTION** inline shared protocols via `<!-- SYNC:tag -->` blocks — NEVER use file references
 - **IMPORTANT MUST ATTENTION** call `/prompt-enhance` on updated SKILL.md as final quality pass
 - **IMPORTANT MUST ATTENTION** keep reference files under 100 lines each (progressive disclosure)
-  <!-- SYNC:shared-protocol-duplication-policy:reminder -->
+      <!-- SYNC:shared-protocol-duplication-policy:reminder -->
 - **IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
-  <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
-  <!-- SYNC:critical-thinking-mindset:reminder -->
+      <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

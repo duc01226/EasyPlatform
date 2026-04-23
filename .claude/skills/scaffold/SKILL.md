@@ -4,6 +4,15 @@ version: 1.0.0
 description: '[Architecture] Scaffold project architecture with OOP/SOLID base classes, infrastructure abstractions, and reusable foundation code before feature implementation.'
 ---
 
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -59,6 +68,33 @@ description: '[Architecture] Scaffold project architecture with OOP/SOLID base c
 > **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
 
 <!-- /SYNC:scaffold-production-readiness -->
+
+<!-- SYNC:harness-setup -->
+
+> **Harness Engineering** — An outer agent harness has two jobs: raise first-attempt quality + provide self-correction feedback loops before human review.
+>
+> **Controls split:**
+>
+> | Axis        | Type          | Examples                                                                      | Frequency        |
+> | ----------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+> | Feedforward | Computational | `.editorconfig`, strict compiler flags, enforced module boundaries            | Always-on        |
+> | Feedforward | Inferential   | `CLAUDE.md` conventions, skill prompts, architecture notes, pattern catalogs  | Always-on        |
+> | Feedback    | Computational | Linters, type checks, pre-commit hooks, ArchUnit/arch-fitness tests, CI gates | Pre-commit → CI  |
+> | Feedback    | Inferential   | `/code-review` skill, `/sre-review`, `/security`, LLM-as-judge passes         | Post-commit → CI |
+>
+> **Three harness types:**
+>
+> 1. **Maintainability** — Complexity, duplication, coverage, style. Easiest: rich deterministic tooling.
+> 2. **Architecture fitness** — Module boundaries, dependency direction, performance budgets, observability conventions.
+> 3. **Behaviour** — Functional correctness. Hardest: requires approved fixtures or strong spec-first discipline.
+>
+> **Keep quality left:** pre-commit sensors fire first (cheap), CI sensors fire second, post-review last (expensive).
+>
+> **Research-driven:** Never hardcode tool choices. Detect tech stack → research ecosystem → present top 2-3 options → user decides. Enforce strictest defaults; loosen only with explicit approval.
+>
+> **Harnessability signals:** Strong typing, explicit module boundaries, opinionated frameworks = easier to harness. Treat these as greenfield architectural choices, not just style preferences.
+
+<!-- /SYNC:harness-setup -->
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
@@ -212,12 +248,24 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 - [ ] **MANDATORY MUST ATTENTION** create `.editorconfig` for cross-IDE consistency (indentation, encoding, line endings)
 - [ ] **MANDATORY MUST ATTENTION** document code quality standards in project README or contributing guide
 
-### Adaptation Protocol
+### Harness Integration (MANDATORY — Do Not Skip)
 
-- Research the chosen tech stack's ecosystem for best-in-class quality tools
-- Present top 2-3 options per category with pros/cons to user via `AskUserQuestion`
-- Configure the strictest reasonable defaults — loosen only with explicit user approval
-- Ensure all quality tools run both locally (fast feedback) AND in CI (enforcement gate)
+**MANDATORY MUST ATTENTION** delegate ALL computational sensor setup to `/linter-setup`:
+
+- Do NOT manually configure linters, formatters, or pre-commit hooks in this skill
+- `/linter-setup` handles: tool research → install → configure → pre-commit hooks → CI gates
+- `/harness-setup` handles: full harness inventory (feedforward guides + all feedback types)
+
+**WHY:** Code quality tooling is part of the project's outer agent harness.
+A checklist of installs is not a harness. A harness is a system of guides and sensors
+where each control fires at the right lifecycle stage and produces signals the agent can consume.
+
+**After scaffold, invoke (in order):**
+
+1. `/linter-setup` — computational feedback sensors (deterministic, fast, always-on)
+2. `/harness-setup` — full harness inventory (all feedforward guides + all feedback sensors)
+
+**Do NOT proceed to `/cook` until both complete.** (`/scaffold` verification gate enforces this)
 
 ## Production Readiness Scaffolding (MANDATORY)
 
@@ -227,10 +275,9 @@ Every scaffolded project MUST ATTENTION include these 4 foundations. AI must det
 
 ### 1. Code Quality Tooling
 
-- Detect tech stack → select from protocol's option matrices
-- Generate: linter config, formatter config, `.editorconfig`, pre-commit hooks
-- Present options to user → generate chosen tool's config files
-- Run protocol's verification checklist before proceeding
+Handled by `/linter-setup` skill — do NOT duplicate here.
+Verify completion: check that `.editorconfig`, linter config, and pre-commit hook config files exist.
+If missing → block scaffold completion, invoke `/linter-setup`.
 
 ### 2. Error Handling Foundation
 
@@ -300,6 +347,8 @@ Run ALL verification checklists from the production readiness protocol:
 - [ ] Error handling foundation verified (Section 2)
 - [ ] Loading state management verified (Section 3)
 - [ ] Docker development environment verified (Section 4)
+- [ ] `/linter-setup` completed (linter + formatter + pre-commit + CI gate configured)
+- [ ] `/harness-setup` completed (harness-inventory.md produced, feedforward guides in place)
 
 **BLOCK proceeding to `/cook` if ANY verification item fails.** Fix issues first, then re-verify.
 
@@ -321,13 +370,28 @@ Run ALL verification checklists from the production readiness protocol:
   <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:scaffold-production-readiness:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:scaffold-production-readiness:reminder -->
 - **IMPORTANT MUST ATTENTION** verify all 4 production readiness foundations (quality tooling, error handling, loading state, Docker) before marking scaffold complete.
-    <!-- /SYNC:scaffold-production-readiness:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+      <!-- /SYNC:scaffold-production-readiness:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

@@ -236,20 +236,20 @@ Claude sees:
 
 ### When Injection Happens
 
-| Event                     | Hook                         | What's Injected                                                     |
-| ------------------------- | ---------------------------- | ------------------------------------------------------------------- |
-| Session start             | `graph-session-init.cjs`     | Status: "Graph active. 94 files, 875 nodes" or install instructions |
-| `/code-review` invoked    | `graph-context-injector.cjs` | Blast radius summary, risk level, impacted files                    |
-| `/review-changes` invoked | `graph-context-injector.cjs` | Same as above                                                       |
-| `/scout` invoked          | `graph-context-injector.cjs` | Structural overview for exploration                                 |
-| `/debug` invoked          | `graph-context-injector.cjs` | Dependency context for tracing                                      |
-| `/sre-review` invoked     | `graph-context-injector.cjs` | Impact assessment for prod readiness                                |
-| `/investigate` invoked    | (in-skill RECOMMENDED)       | Callers, imports, tests, inheritance queries for target             |
-| `/feature-investigation`  | (in-skill RECOMMENDED)       | Same graph queries for workflow-driven investigation                |
-| `/graph-query` invoked    | (standalone skill)           | Natural language graph queries, 8 patterns                          |
-| `/graph-sync` invoked     | (standalone skill)           | Git-aware sync: diff last_synced_commit vs HEAD, re-parse changed   |
-| Session starts            | `graph-session-init.cjs`     | Auto-sync with git state, report stale files                        |
-| File edited               | `graph-auto-update.cjs`      | Nothing visible — silently updates graph.db                         |
+| Event                        | Hook                         | What's Injected                                                     |
+| ---------------------------- | ---------------------------- | ------------------------------------------------------------------- |
+| Session start                | `graph-session-init.cjs`     | Status: "Graph active. 94 files, 875 nodes" or install instructions |
+| `/code-review` invoked       | `graph-context-injector.cjs` | Blast radius summary, risk level, impacted files                    |
+| `/review-changes` invoked    | `graph-context-injector.cjs` | Same as above                                                       |
+| `/scout` invoked             | `graph-context-injector.cjs` | Structural overview for exploration                                 |
+| `/debug-investigate` invoked | `graph-context-injector.cjs` | Dependency context for tracing                                      |
+| `/sre-review` invoked        | `graph-context-injector.cjs` | Impact assessment for prod readiness                                |
+| `/investigate` invoked       | (in-skill RECOMMENDED)       | Callers, imports, tests, inheritance queries for target             |
+| `/feature-investigation`     | (in-skill RECOMMENDED)       | Same graph queries for workflow-driven investigation                |
+| `/graph-query` invoked       | (standalone skill)           | Natural language graph queries, 8 patterns                          |
+| `/graph-sync` invoked        | (standalone skill)           | Git-aware sync: diff last_synced_commit vs HEAD, re-parse changed   |
+| Session starts               | `graph-session-init.cjs`     | Auto-sync with git state, report stale files                        |
+| File edited                  | `graph-auto-update.cjs`      | Nothing visible — silently updates graph.db                         |
 
 ### Context Injection Flow (Mermaid)
 
@@ -600,7 +600,7 @@ sequenceDiagram
 | `/graph-connect-api`    | Detect frontend-backend API connections via graph edges                   |
 | `/code-review`          | Auto-receives blast radius context when graph exists                      |
 | `/scout`                | Auto-receives structural overview when graph exists                       |
-| `/debug`                | Auto-receives dependency context for tracing                              |
+| `/debug-investigate`    | Auto-receives dependency context for tracing                              |
 | `/sre-review`           | Auto-receives impact assessment for prod readiness                        |
 
 ## Real-World Use Cases (Angular + .NET Microservices)

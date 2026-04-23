@@ -1,6 +1,6 @@
 ---
 name: project-config
-version: 2.1.0
+version: 2.2.0
 description: '[Utilities] Scan workspace and update docs/project-config.json to match current project structure'
 disable-model-invocation: false
 ---
@@ -33,16 +33,16 @@ disable-model-invocation: false
 
 ## Quick Summary
 
-**Goal:** Scan the project workspace and update `docs/project-config.json` with accurate values.
+**Goal:** Scan workspace, update `docs/project-config.json` with accurate values.
 
-**IMPORTANT MUST ATTENTION** follow Plan → Review → Execute workflow. **IMPORTANT MUST ATTENTION** use exact schema field names (`--describe`). **IMPORTANT MUST ATTENTION** validate after each phase. **NEVER** use `classPattern`/`keyExtractor` — the correct fields are `contentPattern`/`keyGroup`.
+**IMPORTANT MUST ATTENTION** follow Plan → Review → Execute workflow. **IMPORTANT MUST ATTENTION** use exact schema field names (`--describe`). **IMPORTANT MUST ATTENTION** validate after each phase. **NEVER** use `classPattern`/`keyExtractor` — correct fields: `contentPattern`/`keyGroup`.
 
-**Workflow:** Recon → `/plan` → `/plan-review` → Execute phases (scan → merge → validate → fix) → Follow-up scans → `/prompt-enhance`
+**Workflow:** Recon → classify scale → `/plan` → `/plan-review` → Execute phases (scan → merge → validate → fix) → Follow-up scans → `/prompt-enhance`
 
 **Key Rules:**
 
-- MUST ATTENTION run `node .claude/hooks/lib/project-config-schema.cjs --describe` and use field names verbatim
-- MUST ATTENTION create one TaskCreate per config section — NEVER scan everything in one pass
+- MUST ATTENTION run `node .claude/hooks/lib/project-config-schema.cjs --describe` — use field names verbatim
+- MUST ATTENTION one TaskCreate per config section — NEVER scan everything in one pass
 - MUST ATTENTION validate schema after each merge — `validateConfig(config)` returns PASSED or errors
 - MUST ATTENTION review-and-fix after each phase — read back, spot-check paths, self-review
 - Path regexes MUST ATTENTION use `[\\/]` for cross-platform separator matching
@@ -52,7 +52,9 @@ disable-model-invocation: false
 
 ## ⛔ Plan → Review → Execute Workflow
 
-### Step 1: Quick Reconnaissance
+### Step 1: Detect — Classify Project Scale
+
+**MUST ATTENTION classify scale FIRST** — drives task granularity for all subsequent phases.
 
 ```bash
 find src/ -name "*.csproj" 2>/dev/null | wc -l
@@ -61,11 +63,19 @@ find src/ -name "*.cs" 2>/dev/null | wc -l
 ls -d src/*/ 2>/dev/null
 ```
 
+| Scale         | Signal              | Task Approach                          |
+| ------------- | ------------------- | -------------------------------------- |
+| Small (<5)    | Few modules         | Combine 2a+2b, 2k+2l+2m — ~8 tasks     |
+| Medium (5–20) | Moderate count      | One task per section — ~15 tasks       |
+| Large (20+)   | Many service groups | Split 2a per service group — 20+ tasks |
+
+Small projects: ask user to combine into single pass.
+
 ### Step 2: Create Plan (`/plan`)
 
 Create `plans/{date}-project-config-scan.md`:
 
-1. Assess scale — small (<5), medium (5-20), large (20+)
+1. Record scale classification from Step 1
 2. Group config sections into phases (≤5 tasks each)
 3. Include review-and-fix cycle after each phase
 
@@ -81,8 +91,6 @@ Phase F: Final Review — consolidate, validate, hook tests, create /scan-* task
 Phase G: Self-Review — re-invoke /project-config to verify all config matches source code
 ```
 
-**For small projects:** Ask user to combine into single pass.
-
 ### Step 3: Review Plan (`/plan-review`)
 
 ### Step 4: Execute
@@ -92,24 +100,24 @@ Per phase: TaskCreate → scan → merge → validate → spot-check → fix →
 ### Review-and-Fix Cycle (MANDATORY per phase)
 
 1. Read back updated config sections
-2. Spot-check 2-3 paths against actual directories
+2. Spot-check 2–3 paths against actual dirs
 3. Run schema validation
-4. Self-review: "Missing modules? Accurate descriptions? Correct regexes?"
+4. Self-review: missing modules? Accurate descriptions? Correct regexes?
 5. Fix before proceeding
 
 ---
 
 ## Intermediate Workspace
 
-For medium/large projects: `mkdir -p .ai/workspace/project-config` — write phase reports before merging. Delete after consolidation.
+Medium/large projects: `mkdir -p .ai/workspace/project-config` — write phase reports before merging. Delete after consolidation.
 
 ---
 
 ## ⛔ Schema Protection Rules
 
-**DO NOT** rename/remove/restructure top-level sections. **DO NOT** change field types. **DO NOT** populate deprecated v1 sections for new projects. **DO NOT** remove v1 data from existing projects.
+**NEVER** rename/remove/restructure top-level sections. **NEVER** change field types. **NEVER** populate deprecated v1 sections for new projects. **NEVER** remove v1 data from existing projects.
 
-**You MAY** add entries to maps/arrays, update values, add optional schema fields, populate v2 sections.
+**MAY** add entries to maps/arrays, update values, add optional schema fields, populate v2 sections.
 
 ### Schema Structure (v2)
 
@@ -177,12 +185,6 @@ Read `docs/project-config.json`. Note populated vs skeleton sections.
 
 **Each subsection = one TaskCreate.** Per task: investigate → report → merge → validate.
 
-| Project Size  | Approach                               |
-| ------------- | -------------------------------------- |
-| Small (<5)    | Combine 2a+2b, 2k+2l+2m — ~8 tasks     |
-| Medium (5-20) | One task per section — ~15 tasks       |
-| Large (20+)   | Split 2a per service group — 20+ tasks |
-
 ### 2a. Modules — Backend
 
 ```bash
@@ -204,7 +206,7 @@ ls -d src/*/apps/*/ */apps/*/ apps/*/ 2>/dev/null | head -20
 ls -d src/*/libs/*/ */libs/*/ libs/*/ packages/*/ 2>/dev/null | head -30
 ```
 
-Build entries with `kind: "frontend-app"` or `kind: "library"`.
+Build entries: `kind: "frontend-app"` or `kind: "library"`.
 
 ### 2c. Project Metadata
 
@@ -213,7 +215,7 @@ Build `project { name, description, languages[], packageManagers[], monorepoTool
 
 ### 2d. Framework Patterns
 
-Grep for `abstract class`, `interface I`, most-imported symbols.
+Grep `abstract class`, `interface I`, most-imported symbols.
 Build `framework { name, searchPatternKeywords[] }` from commonly used base classes.
 
 ### 2e. Context Groups
@@ -302,12 +304,12 @@ Build `referenceDocs[]` from `docs/project-reference/`: `{ filename, purpose, se
 
 ## Phase 3: Consolidate & Write
 
-Merge findings section-by-section. Only overwrite if scan found concrete values. Incremental merge recommended for large projects.
+Merge section-by-section. Overwrite only with concrete scan findings. Large projects: merge incrementally.
 
 ## Phase 4: Verify (MANDATORY)
 
-1. Schema validation — MUST ATTENTION pass
-2. Spot-check 2-3 service paths
+1. Schema validation — MUST ATTENTION pass with zero errors
+2. Spot-check 2–3 service paths — verify each path exists (`file:line` evidence)
 3. Run hook tests: `node .claude/hooks/tests/test-all-hooks.cjs`
 
 ## Phase 5: Follow-Up Tasks
@@ -316,6 +318,7 @@ Merge findings section-by-section. Only overwrite if scan found concrete values.
 | ----------------------------------------------------------------------------- | --------------------------------- |
 | `project-structure-reference.md`                                              | `/scan-project-structure` (FIRST) |
 | `backend-patterns-reference.md`                                               | `/scan-backend-patterns`          |
+| `seed-test-data-reference.md`                                                 | `/scan-seed-test-data`            |
 | `design-system/` + `scss-styling-guide.md` + `frontend-patterns-reference.md` | `/scan-ui-system`                 |
 | `integration-test-reference.md`                                               | `/scan-integration-tests`         |
 | `feature-docs-reference.md`                                                   | `/scan-feature-docs`              |
@@ -331,9 +334,7 @@ Run `/prompt-enhance` on all generated/updated docs and `CLAUDE.md`. One task pe
 
 ## Phase 7: Self-Review Verification (MANDATORY)
 
-Re-invoke this skill to verify everything is correct: `/project-config Self review and verify everything again, ensure all is correct with current source code`
-
-This ensures any changes made during earlier phases didn't introduce regressions and catches issues missed in the first pass.
+Re-invoke skill: `/project-config Self review and verify everything again, ensure all is correct with current source code`. Catches regressions and issues missed in first pass.
 
 ## Output
 
@@ -341,20 +342,33 @@ Report: sections updated vs unchanged, new modules discovered, path mismatches, 
 
 ---
 
-## Closing Reminders (AI Attention Anchor)
+## Closing Reminders
 
+**IMPORTANT MUST ATTENTION** classify project scale FIRST (Step 1) — drives all task granularity decisions.
 **IMPORTANT MUST ATTENTION** plan first — recon → `/plan` → `/plan-review` → execute. NEVER jump to scanning.
 **IMPORTANT MUST ATTENTION** break into phases with review cycles — scan → merge → validate → spot-check → fix per phase.
 **IMPORTANT MUST ATTENTION** use exact schema field names — run `--describe`, copy verbatim. NEVER guess.
-**IMPORTANT MUST ATTENTION** validate after EACH phase — catch errors early.
+**IMPORTANT MUST ATTENTION** validate after EACH phase — schema errors compound across phases.
 **NEVER** use `classPattern`/`keyExtractor` — correct fields: `contentPattern` (regex) + `keyGroup` (number).
-**IMPORTANT MUST ATTENTION** create one TaskCreate per config section — NEVER monolithic scan.
-**IMPORTANT MUST ATTENTION** do final holistic review — read entire config, cross-reference, fix inconsistencies.
+**IMPORTANT MUST ATTENTION** one TaskCreate per config section — NEVER monolithic scan.
+**IMPORTANT MUST ATTENTION** Phase 7 self-review is MANDATORY — catches what every earlier phase missed.
 
-  <!-- SYNC:critical-thinking-mindset:reminder -->
+**Anti-Rationalization:**
+
+| Evasion                             | Rebuttal                                                                       |
+| ----------------------------------- | ------------------------------------------------------------------------------ |
+| "File looks simple, skip planning"  | Planning catches scale mistakes and regressions. Apply anyway.                 |
+| "Already know the schema"           | Run `--describe` anyway — field names differ from memory. No proof = no check. |
+| "Phase N looks fine, skip validate" | Schema errors compound across phases. Validate every phase, no exceptions.     |
+| "Self-review is redundant"          | Phase 7 catches what every earlier phase missed. Never skip.                   |
+| "Small project, skip task tracking" | Task tracking prevents drift on all project sizes. Always `TaskCreate` first.  |
+
+<!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

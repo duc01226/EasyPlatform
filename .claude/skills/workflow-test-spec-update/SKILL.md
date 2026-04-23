@@ -5,7 +5,10 @@ description: '[Workflow] Trigger Test Spec Update (Post-Change) workflow — upd
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /tdd-spec -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before updating test specs — Section 7 TC coverage mapping is the canonical baseline.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -78,9 +81,11 @@ disable-model-invocation: true
 
 Activate the `test-spec-update` workflow. Run `/workflow-start test-spec-update` with the user's prompt as context.
 
-**Steps:** /workflow-review-changes → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /integration-test-review → /integration-test-verify → /test → /docs-update → /workflow-end
+**Steps:** /workflow-review-changes → /tdd-spec → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /test → /docs-update → /workflow-end
 
 ---
+
+**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /tdd-spec -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
 
 ## Closing Reminders
 
@@ -88,9 +93,13 @@ Activate the `test-spec-update` workflow. Run `/workflow-start test-spec-update`
 - **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

@@ -1,6 +1,6 @@
 ---
 name: prompt-enhance
-version: 3.0.0
+version: 3.2.0
 description: '[Skill Management] Compress + enhance any prompt/doc/skill file — two-phase optimization: (1) caveman compression (stop-word removal), (2) AI attention anchoring (top/bottom summaries, inline READ summaries, progressive disclosure). Use for prompt engineering, skill refactoring, doc optimization, or reducing token bloat in prompts, skills, or injected docs.'
 ---
 
@@ -32,21 +32,22 @@ description: '[Skill Management] Compress + enhance any prompt/doc/skill file �
 
 ## Quick Summary
 
-**Goal:** Two-phase optimization of any markdown prompt file: (1) Caveman Compression — strip stop words and grammatical scaffolding while preserving semantic meaning; (2) Prompt Enhancement — apply AI attention anchoring so AI actually reads and follows all instructions.
+**Goal:** Two-phase optimization: (1) Caveman Compression — strip stop words + grammatical scaffolding, preserve semantic meaning; (2) Prompt Enhancement — apply AI attention anchoring so AI reads and follows all instructions.
 
 **Workflow:**
 
-1. **Read** — Read the target file completely
-2. **Compress** — Apply caveman compression pass (Phase 1)
-3. **Enhance** — Apply AI attention anchoring transforms (Phase 2)
-4. **Verify** — No content loss, correct structure, rule density ≥ pre-optimization
+1. **Detect** — Classify target: skill file, protocol file, or general doc
+2. **Read** — Read target file completely
+3. **Compress** — Apply caveman compression (Phase 1)
+4. **Enhance** — Apply AI attention anchoring transforms (Phase 2)
+5. **Verify** — No content loss, rule density ≥ pre-optimization
 
 **Key Rules:**
 
-- Compress FIRST, enhance SECOND — compression removes noise; enhancement structures signal
-- Never remove meaningful rules, constraints, code examples, or `file:line` evidence
-- Post-optimization rule density (MUST ATTENTION/NEVER/ALWAYS per 100 lines) must be ≥ pre-optimization
-- Caveman compression applies to prose only — never compress code blocks, YAML, or structured tables
+- NEVER skip Phase 1 (compress) before Phase 2 (enhance) — compression removes noise, enhancement structures signal
+- NEVER remove meaningful rules, constraints, code examples, or `file:line` evidence
+- Post-optimization rule density (MUST ATTENTION/NEVER/ALWAYS per 100 lines) MUST be ≥ pre-optimization
+- Caveman compression applies to prose only — NEVER compress code blocks, YAML, or structured tables
 - Prompt quality > token count, but verbose prompts degrade quality — optimize clarity-per-token
 
 <!-- SYNC:output-quality-principles -->
@@ -70,13 +71,90 @@ description: '[Skill Management] Compress + enhance any prompt/doc/skill file �
 Compress and enhance this file:
 <target>$ARGUMENTS</target>
 
-If no file specified, ask via `AskUserQuestion`. If text passed instead of a file path, apply caveman compression to the text directly and output the result.
+No file? Ask via `AskUserQuestion`. Text passed (not file path)? Apply caveman compression directly and output result.
+
+---
+
+## Phase 0: Detect Target Type
+
+**Before any other step**, classify target:
+
+| Target type        | Detection                                | Action                                                  |
+| ------------------ | ---------------------------------------- | ------------------------------------------------------- |
+| Skill file         | Path matches `.claude/skills/**/*.md`    | Apply Universal Skill-Building Principles after Phase 1 |
+| Protocol file      | Path matches `.claude/protocols/**/*.md` | Standard 2-phase optimization only                      |
+| General doc/prompt | Any other `.md` file                     | Standard 2-phase optimization only                      |
+| Raw text           | No file path provided                    | Apply caveman compression only, output result           |
+
+---
+
+## When Target is a Skill File
+
+Target `.claude/skills/**/*.md` (any `SKILL.md`)? Apply **Universal Skill-Building Principles** AFTER caveman compression, BEFORE writing enhanced output.
+
+<!-- SYNC:universal-skill-building-principles -->
+
+> **Universal Skill-Building Principles** — 10 principles for building AI skills that work across any project type. Source: extracted from review-changes, plan-review, code-review skill rewrites.
+>
+> **Meta-principle: Teach AI to reason, not to recite.** Skill's job: structure WHEN and HOW AI applies its existing knowledge — not enumerate every possible concern.
+>
+> 1. **Detect Before Act** — Every skill starts with a classification phase. Detect artifact type (plan type, code category, change nature) before applying any logic. Detection drives: sub-agent selection, which dimensions to emphasize, mandatory vs. optional checks.
+>    Anti-pattern: same checklist applied regardless of input type.
+> 2. **Derive, Don't Enumerate** — Teach AI HOW to reason about a domain, not WHAT items to tick. Replace "check X, Y, Z" with "understand role → read conventions → derive concerns from first principles → execute with evidence." Fixed checklist = ceiling. Thinking framework = floor.
+>    Test: Can this skill run on a Python/Go project without modification? If not → it's enumerating, not teaching.
+> 3. **Evidence Gates** — Every claim, finding, recommendation requires `file:line` proof or traced call chain. Confidence thresholds: >80% act freely, 60-80% verify first, <60% DO NOT recommend. "Insufficient evidence" is valid output. Speculation is forbidden output.
+> 4. **Fresh Eyes Protocol** — Round 1 in main session. Round 2+ with fresh sub-agent (zero memory of Round 1). Main agent reads report but NEVER filters or overrides findings. Max 3 rounds, then escalate to user. Never declare PASS after Round 1 alone.
+>    Why: main agent rationalizes its own mistakes. Zero-memory sub-agent catches what main agent dismissed.
+> 5. **Specialize by Type** — Route to specialized sub-agents based on detected artifact type:
+>
+>     | Artifact type                | Sub-agent               |
+>     | ---------------------------- | ----------------------- |
+>     | Source code / diffs          | `code-reviewer`         |
+>     | Security-sensitive changes   | `security-auditor`      |
+>     | Performance-critical changes | `performance-optimizer` |
+>     | Plans / docs / specs         | `general-purpose`       |
+>
+> 6. **Embed Protocols Verbatim, Never Reference** — Shared protocols MUST be copied inline into every sub-agent prompt — never referenced by file path or tag name. AI compliance drops significantly behind file-read indirection. Maintain canonical source; embed body at every call site.
+> 7. **Search-Based Discovery** — Never hardcode project-specific paths, formats, or identifiers. Teach skill to discover them:
+>     - "Search for `coding-standards`, `style-guide`, `contributing`" not "read `docs/X/code-review-rules.md`"
+>     - "Find the project's test format near changed files" not "look for `TC-{FEAT}-{NNN}` in `docs/business-features/`"
+>       This is what makes a skill work across any project without modification.
+> 8. **Dimensions > Checklists** — Structure review/analysis as named thinking dimensions, each with a `Think:` prompt that forces first-principles reasoning: (1) state dimension's role, (2) derive what could go wrong if weak, (3) apply to artifact with evidence. Produces targeted, evidence-backed findings — not generic "add more detail" suggestions.
+>    **Serial attention:** When applying a dimension-based framework, NEVER scan all dimensions simultaneously. One focused pass per dimension. AI misses violations when attention is split across concurrent concerns. Pattern: identify applicable dimensions → sequential focused passes → aggregate.
+>    **Threshold invariant:** 3+ similar patterns in any dimension pass = MANDATORY extraction. 2+ violations of same kind = structural/architectural finding, not individual instance.
+> 9. **Recursive Quality Loop** — Fix → Re-review → Fix → Re-review. Each round uses a NEW fresh sub-agent. Continue until PASS or 3 rounds max, then escalate. Never declare success after Round 1 alone. Never reuse a sub-agent across rounds.
+> 10. **Anti-Rationalization Anchors** — Explicitly name and embed the evasion patterns AI uses to skip steps in the skill's closing reminders:
+>
+>     | Evasion               | Rebuttal                                                   |
+>     | --------------------- | ---------------------------------------------------------- |
+>     | "Too simple for this" | Wrong assumptions waste more time. Apply anyway.           |
+>     | "Already searched"    | Show `file:line` evidence. No proof = no search.           |
+>     | "Just do it"          | Still need task tracking. Skip depth, never skip tracking. |
+
+<!-- /SYNC:universal-skill-building-principles -->
+
+### Skill Enhancement Checklist
+
+After caveman compression, evaluate skill against each principle, add missing structure:
+
+| Principle                    | Check                                    | Action if missing                                      |
+| ---------------------------- | ---------------------------------------- | ------------------------------------------------------ |
+| Detect Before Act            | Phase 0 / classification step present?   | Add artifact-type detection before Phase 1             |
+| Derive, Don't Enumerate      | Thinking framework vs. fixed checklist?  | Replace checklist with "understand → derive → execute" |
+| Evidence Gates               | Every claim requires `file:line`?        | Add evidence requirement to all review steps           |
+| Fresh Eyes Protocol          | Multi-round sub-agent review defined?    | Add Round 2 fresh sub-agent protocol                   |
+| Specialize by Type           | Sub-agent routing table present?         | Add `security-auditor`/`performance-optimizer` options |
+| Embed Protocols Verbatim     | Protocols inline in sub-agent prompts?   | Move protocol bodies inline, remove file references    |
+| Search-Based Discovery       | Any hardcoded paths/formats/IDs?         | Replace with search instructions                       |
+| Dimensions > Checklists      | Named dimensions with `Think:` prompts?  | Convert checklist to dimension framework               |
+| Recursive Quality Loop       | Fix → re-review → max 3 rounds defined?  | Add recursive review loop                              |
+| Anti-Rationalization Anchors | Closing reminders include evasion table? | Add evasion → rebuttal table                           |
 
 ---
 
 ## Phase 1: Caveman Compression
 
-Aggressively remove stop words and grammatical scaffolding while preserving meaning. Think like a caveman — use only content words that carry semantic weight.
+Aggressively remove stop words + grammatical scaffolding preserving meaning. Use only content words carrying semantic weight.
 
 ### What to Remove
 
@@ -235,14 +313,14 @@ Do NOT compress:
 
 ### Transform 4: Token Optimization (Conciseness Pass)
 
-**Principle:** Prompt quality is FIRST priority. But verbose prompts degrade quality too — AI attention dilutes across unnecessary tokens. Optimize for **clarity-per-token**: maximum signal, minimum noise.
+Prompt quality FIRST. Verbose prompts degrade quality — AI attention dilutes across unnecessary tokens. Optimize **clarity-per-token**: maximum signal, minimum noise.
 
 **What to cut:**
 
 - **Filler phrases** — "It is important to note that", "Please make sure to", "You should always" → just state the rule
-- **Redundant explanations** — if the heading says it, the body doesn't need to re-explain. Tables > paragraphs for structured data
-- **Duplicate content** — merge sections that say the same thing differently (except intentional top/bottom anchoring)
-- **Overly verbose examples** — trim to minimum lines demonstrating the pattern. Replace paragraph explanations with `// comment` in code
+- **Redundant explanations** — heading says it, body doesn't re-explain. Tables > paragraphs for structured data
+- **Duplicate content** — merge sections saying same thing differently (except intentional top/bottom anchoring)
+- **Overly verbose examples** — trim to minimum lines demonstrating pattern. Replace paragraph explanations with `// comment` in code
 - **Prose paragraphs for rules** — convert to bullet lists or tables (AI parses structured formats faster)
 
 **What to KEEP:**
@@ -262,6 +340,11 @@ Do NOT compress:
 ---
 
 ## Process
+
+### Step 0: Detect and Classify
+
+1. Identify target type (skill file / protocol / general doc / raw text)
+2. Skill file (`.claude/skills/**/*.md`) → apply Universal Skill-Building Principles after Phase 1
 
 ### Step 1: Read and Analyze
 
@@ -288,13 +371,13 @@ For each `.claude/` protocol reference:
 
 ### Step 4: Add/Fix Top Section
 
-- If Quick Summary missing → create from file content
-- If present but weak → strengthen with Goal, Workflow, Key Rules
+- Missing Quick Summary → create from file content
+- Present but weak → strengthen with Goal, Workflow, Key Rules
 - Protocol summaries appear before Quick Summary
 
 ### Step 5: Add/Fix Bottom Section
 
-- If Closing Reminders missing → add standard section
+- Missing Closing Reminders → add standard section
 - Pick rules AI most commonly skips (evidence-based, task creation, pattern search)
 - Remove old "IMPORTANT Task Planning Notes" if superseded by Closing Reminders
 
@@ -314,19 +397,32 @@ For each `.claude/` protocol reference:
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION** apply caveman compression FIRST (Phase 1) before any structural enhancement — never skip
-- **IMPORTANT MUST ATTENTION** never compress code blocks, YAML frontmatter, structured tables, or SYNC tags
+- **IMPORTANT MUST ATTENTION** NEVER compress code blocks, YAML frontmatter, structured tables, or SYNC tags
 - **IMPORTANT MUST ATTENTION** read target file completely before any changes
-- **IMPORTANT MUST ATTENTION** read each referenced protocol file to write accurate inline summaries — never guess content
+- **IMPORTANT MUST ATTENTION** read each referenced protocol file to write accurate inline summaries — NEVER guess content
 - **IMPORTANT MUST ATTENTION** apply primacy-recency anchoring — 3 critical rules in first 5 AND last 5 lines of every enhanced file
 - **IMPORTANT MUST ATTENTION** verify rule density: count MUST ATTENTION/NEVER/ALWAYS before and after — post ≥ pre
 - **IMPORTANT MUST ATTENTION** add inline summaries only for `.claude/` protocol files, not project-specific `docs/` files
-- **IMPORTANT MUST ATTENTION** keep all meaningful content — only restructure/compress, never delete rules or code examples
+- **IMPORTANT MUST ATTENTION** keep all meaningful content — only restructure/compress, NEVER delete rules or code examples
 - **IMPORTANT MUST ATTENTION** verify no YAML frontmatter corruption after changes
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
 - **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting
-  <!-- SYNC:critical-thinking-mindset:reminder -->
+
+**Anti-Rationalization:**
+
+| Evasion                                 | Rebuttal                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| "File is short, skip compression"       | Apply both phases anyway — density matters at any length                  |
+| "Already read the file"                 | Show recorded line count + rule density as proof                          |
+| "Closing reminders already exist"       | Verify they echo top-section rules AND include anti-rationalization table |
+| "Skill file, skip Universal Principles" | NEVER skip — Phase 0 detection is BLOCKING                                |
+
+    <!-- SYNC:critical-thinking-mindset:reminder -->
+
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

@@ -228,6 +228,45 @@ const unitTests = [
         }
     },
     {
+        name: '[init-reference-docs] generatePlaceholderContent copies templatePath when available',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            const modulePath = path.resolve(__dirname, '../../session-init-docs.cjs');
+            const loaderPath = path.resolve(__dirname, '../../lib/project-config-loader.cjs');
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            const origDir = process.env.CLAUDE_PROJECT_DIR;
+
+            try {
+                const templatePath = path.join(tmpDir, '.claude', 'templates', 'reference-docs', 'spec-principles.md');
+                fs.mkdirSync(path.dirname(templatePath), { recursive: true });
+                fs.writeFileSync(templatePath, '# Template Spec Principles\n\nTemplate content.\n', 'utf-8');
+
+                process.env.CLAUDE_PROJECT_DIR = tmpDir;
+                delete require.cache[modulePath];
+                delete require.cache[loaderPath];
+                delete require.cache[helpersPath];
+
+                const { generatePlaceholderContent } = require(modulePath);
+                const content = generatePlaceholderContent({
+                    filename: 'spec-principles.md',
+                    purpose: 'Spec principles',
+                    sections: ['Unused section'],
+                    templatePath: '.claude/templates/reference-docs/spec-principles.md'
+                });
+
+                assertContains(content, '# Template Spec Principles', 'Uses template title');
+                assertContains(content, 'Template content.', 'Uses template body');
+                assertTrue(!content.includes("Fill in your project's details below"), 'Does not fall back to generic placeholder');
+            } finally {
+                if (origDir === undefined) { delete process.env.CLAUDE_PROJECT_DIR; } else { process.env.CLAUDE_PROJECT_DIR = origDir; }
+                delete require.cache[modulePath];
+                delete require.cache[loaderPath];
+                delete require.cache[helpersPath];
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
         // Test (d) — Phase 1: isPlaceholderFile recognises SCSS sentinel
         name: '[init-reference-docs] isPlaceholderFile detects SCSS sentinel and returns false for real tokens',
         fn: async () => {
@@ -273,6 +312,7 @@ const unitTests = [
             assertEqual(SCAN_SKILL_MAP['design-system/design-system-canonical.md'], 'scan-design-system', 'Canonical doc routes');
             assertEqual(SCAN_SKILL_MAP['design-system/design-tokens.scss'], 'scan-design-system', 'SCSS tokens route');
             assertEqual(SCAN_SKILL_MAP['design-system/design-tokens.css'], 'scan-design-system', 'CSS tokens route');
+            assertEqual(SCAN_SKILL_MAP['seed-test-data-reference.md'], 'scan-seed-test-data', 'Seed test data reference routes');
 
             delete require.cache[modulePath];
             delete require.cache[helpersPath];
@@ -450,6 +490,78 @@ const integrationTests = [
                 const refDir = path.join(docsDir, 'project-reference');
                 assertTrue(fs.existsSync(path.join(refDir, 'project-structure-reference.md')), 'Default doc created in project-reference/');
                 assertTrue(fs.existsSync(path.join(refDir, 'lessons.md')), 'lessons.md created in project-reference/');
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
+        name: '[init-reference-docs] copies spec-principles from template when defaults are used',
+        fn: async () => {
+            const tmpDir = createTempProjectDir();
+            try {
+                const docsDir = path.join(tmpDir, 'docs');
+                fs.mkdirSync(docsDir, { recursive: true });
+                fs.writeFileSync(
+                    path.join(docsDir, 'project-config.json'),
+                    JSON.stringify({
+                        project: { name: 'TemplateTestProject' }
+                    })
+                );
+
+                const templatePath = path.join(tmpDir, '.claude', 'templates', 'reference-docs', 'spec-principles.md');
+                fs.mkdirSync(path.dirname(templatePath), { recursive: true });
+                fs.writeFileSync(templatePath, '# Spec Principles Template\n\nCustom template content.\n', 'utf-8');
+
+                const input = createUserPromptInput('hello');
+                const result = await runHook(HOOK_PATH, input, {
+                    cwd: tmpDir,
+                    env: { CLAUDE_PROJECT_DIR: tmpDir }
+                });
+
+                assertAllowed(result.code);
+
+                const refFile = path.join(docsDir, 'project-reference', 'spec-principles.md');
+                assertTrue(fs.existsSync(refFile), 'spec-principles.md created from defaults');
+                const content = fs.readFileSync(refFile, 'utf-8');
+                assertContains(content, '# Spec Principles Template', 'Template title copied');
+                assertContains(content, 'Custom template content.', 'Template content copied');
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
+        name: '[init-reference-docs] copies seed-test-data-reference from template when defaults are used',
+        fn: async () => {
+            const tmpDir = createTempProjectDir();
+            try {
+                const docsDir = path.join(tmpDir, 'docs');
+                fs.mkdirSync(docsDir, { recursive: true });
+                fs.writeFileSync(
+                    path.join(docsDir, 'project-config.json'),
+                    JSON.stringify({
+                        project: { name: 'SeedTemplateTestProject' }
+                    })
+                );
+
+                const templatePath = path.join(tmpDir, '.claude', 'templates', 'reference-docs', 'seed-test-data-reference.md');
+                fs.mkdirSync(path.dirname(templatePath), { recursive: true });
+                fs.writeFileSync(templatePath, '# Seed Template\n\nSeed template content.\n', 'utf-8');
+
+                const input = createUserPromptInput('hello');
+                const result = await runHook(HOOK_PATH, input, {
+                    cwd: tmpDir,
+                    env: { CLAUDE_PROJECT_DIR: tmpDir }
+                });
+
+                assertAllowed(result.code);
+
+                const refFile = path.join(docsDir, 'project-reference', 'seed-test-data-reference.md');
+                assertTrue(fs.existsSync(refFile), 'seed-test-data-reference.md created from defaults');
+                const content = fs.readFileSync(refFile, 'utf-8');
+                assertContains(content, '# Seed Template', 'Template title copied');
+                assertContains(content, 'Seed template content.', 'Template content copied');
             } finally {
                 cleanupTempDir(tmpDir);
             }

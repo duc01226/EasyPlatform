@@ -1,12 +1,39 @@
 ---
 name: integration-test-review
-version: 1.0.0
+version: 1.1.0
 description: '[Code Quality] Review integration tests for assertion quality, bug protection, repeatability, and test-spec traceability. Use in review workflows or standalone.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small todo tasks BEFORE starting.
-> **A test that cannot fail is not a test. It is decoration.** Every test must earn its existence by proving it would FAIL if the bug it guards were reintroduced.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+> **A test that cannot fail is not a test — it is decoration.** Every test MUST earn existence by proving it would FAIL if the bug it guards were reintroduced.
 > Every finding requires `file:line` proof with confidence >80%.
+
+## Quick Summary
+
+**Goal:** Review integration tests for real bug-protection value, correct data assertions, infinite repeatability, spec alignment.
+
+**Scope:** All test files in uncommitted changes (default), or user-specified scope.
+
+**Workflow:** Phase 0 Detect → Collect → 6-Gate Review → Spec Cross-Check → Report → Fix issues → Fresh sub-agent re-review → Build & verify → If fail: investigate + fix plan
+
+**Non-negotiable rules:**
+
+- MUST read handler/service source BEFORE judging any test assertions
+- MUST flag smoke-only tests (no-exception-only checks) as FAIL
+- MUST flag DI-resolution-only tests (resolve + not-null) as FAIL — NOT integration tests
+- MUST verify tests use unique IDs per run (infinitely repeatable)
+- MUST use async polling/retry for ALL DB assertions — async delays are norm
+- NEVER accept assertions that always pass regardless of handler correctness
+- **NO smoke/fake/useless tests** — every test MUST execute actual operations and verify data state
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -32,7 +59,7 @@ description: '[Code Quality] Review integration tests for assertion quality, bug
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-- `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing)
+- `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing) _(check for [Injected: ...] header before reading — may be auto-injected by hook)_
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -254,46 +281,46 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:review-protocol-injection -->
 
-## Quick Summary
+---
 
-**Goal:** Review integration tests for real bug-protection value, correct data assertions, infinite repeatability, and spec alignment.
+## Phase 0: Scope Detection
 
-**Scope:** All test files in uncommitted changes (default), or user-specified scope.
+Classify BEFORE any gate review. Route wrong → waste all effort.
 
-**Workflow:** Collect → Review (5 gates) → Spec cross-check → Report → **Fix all issues** → **Second-round fresh review** → Build & verify → If fail: investigate + fix plan
+| Signal                  | Classification      | Action                                                         |
+| ----------------------- | ------------------- | -------------------------------------------------------------- |
+| No user-specified files | Uncommitted changes | Run `git diff --name-only` to collect scope                    |
+| User specifies files    | Explicit scope      | Use provided list directly                                     |
+| 10+ test files          | Large scope         | Parallel sub-agents grouped by module                          |
+| 1-9 test files          | Normal scope        | Single review pass                                             |
+| 0 test files in changes | No tests            | Report gap — ask user for explicit scope via `AskUserQuestion` |
 
-**Non-negotiable rules:**
-
-- MUST read the handler/service source before judging any test's assertions
-- MUST flag smoke-only tests (no-exception-only checks) as FAIL
-- MUST flag DI-resolution-only tests (resolve + not-null) as FAIL — they are NOT integration tests
-- MUST verify tests use unique IDs per run (infinitely repeatable)
-- MUST use async polling/retry for all DB assertions — async delays are the norm
-- NEVER accept assertions that always pass regardless of handler correctness
-- **NO smoke/fake/useless tests** — every test must execute actual operations and verify data state
+**Search for test reference docs** — NEVER hardcode paths. Grep for `integration-test-reference`, `test-patterns`, `integration-test-guide` near changed test files to discover project-specific conventions before starting gate review.
 
 ---
 
-## The 5 Quality Gates
+## The 6 Quality Gates
 
 ### Gate 1: Assertion Value — "Would this catch the bug?"
 
-The #1 AI failure: **hallucination assertions** — look real, verify nothing.
+> **Think:** If I deleted the core logic from this handler, which assertions would fail? If NONE → FAIL.
 
-**PASS:** Asserts specific field values that would change if handler had a bug. At least one assertion per test that FAILS if core logic breaks.
+**#1 AI failure:** hallucination assertions — look real, verify nothing.
+
+**PASS:** At least one assertion per test FAILS if core logic breaks.
 
 **FAIL:**
 
 - No-exception as ONLY assertion
-- Not-null without checking content
-- Assertions on fields the handler doesn't modify
-- Dead assertions: `x >= 0` where x is always >= 0
-- Unchecked exception captures
-- count >= 0 (always true), string not empty on required fields (always true)
+- Not-null without content check
+- Assertions on fields handler doesn't modify
+- Dead assertions: `x >= 0` where x always >= 0, `count >= 0`, string not-empty on required fields
 
 **Verify:** Read handler source → list fields it changes → check test asserts those fields.
 
 ### Gate 2: Data State — "Does it check the database?"
+
+> **Think:** Does this test prove the database changed, or just that no exception occurred?
 
 **PASS:** After command, test queries DB and asserts specific entity field values.
 
@@ -303,11 +330,13 @@ The #1 AI failure: **hallucination assertions** — look real, verify nothing.
 - Checks existence (not-null) without field values
 - Missing async polling on side-effect assertions
 
-**Exception:** Smoke-only ONLY when side effect is truly unobservable. Must be marked with explicit justification comment.
+**Exception:** Smoke-only ONLY when side effect truly unobservable. MUST include explicit justification comment.
 
-**Always use async polling/retry for data assertions.** Event handlers, bus consumers, background jobs run async. Data may not be available immediately.
+**ALWAYS use async polling/retry for data assertions.** Event handlers, bus consumers, background jobs run async — data may not be immediately available.
 
 ### Gate 3: Repeatability — "Can I run this 100 times?"
+
+> **Think:** If this test runs N times in a shared database, does it get noisier each run? Would run #2 fail?
 
 <!-- SYNC:repeatable-test-principle -->
 
@@ -326,6 +355,8 @@ The #1 AI failure: **hallucination assertions** — look real, verify nothing.
 
 ### Gate 4: Domain Logic — "Does test match handler?"
 
+> **Think:** Did I read the handler source? Do I know which exact fields it writes? Do assertions check those fields — and ONLY those fields?
+
 **PASS:** Assertions match what handler ACTUALLY does (verified by reading source). Covers primary business rule. Validation paths tested.
 
 **FAIL:** Assertions on untouched fields (copy-paste), missing primary side-effect assertion, event handler tests that never trigger the event.
@@ -334,33 +365,35 @@ The #1 AI failure: **hallucination assertions** — look real, verify nothing.
 
 **Also check:**
 
-- Authorization: does the test verify both authorized AND unauthorized access paths?
-- Coverage: at minimum, happy path + validation failure + DB state check (3 tests)
+- Authorization: test verifies both authorized AND unauthorized access paths?
+- Coverage: happy path + validation failure + DB state check (3 tests minimum)
 
 ### Gate 5: Spec Traceability — "Is this tracked?"
 
-**PASS:** Test has spec annotation linking to a TC ID. TC ID exists in spec docs. Method name matches TC.
+> **Think:** Can I trace TC-XXX-NNN from test annotation → spec docs → feature docs in one unbroken chain?
+
+**PASS:** Test has spec annotation linking to TC ID. TC ID exists in spec docs. Method name matches TC.
 
 **FAIL (WARN, not BLOCK):** Missing annotation, orphaned TC ID, or spec says "Planned" but test exists.
 
 ### Gate 6: Three-Way Sync — "Do test, code, and docs agree?"
 
-The hardest gate. When test code, implementation code, and feature/test-spec docs all differ, the AI must identify the discrepancy and classify it using the source-of-truth hierarchy — never silently pick a winner.
+> **Think:** Have I read ALL 3 sources? Where exactly do they disagree? Does evidence support a verdict, or must I escalate?
+
+Hardest gate. Identify discrepancy, classify using source-of-truth hierarchy — NEVER silently pick winner.
 
 #### Source of Truth Hierarchy (highest → lowest)
 
 | Priority    | Source                                                   | Why                                                                |
 | ----------- | -------------------------------------------------------- | ------------------------------------------------------------------ |
 | 1 (Highest) | Feature docs (`docs/business-features/…/Section 15 TCs`) | Business intent — defines WHAT must happen                         |
-| 2           | Test-spec docs (`docs/test-specs/`)                      | TC scenarios derived from feature docs — defines HOW to verify     |
+| 2           | Test-spec docs (`docs/specs/`)                           | TC scenarios derived from feature docs — defines HOW to verify     |
 | 3           | Implementation code (handler/entity/service)             | What WAS built — may reflect intentional evolution not yet in docs |
 | 4 (Lowest)  | Integration test code                                    | What IS being tested — most likely to be wrong or stale            |
 
 **Rule:** Docs win over code. Code wins over tests. Feature docs win over test-spec docs.
 
 #### Conflict Classification
-
-For each TC, read all three sources and classify:
 
 | Pattern                       | Feature Doc | Impl Code | Test Code | Verdict               | Action                                        |
 | ----------------------------- | ----------- | --------- | --------- | --------------------- | --------------------------------------------- |
@@ -376,28 +409,25 @@ For each TC, read all three sources and classify:
 - NEVER fix a test to match broken code — that hides bugs
 - NEVER assume docs are wrong without evidence they were intentionally superseded
 - NEVER self-resolve a three-way conflict — always escalate via `AskUserQuestion`
-- A "stale docs" verdict requires BOTH code AND test to agree — one is not enough
-- When escalating, include: TC ID, what each source says, and what evidence you found
+- "Stale docs" verdict requires BOTH code AND test to agree — one source never enough
+- When escalating, include: TC ID, what each source says, evidence found
 
-#### How to verify each source
+#### Verify Each Source
 
-1. **Feature doc**: Read `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 15 for the TC. Note the scenario title, preconditions, steps, and expected results.
-2. **Test-spec doc**: Read `docs/test-specs/{Service}/README.md` (or `INTEGRATION-TESTS.md`) for the same TC. Note whether it says Planned/Implemented and what the described scenario is.
-3. **Implementation code**: Read the handler/entity/service that the TC exercises. List what it actually does — fields written, events fired, validation rules.
-4. **Test code**: Read the test method. List what it arranges, what command it executes, and what it asserts.
+1. **Feature doc:** Read Section 15 — scenario title, preconditions, steps, expected results
+2. **Test-spec doc:** Find same TC — Planned/Implemented status and described scenario
+3. **Implementation code:** Read handler/entity/service — fields written, events fired, validation rules
+4. **Test code:** Read test method — arrange, execute, assert
 
-Compare each pair. Document findings with `file:line` for each source.
+Compare each pair with `file:line` evidence for each source.
 
-**PASS:** All three sources agree on scenario intent and outcome.
-**WARN:** Minor wording differences with same semantic meaning — flag but do not block.
-**FAIL:** Semantic disagreement — a field, rule, or outcome differs between sources.
-**ESCALATE:** All three differ and the correct answer cannot be derived from evidence alone.
+**PASS:** All three agree. **WARN:** Minor wording, same semantic. **FAIL:** Semantic disagreement on field/rule/outcome. **ESCALATE:** All three differ and evidence cannot resolve.
 
 ---
 
 ## Review Protocol (9 Phases)
 
-Use `TaskCreate` to create todo tasks for EACH phase below before starting.
+Use `TaskCreate` for EACH phase before starting.
 
 **Phase 1 — Collect:** Categorize changed files: new (full review), modified (changed methods only), new projects (infra + samples).
 
@@ -414,66 +444,60 @@ Use `TaskCreate` to create todo tasks for EACH phase below before starting.
 
 **Phase 3 — Spec Cross-Check + Three-Way Diff:** For each TC ID in code:
 
-1. Verify TC entry exists in both `docs/business-features/` (Section 15) and `docs/test-specs/`
-2. Read what the TC describes in each doc
-3. Read what the implementation code actually does
-4. Read what the test asserts
-5. Classify the conflict pattern (Gate 6 table) and record action
+1. Verify TC entry exists in both `docs/business-features/` (Section 15) and `docs/specs/`
+2. Read what TC describes in each doc
+3. Read what implementation code actually does
+4. Read what test asserts
+5. Classify conflict pattern (Gate 6 table) and record action
 6. Flag gaps both directions: TC in code but not in docs, or "Implemented" TC in docs but no test found
 
 **Phase 4 — Initial Report:** Write to `plans/reports/integration-test-review-{date}-{slug}.md`
 
-**Phase 5 — Fix All Issues (MANDATORY):** Fix every CRITICAL and HIGH issue found in Phase 2. MEDIUM issues: fix if straightforward, otherwise document as tech debt.
+**Phase 5 — Fix All Issues (MANDATORY):** Fix every CRITICAL and HIGH issue. MEDIUM: fix if straightforward, document as tech debt otherwise.
 
-1. Prioritize: CRITICAL first, then HIGH, then MEDIUM
-2. For each fix: read the handler source, understand the domain logic, then write/fix the assertion
-3. **Never weaken assertions to make tests pass** — fix root cause (timing, data, setup) instead
-4. After fixing, re-read changed files to verify the fix is correct
-5. Record each fix with `file:line` in the report under `## Fixes Applied`
+1. Prioritize: CRITICAL → HIGH → MEDIUM
+2. Per fix: read handler source, understand domain logic, write/fix assertion
+3. NEVER weaken assertions to make tests pass — fix root cause (timing, data, setup) instead
+4. Re-read changed files to verify fix correctness
+5. Record each fix with `file:line` under `## Fixes Applied`
 
 **Phase 6 — Fresh Sub-Agent Re-Review (MANDATORY):**
 
-> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
+After Phase 5 fixes, spawn fresh `code-reviewer` sub-agents (parallel by module for 10+ files; single agent otherwise) using canonical Agent template from `SYNC:review-protocol-injection`. Each sub-agent re-reads ALL target test files from scratch with ZERO memory of Phase 2/5. When constructing Agent call prompt:
 
-After Phase 5 fixes, spawn fresh `code-reviewer` sub-agents (parallel by module for 10+ files; single agent otherwise) using the canonical Agent template from `SYNC:review-protocol-injection` above. Each sub-agent re-reads ALL target test files from scratch with ZERO memory of Phase 2 findings or Phase 5 fixes. When constructing each Agent call prompt:
-
-1. Copy the Agent call shape from `SYNC:review-protocol-injection` template verbatim
+1. Copy Agent call shape from `SYNC:review-protocol-injection` template verbatim
 2. Set `subagent_type: "code-reviewer"`
-3. Embed the full verbatim body of these 9 SYNC blocks (all present inline above in this skill file): `SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`
-4. In the Task field, specify: `"Review the integration tests in {file-list} against the 6 quality gates: assertion value, data state verification, infinite repeatability, domain logic, test-spec traceability, and three-way sync (test code vs implementation code vs feature/test-spec docs). Read handler source AND feature docs before judging assertions. Flag smoke-only, existence-only, and dead assertions as FAIL. Apply the source-of-truth hierarchy: feature docs > test-spec docs > implementation code > test code. Classify every disagreement as: wrong test, code bug, stale docs, or escalate (three-way conflict)."`
-5. Set Target Files as the explicit file list (never pass inline contents)
-6. Set Reference Docs to include `docs/project-reference/integration-test-reference.md`
-7. Set report path as `plans/reports/integration-test-review-round{N}-{date}.md`
+3. Embed full verbatim body of 9 SYNC blocks (all present inline in this skill file): `SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`
+4. Task field: `"Review integration tests in {file-list} against 6 quality gates: assertion value, data state, infinite repeatability, domain logic, test-spec traceability, three-way sync. Read handler source AND feature docs before judging assertions. Flag smoke-only, existence-only, dead assertions as FAIL. Source-of-truth hierarchy: feature docs > test-spec docs > implementation code > test code. Classify every disagreement as: wrong test, code bug, stale docs, or escalate (three-way conflict)."`
+5. Target Files: explicit file list (never pass inline contents)
+6. Reference Docs: include `docs/project-reference/integration-test-reference.md`
+7. Report path: `plans/reports/integration-test-review-round{N}-{date}.md`
 
 After sub-agents return:
 
 1. **Read** each sub-agent's report
-2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
-3. **If new CRITICAL or HIGH issues:** fix them, then spawn NEW Round N+1 fresh sub-agents (never reuse prior agents)
-4. **Max 3 fresh rounds** — escalate to user via `AskUserQuestion` if still failing after 3 rounds
+2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` — DO NOT filter or override
+3. **If new CRITICAL/HIGH:** fix → spawn NEW Round N+1 fresh sub-agents (never reuse prior agents)
+4. **Max 3 fresh rounds** — escalate via `AskUserQuestion` if still failing after 3 rounds
 5. **Exit criteria:** Fresh-round review returns 0 CRITICAL and 0 HIGH issues
 
-**Phase 7 — Build & Run Tests (MANDATORY):** Build and run ALL changed/reviewed test files. Verify they pass.
+**Phase 7 — Build & Run Tests (MANDATORY):** Build and run ALL changed/reviewed test files.
 
-1. Build the test project
+1. Build test project
 2. Run changed tests (filter by reviewed test classes)
-3. **Never mark review complete until all tests pass.** Unverified reviews have zero value.
-4. Record pass/fail results in the report under `## Test Execution Results`
+3. NEVER mark review complete until all tests pass — unverified reviews have zero value
+4. Record results under `## Test Execution Results`
 
-**Phase 8 — Failure Investigation (if Phase 7 fails):** If tests fail after fixes, do NOT just retry. Investigate systematically.
+**Phase 8 — Failure Investigation (if Phase 7 fails):** Never just retry — investigate systematically.
 
-1. **Classify failure:** Test bug (assertion wrong, setup wrong) vs Service bug (handler broken) vs Environment (service not running, DB timeout)
-2. **Root cause analysis:** Read the failing test output, trace through handler source, identify the exact mismatch
-3. **Generate fix plan:** For each failure, document:
-    - Failing test: `file:line`, TC-ID
-    - Error message / stack trace summary
-    - Root cause (with confidence %)
-    - Proposed fix (with `file:line` of what to change)
-4. **Apply fixes and rerun** — loop until all pass or environment blockers identified
-5. **Environment blockers:** If tests fail because services are not running, document in report and mark as `BLOCKED — requires running system`. Do NOT mark these as test failures.
-6. Append to report under `## Failure Investigation`
+1. **Classify failure:** Test bug (assertion/setup wrong) vs Service bug (handler broken) vs Environment (service not running, DB timeout)
+2. **Root cause:** Read failing output, trace handler source, identify exact mismatch
+3. **Fix plan per failure:** failing test (`file:line`, TC-ID), error summary, root cause + confidence %, proposed fix
+4. **Apply and rerun** — loop until pass or environment blockers identified
+5. **Environment blockers:** Document as `BLOCKED — requires running system`; do NOT mark as test failures
+6. Append under `## Failure Investigation`
 
-**10+ files:** Use parallel sub-agents grouped by module. Each gets file list + 6 gates + handler paths + feature doc paths. Consolidate into single report.
+**10+ files:** Parallel sub-agents grouped by module. Each gets file list + 6 gates + handler paths + feature doc paths. Consolidate into single report.
 
 ---
 
@@ -492,39 +516,126 @@ After sub-agents return:
 | **Missing await** (unchecked async exception)    | Exception swallowed silently                     |
 | **Event not triggered** (query, never fire)      | Tests seeder, not handler                        |
 | **Test fixed to match broken code**              | Hides the bug — docs still say it's wrong        |
-| **Self-resolved three-way conflict**             | AI picked a winner without evidence — silent lie |
+| **Self-resolved three-way conflict**             | AI picked winner without evidence — silent lie   |
 | **Stale docs assumed without two-source proof**  | Docs may be right; code may be the bug           |
+
+---
+
+## Workflow Recommendation
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in a workflow, MUST use `AskUserQuestion` to ask user:
+>
+> 1. **Activate `write-integration-test` workflow** (Recommended) — scout → investigate → tdd-spec → tdd-spec-review → integration-test → integration-test-review → integration-test-verify → tdd-spec [direction=sync] → docs-update → watzup → workflow-end
+> 2. **Execute `/integration-test-review` directly** — run standalone
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, MUST use `AskUserQuestion`:
 
-- **"/integration-test-verify (Recommended)"** — Run integration tests to verify they all pass
+- **"/integration-test-verify (Recommended)"** — Run integration tests to verify all pass
 - **"/workflow-review-changes"** — Review all changes before committing
 - **"Skip, continue manually"** — user decides
 
+---
+
 ## Closing Reminders
 
-- **MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small todo tasks BEFORE starting — create todo tasks for each phase
-- **MANDATORY IMPORTANT MUST ATTENTION** a test that cannot fail is decoration — if it can't catch the bug, delete or fix it
-- **MANDATORY IMPORTANT MUST ATTENTION** read the handler source before judging assertions — you cannot review what you don't understand
-- **MANDATORY IMPORTANT MUST ATTENTION** tests MUST be infinitely repeatable — unique data per run, no cleanup, no rollback dependency
-- **MANDATORY IMPORTANT MUST ATTENTION** always use async polling/retry for DB assertions — async delays from event handlers and consumers
+- **MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` for ALL phases BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** test that cannot fail is decoration — if it can't catch the bug, delete or fix it
+- **MANDATORY IMPORTANT MUST ATTENTION** read handler source BEFORE judging assertions — cannot review without understanding
+- **MANDATORY IMPORTANT MUST ATTENTION** tests MUST be infinitely repeatable — unique data per run, no cleanup, no rollback
+- **MANDATORY IMPORTANT MUST ATTENTION** ALWAYS use async polling/retry for DB assertions
 - **MANDATORY IMPORTANT MUST ATTENTION** flag smoke-only as FAIL unless justified with explicit design comment
 - **MANDATORY IMPORTANT MUST ATTENTION** write findings to report file — never just return text
-- **MANDATORY IMPORTANT MUST ATTENTION** fix all CRITICAL and HIGH issues BEFORE running tests — Phase 5 is NOT optional
-- **MANDATORY IMPORTANT MUST ATTENTION** second-round fresh review after fixes — Phase 6 ensures fixes are correct and no new issues introduced
-- **MANDATORY IMPORTANT MUST ATTENTION** build and run ALL tests after fixes — Phase 7 is NOT optional, unverified reviews have zero value
-- **MANDATORY IMPORTANT MUST ATTENTION** if tests fail, investigate root cause systematically — Phase 8 generates diagnostic report with fix plan, never just retry blindly
-- **MANDATORY IMPORTANT MUST ATTENTION** Gate 6: read ALL three sources (feature doc, impl code, test code) before classifying any discrepancy — never classify from two sources alone
-- **MANDATORY IMPORTANT MUST ATTENTION** NEVER fix a test to match broken code — that hides the bug; docs + code must agree first
-- **MANDATORY IMPORTANT MUST ATTENTION** NEVER self-resolve a three-way conflict — always escalate via `AskUserQuestion` with evidence from all three sources
-- **MANDATORY IMPORTANT MUST ATTENTION** "stale docs" verdict requires BOTH implementation code AND test code to agree — one source is never enough to declare docs wrong
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** fix ALL CRITICAL and HIGH issues BEFORE running tests — Phase 5 NOT optional
+- **MANDATORY IMPORTANT MUST ATTENTION** spawn fresh sub-agent after fixes — Phase 6 NOT optional; Round 1 alone NEVER declares PASS
+- **MANDATORY IMPORTANT MUST ATTENTION** build and run ALL tests after fixes — Phase 7 NOT optional; unverified reviews have zero value
+- **MANDATORY IMPORTANT MUST ATTENTION** if tests fail, classify and investigate root cause — Phase 8 generates fix plan; NEVER retry blindly
+- **MANDATORY IMPORTANT MUST ATTENTION** Gate 6: read ALL three sources before classifying — never classify from two sources alone
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER fix a test to match broken code — hides the bug
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER self-resolve a three-way conflict — escalate via `AskUserQuestion`
+- **MANDATORY IMPORTANT MUST ATTENTION** "stale docs" requires BOTH impl code AND test to agree — one source never enough
+
+**Anti-Rationalization:**
+
+| Evasion                                   | Rebuttal                                                          |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| "Smoke test is fine for now"              | No smoke test earns its place. Fix or delete.                     |
+| "Handler source too long to read"         | Cannot judge assertion quality without reading. REQUIRED.         |
+| "Fresh sub-agent is overkill"             | Round 1 alone NEVER declares PASS. Non-negotiable.                |
+| "Tests were passing before"               | Passing ≠ correct. Dead assertions always pass.                   |
+| "Conflict is obvious, I can self-resolve" | Three-way conflict requires escalation. NEVER self-resolve.       |
+| "Phase 6/7/8 optional for small fixes"    | No exceptions. Every fix requires re-review + build verification. |
+| "0 test files, nothing to review"         | Report gap and ask user — do NOT silently exit.                   |
+
+  <!-- SYNC:critical-thinking-mindset:reminder -->
+
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+---
+
+## Related Skills
+
+| Skill                      | Relationship                                                           | When to Call                                                                   |
+| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `/integration-test`        | **Producer** — generates tests this skill reviews                      | Always preceded by /integration-test                                           |
+| `/integration-test-verify` | **Successor** — runs tests after review clears                         | Call after review passes all 6 gates                                           |
+| `/tdd-spec`                | **TC source** — Gate 5 checks TCs exist in feature doc Section 15      | If Gate 5 fails (orphaned test) → run /tdd-spec UPDATE                         |
+| `/spec-discovery`          | **Spec authority** — Gate 6 compares test code vs spec bundle          | If Gate 6 finds conflict: spec is authority                                    |
+| `/feature-docs`            | **Business doc** — Gate 6 compares tests vs feature doc business rules | If Gate 6 finds conflict: check feature-docs vs spec-discovery alignment first |
+| `/docs-update`             | **Orchestrator** — includes tdd-spec sync                              | Call when Gate 6 reveals doc staleness                                         |
+
+## Standalone Chain
+
+> When called outside a workflow, follow this chain after running integration-test-review.
+
+```
+integration-test-review (you are here)
+  │
+  ├─ PREREQUISITE: integration tests must already exist
+  │    [REQUIRED] Verify: IntegrationTests/ directory has test files with [Trait("TestSpec", ...)] annotations
+  │
+  ├─ Gate 1-5 findings → fix tests (re-run integration-test if test code needs regeneration)
+  │
+  ├─ Gate 6 (Three-Way Sync) conflict resolution:
+  │    │
+  │    ├─ Test code ≠ spec (feature doc says behavior A, test asserts behavior B):
+  │    │    → Determine: spec authoritative or test authoritative?
+  │    │    → If SPEC is correct: fix test → re-run /integration-test
+  │    │    → If TEST reflects correct new behavior (spec stale): /spec-discovery [update] → /feature-docs [update] → /tdd-spec [UPDATE] → update test
+  │    │
+  │    ├─ Test code ≠ implementation (test asserts X, code does Y):
+  │    │    → If CODE is correct: fix test → /tdd-spec UPDATE (update TC to match code's correct behavior)
+  │    │    → If TEST is correct (code bug): do NOT update test → fix code → /prove-fix → re-run tests
+  │    │
+  │    └─ Feature doc ≠ spec bundle (business doc says A, engineering spec says B):
+  │         → Feature doc has higher authority for business rules
+  │         → Run /spec-discovery [update] to reconcile engineering spec with business doc
+  │         → Do NOT self-resolve — escalate to user if ambiguous
+  │
+  ├─ [REQUIRED] → /integration-test-verify
+  │     After all fixes, run actual tests to confirm all gates pass.
+  │
+  ├─ [REQUIRED] → /tdd-spec [direction=sync]
+  │     If TCs were updated (Gate 5/6 fix), sync QA dashboard.
+  │
+  └─ [RECOMMENDED] → /docs-update
+        If Gate 6 revealed doc staleness, /docs-update runs full chain to update all layers.
+```
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

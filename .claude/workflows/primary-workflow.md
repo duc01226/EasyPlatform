@@ -10,7 +10,7 @@
 2. **Plan** — `/plan` + `/plan-review` + `/plan-validate`, save in `./plans/`
 3. **Design Review** — `/why-review` (rationale), `/tdd-spec` + `/tdd-spec-review` (test specs)
 4. **Implement** — `/cook` or `/code`, compile-check after every file change
-5. **Verify** — `/prove-fix`, `/test`, `/integration-test`, `/test-specs-docs`
+5. **Verify** — `/prove-fix`, `/test`, `/integration-test`, `/tdd-spec [direction=sync]`
 6. **Quality** — `/workflow-review-changes` (consolidated: code-simplifier + review-changes + review-architecture + code-review + performance)
 7. **Ship** — `/sre-review`, `/security`, `/changelog`, `/docs-update`, `/watzup`, `/workflow-end`
 
@@ -61,7 +61,7 @@
 - Use `/prove-fix` to build code proof traces (confidence scores, stack-trace-style evidence) — MANDATORY for bugfixes
 - Use `/test` skill to run tests and analyze results
 - Use `/integration-test` to generate integration tests from specs
-- Use `/test-specs-docs` to sync test spec dashboard
+- Use `/tdd-spec [direction=sync]` to sync test spec dashboard
 - **IMPORTANT:** Never use fake data, mocks, cheats, or tricks just to pass the build
 - **IMPORTANT:** Fix failing tests and re-run until all pass
 
@@ -83,7 +83,7 @@
 
 ## Phase 7: Debugging (when issues arise)
 
-- Use `/debug` skill for systematic debugging when issues are reported
+- Use `/debug-investigate` skill for systematic debugging when issues are reported
 - Use `/fix` skill to apply fixes after root cause is identified
 - Re-run tests after every fix to verify no regressions
 

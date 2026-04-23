@@ -21,7 +21,7 @@ const { deleteMarker } = require('./lib/context-tracker.cjs');
 const { cleanupAll } = require('./lib/temp-file-cleanup.cjs');
 const { cleanupSwapFiles, deleteSessionSwap } = require('./lib/swap-engine.cjs');
 const { getTodoState } = require('./lib/todo-state.cjs');
-const { PENDING_TASKS_PATH, ensureProjectTmpDir } = require('./lib/ck-paths.cjs');
+const { PENDING_TASKS_PATH, ensureProjectTmpDir, getSnapshotPath } = require('./lib/ck-paths.cjs');
 
 const PENDING_TASKS_FILE = PENDING_TASKS_PATH;
 
@@ -70,6 +70,12 @@ runHookSync('session-end', event => {
             // Full cleanup on clear/exit - delete entire swap directory
             deleteSessionSwap(sessionId);
             debug('session-end', `Deleted swap directory for session ${sessionId}`);
+            try {
+                const snapshotPath = getSnapshotPath(sessionId);
+                if (fs.existsSync(snapshotPath)) fs.unlinkSync(snapshotPath);
+            } catch (e) {
+                debug('session-end', `Failed to clean snapshot: ${e.message}`);
+            }
         } else if (reason === 'compact') {
             // On compact, only cleanup old files (keep recent for recovery)
             cleanupSwapFiles(sessionId, 24); // 24 hour retention

@@ -223,15 +223,17 @@ node .claude/skills/skill-create/scripts/validate-skills.cjs --fix    # Report +
 - **IMPORTANT MUST ATTENTION** include `## Quick Summary` within first 30 lines of every SKILL.md
 - **IMPORTANT MUST ATTENTION** add Closing Reminders section with `:reminder` SYNC blocks at bottom of every skill
 - **IMPORTANT MUST ATTENTION** follow SKILL.md Schema Reference (inlined above) for official frontmatter fields
-    <!-- SYNC:shared-protocol-duplication-policy:reminder -->
+  <!-- SYNC:shared-protocol-duplication-policy:reminder -->
 - **IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
-    <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
-    <!-- SYNC:output-quality-principles:reminder -->
+  <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
+  <!-- SYNC:output-quality-principles:reminder -->
 - **IMPORTANT MUST ATTENTION** follow output quality principles: token efficiency, lead with answer, no filler
-    <!-- /SYNC:output-quality-principles:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+  <!-- /SYNC:output-quality-principles:reminder -->
+  <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

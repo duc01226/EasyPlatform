@@ -7,7 +7,13 @@ disable-model-invocation: false
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 >
-> **Final task is ALWAYS:** "Run `/prompt-enhance <modified-file>` to optimize lesson content for AI attention anchoring." Do NOT mark the skill complete until this runs.
+> **Mandatory end tasks are ALWAYS (in order):**
+>
+> 1. "Run **Learn Review** (lesson value + generality + recurrence gate)."
+> 2. "Run `/why-review` to challenge whether the lesson is worth persistent memory."
+> 3. "Run `/prompt-enhance <modified-file>` to optimize lesson content for AI attention anchoring."
+>
+> Do NOT mark the skill complete until all 3 tasks run.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -43,7 +49,8 @@ disable-model-invocation: false
 2. **Route** -- Analyze lesson content against Reference Doc Catalog, select best target file
 3. **Save** -- Append lesson to the selected file
 4. **Confirm** -- Acknowledge what was saved and where
-5. **Enhance** -- Run `/prompt-enhance` on modified file(s) to optimize AI attention anchoring
+5. **Learn Review** -- Run the mandatory 2-step end gate (`Learn Review` + `/why-review`)
+6. **Enhance** -- Run `/prompt-enhance` on modified file(s) to optimize AI attention anchoring
 
 **Key Rules:**
 
@@ -91,6 +98,7 @@ Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cj
 | -------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------- | ------------------------- |
 | `project-structure-reference.md` | Architecture, directory tree, tech stack, module registry, service map                           | `subagent-init-*.cjs` (18 hooks)                     | Agent spawn                         | `/scan-project-structure` |
 | `backend-patterns-reference.md`  | Backend/hook patterns: CJS modules, CQRS, repositories, validation, message bus, background jobs | `code-patterns-injector.cjs`, `backend-context.cjs`  | Edit/Write backend files            | `/scan-backend-patterns`  |
+| `seed-test-data-reference.md`    | Seed/dev-data patterns: environment gate, idempotency loop, DI scope safety, command-dispatch    | Referenced in config + seed workflows                | Seeder/DataSeeder file edits        | `/scan-seed-test-data`    |
 | `frontend-patterns-reference.md` | Frontend patterns: components, state mgmt, API services, styling conventions, directives         | `code-patterns-injector.cjs`, `frontend-context.cjs` | Edit/Write frontend files           | `/scan-frontend-patterns` |
 | `integration-test-reference.md`  | Test architecture: base classes, fixtures, helpers, service-specific setup, test runners         | Referenced in config                                 | Test file edits                     | `/scan-integration-tests` |
 | `feature-docs-reference.md`      | Feature doc templates, app-to-service mapping, doc structure conventions                         | On-demand (skill reads)                              | Skill activation                    | `/scan-feature-docs`      |
@@ -220,6 +228,31 @@ Does this failure mode apply to ≥3 different contexts or codebases? If only on
 - BAD: "Read GlobalUsings.cs before adding usings in \*.IntegrationTests" → project-specific file
 - GOOD: "Before generating code that uses project conventions (imports, namespaces, annotations), read the project's bootstrap/configuration files for that layer — convention files override framework defaults silently."
 
+### End-Phase Learn Review Gate (MANDATORY before marking complete)
+
+Run these 2 tasks at the end of every `/learn` operation:
+
+**Task 1 — Learn Review (value + generality + recurrence):**
+
+- Keep only lessons with clear prevention value.
+- Lesson must be either:
+    - Universal across many projects/codebases, OR
+    - A stable project-wide principle (architecture invariant, naming invariant, workflow invariant).
+- Reject lessons that are:
+    - Specific to the current ticket/change/file,
+    - Rare edge cases with low recurrence,
+    - Already covered by existing lessons or review skills.
+- If target is `docs/project-reference/lessons.md` (injected on every prompt), apply stricter bar: high impact + high recurrence only.
+
+**Task 2 — Run `/why-review` (adversarial challenge):**
+
+- Use `/why-review` to challenge whether this lesson deserves persistent memory.
+- Verify:
+    - Why this lesson prevents repeated mistakes,
+    - Why this should be a lesson instead of a one-time note,
+    - Why auto-checks (`/code-review`, `/simplify`, `/security`, `/lint`, hook/test) are insufficient.
+- If rationale is weak, rewrite at higher abstraction or skip `/learn`.
+
 ### Routing Decision Process
 
 1. **Run Triage Gate** — recurrence + auto-fix filters; stop here if either fails
@@ -330,12 +363,14 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 
 - **IMPORTANT MUST ATTENTION** run Triage Gate FIRST — if recurrence is low OR review skills can catch it, skip `/learn` entirely
 - **IMPORTANT MUST ATTENTION** check Reference Doc Catalog to find the best target file — NOT always `lessons.md`
-- **IMPORTANT MUST ATTENTION** final task is ALWAYS: run `/prompt-enhance <modified-file>` — do NOT mark complete until this runs
+- **IMPORTANT MUST ATTENTION** mandatory end tasks are ALWAYS: `Learn Review` → `/why-review` → `/prompt-enhance <modified-file>` (in order)
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **IMPORTANT MUST ATTENTION** prefer auto-injected files for high-recurrence lessons (higher visibility)
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

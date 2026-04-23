@@ -2129,6 +2129,12 @@ async function testContextInjectors() {
             tool_input: { file_path: filePath }
         });
         logResult(`Frontend context: ${filePath.split('/').pop()}`, result.code === 0);
+        if (result.stdout && result.stdout.includes('I18N Sync Check')) {
+            logOutputValidation(
+                'Frontend context i18n sync section is well-formed',
+                result.stdout.includes('translation resources') || result.stdout.includes('translation file patterns')
+            );
+        }
     }
 
     // Styling Context

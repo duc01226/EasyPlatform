@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Big Feature workflow — research-driven develo
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /tech-stack-research -> /architecture-design -> /plan -> /plan-review -> /refine -> /refine-review -> /story -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /scaffold -> /plan-validate -> /why-review -> /cook -> /review-domain-entities -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -78,6 +80,8 @@ disable-model-invocation: true
 
 Activate the `big-feature` workflow. Run `/workflow-start big-feature` with the user's prompt as context.
 
+> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets (e.g., `bravoTALENTS`, `bravoGROWTH`); then `ls docs/specs/{app-bucket}/` to find the specific service spec. Exception: `accounts` is flat at `docs/specs/accounts/`.
+
 **Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /tech-stack-research → /architecture-design → /plan → /plan-review → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /scaffold → /plan-validate → /why-review → /cook → /review-domain-entities → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
 
 ## Repeated Steps Disambiguation (CRITICAL for task creation)
@@ -101,6 +105,8 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /tech-stack-research -> /architecture-design -> /plan -> /plan-review -> /refine -> /refine-review -> /story -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /scaffold -> /plan-validate -> /why-review -> /cook -> /review-domain-entities -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
@@ -113,3 +119,7 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
     <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
     <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

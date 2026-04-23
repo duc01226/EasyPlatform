@@ -1,7 +1,7 @@
 ---
 name: investigate
 description: '[Fix & Debug] Investigate and explain how existing features or logic work. READ-ONLY exploration with no code changes.'
-version: 2.1.0
+version: 2.2.0
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
@@ -29,8 +29,6 @@ version: 2.1.0
 > - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
 
@@ -67,6 +65,25 @@ version: 2.1.0
 
 <!-- /SYNC:graph-assisted-investigation -->
 
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
+
 <!-- SYNC:fix-layer-accountability -->
 
 > **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
@@ -90,39 +107,35 @@ version: 2.1.0
 
 <!-- /SYNC:fix-layer-accountability -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (when task involves business entities/models). (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 ## Quick Summary
 
-**Goal:** READ-ONLY exploration of existing features and logic — understand how code works without making changes.
-
-> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference doc:
->
-> - `project-structure-reference.md` -- project patterns and structure
->
-> If file not found, search for: project documentation, coding standards, architecture docs.
+**Goal:** READ-ONLY exploration — understand how code works, zero changes.
 
 **Workflow:**
 
-1. **Discovery** — Search codebase for related files (Entities > Commands > Events > Controllers)
-2. **Knowledge Graph** — Read and document purpose, symbols, dependencies per file
-3. **Flow Mapping** — Trace entry points through pipeline to exit points
-4. **Analysis** — Extract business rules, validation, authorization, error handling
-5. **Synthesis** — Write executive summary with key files and flow diagrams
-6. **Present** — Deliver findings, offer deeper dives on subtopics
+1. **Phase 0: Classify** — Determine scope (quick / deep / debug / recommendation) before acting
+2. **Discovery** — Search codebase for related files (Entities > Commands > Events > Controllers)
+3. **Graph Expand** — Run graph queries on 2-3 key files (MANDATORY, main agent only)
+4. **Knowledge Graph** — Read + document purpose, symbols, dependencies per file
+5. **Flow Mapping** — Trace entry points through pipeline to exit points
+6. **Analysis** — Extract business rules, validation, authorization, error handling
+7. **Synthesis** — Write executive summary to `.ai/workspace/analysis/[feature]-investigation.md`
+8. **Present** — Deliver structured findings, offer deeper dives
 
 **Key Rules:**
 
-- Strictly READ-ONLY — no code changes allowed
-- Evidence-based: every claim needs `file:line` proof (grep results, read confirmations)
-- Mark unverified claims as "inferred" with low confidence
-- Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`
+- Strictly READ-ONLY — NEVER make code changes
+- Every claim needs `file:line` proof — mark unverified as "inferred"
+- MUST ATTENTION run at least ONE graph command on key files before concluding
+- MUST ATTENTION Plan ToDo Task to READ `project-structure-reference.md` (if not found, search: project documentation, coding standards, architecture docs)
 
 <!-- SYNC:root-cause-debugging -->
 
 > **Root Cause Debugging** — Systematic approach, never guess-and-check.
 >
-> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
+> 1. **Reproduce** — Confirm issue exists with evidence (error message, stack trace, screenshot)
 > 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
 > 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
 > 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
@@ -133,46 +146,55 @@ version: 2.1.0
 
 <!-- /SYNC:root-cause-debugging -->
 
+## Phase 0: Scope Classification
+
+**Classify before acting** — route to correct depth:
+
+| Scope              | Signals                                        | Depth                                                    |
+| ------------------ | ---------------------------------------------- | -------------------------------------------------------- |
+| **Quick**          | Single feature/function, clear entry point     | grep → trace → answer (no analysis file needed)          |
+| **Deep**           | Multi-service, cross-boundary, ambiguous scope | Full workflow + knowledge graph template + analysis file |
+| **Debug**          | Error/crash/unexpected behavior                | Root-cause-debugging protocol above                      |
+| **Recommendation** | Code change suggested (removal, refactor)      | Validation chain protocol below — MANDATORY              |
+
+Quick scope: Skip knowledge graph template + analysis file. Grep → graph trace → present findings.
+Deep scope: MUST ATTENTION write to `.ai/workspace/analysis/[feature]-investigation.md`.
+
 ## Investigation Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Every claim needs `file:line` traced proof. Confidence >80% to act.**
+**Skeptical. Every claim needs `file:line` traced proof. Confidence >80% to act.**
 
-- NEVER assume code works as named — MUST ATTENTION verify by reading actual implementations
-- MUST ATTENTION include `file:line` evidence for every finding; unproven claims MUST ATTENTION be marked "inferred" with low confidence
-- ALWAYS grep for related usages, consumers, and cross-service references — NEVER assume completeness
+- NEVER assume code works as named — verify by reading actual implementations
+- MUST ATTENTION include `file:line` for every finding; unproven claims MUST ATTENTION be marked "inferred"
+- ALWAYS grep related usages, consumers, cross-service references — NEVER assume completeness
 - ALWAYS trace actual call paths with evidence — NEVER rely on signatures alone
 
 ## Workflow
 
-1. **Discovery** - Search codebase for all files related to the feature/question. Prioritize: Entities > Commands/Queries > EventHandlers > Controllers > Consumers > Components.
-2. **Graph Expand (MANDATORY — DO NOT SKIP)** - **YOU (the main agent) MUST ATTENTION run graph queries YOURSELF** on key files found in Step 1. This step is NOT optional — without graph, your understanding is incomplete. Sub-agents CANNOT use graph — only you can. Pick 2-3 key files (entities, commands, bus messages) and run:
+1. **Discovery** — Search for all related files. Priority: Entities > Commands/Queries > EventHandlers > Controllers > Consumers > Components.
+2. **Graph Expand (MANDATORY — DO NOT SKIP)** — **YOU (main agent) MUST ATTENTION run graph queries YOURSELF** on key files from Step 1. Sub-agents CANNOT use graph — only you can. Pick 2-3 key files (entities, commands, bus messages):
     ```bash
     python .claude/scripts/code_graph connections <key_file> --json
     python .claude/scripts/code_graph query callers_of <FunctionName> --json
     python .claude/scripts/code_graph query importers_of <file_path> --json
-    # If "ambiguous" → search to disambiguate, then retry with qualified name
+    # "ambiguous" → search to disambiguate, retry with qualified name
     python .claude/scripts/code_graph search <keyword> --kind Function --json
     # Trace how two nodes connect
     python .claude/scripts/code_graph find-path <source> <target> --json
     # Filter by service, limit results
     python .claude/scripts/code_graph query callers_of <name> --limit 5 --filter "ServiceName" --json
     ```
-    Graph reveals the complete dependency network (callers, importers, tests, inheritance) that grep alone misses. This is essential for understanding features and workflows fully. Also run `/graph-connect-api` for frontend-to-backend API mapping.
-3. **Knowledge Graph** - Read and analyze each file (from grep + graph results). Document purpose, symbols, dependencies, data flow. Batch in groups of 10, update progress after each batch.
-4. **Flow Mapping** - Trace entry points through processing pipeline to exit points. Map data transformations, persistence, side effects, cross-service boundaries.
-5. **Analysis** - Extract business rules, validation logic, authorization, error handling. Document happy path and edge cases.
-6. **Synthesis** - Write executive summary answering the original question. Include key files, patterns used, and text-based flow diagrams.
-7. **Present** - Deliver findings using the structured output format. Offer deeper dives on subtopics.
-
-## ⚠️ MUST ATTENTION READ Before Investigation
-
-**IMPORTANT: You MUST ATTENTION read these files before starting. Do NOT skip.**
-
-- <!-- SYNC:knowledge-graph-template -->
+    Graph reveals complete dependency network (callers, importers, tests, inheritance) grep alone misses. Also run `/graph-connect-api` for frontend-to-backend API mapping.
+3. **Knowledge Graph** — Read + analyze each file (from grep + graph results). Document purpose, symbols, dependencies, data flow. Batch in groups of 10; update progress after each batch. Per-file template:
+    <!-- SYNC:knowledge-graph-template -->
     > **Knowledge Graph Template** — For each analyzed file, document: filePath, type (Entity/Command/Query/EventHandler/Controller/Consumer/Component/Store/Service), architecturalPattern, content summary, symbols, dependencies, businessContext, referenceFiles, relevanceScore (1-10), evidenceLevel (verified/inferred), frameworkAbstractions, serviceContext. Investigation fields: entryPoints, outputPoints, dataTransformations, errorScenarios. Consumer/bus fields: messageBusMessage, messageBusProducers, crossServiceIntegration. Frontend fields: componentHierarchy, stateManagementStores, dataBindingPatterns, validationStrategies.
-                                        <!-- /SYNC:knowledge-graph-template -->
+    <!-- /SYNC:knowledge-graph-template -->
+4. **Flow Mapping** — Trace entry points through processing pipeline to exit points. Map data transformations, persistence, side effects, cross-service boundaries.
+5. **Analysis** — Extract business rules, validation, authorization, error handling. Document happy path AND edge cases.
+6. **Synthesis** — Executive summary answering original question. Key files, patterns used, text-based flow diagrams.
+7. **Present** — Structured output (see Output Format). Offer deeper dives on subtopics.
 
-**If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files first.
+**If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files.
 
 ## Investigation Techniques
 
@@ -186,7 +208,7 @@ Grep `{FeatureName}` combined with: `EventHandler`, `BackgroundJob`, `Consumer`,
 
 **Backend:** method callers (grep `*.cs`), service injectors (grep interface in constructors), entity events (`EntityEvent<Name>`), cross-service (`*BusMessage` across services), repository usage (`IRepository<Name>`).
 
-**Frontend:** component users (grep selector in `*.html`), service importers (grep class in `*.ts`), store chains (`effectSimple` -> API -> `tapResponse` -> state), routes (grep component in `*routing*.ts`).
+**Frontend:** component users (grep selector in `*.html`), service importers (grep class in `*.ts`), store chains (`effectSimple` → API → `tapResponse` → state), routes (grep component in `*routing*.ts`).
 
 ### Data Flow Mapping
 
@@ -205,36 +227,13 @@ Document as: `[Entry] → [Validation] → [Processing] → [Persistence] → [S
 
 ### Project Pattern Recognition
 
-**Backend** (see `backend-patterns-reference.md`): CQRS commands/queries, entity event handlers, message bus consumers, repository extensions, validation fluent API, authorization attributes.
+**Backend** (search for `backend-patterns-reference` in docs/): CQRS commands/queries, entity event handlers, message bus consumers, repository extensions, validation fluent API, authorization attributes.
 
-**Frontend** (see `frontend-patterns-reference.md`): store component base, store base, `effectSimple`/`tapResponse`, `observerLoadingErrorState`, API service base class.
-
-## Evidence Collection
-
-**MANDATORY:** Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`. MUST ATTENTION re-read ENTIRE file before presenting findings. Structure: Metadata (original question) → Progress → File List → Knowledge Graph (per-file entries per SYNC:knowledge-graph-template) → Data Flow → Findings.
-
-**Rule:** After every 10 files, MUST ATTENTION update progress and re-check alignment with original question.
-
-### Analysis Phases
-
-**Phase 2 — Comprehensive Analysis:** (1) Happy path, (2) Error paths, (3) Edge cases, (4) Authorization checks, (5) Validation per layer. Extract: core business rules, state transitions, side effects.
-
-**Phase 3 — Synthesis:** Executive summary (1-para answer, top 5-10 key files, patterns used) + step-by-step walkthrough with `file:line` references + flow diagrams.
-
-### Output Format
-
-MUST ATTENTION include: (1) Direct answer (1-2 paragraphs), (2) Step-by-step "How It Works" with `file:line` refs, (3) Key Files table, (4) Data Flow diagram, (5) "Want to Know More?" subtopics.
-
-### Guidelines
-
-- **Evidence-based**: Every claim needs code evidence. MUST ATTENTION mark unverified as "inferred".
-- **Question-focused**: ALWAYS tie findings back to original question.
-- **Read-only**: NEVER suggest changes unless explicitly asked.
-- **Layered**: Start simple, offer deeper detail on request.
+**Frontend** (search for `frontend-patterns-reference` in docs/): store component base, store base, `effectSimple`/`tapResponse`, `observerLoadingErrorState`, API service base class.
 
 ### Graph Intelligence (MANDATORY when graph.db exists)
 
-**MUST ATTENTION orchestrate grep -> graph -> grep dynamically:** (1) Grep key terms to find entry files, (2) Use `connections`/`batch-query`/`trace --direction both` to expand dependency network, (3) Grep again to verify content. The `trace` command follows ALL edge types including MESSAGE_BUS and TRIGGERS_EVENT.
+**MUST ATTENTION orchestrate grep → graph → grep dynamically:** (1) Grep key terms to find entry files, (2) Use `connections`/`batch-query`/`trace --direction both` to expand dependency network, (3) Grep again to verify content. `trace` follows ALL edge types including MESSAGE_BUS and TRIGGERS_EVENT.
 
 ```bash
 python .claude/scripts/code_graph connections <file> --json     # Full picture
@@ -243,6 +242,31 @@ python .claude/scripts/code_graph query importers_of <file> --json
 python .claude/scripts/code_graph query tests_for <name> --json
 python .claude/scripts/code_graph batch-query <f1> <f2> --json
 ```
+
+## Evidence Collection
+
+**Deep scope — MANDATORY:** Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`. MUST ATTENTION re-read ENTIRE file before presenting findings.
+
+Structure: Metadata (original question) → Progress → File List → Knowledge Graph (per-file entries per SYNC:knowledge-graph-template) → Data Flow → Findings.
+
+**Rule:** Every 10 files → MUST ATTENTION update progress, re-check alignment with original question.
+
+### Analysis Phases
+
+**Comprehensive:** (1) Happy path, (2) Error paths, (3) Edge cases, (4) Authorization checks, (5) Validation per layer. Extract: core business rules, state transitions, side effects.
+
+**Synthesis:** Executive summary (1-para answer, top 5-10 key files, patterns used) + step-by-step walkthrough with `file:line` references + flow diagrams.
+
+### Output Format
+
+MUST ATTENTION include: (1) Direct answer (1-2 paragraphs), (2) Step-by-step "How It Works" with `file:line` refs, (3) Key Files table, (4) Data Flow diagram, (5) "Want to Know More?" subtopics.
+
+### Guidelines
+
+- **Evidence-based** — every claim needs code evidence; MUST ATTENTION mark unverified as "inferred"
+- **Question-focused** — ALWAYS tie findings back to original question
+- **Read-only** — NEVER suggest changes unless explicitly asked
+- **Layered** — Start simple, offer deeper detail on request
 
 ## Related Skills
 
@@ -283,7 +307,7 @@ Applies when recommending code changes (removal, refactoring, replacement). MUST
 
 ### Evidence Hierarchy
 
-(1) Code evidence (grep/read) → (2) Test evidence → (3) Documentation → (4) Inference. Recommendations based on inference alone are FORBIDDEN — MUST ATTENTION upgrade to code evidence.
+(1) Code evidence (grep/read) → (2) Test evidence → (3) Documentation → (4) Inference. Recommendations based on inference alone FORBIDDEN — MUST ATTENTION upgrade to code evidence.
 
 ### Confidence Levels
 
@@ -300,11 +324,12 @@ Find working reference → compare implementations → identify differences → 
 ## Closing Reminders
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-- **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-  <!-- SYNC:understand-code-first:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** Phase 0: classify scope (quick/deep/debug/recommendation) before acting
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act, <60% DO NOT recommend)
+- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding any investigation
+- **MANDATORY IMPORTANT MUST ATTENTION** deep scope → write analysis to `.ai/workspace/analysis/[feature]-investigation.md`; re-read ENTIRE file before presenting
+- **MANDATORY IMPORTANT MUST ATTENTION** recommendation scope → complete ALL validation chain steps before any code change suggestion
+    <!-- SYNC:understand-code-first:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
     <!-- /SYNC:understand-code-first:reminder -->
     <!-- SYNC:graph-assisted-investigation:reminder -->
@@ -315,13 +340,25 @@ Find working reference → compare implementations → identify differences → 
     <!-- /SYNC:evidence-based-reasoning:reminder -->
     <!-- SYNC:knowledge-graph-template:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** document per-file: type, pattern, symbols, dependencies, relevanceScore, evidenceLevel.
-  <!-- /SYNC:knowledge-graph-template:reminder -->
-  <!-- SYNC:fix-layer-accountability:reminder -->
+    <!-- /SYNC:knowledge-graph-template:reminder -->
+    <!-- SYNC:fix-layer-accountability:reminder -->
 - **IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
     <!-- /SYNC:fix-layer-accountability:reminder -->
     <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**Anti-Rationalization:**
+
+| Evasion                                            | Rebuttal                                                                  |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| "Simple investigation, skip graph"                 | Graph reveals callers + bus consumers grep misses. Run it anyway.         |
+| "Already grepped, enough evidence"                 | Show `file:line` proof. No citation = no evidence.                        |
+| "Quick task, skip TaskCreate"                      | Still need tracking. Create tasks, mark done immediately.                 |
+| "Recommendation is obvious, skip validation chain" | Risk matrix applies regardless of confidence. Complete ALL steps.         |
+| "Deep scope wastes time for this"                  | Classify first. If quick, fine — but DECLARE scope before skipping steps. |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

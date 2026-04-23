@@ -1,14 +1,22 @@
 ---
 name: tdd-spec-review
-version: 1.1.0
+version: 2.0.0
+last_reviewed: 2026-04-21
 description: '[Code Quality] Review test specifications for coverage, completeness, and correctness before implementation. AI self-review gate after /tdd-spec.'
 ---
 
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **Evidence Gate:** [BLOCKING] — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
@@ -89,6 +97,25 @@ description: '[Code Quality] Review test specifications for coverage, completene
 > - Track iteration count in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
+
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
 
 <!-- SYNC:review-protocol-injection -->
 
@@ -245,7 +272,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:graph-impact-analysis -->
 
-- `docs/test-specs/` — Test specifications by module (cross-reference during review to verify TC completeness and avoid duplicates)
+- `docs/specs/` — Test specifications by module (cross-reference during review to verify TC completeness and avoid duplicates)
 - `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
 
 ## Quick Summary
@@ -253,6 +280,8 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 **Goal:** Auto-review test specifications for coverage completeness, TC format correctness, and no missing test cases before implementation proceeds.
 
 **Key distinction:** AI self-review (automatic), NOT user interview.
+
+**[BLOCKING] Read** `docs/project-reference/spec-principles.md` — use Section 4 (AI-Implementability Checklist) and Section 7 (TC Coverage Mapping) as review criteria in addition to adversarial techniques below.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -277,7 +306,7 @@ For each TC, check its assertion: "Could this TC PASS even if the feature is bro
 Identify code paths that EXIST but have NO corresponding TC. Common gaps: admin/superuser paths, concurrent access, partial data states, idempotency, rollback behavior. If a gap exists — flag it, don't rationalize it.
 
 **5. Boundary Condition Probe**
-For each TC that tests a value (count, length, amount): "Is there a TC for the value-1, value, value+1 boundary?" Off-by-one errors are the most common business logic bug. If boundary TCs are missing, flag them.
+For each TC that tests a value (count, length, amount): "Is there a TC for the value-1, value, value+1 boundary?" Off-by-one errors are the most common business logic bug. Also probe: `null` (unset vs empty distinction), empty string vs whitespace-only, max-length overflow, zero and negative values, concurrent write contention on shared state. If boundary TCs for any of these are missing and the domain scenario is realistic, flag them.
 
 **6. Contrarian Pass**
 Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
@@ -303,7 +332,7 @@ If any box is unchecked → adversarial review incomplete. Go back.
 
 ## Workflow
 
-1. **Locate test specs** — Find TCs in feature doc Section 15 or `docs/test-specs/`
+1. **Locate test specs** — Find TCs in feature doc Section 15 or `docs/specs/`
 2. **Load source** — Read stories/PBI/acceptance criteria that TCs should cover
 3. **Evaluate checklist** — Score each check
 4. **Calculate coverage** — % of stories/AC with corresponding TCs
@@ -314,16 +343,18 @@ If any box is unchecked → adversarial review incomplete. Go back.
 
 ### Required (all must pass)
 
-| #   | Check                                                                                     | Presence                                         | Quality Depth                                                                                               |
-| --- | ----------------------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| 1   | **TC ID format** — All TCs follow `TC-{FEATURE}-{NNN}` format                             | Do all TCs use the `TC-{FEATURE}-{NNN}` pattern? | Are IDs unique per TC? Does the FEATURE code match the actual feature?                                      |
-| 2   | **Story coverage** — Every user story has at least one corresponding TC                   | Does every story ID appear in at least one TC?   | Does each TC actually test the story behavior, or does it just reference the story ID in a comment?         |
-| 3   | **AC coverage** — Every acceptance criterion has a test case                              | Is every AC traceable to at least one TC?        | Does each AC have a TC that would FAIL if the AC is violated?                                               |
-| 4   | **Happy path** — Each story has at least one happy path TC                                | Is a happy path TC present per story?            | Does the happy path TC verify the full end-to-end scenario, or just a happy-path stub?                      |
-| 5   | **Error path** — Each story has at least one error/failure TC                             | Is an error/failure TC present per story?        | Does the error TC verify the exact error response (code + message), not just that an error occurred?        |
-| 6   | **No duplicates** — No duplicate TCs testing the same scenario                            | Are all TC IDs unique with distinct scenarios?   | Are there TCs that test the same scenario with slightly different input? Flag near-duplicates.              |
-| 7   | **Testable assertions** — Each TC has clear expected result (not vague "should work")     | Does each TC have a specific expected result?    | Is each assertion specific enough to catch regressions? Would it pass if the return value is wrong?         |
-| 8   | **Authorization TCs** — At least 1 TC per story verifying unauthorized access is rejected | Is an authorization TC present per story?        | Does the authorization TC test a realistic access scenario, not just "wrong role → 403 without body check"? |
+| #   | Check                                                                                                                              | Presence                                                                          | Quality Depth                                                                                               |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 1   | **TC ID format** — All TCs follow `TC-{FEATURE}-{NNN}` format                                                                      | Do all TCs use the `TC-{FEATURE}-{NNN}` pattern?                                  | Are IDs unique per TC? Does the FEATURE code match the actual feature?                                      |
+| 2   | **Story coverage** — Every user story has at least one corresponding TC                                                            | Does every story ID appear in at least one TC?                                    | Does each TC actually test the story behavior, or does it just reference the story ID in a comment?         |
+| 3   | **AC coverage** — Every acceptance criterion has a test case                                                                       | Is every AC traceable to at least one TC?                                         | Does each AC have a TC that would FAIL if the AC is violated?                                               |
+| 4   | **Happy path** — Each story has at least one happy path TC                                                                         | Is a happy path TC present per story?                                             | Does the happy path TC verify the full end-to-end scenario, or just a happy-path stub?                      |
+| 5   | **Error path** — Each story has at least one error/failure TC                                                                      | Is an error/failure TC present per story?                                         | Does the error TC verify the exact error response (code + message), not just that an error occurred?        |
+| 6   | **No duplicates** — No duplicate TCs testing the same scenario                                                                     | Are all TC IDs unique with distinct scenarios?                                    | Are there TCs that test the same scenario with slightly different input? Flag near-duplicates.              |
+| 7   | **Testable assertions** — Each TC has clear expected result (not vague "should work")                                              | Does each TC have a specific expected result?                                     | Is each assertion specific enough to catch regressions? Would it pass if the return value is wrong?         |
+| 8   | **Authorization TCs** — At least 1 TC per story verifying unauthorized access is rejected                                          | Is an authorization TC present per story?                                         | Does the authorization TC test a realistic access scenario, not just "wrong role → 403 without body check"? |
+| 9   | **TC format completeness** — Every TC has Related Files table and IntegrationTest field                                            | Does every TC include a Related Files table and `IntegrationTest:` field?         | Is IntegrationTest populated with `{File}.cs::{MethodName}` (not `Untested` for Tested-status TCs)?         |
+| 10  | **Preservation Tests (bugfix context)** — When fixing a bug, at least 1 TC verifies the pre-fix behavior is no longer reproducible | If this is a bugfix: is there a TC that would have CAUGHT the bug before the fix? | Does the preservation TC assert the exact broken behavior (not just "no exception")?                        |
 
 ### Recommended (>=50% should pass)
 
@@ -391,15 +422,24 @@ After sub-agent returns:
 ## Key Rules
 
 - **FAIL blocks workflow** — If FAIL, do NOT proceed to implementation.
-- **Coverage >= 100% required** — Every story and AC must have at least one TC.
+- **Coverage 100% required for Tested + Untested TCs** — Every story and AC must have at least one TC with `Status: Tested` or `Status: Untested`. TCs with `Status: Planned` are exempt from coverage calculation — they acknowledge a gap, they are not missing work.
 - **No guessing** — Reference specific TC IDs and story references.
 - **Quality over quantity** — Flag duplicate TCs, prefer fewer meaningful tests.
 
 ---
 
+## Workflow Recommendation
+
+> **[BLOCKING]** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+>
+> 1. **Activate `pbi-to-tests` workflow** (Recommended) — tdd-spec → tdd-spec-review → quality-gate → workflow-end
+> 2. **Execute `/tdd-spec-review` directly** — run this skill standalone
+
+---
+
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**[BLOCKING]** After completing this skill, use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/plan (Recommended)"** — Create implementation plan with validated test specs
 - **"/tdd-spec"** — Re-generate specs if FAIL verdict
@@ -408,21 +448,36 @@ After sub-agent returns:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+**[BLOCKING]** Break work into small todo tasks using `TaskCreate` BEFORE starting.
+**[BLOCKING]** Validate decisions with user via `AskUserQuestion` — never auto-decide.
+**[REQUIRED]** Add a final review todo task to verify work quality.
+**[BLOCKING]** READ the following files before starting:
 
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context) — never skip or combine with Round 1.
-  <!-- /SYNC:double-round-trip-review:reminder -->
-  <!-- SYNC:graph-impact-analysis:reminder -->
+    <!-- /SYNC:double-round-trip-review:reminder -->
+    <!-- SYNC:graph-impact-analysis:reminder -->
 - **IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-      <!-- /SYNC:graph-impact-analysis:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+  <!-- /SYNC:graph-impact-analysis:reminder -->
+  <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

@@ -4,7 +4,7 @@
 /**
  * Tests for context-tracker.cjs marker infrastructure
  *
- * Scope after statusline-baseline deep clean:
+ * Scope: marker infrastructure only
  * - Only marker read/write/delete + clearAllState survive
  * - Tool-count + baseline + calibration subsystems removed
  *

@@ -4,6 +4,8 @@ version: 1.0.0
 description: "[Skill Management] Activate a workflow from the injected catalog. Use when starting a detected workflow, initializing workflow state, or activating a workflow sequence. Triggers on 'start workflow', 'activate workflow', 'workflow-start', 'begin workflow'."
 ---
 
+**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
+
 > **[MANDATORY]** `TaskCreate` FIRST — break every workflow into tasks before any action. NEVER skip.
 > **[MANDATORY]** `AskUserQuestion` ALWAYS — present 3 options, NEVER auto-activate.
 > **[MANDATORY]** `Skill` tool REQUIRED per step — NEVER mark a task `completed` without invoking it.
@@ -307,6 +309,8 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 
 ---
 
+**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
+
 ## Closing Reminders
 
 - **MUST ATTENTION** call `AskUserQuestion` BEFORE activating — present all THREE options (catalog | custom pipeline | execute directly). Never auto-activate.
@@ -315,9 +319,13 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 - **MUST ATTENTION** never mark a task `completed` without invoking its `Skill` tool — skip means comment + completed, not delete
 - **MUST ATTENTION** custom pipeline steps must be valid `commandMapping` keys — never invent step names
 - **MUST ATTENTION** use Tier 1 context parse FIRST — check `## Workflow Catalog` in context before any file read
-  <!-- SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

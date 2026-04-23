@@ -51,18 +51,22 @@ disable-model-invocation: true
 
 ## Step 1: Verify Reference Doc Stubs
 
-Check that the `session-init-docs.cjs` hook has created the 10 reference doc files:
+Check that the `session-init-docs.cjs` hook has created the 14 reference doc files:
 
 ```
 docs/project-reference/project-structure-reference.md     -> /scan-project-structure
 docs/project-reference/backend-patterns-reference.md      -> /scan-backend-patterns
+docs/project-reference/seed-test-data-reference.md       -> /scan-seed-test-data
 docs/project-reference/frontend-patterns-reference.md     -> /scan-frontend-patterns
 docs/project-reference/integration-test-reference.md      -> /scan-integration-tests
 docs/project-reference/feature-docs-reference.md          -> /scan-feature-docs
+docs/project-reference/spec-principles.md                -> static template (no scan skill)
 docs/project-reference/code-review-rules.md              -> /scan-code-review-rules
 docs/project-reference/scss-styling-guide.md             -> /scan-scss-styling
 docs/project-reference/design-system/README.md           -> /scan-design-system
 docs/project-reference/e2e-test-reference.md             -> /scan-e2e-tests
+docs/project-reference/domain-entities-reference.md      -> /scan-domain-entities
+docs/project-reference/docs-index-reference.md           -> /scan-docs-index
 docs/project-reference/lessons.md                        -> /learn (managed separately)
 ```
 
@@ -76,8 +80,8 @@ Read the first 512 bytes of each file. If it contains `<!-- Fill in your project
 
 Use `AskUserQuestion` to present:
 
-1. **"Run /claude-md-init + all scan skills" (Recommended for first-time init)** -- Generates CLAUDE.md from config, then runs all 9 scan skills
-2. **"Run all scan skills only"** -- Runs all 9 scan skills without CLAUDE.md generation
+1. **"Run /claude-md-init + all scan skills" (Recommended for first-time init)** -- Generates CLAUDE.md from config, then runs all 12 scan skills
+2. **"Run all scan skills only"** -- Runs all 12 scan skills without CLAUDE.md generation
 3. **"Select specific skills"** -- Let user choose which ones to run
 4. **"Skip -- docs are already populated"** -- Exit if all docs have content
 
@@ -101,3 +105,5 @@ Reference doc definitions are in `docs/project-config.json` under `referenceDocs
   <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
   <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

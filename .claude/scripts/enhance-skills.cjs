@@ -27,9 +27,8 @@ const SKILL_RELATIONSHIPS = {
     'feature-investigation': ['planning', 'debug', 'documentation'],
 
     // Testing cluster
-    'test-spec': ['test-specs-docs', 'qc-specialist', 'debug'],
+    'test-spec': ['tdd-spec', 'qc-specialist', 'debug'],
     'qc-specialist': ['test-spec', 'code-review'],
-    'test-specs-docs': ['test-spec', 'documentation'],
 
     // Documentation cluster
     documentation: ['feature-docs', 'changelog', 'release-notes'],

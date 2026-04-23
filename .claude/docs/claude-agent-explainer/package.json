@@ -1,0 +1,25 @@
+{
+    "name": "claude-agent-explainer",
+    "version": "1.0.0",
+    "description": "Claude AI Agent Framework explainer video",
+    "scripts": {
+        "studio": "remotion studio",
+        "render": "remotion render ClaudeAgentExplainer out/video.mp4",
+        "still": "remotion still ClaudeAgentExplainer --frame=30 out/still.png"
+    },
+    "dependencies": {
+        "remotion": "4.0.290",
+        "@remotion/cli": "4.0.290",
+        "@remotion/transitions": "4.0.290",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "@types/react": "^18.2.0",
+        "@types/react-dom": "^18.2.0",
+        "typescript": "^5.4.0"
+    },
+    "remotion": {
+        "entryPoint": "src/index.ts"
+    }
+}

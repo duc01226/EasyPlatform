@@ -99,6 +99,16 @@ const configTests = [
         }
     },
     {
+        name: '[quality-audit] injectContext contains multilingual UI translation guidance',
+        fn: async () => {
+            assertContains(
+                qualityAudit.preActions.injectContext,
+                'multilingual UI text changes',
+                'injectContext should include multilingual UI translation-sync guidance'
+            );
+        }
+    },
+    {
         name: '[quality-audit] has whenToUse field',
         fn: async () => {
             assertTrue(typeof qualityAudit.whenToUse === 'string' && qualityAudit.whenToUse.length > 0, 'whenToUse should be a non-empty string');

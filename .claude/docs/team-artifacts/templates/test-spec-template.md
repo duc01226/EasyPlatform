@@ -58,7 +58,7 @@ template_version: '1.0'
 - **Preconditions:** {Setup required}
 - **Test Data:** {Data requirements}
 
-**Steps:**
+**IMPORTANT MANDATORY Steps:**
 
 1. {Step 1}
 2. {Step 2}

@@ -56,7 +56,7 @@ function getDefaultConfig() {
       test: { claude: '/test' },
       'test-initial': { claude: '/test' },
       fix: { claude: '/fix' },
-      debug: { claude: '/debug' },
+      debug: { claude: '/debug-investigate' },
       scout: { claude: '/scout' },
       investigate: { claude: '/feature-investigation' },
       'code-review': { claude: '/code-review' },

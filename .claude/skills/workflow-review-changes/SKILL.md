@@ -4,6 +4,17 @@ version: 4.0.0
 description: '[Workflow] Trigger Review Current Changes workflow — review, fix, and re-review recursively until all issues resolved.'
 ---
 
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+**IMPORTANT MANDATORY Steps:** /review-changes -> **[parallel batch]** /review-architecture + /review-domain-entities (if entity changes) + /performance + /integration-test-review + /security -> /code-simplifier -> /code-review -> /integration-test-verify -> /plan -> /plan-validate -> /why-review -> /cook -> **fresh sub-agent re-review gate** -> /docs-update -> /watzup -> /workflow-end
+
 > **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review-changes` workflow (16 steps). When invoked as a step inside a parent workflow (e.g., `feature`, `bugfix`, `refactor`), it MUST execute via `Agent` tool (`subagent_type: "code-reviewer"`) — NEVER as an inline `Skill` tool call. Inline execution absorbs 16 steps of context into the parent session.
 >
 > **Sub-agent prompt must include:** current git diff, feature/task description, instruction to return SYNC:subagent-return-contract summary and write full findings to `plans/reports/`.
@@ -35,6 +46,7 @@ description: '[Workflow] Trigger Review Current Changes workflow — review, fix
 > - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> - **Business terminology in Application/Domain layers.** Comments and naming in Application/Domain must stay business-oriented and technical-agnostic; avoid implementation terms (say `background job`, not `Hangfire background job`).
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -44,7 +56,7 @@ Activate the `review-changes` workflow. Run `/workflow-start review-changes` wit
 
 **Goal:** Review all uncommitted changes, fix issues found, then spawn a **fresh code-reviewer sub-agent** for unbiased re-review — repeat until clean.
 
-**Sequence:** /review-changes → **[parallel batch]** /review-architecture + /review-domain-entities (if entity changes) + /performance + /integration-test-review → /code-simplifier → /code-review → /integration-test-verify → /plan → /plan-validate → /why-review → /cook → **fresh sub-agent re-review gate** → /docs-update → /watzup → /workflow-end
+**Sequence:** /review-changes → **[parallel batch]** /review-architecture + /review-domain-entities (if entity changes) + /performance + /integration-test-review + /security → /code-simplifier → /code-review → /integration-test-verify → /plan → /plan-validate → /why-review → /cook → **fresh sub-agent re-review gate** → /docs-update → /watzup → /workflow-end
 
 **Key Rules:**
 
@@ -57,52 +69,62 @@ Activate the `review-changes` workflow. Run `/workflow-start review-changes` wit
 
 ## Mandatory Task Creation (ZERO TOLERANCE)
 
-Create one task per row in the table below — source of truth is `workflows.json` → `review-changes.sequence` (currently 16 steps; verify count matches if you suspect drift):
+Create one task per row in the table below — source of truth is `workflows.json` → `review-changes.sequence` (currently 17 steps; verify count matches if you suspect drift):
 
-| #   | Task Subject                                                                                                   | Conditional?                                                                                  |
-| --- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1   | `[Workflow] /review-changes — Review all uncommitted changes (includes integration test sync check)`           | No                                                                                            |
-| 2   | `[Workflow] /review-architecture — Architecture compliance review` ⚡ **PARALLEL BATCH**                       | No — run as sub-agent in parallel with steps 3/4/5                                            |
-| 3   | `[Workflow] /review-domain-entities — DDD quality review of changed domain entity files` ⚡ **PARALLEL BATCH** | Yes — skip if no domain entity files (Domain/, Entities/, ValueObjects/) in git diff          |
-| 4   | `[Workflow] /performance — Performance analysis` ⚡ **PARALLEL BATCH**                                         | No — run as sub-agent in parallel with steps 2/3/5                                            |
-| 5   | `[Workflow] /integration-test-review — Integration test quality review` ⚡ **PARALLEL BATCH**                  | No — run as sub-agent in parallel with steps 2/3/4                                            |
-| 6   | `[Workflow] /code-simplifier — Simplify and refine code`                                                       | No — runs AFTER parallel batch (modifies code; batch reviews pre-simplification state)        |
-| 7   | `[Workflow] /code-review — Comprehensive code review`                                                          | No — runs AFTER code-simplifier (reviews simplified code)                                     |
-| 8   | `[Workflow] /integration-test-verify — Verify integration tests pass`                                          | No — runs AFTER code-simplifier (verifies simplified code)                                    |
-| 9   | `[Workflow] /plan — Consolidate review findings into fix plan`                                                 | Skip if all reviews PASS                                                                      |
-| 10  | `[Workflow] /plan-validate — Critical questions on fix plan`                                                   | Skip if all reviews PASS                                                                      |
-| 11  | `[Workflow] /why-review — Sanity-check that proposed fixes are warranted`                                      | Skip if all reviews PASS                                                                      |
-| 12  | `[Workflow] /cook — Implement fixes from plan`                                                                 | Skip if all reviews PASS                                                                      |
-| 13  | `[Workflow] Fresh sub-agent re-review gate — spawn new Agent per SYNC:fresh-context-review`                    | Skip if all reviews PASS                                                                      |
-| 14  | `[Workflow] /docs-update — Update impacted documentation`                                                      | Always run — /docs-update triages internally (fast-exits when only config/tool files changed) |
-| 15  | `[Workflow] /watzup — Wrap up and summarize`                                                                   | No                                                                                            |
-| 16  | `[Workflow] /workflow-end — End workflow`                                                                      | No                                                                                            |
+| #   | Task Subject                                                                                                                                                                   | Conditional?                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| 1   | `[Workflow] /review-changes — Surface detection + dimensional review tasks (BE/FE/SCSS/Synthesis/General) + integration test sync check + multilingual translation sync check` | No                                                                                            |
+| 2   | `[Workflow] /review-architecture — Architecture compliance review` ⚡ **PARALLEL BATCH**                                                                                       | No — run as sub-agent in parallel with steps 3/4/5/6                                          |
+| 3   | `[Workflow] /review-domain-entities — DDD quality review of changed domain entity files` ⚡ **PARALLEL BATCH**                                                                 | Yes — skip if no domain entity files (Domain/, Entities/, ValueObjects/) in git diff          |
+| 4   | `[Workflow] /performance — Performance analysis` ⚡ **PARALLEL BATCH**                                                                                                         | No — run as sub-agent in parallel with steps 2/3/5/6                                          |
+| 5   | `[Workflow] /integration-test-review — Integration test quality review` ⚡ **PARALLEL BATCH**                                                                                  | No — run as sub-agent in parallel with steps 2/3/4/6                                          |
+| 6   | `[Workflow] /security — Security vulnerability review` ⚡ **PARALLEL BATCH**                                                                                                   | No — run as sub-agent in parallel with steps 2/3/4/5                                          |
+| 7   | `[Workflow] /code-simplifier — Simplify and refine code`                                                                                                                       | No — runs AFTER parallel batch (modifies code; batch reviews pre-simplification state)        |
+| 8   | `[Workflow] /code-review — Comprehensive code review`                                                                                                                          | No — runs AFTER code-simplifier (reviews simplified code)                                     |
+| 9   | `[Workflow] /integration-test-verify — Verify integration tests pass`                                                                                                          | No — runs AFTER code-simplifier (verifies simplified code)                                    |
+| 10  | `[Workflow] /plan — Consolidate review findings into fix plan`                                                                                                                 | Skip if all reviews PASS                                                                      |
+| 11  | `[Workflow] /plan-validate — Critical questions on fix plan`                                                                                                                   | Skip if all reviews PASS                                                                      |
+| 12  | `[Workflow] /why-review — Sanity-check that proposed fixes are warranted`                                                                                                      | Skip if all reviews PASS                                                                      |
+| 13  | `[Workflow] /cook — Implement fixes from plan`                                                                                                                                 | Skip if all reviews PASS                                                                      |
+| 14  | `[Workflow] Fresh sub-agent re-review gate — spawn new Agent per SYNC:fresh-context-review`                                                                                    | Skip if all reviews PASS                                                                      |
+| 15  | `[Workflow] /docs-update — Update impacted documentation`                                                                                                                      | Always run — /docs-update triages internally (fast-exits when only config/tool files changed) |
+| 16  | `[Workflow] /watzup — Wrap up and summarize`                                                                                                                                   | No                                                                                            |
+| 17  | `[Workflow] /workflow-end — End workflow`                                                                                                                                      | No                                                                                            |
 
 NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional tasks `completed` with note "Skipped — all reviews passed".
 
 > **Integration Test Sync:** The `/review-changes` skill (task #1) includes a **mandatory** integration test coverage check for changed command/query/handler files. When gaps are found, the skill uses `AskUserQuestion` to surface them — NOT purely advisory. The user must explicitly choose to run `/integration-test` or confirm tests are already written. No silent skip.
 
-> **Docs Update:** `/docs-update` MUST run after EVERY review — it performs Phase 0 triage and fast-exits automatically when only non-business-code files changed (`.claude/**`, config). When business code is in the changeset, it WILL invoke `/feature-docs` and `/tdd-spec`. Never skip based on review PASS status alone.
+> **Translation Sync:** The `/review-changes` skill (task #1) includes a **mandatory** multilingual UI translation-sync check. When UI text changes in multilingual projects without locale updates, the skill uses `AskUserQuestion` for an explicit user decision — NOT purely advisory.
+
+> **Docs Update:** `/docs-update` MUST run after EVERY review — it performs Phase 0 triage and fast-exits automatically when only non-business-code files changed (`.claude/**`, config). When business code is in the changeset, it WILL invoke: Phase 2 `/feature-docs` (business feature doc update), Phase 2.5 `/spec-discovery update` (engineering spec sync — if `docs/specs/` bundle exists; note: dirs found are app buckets like `bravoTALENTS/`, not service names — probe `ls docs/specs/{app-bucket}/` to find a specific service), Phase 3 `/tdd-spec` (test spec sync), Phase 4 `/tdd-spec [direction=sync]` (dashboard sync). Never skip based on review PASS status alone.
 
 ---
 
 ## Parallel Review Phase (Steps 2–5) — EXECUTION PROTOCOL
 
-Steps 2–5 (`/review-architecture`, `/review-domain-entities`, `/performance`, `/integration-test-review`) are **read-only** and **independent** — no shared mutable state, no ordering dependency between them. Run them as parallel sub-agents to preserve main session context budget and reduce wall-clock time.
+> **Note:** Steps 2–6 are ARCHITECTURAL/SECURITY reviewers (architecture compliance, DDD entities,
+> performance, integration test quality, security vulnerabilities). They are separate from the
+> DIMENSIONAL review (BE/FE/SCSS/Synthesis) that runs inside Step 1 (`/review-changes`). Both
+> operate in parallel — Steps 2–6 as explicit workflow parallel sub-agents; dimensional agents
+> inside Step 1 as its internal parallel batch. No overlap in responsibility.
+
+Steps 2–6 (`/review-architecture`, `/review-domain-entities`, `/performance`, `/integration-test-review`, `/security`) are **read-only** and **independent** — no shared mutable state, no ordering dependency between them. Run them as parallel sub-agents to preserve main session context budget and reduce wall-clock time.
 
 ### Why parallel?
 
-Each reviewer reads the git diff independently and analyzes one concern. Sequential execution would burn 40K+ tokens in the main session absorbing all four inline. The `stepMeta` in `workflows.json` marks all four as `executionMode: subagent, contextBudget: high` — the `workflow-step-tracker.cjs` hook outputs `💡 [SUB-AGENT RECOMMENDED]` as each step becomes active.
+Each reviewer reads the git diff independently and analyzes one concern. Sequential execution would burn 50K+ tokens in the main session absorbing all five inline. The `stepMeta` in `workflows.json` marks all five as `executionMode: subagent, contextBudget: high` — the `workflow-step-tracker.cjs` hook outputs `💡 [SUB-AGENT RECOMMENDED]` as each step becomes active.
 
 ### Execution: spawn in one message
 
 After step 1 (`/review-changes`) completes, spawn all active parallel reviewers in **a single response** with multiple `Agent` tool calls:
 
 ```
-Agent(review-architecture, subagent_type="code-reviewer", ...)   ← all in ONE message
-Agent(review-domain-entities, subagent_type="code-reviewer", ...) ← only if entity files in diff
+Agent(review-architecture, subagent_type="code-reviewer", ...)    ← all in ONE message
+Agent(review-domain-entities, subagent_type="code-reviewer", ...)  ← only if entity files in diff
 Agent(performance, subagent_type="code-reviewer", ...)
 Agent(integration-test-review, subagent_type="code-reviewer", ...)
+Agent(security, subagent_type="code-reviewer", ...)
 ```
 
 Each sub-agent receives:
@@ -119,26 +141,51 @@ Each sub-agent receives:
 2. `TaskUpdate` step 3 → `completed` (or "Skipped — no entity files" if conditional)
 3. `TaskUpdate` step 4 → `completed`
 4. `TaskUpdate` step 5 → `completed`
-5. Read all sub-agent report files; synthesize findings into a combined review summary
-6. Proceed to step 6 (`/code-simplifier`) sequentially
+5. `TaskUpdate` step 6 → `completed`
+6. Read all sub-agent report files; synthesize findings into a combined review summary
+7. Proceed to step 7 (`/code-simplifier`) sequentially
 
 ### Consolidation before /code-simplifier
 
 Before running `/code-simplifier`, synthesize all parallel sub-agent findings:
 
-- List all Critical/High findings across all 4 reports
+- List all Critical/High findings across all 5 reports
 - Note any conflicts between reviewers (same file, different concerns)
 - Pass this summary to `/code-simplifier` as context so simplification is informed by review findings
+
+**Surface Analysis from Step 1:**
+
+Step 1 (`/review-changes`) now emits a surface analysis summary in its report:
+
+```
+## Change Surface Analysis
+BE files: {N}
+FE-Logic files: {M}
+SCSS files: {P}
+Review Mode: [DIMENSIONAL | BE-ONLY | FE-ONLY | FE-SPLIT | TOOLING]
+```
+
+Include this surface analysis in the consolidation summary passed to `/code-simplifier`.
+This lets the simplifier focus attention on the dominant surface without re-analyzing the diff.
+
+Dimensional agent reports (if mode = DIMENSIONAL):
+
+- `plans/reports/review-be-{date}.md` — BE findings
+- `plans/reports/review-fe-logic-{date}.md` — FE-Logic findings
+- `plans/reports/review-scss-{date}.md` — SCSS findings (if spawned)
+- `plans/reports/synthesis-review-{date}.md` — Cross-boundary findings
+
+All four feed into the consolidation summary alongside steps 2–5 architectural findings.
 
 ### What runs sequentially (never parallelize)
 
 | Step                           | Why sequential                                         |
 | ------------------------------ | ------------------------------------------------------ |
 | `review-changes` (#1)          | Establishes baseline — must run first                  |
-| `code-simplifier` (#6)         | Modifies code — batch reviews pre-simplification state |
-| `code-review` (#7)             | Must review simplified code (after #6)                 |
-| `integration-test-verify` (#8) | Must run tests on simplified code (after #6)           |
-| `plan` → `cook` (#9–13)        | Ordered fix cycle — each step depends on previous      |
+| `code-simplifier` (#7)         | Modifies code — batch reviews pre-simplification state |
+| `code-review` (#8)             | Must review simplified code (after #7)                 |
+| `integration-test-verify` (#9) | Must run tests on simplified code (after #7)           |
+| `plan` → `cook` (#10–14)       | Ordered fix cycle — each step depends on previous      |
 
 ---
 
@@ -217,10 +264,10 @@ Before running `/code-simplifier`, synthesize all parallel sub-agent findings:
 ### Decision Logic
 
 ```
-Reviews (steps 1-6) → ALL PASS? AND integration-test-verify (step 8) passes?
-  YES → skip steps 9-13, proceed to /docs-update → /watzup → /workflow-end → DONE
-  NO  → /plan → /plan-validate → /why-review → /cook → FRESH SUB-AGENT RE-REVIEW GATE (step 13)
-Note: /integration-test-verify (step 8) always runs — it is NOT conditional on review outcome.
+Reviews (steps 1-7) → ALL PASS? AND integration-test-verify (step 9) passes?
+  YES → skip steps 10-14, proceed to /docs-update → /watzup → /workflow-end → DONE
+  NO  → /plan → /plan-validate → /why-review → /cook → FRESH SUB-AGENT RE-REVIEW GATE (step 14)
+Note: /integration-test-verify (step 9) always runs — it is NOT conditional on review outcome.
 ```
 
 ### Fresh Sub-Agent Re-Review Gate (Step 13) — After `/cook` Applies Fixes
@@ -262,6 +309,8 @@ Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-ag
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /review-changes -> **[parallel batch]** /review-architecture + /review-domain-entities (if entity changes) + /performance + /integration-test-review + /security -> /code-simplifier -> /code-review -> /integration-test-verify -> /plan -> /plan-validate -> /why-review -> /cook -> **fresh sub-agent re-review gate** -> /docs-update -> /watzup -> /workflow-end
+
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — create ALL 16 tasks immediately
@@ -270,9 +319,25 @@ Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-ag
 - **IMPORTANT MUST ATTENTION** PASS means a fresh sub-agent round finds ZERO Critical/High issues WITHOUT needing fixes — only then are changes ready to commit
 - **IMPORTANT MUST ATTENTION** skip steps 9-13 when all reviews PASS and tests pass (no fixes needed)
 - **IMPORTANT MUST ATTENTION** each step MUST invoke its `Skill` tool — marking completed without invocation is a violation
+- **IMPORTANT MUST ATTENTION** treat multilingual UI translation gaps as mandatory user-decision gates — no silent pass when locale updates are missing
   <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
   <!-- /SYNC:critical-thinking-mindset:reminder -->
   <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
   <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

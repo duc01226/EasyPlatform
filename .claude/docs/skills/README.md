@@ -31,7 +31,7 @@ Skills Activated: fix, feature-investigation
 | [AI/ML Tools](#aiml-tools)                        | 4      | Prompts, multimodal, agents                          |
 | [Documentation](#documentation)                   | 6      | Docs, feature docs, changelogs, release notes        |
 | [Git/Workflow](#gitworkflow)                      | 6      | Commits, branches, code review, scout, quality gates |
-| [Code Quality](#code-quality)                     | 7      | Graph-based code analysis, blast radius, sync        |
+| [Code Quality](#code-quality)                     | 10     | Graph-based code analysis, blast radius, sync        |
 | [Planning/Research](#planningresearch)            | 6      | Plans, research, implementation, investigation       |
 | [Infrastructure/DevOps](#infrastructuredevops)    | 5      | Cloudflare, Docker, MCP                              |
 | [Context/Memory](#contextmemory)                  | 6      | Optimization, persistence, learning                  |
@@ -80,13 +80,13 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 ## Debugging/Testing
 
-| Skill                     | Triggers                                                              | Description                                                                                                      |
-| ------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `webapp-testing`          | E2E, Playwright, Cypress                                              | End-to-end testing                                                                                               |
-| `test-spec`               | test specification, QA spec, test strategy, TC-IDs, test cases        | Test specification and detailed test case generation from PBIs                                                   |
-| `test-specs-docs`         | test specs docs, Given-When-Then, QA docs                             | YourProject test spec documentation                                                                              |
-| `integration-test-review` | integration test review, assertion quality, test gate review, TC gate | Review integration tests against 5 quality gates (assertion value, data state, repeatability, domain logic, TC)  |
-| `integration-test-verify` | run integration tests, verify tests pass, test runner, dotnet test    | Run integration tests after writing/reviewing them — reads project-config.json for project-specific run guidance |
+| Skill                       | Triggers                                                              | Description                                                                                                           |
+| --------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `webapp-testing`            | E2E, Playwright, Cypress                                              | End-to-end testing                                                                                                    |
+| `tdd-spec`                  | test specification, QA spec, test strategy, TC-IDs, test cases        | Unified test case writer — generates TC-{FEAT}-{NNN} specs from PBIs and feature docs                                 |
+| `tdd-spec [direction=sync]` | sync test specs, update dashboard, reverse sync, sync to feature docs | Dashboard sync mode — syncs TCs from feature docs Section 15 to `docs/specs/` (replaces deprecated `test-specs-docs`) |
+| `integration-test-review`   | integration test review, assertion quality, test gate review, TC gate | Review integration tests against 5 quality gates (assertion value, data state, repeatability, domain logic, TC)       |
+| `integration-test-verify`   | run integration tests, verify tests pass, test runner, dotnet test    | Run integration tests after writing/reviewing them — reads project-config.json for project-specific run guidance      |
 
 ---
 
@@ -130,16 +130,18 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 ## Code Quality
 
-| Skill                  | Triggers                                           | Description                                                            |
-| ---------------------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
-| `graph-build`          | build graph, code graph, knowledge graph           | Build or update the code review knowledge graph (Tree-sitter + SQLite) |
-| `graph-blast-radius`   | blast radius, impact analysis, structural impact   | Analyze structural impact of current changes using knowledge graph     |
-| `graph-export`         | export graph, JSON dump                            | Export full knowledge graph to JSON file                               |
-| `graph-export-mermaid` | mermaid, diagram, visualize                        | Export single-file graph as Mermaid diagram                            |
-| `graph-query`          | graph query, callers, tests_for                    | Natural language graph relationship queries                            |
-| `graph-connect-api`    | connect api, api connections, frontend backend     | Detect frontend-to-backend API connections via knowledge graph         |
-| `graph-sync`           | sync graph, refresh graph, update graph after pull | Sync knowledge graph with current git state after pull/checkout        |
-| `graph-update`         | update graph, working tree, uncommitted changes    | Update knowledge graph with uncommitted working tree changes           |
+| Skill                  | Triggers                                                | Description                                                            |
+| ---------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `graph-build`          | build graph, code graph, knowledge graph                | Build or update the code review knowledge graph (Tree-sitter + SQLite) |
+| `graph-blast-radius`   | blast radius, impact analysis, structural impact        | Analyze structural impact of current changes using knowledge graph     |
+| `graph-export`         | export graph, JSON dump                                 | Export full knowledge graph to JSON file                               |
+| `graph-export-mermaid` | mermaid, diagram, visualize                             | Export single-file graph as Mermaid diagram                            |
+| `graph-query`          | graph query, callers, tests_for                         | Natural language graph relationship queries                            |
+| `graph-connect-api`    | connect api, api connections, frontend backend          | Detect frontend-to-backend API connections via knowledge graph         |
+| `graph-sync`           | sync graph, refresh graph, update graph after pull      | Sync knowledge graph with current git state after pull/checkout        |
+| `graph-update`         | update graph, working tree, uncommitted changes         | Update knowledge graph with uncommitted working tree changes           |
+| `linter-setup`         | linter setup, formatter setup, pre-commit, quality gate | Configure stack-appropriate lint/format/type-check quality tooling     |
+| `harness-setup`        | harness setup, quality harness, feedback sensors        | Set up feedforward guides and feedback sensors for coding workflows    |
 
 ---
 
@@ -188,7 +190,7 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 | `business-analyst` | requirements, user story, acceptance criteria, BDD  | Requirements analysis, story writing   |
 | `product-owner`    | backlog, prioritize, PBI, feature idea, stakeholder | Backlog management, prioritization     |
 | `project-manager`  | timeline, dependencies, status, milestone, resource | Project tracking, reporting            |
-| `test-spec`        | test plan, test cases, coverage, automation         | Test specification and case generation |
+| `tdd-spec`         | test plan, test cases, coverage, automation         | Test specification and case generation |
 | `qc-specialist`    | quality gate, audit, compliance, standards          | Quality checkpoints, audits            |
 | `ux-designer`      | wireframe, mockup, user flow, design spec           | UX design, specifications              |
 | `design-spec`      | UI specification, component spec, layout spec       | Design specification documents         |
@@ -288,23 +290,23 @@ triggers: [keyword1, keyword2, keyword3]
 
 Skills are often activated alongside commands:
 
-| Command         | Primary Skills Activated           |
-| --------------- | ---------------------------------- |
-| `/cook`         | `feature`, `planning`, `test-spec` |
-| `/fix`          | `debug-investigate`                |
-| `/plan`         | `planning`, `plan-analysis`        |
-| `/review`       | `code-review`                      |
-| `/scout`        | `scout`, `feature-investigation`   |
-| `/test`         | `test-spec`, `webapp-testing`      |
-| `/idea`         | `idea`, `product-owner`            |
-| `/refine`       | `refine`, `business-analyst`       |
-| `/story`        | `story`, `business-analyst`        |
-| `/design-spec`  | `design-spec`, `ux-designer`       |
-| `/test-spec`    | `test-spec`                        |
-| `/quality-gate` | `qc-specialist`                    |
-| `/status`       | `status`, `project-manager`        |
-| `/dependency`   | `dependency`, `project-manager`    |
-| `/prioritize`   | `prioritize`, `product-owner`      |
+| Command         | Primary Skills Activated          |
+| --------------- | --------------------------------- |
+| `/cook`         | `feature`, `planning`, `tdd-spec` |
+| `/fix`          | `debug-investigate`               |
+| `/plan`         | `planning`, `plan-analysis`       |
+| `/review`       | `code-review`                     |
+| `/scout`        | `scout`, `feature-investigation`  |
+| `/test`         | `tdd-spec`, `webapp-testing`      |
+| `/idea`         | `idea`, `product-owner`           |
+| `/refine`       | `refine`, `business-analyst`      |
+| `/story`        | `story`, `business-analyst`       |
+| `/design-spec`  | `design-spec`, `ux-designer`      |
+| `/tdd-spec`     | `tdd-spec`                        |
+| `/quality-gate` | `qc-specialist`                   |
+| `/status`       | `status`, `project-manager`       |
+| `/dependency`   | `dependency`, `project-manager`   |
+| `/prioritize`   | `prioritize`, `product-owner`     |
 
 ---
 

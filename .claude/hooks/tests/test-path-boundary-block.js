@@ -278,6 +278,45 @@ const sedAwkTests = [
     }
 ];
 
+// Tests for grep/ripgrep pattern false positives (should ALLOW)
+const grepTests = [
+    {
+        name: 'grep quoted pattern with SYNC marker - should allow',
+        input: { tool_input: { command: 'grep -c "<!-- /SYNC:" "$f" 2>/dev/null' } },
+        expectBlock: false
+    },
+    {
+        name: 'grep single-quoted SYNC pattern - should allow',
+        input: { tool_input: { command: 'grep -c \'<!-- /SYNC:\' "$f"' } },
+        expectBlock: false
+    },
+    {
+        name: 'rg with API route pattern - should allow',
+        input: { tool_input: { command: 'rg -l "/api/v2/users" src/' } },
+        expectBlock: false
+    },
+    {
+        name: 'rg --type with space-separated value - should allow',
+        input: { tool_input: { command: 'rg --type js "/api/v2/users" src/' } },
+        expectBlock: false
+    },
+    {
+        name: 'grep -A with numeric value then path pattern - should allow',
+        input: { tool_input: { command: 'grep -A 3 "/pattern/here" file.txt' } },
+        expectBlock: false
+    },
+    {
+        name: 'grep then real outside path after semicolon - should block',
+        input: { tool_input: { command: 'grep "pattern" "$f"; cat /etc/passwd' } },
+        expectBlock: true
+    },
+    {
+        name: 'grep unquoted real path as target - should block',
+        input: { tool_input: { command: 'grep something /etc/passwd' } },
+        expectBlock: true
+    }
+];
+
 // Tests for MCP filesystem tools
 const mcpTests = [
     {
@@ -448,6 +487,7 @@ async function main() {
         ['Bash Command Tests', bashTests],
         ['Inline Code Tests', inlineCodeTests],
         ['Sed/Awk Pattern Tests', sedAwkTests],
+        ['Grep Pattern Tests', grepTests],
         ['MCP Filesystem Tests', mcpTests],
         ['NotebookEdit Tests', notebookTests],
         ['Config Toggle Tests', configTests],

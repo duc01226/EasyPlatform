@@ -1,32 +1,26 @@
 ---
 name: scan-domain-entities
-version: 1.0.0
+version: 2.0.0
 description: '[Documentation] Scan project and populate/sync docs/project-reference/domain-entities-reference.md with domain entities, data models, DTOs, aggregate boundaries, cross-service entity sync, and ER diagrams.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
+> **AI Mistake Prevention** — Failure modes to avoid:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> - **Verify AI-generated content against actual code.** AI hallucinates entity class names, property names, relationship types. Grep to confirm existence before documenting.
+> - **Trace full dependency chain after edits.** Always trace full chain.
+> - **Holistic-first — resist nearest-attention trap.** List EVERY precondition before forming hypothesis.
+> - **Surface ambiguity before coding.** NEVER pick silently.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -34,89 +28,113 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- SYNC:scan-and-update-reference-doc -->
 
-> **Scan & Update Reference Doc** — When updating reference docs: (1) Read existing doc first. (2) Scan codebase for current state (grep/glob). (3) Diff findings vs doc content. (4) Update ONLY sections where code diverged from doc. (5) Preserve manual annotations. (6) Update metadata (date, counts). NEVER rewrite entire doc — surgical updates only.
+> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
+>
+> 1. **Read existing doc** first — understand structure and manual annotations
+> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
+> 3. **Scan codebase** (grep/glob) for current patterns
+> 4. **Diff** findings vs doc — identify stale sections only
+> 5. **Update ONLY** diverged sections. Preserve manual annotations.
+> 6. **Update metadata** (date, version) in frontmatter/header
+> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
 
 <!-- /SYNC:scan-and-update-reference-doc -->
 
 <!-- SYNC:output-quality-principles -->
 
-> **Output Quality** — Reference docs are injected into AI context. Apply 10 rules: (1) No inventories/counts — AI can grep. (2) No directory trees — AI can glob. (3) No TOCs. (4) Rules > descriptions — "MUST ATTENTION use X" not "X allows you to...". (5) 1 example per pattern. (6) Tables > prose. (7) BAD/GOOD pairs: 2-3 lines each. (8) Primacy-recency anchoring — critical rules in first AND last 5 lines. (9) No checkbox checklists — bullets force reading. (10) Density target: >=8 MUST ATTENTION/NEVER/ALWAYS per 100 lines.
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — stale instantly
+> 2. No directory trees — use 1-line path conventions
+> 3. No TOCs — AI reads linearly
+> 4. One example per pattern — only if non-obvious
+> 5. Lead with answer, not reasoning
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end
 
 <!-- /SYNC:output-quality-principles -->
 
 ## Quick Summary
 
-**Goal:** Scan project codebase and populate `docs/project-reference/domain-entities-reference.md` with domain entities, data models, DTOs, aggregate boundaries, cross-service entity sync maps, and Mermaid ER diagrams. (content auto-injected by hook — check for [Injected: ...] header before reading)
+**Goal:** Scan project codebase → populate `docs/project-reference/domain-entities-reference.md` with domain entities, data models, DTOs, aggregate boundaries, cross-service entity sync maps, and Mermaid ER diagrams. (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 **Workflow:**
 
-1. **Read** — Load current target doc, detect init vs sync mode
-2. **Scan** — Discover entities, models, DTOs, relationships via parallel sub-agents
-3. **Report** — Write findings to external report file
+1. **Classify** — Detect architecture type and framework before scanning
+2. **Scan** — Parallel sub-agents discover entities, DTOs, relationships, cross-service sync
+3. **Report** — Write findings incrementally to report file
 4. **Generate** — Build/update reference doc from report
-5. **Verify** — Validate entity references point to real files
+5. **Fresh-Eyes** — Round 2 verification + coverage report
 
 **Key Rules:**
 
-- Generic — works with any framework (.NET, Node.js, Java, Python, game engines, etc.)
-- Detect framework first, then scan for framework-specific entity patterns
-- For microservices: unify cross-service entities (identify owner vs consumer services)
-- Every entity reference must come from actual project files with file:line references
-- Detail level: summary + key properties (IDs, FKs, status fields, relationships) — NOT full property listing
+- Generic — works with any framework (.NET, Node.js, Java, Python, game engines)
+- **MUST ATTENTION** detect BOTH framework AND architecture type before sub-agents launch
+- For microservices: unify cross-service entities (owner vs consumer)
+- Detail level: summary + key properties (IDs, FKs, status fields) — NOT full property listing
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+---
 
 # Scan Domain Entities
 
-## Phase 0: Read & Assess
+## Phase 0: Classify Architecture & Framework
+
+**Before any other step**, run in parallel:
 
 1. Read `docs/project-reference/domain-entities-reference.md`
-2. Detect mode: init (placeholder) or sync (populated)
-3. If sync: extract existing sections and note what's already documented
+    - Detect mode: Init (placeholder) or Sync (populated)
+    - In Sync mode: extract entity catalog sections → skip re-scanning up-to-date services
 
-## Phase 1: Plan Scan Strategy
+2. Detect framework from project files:
 
-### Detect Project Type & Framework
+| Indicator                             | Framework   | Entity Patterns to Search                                                |
+| ------------------------------------- | ----------- | ------------------------------------------------------------------------ |
+| `.csproj`                             | .NET        | `Entity`, `AggregateRoot`, `ValueObject`, `IEntity`, `BaseEntity`        |
+| `package.json` + ORM                  | Node.js     | Mongoose `Schema`, TypeORM `@Entity`, Prisma `model`, Sequelize `define` |
+| `pom.xml` / `build.gradle`            | Java/Kotlin | JPA `@Entity`, Spring Data, Hibernate, `@Table`                          |
+| `requirements.txt` / `pyproject.toml` | Python      | Django `models.Model`, SQLAlchemy, Pydantic `BaseModel`                  |
+| `*.proto`                             | Protobuf    | `message` definitions (cross-service contracts)                          |
 
-Scan for project type indicators in this priority order:
+3. Detect architecture type:
 
-1. **Check `docs/project-config.json`** — Use `modules[]` for service paths, `project.languages` for tech stack
-2. **Filesystem detection fallback:**
+| Signal                                                   | Architecture     | Sub-Agents                                         |
+| -------------------------------------------------------- | ---------------- | -------------------------------------------------- |
+| Multiple service directories with separate domain layers | Microservices    | Run all 4 agents including Agent 4 (cross-service) |
+| Single domain layer                                      | Monolith         | Run Agents 1-3, skip Agent 4                       |
+| Single deployment, bounded contexts                      | Modular monolith | Run Agents 1-3, analyze module boundaries          |
 
-| Indicator                             | Framework   | Entity Patterns to Search                                                              |
-| ------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
-| `.csproj`                             | .NET        | `Entity`, `AggregateRoot`, `ValueObject`, `IEntity`, `BaseEntity`, project entity base |
-| `package.json` + ORM                  | Node.js     | Mongoose `Schema`, TypeORM `@Entity`, Prisma `model`, Sequelize `define`               |
-| `pom.xml` / `build.gradle`            | Java/Kotlin | JPA `@Entity`, Spring Data, Hibernate, `@Table`                                        |
-| `requirements.txt` / `pyproject.toml` | Python      | Django `models.Model`, SQLAlchemy, Pydantic `BaseModel`                                |
-| `*.proto`                             | Protobuf    | `message` definitions (cross-service contracts)                                        |
-| Unity project files                   | Unity       | `ScriptableObject`, `MonoBehaviour` data classes                                       |
-| Unreal project files                  | Unreal      | `UObject`, `USTRUCT`, `UCLASS` data types                                              |
+4. Load service paths from `docs/project-config.json` `modules[]` if available.
 
-3. **Generic fallback** (any project): scan for `class.*Entity`, `class.*Model`, `class.*Dto`, `interface.*Repository`, `schema`, `@table`, `collection`
+**Evidence gate:** Confidence <60% on framework detection → report uncertainty, DO NOT proceed with framework-specific scan.
 
-### Detect Architecture Type
+## Phase 1: Plan
 
-- **Microservices:** Multiple service directories with separate domain layers → enable cross-service entity sync analysis
-- **Monolith:** Single domain layer → skip cross-service analysis
-- **Modular monolith:** Single deployment but bounded contexts → analyze module boundaries
-
-Use `docs/project-config.json` `modules[]` to identify service boundaries. If unavailable, detect from directory structure.
+Create `TaskCreate` entries for each sub-agent, each service/module to scan, and the coverage report step. **Do not start Phase 2 without tasks created.**
 
 ## Phase 2: Execute Scan (Parallel Sub-Agents)
 
-Launch **3-4 Explore agents** in parallel:
+Launch **3-4 general-purpose sub-agents** in parallel. Each MUST:
+
+- Write findings incrementally after each service/file — NEVER batch at end
+- Cite `file:line` for every entity example
+- Confidence: >80% document; 60-80% note as "observed (unverified)"; <60% omit
+
+All findings → `plans/reports/scan-domain-entities-{YYMMDD}-{HHMM}-report.md`
 
 ### Agent 1: Domain Entities & Aggregates
 
-- Grep for entity base class inheritance (framework-specific patterns from Phase 1)
+**Think:** What is the entity hierarchy in this project? Which classes are aggregate roots vs leaf entities vs value objects? What are the key business properties (IDs, status, foreign keys)? Where is domain logic placed?
+
+- Grep for entity base class inheritance (framework-specific from Phase 0)
 - Find aggregate root classes
 - Find value objects
 - Find enum types used as entity properties
-- For each entity: note key properties (ID, foreign keys, status/state fields, timestamps)
-- Note file paths with line numbers
+- For each entity: note key properties (ID, FKs, status/state fields, timestamps)
+- Record file paths with line numbers
 
 ### Agent 2: DTOs, ViewModels & Application Layer Models
+
+**Think:** How does data flow from entities to consumers? Who owns the mapping — the DTO, the handler, or a mapper service? Where is the mapping defined?
 
 - Grep for DTO classes (`*Dto`, `*DTO`, `*ViewModel`, `*Response`, `*Request`)
 - Find command/query objects that carry entity data
@@ -125,13 +143,17 @@ Launch **3-4 Explore agents** in parallel:
 
 ### Agent 3: Database Schemas & Persistence
 
+**Think:** How are entities persisted? What indexes exist? What databases are used per service? Where is schema evolution handled?
+
 - Find database collection/table definitions
 - Find migration files that create/alter entity tables
 - Find index definitions on entities
+- Identify database technology per service (MongoDB, SQL Server, PostgreSQL)
 - Find seed data files
-- Identify database technology per service (MongoDB, SQL Server, PostgreSQL, etc.)
 
-### Agent 4: Cross-Service Entity Sync (microservices only)
+### Agent 4: Cross-Service Entity Sync (microservices only — skip otherwise)
+
+**Think:** Which entities cross service boundaries? Who owns them? How are they synced — via events, via direct API calls, or via shared database (the last being an anti-pattern)?
 
 - Grep for integration event classes (`*IntegrationEvent`, `*Event`, `*Message`)
 - Find message bus consumers that sync entity data across services
@@ -139,92 +161,90 @@ Launch **3-4 Explore agents** in parallel:
 - Map: which entity originates in which service, which services consume it
 - Find event handler classes that create/update projected entities
 
-Write all findings to: `plans/reports/scan-domain-entities-{YYMMDD}-{HHMM}-report.md`
-
 ## Phase 3: Analyze & Generate
 
-Read the report. Build these sections:
+Read full report. Apply fresh-eyes protocol:
+
+**Round 1 (main agent):** Build section drafts from report findings.
+
+**Round 2 (fresh sub-agent, zero memory):**
+
+- Does every entity in the catalog have a real `file:line` reference? (Glob verify)
+- Do class names in examples match actual class definitions? (Grep verify)
+- Coverage gap report: which services have NO entities found?
+- Are cross-service sync entries accurate (right owner, right consumer)?
 
 ### Target Sections
 
 | Section                      | Content                                                                                           |
 | ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| **Entity Catalog**           | Table per service/module: entity name, key properties (IDs, FKs, status), base class, file path   |
-| **Entity Relationships**     | Mermaid ER diagram per service showing entity relationships (1:N, N:M, 1:1)                       |
-| **Cross-Service Entity Map** | Table: entity name, owner service, consumer services, sync mechanism (event name), sync direction |
-| **DTO Mapping**              | Table: DTO class → Entity class, mapping approach (manual/auto), file path                        |
+| **Entity Catalog**           | Table per service/module: entity name, key properties (IDs, FKs, status), base class, `file:line` |
+| **Entity Relationships**     | Mermaid ER diagram per service — key relationships only                                           |
+| **Cross-Service Entity Map** | Table: entity, owner service, consumer services, sync event, direction                            |
+| **DTO Mapping**              | Table: DTO class → Entity class, mapping approach, `file:line`                                    |
 | **Aggregate Boundaries**     | Which entities form aggregates, aggregate root identification                                     |
 | **Naming Conventions**       | Detected naming patterns (suffixes, prefixes, namespace conventions)                              |
+| **Coverage Report**          | Services scanned / entities found / services with NO entities (gaps)                              |
 
 ### Entity Catalog Format
-
-For each service/module, produce a table:
 
 ```markdown
 ### {ServiceName} Entities
 
-| Entity   | Key Properties                | Base Class | Relationships          | File                   |
-| -------- | ----------------------------- | ---------- | ---------------------- | ---------------------- |
-| Employee | Id, CompanyId, UserId, Status | EntityBase | 1:N Goals, 1:N Reviews | `path/Employee.cs:L15` |
+| Entity   | Key Properties                | Base Class | Relationships | File                   |
+| -------- | ----------------------------- | ---------- | ------------- | ---------------------- |
+| Employee | Id, CompanyId, UserId, Status | EntityBase | 1:N Goals     | `path/Employee.cs:L15` |
 ```
 
-**Detail level:** Summary + key properties only. Include: IDs, foreign keys, status/state fields, important business fields. Do NOT list every property.
-
-### Cross-Service Entity Map Format (microservices)
-
-When the same entity concept appears in multiple services:
-
-```markdown
-| Unified Entity | Owner Service | Consumer Services  | Sync Event           | Direction         |
-| -------------- | ------------- | ------------------ | -------------------- | ----------------- |
-| Employee       | ServiceA      | ServiceB, Accounts | EmployeeCreatedEvent | Owner → Consumers |
-```
+**Detail level:** Summary + key properties only — IDs, FKs, status/state, important business fields. Do NOT list every property.
 
 ### Mermaid ER Diagram Guidelines
 
-- One diagram per service/bounded context (keep diagrams readable)
+- One diagram per service/bounded context (keep readable)
 - One cross-service diagram showing entity sync flows
-- Use Mermaid `erDiagram` syntax
 - Show only key relationships, not every FK
-
-```mermaid
-erDiagram
-    Employee ||--o{ Goal : "has"
-    Employee ||--o{ Review : "receives"
-    Goal ||--o{ CheckIn : "tracks"
-```
-
-### Content Rules
-
-- Show actual entity class declarations (3-5 lines) with `file:line` references
-- Include count of entities per service
-- Group by service/module, not by entity type
-- For microservices: highlight cross-service boundaries clearly
 
 ## Phase 4: Write & Verify
 
 1. Write updated doc with `<!-- Last scanned: YYYY-MM-DD -->` at top
-2. Verify: 5+ entity file paths exist (Glob check)
-3. Verify: class names in catalog match actual class definitions (Grep check)
-4. Report: sections updated, entities discovered, coverage gaps
+2. Surgical update only — preserve unchanged sections
+3. Verify (Glob check): ALL entity file paths exist — not just 5
+4. Verify (Grep check): class names in catalog match actual class definitions
+5. Coverage report: list services with no entities found (flag as gap)
+6. Report: sections updated / unchanged / coverage gaps / violations
 
 ---
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per sub-agent, one per service
+- **IMPORTANT MUST ATTENTION** detect BOTH framework AND architecture type in Phase 0 — sub-agents depend on both
+- **IMPORTANT MUST ATTENTION** cite `file:line` for every entity example — NEVER fabricate class names or property names
+- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each service — NEVER batch at end
+- **IMPORTANT MUST ATTENTION** coverage report is mandatory — list services with NO entities found
+- **IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — validates `file:line` and class names
       <!-- SYNC:scan-and-update-reference-doc:reminder -->
 - **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
       <!-- /SYNC:scan-and-update-reference-doc:reminder -->
       <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
+- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
       <!-- /SYNC:output-quality-principles:reminder -->
       <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
       <!-- /SYNC:critical-thinking-mindset:reminder -->
       <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**Anti-Rationalization:**
+
+| Evasion                                          | Rebuttal                                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| "Framework obvious, skip Phase 0 detection"      | Phase 0 is BLOCKING — entity patterns depend on detected framework           |
+| "Architecture type obvious from directory names" | Verify from actual service structure — names are not evidence                |
+| "Verified 5 paths, that's enough"                | Glob-verify ALL entity paths — 5 is insufficient                             |
+| "Cross-service agent not needed (monolith)"      | Confirm monolith from Phase 0 evidence before skipping Agent 4               |
+| "Coverage report not needed"                     | Coverage report is a required section — list services with no entities found |
+| "Round 2 not needed for small scan"              | Main agent rationalizes own entity discoveries. Fresh-eyes mandatory.        |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and break into small todo tasks and sub-tasks using TaskCreate.

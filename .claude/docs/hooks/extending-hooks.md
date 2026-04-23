@@ -553,7 +553,6 @@ export CK_DEBUG=1
 ## Related Documentation
 
 - [README.md](./README.md) - Hooks overview and catalog
-- [architecture.md](./architecture.md) - Hook system architecture
 
 ---
 

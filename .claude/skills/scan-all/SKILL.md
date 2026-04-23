@@ -1,7 +1,7 @@
 ---
 name: scan-all
 version: 1.0.0
-description: '[Documentation] Orchestrate all reference doc scans in parallel. Refreshes all 11 docs/project-reference/ files and clears the staleness gate. Use for project onboarding, periodic refresh, or when the staleness gate blocks prompts.'
+description: '[Documentation] Orchestrate all reference doc scans in parallel. Refreshes all 12 scanned docs/project-reference/ files and clears the staleness gate. Use for project onboarding, periodic refresh, or when the staleness gate blocks prompts.'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
@@ -46,21 +46,21 @@ description: '[Documentation] Orchestrate all reference doc scans in parallel. R
 
 ## Quick Summary
 
-**Goal:** Run all 11 scan-\* skills in parallel and clear the staleness gate.
+**Goal:** Run all 12 scan-\* skills in parallel and clear the staleness gate.
 
 **Workflow:**
 
 1. **Check Prerequisites** — Verify project has content (not empty)
-2. **Launch Parallel Scans** — All 11 skills simultaneously
+2. **Launch Parallel Scans** — All 12 skills simultaneously
 3. **Collect Results** — Read scan output from reference docs
 4. **Clear Staleness Flag** — Remove `.claude/.scan-stale` so the gate unblocks
 5. **Build Knowledge Graph** — Run `/graph-build` to update structural graph
-6. **Enhance Docs** — Run `/prompt-enhance` on all 11 scanned docs
+6. **Enhance Docs** — Run `/prompt-enhance` on all 12 scanned docs
 7. **Summarize** — Report what was refreshed
 
 **Key Rules:**
 
-- All 11 scans run in PARALLEL for speed
+- All 12 scans run in PARALLEL for speed
 - Does NOT modify code — only populates docs/project-reference/
 - Clears `.claude/.scan-stale` flag after completion
 - `/prompt-enhance` ensures AI attention anchoring on all generated docs
@@ -79,21 +79,22 @@ description: '[Documentation] Orchestrate all reference doc scans in parallel. R
 
 ## Execution
 
-Launch all 11 scan skills in parallel:
+Launch all 12 scan skills in parallel:
 
 | #   | Skill                     | Target Doc                       |
 | --- | ------------------------- | -------------------------------- |
 | 1   | `/scan-project-structure` | `project-structure-reference.md` |
 | 2   | `/scan-backend-patterns`  | `backend-patterns-reference.md`  |
-| 3   | `/scan-frontend-patterns` | `frontend-patterns-reference.md` |
-| 4   | `/scan-integration-tests` | `integration-test-reference.md`  |
-| 5   | `/scan-feature-docs`      | `feature-docs-reference.md`      |
-| 6   | `/scan-code-review-rules` | `code-review-rules.md`           |
-| 7   | `/scan-scss-styling`      | `scss-styling-guide.md`          |
-| 8   | `/scan-design-system`     | `design-system/README.md`        |
-| 9   | `/scan-e2e-tests`         | `e2e-test-reference.md`          |
-| 10  | `/scan-domain-entities`   | `domain-entities-reference.md`   |
-| 11  | `/scan-docs-index`        | `docs-index-reference.md`        |
+| 3   | `/scan-seed-test-data`    | `seed-test-data-reference.md`    |
+| 4   | `/scan-frontend-patterns` | `frontend-patterns-reference.md` |
+| 5   | `/scan-integration-tests` | `integration-test-reference.md`  |
+| 6   | `/scan-feature-docs`      | `feature-docs-reference.md`      |
+| 7   | `/scan-code-review-rules` | `code-review-rules.md`           |
+| 8   | `/scan-scss-styling`      | `scss-styling-guide.md`          |
+| 9   | `/scan-design-system`     | `design-system/README.md`        |
+| 10  | `/scan-e2e-tests`         | `e2e-test-reference.md`          |
+| 11  | `/scan-domain-entities`   | `domain-entities-reference.md`   |
+| 12  | `/scan-docs-index`        | `docs-index-reference.md`        |
 
 ## Post-Scan Cleanup
 
@@ -131,15 +132,16 @@ After graph build, **MUST ATTENTION create tasks to run `/prompt-enhance` on all
 | --- | ------------------------------------------------------- |
 | 1   | `docs/project-reference/project-structure-reference.md` |
 | 2   | `docs/project-reference/backend-patterns-reference.md`  |
-| 3   | `docs/project-reference/frontend-patterns-reference.md` |
-| 4   | `docs/project-reference/integration-test-reference.md`  |
-| 5   | `docs/project-reference/feature-docs-reference.md`      |
-| 6   | `docs/project-reference/code-review-rules.md`           |
-| 7   | `docs/project-reference/scss-styling-guide.md`          |
-| 8   | `docs/project-reference/design-system/README.md`        |
-| 9   | `docs/project-reference/e2e-test-reference.md`          |
-| 10  | `docs/project-reference/domain-entities-reference.md`   |
-| 11  | `docs/project-reference/docs-index-reference.md`        |
+| 3   | `docs/project-reference/seed-test-data-reference.md`    |
+| 4   | `docs/project-reference/frontend-patterns-reference.md` |
+| 5   | `docs/project-reference/integration-test-reference.md`  |
+| 6   | `docs/project-reference/feature-docs-reference.md`      |
+| 7   | `docs/project-reference/code-review-rules.md`           |
+| 8   | `docs/project-reference/scss-styling-guide.md`          |
+| 9   | `docs/project-reference/design-system/README.md`        |
+| 10  | `docs/project-reference/e2e-test-reference.md`          |
+| 11  | `docs/project-reference/domain-entities-reference.md`   |
+| 12  | `docs/project-reference/docs-index-reference.md`        |
 
 Run via: `/prompt-enhance docs/project-reference/{filename}`
 
@@ -149,10 +151,10 @@ After all scans complete, report:
 
 "Scan All Complete:
 
-- {X}/11 scans succeeded
+- {X}/12 scans succeeded
 - Reference docs refreshed in docs/project-reference/
 - Staleness gate cleared
-- Prompt-enhanced {Y}/11 docs
+- Prompt-enhanced {Y}/12 docs
 - Knowledge graph rebuilt via /graph-build"
 
 ---
@@ -172,3 +174,5 @@ After all scans complete, report:
       <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

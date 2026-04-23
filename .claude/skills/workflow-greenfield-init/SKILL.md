@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Greenfield Project Init workflow — full water
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /tech-stack-research -> /architecture-design -> /plan -> /security -> /performance -> /plan-review -> /refine -> /refine-review -> /story -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /plan-validate -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -78,7 +80,7 @@ disable-model-invocation: true
 
 Activate the `greenfield-init` workflow. Run `/workflow-start greenfield-init` with the user's prompt as context.
 
-**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /tech-stack-research → /architecture-design → /plan → /security → /performance → /plan-review → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /plan-validate → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /scaffold → /why-review → /cook → /review-domain-entities → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /integration-test → /integration-test-review → /integration-test-verify → /test → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /tech-stack-research → /architecture-design → /plan → /security → /performance → /plan-review → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /plan-validate → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /scaffold → /linter-setup → /harness-setup → /why-review → /cook → /review-domain-entities → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /integration-test → /integration-test-review → /integration-test-verify → /test → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
 
 ---
 
@@ -86,27 +88,31 @@ Activate the `greenfield-init` workflow. Run `/workflow-start greenfield-init` w
 
 This workflow has steps that appear multiple times. When creating tasks, use these descriptions to distinguish them:
 
-| Step                      | Occurrence   | Task Description                                                              |
-| ------------------------- | ------------ | ----------------------------------------------------------------------------- |
-| `/plan`                   | 1st (pos 8)  | PLAN₁: High-level architecture plan (after architecture-design)               |
-| `/plan`                   | 2nd (pos 20) | PLAN₂: Sprint-ready implementation plan (after tdd-spec-review)               |
-| `/plan`                   | 3rd (pos 28) | PLAN₃: Integration test architecture plan (post-implementation)               |
-| `/plan-review`            | 1st (pos 11) | Review PLAN₁ architecture                                                     |
-| `/plan-review`            | 2nd (pos 21) | Review PLAN₂ implementation                                                   |
-| `/plan-review`            | 3rd (pos 29) | Review PLAN₃ integration tests                                                |
-| `/security`               | 1st (pos 9)  | Architecture security review                                                  |
-| `/security`               | 2nd (pos 35) | Production readiness security review                                          |
-| `/tdd-spec`               | 1st (pos 18) | TDD-SPEC₁: Feature test specs (before implementation)                         |
-| `/tdd-spec`               | 2nd (pos 26) | TDD-SPEC₂: Post-implementation test spec update                               |
-| `/tdd-spec-review`        | 1st (pos 19) | Review TDD-SPEC₁                                                              |
-| `/tdd-spec-review`        | 2nd (pos 27) | Review TDD-SPEC₂                                                              |
-| `/test`                   | 1st (pos 32) | Test after integration tests                                                  |
-| `/test`                   | 2nd (pos 37) | Final test verification                                                       |
-| `/review-domain-entities` | 1st (pos 25) | DDD quality review — conditional: skip if no domain entity files in changeset |
+| Step                      | Occurrence   | Task Description                                                                          |
+| ------------------------- | ------------ | ----------------------------------------------------------------------------------------- |
+| `/plan`                   | 1st (pos 8)  | PLAN₁: High-level architecture plan (after architecture-design)                           |
+| `/plan`                   | 2nd (pos 22) | PLAN₂: Sprint-ready implementation plan (after tdd-spec-review)                           |
+| `/plan`                   | 3rd (pos 32) | PLAN₃: Integration test architecture plan (post-implementation)                           |
+| `/plan-review`            | 1st (pos 11) | Review PLAN₁ architecture                                                                 |
+| `/plan-review`            | 2nd (pos 23) | Review PLAN₂ implementation                                                               |
+| `/plan-review`            | 3rd (pos 33) | Review PLAN₃ integration tests                                                            |
+| `/security`               | 1st (pos 9)  | Architecture security review                                                              |
+| `/security`               | 2nd (pos 40) | Production readiness security review                                                      |
+| `/tdd-spec`               | 1st (pos 20) | TDD-SPEC₁: Feature test specs (before implementation)                                     |
+| `/tdd-spec`               | 2nd (pos 30) | TDD-SPEC₂: Post-implementation test spec update                                           |
+| `/tdd-spec-review`        | 1st (pos 21) | Review TDD-SPEC₁                                                                          |
+| `/tdd-spec-review`        | 2nd (pos 31) | Review TDD-SPEC₂                                                                          |
+| `/test`                   | 1st (pos 37) | Test after integration tests                                                              |
+| `/test`                   | 2nd (pos 42) | Final test verification                                                                   |
+| `/review-domain-entities` | 1st (pos 29) | DDD quality review — conditional: skip if no domain entity files in changeset             |
+| `/linter-setup`           | (new)        | LINTER-SETUP: Install and configure computational feedback sensors                        |
+| `/harness-setup`          | (new)        | HARNESS-SETUP: Full outer agent harness (feedforward guides + feedback sensors inventory) |
 
 **NEVER deduplicate** — each occurrence is a distinct task with a different purpose.
 
 ---
+
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /tech-stack-research -> /architecture-design -> /plan -> /security -> /performance -> /plan-review -> /refine -> /refine-review -> /story -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /plan-validate -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
 
 ## Closing Reminders
 
@@ -114,9 +120,13 @@ This workflow has steps that appear multiple times. When creating tasks, use the
 - **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

@@ -2,7 +2,7 @@
 
 ## Module Test Spec Template (README.md)
 
-Reference: Search for existing test spec files in `docs/test-specs/{Module}/README.md`
+Reference: Search for existing test spec files in `docs/specs/{Module}/README.md`
 
 ````markdown
 # {Module} - Comprehensive Test Specifications

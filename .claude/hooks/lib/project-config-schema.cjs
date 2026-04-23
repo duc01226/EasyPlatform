@@ -274,7 +274,8 @@ const SCHEMA = {
         itemSchema: {
             filename: { type: 'string', required: true },
             purpose: { type: 'string', required: true },
-            sections: { type: 'array', required: false }
+            sections: { type: 'array', required: false },
+            templatePath: { type: 'string', required: false }
         }
     },
     graphConnectors: {
@@ -390,6 +391,17 @@ const SCHEMA = {
             featureDocPath: { type: 'string', required: false },
             featureDocTemplate: { type: 'string', required: false },
             reviewRulesDoc: { type: 'string', required: false }
+        }
+    },
+    localization: {
+        type: 'object',
+        required: false,
+        properties: {
+            enabled: { type: 'boolean', required: false },
+            supportedLocales: { type: 'array', required: false },
+            defaultLocale: { type: 'string', required: false },
+            translationFilePatterns: { type: 'array', required: false, itemsAreRegex: true },
+            uiPathPatterns: { type: 'array', required: false, itemsAreRegex: true }
         }
     }
 };

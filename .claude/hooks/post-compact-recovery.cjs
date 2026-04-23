@@ -23,8 +23,45 @@ const path = require('path');
 const { loadConfig, readSessionState, getReportsPath, resolvePlanPath } = require('./lib/ck-config-utils.cjs');
 const { loadState: loadWorkflowState, getCurrentStepInfo, getRecoveryContext } = require('./lib/workflow-state.cjs');
 const { getSwapEntries } = require('./lib/swap-engine.cjs');
-const { getMarkerPath, SESSION_ID_DEFAULT } = require('./lib/ck-paths.cjs');
+const { getMarkerPath, SESSION_ID_DEFAULT, getSnapshotPath, SNAPSHOT_MAX_AGE_MINUTES } = require('./lib/ck-paths.cjs');
 const { injectCriticalContext, injectAiMistakePrevention } = require('./lib/prompt-injections.cjs');
+
+/**
+ * Load last-200-line transcript snapshot and return as fenced markdown block.
+ * Returns null if snapshot missing, stale (>120 min), or unreadable.
+ * @param {string} sessionId - Session ID
+ * @returns {string|null}
+ */
+function loadSnapshotBlock(sessionId) {
+    try {
+        const snapshotPath = getSnapshotPath(sessionId);
+        if (!fs.existsSync(snapshotPath)) return null;
+
+        const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf-8'));
+        if (!snapshot.capturedAt || typeof snapshot.capturedAt !== 'number') return null;
+        const ageMinutes = (Date.now() - snapshot.capturedAt) / 60000;
+        if (ageMinutes > SNAPSHOT_MAX_AGE_MINUTES) return null;
+
+        const lines = (snapshot.lines || []).join('\n');
+        const block = [
+            '',
+            '## 📋 Context Snapshot (Before Compact)',
+            '',
+            `> Last **${snapshot.lineCount}** transcript lines captured at ${new Date(snapshot.capturedAt).toISOString()}`,
+            '',
+            '```',
+            lines,
+            '```',
+            ''
+        ].join('\n');
+
+        try { fs.unlinkSync(snapshotPath); } catch { /* cleanup best-effort — injection still proceeds */ }
+
+        return block;
+    } catch {
+        return null;
+    }
+}
 
 /**
  * Find most recent checkpoint file (within time limit)
@@ -344,6 +381,7 @@ async function main() {
         // checkpoint-only mode. This is expected behavior — the invariant is: if you need
         // full recovery, a compact event MUST have fired with write-compact-marker active.
         const workflowState = loadWorkflowState(sessionId);
+        const markerExists = fs.existsSync(getMarkerPath(sessionId));
 
         // Check if there's an active workflow to recover
         if (!workflowState.workflowType && (!workflowState.todos || workflowState.todos.length === 0)) {
@@ -356,7 +394,6 @@ async function main() {
             if (!checkpointPath) {
                 // Phase 03: scan for partial subagent progress files (session-scoped)
                 // ONLY surface after a compact event — check for compact marker
-                const markerExists = fs.existsSync(getMarkerPath(sessionId));
                 if (markerExists) {
                     const partialFiles = findPartialProgressFiles(120, sessionId);
                     if (partialFiles.length > 0) {
@@ -375,6 +412,7 @@ async function main() {
                         if (aiMistake) console.log(aiMistake);
                     } catch { /* silent */ }
                 }
+                if (markerExists) { try { const sb = loadSnapshotBlock(sessionId); if (sb) console.log(sb); } catch { /* silent */ } }
                 process.exit(0);
             }
 
@@ -382,6 +420,7 @@ async function main() {
             const metadata = extractRecoveryMetadata(checkpointPath);
             if (!metadata || !metadata.pendingTodos || metadata.pendingTodos.length === 0) {
                 try { const aiMistake = injectAiMistakePrevention(null, true); if (aiMistake) console.log(aiMistake); } catch { /* silent */ }
+                if (markerExists) { try { const sb = loadSnapshotBlock(sessionId); if (sb) console.log(sb); } catch { /* silent */ } }
                 process.exit(0);
             }
 
@@ -394,6 +433,7 @@ async function main() {
             console.log('**⚠️ MUST ATTENTION READ** this file if you need to recover context from a previous session.');
             console.log('');
             try { const aiMistake = injectAiMistakePrevention(null, true); if (aiMistake) console.log(aiMistake); } catch { /* silent */ }
+            if (markerExists) { try { const sb = loadSnapshotBlock(sessionId); if (sb) console.log(sb); } catch { /* silent */ } }
             process.exit(0);
         }
 
@@ -410,6 +450,7 @@ async function main() {
         // Build and output recovery injection
         const recoveryContent = buildRecoveryInjection(workflowState, stepInfo, sessionState, checkpointPath, sessionId);
         console.log(recoveryContent);
+        if (markerExists) { try { const sb = loadSnapshotBlock(sessionId); if (sb) console.log(sb); } catch { /* silent */ } }
 
         // Re-anchor critical principles after compact — skipDedup=true because context is fresh.
         // Placed at the bottom (recency position) so they land near the AI's attention boundary.

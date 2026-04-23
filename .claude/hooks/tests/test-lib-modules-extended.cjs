@@ -408,6 +408,29 @@ logSection('V2 Schema Validation');
     const withTesting = { ...minV2, testing: { frameworks: ['jest', 'xunit'] } };
     logResult('testing section valid', validateConfig(withTesting).valid);
 
+    // localization section
+    const withLocalization = {
+        ...minV2,
+        localization: {
+            enabled: true,
+            supportedLocales: ['en', 'vi'],
+            defaultLocale: 'en',
+            translationFilePatterns: ['src[\\\\/]i18n[\\\\/].*\\.json$'],
+            uiPathPatterns: ['src[\\\\/].*\\.(ts|tsx|html)$']
+        }
+    };
+    logResult('localization section valid', validateConfig(withLocalization).valid);
+
+    // localization invalid types
+    const badLocalization = {
+        ...minV2,
+        localization: {
+            enabled: true,
+            supportedLocales: 'en,vi'
+        }
+    };
+    logResult('localization.supportedLocales wrong type rejected', !validateConfig(badLocalization).valid);
+
     // databases freeform
     const withDbs = {
         ...minV2,
@@ -436,7 +459,7 @@ logSection('V2 Schema Validation');
 logSection('V2 Loader Helpers');
 
 {
-    const { getModules, getContextGroup, getModuleForPath, resolveSection } = require('../lib/project-config-loader.cjs');
+    const { getModules, getContextGroup, getModuleForPath, resolveSection, getLocalizationConfig, isMultilingualProject } = require('../lib/project-config-loader.cjs');
     const { generateTestFixtures } = require('../lib/test-fixture-generator.cjs');
     const f = generateTestFixtures();
 
@@ -472,6 +495,33 @@ logSection('V2 Loader Helpers');
     // resolveSection returns scss as fallback for styling
     const styling = resolveSection('styling', 'scss');
     logResult('resolveSection returns section', styling !== null);
+
+    // localization helpers from real config
+    const localization = getLocalizationConfig();
+    logResult('getLocalizationConfig returns object', localization && typeof localization === 'object');
+    logResult('getLocalizationConfig provides regex arrays', Array.isArray(localization.translationFilePatterns) && Array.isArray(localization.uiPathPatterns));
+    logResult('isMultilingualProject returns boolean', typeof isMultilingualProject() === 'boolean');
+
+    // localization helpers with inline config
+    const localConfig = {
+        localization: {
+            enabled: true,
+            supportedLocales: ['en', 'vi'],
+            translationFilePatterns: ['src[\\\\/]i18n[\\\\/].*\\.json$'],
+            uiPathPatterns: ['src[\\\\/].*\\.(ts|tsx|html)$']
+        }
+    };
+    const localCfg = getLocalizationConfig(localConfig);
+    logResult('getLocalizationConfig parses supported locales', localCfg.supportedLocales.length === 2);
+    logResult('isMultilingualProject true when enabled + >1 locales', isMultilingualProject(localConfig) === true);
+
+    const singleLocaleConfig = {
+        localization: {
+            enabled: true,
+            supportedLocales: ['en']
+        }
+    };
+    logResult('isMultilingualProject false for single locale', isMultilingualProject(singleLocaleConfig) === false);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -524,9 +574,9 @@ logSection('describeSchema');
     logResult('shows required markers', output.includes('required'));
     logResult('shows optional markers', output.includes('optional'));
 
-    // Conciseness check — should be under 250 lines for AI context
+    // Conciseness check — should be under 300 lines for AI context
     const lineCount = output.split('\n').length;
-    logResult('output under 250 lines', lineCount < 250, `${lineCount} lines`);
+    logResult('output under 300 lines', lineCount < 300, `${lineCount} lines`);
 }
 
 // ════════════════════════════════════════════════════════════════════════════

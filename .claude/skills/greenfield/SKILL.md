@@ -44,7 +44,7 @@ description: '[Planning] Start a new project from scratch with full waterfall in
 4. **Business Evaluation** (`/business-evaluation`) — Viability assessment, risk matrix, value proposition
 5. **Domain Analysis & ERD** (`/domain-analysis`) — Bounded contexts, aggregates, entities, ERD diagram, domain events. Validate every context boundary with user.
 6. **Tech Stack Research** (`/tech-stack-research`) — Derive technical requirements from business + domain analysis. Research top 3 options per stack layer (backend, frontend, database, messaging, infra). Detailed pros/cons matrix, team-fit scoring, market analysis. Present comparison report for user to decide.
-7. **Architecture Design** (`/architecture-design`) — Research and compare top 3 architecture styles (Clean, Hexagonal, Vertical Slice, etc.). Evaluate design patterns (CQRS, Repository, Mediator). Audit against SOLID, DRY, KISS, YAGNI. Validate scalability, maintainability, IoC, technical agnosticism. Present comparison with recommendation.
+7. **Architecture Design** (`/architecture-design`) — Research and compare top 3 architecture styles (Clean, Hexagonal, Vertical Slice, etc.). Evaluate design patterns (CQRS, Repository, Mediator). Audit against SOLID, DRY, KISS, YAGNI. Validate scalability, maintainability, IoC, technical agnosticism. Present comparison with recommendation. **Harness output required:** produce a "Scaffold Handoff — Harness Plan" table in the architecture report: (a) feedforward guides to create (AGENTS.md sections, skill activation rules, pattern catalog), (b) computational feedback sensors to install (linter, formatter, pre-commit, CI), (c) inferential feedback sensors to configure (review skills, AI gates). This table feeds `/scaffold` → `/linter-setup` → `/harness-setup`.
 8. **Implementation Plan** (`/plan`) — Create phased plan using confirmed tech stack + architecture + domain model
 9. **Security Audit** (`/security`) — Review plan for OWASP Top 10, auth patterns, data protection concerns
 10. **Performance Audit** (`/performance`) — Review plan for performance bottlenecks, scalability, query optimization
@@ -63,7 +63,7 @@ description: '[Planning] Start a new project from scratch with full waterfall in
 - Delegate architecture decisions to `solution-architect` agent
 - Present 2-4 options for every major decision with confidence %
 - **Business-First Protocol:** Tech stack is NEVER asked upfront. Business analysis (steps 1-5) + domain modeling (step 6) must complete first. Tech stack is derived from requirements through research and presented as a comparison report with options.
-- **MANDATORY IMPORTANT MUST ATTENTION** architecture design and scaffold steps MUST ATTENTION include code quality gate tooling setup — linter, static analyzer, formatter, pre-commit hooks, CI quality gates, and build-time enforcement are NON-SKIPPABLE infrastructure.
+- **MANDATORY IMPORTANT MUST ATTENTION** architecture design MUST produce a "Scaffold Handoff — Harness Plan" table covering: feedforward guides, computational sensors (`/linter-setup` handles install), and inferential sensors (`/harness-setup` configures). The scaffold + linter-setup + harness-setup triad are NON-SKIPPABLE infrastructure — code without a harness accumulates technical debt from day one.
 
 ## Entry Point
 
@@ -136,3 +136,5 @@ After completion, recommend next step: `/cook` to scaffold the project structure
       <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

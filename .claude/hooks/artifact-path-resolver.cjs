@@ -6,7 +6,7 @@
  * Ensures consistent naming and folder placement.
  *
  * @trigger PreToolUse (Write)
- * @resolves Output paths for /idea, /refine, /story, /test-spec, /design-spec
+ * @resolves Output paths for /idea, /refine, /story, /tdd-spec, /design-spec
  *
  * Input: JSON via stdin with tool_name, tool_input
  * Output: Context string via stdout with resolved path info
@@ -29,7 +29,7 @@ const COMMAND_PATH_MAPPINGS = {
   'idea': 'team-artifacts/ideas/',
   'refine': 'team-artifacts/pbis/',
   'story': 'team-artifacts/pbis/stories/',
-  'test-spec': 'team-artifacts/test-specs/',
+  'tdd-spec': 'docs/specs/',
   'design-spec': 'team-artifacts/design-specs/',
   'quality-gate': 'team-artifacts/qc-reports/',
   'status': 'plans/reports/'
@@ -40,7 +40,7 @@ const TYPE_MAPPING = {
   'idea': 'idea',
   'refine': 'pbi',
   'story': 'story',
-  'test-spec': 'testspec',
+  'tdd-spec': 'testspec',
   'design-spec': 'designspec',
   'quality-gate': 'gate',
   'status': 'status'
@@ -51,7 +51,7 @@ const ROLE_MAPPING = {
   'idea': 'po',
   'refine': 'ba',
   'story': 'ba',
-  'test-spec': 'qa',
+  'tdd-spec': 'qa',
   'design-spec': 'ux',
   'quality-gate': 'qc',
   'status': 'pm'

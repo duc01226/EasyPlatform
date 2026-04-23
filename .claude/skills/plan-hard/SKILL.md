@@ -47,14 +47,47 @@ disable-model-invocation: false
 
 <!-- /SYNC:understand-code-first -->
 
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
+
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation Framework** — Story Points (Modified Fibonacci) + Man-Days for 3-5yr dev (6 productive hrs/day, .NET + Angular stack). AI estimate assumes Claude Code with good project context (code graph, patterns, hooks active).
+>
+> | SP  | Complexity | Description                                    | Traditional (code + test) | AI-Assisted (code+rev + test+rev) |
+> | --- | ---------- | ---------------------------------------------- | ------------------------- | --------------------------------- |
+> | 1   | Low        | Trivial: single field, config flag, CSS fix    | 0.5d (0.3d+0.2d)          | 0.25d (0.15d+0.1d)                |
+> | 2   | Low        | Small: simple CRUD endpoint OR basic component | 1d (0.6d+0.4d)            | 0.35d (0.2d+0.15d)                |
+> | 3   | Medium     | Medium: form + API + validation                | 2d (1.3d+0.7d)            | 0.65d (0.4d+0.25d)                |
+> | 5   | Medium     | Large: multi-layer feature (BE + FE)           | 4d (2.5d+1.5d)            | 1.0d (0.6d+0.4d)                  |
+> | 8   | High       | Very large: complex feature + migration        | 6d (4d+2d)                | 1.5d (1.0d+0.5d)                  |
+> | 13  | Critical   | Epic: cross-service — SHOULD split             | 10d (6.5d+3.5d)           | 2.0d (1.3d+0.7d)                  |
+> | 21  | Critical   | MUST split — not sprint-ready                  | >15d                      | ~3d                               |
+>
+> **AI speedup grows with task size:** SP 1 ≈ 2x · SP 2-3 ≈ 3x · SP 5-8 ≈ 4x · SP 13+ ≈ 5x. Pattern-heavy CQRS/Angular boilerplate eliminated in hours at any scale. Fixed overhead: human review.
+> **AI column breakdown:** `(code_gen × 1.3) + (test_gen × 1.3)` — each artifact adds 30% human review overhead. Test writing with AI = few hours generation + 30% review, same model as coding.
+> Output `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in plan/PBI frontmatter.
 
 <!-- /SYNC:estimation-framework -->
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
-- `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
+- `docs/specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
 <!-- SYNC:plan-quality -->
 
@@ -70,8 +103,6 @@ disable-model-invocation: false
 > **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/tdd-spec` fills after.
 
 <!-- /SYNC:plan-quality -->
-
-> **Phase Quality:**
 
 <!-- SYNC:iterative-phase-quality -->
 
@@ -126,7 +157,7 @@ disable-model-invocation: false
 
 1. **Pre-Check** — Detect active/suggested plan or create new directory
 2. **Research** — Parallel researcher subagents explore different aspects (max 5 tool calls each)
-3. **Codebase Analysis** — Read backend-patterns-reference.md, frontend-patterns-reference.md, project-structure-reference.md; scout if needed
+3. **Codebase Analysis** — Search for project reference docs (patterns-reference, project-structure, architecture, adr); scout if not found
 4. **Plan Creation** — Planner subagent creates plan.md + phase-XX files with full sections
 5. **Post-Validation** — Optionally interview user to confirm decisions via /plan-validate
 
@@ -151,15 +182,13 @@ disable-model-invocation: false
 2. **Replace with:** market research + business evaluation phase using WebSearch + WebFetch
 3. Delegate architecture decisions to `solution-architect` agent
 4. Output: `plans/{id}/plan.md` with greenfield-specific phases (domain model, tech stack, project structure)
-5. Skip "MUST ATTENTION READ project-structure-reference.md" (won't exist)
+5. Skip reading project reference docs (won't exist in greenfield)
 6. Enable broad web research for tech landscape, best practices, framework comparisons
 7. Every decision point requires AskUserQuestion with 2-4 options + confidence %
 8. **[CRITICAL] Business-First Protocol:** Tech stack decisions come AFTER full business analysis. Do NOT ask user to pick a tech stack upfront. Instead: complete business evaluation → derive technical requirements → research current market options → produce comparison report → present to user for decision. See `solution-architect` agent for the full tech stack research methodology.
 
 - Research reports <=150 lines; plan.md <=80 lines
 - **External Memory**: Write all research and analysis to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE analysis file before generating plan.
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Activate `planning` skill.
 
@@ -173,8 +202,8 @@ Activate `planning` skill.
     - Generic interfaces: `interface I\w+<|IGeneric|IBase`
     - Infrastructure abstractions: `IRepository|IUnitOfWork|IService|IHandler`
     - Utility/extension layers: `Extensions|Helpers|Utils|Common` (directories or classes)
-    - Frontend foundations: `base.*component|base.*service|base.*store|abstract.*component` (case-insensitive)
-    - DI/IoC registration: `AddScoped|AddSingleton|providers:|NgModule|@Injectable`
+    - Frontend foundations: `base.*component|base.*service|base.*store|abstract.*component` (if frontend present)
+    - DI/IoC registration: search for DI registration patterns idiomatic to the project's framework
 3. If existing scaffolding found → **SKIP.** Log: "Existing scaffolding detected at {file:line}. Skipping Phase 1 scaffolding."
 4. If NO foundational abstractions found → **PROCEED** with scaffolding phase.
 
@@ -214,8 +243,8 @@ Check the `## Plan Context` section in the injected context:
 2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
 3. Use multiple `researcher` agents (max 2 agents) in parallel to research for this task:
    Each agent research for a different aspect of the task and are allowed to perform max 5 tool calls.
-4. Analyze the codebase by reading `backend-patterns-reference.md`, `frontend-patterns-reference.md`, and `project-structure-reference.md` file.
-   **ONLY PERFORM THIS FOLLOWING STEP IF reference docs are placeholders or older than 3 days**: Use `/scout <instructions>` slash command to search the codebase for files needed to complete the task.
+4. Analyze the codebase: search for project reference docs (`patterns-reference`, `project-structure`, `architecture`, `adr`) and read those found.
+   **ONLY PERFORM THIS IF docs not found or older than 3 days**: Use `/scout <instructions>` to search the codebase for files needed.
 5. Main agent gathers all research and scout report filepaths, and pass them to `planner` subagent with the prompt to create an implementation plan of this task.
 6. Main agent receives the implementation plan from `planner` subagent, and ask user to review the plan
 
@@ -270,6 +299,8 @@ After plan creation, offer validation interview to confirm decisions before impl
     priority: P2
     effort: { sum of phases, e.g., 4h }
     story_points: { sum of phase SPs, e.g., 8 }
+    man_days_traditional: '{ total e.g., 6d (4d code + 2d test) }'
+    man_days_ai: '{ total with AI e.g., 3d (2d code + 1d test) }'
     branch: { current git branch }
     tags: [relevant, tags]
     created: { YYYY-MM-DD }
@@ -292,18 +323,9 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 ## Important Notes
 
-**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
-**IMPORTANT:** Ensure token efficiency while maintaining high quality.
-**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
-
-## REMINDER — Planning-Only Command
-
-> **DO NOT** use `EnterPlanMode` tool.
-> **DO NOT** start implementing.
-> **ALWAYS** validate with `/plan-review` after plan creation.
-> **ASK** user to confirm the plan before any implementation begins.
-> **ASK** user decision questions with your recommendations when multiple approaches exist.
+- Activate needed skills from catalog during process.
+- Token efficiency without sacrificing quality. Sacrifice grammar for concision in reports.
+- Unresolved questions → list at end of report.
 
 ---
 
@@ -369,27 +391,32 @@ After creating all phase files, run the **recursive decomposition loop**:
 <!-- SYNC:plan-granularity:reminder -->
 
 - **IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-  <!-- /SYNC:plan-granularity:reminder -->
+    <!-- /SYNC:plan-granularity:reminder -->
 
-                                  <!-- SYNC:understand-code-first:reminder -->
+                                          <!-- SYNC:understand-code-first:reminder -->
 
 - **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
-- **IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
+- **IMPORTANT MUST ATTENTION** include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in plan/PBI frontmatter. Use SP table: SP 1=0.5d/0.25d, SP 2=1d/0.35d, SP 3=2d/0.65d, SP 5=4d/1.0d, SP 8=6d/1.5d · SP 13=10d/2.0d. SP 13 SHOULD split, SP 21 MUST split.
+  <!-- /SYNC:estimation-framework:reminder -->
+  <!-- SYNC:plan-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
+  <!-- /SYNC:plan-quality:reminder -->
+  <!-- SYNC:iterative-phase-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-    <!-- /SYNC:iterative-phase-quality:reminder -->
-    <!-- SYNC:fix-layer-accountability:reminder -->
+      <!-- /SYNC:iterative-phase-quality:reminder -->
+      <!-- SYNC:fix-layer-accountability:reminder -->
 - **IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
-    <!-- /SYNC:fix-layer-accountability:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+      <!-- /SYNC:fix-layer-accountability:reminder -->
+      <!-- SYNC:cross-service-check:reminder -->
+- **IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
+      <!-- /SYNC:cross-service-check:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

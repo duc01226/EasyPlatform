@@ -6,7 +6,7 @@
  * Triggers on Read/Write operations to team-artifacts/ folders.
  *
  * @trigger PreToolUse (Read, Write)
- * @injects Role templates, naming conventions, quality checklists
+ * @injects Role templates, naming conventions, quality checklists (team-artifacts only)
  *
  * Input: JSON via stdin with tool_name, tool_input
  * Output: Context string via stdout
@@ -40,12 +40,6 @@ const ROLE_PATH_MAPPINGS = {
         skill: 'business-analyst',
         template: '.claude/docs/team-artifacts/templates/pbi-template.md',
         context: 'PBI CREATION: GIVEN/WHEN/THEN format required, INVEST criteria, numeric priority.'
-    },
-    'team-artifacts/test-specs/': {
-        role: 'qa-engineer',
-        skill: 'test-spec',
-        template: '.claude/docs/team-artifacts/templates/test-spec-template.md',
-        context: 'TEST SPEC: TC-{FEATURE}-{NNN} IDs required, Evidence field mandatory, file:line format.'
     },
     'team-artifacts/design-specs/': {
         role: 'ux-designer',

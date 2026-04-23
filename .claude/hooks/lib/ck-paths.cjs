@@ -52,6 +52,10 @@ const SWAP_DIR = path.join(CK_TMP_DIR, 'swap');
 // Session state directory (consolidated from /tmp/ck-session-*.json)
 const SESSION_STATE_DIR = path.join(CK_TMP_DIR, 'session');
 
+// Rolling transcript snapshots (last 200 lines before auto-compact)
+const SNAPSHOT_DIR = path.join(CK_TMP_DIR, 'snapshots');
+const SNAPSHOT_MAX_AGE_MINUTES = 120;
+
 /**
  * Ensure directory exists
  * @param {string} dirPath - Directory path to create
@@ -118,6 +122,16 @@ function getSessionStatePath(sessionId) {
 }
 
 /**
+ * Get snapshot file path for a session
+ * @param {string} sessionId - Session ID
+ * @returns {string} Full path to snapshot file
+ */
+function getSnapshotPath(sessionId) {
+    ensureDir(SNAPSHOT_DIR);
+    return path.join(SNAPSHOT_DIR, `${sessionId}.json`);
+}
+
+/**
  * Ensure the project-scoped tmp/claude-temp/ directory exists.
  * Call before writing any project-scoped runtime file.
  */
@@ -135,6 +149,7 @@ function initDirs() {
     ensureDir(DEBUG_DIR);
     ensureDir(SWAP_DIR);
     ensureDir(SESSION_STATE_DIR);
+    ensureDir(SNAPSHOT_DIR);
 }
 
 /**
@@ -158,6 +173,8 @@ module.exports = {
     DEBUG_DIR,
     SWAP_DIR,
     SESSION_STATE_DIR,
+    SNAPSHOT_DIR,
+    SNAPSHOT_MAX_AGE_MINUTES,
     PROJECT_TMP_DIR,
 
     // Files (project-scoped runtime)
@@ -176,6 +193,7 @@ module.exports = {
     getSwapDir,
     ensureSwapDir,
     getSessionStatePath,
+    getSnapshotPath,
     initDirs,
     cleanAll,
     SESSION_ID_DEFAULT

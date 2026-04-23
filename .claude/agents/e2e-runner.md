@@ -67,7 +67,7 @@ memory: project
 ```bash
 head -100 docs/project-reference/e2e-test-reference.md  # Project-specific patterns
 grep -A 50 '"e2eTesting"' docs/project-config.json       # Framework, paths, commands
-grep -r "TC-.*-E2E-" docs/test-specs/ docs/business-features/  # Find TC codes
+grep -r "TC-.*-E2E-" docs/specs/ docs/business-features/  # Find TC codes
 ```
 
 **When fixing E2E failures, update `docs/project-reference/e2e-test-reference.md` with learnings.**
@@ -159,9 +159,9 @@ E2E test report: files created/modified, TC codes covered, run command, precondi
 - **IMPORTANT MUST ATTENTION** NEVER hardcode selectors — use `data-testid`, BEM classes, or ARIA roles
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **IMPORTANT MUST ATTENTION** update `docs/project-reference/e2e-test-reference.md` with learnings after fixing failures
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->

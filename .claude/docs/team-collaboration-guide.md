@@ -238,7 +238,6 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
 | Skill               | Purpose                                  | Example                   |
 | ------------------- | ---------------------------------------- | ------------------------- |
 | `/tdd-spec`         | Generate test specs (TC-{FEATURE}-{NNN}) | `/tdd-spec {feature-doc}` |
-| `/test-spec`        | Generate test cases from PBI             | `/test-spec {pbi-file}`   |
 | `/integration-test` | Generate integration tests from specs    | `/integration-test`       |
 | `/e2e-test`         | Generate E2E tests                       | `/e2e-test`               |
 | `/quality-gate`     | Run quality checklist                    | `/quality-gate pre-dev`   |
@@ -281,7 +280,7 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
 
 **Trigger:** "new idea", "feature request", "backlog item"
 **Roles:** Product Owner, Business Analyst
-**Steps:** `/idea` → `/refine` → `/story` → `/prioritize`
+**IMPORTANT MANDATORY Steps:** `/idea` → `/refine` → `/story` → `/prioritize`
 
 ```
 PO:  /idea ──→ [idea captured] ──→ /prioritize ──→ [backlog ordered]
@@ -295,7 +294,7 @@ BA:             /refine ──→ [PBI with AC] ──→ /story ──→ [user
 
 **Trigger:** "test cases from PBI", "qa this"
 **Roles:** QA Engineer, QC Specialist
-**Steps:** `/tdd-spec` → `/quality-gate`
+**IMPORTANT MANDATORY Steps:** `/tdd-spec` → `/quality-gate`
 
 ```
 QA:  [PBI] ──→ /tdd-spec ──→ [test spec with TC-{FEAT}-{NNN}]
@@ -315,7 +314,7 @@ QC:                              /quality-gate ──→ [PASS/FAIL report]
 
 **Trigger:** "ui spec", "component spec", "design the", "landing page", "screenshot"
 **Roles:** UX Designer, Developer
-**Steps:** `/design-spec` → `/interface-design` | `/frontend-design` → `/code-review`
+**IMPORTANT MANDATORY Steps:** `/design-spec` → `/interface-design` | `/frontend-design` → `/code-review`
 
 ```
 UX:   [PBI] ──→ /design-spec ──→ [component spec + states + tokens]
@@ -340,7 +339,7 @@ Dev:                             /code-review ──→ Implementation
 
 **Trigger:** "status report", "sprint update"
 **Roles:** Project Manager
-**Steps:** `/status` → `/dependency`
+**IMPORTANT MANDATORY Steps:** `/status` → `/dependency`
 
 ```
 PM:  /status sprint ──→ [status report]
@@ -362,7 +361,7 @@ PM:  /status sprint ──→ [status report]
 
 **Trigger:** "test-first", "TDD", "spec-driven"
 **Roles:** Developer, QA
-**Steps:** `/scout` → `/investigate` → `/tdd-spec` → `/plan` → `/cook` → `/integration-test` → `/test` → `/docs-update`
+**IMPORTANT MANDATORY Steps:** `/scout` → `/investigate` → `/tdd-spec` → `/plan` → `/cook` → `/integration-test` → `/test` → `/docs-update`
 
 Test specs are written **before** implementation, then code is written to satisfy them.
 
@@ -377,7 +376,7 @@ Claude provides structured handoff workflows to ensure clean transitions between
 | `idea-to-pbi` (PO→BA)    | PO → BA   | "hand off to BA"        | `/idea` → `/review-artifact` → `/handoff` → `/refine` → `/story` (conditional first 2 steps)  |
 | `ba-dev-handoff`         | BA → Dev  | "ready for development" | `/review-artifact` → `/quality-gate` → `/handoff` → `/plan` → `/plan-review`                  |
 | `design-dev-handoff`     | UX → Dev  | "design ready for dev"  | `/design-spec` → `/review-artifact` → `/handoff` → `/plan`                                    |
-| `dev-qa-handoff`         | Dev → QA  | "ready for testing"     | `/handoff` → `/test-spec`                                                                     |
+| `dev-qa-handoff`         | Dev → QA  | "ready for testing"     | `/handoff` → `/tdd-spec`                                                                      |
 | `qa-po-acceptance`       | QA → PO   | "testing complete"      | `/quality-gate` → `/handoff` → `/acceptance`                                                  |
 | `full-feature-lifecycle` | All       | "full lifecycle"        | `/idea` → `/refine` → `/story` → `/design-spec` → `/plan` → `/cook` → `/test` → `/acceptance` |
 
@@ -518,7 +517,6 @@ CAPTURE & REQUIREMENTS
 
 TESTING & QUALITY
   /tdd-spec {source}         Generate test specs (TC-{FEAT}-{NNN})
-  /test-spec {pbi}           Generate test cases
   /integration-test          Generate integration tests
   /e2e-test                  Generate E2E tests
   /quality-gate {type}       Run quality checklist (pre-dev|pre-qa|pre-release)
@@ -561,7 +559,7 @@ PLANNING
 | "design spec for"                 | design-workflow        | /design-spec → /code-review                         |
 | "status report" / "sprint update" | pm-reporting           | /status → /dependency                               |
 | "ready for dev"                   | ba-dev-handoff         | /review-artifact → /quality-gate → /handoff → /plan |
-| "ready for testing"               | dev-qa-handoff         | /handoff → /test-spec                               |
+| "ready for testing"               | dev-qa-handoff         | /handoff → /tdd-spec                                |
 | "testing complete"                | qa-po-acceptance       | /quality-gate → /handoff → /acceptance              |
 | "TDD" / "test-first"              | tdd-feature            | /tdd-spec → /plan → /cook → /test                   |
 | "full lifecycle"                  | full-feature-lifecycle | /idea → ... → /acceptance                           |

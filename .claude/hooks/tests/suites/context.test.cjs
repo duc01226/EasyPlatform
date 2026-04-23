@@ -24,6 +24,35 @@ const BACKEND_CONTEXT = getHookPath('backend-context.cjs');
 const FRONTEND_CONTEXT = getHookPath('frontend-context.cjs');
 const STYLING_CONTEXT = getHookPath('scss-styling-context.cjs');
 
+function writeProjectConfig(tmpDir, localizationOverride) {
+    const docsDir = path.join(tmpDir, 'docs');
+    fs.mkdirSync(docsDir, { recursive: true });
+    const config = {
+        project: { name: 'TestProject' },
+        framework: { name: 'TestFramework' },
+        designSystem: { docsPath: 'docs/project-reference/design-system', appMappings: [] },
+        modules: [
+            {
+                name: 'WebV2',
+                kind: 'frontend-app',
+                pathRegex: 'src[\\\\/]WebV2[\\\\/]',
+                meta: { generation: 'modern' }
+            }
+        ],
+        contextGroups: [
+            {
+                name: 'Frontend Apps',
+                fileExtensions: ['.ts', '.tsx', '.html', '.css', '.scss'],
+                pathRegexes: ['src[\\\\/](WebV2|Web)[\\\\/]', 'libs[\\\\/](platform-core|bravo-common|bravo-domain)[\\\\/]'],
+                patternsDoc: 'docs/project-reference/frontend-patterns-reference.md',
+                rules: []
+            }
+        ],
+        localization: localizationOverride
+    };
+    fs.writeFileSync(path.join(docsDir, 'project-config.json'), JSON.stringify(config, null, 2));
+}
+
 // ============================================================================
 // design-system-context.cjs Tests
 // ============================================================================
@@ -355,6 +384,56 @@ const frontendTypescriptContextTests = [
             try {
                 const result = await runHook(FRONTEND_CONTEXT, {}, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should fail-open');
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
+        name: '[frontend-typescript-context] multilingual config injects i18n sync check',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            try {
+                writeProjectConfig(tmpDir, {
+                    enabled: true,
+                    supportedLocales: ['en', 'vi'],
+                    defaultLocale: 'en',
+                    translationFilePatterns: ['src[\\\\/]i18n[\\\\/].*\\.(json|ts)$'],
+                    uiPathPatterns: ['src[\\\\/](WebV2|Web)[\\\\/].*\\.(ts|tsx|html|scss|css)$']
+                });
+                const input = createPreToolUseInput('Edit', {
+                    file_path: `${f.modernAppBase}/app/component.ts`,
+                    old_string: 'title = "Old";',
+                    new_string: 'title = "New";'
+                });
+                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir, env: { CLAUDE_PROJECT_DIR: tmpDir } });
+                assertAllowed(result.code);
+                assertContains(result.stdout, 'I18N Sync Check', 'Should include i18n sync section for multilingual projects');
+                assertContains(result.stdout, 'translation resources', 'Should include translation sync guidance');
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
+        name: '[frontend-typescript-context] single-locale config does not inject i18n sync check',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            try {
+                writeProjectConfig(tmpDir, {
+                    enabled: true,
+                    supportedLocales: ['en'],
+                    defaultLocale: 'en',
+                    translationFilePatterns: ['src[\\\\/]i18n[\\\\/].*\\.(json|ts)$']
+                });
+                const input = createPreToolUseInput('Edit', {
+                    file_path: `${f.modernAppBase}/app/component.ts`,
+                    old_string: 'title = "Old";',
+                    new_string: 'title = "New";'
+                });
+                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir, env: { CLAUDE_PROJECT_DIR: tmpDir } });
+                assertAllowed(result.code);
+                assertTrue(!result.stdout.includes('I18N Sync Check'), 'Should not include i18n sync section for single-locale projects');
             } finally {
                 cleanupTempDir(tmpDir);
             }

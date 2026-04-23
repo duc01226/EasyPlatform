@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Feature Implementation workflow — implement a
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /domain-analysis -> /plan -> /plan-review -> /plan-validate -> /why-review -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /cook -> /review-domain-entities -> /tdd-spec -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -78,9 +80,11 @@ disable-model-invocation: true
 
 Activate the `feature` workflow. Run `/workflow-start feature` with the user's prompt as context.
 
-**Steps:** /scout → /feature-investigation → /domain-analysis (if entity changes) → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /review-domain-entities (if entity changes) → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets (e.g., `bravoTALENTS`, `bravoGROWTH`); then `ls docs/specs/{app-bucket}/` to find the specific service spec. Exception: `accounts` is flat at `docs/specs/accounts/`.
 
-> **[PERFORMANCE EXCEPTION]** If this feature is a performance enhancement (query optimization, caching, throughput improvement, latency reduction), skip `/tdd-spec` (both occurrences), `/tdd-spec-review` (both occurrences), PLAN₂ + its `/plan-review`, `/test-specs-docs`, `/integration-test`, `/integration-test-review`, and `/integration-test-verify`. Do NOT skip `/cook` — implementation still runs. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead.
+**Steps:** /scout → /feature-investigation → /domain-analysis (if entity changes) → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /review-domain-entities (if entity changes) → /tdd-spec → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+
+> **[PERFORMANCE EXCEPTION]** If this feature is a performance enhancement (query optimization, caching, throughput improvement, latency reduction), skip `/tdd-spec` (both occurrences), `/tdd-spec-review` (both occurrences), PLAN₂ + its `/plan-review`, `/tdd-spec [direction=sync]`, `/integration-test`, `/integration-test-review`, and `/integration-test-verify`. Do NOT skip `/cook` — implementation still runs. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead.
 
 ## Repeated Steps Disambiguation (CRITICAL for task creation)
 
@@ -112,3 +116,9 @@ When a feature involves UI changes (detected during `/scout` or `/feature-invest
 ## Closing Rule
 
 Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `TaskUpdate completed`. No shortcuts.
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /domain-analysis -> /plan -> /plan-review -> /plan-validate -> /why-review -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /cook -> /review-domain-entities -> /tdd-spec -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end

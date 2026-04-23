@@ -52,5 +52,12 @@
         "featureDocTemplate": "",
         "reviewRulesDoc": ""
     },
+    "localization": {
+        "enabled": true,
+        "supportedLocales": ["en", "vi"],
+        "defaultLocale": "en",
+        "translationFilePatterns": ["src[\\\\/]i18n[\\\\/].*\\.(json|ts)$"],
+        "uiPathPatterns": ["src[\\\\/].*\\.(ts|tsx|html|scss|css)$"]
+    },
     "custom": {}
 }

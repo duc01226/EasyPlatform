@@ -1,12 +1,40 @@
 ---
 name: integration-test
-version: 1.0.0
+version: 2.0.0
 description: '[Testing] Generate or review integration tests. Modes: generate (from git changes or prompt), review (quality audit of existing tests), diagnose (analyze test failures). Subcutaneous tests with real DI, no mocks.'
 execution-mode: subagent
 context-budget: high
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+> **[IMPORTANT]** `TaskCreate` — break ALL work into small tasks BEFORE starting. NEVER skip task creation.
+
+## Quick Summary
+
+**Goal:** Generate/review integration test files using real DI (no mocks). 5 modes: (1) from-changes · (2) from-prompt · (3) review · (4) diagnose · (5) verify-traceability.
+
+**Workflow:** Detect mode → Find targets → Gather context → Execute → Report
+
+**Key Rules:**
+
+- NEVER write smoke-only tests — read handler/entity/event source first, assert specific field values
+- ALWAYS wrap ALL DB assertions in async polling — no exceptions, not just async handlers
+- MUST ATTENTION search existing patterns FIRST before generating any test
+- MUST ATTENTION READ `references/integration-test-patterns.md` before writing
+- Organize by domain feature NEVER by CQRS type — NEVER create `Queries/` or `Commands/` folders
+- Every test method MUST have TC annotation — auto-create in Section 15 if missing
+- Minimum 3 tests per command
+- NEVER mark done until tests pass via `/integration-test-verify`
+
+---
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -32,7 +60,11 @@ context-budget: high
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-**Prerequisites:** **MUST ATTENTION READ** before executing:
+**Prerequisites — MUST ATTENTION READ before executing:**
+
+> **`references/integration-test-patterns.md`** — canonical test templates: collection attributes, base class usage, TC annotation format, async polling helpers, unique name generators, DB assertion patterns. Read before writing ANY test.
+>
+> **`docs/specs/`** — existing TCs by module: read to verify test-to-spec traceability and get TC IDs before generating. (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 <!-- SYNC:understand-code-first -->
 
@@ -50,9 +82,9 @@ context-budget: high
 
 <!-- /SYNC:understand-code-first -->
 
-- `references/integration-test-patterns.md`
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
-- `docs/test-specs/` — Test specifications by module (read existing TCs for expected behavior; verify test-to-spec traceability)
+- `references/integration-test-patterns.md` — canonical test templates (MUST READ before writing any test)
+- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (content auto-injected by hook — check for [Injected: ...] header before reading)
+- `docs/specs/` — existing TCs by module (read before generating tests; verify test-to-spec traceability)
 
 <!-- SYNC:graph-impact-analysis -->
 
@@ -60,42 +92,42 @@ context-budget: high
 
 <!-- /SYNC:graph-impact-analysis -->
 
-> **CRITICAL: Search existing patterns FIRST.** Before generating ANY test, grep for existing integration test files in the same service. Read at least 1 existing test file to match conventions (namespace, usings, collection name, base class, helper usage). Never generate tests that contradict established patterns in the codebase.
+> **CRITICAL: Search existing patterns FIRST.** Before generating ANY test, grep existing integration test files in same service. Read ≥1 existing test file to match conventions (namespace, usings, collection name, base class, helper usage). NEVER generate tests contradicting established codebase patterns.
 
-> **CRITICAL: NO Smoke/Fake/Useless Tests.** Every test MUST execute actual commands/handlers and verify data state in the database — like a QC tester testing the real system. NO DI-resolution-only tests (`GetRequiredService + NotBeNull`). NO exception-check-only tests (`exception.Should().BeNull()` alone). Before writing assertions: READ the handler/entity/event source to understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assert specific field values in the database.
+> **CRITICAL: NO Smoke/Fake/Useless Tests.** Every test MUST execute actual commands/handlers and verify DB data state. NO DI-resolution-only tests. NO exception-check-only tests. Before writing assertions: READ handler/entity/event source — understand WHAT fields change, WHAT entities created/updated/deleted, WHAT event handlers fire. Assert specific field values.
 
-> **CRITICAL: Async Polling for ALL Data Assertions.** ALWAYS wrap data state assertions in the project's async polling/retry helper. This is the DEFAULT for ALL data verification — not just "async event handlers". Data persistence may be delayed by entity event handlers, message bus consumers, background jobs, or DB write latency. Async polling retries with timeout and is always safe. **Rule: If you assert data in the database, use async polling. No exceptions.**
+> **CRITICAL: Async Polling for ALL Data Assertions.** ALWAYS wrap data state assertions in async polling/retry helper. DEFAULT for ALL data verification — not just async handlers. Data persistence may be delayed by event handlers, message bus consumers, background jobs, DB write latency. **Rule: If asserting data in DB → use async polling. No exceptions.**
 
 <!-- SYNC:repeatable-test-principle -->
 
-> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data.
+> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run 100 times, each run adds data.
 >
-> 1. **Unique data per run:** Use the project's unique ID generator for ALL entity IDs created in tests. NEVER hardcode IDs.
-> 2. **Additive only:** Tests create data, never delete/reset. Prior test runs MUST NOT interfere with current run.
-> 3. **No schema rollback dependency:** Tests work with current schema only. Never rely on schema rollback or migration reversals.
-> 4. **Idempotent seeders:** Fixture-level seeders use create-if-missing pattern (check existence before insert). Test-level data uses unique IDs per execution.
-> 5. **No cleanup required:** No teardown, no database reset between runs. Each test is isolated by unique seed data, not by cleanup.
-> 6. **Unique names/codes:** When entities require unique names/codes, append a unique suffix using the project's ID generator.
+> 1. **Unique data per run:** Use project's unique ID generator for ALL entity IDs. NEVER hardcode IDs.
+> 2. **Additive only:** Tests create data, never delete/reset. Prior runs MUST NOT interfere.
+> 3. **No schema rollback dependency:** Tests work with current schema only. Never rely on rollback.
+> 4. **Idempotent seeders:** Fixture-level seeders use create-if-missing (check existence before insert). Test-level data uses unique IDs per execution.
+> 5. **No cleanup required:** No teardown, no DB reset between runs. Isolation by unique seed data, not cleanup.
+> 6. **Unique names/codes:** Entities requiring unique names/codes — append unique suffix via project's ID generator.
 
 <!-- /SYNC:repeatable-test-principle -->
 
-> **For test specifications and test case generation from PBIs, use `/tdd-spec` skill (preferred) or `/test-spec` skill instead.**
+> **For test specifications and test case generation from PBIs, use `/tdd-spec` skill instead.**
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **External Memory:** Complex/lengthy work → write findings to `plans/reports/` — prevents context loss.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim requires `file:line` proof or traced evidence with confidence percentage (>80% act, <80% verify first).
 
 <!-- SYNC:red-flag-stop-conditions -->
 
-> **Red Flag Stop Conditions** — STOP and escalate to user via AskUserQuestion when:
+> **Red Flag Stop Conditions** — STOP and escalate via AskUserQuestion when:
 >
 > 1. Confidence drops below 60% on any critical decision
-> 2. Changes would affect >20 files (blast radius too large)
-> 3. Cross-service boundary is being crossed
-> 4. Security-sensitive code (auth, crypto, PII handling)
+> 2. Changes affect >20 files
+> 3. Cross-service boundary crossed
+> 4. Security-sensitive code (auth, crypto, PII)
 > 5. Breaking change detected (interface, API contract, DB schema)
-> 6. Test coverage would decrease after changes
-> 7. Approach requires technology/pattern not in the project
+> 6. Test coverage would decrease
+> 7. Approach requires technology/pattern not in project
 >
 > **NEVER proceed past a red flag without explicit user approval.**
 
@@ -126,7 +158,7 @@ context-budget: high
 > 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
 > 4. **Main agent:** Reads report file only when resolving specific blockers
 >
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction.
 >
 > **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
 
@@ -157,80 +189,71 @@ context-budget: high
 > Full report: plans/reports/[skill-name]-[date]-[slug].md
 > ```
 >
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Main agent reads `Full report` ONLY when: (a) resolving specific blocker, or (b) building fix plan.
 > Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
 
 <!-- /SYNC:subagent-return-contract -->
 
-## Quick Summary
-
-**Goal:** Generate integration test files for commands/queries using real DI (no mocks).
-
 ## Project Pattern Discovery
 
-Before implementation, search your codebase for project-specific patterns:
+Before implementation, search codebase for patterns:
 
-- Search for: `IntegrationTest`, `TestFixture`, `TestUserContext`, `IntegrationTestBase`
-- Look for: existing test projects, test collection definitions, service-specific test base classes
+- Search: `IntegrationTest`, `TestFixture`, `TestUserContext`, `IntegrationTestBase`
+- Look for: existing test projects, collection definitions, service-specific base classes
 
-> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ `integration-test-reference.md` for project-specific patterns and code examples.
-> If file not found, continue with search-based discovery above.
-
-**Five modes:** (1) From git changes (default) — detects uncommitted command/query files and generates matching tests. (2) From prompt — user specifies what to test. (3) Review — audit existing tests for quality, best practices, and flaky patterns. (4) Diagnose — analyze test failures to determine root cause (test bug vs code bug). (5) Verify-traceability — check test code matches test specs and feature docs.
+> **MANDATORY IMPORTANT MUST ATTENTION** plan task to READ `integration-test-reference.md` for project-specific patterns and code examples. If not found, continue with search-based discovery.
 
 **Workflow:**
 
-1. **Detect mode** — See Mode Detection section below
+1. **Detect mode** — See Mode Detection below
 2. **Find targets** — Identify test/command/query files
-3. **Gather context** — Read relevant files for the detected mode
-4. **Execute** — Generate, review, diagnose, or verify depending on mode
+3. **Gather context** — Read relevant files for detected mode
+4. **Execute** — Generate, review, diagnose, or verify
 5. **Report** — Build check (generate), quality report (review), root cause (diagnose)
 
 **Key Rules:**
 
-- MUST ATTENTION search for existing test patterns in the same service BEFORE generating
+- MUST ATTENTION search existing test patterns in same service BEFORE generating
 - MUST ATTENTION READ `references/integration-test-patterns.md` before writing any test
-- **Organize by domain feature, NOT by type** — command and query tests for the same domain go in the same folder (e.g., `Orders/OrderCommandIntegrationTests.*` + `Orders/OrderQueryIntegrationTests.*`). NEVER create a `Queries/` or `Commands/` folder.
-- Use the project's unique name generator for ALL string test data (search test utilities for unique name helpers)
-- Use the project's entity assertion helpers for DB verification with built-in async polling (search test base classes for `AssertEntity*` or equivalent patterns)
-- **CRITICAL MUST ATTENTION ENSURE:** ALWAYS wrap ALL data state assertions in the project's async polling/retry helper. This is the DEFAULT — not just for "async" handlers. Data may be delayed by entity event handlers, message bus consumers, or background jobs. Async polling retries with timeout and is always safe. **If you assert data in DB → use async polling. No exceptions.**
-- **CRITICAL MUST ATTENTION ENSURE:** Before writing assertions, READ the handler/entity/event source code. Understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assert specific field values, not just non-null. Smoke-only is FORBIDDEN unless side effect is truly unobservable.
+- **Organize by domain feature, NEVER by type** — command + query tests for same domain → same folder (e.g., `Orders/OrderCommandIntegrationTests.*`). NEVER create `Queries/` or `Commands/` folder.
+- Use project's unique name generator for ALL string test data
+- Use project's entity assertion helpers for DB verification with async polling
+- **CRITICAL MUST ATTENTION:** ALWAYS wrap ALL DB assertions in async polling/retry — DEFAULT for ALL assertions, not just async handlers. **If asserting data in DB → use async polling. No exceptions.**
+- **CRITICAL MUST ATTENTION:** Before writing assertions, READ handler/entity/event source. Understand WHAT fields change, WHAT entities created/updated/deleted, WHAT event handlers fire. **Smoke-only FORBIDDEN** unless side effect truly unobservable.
 - Minimum 3 test methods: happy path, validation failure, DB state check
-- **Authorization tests:** Include tests with multiple user contexts (use the project's user context factory) — verify authorized access succeeds AND unauthorized access is rejected
-- Every test method MUST ATTENTION have `// TC-{FEATURE}-{NNN}: Description` comment AND a test-spec annotation (e.g., `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` in xUnit — adapt to your framework) — placed before the test method, outside method body
-- If no TC exists in feature docs, **auto-create** it in Section 15 before generating the test
-- For comprehensive test spec generation before coding, use `/tdd-spec` first
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+- **Authorization tests:** Multiple user contexts — authorized succeeds AND unauthorized rejected
+- Every test method MUST have `// TC-{FEATURE}-{NNN}: Description` comment + test-spec annotation — before method, outside body
+- No TC in feature docs → **auto-create** in Section 15 before generating test
+- For comprehensive spec generation before coding → `/tdd-spec` first
 
 ## Mandatory Task Ordering (MUST ATTENTION FOLLOW)
 
-When generating integration tests, ALWAYS create and execute tasks in this exact order:
+ALWAYS create and execute tasks in this exact order:
 
-1. **FIRST task: Verify/upsert test specs in feature docs**
-    - Read feature doc Section 15 (`docs/business-features/{App}/detailed-features/`) for the target domain
-    - Read test-specs doc (`docs/test-specs/{App}/README.md`) if exists
-    - For each test case to generate: verify a matching `TC-{FEATURE}-{NNN}` exists in docs
-    - If TC is MISSING: create the TC entry in Section 15 with Priority, Status, GIVEN/WHEN/THEN, Evidence
-    - If TC is INCORRECT: update it to reflect current command/query behavior
-    - Output: a TC mapping list (TC code → test method name) for subsequent tasks
+1. **FIRST: Verify/upsert test specs in feature docs**
+    - Read feature doc Section 15 (`docs/business-features/{App}/detailed-features/`) for target domain
+    - Read test-specs doc (`docs/specs/{App}/README.md`) if exists
+    - For each test case: verify matching `TC-{FEATURE}-{NNN}` exists
+    - TC MISSING → create entry in Section 15 with Priority, Status, GIVEN/WHEN/THEN, Evidence
+    - TC INCORRECT → update to reflect current behavior
+    - Output: TC mapping list (TC code → test method name)
 
-2. **MIDDLE tasks: Implement integration tests**
-    - Generate test files using the TC mapping from task 1
-    - Each test method gets a TC annotation before it (outside method body) — **adapt to your test framework** (C#/xUnit example):
+2. **MIDDLE: Implement integration tests**
+    - Generate test files using TC mapping from task 1
+    - Each test method gets TC annotation before it (outside method body):
         ```csharp
         // TC-OM-001: Create valid order — happy path
         [Trait("TestSpec", "TC-OM-001")]
         [Fact]
         public async Task CreateOrder_WhenValidData_ShouldCreateSuccessfully()
         ```
-    - Follow all existing patterns from the project's test base classes (collection/group, category, unique data helpers, assertion helpers, etc.)
+    - Follow existing patterns from project's test base classes
 
-3. **FINAL task: Verify bidirectional traceability**
-    - Grep for test-spec annotations in the test project (e.g., `[Trait("TestSpec", ...)]` in xUnit, `@Tag` in JUnit — adapt to your framework)
-    - Grep all `TC-{FEATURE}-{NNN}` in feature doc Section 15 / test-specs doc
-    - Verify every test method links to a doc TC, and every doc TC links back to a test
-    - Flag orphans: tests without doc TCs, or doc TCs without matching tests
+3. **FINAL: Verify bidirectional traceability**
+    - Grep test-spec annotations in test project
+    - Grep all `TC-{FEATURE}-{NNN}` in feature doc Section 15 / specs doc
+    - Verify: every test method → doc TC, every doc TC → test method
+    - Flag orphans: tests without doc TCs, doc TCs without matching tests
     - Update `IntegrationTest` field in feature doc TCs with `{File}::{MethodName}`
 
 ## Module Abbreviation Registry
@@ -247,12 +270,12 @@ When generating integration tests, ALWAYS create and execute tasks in this exact
 
 ## TC Code Numbering Rules
 
-When creating new `TC-{FEATURE}-{NNN}` codes:
+Creating new `TC-{FEATURE}-{NNN}` codes:
 
-1. **Always check the feature doc's first** — `docs/business-features/{App}/detailed-features/` contains existing TC codes. New codes must not collide.
-2. **Existing docs use decade-based grouping** — e.g., OM: 001-004 (CRUD), 011-013 (validation), 021-023 (permissions), 031-033 (events). Find the next free decade.
-3. **If a collision is unavoidable** — renumber in the doc side only (e.g., TC-OM-031 → TC-OM-034). Keep the test-spec annotation in the test file unchanged and add a renumbering note in the doc.
-4. **Feature doc is the canonical registry** — the test-spec annotation in test files is for traceability, not the source of truth for numbering.
+1. Check feature doc first — `docs/business-features/{App}/detailed-features/` has existing codes. New codes must not collide.
+2. Decade-based grouping — e.g., OM: 001-004 (CRUD), 011-013 (validation), 021-023 (permissions), 031-033 (events). Find next free decade.
+3. Unavoidable collision → renumber in doc only. Keep test-spec annotation unchanged; add renumbering note in doc.
+4. Feature doc = canonical registry. Test-spec annotation = traceability only, not numbering source.
 
 # Integration Test Generation
 
@@ -285,13 +308,13 @@ Run via Bash tool:
 git diff --name-only; git diff --cached --name-only
 ```
 
-Filter for command/query files using the project's naming conventions (e.g., `*Command.*`, `*Query.*`). Path patterns for services and test projects come from `docs/project-config.json` → `modules` or `backendServices`. Extract service from path:
+Filter for command/query files using project naming conventions (e.g., `*Command.*`, `*Query.*`). Path patterns from `docs/project-config.json` → `modules` or `backendServices`. Extract service from path:
 
 | Path pattern                                        | Service   | Test project                                         |
 | --------------------------------------------------- | --------- | ---------------------------------------------------- |
 | Per `docs/project-config.json` service path pattern | {Service} | `{Service}.IntegrationTests` (or project equivalent) |
 
-Search your codebase for existing `*.IntegrationTests.*` projects to find the correct mapping.
+Search codebase for existing `*.IntegrationTests.*` projects to find correct mapping.
 
 If no test project exists: inform user "No integration test project for {service}. See CLAUDE.md Integration Testing section to create one."
 
@@ -302,38 +325,38 @@ If test file already exists: ask user overwrite or skip.
 User specifies command/query name. Use Grep tool (NOT bash grep):
 
 ```
-Grep pattern="class {CommandName}" path="." glob="*.cs" (adapt path and extension to your project)
+Grep pattern="class {CommandName}" path="." glob="*.cs"
 ```
 
 ## Step 2: Gather Context
 
-For each target, read these files (in parallel):
+For each target, read in parallel:
 
-1. **Command/query file** — extract: class name, result type, DTO property, entity type
-2. **Existing test files in same service** — use Glob `{Service}.IntegrationTests/**/*IntegrationTests.*`, read 1+ for conventions (collection name, trait, namespace, usings, base class)
+1. **Command/query file** — extract: class name, result type, DTO properties, entity type
+2. **Existing test files in same service** — Glob `{Service}.IntegrationTests/**/*IntegrationTests.*`, read ≥1 for conventions (collection name, trait, namespace, usings, base class)
 3. **Service integration test base class** — grep: `class.*ServiceIntegrationTestBase`
 4. **`references/integration-test-patterns.md`** — canonical templates (adapt {Service} placeholders)
 
 ## Step 2b: Look Up TC Codes
 
-For each target domain, read the matching test spec:
+For each target domain, read:
 
-- `docs/business-features/{App}/detailed-features/` Section 15 (primary source of truth)
-- `docs/test-specs/{App}/README.md` (secondary reference)
+- `docs/business-features/{App}/detailed-features/` Section 15 (primary source)
+- `docs/specs/{App}/README.md` (secondary reference)
 
-Build a mapping: test case description → TC code (e.g., "create valid order" → TC-OM-001).
-If no TC exists, **CREATE IT** in the feature doc Section 15 before generating the test.
-If TC is outdated or incorrect, **UPDATE IT** first.
-This is NOT optional — the doc is the source of truth and must be correct before tests reference it.
-If no TC exists and feature doc Section 15 is missing, run `/tdd-spec` first to generate test specifications.
+Build mapping: test case description → TC code (e.g., "create valid order" → TC-OM-001).
+
+- No TC exists → **CREATE IT** in Section 15 before generating test. NOT optional.
+- TC outdated/incorrect → **UPDATE IT** first.
+- Section 15 missing → run `/tdd-spec` first.
 
 ## Step 3: Generate Test File
 
-**File path:** `{project-test-dir}/{Service}.IntegrationTests/{Domain}/{CommandName}IntegrationTests{ext}` (adapt path and extension to your project's conventions — see `docs/project-config.json` → `integrationTestVerify.testProjectPattern`)
+**File path:** `{project-test-dir}/{Service}.IntegrationTests/{Domain}/{CommandName}IntegrationTests{ext}` (adapt path/extension per `docs/project-config.json` → `integrationTestVerify.testProjectPattern`)
 
-> **Folder = domain feature.** `{Domain}` is the business domain (Orders, Inventory, Notifications, UserProfiles, etc.), NOT the CQRS type. Both command and query tests for the same domain live in the same folder.
+> **Folder = domain feature.** `{Domain}` = business domain (Orders, Inventory, Notifications, UserProfiles), NOT CQRS type. Command and query tests for same domain live in same folder.
 
-**Structure (C#/xUnit example — adapt namespace, collection/group attribute, category annotation, and base class to your framework):**
+**Structure (C#/xUnit — adapt to your framework):**
 
 ```csharp
 #region
@@ -364,24 +387,23 @@ public class {CommandName}IntegrationTests : {Service}ServiceIntegrationTestBase
 
 ## Step 4: Verify
 
-Build the test project using your project's build tool (see `/integration-test-verify` for config-driven build and run).
+Build test project via project's build tool (see `/integration-test-verify` for config-driven build).
 
-Check:
+MUST ATTENTION verify ALL of the following:
 
-- [ ] Test collection/group attribute present with correct collection name (framework-specific: `[Collection]`, `@Nested`, etc.)
-- [ ] Test category annotation present (framework-specific: `[Trait("Category", ...)]`, `@Tag`, `@Category`, etc.)
-- [ ] All string test data uses the project's unique name generator
-- [ ] User context created via the project's user context factory
-- [ ] DB assertions use the project's entity assertion helpers with async polling
-- [ ] No mocks — real DI only
-- [ ] Every test method has `// TC-{FEATURE}-{NNN}: Description` comment + test-spec annotation (adapt to your framework)
+- Test collection/group attribute present with correct collection name
+- Test category annotation present
+- All string test data uses project's unique name generator
+- User context created via project's user context factory
+- DB assertions use project's entity assertion helpers with async polling
+- No mocks — real DI only
+- Every test method has `// TC-{FEATURE}-{NNN}: Description` comment + test-spec annotation
 
 ## Example Files to Study
 
-Search your codebase for existing integration test files to use as reference (adapt file extension to your project):
+Search codebase for existing integration test files:
 
 ```bash
-# Find existing integration test files (adapt path and extension to your project)
 find . -name "*IntegrationTests.*" -type f
 find . -name "*IntegrationTestBase.*" -type f
 find . -name "*IntegrationTestFixture.*" -type f
@@ -393,16 +415,6 @@ find . -name "*IntegrationTestFixture.*" -type f
 | `{Service}.IntegrationTests/{Domain}/*QueryIntegrationTests.*`     | Query with create-then-query |
 | `{Service}.IntegrationTests/{Domain}/Delete*IntegrationTests.*`    | Delete + cascade             |
 | `{Service}.IntegrationTests/{Service}ServiceIntegrationTestBase.*` | Service base class pattern   |
-
-## Related
-
-| Skill             | Relationship                                         | When to Use                                                               |
-| ----------------- | ---------------------------------------------------- | ------------------------------------------------------------------------- |
-| `tdd-spec`        | TC source — generates test specs this skill consumes | Run FIRST to create TCs in feature doc Section 15 before generating tests |
-| `test-spec`       | Heavyweight planning — feeds test strategies         | Use for complex test planning requiring deep investigation                |
-| `test-specs-docs` | Dashboard sync — keeps docs/test-specs/ in sync      | Run AFTER generating tests to update the cross-module dashboard           |
-| `test`            | Test runner — executes the generated tests           | Run AFTER generating tests to verify they pass                            |
-| `review-changes`  | Change review — reviews uncommitted changes          | Run to review test files before committing                                |
 
 ### How to Use for Each Case
 
@@ -458,45 +470,70 @@ find . -name "*IntegrationTestFixture.*" -type f
 
 # REVIEW Mode — Test Quality Audit
 
-When mode = REVIEW, audit existing integration tests for quality, flaky patterns, and best practices.
+Mode = REVIEW: audit existing integration tests for quality, flaky patterns, best practices.
+
+## Sub-Agent Routing
+
+| Input type                                        | Sub-agent            | Why                                                                                                                                |
+| ------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Test file quality audit                           | `integration-tester` | Purpose-built for spec generation, TC traceability, and test patterns — catches integration-specific issues `code-reviewer` misses |
+| Security-sensitive test data (PII, auth fixtures) | `security-auditor`   | Detects PII leakage in test fixtures                                                                                               |
+
+## Sub-Agent Type Override
+
+> **MANDATORY:** Integration test REVIEW mode spawns `integration-tester` sub-agent (`subagent_type: "integration-tester"`), NOT `code-reviewer`.
+> **Rationale:** `integration-tester` specializes in test spec generation, TC traceability, CQRS test patterns, `WaitUntilAsync` correctness, and microservices integration context — areas `code-reviewer` does not cover at depth.
+
+**Fresh Eyes Protocol:** Run Round 1 inline. If findings are LOW confidence or contradictory → spawn fresh `integration-tester` sub-agent (zero memory of Round 1) for Round 2. Main agent reads report, NEVER filters findings. Max 2 rounds, then escalate.
+
+<!-- SYNC:sub-agent-selection -->
+
+> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
+> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+
+<!-- /SYNC:sub-agent-selection -->
 
 ## Review Workflow
 
 1. **Find test files** — Glob `{Service}.IntegrationTests/{Domain}/**/*IntegrationTests.*`
-2. **Read each test file** — analyze for quality issues
+2. **Read each test file** — analyze for quality issues (persist findings after each file per SYNC:incremental-persistence)
 3. **Generate quality report** — categorized findings with severity
+4. **Round 2 (if low confidence):** Spawn fresh sub-agent with report path — NEVER re-examine with main context
 
-## Review Checklist
+## Review Dimensions
 
-### Flaky Test Detection (CRITICAL)
+**Dimension 1: Reliability** — Think: What causes intermittent failures?
 
-These patterns cause intermittent failures — flag as HIGH severity:
+- MUST ATTENTION flag **missing async polling** — DB assertions after async handlers without `WaitUntilAsync()` or equiv → WILL flake
+- MUST ATTENTION flag **missing retry for eventual consistency** — message bus / event handler / background job state without polling wrapper
+- MUST ATTENTION flag **hardcoded delays** — `Thread.Sleep()`, `Task.Delay()` instead of condition-based polling
+- MUST ATTENTION flag **race conditions** — tests modifying shared state without isolation (same entity ID, same user context)
+- MUST ATTENTION flag **non-unique test data** — hardcoded strings/IDs instead of unique generators
+- MUST ATTENTION flag **time-dependent assertions** — `DateTime.Now` without time abstraction
 
-- [ ] **Missing async polling** — DB assertions after async event handlers without async polling/retry (e.g., `WaitUntilAsync()` or equivalent). Direct assertions on state changed by background threads WILL flake.
-- [ ] **Missing retry for eventual consistency** — Any assertion that checks state modified by message bus consumers, event handlers, or background jobs without polling/retry wrapper
-- [ ] **Hardcoded delays** — `Thread.Sleep()`, `Task.Delay()` instead of condition-based polling (`WaitUntil`, retry loops with timeout)
-- [ ] **Race conditions** — Multiple tests modifying shared state without isolation (e.g., same entity ID, same user context)
-- [ ] **Non-unique test data** — Hardcoded strings/IDs instead of unique generators (search your test utilities for a unique name helper, e.g., `IntegrationTestHelper.UniqueName()` or equivalent)
-- [ ] **Time-dependent assertions** — Tests that depend on `DateTime.Now` without time abstraction
+**Dimension 2: Assertion Value** — Think: Does the test actually verify anything?
 
-### Best Practice Checks
+- MUST ATTENTION flag DI-resolution-only tests — smoke tests that just resolve services → HIGH severity
+- MUST ATTENTION flag exception-check-only tests — `exception.Should().BeNull()` alone → HIGH severity
+- MUST ATTENTION verify test reads handler/entity/event source and asserts specific field values
+- MUST ATTENTION verify minimum 3 tests per command (happy path, validation failure, DB state)
 
-- [ ] **Collection/group attribute** — All test classes have correct collection/group for shared fixture
-- [ ] **Category trait** — `[Trait("Category", "Command")]` or equivalent categorization present
-- [ ] **TC annotation** — Every test method has TC code comment + test spec trait/attribute
-- [ ] **Minimum test coverage** — At least 3 tests per command: happy path, validation, DB state
-- [ ] **No mocks** — Real DI only, no mock frameworks in integration tests
-- [ ] **Unique test data** — All string data uses unique generators
-- [ ] **User context** — Test user context via factory, not hardcoded
-- [ ] **DB assertions** — Uses entity assertion helpers (not raw DB queries)
-- [ ] **Cleanup** — Tests don't leave orphaned data that affects other tests
+**Dimension 3: Conventions** — Think: Does test follow project patterns?
 
-### Code Quality Checks
+- MUST ATTENTION verify collection/group attribute — correct collection name for shared fixture
+- MUST ATTENTION verify category trait — `[Trait("Category", "Command")]` or equiv
+- MUST ATTENTION verify TC annotation — every test method has TC code comment + test spec trait
+- MUST ATTENTION verify no mocks — real DI only
+- MUST ATTENTION verify unique test data — all string data uses unique generators
+- MUST ATTENTION verify user context — via factory, not hardcoded
+- MUST ATTENTION verify DB assertions — uses entity assertion helpers, not raw DB queries
 
-- [ ] **Method naming** — Follows `{Action}_When{Condition}_Should{Expectation}` pattern
-- [ ] **Arrange-Act-Assert** — Clear separation in test methods
-- [ ] **No logic in tests** — No conditionals, loops, or complex setup in test methods
-- [ ] **Test independence** — Each test can run in isolation
+**Dimension 4: Code Quality** — Think: Maintainability and isolation?
+
+- MUST ATTENTION verify method naming — `{Action}_When{Condition}_Should{Expectation}`
+- MUST ATTENTION verify Arrange-Act-Assert — clear separation
+- MUST ATTENTION flag logic in tests — conditionals, loops, complex setup in test methods
+- MUST ATTENTION verify test independence — each test runs in isolation
 
 ## Review Report Format
 
@@ -534,14 +571,14 @@ These patterns cause intermittent failures — flag as HIGH severity:
 
 # DIAGNOSE Mode — Test Failure Root Cause Analysis
 
-When mode = DIAGNOSE, analyze failing tests to determine whether the failure is a test bug or an application code bug.
+Mode = DIAGNOSE: analyze failing tests to determine test bug vs application code bug.
 
 ## Diagnose Workflow
 
 1. **Identify failing tests** — User provides test class name or run test suite to collect failures
-2. **Read test code** — Understand what the test expects
-3. **Read application code** — Trace the command/query handler path
-4. **Compare expected vs actual** — Determine root cause
+2. **Read test code** — understand what test expects
+3. **Read application code** — trace the command/query handler path
+4. **Compare expected vs actual** — determine root cause
 5. **Classify** — Test bug vs code bug vs infrastructure issue
 6. **Report** — Root cause + recommended fix
 
@@ -612,20 +649,18 @@ Test fails
 
 # VERIFY-TRACEABILITY Mode — Test ↔ Spec ↔ Feature Doc Verification
 
-When mode = VERIFY, perform bidirectional traceability check between test code, test specifications, and feature documentation.
+Mode = VERIFY: bidirectional traceability check between test code, test specs, feature docs.
 
 ## Verify Workflow
 
 1. **Collect test methods** — Grep for test spec annotations in test project
 2. **Collect doc TCs** — Read feature doc Section 15 for all TC entries
-3. **Build 3-way matrix** — Test code ↔ test-specs/ ↔ feature doc Section 15
+3. **Build 3-way matrix** — Test code ↔ specs/ ↔ feature doc Section 15
 4. **Identify mismatches** — Orphans, stale references, behavior drift
 5. **Classify mismatches** — Which source is correct?
 6. **Report** — Traceability matrix + recommended fixes
 
 ## Mismatch Classification
-
-When test code and spec disagree, determine which is correct:
 
 | Scenario                                          | Likely Correct Source         | Action                       |
 | ------------------------------------------------- | ----------------------------- | ---------------------------- |
@@ -635,15 +670,17 @@ When test code and spec disagree, determine which is correct:
 | Spec exists, no test                              | Spec (test was never written) | Generate test from spec      |
 | Test and spec agree, but code behaves differently | Spec (code has regression)    | Fix code or update spec+test |
 
-## Verification Checklist
+## Verification Requirements
 
-- [ ] Every test method has a matching TC in feature doc Section 15
-- [ ] Every TC in Section 15 has a matching test method (or is marked `Status: Untested`)
-- [ ] TC descriptions in docs match what the test actually validates
-- [ ] Evidence file paths in TCs point to current (not stale) code locations
-- [ ] Test annotations match TC IDs (no typos, no orphaned IDs)
-- [ ] Priority levels in docs match test categorization
-- [ ] `docs/test-specs/` dashboard is in sync with feature doc Section 15
+MUST ATTENTION verify ALL of the following:
+
+- Every test method has matching TC in feature doc Section 15
+- Every TC in Section 15 has matching test method (or marked `Status: Untested`)
+- TC descriptions in docs match what test actually validates
+- Evidence file paths in TCs point to current (not stale) code locations
+- Test annotations match TC IDs (no typos, no orphaned IDs)
+- Priority levels in docs match test categorization
+- `docs/specs/` dashboard is in sync with feature doc Section 15
 
 ## Verify Report Format
 
@@ -702,50 +739,55 @@ When test code and spec disagree, determine which is correct:
 
 **Rules:**
 
-- Every test creates its own data — no shared mutable state between tests
-- Use unique identifiers for ALL string data (search your test utilities for a unique name/data generator helper)
+- Every test creates own data — no shared mutable state between tests
+- Unique identifiers for ALL string data (search test utilities for unique name/data generator helper)
 - Factory methods return valid entities by default — tests override only what they test
-- Cross-entity dependencies: create parent first, then child (e.g., create User, then create Order for that User)
-- **Seed data:** If the feature requires reference/lookup data, set up seed data in the collection fixture or per-test preconditions
+- Cross-entity dependencies: create parent first, then child (e.g., User → Order)
+- Feature requires reference/lookup data → set up in collection fixture or per-test preconditions
 
 ---
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** NOT in workflow? `AskUserQuestion` — do NOT decide complexity yourself. User decides:
 >
-> 1. **Activate `test-to-integration` workflow** (Recommended) — scout → integration-test → test
-> 2. **Execute `/integration-test` directly** — run this skill standalone
+> 1. **`test-to-integration` workflow** (Recommended) — scout → integration-test → integration-test-review → integration-test-verify → test → docs-update → watzup → workflow-end
+> 2. **`/integration-test` directly** — standalone
 
 ---
 
 ## Test Execution & Failure Diagnosis (MANDATORY)
 
-> **IMPORTANT MUST ATTENTION:** After generating/modifying integration tests, you MUST:
+> **IMPORTANT MUST ATTENTION:** After generating/modifying integration tests, MUST:
 >
-> 1. **Run tests:** Use `/integration-test-verify` (reads `quickRunCommand` from `docs/project-config.json`)
-> 2. **If tests fail:** Diagnose root cause — is the failure because (a) test code has wrong setup/assertions → fix test code, or (b) actual service code has a bug → report as finding
-> 3. **Never mark done until tests pass.** Unrun tests have zero value.
-> 4. **Iterate:** Fix → rerun → verify until all tests pass or failures are confirmed as service bugs
+> 1. **Run tests:** `/integration-test-verify` (reads `quickRunCommand` from `docs/project-config.json`)
+> 2. **If tests fail:** Diagnose root cause — (a) wrong test setup/assertions → fix test, or (b) service bug → report as finding
+> 3. **NEVER mark done until tests pass.** Unrun tests have zero value.
+> 4. **Iterate:** Fix → rerun → verify until all pass or failures confirmed as service bugs
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, use `AskUserQuestion` to present:
 
-- **"/integration-test-verify (Recommended)"** — Run integration tests to verify they all pass
+- **"/integration-test-verify (Recommended)"** — Run integration tests to verify they pass
 - **"/workflow-review-changes"** — Review all changes before committing
 - **"Skip, continue manually"** — user decides
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER write smoke-only tests — read handler/entity/event source, assert specific field values
+- **MANDATORY IMPORTANT MUST ATTENTION** ALWAYS use async polling for ALL DB assertions — no exceptions
+- **MANDATORY IMPORTANT MUST ATTENTION** `TaskCreate` — break ALL work into small tasks BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** `AskUserQuestion` — validate decisions with user. NEVER auto-decide.
+- **MANDATORY IMPORTANT MUST ATTENTION** READ `references/integration-test-patterns.md` BEFORE writing any test
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER create `Queries/` or `Commands/` folders — organize by domain feature
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER generate tests without TC annotation — auto-create in Section 15 if missing
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER mark done until tests pass via `/integration-test-verify`
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns, cite `file:line` before modifying anything
 
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+- **MANDATORY IMPORTANT MUST ATTENTION** run graph trace when graph.db exists. Grep 3+ patterns, cite `file:line`.
     <!-- /SYNC:understand-code-first:reminder -->
     <!-- SYNC:graph-impact-analysis:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
@@ -755,11 +797,85 @@ When test code and spec disagree, determine which is correct:
     <!-- /SYNC:red-flag-stop-conditions:reminder -->
     <!-- SYNC:rationalization-prevention:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-  <!-- /SYNC:rationalization-prevention:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** READ `references/integration-test-patterns.md` before starting
-  <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+    <!-- /SYNC:rationalization-prevention:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act.
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
+- **MUST ATTENTION** holistic-first debugging, fix at responsible layer, surface ambiguity before coding.
   <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**Anti-Rationalization:**
+
+| Evasion                            | Rebuttal                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------- |
+| "Test is simple, skip TC lookup"   | TC traceability = test value. Skip = untraceable test.                    |
+| "Async polling not needed here"    | ALL DB assertions need polling. Handler type irrelevant.                  |
+| "Already searched patterns"        | Show `file:line` evidence. No proof = no search.                          |
+| "Smoke test is fine for now"       | Smoke-only FORBIDDEN. Assert specific field values.                       |
+| "REVIEW: one pass is enough"       | Low confidence → spawn fresh sub-agent. Never declare PASS after Round 1. |
+| "Skip task creation, it's obvious" | TaskCreate is non-negotiable. Tracking prevents context loss.             |
+
+---
+
+## Related Skills
+
+| Skill                        | Relationship                                                                         | When to Call                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `/tdd-spec`                  | **Producer** — TCs in feature doc Section 15 are the source for test generation      | Must run tdd-spec before integration-test (CREATE or UPDATE mode). TCs must exist before generating tests. |
+| `/tdd-spec-review`           | **Upstream reviewer** — validates TC quality before test generation                  | Run before integration-test to ensure TCs have real assertion value                                        |
+| `/tdd-spec [direction=sync]` | **Dashboard** — syncs QA dashboard after TCs are linked to test files                | Run after integration-test to update `IntegrationTest:` fields in dashboard                                |
+| `/feature-docs`              | **TC host** — Section 15 of feature doc is where TCs live                            | If feature doc is missing or Section 15 is empty → run /feature-docs first                                 |
+| `/spec-discovery`            | **Upstream spec** — engineering spec is source of truth for what tests should assert | If tests diverge from spec → check spec-discovery output for correct behavior                              |
+| `/integration-test-review`   | **Reviewer** — 6-gate quality audit of generated tests                               | Always call after generating integration tests                                                             |
+| `/integration-test-verify`   | **Runner** — executes tests and reports pass/fail                                    | Always call after integration-test-review clears                                                           |
+| `/docs-update`               | **Orchestrator** — calls tdd-spec sync (Phase 4) with test traceability              | Run for full doc sync after integration test files updated                                                 |
+
+## Standalone Chain
+
+> **When called outside a workflow**, follow this chain to complete the integration test authoring cycle.
+
+```
+integration-test (you are here)
+  │
+  ├─ PREREQUISITE: TCs must exist in feature doc Section 15
+  │    [REQUIRED] Verify: docs/business-features/{Module}/README.md Section 15 has TC-{FEATURE}-{NNN} entries
+  │    If empty → run /tdd-spec [CREATE mode] first
+  │
+  ├─ [REQUIRED] → /integration-test-review
+  │     6-gate quality audit: assertion value, data state, repeatability, domain logic, traceability, three-way sync.
+  │     Never skip — Gate 6 (three-way sync) is the only place where spec/code/test conflicts surface.
+  │
+  ├─ [REQUIRED] → /integration-test-verify
+  │     Runs tests and reports pass/fail counts. Never mark complete without real runner output.
+  │
+  ├─ [REQUIRED] → /tdd-spec [direction=sync]
+  │     Updates QA dashboard with IntegrationTest: file::method traceability links.
+  │
+  ├─ [RECOMMENDED] → /docs-update
+  │     Updates feature doc evidence fields and version history if test coverage changed materially.
+  │
+  └─ [RECOMMENDED] → /tdd-spec-review
+        Re-run if integration-test-review (Gate 6) flagged TC issues requiring TC edits.
+
+### Mode-Specific Chains
+
+| Mode | Pre-step | Post-step |
+|------|---------|-----------|
+| from-changes | verify TCs updated (run /tdd-spec UPDATE first) | /integration-test-review → /verify → /sync |
+| from-prompt | confirm TC exists for target feature | /integration-test-review → /verify → /sync |
+| review | N/A (read-only) | report findings → /tdd-spec UPDATE if TCs need fixes |
+| diagnose | run /test to see failures first | fix identified issue → re-run /integration-test-verify |
+| verify-traceability | N/A (read-only) | if orphaned TCs: /tdd-spec UPDATE → /integration-test [from-prompt] |
+```
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

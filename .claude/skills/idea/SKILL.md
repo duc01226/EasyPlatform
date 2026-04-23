@@ -1,14 +1,23 @@
 ---
 name: idea
-version: 1.0.0
-description: "[Project Management] Capture and structure product ideas as backlog artifacts. Use when capturing new ideas, feature requests, or concepts for future refinement. Triggers on keywords like "capture idea", "new idea", "feature idea", "add to backlog", "quick idea"."
+version: 1.1.0
+description: '[Project Management] Capture and structure product ideas as backlog artifacts. Use when capturing new ideas, feature requests, or concepts for future refinement. Triggers on keywords like "capture idea", "new idea", "feature idea", "add to backlog", "quick idea".'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+> **[IMPORTANT]** `TaskCreate` break ALL work into small tasks BEFORE starting — including tasks each file read. Simple tasks: AI MUST ATTENTION ask user whether to skip.
+
+> **External Memory:** Complex/lengthy work (research, analysis, scan, review) → write intermediate findings to `plans/reports/` — prevents context loss, serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence, confidence percentage (>80% act, <80% verify first).
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -38,216 +47,128 @@ description: "[Project Management] Capture and structure product ideas as backlo
 
 **Goal:** Capture raw product ideas as structured backlog artifacts with project module context.
 
-> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference doc:
->
-> - `project-structure-reference.md` -- project patterns and structure
->
-> If file not found, search for: project documentation, coding standards, architecture docs.
+> **MANDATORY IMPORTANT MUST ATTENTION** TaskCreate task to READ project-specific reference doc:
+> `project-structure-reference.md` — project patterns and structure. Not found → search: project documentation, coding standards, architecture docs.
 
 **Workflow:**
 
-1. **Gather Info** — Ask about the idea, problem, value, and target users
-2. **Generate Artifact** — Create idea file with ID (IDEA-YYMMDD-NNN) and draft status
-3. **Detect Module** — Auto-match to project module, load feature context from docs
-4. **Validate** — Interview user to confirm problem statement, scope, stakeholders
-5. **Suggest Next** — Point to `/refine` for PBI creation
+1. **Gather Info** — Ask problem, value, scope, target users
+2. **Generate Artifact** — Create idea file with ID (`IDEA-YYMMDD-NNN`) + draft status
+3. **Detect Module** — Auto-match project module, load feature context from docs
+4. **Discovery Interview** — `AskUserQuestion` 3-5 structured questions (MANDATORY)
+5. **Validate** — Confirm problem statement, scope, stakeholders (MANDATORY)
+6. **Suggest Next** — Point to `/refine` for PBI creation
 
 **Key Rules:**
 
-- Output to `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`
+- Output: `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`
+- Validation NEVER optional — MANDATORY step
+- Auto-detect module silently; prompt only when ambiguous
+- MUST ATTENTION include `t_shirt_size` (XS/S/M/L/XL) in artifact for early sizing
 
 ## Greenfield Mode
 
-> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+> **Auto-detected:** No codebase found (no `src/`, `app/`, `lib/`, `server/`, `packages/` dirs; no `package.json`/`*.sln`/`go.mod`; no `project-config.json`) → greenfield mode. Planning artifacts (`docs/`, `plans/`, `.claude/`) don't count — project must have actual code dirs with content.
 
-**When greenfield is detected:**
+**When greenfield detected:**
 
-1. Skip module auto-detection from existing project (no modules exist yet)
-2. Skip "MUST ATTENTION READ project-structure-reference.md" (won't exist)
-3. Focus on broader problem-space capture: market gap, competitors, differentiation
-4. Output tech-agnostic problem statement (no existing tech stack to reference)
-5. Enable web research for market/competitor context (WebSearch)
-6. Increase AskUserQuestion frequency — capture vision, constraints, team profile, scale expectations
-7. **[CRITICAL] DO NOT ask about tech stack during idea capture.** Tech stack is a research-driven decision that comes AFTER full business analysis (business-evaluation phase). If the user volunteers a tech stack preference, acknowledge it but still defer final decision to the tech stack research phase where it will be properly evaluated with pros/cons, market analysis, and team-fit assessment.
-
-- Validation step is mandatory, not optional
-- Auto-detect module silently; only prompt when ambiguous
-- MUST ATTENTION include rough `t_shirt_size` (XS/S/M/L/XL) in idea artifact for early sizing
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-# Idea Capture
-
-Capture raw ideas as structured artifacts for backlog consideration.
-
-## When to Use
-
-- User has new feature concept
-- Stakeholder request needs documentation
-- Quick capture without full refinement
-
-## Quick Reference
-
-### Workflow
-
-1. Activate `product-owner` skill
-2. Gather idea details (problem, value, scope, target users)
-3. Generate artifact with ID and draft status
-4. Detect related project module (dynamic discovery)
-5. Load feature context from `docs/business-features/`
-6. Save artifact to `team-artifacts/ideas/`
-7. **Validate idea** (MANDATORY) - Interview user to confirm problem statement, scope, and stakeholders
-8. Suggest next: `/refine {idea-file}`
-
-### Output
-
-- **Path:** `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`
-- **ID Pattern:** `IDEA-{YYMMDD}-{NNN}` (sequential)
-
-### Related
-
-- **Role Skill:** `product-owner`
-- **Command:** `/idea`
-- **Next Step:** `/refine`
-
-## Template
-
-See: `.claude/docs/team-artifacts/templates/idea-template.md`
+1. Skip module auto-detection (no modules exist yet)
+2. Skip `project-structure-reference.md` read (won't exist)
+3. Focus broader problem-space: market gap, competitors, differentiation
+4. Output tech-agnostic problem statement
+5. Enable WebSearch for market/competitor context
+6. Increase `AskUserQuestion` frequency — capture vision, constraints, team profile, scale expectations
+7. **[CRITICAL] NEVER ask about tech stack during idea capture.** Tech stack = research-driven decision AFTER full business analysis (business-evaluation phase). User volunteers preference → acknowledge but defer to tech stack research phase.
 
 ## Detailed Workflow
 
 ### Step 1: Gather Information
 
-- If no title provided, ask: "What's the idea in one sentence?"
+- No title → ask: "What's the idea in one sentence?"
 - Ask: "What problem does this solve?"
 - Ask: "Who benefits from this?"
 - Ask: "Any initial scope thoughts?"
 
 ### Step 2: Generate Artifact
 
-- Create idea file using template
-- Generate ID: `IDEA-{YYMMDD}-{NNN}` (sequential)
-- Set status: `draft`
+- Template: `.claude/docs/team-artifacts/templates/idea-template.md`
+- ID: `IDEA-{YYMMDD}-{NNN}` (sequential)
+- Status: `draft`
 
 ### Step 3: Capture Details
 
-- Document problem statement
-- List expected value
-- Identify target users
+- Document problem statement, expected value, target users
 
 ### Step 4: Detect Project Module
 
 **Dynamic Discovery:**
 
 1. Run: `Glob("docs/business-features/*/README.md")`
-2. Extract module names from paths (e.g., ServiceB, ServiceA, SupportingServices)
-3. Match idea keywords against module keywords (detect module from docs/business-features/ directory names)
+2. Extract module names from paths
+3. Match idea keywords against module keywords
 
-**Detection Approach (silent auto-detect):**
-
-- Auto-detect without showing confidence levels
-- Only prompt when ambiguous or no clear match
-- Multi-module: Load ALL detected modules
+| Scenario             | Action                                                                          |
+| -------------------- | ------------------------------------------------------------------------------- |
+| Clear match          | Auto-detect — NEVER show confidence levels                                      |
+| Ambiguous / no match | Prompt: "Which project module?" + Glob results + "Cross-cutting/Infrastructure" |
+| 2+ modules detected  | Load ALL modules, add all to `related_features`                                 |
 
 **If module detected:**
 
-1. Read `docs/business-features/{module}/README.md` (first 200 lines for overview)
+1. Read `docs/business-features/{module}/README.md` (first 200 lines)
 2. Extract feature list from Quick Navigation section
-3. Add to idea frontmatter:
-    - `module: {detected_module}`
-    - `related_features: [Feature1, Feature2]`
-
-**If ambiguous/not detected:**
-
-- Run Glob to get current module list
-- Prompt: "Which project module?" + list Glob results + "Cross-cutting/Infrastructure"
-
-**Multi-module detection:**
-
-- If 2+ modules detected, load ALL modules (no primary prompt)
-- Add all to `related_features` list
+3. Add to frontmatter: `module: {detected_module}`, `related_features: [Feature1, Feature2]`
 
 ### Step 5: Load Feature Context
 
-Once module detected:
-
-1. Read module README overview section (~2K tokens)
-2. Identify closest matching feature(s) from feature list
+1. Read module README overview (~2K tokens)
+2. Identify closest matching feature(s)
 3. Read corresponding feature doc (3-5K tokens)
-4. Extract:
-    - Related entities
-    - Existing business rules (BR-{MOD}-XXX)
-    - Test case patterns (TC-{FEATURE}-{NNN})
+4. Extract: related entities, existing business rules (BR-{MOD}-XXX), test case patterns (TC-{FEATURE}-{NNN})
 
-**Token Budget:** Target 8-12K tokens total for feature context.
+**Token Budget:** Target 8-12K tokens total.
 
 ### Step 6: Save Artifact
 
 - Path: `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`
-- Role: Infer from context or ask
+- Role: infer from context or ask
 - Include domain context if detected
 
-### Step 6.5: Idea Discovery Interview (MANDATORY)
+### Step 6.5: Discovery Interview (MANDATORY)
 
-Use `AskUserQuestion` to probe the idea with 3-5 structured questions. Each question MUST ATTENTION have 2-4 options with one marked "(Recommended)".
+Use `AskUserQuestion` — 3-5 structured questions. Each MUST ATTENTION have 2-4 options with one marked "(Recommended)".
 
-#### Question Categories (pick 3-5 based on idea type):
+| Category        | Purpose                           | Example                                   |
+| --------------- | --------------------------------- | ----------------------------------------- |
+| Problem Clarity | Distinguish problem from solution | "What problem does this solve?" + options |
+| User Persona    | Identify primary user             | "Who benefits most?" + role options       |
+| Scope           | MVP vs full vision                | "What's smallest valuable version?"       |
+| Testability     | Define done?                      | "How would you verify this works?"        |
+| Impact          | Business value sizing             | "How many users/processes affected?"      |
+| Constraints     | Known blockers                    | "Any technical/business constraints?"     |
+| Scale           | Expected load/growth              | "How many users/transactions expected?"   |
 
-| Category        | Purpose                           | Example                                      |
-| --------------- | --------------------------------- | -------------------------------------------- |
-| Problem Clarity | Distinguish problem from solution | "What problem does this solve?" with options |
-| User Persona    | Identify primary user             | "Who benefits most?" with role options       |
-| Scope           | MVP vs full vision                | "What's the smallest valuable version?"      |
-| Testability     | Can we define done?               | "How would you verify this works?"           |
-| Impact          | Business value sizing             | "How many users/processes does this affect?" |
-| Constraints     | Known blockers                    | "Any technical/business constraints?"        |
-| Scale           | Expected load and growth          | "How many users/transactions expected?"      |
+> **Greenfield:** NEVER include tech stack questions. Focus on business problem, users, scale, constraints.
 
-> **Greenfield note:** In greenfield mode, do NOT include tech stack questions here. Focus on business problem, users, scale, and constraints. Tech stack is evaluated in a dedicated research phase later.
+**Testability Question (ALWAYS include):**
+"How would you verify this feature works correctly?" — Options: manual test steps, automated test criteria, metric thresholds.
 
-#### Testability Question (ALWAYS include):
+Document all answers under `## Discovery Interview`.
 
-"How would you verify this feature works correctly?"
+### Step 7: Validate Idea (MANDATORY)
 
-- Options based on domain: manual test steps, automated test criteria, metric thresholds
+`AskUserQuestion` — 2-3 validation questions:
 
-Document all answers in the idea artifact under `## Discovery Interview`.
+| Category     | Example Question                                      |
+| ------------ | ----------------------------------------------------- |
+| Problem      | "Is the problem statement clear and user-focused?"    |
+| Value        | "What's the expected business value or user benefit?" |
+| Scope        | "Any scope boundaries to clarify now?"                |
+| Stakeholders | "Who else should review this idea?"                   |
 
-### Step 7: Suggest Next Step
+Document under `## Validation Summary`. Update artifact based on answers.
 
-After idea capture, suggest:
-
-1. `/refine` — Refine into PBI (Recommended)
-2. `/tdd-spec` — Jump straight to test spec creation
-3. `/plan` — Start implementation planning
-
-- Output: "Idea captured! To refine into a PBI, run: `/refine {filename}`"
-- If domain module detected: "Module context from {module} will be used during refinement."
-
-## Validation Step (MANDATORY)
-
-After capturing the idea, validate with user. **This step is NOT optional.**
-
-### Question Categories
-
-| Category         | Example Question                                      |
-| ---------------- | ----------------------------------------------------- |
-| **Problem**      | "Is the problem statement clear and user-focused?"    |
-| **Value**        | "What's the expected business value or user benefit?" |
-| **Scope**        | "Any scope boundaries to clarify now?"                |
-| **Stakeholders** | "Who else should review this idea?"                   |
-
-### Process
-
-1. Generate 2-3 questions focused on problem clarity, scope, and stakeholders
-2. Use `AskUserQuestion` tool to interview with specific questions:
-    - "Is the problem statement clear and user-focused?"
-    - "Any scope boundaries to clarify now?"
-    - "Who else should review this idea?"
-3. Document in idea artifact under `## Validation Summary`
-4. Update idea based on answers
-
-### Validation Output Format
+**Validation Output Format:**
 
 ```markdown
 ## Validation Summary
@@ -263,9 +184,20 @@ After capturing the idea, validate with user. **This step is NOT optional.**
 - [ ] {follow-up if any}
 ```
 
-## Domain Context Output Format
+### Step 8: Suggest Next Step
 
-When a project module is detected, include this section in the idea artifact:
+`AskUserQuestion` after capture:
+
+1. `/refine` — Refine into PBI (Recommended)
+2. `/tdd-spec` — Jump straight to test spec
+3. `/plan` — Start implementation planning
+
+Output: "Idea captured! To refine into a PBI, run: `/refine {filename}`"
+Module detected: "Module context from {module} will be used during refinement."
+
+## Output Formats
+
+### Domain Context Section
 
 ```markdown
 ## Domain Context (Project Features)
@@ -289,7 +221,7 @@ When a project module is detected, include this section in the idea artifact:
 - BR-{MOD}-XXX: {Brief description}
 ```
 
-## UI Sketch Output Format
+### UI Sketch Section
 
 <!-- SYNC:ui-wireframe -->
 
@@ -297,67 +229,87 @@ When a project module is detected, include this section in the idea artifact:
 
 <!-- /SYNC:ui-wireframe -->
 
-When the idea involves UI changes, include this section in the idea artifact:
-
 ```markdown
 ## UI Sketch
 
 ### Layout
 
-{Rough ASCII wireframe showing spatial arrangement — see UI wireframe protocol}
+{Rough ASCII wireframe — see UI wireframe protocol}
 
 ### Key Components
 
 - **{Component}** — {purpose} _(tier: common | domain-shared | page/app)_
-- **{Component}** — {purpose} _(tier: common | domain-shared | page/app)_
 ```
 
-> Classify components per **Component Hierarchy** in `UI wireframe protocol` — search existing libs before proposing new components.
-> If backend-only idea: `## UI Sketch` → `N/A — Backend-only change. No UI affected.`
+> Search existing libs before proposing new components.
+> Backend-only idea: `## UI Sketch` → `N/A — Backend-only change. No UI affected.`
 
-## Example
+## Examples
 
 ```bash
 /idea "Dark mode toggle for settings"
-```
+# Creates: team-artifacts/ideas/260119-po-idea-dark-mode-toggle.md
 
-Creates: `team-artifacts/ideas/260119-po-idea-dark-mode-toggle.md`
-
-```bash
 /idea "Add goal progress tracking notification"
+# Creates with module context: team-artifacts/ideas/260119-po-idea-goal-progress-notification.md
 ```
-
-Creates with ServiceB context: `team-artifacts/ideas/260119-po-idea-goal-progress-notification.md`
 
 ---
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** Not already in workflow → MUST ATTENTION use `AskUserQuestion`:
 >
 > 1. **Activate `idea-to-pbi` workflow** (Recommended) — idea → refine → refine-review → story → story-review → prioritize
-> 2. **Execute `/idea` directly** — run this skill standalone
+> 2. **Execute `/idea` directly** — run standalone
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing skill, use `AskUserQuestion`:
 
 - **"/refine (Recommended)"** — Transform idea into actionable PBI
-- **"/web-research"** — If idea needs market research first
+- **"/web-research"** — Idea needs market research first
 - **"Skip, continue manually"** — user decides
+
+---
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+- **IMPORTANT MUST ATTENTION** `TaskCreate` break ALL work into small tasks BEFORE starting
+- **IMPORTANT MUST ATTENTION** validate all decisions with user via `AskUserQuestion` — NEVER auto-decide
+- **IMPORTANT MUST ATTENTION** Discovery Interview + Validation NEVER optional — MANDATORY steps
+- **IMPORTANT MUST ATTENTION** NEVER ask about tech stack in greenfield mode — defer to business-evaluation phase
+- **IMPORTANT MUST ATTENTION** auto-detect module silently — prompt only when ambiguous
+- **IMPORTANT MUST ATTENTION** add final review task to verify work quality
+
+**Anti-Rationalization:**
+
+| Evasion                                   | Rebuttal                                                  |
+| ----------------------------------------- | --------------------------------------------------------- |
+| "Idea is simple, skip interview"          | NEVER skip — discovery uncovers hidden constraints        |
+| "Module is obvious, skip detection"       | Still run `Glob()` — confirm with evidence not assumption |
+| "Validation is redundant after interview" | ALWAYS run both — different question categories           |
+| "Greenfield check is optional"            | Auto-detect is MANDATORY — no manual override             |
 
   <!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

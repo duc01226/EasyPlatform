@@ -1,32 +1,26 @@
 ---
 name: scan-e2e-tests
-version: 1.0.0
+version: 2.0.0
 description: '[Documentation] Scan project and populate/sync docs/project-reference/e2e-test-reference.md with E2E test architecture, page objects, step definitions, configuration, and framework patterns.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
+> **AI Mistake Prevention** — Failure modes to avoid:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> - **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
+> - **Trace full dependency chain after edits.** Always trace full chain.
+> - **Surface ambiguity before coding.** NEVER pick silently.
+> - **NEVER hardcode file counts in docs.** Use grep-expression stats, not hardcoded numbers.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -34,168 +28,164 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- SYNC:scan-and-update-reference-doc -->
 
-> **Scan & Update Reference Doc** — When updating reference docs: (1) Read existing doc first. (2) Scan codebase for current state (grep/glob). (3) Diff findings vs doc content. (4) Update ONLY sections where code diverged from doc. (5) Preserve manual annotations. (6) Update metadata (date, counts). NEVER rewrite entire doc — surgical updates only.
+> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
+>
+> 1. **Read existing doc** first — understand structure and manual annotations
+> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
+> 3. **Scan codebase** (grep/glob) for current patterns
+> 4. **Diff** findings vs doc — identify stale sections only
+> 5. **Update ONLY** diverged sections. Preserve manual annotations.
+> 6. **Update metadata** (date, version) in frontmatter/header
+> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
 
 <!-- /SYNC:scan-and-update-reference-doc -->
 
 <!-- SYNC:output-quality-principles -->
 
-> **Output Quality** — Reference docs are injected into AI context. Apply 10 rules: (1) No inventories/counts — AI can grep. (2) No directory trees — AI can glob. (3) No TOCs. (4) Rules > descriptions — "MUST ATTENTION use X" not "X allows you to...". (5) 1 example per pattern. (6) Tables > prose. (7) BAD/GOOD pairs: 2-3 lines each. (8) Primacy-recency anchoring — critical rules in first AND last 5 lines. (9) No checkbox checklists — bullets force reading. (10) Density target: >=8 MUST ATTENTION/NEVER/ALWAYS per 100 lines.
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — stale instantly
+> 2. No directory trees — use 1-line path conventions
+> 3. No TOCs — AI reads linearly
+> 4. One example per pattern — only if non-obvious
+> 5. Lead with answer, not reasoning
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end
 
 <!-- /SYNC:output-quality-principles -->
 
 ## Quick Summary
 
-**Goal:** Scan E2E test codebase and populate `docs/project-reference/e2e-test-reference.md` with architecture, base classes, page objects, step definitions, configuration, and best practices. (content auto-injected by hook — check for [Injected: ...] header before reading)
+**Goal:** Scan E2E test codebase → populate `docs/project-reference/e2e-test-reference.md` with architecture, base classes, page objects, step definitions, configuration, and best practices. (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 **Workflow:**
 
-1. **Read** — Load current target doc, detect init vs sync mode
-2. **Detect** — Identify E2E framework(s) and tech stack
-3. **Scan** — Discover E2E patterns via parallel sub-agents
-4. **Report** — Write findings to external report file
-5. **Generate** — Build/update reference doc from report
-6. **Verify** — Validate code examples reference real files
+1. **Classify** — Detect E2E framework, BDD mode, scan mode
+2. **Scan** — Parallel sub-agents discover patterns with `file:line` evidence
+3. **Report** — Write findings incrementally to report file
+4. **Generate** — Build/update reference doc from report
+5. **Fresh-Eyes** — Round 2 verification validates all examples
 
 **Key Rules:**
 
-- Generic — works with any E2E framework (Selenium, Playwright, Cypress, WebdriverIO, Puppeteer, etc.)
-- BDD frameworks (SpecFlow, Cucumber, Behave) are E2E — scan feature files, step definitions, contexts
-- Detect framework first, then scan for framework-specific patterns
-- Every code example must come from actual project files with file:line references
-- Use `docs/project-config.json` `e2eTesting` section if available for project-specific paths
+- Generic — works with any E2E framework (Selenium, Playwright, Cypress, WebdriverIO, etc.)
+- BDD frameworks (SpecFlow, Cucumber, Behave) are E2E — scan feature files and step definitions
+- **MUST ATTENTION** detect framework FIRST — agent routing depends on it
+- Every code example from actual project files with `file:line`
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+---
 
 # Scan E2E Tests
 
-## Phase 0: Read & Assess
+## Phase 0: Detect Artifact Type & Mode
+
+**Before any other step**, run in parallel:
 
 1. Read `docs/project-reference/e2e-test-reference.md`
-2. Detect mode: init (placeholder) or sync (populated)
-3. If sync: extract existing sections and note what's already well-documented
-4. Read `docs/project-config.json` `e2eTesting` section if it exists — use as hints for paths and framework
+    - Detect mode: Init (placeholder) or Sync (populated)
+    - In Sync mode: extract section list → skip re-scanning well-documented sections
 
-## Phase 1: Detect E2E Framework
+2. Detect E2E framework and artifact type:
 
-Detect E2E framework and tech stack from project files:
+| Signal                                          | Framework      | Artifact Type      | Agent Routing                |
+| ----------------------------------------------- | -------------- | ------------------ | ---------------------------- |
+| `*.feature` files + `[Binding]`/`[Given]` in C# | SpecFlow (BDD) | BDD + Page Objects | Run Agent 1+2+3 (BDD)        |
+| `playwright.config.*`                           | Playwright     | Non-BDD            | Run Agent 1+2 (skip Agent 3) |
+| `cypress.config.*`                              | Cypress        | Non-BDD            | Run Agent 1+2 (skip Agent 3) |
+| `*.feature` files + Python                      | Behave (BDD)   | BDD                | Run Agent 1+2+3 (BDD)        |
+| `*.feature` files + Java                        | Cucumber (BDD) | BDD                | Run Agent 1+2+3 (BDD)        |
+| `wdio.conf.*`                                   | WebdriverIO    | Non-BDD            | Run Agent 1+2 (skip Agent 3) |
 
-### .NET / C#
+3. Detect scan mode:
 
-```bash
-# Selenium + SpecFlow (BDD)
-grep -r "Selenium.WebDriver\|SpecFlow" --include="*.csproj" -l
-find . -name "*.feature" -type f | head -10
-grep -r "\[Binding\]\|\[Given\|\[When\|\[Then" --include="*.cs" -l | head -10
+| Mode | Condition                                  | Action                                              |
+| ---- | ------------------------------------------ | --------------------------------------------------- |
+| Init | Target doc doesn't exist or is placeholder | Full scan, create all sections                      |
+| Sync | Target doc exists with content             | Diff scan — check for new frameworks, count changes |
 
-# Playwright .NET
-grep -r "Microsoft.Playwright" --include="*.csproj" -l
-```
+4. Read `docs/project-config.json` `e2eTesting` section if it exists — use as hints for paths.
 
-### TypeScript / JavaScript
+**Evidence gate:** Confidence <60% on framework → report uncertainty, ask user before proceeding.
 
-```bash
-# Playwright
-ls playwright.config.* 2>/dev/null
-grep -l "playwright" package.json */package.json 2>/dev/null
+## Phase 1: Plan
 
-# Cypress
-ls cypress.config.* 2>/dev/null
-grep -l "cypress" package.json */package.json 2>/dev/null
-
-# WebdriverIO
-ls wdio.conf.* 2>/dev/null
-
-# Puppeteer
-grep -l "puppeteer" package.json */package.json 2>/dev/null
-```
-
-### Python
-
-```bash
-# Selenium + Behave (BDD)
-grep -r "selenium\|behave" requirements*.txt setup.py pyproject.toml 2>/dev/null
-find . -name "*.feature" -type f | head -10
-
-# Playwright Python
-grep -r "playwright" requirements*.txt pyproject.toml 2>/dev/null
-```
-
-### Java
-
-```bash
-# Selenium + Cucumber (BDD)
-grep -r "selenium\|cucumber" --include="pom.xml" --include="build.gradle" -l 2>/dev/null
-find . -name "*.feature" -type f | head -10
-```
-
-**Output:** Detected framework(s), language, BDD framework (if any), test runner
+Create `TaskCreate` entries for each sub-agent. **Do not start Phase 2 without tasks created.**
 
 ## Phase 2: Execute Scan (Parallel Sub-Agents)
 
-Launch **3 Explore agents** in parallel:
+Launch sub-agents matching detected framework. Each MUST:
+
+- Write findings incrementally after each file — NEVER batch at end
+- Cite `file:line` for every pattern example
+- Evidence requirement: NEVER document a count — use grep-expression statistics instead
+
+All findings → `plans/reports/scan-e2e-tests-{YYMMDD}-{HHMM}-report.md`
 
 ### Agent 1: E2E Framework & Architecture
+
+**Think:** What makes this test infrastructure reusable vs brittle? How is the test project structured? What base classes exist and what do they provide? What lifecycle hooks are available?
 
 - Find E2E project structure (test directories, page object directories)
 - Find base classes for tests and page objects
 - Find DI/startup configuration for test projects
 - Find WebDriver/browser management (driver creation, lifecycle, options)
 - Find settings/configuration classes (URLs, credentials, timeouts)
-- Count test files, feature files, page objects
+
+Security/performance flag: If test credentials are found hardcoded in source files, flag as CRITICAL security issue in report.
 
 ### Agent 2: Page Object Model & Components
 
+**Think:** How do page objects encapsulate UI interaction? What patterns make them maintainable? What wait/retry strategies prevent flakiness?
+
 - Find page object classes and their hierarchy
 - Find UI component wrappers (reusable element abstractions)
-- Find selector patterns (CSS, data-testid, XPath, BEM)
+- Find selector patterns (CSS, data-testid, XPath, BEM) — note which are used most
 - Find navigation helpers (page transitions, URL routing)
 - Find wait/retry patterns (explicit waits, polling, retry logic)
 - Find assertion helpers and validation patterns
 
-### Agent 3: BDD & Test Patterns (if BDD detected)
+### Agent 3: BDD & Test Patterns (run ONLY if BDD detected in Phase 0)
 
-- Find feature files (.feature) — count, categorize by area
-- Find step definition classes — count, list patterns
+**Think:** How do feature files, step definitions, and context sharing work together? What patterns enable reuse across scenarios? How is test state managed?
+
+- Find feature files (`.feature`) — categorize by area
+- Find step definition classes — count patterns
 - Find context/state sharing between steps (ScenarioContext, World, IBddStepsContext)
 - Find hooks (Before/After scenario, BeforeAll/AfterAll)
 - Find test data patterns (fixtures, factories, unique generators)
 - Find test account/credential management patterns
 - Find environment configuration (per-env settings, CI headless mode)
 
-Write all findings to: `plans/reports/scan-e2e-tests-{YYMMDD}-{HHMM}-report.md`
-
 ## Phase 3: Generate Reference Doc
 
-Build `docs/project-reference/e2e-test-reference.md` with these sections:
+**Round 1 (main agent):** Build sections from report findings.
+
+**Round 2 (fresh sub-agent, zero memory):**
+
+- Does every code example exist at the claimed `file:line`? (Glob + Grep verify)
+- Are security-sensitive patterns (hardcoded credentials) flagged?
+- Are feature/step counts expressed as grep expressions, not hardcoded numbers?
+- Are conditional sections (BDD, test accounts) only present if corresponding code found?
+
+**Round 3 only if Round 2 finds issues.** Max 3 rounds → escalate to user if unresolved.
 
 ### Required Sections (all frameworks)
 
-1. **Architecture Overview** — Layer diagram, project dependencies
-2. **Project Structure** — Directory tree with annotations
-3. **Key Dependencies** — Package versions table
-4. **Base Classes** — Test/page object hierarchies with code examples
-5. **Page Object Pattern** — How to create page objects, component wrappers
-6. **Wait & Assertion Patterns** — Resilient waits, retry, assertion helpers
-7. **Navigation & Page Discovery** — URL routing, page transitions
-8. **Configuration** — Settings files, environment variants, CI setup
-9. **Running Tests** — Commands for all, filtered, headed, CI modes
-10. **Best Practices** — Project-specific conventions
+| Section                       | Content                                         |
+| ----------------------------- | ----------------------------------------------- |
+| **Architecture Overview**     | Layer diagram, project dependencies             |
+| **Base Classes**              | Test/page object hierarchies with code examples |
+| **Page Object Pattern**       | How to create page objects, component wrappers  |
+| **Wait & Assertion Patterns** | Resilient waits, retry, assertion helpers       |
+| **Configuration**             | Settings files, environment variants, CI setup  |
+| **Running Tests**             | Commands for all, filtered, headed, CI modes    |
+| **Best Practices**            | Project-specific conventions                    |
 
 ### Conditional Sections (framework-specific)
 
-- **BDD Pattern** (SpecFlow/Cucumber/Behave) — Feature file conventions, step definitions, context sharing, tags
+- **BDD Pattern** (if SpecFlow/Cucumber/Behave) — Feature file conventions, step definitions, context sharing, tags
 - **Test Account System** (if credential management found) — Account types, numbered variants
-- **Common Patterns** (if shared steps/helpers found) — Login flows, error assertions, reusable steps
 - **Environment Variants** (if multi-env found) — Abstract/concrete page pattern, env-specific configs
-
-### Section Template
-
-Each section should include:
-
-- Brief description of the pattern
-- Code example from actual project files (with file:line reference)
-- Key class/method names for searchability
 
 ## Phase 4: Update project-config.json
 
@@ -206,51 +196,62 @@ If `docs/project-config.json` exists, update/create the `e2eTesting` section:
     "e2eTesting": {
         "framework": "<detected>",
         "language": "<detected>",
+        "bddFramework": "<detected or null>",
         "guideDoc": "docs/project-reference/e2e-test-reference.md",
-        "runCommands": { ... },
-        "bestPractices": [ ... ],
-        "entryPoints": [ ... ],
-        "stats": { "featureFiles": N, "stepDefinitionFiles": N, "featureAreas": N },
-        "dependencies": { ... },
-        "architecture": { ... }
+        "runCommands": {},
+        "entryPoints": [],
+        "stats": {
+            "featureFilesGrepExpr": "<grep pattern>",
+            "stepDefinitionFilesGrepExpr": "<grep pattern>"
+        },
+        "dependencies": {},
+        "architecture": {}
     }
 }
 ```
 
-## Phase 5: Verify
+Note: stats use grep expressions, NOT hardcoded counts.
 
-1. Spot-check 3-5 code examples — do file:line references exist?
-2. Verify class names match actual code (grep for each)
-3. Verify dependency versions against .csproj / package.json / requirements.txt
-4. Verify file counts (feature files, step defs, page objects) are accurate
-5. Run schema validation if project-config.json was updated
+## Phase 5: Write & Verify
 
-## Output
-
-Report what changed:
-
-- Sections created vs updated
-- Framework detected and version
-- File counts discovered
-- Any patterns not documented (gaps)
+1. Write updated doc with `<!-- Last scanned: YYYY-MM-DD -->` at top
+2. Surgical update only — preserve unchanged sections
+3. Verify (Glob + Grep): ALL code example file paths exist AND class names match
+4. Verify dependency versions against `.csproj` / `package.json` / `requirements.txt`
+5. Verify no hardcoded file counts in output doc (use grep expressions or omit)
+6. Report: sections created vs updated, framework detected, gaps
 
 ---
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
+- **IMPORTANT MUST ATTENTION** detect framework in Phase 0 — agent routing depends on BDD vs non-BDD
+- **IMPORTANT MUST ATTENTION** cite `file:line` for every code example — NEVER fabricate class names
+- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each file — NEVER batch at end
+- **IMPORTANT MUST ATTENTION** NEVER hardcode file counts — use grep expressions in project-config.json stats
+- **IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — NEVER declare PASS after Round 1
       <!-- SYNC:scan-and-update-reference-doc:reminder -->
 - **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
       <!-- /SYNC:scan-and-update-reference-doc:reminder -->
       <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
+- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
       <!-- /SYNC:output-quality-principles:reminder -->
       <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
       <!-- /SYNC:critical-thinking-mindset:reminder -->
       <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**Anti-Rationalization:**
+
+| Evasion                                       | Rebuttal                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------ |
+| "Framework obvious, skip Phase 0 detection"   | Phase 0 is BLOCKING — BDD vs non-BDD detection determines which agents run     |
+| "BDD agent not needed (probably non-BDD)"     | Confirm non-BDD from Phase 0 evidence before skipping Agent 3                  |
+| "Examples look right, skip Round 2"           | NEVER declare PASS after Round 1. Main agent rationalizes fabricated examples. |
+| "File counts in project-config.json are fine" | NEVER hardcode counts — use grep expressions to avoid instant staleness        |
+| "Conditional sections not needed"             | Only add conditional sections if corresponding code evidence found in scan     |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and break into small todo tasks and sub-tasks using TaskCreate.

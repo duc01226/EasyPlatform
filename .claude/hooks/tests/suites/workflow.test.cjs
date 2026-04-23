@@ -766,6 +766,24 @@ const deadModuleVerificationTests = [
             const missing = Object.entries(data.workflows).filter(([, w]) => !w.whenNotToUse);
             assertTrue(missing.length === 0, `All workflows should have whenNotToUse, missing: ${missing.map(([id]) => id).join(', ')}`);
         }
+    },
+    {
+        name: '[review-guidance] review workflow injectContext includes multilingual UI sync check',
+        fn: async () => {
+            const configPath = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
+            const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            const text = data.workflows?.review?.preActions?.injectContext || '';
+            assertContains(text, 'MULTILINGUAL UI SYNC CHECK', 'review workflow should include multilingual UI sync guidance');
+        }
+    },
+    {
+        name: '[review-guidance] review-changes workflow injectContext includes multilingual UI sync check',
+        fn: async () => {
+            const configPath = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
+            const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            const text = data.workflows?.['review-changes']?.preActions?.injectContext || '';
+            assertContains(text, 'MULTILINGUAL UI SYNC CHECK', 'review-changes workflow should include multilingual UI sync guidance');
+        }
     }
 ];
 

@@ -141,6 +141,7 @@ function checkConfigStatus() {
 const SCAN_SKILL_MAP = {
     'project-structure-reference.md': 'scan-project-structure',
     'backend-patterns-reference.md': 'scan-backend-patterns',
+    'seed-test-data-reference.md': 'scan-seed-test-data',
     'frontend-patterns-reference.md': 'scan-frontend-patterns',
     'integration-test-reference.md': 'scan-integration-tests',
     'feature-docs-reference.md': 'scan-feature-docs',
@@ -172,6 +173,12 @@ const DEFAULT_REFERENCE_DOCS = [
         sections: ['Repository Pattern', 'CQRS Patterns', 'Validation Patterns', 'Entity Patterns', 'Message Bus']
     },
     {
+        filename: 'seed-test-data-reference.md',
+        purpose: 'Seed test data patterns: idempotent seeder architecture, DI scope safety, command dispatch, and config-driven counts.',
+        sections: [],
+        templatePath: '.claude/templates/reference-docs/seed-test-data-reference.md'
+    },
+    {
         filename: 'frontend-patterns-reference.md',
         purpose: 'Frontend patterns: component base classes, state management, API services, styling conventions.',
         sections: ['Component Base Classes', 'State Management', 'API Services', 'Styling Conventions', 'Directory Structure']
@@ -185,6 +192,12 @@ const DEFAULT_REFERENCE_DOCS = [
         filename: 'feature-docs-reference.md',
         purpose: 'Feature documentation patterns: app-to-service mapping, doc structure, templates, and conventions.',
         sections: ['App-to-Service Mapping', 'Feature Doc Structure', 'Templates', 'Conventions']
+    },
+    {
+        filename: 'spec-principles.md',
+        purpose: 'Spec quality principles: completeness criteria, AI-implementability, test coverage mapping, and tech-agnostic standards.',
+        sections: [],
+        templatePath: '.claude/templates/reference-docs/spec-principles.md'
     },
     {
         filename: 'code-review-rules.md',
@@ -297,7 +310,7 @@ function checkProjectConfig() {
 
 /**
  * Load reference doc definitions from config, falling back to defaults.
- * @returns {Array<{filename: string, purpose: string, sections?: string[]}>}
+ * @returns {Array<{filename: string, purpose: string, sections?: string[], templatePath?: string}>}
  */
 function getReferenceDocs() {
     const config = loadProjectConfig();
@@ -311,10 +324,28 @@ function getReferenceDocs() {
  * Branches on file extension: .scss/.css → SCSS-style body using
  * PLACEHOLDER_MARKER_SCSS sentinel; everything else (default .md) → Markdown
  * body using PLACEHOLDER_MARKER. Title transform strips .md/.scss/.css.
- * @param {{filename: string, purpose: string, sections?: string[]}} doc
+ * If doc.templatePath is provided and exists, that template is copied as-is.
+ *
+ * @param {{filename: string, purpose: string, sections?: string[], templatePath?: string}} doc
  * @returns {string}
  */
 function generatePlaceholderContent(doc) {
+    // Optional template passthrough for docs that need rich defaults.
+    if (typeof doc.templatePath === 'string' && doc.templatePath.trim() !== '') {
+        const rawTemplatePath = doc.templatePath.trim();
+        const templatePath = path.isAbsolute(rawTemplatePath)
+            ? rawTemplatePath
+            : path.join(PROJECT_DIR, rawTemplatePath);
+        try {
+            if (fs.existsSync(templatePath) && fs.statSync(templatePath).isFile()) {
+                const templateContent = fs.readFileSync(templatePath, 'utf-8');
+                return templateContent.endsWith('\n') ? templateContent : (templateContent + '\n');
+            }
+        } catch {
+            /* fall through to generated placeholder content */
+        }
+    }
+
     const ext = path.extname(doc.filename).toLowerCase();
     const baseName = doc.filename
         .replace(/\.(md|scss|css)$/, '')

@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Feature with Integration Test workflow — impl
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /domain-analysis (if entity changes) -> /plan -> /plan-review -> /plan-validate -> /why-review -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /cook -> /review-domain-entities (if entity changes) -> /integration-test -> /integration-test-review -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -99,6 +101,8 @@ This workflow has steps that appear multiple times. When creating tasks, use the
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /domain-analysis (if entity changes) -> /plan -> /plan-review -> /plan-validate -> /why-review -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /cook -> /review-domain-entities (if entity changes) -> /integration-test -> /integration-test-review -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
@@ -111,3 +115,7 @@ This workflow has steps that appear multiple times. When creating tasks, use the
       <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

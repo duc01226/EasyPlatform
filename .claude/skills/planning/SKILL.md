@@ -1,7 +1,7 @@
 ---
 name: planning
 version: 2.0.0
-description: "[Planning] Use when you need to research, analyze, investigate, plan, design, or architect technical solutions. Includes comprehensive research phase with Gemini CLI, WebSearch, and 5-research limit. Triggers on keywords like "research", "analyze", "investigate options", "explore solutions", "compare approaches", "evaluate alternatives", "plan", "design", "architect"."
+description: '[Planning] Use when you need to research, analyze, investigate, plan, design, or architect technical solutions. Includes comprehensive research phase with Gemini CLI, WebSearch, and 5-research limit. Triggers on keywords like "research", "analyze", "investigate options", "explore solutions", "compare approaches", "evaluate alternatives", "plan", "design", "architect".'
 license: MIT
 ---
 
@@ -49,11 +49,25 @@ license: MIT
 
 <!-- SYNC:estimation-framework -->
 
-> **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+> **Estimation Framework** — Story Points (Modified Fibonacci) + Man-Days for 3-5yr dev (6 productive hrs/day, .NET + Angular stack). AI estimate assumes Claude Code with good project context (code graph, patterns, hooks active).
+>
+> | SP  | Complexity | Description                                    | Traditional (code + test) | AI-Assisted (code+rev + test+rev) |
+> | --- | ---------- | ---------------------------------------------- | ------------------------- | --------------------------------- |
+> | 1   | Low        | Trivial: single field, config flag, CSS fix    | 0.5d (0.3d+0.2d)          | 0.25d (0.15d+0.1d)                |
+> | 2   | Low        | Small: simple CRUD endpoint OR basic component | 1d (0.6d+0.4d)            | 0.35d (0.2d+0.15d)                |
+> | 3   | Medium     | Medium: form + API + validation                | 2d (1.3d+0.7d)            | 0.65d (0.4d+0.25d)                |
+> | 5   | Medium     | Large: multi-layer feature (BE + FE)           | 4d (2.5d+1.5d)            | 1.0d (0.6d+0.4d)                  |
+> | 8   | High       | Very large: complex feature + migration        | 6d (4d+2d)                | 1.5d (1.0d+0.5d)                  |
+> | 13  | Critical   | Epic: cross-service — SHOULD split             | 10d (6.5d+3.5d)           | 2.0d (1.3d+0.7d)                  |
+> | 21  | Critical   | MUST split — not sprint-ready                  | >15d                      | ~3d                               |
+>
+> **AI speedup grows with task size:** SP 1 ≈ 2x · SP 2-3 ≈ 3x · SP 5-8 ≈ 4x · SP 13+ ≈ 5x. Pattern-heavy CQRS/Angular boilerplate eliminated in hours at any scale. Fixed overhead: human review.
+> **AI column breakdown:** `(code_gen × 1.3) + (test_gen × 1.3)` — each artifact adds 30% human review overhead. Test writing with AI = few hours generation + 30% review, same model as coding.
+> Output `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in plan/PBI frontmatter.
 
 <!-- /SYNC:estimation-framework -->
 
-- `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
+- `docs/specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
 <!-- SYNC:plan-quality -->
 
@@ -816,6 +830,9 @@ status: pending
 priority: P1
 effort: 8h
 story_points: 8
+complexity: High
+man_days_traditional: '6d (4d code + 2d test)'
+man_days_ai: '3d (2d code + 1d test)'
 issue: 123
 branch: kai/feat/oauth-auth
 tags: [auth, backend, security]
@@ -1244,7 +1261,7 @@ After creating all phase files, run the **recursive decomposition loop**:
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
   <!-- /SYNC:evidence-based-reasoning:reminder -->
   <!-- SYNC:estimation-framework:reminder -->
-- **IMPORTANT MUST ATTENTION** include `story_points` and `complexity` in plan frontmatter. SP > 8 = split.
+- **IMPORTANT MUST ATTENTION** include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in plan/PBI frontmatter. Use SP table: SP 1=0.5d/0.25d, SP 2=1d/0.35d, SP 3=2d/0.65d, SP 5=4d/1.0d, SP 8=6d/1.5d · SP 13=10d/2.0d. SP 13 SHOULD split, SP 21 MUST split.
   <!-- /SYNC:estimation-framework:reminder -->
   <!-- SYNC:plan-quality:reminder -->
 - **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
@@ -1261,3 +1278,5 @@ After creating all phase files, run the **recursive decomposition loop**:
   <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
   <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

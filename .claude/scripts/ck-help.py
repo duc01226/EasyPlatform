@@ -69,7 +69,7 @@ CATEGORY_GUIDES = {
         "title": "Fixing Issues",
         "workflow": [
             ("Start", "`/fix` \"describe your issue\""),
-            ("If stuck", "`/debug` \"more details\""),
+            ("If stuck", "`/debug-investigate` \"more details\""),
             ("Verify", "`/test`"),
         ],
         "tip": "Include error messages for better results",

@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Write Integration Tests workflow — spec-first
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /tdd-spec -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 > **[CRITICAL] Understand Domain First Gate:** The `/investigate` step is MANDATORY before `/tdd-spec` and `/integration-test`. You MUST read the handler/entity/event source to understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assertions written without reading the handler source are guaranteed to be wrong or smoke-only.
@@ -80,7 +82,7 @@ disable-model-invocation: true
 
 Activate the `write-integration-test` workflow. Run `/workflow-start write-integration-test` with the user's prompt as context.
 
-**Steps:** /scout → /feature-investigation → /tdd-spec → /tdd-spec-review → /integration-test → /integration-test-review → /integration-test-verify → /test-specs-docs → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /feature-investigation → /tdd-spec → /tdd-spec-review → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /docs-update → /watzup → /workflow-end
 
 > **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
 >
@@ -91,11 +93,13 @@ Activate the `write-integration-test` workflow. Run `/workflow-start write-integ
 > - **`/integration-test`** — Generate test files from TC specs using FROM-PROMPT or FROM-CHANGES mode. Non-negotiable: async polling/retry for all DB assertions, unique data generators for all test data, test-spec annotation on every test method (adapt annotation syntax to your framework).
 > - **`/integration-test-review`** — 6-gate quality check (assertion value, data state, repeatability, domain logic, traceability, three-way sync). Mandatory fix loop + fresh sub-agent re-check. NEVER proceed with CRITICAL/HIGH issues outstanding.
 > - **`/integration-test-verify`** — Run tests via `quickRunCommand` from `docs/project-config.json`. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.
-> - **`/test-specs-docs`** — Sync the cross-module spec dashboard (`docs/test-specs/`). Update `IntegrationTest` fields with `{File}::{MethodName}` traceability links.
+> - **`/tdd-spec [direction=sync]`** — Sync the cross-module spec dashboard (`docs/specs/`). Update `IntegrationTest` fields with `{File}::{MethodName}` traceability links.
 > - **`/docs-update`** — Update feature doc evidence fields, version history, and changelog if test coverage changed materially.
 > - **`/watzup`** + **`/workflow-end`** — Summary report and close.
 
 ---
+
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /tdd-spec -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
 
 ## Closing Reminders
 
@@ -111,3 +115,7 @@ Activate the `write-integration-test` workflow. Run `/workflow-start write-integ
     <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
     <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

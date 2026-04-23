@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Dev to QA Handoff workflow — development comp
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /handoff -> /tdd-spec -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -78,9 +80,11 @@ disable-model-invocation: true
 
 Activate the `dev-qa-handoff` workflow. Run `/workflow-start dev-qa-handoff` with the user's prompt as context.
 
-**Steps:** /handoff → /test-spec → /workflow-end
+**Steps:** /handoff → /tdd-spec → /workflow-end
 
 ---
+
+**IMPORTANT MANDATORY Steps:** /handoff -> /tdd-spec -> /workflow-end
 
 ## Closing Reminders
 
@@ -94,3 +98,7 @@ Activate the `dev-qa-handoff` workflow. Run `/workflow-start dev-qa-handoff` wit
     <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
     <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

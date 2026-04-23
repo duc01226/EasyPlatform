@@ -29,6 +29,7 @@
  *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler-project-config
  *   DESIGN_SYSTEM        → design-system-context
  *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
+ *   PYTHON_GUIDE         → python-call-guide (PreToolUse: Bash)
  *
  * DEDUP_LINES — dynamically calculated transcript line counts for each marker.
  * Values are computed at runtime based on actual injection content sizes.
@@ -233,7 +234,8 @@ const CONTENT_SOURCES = {
     // Behavioral windows — not content dedup, fixed values
     SEARCH_WINDOW: { type: 'fixed', value: 100 },
     SEARCH_SKIP_OVERRIDE: { type: 'fixed', value: 100 },
-    GRAPH_GREP_SUGGESTER: { type: 'fixed', value: 100 }
+    GRAPH_GREP_SUGGESTER: { type: 'fixed', value: 100 },
+    PYTHON_GUIDE: { type: 'fixed', value: 100 }
 };
 
 /**
@@ -378,5 +380,8 @@ module.exports = {
     AI_MISTAKE_PREVENTION: '## Common AI Mistake Prevention',
 
     /** Marker for graph-grep-suggester directive */
-    GRAPH_GREP_SUGGESTER: '[graph] **STOP AND DECIDE'
+    GRAPH_GREP_SUGGESTER: '[graph] **STOP AND DECIDE',
+
+    /** Marker for python-call-guide PreToolUse injection */
+    PYTHON_GUIDE: '[python-guide]'
 };

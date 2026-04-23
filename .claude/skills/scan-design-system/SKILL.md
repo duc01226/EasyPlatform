@@ -1,32 +1,26 @@
 ---
 name: scan-design-system
-version: 1.0.0
+version: 2.0.0
 description: '[Documentation] Scan project and populate/sync docs/project-reference/design-system/README.md with design system overview, app-to-doc mapping, design tokens, and component inventory.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
+> **AI Mistake Prevention** — Failure modes to avoid:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> - **Verify AI-generated content against actual code.** AI hallucinates component names/token values. Grep to confirm existence before documenting.
+> - **NEVER invent variable values, hex colors, or mixin signatures.** Grep to confirm before documenting.
+> - **Trace full dependency chain after edits.** Always trace full chain.
+> - **Surface ambiguity before coding.** NEVER pick silently.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -34,15 +28,15 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- SYNC:scan-and-update-reference-doc -->
 
-> **Scan & Update Reference Doc** — Surgical updates only, never full rewrite.
+> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
 >
-> 1. **Read existing doc** first — understand current structure and manual annotations
-> 2. **Detect mode:** Placeholder (only headings, no content) → Init mode. Has content → Sync mode.
-> 3. **Scan codebase** for current state (grep/glob for patterns, counts, file paths)
-> 4. **Diff** findings vs doc content — identify stale sections only
-> 5. **Update ONLY** sections where code diverged from doc. Preserve manual annotations.
-> 6. **Update metadata** (date, counts, version) in frontmatter or header
-> 7. **NEVER** rewrite entire doc. NEVER remove sections without evidence they're obsolete.
+> 1. **Read existing doc** first — understand structure and manual annotations
+> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
+> 3. **Scan codebase** (grep/glob) for current patterns
+> 4. **Diff** findings vs doc — identify stale sections only
+> 5. **Update ONLY** diverged sections. Preserve manual annotations.
+> 6. **Update metadata** (date, version) in frontmatter/header
+> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
 
 <!-- /SYNC:scan-and-update-reference-doc -->
 
@@ -50,199 +44,209 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 > **Output Quality** — Token efficiency without sacrificing quality.
 >
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 1. No inventories/counts — stale instantly
+> 2. No directory trees — use 1-line path conventions
+> 3. No TOCs — AI reads linearly
+> 4. One example per pattern — only if non-obvious
+> 5. Lead with answer, not reasoning
 > 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
+> 7. Unresolved questions at end
 
 <!-- /SYNC:output-quality-principles -->
 
 ## Quick Summary
 
-**Goal:** Scan project for design system artifacts and populate `docs/project-reference/design-system/README.md` with an overview of the design system, app-to-documentation mapping, design token inventory, and component catalog. (content auto-injected by hook — check for [Injected: ...] header before reading)
+**Goal:** Scan project for design system artifacts → populate `docs/project-reference/design-system/README.md` with overview, app-to-documentation mapping, design token inventory, and component catalog. (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 **Workflow:**
 
-1. **Read** — Load current target doc, detect init vs sync mode
-2. **Scan** — Discover design system structure via parallel sub-agents
-3. **Report** — Write findings to external report file
+1. **Classify** — Detect design system type and approach before scanning
+2. **Scan** — Parallel sub-agents discover structure, components, tokens
+3. **Report** — Write findings incrementally to report file
 4. **Generate** — Build/update reference doc from report
-5. **Verify** — Validate component paths and token files exist
+5. **Fresh-Eyes** — Round 2 verification validates paths and token values
 
 **Key Rules:**
 
-- Generic — works with any design system approach (custom, Storybook, Figma tokens, etc.)
-- Discover design system organization dynamically from file system
-- Map relationships between apps and their design documentation
-- Every reference must point to real files found in this project
+- Generic — works with any design system approach
+- Discover organization dynamically from file system
+- **MUST ATTENTION** detect design system TYPE first — agent emphasis depends on type
+- Every reference must point to real files — NEVER fabricate component names or token values
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+---
 
 # Scan Design System
 
-## Phase 0: Read & Assess
+## Phase 0: Classify Design System Type
+
+**Before any other step**, run in parallel:
 
 1. Read `docs/project-reference/design-system/README.md`
-2. Resolve config-driven paths from `docs/project-config.json`:
-    - `designSystem.canonicalDoc` (e.g., `design-system-canonical.md`) — single source of truth for new code
-    - `designSystem.tokenFiles` (e.g., `["design-tokens.scss","design-tokens.css"]`) — drop-in token files
+    - Detect mode: Init (placeholder) or Sync (populated)
+    - In Sync mode: extract section list → skip re-scanning well-documented sections
+
+2. Detect design system type:
+
+| Signal                                                                     | Type              | Agent Emphasis                           |
+| -------------------------------------------------------------------------- | ----------------- | ---------------------------------------- |
+| Token files (`design-tokens.json`, `tokens.scss`, Style Dictionary config) | Token-first       | Prioritize Agent 3 (token discovery)     |
+| Storybook config (`.storybook/`, `*.stories.ts`)                           | Component-library | Prioritize Agent 2 (component inventory) |
+| Figma token exports or `figma-tokens.json`                                 | Figma-driven      | Prioritize Agent 3 (token import chain)  |
+| Only component directories, no token files                                 | Ad-hoc/CSS-only   | Prioritize Agent 1 (structure)           |
+| Mix of above                                                               | Hybrid            | Run all 3 agents with equal weight       |
+
+3. Resolve config-driven paths from `docs/project-config.json`:
+    - `designSystem.canonicalDoc` — single source of truth for new code
+    - `designSystem.tokenFiles` — drop-in token files
     - **Never hardcode these names** — content varies per project, names come from config.
-3. Detect mode: init (placeholder, OR canonical/tokens missing on disk) or sync (populated and present)
-4. If sync: extract existing sections and note what's already well-documented
-5. Also check for app-specific design docs in the same directory
 
-## Phase 1: Plan Scan Strategy
+4. Check for app-specific design docs in the same directory
 
-Discover design system locations:
+**Evidence gate:** Confidence <60% on design system type → report uncertainty, proceed with Agent 1 (structure) only.
 
-- `docs/project-reference/design-system/` directory and its contents
-- Storybook config (`.storybook/`, `*.stories.ts`)
-- Design token files (JSON, CSS, SCSS variables)
-- Component library directories (shared components, UI kit)
-- Figma token exports or style dictionary config
+## Phase 1: Plan
 
-Use `docs/project-config.json` designSystem section if available for:
-
-- `docsPath` — where design docs live
-- `appMappings` — which apps have which design docs (per-app inventory)
-- `canonicalDoc` — single target/canonical design system filename
-- `tokenFiles` — drop-in token files (SCSS/CSS) referenced by canonical
-
-Resolve canonical doc + token file paths from config. Never hardcode names — they differ per project.
-
-> This skill executes **3 parallel sub-agents** in Phase 2: (1) Design System Structure, (2) Component Inventory, (3) Token & Component Source Discovery.
+Create `TaskCreate` entries for each sub-agent and each verification step. **Do not start Phase 2 without tasks created.**
 
 ## Phase 2: Execute Scan (Parallel Sub-Agents)
 
-Launch **3 Explore agents** in parallel:
+Launch **3 general-purpose sub-agents** in parallel. Each MUST:
+
+- Write findings incrementally after each category — NEVER batch at end
+- Cite `file:line` for every finding
+- Confidence: >80% document; 60-80% note as "observed (unverified)"; <60% omit
+
+All findings → `plans/reports/scan-design-system-{YYMMDD}-{HHMM}-report.md`
 
 ### Agent 1: Design System Structure
+
+**Think:** How is the design system organized? What's the canonical doc? What's the token chain? Which apps have design docs and which don't?
 
 - Glob for `docs/project-reference/design-system/**` to map all design docs
 - Find design token files (CSS custom properties, SCSS variables, JSON tokens)
 - Discover Storybook stories (`*.stories.ts`, `*.stories.tsx`, `*.stories.mdx`)
 - Find component library entry points (index files, barrel exports)
-- Look for style dictionary or token transformation configs
-- Map app-to-design-doc relationships (which app uses which design doc)
-- **Verify canonical doc** at `{docsPath}/{canonicalDoc}` has expected sections (Foundations / Components / Patterns / Accessibility / Adoption Strategy). Flag missing sections.
-- **Verify token files** at `{docsPath}/{tokenFiles[i]}` exist and contain variable declarations (`--brand-*`, `$brand-*`, etc.). Flag empty/missing.
+- Map app-to-design-doc relationships
+- **Verify canonical doc** at `{docsPath}/{canonicalDoc}` has expected sections. Flag missing sections.
+- **Verify token files** at `{docsPath}/{tokenFiles[i]}` exist and contain variable declarations. Flag empty/missing.
 
 ### Agent 2: Component Inventory
 
-- Grep for reusable UI components (shared component directories, exported components)
+**Think:** What dimensions define a complete component inventory? Consider: Discoverability (can I find it?), Categorization (what type?), Variant coverage (size/color/state?), Accessibility (ARIA/keyboard?), Documentation completeness (JSDoc/README/Storybook?), Icon/asset library coverage.
+
+For each dimension, derive the specific grep/glob patterns from what the project actually uses — do NOT hardcode Angular/React/Vue-specific patterns unless confirmed.
+
+- Find reusable UI components (shared component directories, exported components)
 - Find component categories (layout, forms, feedback, navigation, data display)
 - Discover component variants (size, color, state variations)
-- Count components per category
 - Find icon sets or asset libraries
-- Look for accessibility patterns in components (ARIA roles, keyboard support)
-- Find documentation for individual components (JSDoc, README, Storybook docs)
+- Look for accessibility patterns (ARIA roles, keyboard support)
+- Find documentation for individual components
 
-### Agent 3: Token & Component Source Discovery (init-authoring support)
+### Agent 3: Token & Component Source Discovery
 
-Scope: discover design tokens and component class prefixes from actual source code so init mode can author canonical doc + token files. **Bias toward declarations + frequency, NOT raw literal occurrences — auto-generated junk is strictly worse than placeholder.**
+**Think:** What design tokens actually exist in source code (not just what's documented)? Which are declarations (authoritative) vs usages (derived)?
 
 **Source scope (whitelist, not full repo):**
 
 - `src/**/styles/**/*.{scss,css}`, `src/**/themes/**/*.{scss,css}`, `src/**/tokens/**/*.{scss,css}`
-- `src/**/*.scss`, `src/**/*.css` ONLY when path contains `theme`, `token`, `palette`, `design`, `style-guide`, or `variables`
-- Exclude `node_modules`, `dist`, `.nx`, `coverage`, `*.spec.scss`, component-local styles
+- `src/**/*.scss` ONLY when path contains `theme`, `token`, `palette`, `design`, `style-guide`, or `variables`
+- Exclude `node_modules`, `dist`, `.nx`, `coverage`, component-local styles
 
-**Discovery rules (declarations + frequency, NOT every literal):**
+**Discovery rules (declarations only, NOT usages):**
 
-- **CSS custom properties (declarations only):** `--[a-zA-Z][a-zA-Z0-9_-]*\s*:` — capture LHS only, dedupe.
-- **SCSS variable declarations:** `^\s*\$[a-zA-Z][a-zA-Z0-9_-]*\s*:` — anchor to start-of-line so usages are excluded.
-- **Color values used ≥3 times** across whitelist:
-    - Hex: `#[0-9a-fA-F]{3,8}\b`
-    - RGB/RGBA: `rgba?\([^)]+\)`
-    - HSL/HSLA: `hsla?\([^)]+\)`
-    - Apply frequency filter: drop values appearing <3 times (one-offs ≠ design tokens).
-- **Spacing scale (declarations only):** `(padding|margin|gap|width|height|inset|top|right|bottom|left)\s*:\s*[\d.]+(px|rem|em)` — extract numeric values, dedupe and sort.
-- **Typography (declarations only):** `(font-family|font-size|font-weight|line-height|letter-spacing)\s*:` — extract RHS values, dedupe.
-- **Breakpoints:** `@media[^{]*\((min|max)-width:\s*[\d.]+(px|em|rem)\)` — extract widths, dedupe.
-- **Z-index (declarations only):** `z-index\s*:\s*[-\d]+` — extract values, dedupe and sort.
-- **Elevation/shadow (declarations only):** `(box-shadow|filter\s*:\s*drop-shadow)\s*:` — extract RHS values, dedupe.
-- **Component prefixes:** Use `componentSystem.selectorPrefixes` from `docs/project-config.json` if present; else grep BEM-style block selectors (`\.[a-z][a-z0-9-]*__` and `\.[a-z][a-z0-9-]*--`) and dedupe by block name.
+- CSS custom properties (declarations): `--[a-zA-Z][a-zA-Z0-9_-]*\s*:` — capture LHS only, dedupe
+- SCSS variable declarations: `^\s*\$[a-zA-Z][a-zA-Z0-9_-]*\s*:` — anchor to start-of-line
+- Color values used ≥3 times across whitelist (hex, rgb, hsl)
+- Spacing scale (declarations): `(padding|margin|gap)\s*:\s*[\d.]+(px|rem|em)` — extract values, dedupe
+- Typography (declarations): `(font-family|font-size|font-weight)\s*:` — extract RHS, dedupe
+- Breakpoints: `@media[^{]*\((min|max)-width:\s*[\d.]+(px|em|rem)\)` — extract widths, dedupe
 
-**Categorise findings:** Colors / Typography / Spacing / Breakpoints / Z-Index / Elevation / Component-prefixes / Other.
-**Persist incrementally** — append to report after each category, don't batch at end.
-**Quality gate:** If a category has <3 unique entries OR >200 entries, log "scope too narrow/broad — manual refinement required" instead of dumping into canonical doc.
-
-Write all findings to: `plans/reports/scan-design-system-{YYMMDD}-{HHMM}-report.md`
+**Categorise:** Colors / Typography / Spacing / Breakpoints / Z-Index / Elevation / Component-prefixes / Other.
+**Persist incrementally** — append to report after each category.
+**Quality gate:** If a category has <3 unique entries OR >200 entries, log "scope too narrow/broad — manual refinement required".
 
 ## Phase 3: Analyze & Generate
 
-Read the report. Build these sections:
+Read report. Build target sections.
+
+**Round 1 (main agent):** Build section drafts from report findings.
+
+**Round 2 (fresh sub-agent, zero memory):** Independently verifies:
+
+- All doc paths exist on filesystem (Glob check — not just "looks right")
+- All token values are from actual declarations, not usages or fabricated
+- Component names in inventory match actual files (Grep check)
+- Gap Analysis section present (what's missing, not just what exists)
 
 ### Target Sections
 
-| Section                    | Content                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------- |
-| **Design System Overview** | High-level description of the design system approach, tools, and organization               |
-| **App Documentation Map**  | Table: App name, Design doc path, Token source, Component library                           |
-| **Design Tokens**          | Token categories (color, typography, spacing, elevation), file locations, naming convention |
-| **Component Inventory**    | Table: Component name, Category, Variants, Path, Has docs?                                  |
-| **Icon & Asset Library**   | Icon set source, asset directory paths, usage patterns                                      |
-| **Storybook**              | Storybook setup (if exists), story organization, how to add new stories                     |
-| **Usage Guidelines**       | How to consume tokens and components in application code                                    |
-
-### Content Rules
-
-- Use tables for component inventory and token listings
-- Include actual token values (colors, spacing scale) where practical
-- Show component usage examples from real application code
-- Map each app to its specific design documentation file
+| Section                    | Content                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| **Design System Overview** | High-level description — type, tools, organization                             |
+| **App Documentation Map**  | Table: App name, Design doc path, Token source, Component library              |
+| **Design Tokens**          | Token categories, file locations, naming convention — values from declarations |
+| **Component Inventory**    | Table: Component name, Category, Variants, Path, Has docs?                     |
+| **Gap Analysis**           | Missing docs, zero-adoption tokens, undocumented components                    |
+| **Icon & Asset Library**   | Icon set source, asset directory paths, usage patterns                         |
+| **Storybook**              | Setup (if exists), story organization, how to add new stories                  |
+| **Usage Guidelines**       | How to consume tokens and components in application code                       |
 
 ### Authoring (init mode only)
 
-When init mode detected (canonical doc missing or placeholder per Phase 0 detection):
+When init mode detected (canonical doc missing or placeholder):
 
 1. **Author `{docsPath}/{canonicalDoc}`** from Agent 3 findings:
-    - **Prepend regen marker:** First line MUST be `<!-- Generated by /scan-design-system on YYYY-MM-DD; refine sections manually -->` (substitute today's ISO date). Markdown renderers ignore HTML comments.
-    - Sections (in order):
-        - Foundations (intro, design philosophy)
-        - Tokens (color palette, typography scale, spacing scale, breakpoints, z-index, elevation, radius)
-        - Components (per-component class prefix + semantic role)
-        - Patterns (composition examples)
-        - Accessibility (WCAG 2.1 AA notes — color contrast, focus, motion)
-        - Adoption Strategy (how to consume tokens in app code)
-2. **Author each `{docsPath}/{tokenFiles[i]}`** by grouping discovered declarations by category and emitting valid SCSS/CSS:
-    - **First action: REMOVE the `PLACEHOLDER_MARKER_SCSS` sentinel** (`/* @claude:placeholder — do not commit */`) from the placeholder file BEFORE writing real tokens. If sentinel survives, `session-init-docs.cjs` placeholder advisory loops indefinitely.
-    - `.scss` file: SCSS variable block per category, then CSS custom property mirrors inside `:root {}`
-    - `.css` file: CSS custom properties only inside `:root {}`
-    - Categories emitted: Colors, Typography, Spacing, Breakpoints, Z-Index, Elevation/Shadow.
-3. **Preserve manual content in sync mode** — if doc/token file already populated (not placeholder), DO NOT overwrite. Only add missing token entries.
-4. **Token category scope (full):** colors (≥3-occurrence filter), CSS custom properties (`--*` declarations), SCSS variables (`$*` declarations), spacing scale (declarations), typography (declarations), breakpoints (`@media min/max-width`), z-index (declarations), elevation (`box-shadow`/`filter: drop-shadow`).
+    - **Prepend regen marker:** `<!-- Generated by /scan-design-system on YYYY-MM-DD; refine sections manually -->`
+    - Sections: Foundations, Tokens, Components, Patterns, Accessibility, Adoption Strategy
+2. **Author each `{docsPath}/{tokenFiles[i]}`** from grouped declarations:
+    - **First: REMOVE `PLACEHOLDER_MARKER_SCSS` sentinel** before writing real tokens
+    - `.scss`: SCSS variable block per category + CSS custom property mirrors in `:root {}`
+    - Categories: Colors, Typography, Spacing, Breakpoints, Z-Index, Elevation/Shadow
+3. **Preserve manual content in sync mode** — DO NOT overwrite populated doc/token file
 
 ## Phase 4: Write & Verify
 
 1. Write updated doc with `<!-- Last scanned: YYYY-MM-DD -->` at top
-2. Verify: 3 design doc paths exist on filesystem
-3. Verify: component paths in inventory match actual files
-4. **Verify config-driven paths exist:** `{docsPath}/{canonicalDoc}` and every `{docsPath}/{tokenFiles[i]}`.
-    - **If init mode AND missing/placeholder:** invoke Phase 3 Authoring step to generate from Agent 3 findings.
-    - **If sync mode AND missing:** log gap only (preserve manual content; flag for user re-authoring decision).
-5. Report: sections updated, component count, token categories documented, **canonical + token presence**.
+2. Surgical update only — preserve unchanged sections
+3. Verify config-driven paths: `{docsPath}/{canonicalDoc}` and every `{docsPath}/{tokenFiles[i]}`
+4. Verify (Glob): ALL component paths in inventory exist — not just 3
+5. Verify (Grep): Token names in doc match actual declarations in source
+6. Verify: Gap Analysis section present
+7. Report: sections updated / unchanged / gaps documented / canonical + token presence
 
 ---
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-  <!-- SYNC:scan-and-update-reference-doc:reminder -->
+- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
+- **IMPORTANT MUST ATTENTION** detect design system TYPE in Phase 0 — agent emphasis depends on it
+- **IMPORTANT MUST ATTENTION** NEVER invent variable values, hex colors, or mixin signatures — Grep to confirm
+- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each category — NEVER batch at end
+- **IMPORTANT MUST ATTENTION** Gap Analysis section is mandatory — document what's missing, not just what exists
+- **IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — validates paths and token values
+      <!-- SYNC:scan-and-update-reference-doc:reminder -->
 - **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-  <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-  <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** follow output quality rules: no counts/trees/TOCs, rules > descriptions, 1 example per pattern, primacy-recency anchoring.
-  <!-- /SYNC:output-quality-principles:reminder -->
-  <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+      <!-- SYNC:output-quality-principles:reminder -->
+- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+      <!-- /SYNC:output-quality-principles:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
+- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
+- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**Anti-Rationalization:**
+
+| Evasion                                              | Rebuttal                                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| "Design system type obvious, skip Phase 0 detection" | Phase 0 is BLOCKING — agent emphasis depends on detected type                  |
+| "Only 2 agents needed, skip token discovery agent"   | Token discovery is separate from component inventory — NEVER merge             |
+| "Token values look correct"                          | Grep-verify ALL token values against declarations — "looks correct" ≠ verified |
+| "Gap Analysis not needed"                            | Gap Analysis is a required section — documents what's missing for future work  |
+| "Round 2 verification not needed for small scan"     | Main agent rationalizes own mistakes. Fresh-eyes mandatory.                    |
+| "Verified 3 paths, that's enough"                    | Glob-verify ALL paths in inventory — spot-check is insufficient                |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and break into small todo tasks and sub-tasks using TaskCreate.

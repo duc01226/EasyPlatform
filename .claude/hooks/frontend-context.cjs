@@ -26,6 +26,8 @@ const {
   buildPatternList,
   getContextGroup,
   getModuleForPath,
+  getLocalizationConfig,
+  isMultilingualProject,
 } = require("./lib/project-config-loader.cjs");
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -42,6 +44,7 @@ const FRONTEND_PATTERNS = buildPatternList(config.frontendApps?.patterns);
 const APP_PATTERNS = buildRegexMap(config.frontendApps?.appMap);
 const LEGACY_APPS = new Set(config.frontendApps?.legacyApps || []);
 const MODERN_APPS = new Set(config.frontendApps?.modernApps || []);
+const LOCALIZATION_CONFIG = getLocalizationConfig(config);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -52,6 +55,7 @@ const FRONTEND_EXTENSIONS = new Set([
   ".html",
   ".js",
   ".ts",
+  ".tsx",
   ".css",
   ".scss",
   ".json",
@@ -122,6 +126,41 @@ function shouldInject(filePath, transcriptPath) {
   return true;
 }
 
+function shouldShowI18nSyncCheck(filePath) {
+  if (!isMultilingualProject(config)) return false;
+  if (!isFrontendFile(filePath)) return false;
+
+  const normalizedPath = (filePath || "").replace(/\\/g, "/");
+  const uiPathPatterns = LOCALIZATION_CONFIG.uiPathPatterns || [];
+  if (uiPathPatterns.length === 0) return true;
+  return uiPathPatterns.some((pattern) => pattern.test(normalizedPath));
+}
+
+function appendI18nSyncSection(lines) {
+  lines.push(
+    "### I18N Sync Check",
+    "",
+    "- Multilingual project detected from `localization.supportedLocales`.",
+    "- If user-visible text, labels, or messages changed, verify translation resources were updated for all locales.",
+  );
+
+  if (LOCALIZATION_CONFIG.translationFilePatterns.length > 0) {
+    lines.push("- Translation file patterns:");
+    for (const pattern of LOCALIZATION_CONFIG.translationFilePatterns) {
+      lines.push(`  - \`${pattern.source}\``);
+    }
+  } else {
+    lines.push(
+      "- No `localization.translationFilePatterns` configured. Add patterns in `docs/project-config.json` to reduce false positives."
+    );
+  }
+
+  lines.push(
+    "- If translations are missing, stop and decide explicitly before proceeding.",
+    ""
+  );
+}
+
 function buildInjection(context, filePath, app, patternsAlreadyInjected) {
   const fileName = path.basename(filePath);
   const ctxGroup = getContextGroup(filePath);
@@ -175,6 +214,10 @@ function buildInjection(context, filePath, app, patternsAlreadyInjected) {
       lines.push(`${i + 1}. ${rule}`);
     });
     lines.push("");
+  }
+
+  if (shouldShowI18nSyncCheck(filePath)) {
+    appendI18nSyncSection(lines);
   }
 
   // Inject domain entities doc directly

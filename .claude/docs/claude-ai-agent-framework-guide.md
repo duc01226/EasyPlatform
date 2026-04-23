@@ -1,4 +1,4 @@
-# Claude AI Agent Framework — Architecture & Best Practices
+﻿# Claude AI Agent Framework — Architecture & Best Practices
 
 > How to engineer Claude Code into a self-reinforcing, hallucination-resistant, context-aware AI development agent through hooks, skills, workflows, and specialized agents.
 
@@ -27,6 +27,8 @@
     - 8.15 [Prompt Engineering Principles Applied](#815-prompt-engineering-principles-applied)
     - 8.16 [Context Engineering Principles Applied](#816-context-engineering-principles-applied)
     - 8.17 [Code Review Graph — Structural Intelligence](#817-code-graph--structural-intelligence)
+    - 8.18 [Surface-Aware Code Review — Phase 0.7 Detection](#818-surface-aware-code-review--phase-07-detection)
+    - 8.19 [Spec-Driven Development Loop — Closed Feedback Chain](#819-spec-driven-development-loop--closed-feedback-chain)
 9. [State Management & Recovery](#9-state-management--recovery)
 10. [Testing Infrastructure](#10-testing-infrastructure)
 11. [Quick Reference](#11-quick-reference)
@@ -39,7 +41,7 @@
 
 ## 1. Executive Summary
 
-This framework wraps Claude Code in a **3-layer framework** — **~37 hooks** (53 files), **258 skills**, **48 workflows**, and **28 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
+This framework wraps Claude Code in a **3-layer framework** — **~40 hooks** (56 files), **258 skills**, **48 workflows**, and **28 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
 
 **Core insight:** LLMs forget, hallucinate, and drift. Instead of hoping the AI "just gets it right," this framework uses **programmatic guardrails** (hooks) and **prompt-engineered protocols** (skills/workflows) to enforce correctness at every stage.
 
@@ -60,6 +62,11 @@ This framework wraps Claude Code in a **3-layer framework** — **~37 hooks** (5
 │  AI misses lifecycle   │  48 workflows       │  Full SDLC cover │
 │  AI skips research   │  big-feature wf      │  Step-select gate  │
 │  AI skips E2E tests    │  E2E skills/flows   │  Recording→test  │
+│  AI ignores doc format │  feature-docs-ctx   │  17-section inject │
+│  AI reviews wrong surface│ Phase 0.7 detect  │  BE/FE/SCSS buckets│
+│  AI writes stale docs  │  DOC SYNC DEFERRAL  │  Review=read-only  │
+│  Docs phases skipped   │  docs-update BLOCK  │  8-task audit trail│
+│  Spec bundle stale     │  spec-discovery upd │  Incremental diffs │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -263,10 +270,10 @@ graph LR
     style UPS fill:#9C27B0,color:white
 ```
 
-### 4.3 The ~37 Hooks — Organized by Purpose
+### 4.3 The ~40 Hooks — Organized by Purpose
 
 ```
-HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
+HOOK SYSTEM (~40 hooks, 56 files incl. part-files)
 │
 ├── SESSION LIFECYCLE (7 hooks)
 │   ├── session-init.cjs ─────────── Load config, set 25 env vars
@@ -275,7 +282,7 @@ HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
 │   ├── session-resume.cjs ────────── Restore todos from checkpoints
 │   ├── npm-auto-install.cjs ──────── Install missing npm packages
 │   ├── session-end.cjs ──────────── Cleanup swap files, save state
-│   └── subagent-init-*.cjs ──────── Inject context into subagents (18 part-hooks)
+│   └── subagent-init-*.cjs ──────── Inject context into subagents (18+ part-hooks)
 │
 ├── PROMPT PROCESSING (3 hooks)
 │   ├── init-prompt-gate.cjs ──────── Block until project-config exists
@@ -292,7 +299,7 @@ HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
 │   ├── edit-enforcement.cjs ──────── Require tasks before edits
 │   └── skill-enforcement.cjs ─────── Require tasks before skills
 │
-├── CONTEXT INJECTION (10 hooks)
+├── CONTEXT INJECTION (12 hooks)
 │   ├── backend-context.cjs ───────── Backend patterns for server files
 │   ├── frontend-context.cjs ──────── Frontend patterns for client files
 │   ├── design-system-context.cjs ── Design tokens for UI components
@@ -302,7 +309,13 @@ HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
 │   ├── lessons-injector.cjs ──────── Past mistakes from lessons.md
 │   ├── role-context-injector.cjs ── Role-based guidance (PO/BA/QA/Dev)
 │   ├── figma-context-extractor ──── Figma design context
-│   └── code-review-rules-injector ── Code review standards
+│   ├── code-review-rules-injector ── Code review standards
+│   ├── feature-docs-context.cjs ─── 17-section format reminder for docs/business-features/**
+│   └── test-specs-context.cjs ───── TC naming + Section 15 rules for test-specs writes
+│
+├── MINDSET INJECTION (2 hooks)
+│   ├── mindset-injector.cjs ──────── Critical thinking + AI mistake prevention on Edit|Write|Skill|Agent|Task
+│   └── mindset-compact-injector.cjs ─ Lightweight critical-thinking re-anchor on Read|Grep|Glob|Bash
 │
 ├── POST-PROCESSING (7 hooks)
 │   ├── tool-output-swap.cjs ──────── Externalize large outputs (>50KB)
@@ -313,7 +326,7 @@ HOOK SYSTEM (~37 hooks, 53 files incl. part-files)
 │   ├── workflow-step-tracker.cjs ── Track workflow step completion
 │   └── write-compact-marker.cjs ─── Save recovery state pre-compact
 │
-└── SUPPORT INFRASTRUCTURE (27 lib modules)
+└── SUPPORT INFRASTRUCTURE (27+ lib modules)
     ├── State: ck-session-state, workflow-state, todo-state, edit-state
     ├── Context: context-injector-base, prompt-injections, context-tracker
     ├── Memory: swap-engine (externalize large outputs)
@@ -329,12 +342,16 @@ Large hooks are split into chained **part-files** (`-p2.cjs`, `-p3.cjs`) to stay
 ```
 prompt-context-assembler.cjs      ← Main: dev rules + workflow catalog
 prompt-context-assembler-closers.cjs   ← Closers: project config summary + CLAUDE.md re-injection
+prompt-context-assembler-claude.cjs   ← Claude-specific: model/session context
 prompt-context-assembler-docs.cjs ← Docs variant: reference doc injection
 prompt-context-assembler-docs-p2.cjs ← Docs part 2: staleness gate + graph gate
 
 workflow-router.cjs               ← Main: detect workflow intent
 workflow-router-p2.cjs            ← Part 2: inject workflow catalog
 workflow-router-p3.cjs            ← Part 3: lesson-learned reminder
+
+mindset-injector.cjs              ← Full: critical thinking + AI mistakes + golden rules (Edit|Write|Skill|Agent|Task)
+mindset-compact-injector.cjs      ← Lightweight: critical-thinking only (Read|Grep|Glob|Bash) — cheap re-anchor
 ```
 
 **Why this matters:** Previously, accumulating logic in a single hook file made it hard to reason about, test, and maintain. Part-file splitting applies single-responsibility at the file level — each part handles one concern.
@@ -480,12 +497,11 @@ mindmap
       api-design
     Testing & TDD
       tdd-spec
-      test-spec
       integration-test
       integration-test-review
       integration-test-verify
       e2e-test
-      test-specs-docs
+      tdd-spec [direction=sync]
       test
       webapp-testing
     Requirements & Ideas
@@ -781,18 +797,18 @@ Workflows are **JSON-defined sequences of skills** stored in `.claude/workflows.
 WORKFLOW CATALOG
 │
 ├── DEVELOPMENT (16) ★ includes TDD, E2E, and big-feature workflows
-│   ├── feature ─────────── scout→investigate→plan→tdd-spec→plan→cook→tdd-spec→test-specs-docs→test→docs
+│   ├── feature ─────────── scout→investigate→plan→tdd-spec→plan→cook→tdd-spec→tdd-spec [direction=sync]→test→docs
 │   ├── feature-with-integration-test ── feature + tdd-spec→plan→integration-test→test ★
 │   ├── big-feature ─────── idea→research→domain→techstack→plan→refine→story→plan2→scaffold→cook→test ★
 │   ├── tdd-feature ─────── scout→investigate→tdd-spec→plan→cook→integration-test→test→docs ★ TDD
-│   ├── bugfix ──────────── scout→investigate→debug→plan→fix→prove-fix→tdd-spec→test-specs-docs→test
-│   ├── hotfix ──────────── scout→plan→fix→prove-fix→tdd-spec→test-specs-docs→test (fast path)
-│   ├── refactor ────────── scout→investigate→plan→code→tdd-spec→test-specs-docs→test→docs
-│   ├── batch-operation ─── plan→code→tdd-spec→test-specs-docs→review→test
+│   ├── bugfix ──────────── scout→investigate→debug→plan→fix→prove-fix→tdd-spec→tdd-spec [direction=sync]→test
+│   ├── hotfix ──────────── scout→plan→fix→prove-fix→tdd-spec→tdd-spec [direction=sync]→test (fast path)
+│   ├── refactor ────────── scout→investigate→plan→code→tdd-spec→tdd-spec [direction=sync]→test→docs
+│   ├── batch-operation ─── plan→code→tdd-spec→tdd-spec [direction=sync]→review→test
 │   ├── migration ───────── scout→investigate→plan→code→test→docs
 │   ├── package-upgrade ─── scout→investigate→plan→code→test
 │   ├── idea-to-tdd ─────── idea→refine→tdd-spec ★ TDD pipeline
-│   ├── test-spec-update ── review-changes→tdd-spec→test-specs-docs→integration-test→test
+│   ├── test-spec-update ── review-changes→tdd-spec→tdd-spec [direction=sync]→integration-test→test
 │   ├── test-to-integration scout→integration-test→test→watzup
 │   ├── e2e-from-recording ─ scout→e2e-test→test→watzup ★ E2E from Chrome recording
 │   ├── e2e-update-ui ────── scout→e2e-test→test→watzup ★ Update screenshot baselines
@@ -801,12 +817,12 @@ WORKFLOW CATALOG
 ├── QUALITY & TESTING (8)
 │   ├── quality-audit ───── code-review→plan→code→tdd-spec→review→test
 │   ├── security-audit ──── scout→security→watzup (read-only)
-│   ├── performance ─────── scout→investigate→plan→code→tdd-spec→test-specs-docs→test→sre-review
-│   ├── review-changes ──── review-changes→code-review→watzup
+│   ├── performance ─────── scout→investigate→plan→code→tdd-spec→tdd-spec [direction=sync]→test→sre-review
+│   ├── review-changes ──── review-changes→[arch+domain+perf+int-test+security]→simplifier→code-review→plan→cook→docs-update→watzup (17 steps)
 │   ├── review ────────────── code-review→watzup
 │   ├── testing ───────────── test→workflow-end
 │   ├── test-verify ─────── scout→integration-test→test→integration-test→watzup
-│   └── verification ────── scout→investigate→test→fix→prove-fix→tdd-spec→test-specs-docs→test
+│   └── verification ────── scout→investigate→test→fix→prove-fix→tdd-spec→tdd-spec [direction=sync]→test
 │
 ├── PLANNING & INCEPTION (5)
 │   ├── greenfield-init ─── idea→research→domain→techstack→plan→scaffold→cook→integration-test→review (40 steps)
@@ -837,7 +853,7 @@ WORKFLOW CATALOG
 │   ├── full-feature-lifecycle ── idea→refine→design→plan→cook→test→accept (21 steps)
 │   ├── ba-dev-handoff ── review→quality-gate→handoff→plan
 │   ├── design-dev-handoff ── design→review→handoff→plan
-│   ├── dev-qa-handoff ── handoff→test-spec
+│   ├── dev-qa-handoff \u2500\u2500 handoff\u2192tdd-spec
 │   ├── qa-po-acceptance ── quality-gate→handoff→acceptance
 │   └── deployment ──────── scout→investigate→plan→code→review→test
 │
@@ -986,6 +1002,21 @@ graph LR
 }
 ```
 
+### 7.2.5 settings.json — Key Configuration Flags
+
+Beyond `project-config.json`, `settings.json` governs Claude Code's runtime behavior. Key flags as of the current version:
+
+| Setting                           | Value                                                                             | Purpose                                                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `autoMemoryEnabled`               | `false`                                                                           | Disables Claude Code's built-in memory — framework uses its own external state (swap engine, todo state, lessons.md)       |
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` | `250000`                                                                          | Context compaction triggers at 250K tokens (up from default), giving longer sessions before recovery kicks in              |
+| `CLAUDE_CODE_DISABLE_AUTO_MEMORY` | `1`                                                                               | Env-level memory disable (belt-and-suspenders with `autoMemoryEnabled`)                                                    |
+| `enableAllProjectMcpServers`      | `false`                                                                           | Opt-in MCP only — prevents auto-enabling untrusted servers                                                                 |
+| `enabledMcpjsonServers`           | `["context7","github"]`                                                           | Only context7 (library docs) and github MCP active; memory/sequential-thinking disabled (framework handles these natively) |
+| `disabledMcpjsonServers`          | `["chrome-devtools","mongodb","postgres","figma","memory","sequential-thinking"]` | Explicit disable list prevents accidental re-enable                                                                        |
+
+**Why disable built-in memory?** The framework's external state persistence (swap engine, todo-tracker, lessons.md, workflow-state) is more controlled and transparent than Claude Code's automatic memory. Disabling built-in memory prevents the two systems from conflicting.
+
 ### 7.3 How Hooks Consume Config
 
 ```mermaid
@@ -1034,6 +1065,10 @@ This section maps each framework mechanism to the **AI agent best practice** it 
 │  Activate code-review │ Code review rules              │ cr-rules│
 │  Context compaction   │ Recovery state                 │ compact │
 │  Subagent spawned     │ Project context + lessons      │ sub-init│
+│  Edit|Write Agent|Skill│ Critical thinking + AI guardrails│ mindset│
+│  Read|Grep|Glob|Bash  │ Lightweight critical-thinking  │ mindset-compact│
+│  Write docs/business-features/**│ 17-section format + TC rules│ feature-docs-ctx│
+│  Write docs/specs/**│ TC naming + Section 15 rules │ test-specs-ctx│
 │                                                                   │
 │  DEDUP: Each injection checks for its marker in last 300 lines  │
 │  of transcript. Skips if already present. Re-injects after      │
@@ -1291,7 +1326,7 @@ All test-related skills use a **single TC ID format** across the entire project,
 │  Source: docs/project-reference/feature-docs-reference.md       │
 │                                                                   │
 │  SOURCE OF TRUTH: Feature docs Section 15 (canonical registry)  │
-│  DASHBOARD: docs/test-specs/ (aggregated cross-module views)    │
+│  DASHBOARD: docs/specs/ (aggregated cross-module views)    │
 │  CODE LINK: Test annotation linking test to TC ID               │
 │             e.g., tag/trait/decorator in test files               │
 └─────────────────────────────────────────────────────────────────┘
@@ -1305,13 +1340,12 @@ Four skills form a connected test specification pipeline:
 flowchart LR
     subgraph "Spec Generation"
         TS["/tdd-spec<br/>Unified TC Writer"]
-        TSP["/test-spec<br/>Heavyweight Planning"]
     end
 
     subgraph "Persistence"
         FD["Feature Doc<br/>Section 15<br/>(Source of Truth)"]
-        TSD["/test-specs-docs<br/>Dashboard Sync"]
-        DASH["docs/test-specs/<br/>(Cross-Module Dashboard)"]
+        TSD["/tdd-spec [direction=sync]<br/>Dashboard Sync"]
+        DASH["docs/specs/<br/>(Cross-Module Dashboard)"]
     end
 
     subgraph "Code Generation"
@@ -1320,7 +1354,6 @@ flowchart LR
     end
 
     TS -->|"Write TCs"| FD
-    TSP -->|"Plan TCs"| TS
     FD -->|"Aggregate"| TSD
     TSD -->|"Sync"| DASH
     FD -->|"Source TCs"| IT
@@ -1359,7 +1392,7 @@ flowchart LR
 │  ALL MODES:                                                       │
 │  • Write TCs to feature doc Section 15 (canonical)              │
 │  • Use AskUserQuestion for TC review with user                  │
-│  • Optionally sync to docs/test-specs/ dashboard                │
+│  • Optionally sync to docs/specs/ dashboard                │
 │  • Unified format: TC-{FEATURE}-{NNN}                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -1427,8 +1460,8 @@ The framework supports AI-assisted development across **every phase** of the sof
 │                     │ /design-spec           │ with TC seeds      │
 │─────────────────────│────────────────────────│────────────────────│
 │  3. TEST SPECS      │ /tdd-spec (unified)    │ TDD-first or      │
-│                     │ /test-spec (planning)  │ implement-first    │
-│                     │ idea-to-tdd workflow   │ test case gen      │
+│                     │ idea-to-tdd workflow   │ implement-first    │
+│                     │                        │ test case gen      │
 │─────────────────────│────────────────────────│────────────────────│
 │  4. PLANNING        │ /plan, /plan-review    │ Evidence-based     │
 │                     │ /plan-validate         │ plans with user    │
@@ -1488,7 +1521,7 @@ This section provides concrete prompts and expected flows for every test generat
 │                                                                 │
 │  SOURCE OF TRUTH           DASHBOARD              CODE LINK     │
 │  ┌───────────────┐    ┌──────────────────┐   ┌──────────────┐  │
-│  │ Feature Docs   │───→│ docs/test-specs/  │   │ Test Code    │  │
+│  │ Feature Docs   │───→│ docs/specs/  │   │ Test Code    │  │
 │  │ Section 15     │    │ {Module}/README   │   │ (annotated   │  │
 │  │ TC-{FEAT}-{N}  │←───│ (cross-module     │   │  with TC ID  │  │
 │  │                │    │  dashboard)       │   │  per test)   │  │
@@ -1497,7 +1530,7 @@ This section provides concrete prompts and expected flows for every test generat
 │          └───────── TRACEABILITY ────────────────────┘          │
 │                                                                 │
 │  Skills:  /tdd-spec (write TCs) → /integration-test (test code) │
-│           /test-specs-docs (sync dashboard)                     │
+│           /tdd-spec [direction=sync] (sync dashboard)                     │
 │                                                                 │
 │  Workflows: pbi-to-tests, tdd-feature, test-spec-update,       │
 │             test-to-integration                                 │
@@ -1529,14 +1562,14 @@ This section provides concrete prompts and expected flows for every test generat
 4. Generates TC outlines with `Evidence: {file}:{line}` references
 5. Presents TC list via `AskUserQuestion` for interactive review
 6. Writes approved TCs to feature doc Section 15 (canonical)
-7. Optionally updates `docs/test-specs/` dashboard
+7. Optionally updates `docs/specs/` dashboard
 
 **Output locations:**
 
 | Artifact             | Path                                                                     |
 | -------------------- | ------------------------------------------------------------------------ |
 | TCs (canonical)      | `docs/business-features/{App}/detailed-features/{feature}.md` Section 15 |
-| Dashboard (optional) | `docs/test-specs/{Module}/README.md`                                     |
+| Dashboard (optional) | `docs/specs/{Module}/README.md`                                          |
 
 ---
 
@@ -1601,33 +1634,33 @@ feature-with-integration-test:
 
 #### Case 3: Sync Test Specs ↔ Feature Docs (Bidirectional)
 
-**Scenario:** Test specs exist in `docs/test-specs/` but not in feature docs Section 15, or vice versa. Need to reconcile.
+**Scenario:** Test specs exist in `docs/specs/` but not in feature docs Section 15, or vice versa. Need to reconcile.
 
 **Prompt examples:**
 
 ```
-# Forward sync: feature docs → test-specs/ dashboard
-/test-specs-docs sync test specs for Orders module
+# Forward sync: feature docs → specs/ dashboard
+/tdd-spec [direction=sync] sync test specs for Orders module
 
-# Reverse sync: test-specs/ → feature docs
-/test-specs-docs reverse sync to feature docs for Orders
+# Reverse sync: specs/ → feature docs
+/tdd-spec [direction=sync] reverse sync to feature docs for Orders
 
 # Full bidirectional reconciliation
 /tdd-spec sync test specs for Orders feature
 
 # Bidirectional with dashboard update
-/test-specs-docs full sync for Orders module
+/tdd-spec [direction=sync] full sync for Orders module
 ```
 
 **What happens (bidirectional via /tdd-spec sync mode):**
 
 1. Reads feature doc Section 15 TCs
-2. Reads `docs/test-specs/{Module}/README.md` TCs
+2. Reads `docs/specs/{Module}/README.md` TCs
 3. Greps for TC annotations (e.g., test tags/traits) in test files
 4. Builds 3-way comparison:
 
 ```
-| TC ID     | Feature Doc? | test-specs/? | Test Code? | Action           |
+| TC ID     | Feature Doc? | specs/?      | Test Code? | Action           |
 | --------- | ------------ | ------------ | ---------- | ---------------- |
 | TC-GM-001 | ✅            | ✅            | ✅          | None             |
 | TC-GM-025 | ✅            | ❌            | ✅          | Add to dashboard |
@@ -1639,11 +1672,11 @@ feature-with-integration-test:
 
 **Direction detection keywords:**
 
-| User says                              | Direction                            | Skill                 |
-| -------------------------------------- | ------------------------------------ | --------------------- |
-| "sync test specs", "update dashboard"  | Forward (feature docs → test-specs/) | `/test-specs-docs`    |
-| "sync to feature docs", "reverse sync" | Reverse (test-specs/ → feature docs) | `/test-specs-docs`    |
-| "full sync", "bidirectional"           | Both directions                      | `/tdd-spec` sync mode |
+| User says                              | Direction                       | Skill                        |
+| -------------------------------------- | ------------------------------- | ---------------------------- |
+| "sync test specs", "update dashboard"  | Forward (feature docs → specs/) | `/tdd-spec [direction=sync]` |
+| "sync to feature docs", "reverse sync" | Reverse (specs/ → feature docs) | `/tdd-spec [direction=sync]` |
+| "full sync", "bidirectional"           | Both directions                 | `/tdd-spec` sync mode        |
 
 ---
 
@@ -1675,13 +1708,13 @@ feature-with-integration-test:
 4. Identifies: new commands/queries not covered, changed behaviors, removed features
 5. For bugfixes: adds a **regression TC** (e.g., `TC-GM-040: Regression — goal title validation bypass`)
 6. Generates gap analysis
-7. Updates **both** feature docs Section 15 AND `docs/test-specs/` dashboard
+7. Updates **both** feature docs Section 15 AND `docs/specs/` dashboard
 8. Suggests: `/integration-test` to generate/update tests for changed TCs
 
 **test-spec-update workflow sequence:**
 
 ```
-test-spec-update: review-changes → tdd-spec → test-specs-docs →
+test-spec-update: review-changes → tdd-spec → tdd-spec [direction=sync] →
                   integration-test → test → workflow-end
 ```
 
@@ -1691,7 +1724,7 @@ test-spec-update: review-changes → tdd-spec → test-specs-docs →
 
 #### Case 5: Test Specs → Generate Integration Tests
 
-**Scenario:** Test specifications exist in feature docs Section 15 (or `docs/test-specs/`). Now generate integration test code.
+**Scenario:** Test specifications exist in feature docs Section 15 (or `docs/specs/`). Now generate integration test code.
 
 **Prompt examples:**
 
@@ -1810,7 +1843,7 @@ test-verify: scout → integration-test (review) → test → integration-test (
 1. `/integration-test` enters VERIFY-TRACEABILITY mode
 2. Collects test methods with TC annotations from the test project
 3. Collects TC entries from feature doc Section 15
-4. Builds 3-way traceability matrix: test code ↔ feature doc ↔ test-specs dashboard
+4. Builds 3-way traceability matrix: test code ↔ feature doc ↔ specs dashboard
 5. Identifies:
     - Orphaned tests (have annotation but no matching TC in docs)
     - Orphaned TCs (documented but no matching test)
@@ -1859,7 +1892,7 @@ test-verify: scout → integration-test (review) → test → integration-test (
 │  Code → test specs       │ /tdd-spec       │ pbi-to-tests       │
 │  PBI → test specs (TDD)  │ /tdd-spec       │ tdd-feature        │
 │  Sync specs ↔ docs       │ /tdd-spec or    │ —                  │
-│                          │ /test-specs-docs│                    │
+│                          │ /tdd-spec [direction=sync]│                    │
 │  Bug/PR → update specs   │ /tdd-spec       │ test-spec-update   │
 │  Specs → test code       │ /integration-   │ test-to-integration│
 │                          │  test           │                    │
@@ -2253,7 +2286,7 @@ Uses triple planning rounds and conditional scaffold.
 
 #### Solution Architect Agent
 
-The `solution-architect` agent (Opus model) provides domain expertise throughout:
+The `solution-architect` agent (inherits parent session model) provides domain expertise throughout:
 
 | Capability            | What It Does                                                   |
 | --------------------- | -------------------------------------------------------------- |
@@ -2689,7 +2722,7 @@ Context engineering is the discipline of **managing what information reaches the
 ┌─────────────────────────────────────────────────────────────────┐
 │  WHY CONTEXT ENGINEERING MATTERS                                  │
 │                                                                   │
-│  Claude Code context window: ~200K tokens                        │
+│  Claude Code context window: ~200K tokens (auto-compact at 250K) │
 │  A typical project's full context: >>200K tokens                 │
 │  Backend patterns doc alone: ~60KB (~15K tokens)                 │
 │  Frontend patterns doc: ~57KB (~14K tokens)                      │
@@ -2897,8 +2930,10 @@ Context engineering is the discipline of **managing what information reaches the
 │  Each agent inherits: CLAUDE.md + lessons (via subagent-init-*) │
 │  Each agent ignores: unrelated session state                     │
 │                                                                   │
-│  PARALLEL BENEFIT: 4 code-reviewer agents reviewing different    │
+│  PARALLEL BENEFIT: 5 code-reviewer agents reviewing different    │
 │  file groups simultaneously, each with focused context.           │
+│  (architecture + domain-entities + performance +                 │
+│  integration-test-review + security — all concurrent)            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -2965,7 +3000,7 @@ graph TB
     end
 
     subgraph "Hook 3: graph-context-injector.cjs"
-        SKILL["PreToolUse(Skill)<br/>/code-review, /scout,<br/>/debug, /sre-review"] --> BR["Run graph-blast-radius"]
+        SKILL["PreToolUse(Skill)<br/>/code-review, /scout,<br/>/debug-investigate, /sre-review"] --> BR["Run graph-blast-radius"]
         BR --> INJ["Inject into context:<br/>Risk level, impacted files,<br/>untested functions"]
     end
 
@@ -3026,7 +3061,7 @@ sequenceDiagram
 | **Sync**    | `/graph-sync`           | Sync graph with git state after pull/checkout                  |
 | **Batch**   | `/graph-query batch`    | Multi-file deduplicated query                                  |
 
-Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/review-changes`, `/review-architecture`, `/scout`, `/debug`, `/sre-review`, `/investigate`, `/feature-investigation`, `/fix`, `/refactoring`, `/security`, `/performance`, `/code-simplifier`, `/prove-fix`.
+Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/review-changes`, `/review-architecture`, `/scout`, `/debug-investigate`, `/sre-review`, `/investigate`, `/feature-investigation`, `/fix`, `/refactoring`, `/security`, `/performance`, `/code-simplifier`, `/prove-fix`.
 
 #### Auto-Maintenance
 
@@ -3060,6 +3095,151 @@ The graph requires **zero manual maintenance** after initial build:
 ```
 
 > **Setup:** `pip install tree-sitter tree-sitter-language-pack networkx` then `/graph-build`. See [code-graph-mechanism.md](./code-graph-mechanism.md) for full technical details.
+
+---
+
+### 8.18 Surface-Aware Code Review — Phase 0.7 Detection
+
+A key problem with generic code review: the reviewer doesn't know whether the PR touches backend, frontend, both, or only tooling — so it checks everything regardless. A BE-only fix still triggers SCSS reviews. An Angular-only change still spawns C# pattern checks.
+
+**Phase 0.7 Surface Detection** (added to `/review-changes`) classifies the git diff into surface buckets _before_ spawning any sub-agent:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 0.7 — SURFACE DETECTION (runs before any sub-agent)       │
+│                                                                   │
+│  Surface Bucket    Files Matched          Review Mode Triggered   │
+│  ──────────────    ─────────────          ────────────────────── │
+│  BE-only           *.cs, handlers,        BE sub-agent only       │
+│                    services                                        │
+│  FE-only           *.ts, *.html           FE-Logic sub-agent only │
+│                    (no .cs)                                        │
+│  BE+FE             Both present           Parallel: BE + FE-Logic │
+│  (dimensional)                            + SCSS (if .scss)       │
+│                                           + Synthesis              │
+│  SCSS-only         .scss only             SCSS sub-agent only     │
+│  Tooling-only      .claude/, config,      Fast-exit (no review)   │
+│                    lock files                                      │
+│                                                                   │
+│  WHY THIS MATTERS:                                                 │
+│  Before: Every review spawned all agents regardless of diff.     │
+│  After: BE-only PRs get BE-only review. No FE noise on .cs PRs.  │
+│  The surface classification is written to the report and passed  │
+│  downstream to /code-simplifier so simplification is also        │
+│  surface-aware.                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Structured Review Checklists
+
+Two protocol blocks (`SYNC:be-focused-review-checklist` and `SYNC:fe-logic-focused-review-checklist`) are **embedded verbatim** in sub-agent prompts. This removes AI discretion about _what_ to check:
+
+**`SYNC:be-focused-review-checklist`** — 9 explicit BE checks tied to project patterns:
+
+1. Command/Query handler co-location (CQRS one-file rule)
+2. Repository usage — no generic interface, no direct DbContext
+3. Business validation — `PlatformValidationResult` fluent API, no `throw new`
+4. Side effect placement — entity event handlers only, not in handler bodies
+5. Cross-service communication — message bus only, no shared DB access
+6. DTO mapping ownership — DTOs own mapping, no mapping in `Handle()`
+7. Domain logic placement — lowest-layer rule
+8. Common correctness patterns (null safety, LINQ, async)
+9. Integration test coverage check
+
+**`SYNC:fe-logic-focused-review-checklist`** — parallel FE checks for base class extension, store patterns, subscription lifecycle, BEM CSS class enforcement.
+
+The checklists reference `backend-patterns-reference.md` directly, so agents look up actual class names rather than guessing.
+
+#### DOC SYNC DEFERRAL — Eliminating Reviewer Hallucination in Docs
+
+A subtle failure mode: review sub-agents would sometimes edit feature docs or spec files inline ("while I'm here, I'll update the docs"). This caused:
+
+- Docs updated with potentially incorrect content (reviewer hallucinated API behavior)
+- `/docs-update` step later found docs "already updated" but with wrong content
+- Double-write race conditions when multiple parallel reviewers touched the same doc file
+
+The `review-changes.injectContext` in `workflows.json` now includes a **DOC SYNC DEFERRAL** block injected into every review sub-agent:
+
+```
+DOC SYNC DEFERRAL: DO NOT update feature docs, engineering specs, or test spec TCs
+during review steps. The dedicated docs-update step handles all of this.
+TEST SPEC VERIFICATION above is READ-ONLY cross-reference only — flag gaps, do not write.
+```
+
+**Effect:** Review steps are strictly read-only for docs. They may _flag_ staleness as a finding, but the actual write is deferred to `/docs-update` (step 15), which uses specialized sub-skills with evidence verification. Single point of write = no race conditions, no reviewer hallucinations in docs.
+
+#### docs-update v3.2.0 — Mandatory Task Table with Audit Trail
+
+The `/docs-update` skill was upgraded from advisory ([IMPORTANT]) to enforced ([BLOCKING]) compliance with a **Mandatory Task Creation Table**:
+
+```
+[BLOCKING] Create ALL 8 tasks via TaskCreate BEFORE any action.
+NEVER skip, batch-complete, or mark done without invoking the sub-skill.
+
+# Task  Subject                                               Conditional?
+  1     Phase 0 — Triage                                      No — always
+  2     Phase 1 — Project docs update                         Yes — arch changes only
+  3     Phase 2 — /feature-docs invocation                    Yes — service files changed
+  4     Phase 2.5 — /spec-discovery [mode=update]             Yes — docs/specs/ exists
+  5     Phase 3 — /tdd-spec update                            Yes — behavior changed
+  6     Phase 4 — /tdd-spec [direction=sync]                  Yes — Phase 3 ran
+  7     Phase 5 — Write summary report                        No — always
+  8     Final review — verify all phases ran                  No — always
+```
+
+**Before:** The AI could "plan" docs-update in its head, run a few greps, write a note, and call it done with no audit trail.
+**After:** Every execution creates exactly 8 tasks. Skipped phases leave a `completed` task with an explicit reason — permanent audit record of why each phase was skipped.
+
+**Dedup module rule:** backend + frontend files for the same module = ONE `/feature-docs` invocation. Prevents duplicate section updates when a PR touches both `Employee.Application/*.cs` and `employee-list.component.ts`.
+
+---
+
+### 8.19 Spec-Driven Development Loop — Closed Feedback Chain
+
+The spec-driven development loop ensures that every code fix propagates through all documentation artifacts in sequence:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  SPEC-DRIVEN FEEDBACK CHAIN                                       │
+│                                                                   │
+│  Code fix (service/handler/consumer)                              │
+│    → Engineering spec bundle updated                              │
+│        (A-domain-model.md, B-business-rules.md)                  │
+│    → Integration tests written with TC-{FEAT}-{NNN} annotations  │
+│    → Feature doc Section 15 updated (TC evidence)               │
+│    → QA dashboard synced (PRIORITY-INDEX.md)                     │
+│    → SPEC-CHANGELOG.md entry written                             │
+│                                                                   │
+│  Every artifact in the chain updated in a single branch.          │
+│  No orphaned specs, no stale dashboard entries, no               │
+│  undocumented tests.                                              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Engineering Spec Bundle — AI Source of Truth
+
+The engineering spec bundle (`docs/specs/{app-bucket}/{system-name}/`) is used by AI sessions as a **source of truth for domain modeling**. When a developer asks "what values does `EmployeeClassification` have?", the AI reads `A-domain-model.md`, not the source code.
+
+**Why accuracy matters:** A 2-value answer when the actual code has 3 values causes:
+
+- Incorrect code generation (missing the third enum value in switch cases)
+- Incorrect test assertions (only asserting 2 of 3 variants)
+- Documentation that contradicts the codebase
+
+The spec bundle includes `last_extracted` and `extraction_mode` frontmatter. Keeping these updated means future `/spec-discovery [mode=update]` runs treat it as a known-good baseline and perform incremental diffs rather than full re-extraction.
+
+#### QA Dashboard — Bidirectional Test Catalog
+
+`docs/specs/PRIORITY-INDEX.md` is the cross-referenceable test catalog. When integration tests exist but are NOT registered here, the `/integration-test-review` agent produces false-negative "no integration tests found" findings.
+
+**Registration format:** Each TC entry includes an `evidence` field linking to the integration test method name (`TestClass::MethodName`). This enables future AI sessions to find the test via a single grep — no manual file tree traversal required.
+
+The `[Trait("TestSpec", "TC-{FEAT}-{NNN}")]` annotation in test code provides the bidirectional link:
+
+- Feature doc Section 15 → spec bundle TC ID → test method (forward)
+- Test method `Trait` → TC ID → feature doc evidence section (reverse)
+
+Both directions are queryable without reading source code, making the spec-driven chain **self-documenting for AI agents**.
 
 ---
 
@@ -3275,12 +3455,13 @@ flowchart TB
 
 ```
 .claude/
-├── settings.json ──────── Hook registration (9 events, 44 hooks)
+├── settings.json ──────── Hook registration (9 events, ~47 hooks)
+├── ccstatusline.json ──── Status line display config (model, context, tokens, git-changes)
 ├── .ck.json ──────────── Hook-specific config
 ├── .ckignore ─────────── Scout block patterns
 ├── workflows.json ─────── 48 workflow definitions
 ├── workflows/ ──────────── Workflow definitions (primary-workflow.md, etc.)
-├── hooks/ ─────────────── 44 hooks + 27 lib modules
+├── hooks/ ─────────────── ~40 hooks + 27+ lib modules
 │   ├── session-init.cjs
 │   ├── workflow-router.cjs
 │   ├── prompt-context-assembler.cjs
@@ -3373,13 +3554,15 @@ Agents solve two critical problems:
 
 1. **Context isolation** — Each agent gets a focused context window without polluting the main session. A code reviewer doesn't need implementation state; a scout doesn't need review findings.
 
-2. **Parallel execution** — Multiple agents can run simultaneously (e.g., 4 code-reviewer agents reviewing different file categories in parallel), dramatically reducing time for large tasks.
+2. **Parallel execution** — Multiple agents can run simultaneously (e.g., 5 code-reviewer agents reviewing different file categories in parallel: architecture, domain-entities, performance, integration-test-review, and security), dramatically reducing time for large tasks.
 
 **Key design:** Agents inherit project context via 18 `subagent-init-*.cjs` part-hooks — they automatically receive CLAUDE.md instructions, learned lessons, and active workflow state.
 
 ### 12.3 Agent Behavioral Rules (NEW)
 
-All 28 agents now include **domain-specific NEVER/ALWAYS rules** appended to their system prompts. These are negative-prompting guardrails that prevent agents from overstepping their role:
+All 28 agents include two layers of behavioral enforcement:
+
+**Layer 1 — Domain-specific NEVER/ALWAYS rules** appended to their system prompts:
 
 ```
 # Example: ui-ux-designer agent
@@ -3393,7 +3576,33 @@ All 28 agents now include **domain-specific NEVER/ALWAYS rules** appended to the
 - ALWAYS place side effects in Entity Event Handlers
 ```
 
-**Why this matters (prompt engineering):** Negative prompting ("NEVER do X") is more effective than positive-only instructions for LLMs. The agent's focused context means these rules are always visible — they can't be compacted away like instructions in a long conversation.
+**Layer 2 — Inlined `<!-- SYNC:... -->` protocol blocks** in every agent definition:
+
+Each agent definition now inlines two shared protocol blocks from `sync-inline-versions.md`:
+
+```markdown
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking.
+> Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact...
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> - Check downstream references before deleting...
+> - Verify AI-generated content against actual code...
+> - Holistic-first debugging — resist nearest-attention trap...
+
+<!-- /SYNC:ai-mistake-prevention -->
+```
+
+**Agent model: `inherit`** — All agents now use `model: inherit` (inheriting the parent session's model) rather than hardcoding `model: opus`. This ensures agents always use the same model as the active session, reducing cost for lightweight tasks while allowing upgrades to propagate automatically.
+
+**Why this matters (prompt engineering):** Negative prompting ("NEVER do X") + inlined critical-thinking protocols create two complementary guardrails. NEVER/ALWAYS rules prevent role overstepping; SYNC blocks prevent reasoning failures (hallucination, shallow investigation). The agent's focused context means both layers are always visible — they can't be compacted away like instructions in a long conversation.
 
 ### 12.4 GitHub Copilot Sync
 
@@ -3481,20 +3690,24 @@ The framework elevates the AI from a code autocomplete tool to a **strategic dev
 
 The framework succeeds because it aligns with how LLMs actually fail:
 
-| LLM Failure Mode            | Root Cause                                                  | Framework Counter                                                |
-| --------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
-| **Pattern invention**       | Training data generalizes; your project is specific         | Context injection puts real patterns in every prompt             |
-| **Context amnesia**         | Long conversations exceed attention; compaction drops state | External state files + recovery hooks restore progress           |
-| **Skipped steps**           | LLMs optimize for shortest path to output                   | Workflow enforcement makes process non-negotiable                |
-| **Confident hallucination** | LLMs can't distinguish recall from confabulation            | Evidence gates demand `file:line` proof for every claim          |
-| **Convention drift**        | Without reminders, AI reverts to generic patterns           | Hook injection re-injects project conventions on every edit      |
-| **Repeated mistakes**       | Each session starts fresh with no memory of past errors     | Lessons system persists errors and re-injects them as guardrails |
+| LLM Failure Mode               | Root Cause                                                  | Framework Counter                                                |
+| ------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Pattern invention**          | Training data generalizes; your project is specific         | Context injection puts real patterns in every prompt             |
+| **Context amnesia**            | Long conversations exceed attention; compaction drops state | External state files + recovery hooks restore progress           |
+| **Skipped steps**              | LLMs optimize for shortest path to output                   | Workflow enforcement makes process non-negotiable                |
+| **Confident hallucination**    | LLMs can't distinguish recall from confabulation            | Evidence gates demand `file:line` proof for every claim          |
+| **Convention drift**           | Without reminders, AI reverts to generic patterns           | Hook injection re-injects project conventions on every edit      |
+| **Repeated mistakes**          | Each session starts fresh with no memory of past errors     | Lessons system persists errors and re-injects them as guardrails |
+| **Wrong-surface reviews**      | Reviewers check FE patterns on BE-only PRs                  | Phase 0.7 surface detection routes to correct sub-agent set      |
+| **Reviewer writes stale docs** | Review agents update docs with unverified content           | DOC SYNC DEFERRAL: review=read-only; writes deferred to step 15  |
+| **Silent doc phase skips**     | /docs-update phases run without audit trail                 | Mandatory 8-task table: every phase tracked, skips logged        |
+| **Stale spec bundle**          | AI sessions read outdated enum/model specs                  | spec-discovery update mode keeps last_extracted current          |
 
 **The meta-principle:** Don't fight the LLM's nature — build infrastructure around it. Accept that it forgets, and build state persistence. Accept that it hallucinates, and build evidence gates. Accept that it drifts, and build convention injection. The framework doesn't make the AI smarter — it makes the AI's environment smarter.
 
 ### The Result
 
-**~37 hooks** (53 files), **258 skills**, **48 workflows**, and **28 specialized agents** working in concert to deliver:
+**~40 hooks** (56 files), **258 skills**, **48 workflows**, and **28 specialized agents** working in concert to deliver:
 
 - **Fewer hallucinations** — Evidence gates and proof traces catch AI fabrications before they reach files
 - **Better code quality** — Pattern injection ensures AI follows project conventions, not generic training data

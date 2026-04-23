@@ -198,6 +198,67 @@ function getAllFileExtensions() {
 }
 
 /**
+ * Compile an array of regex strings into RegExp objects.
+ * Invalid regex patterns are ignored.
+ * @param {string[]|undefined} patterns
+ * @returns {RegExp[]}
+ */
+function compileRegexArray(patterns) {
+    if (!Array.isArray(patterns)) return [];
+    const result = [];
+    for (const pattern of patterns) {
+        if (typeof pattern !== 'string') continue;
+        try {
+            result.push(new RegExp(pattern, 'i'));
+        } catch {
+            /* skip invalid regex */
+        }
+    }
+    return result;
+}
+
+/**
+ * Get normalized localization settings from project config.
+ * @param {object} [config] - Parsed project-config.json. If omitted, loads from disk.
+ * @returns {{enabled:boolean,supportedLocales:string[],defaultLocale:string,translationFilePatterns:RegExp[],uiPathPatterns:RegExp[]}}
+ */
+function getLocalizationConfig(config) {
+    if (config === undefined) config = loadProjectConfig();
+    const localization = config?.localization;
+    if (!localization || typeof localization !== 'object') {
+        return {
+            enabled: false,
+            supportedLocales: [],
+            defaultLocale: '',
+            translationFilePatterns: [],
+            uiPathPatterns: []
+        };
+    }
+
+    const supportedLocales = Array.isArray(localization.supportedLocales)
+        ? localization.supportedLocales.filter(locale => typeof locale === 'string' && locale.trim().length > 0)
+        : [];
+
+    return {
+        enabled: localization.enabled === true,
+        supportedLocales,
+        defaultLocale: typeof localization.defaultLocale === 'string' ? localization.defaultLocale : '',
+        translationFilePatterns: compileRegexArray(localization.translationFilePatterns),
+        uiPathPatterns: compileRegexArray(localization.uiPathPatterns)
+    };
+}
+
+/**
+ * True when project explicitly enables localization and has multiple supported locales.
+ * @param {object} [config] - Parsed project-config.json. If omitted, loads from disk.
+ * @returns {boolean}
+ */
+function isMultilingualProject(config) {
+    const localization = getLocalizationConfig(config);
+    return localization.enabled && localization.supportedLocales.length > 1;
+}
+
+/**
  * Check if a parsed project config has been populated with real values.
  * "Populated" = has a non-empty project.name AND at least one substantive section
  * (modules, services, contextGroups, framework with real name, testing, e2eTesting, styling, etc.)
@@ -219,8 +280,9 @@ function isConfigPopulated(config) {
     const hasTesting = !!(config.testing?.frameworks?.length > 0 || config.e2eTesting?.framework?.trim().length > 0);
     const hasStyling = !!(config.styling?.technology?.trim().length > 0 || (config.scss?.appMap && Object.keys(config.scss.appMap).length > 0));
     const hasFrontendApps = !!(config.frontendApps?.appMap && Object.keys(config.frontendApps.appMap).length > 0);
+    const hasLocalization = !!(config.localization && (Array.isArray(config.localization.supportedLocales) || Array.isArray(config.localization.translationFilePatterns)));
 
-    return hasModules || hasServices || hasContextGroups || hasFramework || hasTesting || hasStyling || hasFrontendApps;
+    return hasModules || hasServices || hasContextGroups || hasFramework || hasTesting || hasStyling || hasFrontendApps || hasLocalization;
 }
 
 /**
@@ -372,6 +434,8 @@ module.exports = {
     getModuleForPath,
     resolveSection,
     getAllFileExtensions,
+    getLocalizationConfig,
+    isMultilingualProject,
     isConfigPopulated,
     isKnowledgePath,
     generateProjectSummary

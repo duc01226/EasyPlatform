@@ -1,8 +1,7 @@
 ---
 name: plan-analysis
 version: 1.0.1
-description: "[Planning] Use when the user provides an implementation plan file and asks to analyze it, assess impact, update specifications, or verify planned changes. Triggers on keywords like "analyze plan", "implementation plan", "assess impact", "update spec from plan", "verify plan"."
-
+description: '[Planning] Use when the user provides an implementation plan file and asks to analyze it, assess impact, update specifications, or verify planned changes. Triggers on keywords like "analyze plan", "implementation plan", "assess impact", "update spec from plan", "verify plan".'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
@@ -48,7 +47,7 @@ description: "[Planning] Use when the user provides an implementation plan file 
 
 <!-- /SYNC:plan-quality -->
 
-- `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
+- `docs/specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
 <!-- SYNC:iterative-phase-quality -->
 
@@ -336,3 +335,5 @@ Verify under `## Specification Validation`:
       <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

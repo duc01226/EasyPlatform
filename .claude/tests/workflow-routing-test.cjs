@@ -160,9 +160,9 @@ assert(
     'Should include TaskCreate enforcement'
 );
 assert(
-    'Injection contains MATCH/SELECT/ACTIVATE steps',
-    injection.includes('MATCH') && injection.includes('SELECT') && injection.includes('ACTIVATE'),
-    'Should include detection steps'
+    'Injection contains MATCH/ANALYZE/ASK/ACTIVATE steps',
+    injection.includes('MATCH') && injection.includes('ANALYZE') && injection.includes('ASK') && injection.includes('ACTIVATE'),
+    'Should include current detection steps'
 );
 
 // Quick mode injection
@@ -277,10 +277,33 @@ for (const [id, wf] of Object.entries(defaultConfig.workflows)) {
 }
 
 // ============================================================
-// SECTION 9: Workflow Coverage Summary
+// SECTION 9: Review Workflow Guidance
+// Ensure i18n translation-sync guidance exists in review preActions
 // ============================================================
 
-console.log('\n--- Section 9: Coverage Summary ---');
+console.log('\n--- Section 9: Review Workflow Guidance ---');
+
+assert(
+    'review workflow injectContext includes multilingual UI sync check',
+    workflows.review?.preActions?.injectContext?.includes('MULTILINGUAL UI SYNC CHECK'),
+    'review.preActions.injectContext should include multilingual UI sync guidance'
+);
+assert(
+    'review-changes workflow injectContext includes multilingual UI sync check',
+    workflows['review-changes']?.preActions?.injectContext?.includes('MULTILINGUAL UI SYNC CHECK'),
+    'review-changes.preActions.injectContext should include multilingual UI sync guidance'
+);
+assert(
+    'quality-audit workflow injectContext includes multilingual UI text guidance',
+    workflows['quality-audit']?.preActions?.injectContext?.includes('multilingual UI text changes'),
+    'quality-audit.preActions.injectContext should include multilingual UI guidance'
+);
+
+// ============================================================
+// SECTION 10: Workflow Coverage Summary
+// ============================================================
+
+console.log('\n--- Section 10: Coverage Summary ---');
 
 assert('All workflows tested', workflowIds.length > 0, `Tested ${workflowIds.length} workflows`);
 

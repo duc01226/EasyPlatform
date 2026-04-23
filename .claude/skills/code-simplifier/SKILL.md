@@ -1,10 +1,19 @@
 ---
 name: code-simplifier
-version: 2.0.0
+version: 2.2.0
 description: '[Code Quality] Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. For simple tasks, MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -47,56 +56,66 @@ description: '[Code Quality] Simplifies and refines code for clarity, consistenc
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
 <!-- /SYNC:understand-code-first -->
+
 <!-- SYNC:design-patterns-quality -->
 
 > **Design Patterns Quality** — Priority checks for every code change:
 >
-> 1. **DRY via OOP:** Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION share base class. 3+ similar patterns → extract to shared abstraction.
+> 1. **DRY via OOP:** Identify classes/modules with the same purpose, naming pattern, or lifecycle. Apply your knowledge of the project's language/framework to determine the idiomatic abstraction (base class, mixin, trait, protocol, decorator). 3+ similar patterns → extract to shared abstraction.
 > 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
 > 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
 > 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
 > 5. **YAGNI gate:** NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
 >
 > **Anti-patterns to flag:** God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
+>
+> **Serial Attention for Design Quality** — DO NOT scan all quality concerns simultaneously. Split attention misses violations that focused passes catch.
+>
+> 1. **Identify applicable dimensions** — Based on the code's language, domain, and patterns, determine which quality dimensions apply: DRY, SOLID principles (SRP/OCP/LSP/ISP/DIP), OOP idioms, cohesion/coupling, GRASP, Law of Demeter, CQRS invariants, etc. Your list is NOT fixed — derive from what the code actually does.
+> 2. **One focused pass per dimension** — Dedicate single-focus attention to EACH dimension in sequence. Do NOT mix concerns across passes.
+> 3. **Threshold: 3+ similar patterns = MANDATORY extraction** — Not optional suggestion. Flag as mandatory structural fix requiring action.
+> 4. **2+ violations of same kind = structural finding** — Report as "pattern problem" needing architectural resolution, not a list of individual instances.
 
 <!-- /SYNC:design-patterns-quality -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **External Memory:** Complex/lengthy work → write findings to `plans/reports/`. Prevents context loss, serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence (confidence >80% to act, <80% verify first).
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns for base class extraction. Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION inherit common base. Verify stack has linting/analyzer configured.
 
 ## Quick Summary
 
-**Goal:** Simplify and refine code for clarity, consistency, and maintainability while preserving all functionality.
+**Goal:** Simplify and refine code for clarity, consistency, maintainability — preserving all functionality.
 
-> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan task to READ:
 >
-> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
-> - `project-structure-reference.md` — project patterns and structure
+> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists **(READ FIRST)**
+> - `project-structure-reference.md` — project patterns/structure
 >
-> If files not found, search for: project documentation, coding standards, architecture docs.
+> If not found, search for: project documentation, coding standards, architecture docs.
 
 **Workflow:**
 
-1. **Identify Targets** — Recent git changes or specified files (skip generated/vendor)
-2. **Analyze** — Find complexity hotspots (nesting >3, methods >20 lines), duplicates, naming issues
-3. **Apply Simplifications** — One refactoring type at a time following KISS/DRY/YAGNI
-4. **Verify** — Run related tests, confirm no behavior changes
-5. **Fresh-Context Verification** — Spawn code-reviewer sub-agent to validate simplifications
+1. **Phase 0: Detect** — Classify artifact type (backend/frontend/test/config) and scope
+2. **Identify Targets** — Recent git changes or specified files (skip generated/vendor)
+3. **Analyze** — Apply simplification dimensions (see below)
+4. **Apply** — One refactoring type at a time following KISS/DRY/YAGNI
+5. **Verify** — Run related tests, confirm no behavior changes
+6. **Fresh-Context Review** — Spawn code-reviewer sub-agent (MANDATORY)
 
 **Key Rules:**
 
-- Preserve all existing functionality; no behavior changes
-- Follow platform patterns (Entity expressions, fluent helpers, project store base (search for: store base class), BEM)
-- Keep tests passing after every change
+- Preserve all existing functionality — no behavior changes
+- Follow platform patterns (entity expressions, fluent helpers, store base, BEM)
+- Tests pass after every change
+- NEVER apply simplification when unsure it preserves behavior
 
 ### Frontend/UI Context (if applicable)
 
-> When this task involves frontend or UI changes,
+> When task involves frontend/UI changes:
 
 <!-- SYNC:ui-system-context -->
 
@@ -112,71 +131,125 @@ description: '[Code Quality] Simplifies and refines code for clarity, consistenc
 
 <!-- /SYNC:ui-system-context -->
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
-- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
-- Design system tokens: `docs/project-reference/design-system/README.md`
+## Phase 0: Artifact Detection
 
-# Code Simplifier Skill
+**MUST ATTENTION** classify before simplifying — detection drives focus and sub-agent routing:
 
-Simplify and refine code for clarity, consistency, and maintainability.
+| Artifact Type      | Detection                   | Key Focus                                             |
+| ------------------ | --------------------------- | ----------------------------------------------------- |
+| Backend (C#/.NET)  | `.cs` files                 | Entity expressions, fluent API, DRY via OOP, SOLID    |
+| Frontend (TS/HTML) | `.ts`, `.html`, `.scss`     | BEM, store base, subscription cleanup, component base |
+| Tests              | `*Test.cs`, `*.spec.ts`     | Assertions, `WaitUntilAsync`, data isolation          |
+| Config/Generated   | Migrations, `*.generated.*` | **SKIP** — NEVER simplify generated/migration code    |
 
-## Usage
+Sub-agent routing by artifact:
 
-```
-/code-simplifier                    # Simplify recently modified files
-/code-simplifier path/to/file.ts    # Simplify specific file
-/code-simplifier --scope=function   # Focus on function-level simplification
-```
+| Artifact             | Sub-agent               |
+| -------------------- | ----------------------- |
+| Source code/diffs    | `code-reviewer`         |
+| Security-sensitive   | `security-auditor`      |
+| Performance-critical | `performance-optimizer` |
+| Plans/docs/specs     | `general-purpose`       |
 
 ## Simplification Mindset
 
-**Be skeptical. Verify before simplifying. Every change needs proof it preserves behavior.**
+**Skeptical-first:** Verify before simplifying. Every change needs proof it preserves behavior.
 
-- Do NOT assume code is redundant — verify by tracing call paths and reading implementations
-- Before removing/replacing code, grep for all usages to confirm nothing depends on the current form
-- Before flagging a convention violation, grep for 3+ existing examples — codebase convention wins
-- Every simplification must include `file:line` evidence of what was verified
-- If unsure whether simplification preserves behavior, do NOT apply it
+- NEVER assume code redundant — trace call paths and read implementations first
+- Before removing/replacing: grep all usages confirming nothing depends on current form
+- Before flagging convention violation: grep 3+ existing examples — codebase convention wins
+- Every simplification requires `file:line` evidence of what was verified
+- If unsure whether simplification preserves behavior → DO NOT apply
 
-## What It Does
+## Simplification Dimensions
 
-1. **Analyzes** code for unnecessary complexity
-2. **Identifies** opportunities to simplify without changing behavior
-3. **Applies** KISS, DRY, and YAGNI principles
-4. **Preserves** all existing functionality
-5. **Follows convention** — grep for 3+ existing patterns before applying simplifications
+Dimension-based reasoning replaces fixed checklists. Each dimension has a `Think:` prompt forcing first-principles reasoning.
 
-## Readability Checklist (MUST ATTENTION evaluate)
+### Dimension 1: Readability
 
-Before finishing, verify the code is **easy to read, easy to maintain, easy to understand**:
+> **Think:** Would a new engineer understand this in 30 seconds? What forces multiple file traces?
 
-- **Schema visibility** — If a function computes a data structure (object, map, config), add a comment showing the output shape so readers don't have to trace the code
-- **Non-obvious data flows** — If data transforms through multiple steps (A → B → C), add a brief comment explaining the pipeline
-- **Self-documenting signatures** — Function params should explain their role; remove unused params
-- **Magic values** — Replace unexplained numbers/strings with named constants or add inline rationale
-- **Naming clarity** — Variables/functions should reveal intent without reading the implementation
+- Schema visibility: functions computing data structures need output-shape comment
+- Non-obvious pipelines: A→B→C transformations need brief pipeline explanation
+- Self-documenting signatures: params explain role; remove unused params
+- Magic values: replace unexplained numbers/strings with named constants
+- Naming clarity: names reveal intent without reading implementation
 
-## Simplification Targets
+### Dimension 2: DRY & Abstraction
 
-- Redundant code paths
-- Over-engineered abstractions
-- Unnecessary comments (self-documenting code preferred)
-- Complex conditionals that can be flattened
-- Verbose patterns that have simpler alternatives
+> **Think:** Pattern appearing ≥3 places? What base class/generic eliminates duplication?
+
+- Same-suffix classes (`*Entity`, `*Dto`, `*Service`) → shared base
+- Repeated logic blocks → extract to helper/extension method
+- YAGNI gate: NEVER extract for hypothetical future use — 3+ occurrences required
+
+### Dimension 3: Right Responsibility
+
+> **Think:** Logic in lowest layer that can own it? Could moving it down enable reuse?
+
+- `Entity/Model → Domain Service → Application Service → Controller` (logic belongs lowest)
+- Business logic in controllers → move down
+- Mapping in handlers → move to DTO methods
+
+### Dimension 4: Complexity Reduction
+
+> **Think:** What is cognitive load? Can nesting/conditionals flatten?
+
+- Nesting >3 → refactor (early returns, extract methods)
+- Methods >20 lines → extract
+- Complex conditionals → flatten or Strategy pattern (3+ branching occurrences only)
+
+### Dimension 5: Database Performance
+
+> **MANDATORY IMPORTANT MUST ATTENTION**
+>
+> 1. **Paging:** ALL list queries MUST use pagination. NEVER unbounded `GetAll()`, `ToList()`, `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Indexes:** ALL filter fields, foreign keys, sort columns MUST have database indexes. Entity expressions must match index field order. Collections need index management methods.
+
+## Project Patterns
+
+### Backend
+
+- Extract entity static expressions (search: entity expression pattern)
+- Use fluent helpers (search: fluent helper pattern in `docs/project-reference/backend-patterns-reference.md`)
+- Move mapping to DTO mapping methods (search: DTO mapping pattern)
+- Use project validation fluent API (see `docs/project-reference/backend-patterns-reference.md`)
+- Verify entity expressions have database indexes
+- Verify document DB collections have index management methods
+
+### Frontend
+
+- Use project store base (search: store base class) for state management
+- Apply subscription cleanup (search: subscription cleanup pattern) to all subscriptions
+- BEM class naming on ALL template elements
+- Use platform base classes (search: base component class, store component base class)
+
+## Graph Intelligence (MANDATORY if graph.db exists)
+
+Before simplifying, trace what depends on target:
+
+```
+python .claude/scripts/code_graph trace <file> --direction downstream --json
+```
+
+Verify simplified code preserves same interface for all traced consumers. Cross-service MESSAGE_BUS consumers are especially fragile — may depend on exact message shape.
+
+Additional queries:
+
+- Verify no callers break: `python .claude/scripts/code_graph query callers_of <function> --json`
+- Check dependents: `python .claude/scripts/code_graph query importers_of <module> --json`
+- Batch analysis: `python .claude/scripts/code_graph batch-query file1 file2 --json`
 
 ## Execution
 
-Use the `code-simplifier:code-simplifier` subagent:
-
 ```
-Task(subagent_type="code-simplifier:code-simplifier", prompt="Review and simplify [target files]")
+Agent(subagent_type="code-simplifier", prompt="Review and simplify [target files]")
 ```
 
-## Examples
-
-**Before:**
+**Example:**
 
 ```typescript
+// Before
 function getData() {
     const result = fetchData();
     if (result !== null && result !== undefined) {
@@ -185,74 +258,19 @@ function getData() {
         return null;
     }
 }
-```
 
-**After:**
-
-```typescript
+// After
 function getData() {
     return fetchData() ?? null;
 }
 ```
 
-## Workflow
-
-1. **Identify targets**
-    - If no arguments: `git diff --name-only HEAD~1` for recent changes
-    - If arguments provided: use specified files/patterns
-    - Skip: generated code, migrations, vendor files
-
-2. **Analyze each file**
-    - Identify complexity hotspots (nesting > 3, methods > 20 lines)
-    - Find duplicated code patterns
-    - Check naming clarity
-
-3. **Design Pattern Assessment** (per `design-patterns-quality-checklist.md`)
-    - **DRY/Abstraction:** Flag duplicate patterns extractable to base class, generic, or helper
-    - **Right Responsibility:** Verify logic is in lowest appropriate layer (Entity > Service > Component)
-    - **Pattern Opportunities:** Check for creational/structural/behavioral pattern opportunities (switch→Strategy, scattered new→Factory, etc.)
-    - **Anti-Patterns:** Flag God Objects, Copy-Paste, Circular Dependencies, Singleton overuse
-    - **Guard against over-engineering:** Only recommend patterns with evidence of 3+ occurrences of the problem
-
-4. **Apply simplifications**
-    - One refactoring type at a time
-    - Preserve all functionality
-    - Follow platform patterns
-
-5. **Verify**
-    - Run related tests if available
-    - Confirm no behavior changes
-
-## Project Patterns
-
-### Backend
-
-- Extract to entity static expressions (search for: entity expression pattern)
-- Use fluent helpers (search for: fluent helper pattern in docs/project-reference/backend-patterns-reference.md)
-- Move mapping to DTO mapping methods (search for: DTO mapping pattern)
-- Use project validation fluent API (see docs/project-reference/backend-patterns-reference.md)
-- Check entity expressions have database indexes
-- Verify document database index methods exist for collections
-
-> **[IMPORTANT] Database Performance Protocol (MANDATORY):**
->
-> 1. **Paging Required** — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
-> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
-
-### Frontend
-
-- Use `project store base (search for: store base class)` for state management
-- Apply subscription cleanup pattern (search for: subscription cleanup pattern) to all subscriptions
-- Ensure BEM class naming on all template elements
-- Use platform base classes (`project base component (search for: base component class)`, `project store component base (search for: store component base class)`)
-
 ## Constraints
 
-- **Preserve functionality** — No behavior changes
-- **Keep tests passing** — Verify after changes
-- **Follow patterns** — Use platform conventions
-- **Document intent** — Add comments only where non-obvious
-- **Doc staleness** — After simplifications, cross-reference changed files against related docs (feature docs, test specs, READMEs); flag any that need updating
+- **Preserve functionality** — no behavior changes
+- **Tests passing** — verify after every change
+- **Follow patterns** — use platform conventions, never invent
+- **Doc staleness** — cross-ref changed files against feature docs, test specs, READMEs; flag updates needed
 
 <!-- SYNC:shared-protocol-duplication-policy -->
 
@@ -260,32 +278,11 @@ function getData() {
 
 <!-- /SYNC:shared-protocol-duplication-policy -->
 
-## Graph Intelligence (RECOMMENDED if graph.db exists)
-
-If `.code-graph/graph.db` exists, enhance analysis with structural queries:
-
-- **Verify no callers break after simplification:** `python .claude/scripts/code_graph query callers_of <function> --json`
-- **Check dependents:** `python .claude/scripts/code_graph query importers_of <module> --json`
-- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
-
-### Graph-Trace Before Simplification
-
-When graph DB is available, BEFORE simplifying code, trace to understand what depends on it:
-
-- `python .claude/scripts/code_graph trace <file-to-simplify> --direction downstream --json` — all downstream consumers that depend on current behavior
-- Verify simplified code preserves the same interface for all traced consumers
-- Cross-service MESSAGE_BUS consumers are especially fragile — they may depend on exact message shape
-
-## Related
-
-- `code-review`
-- `refactoring`
-
 ---
 
 ## Fresh Sub-Agent Verification (MANDATORY after simplifications in a review workflow)
 
-After simplifications are applied, verification requires a **fresh sub-agent review** to eliminate confirmation bias. See `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined below).
+After simplifications applied, verification requires **fresh sub-agent review** to eliminate confirmation bias. See SYNC blocks below.
 
 <!-- SYNC:double-round-trip-review -->
 
@@ -494,16 +491,16 @@ When used standalone (outside a review workflow), run `/workflow-review-changes`
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in workflow, use `AskUserQuestion` to ask user. Do NOT decide this is "simple enough to skip" — the user decides:
 >
 > 1. **Activate `quality-audit` workflow** (Recommended) — code-simplifier → review-changes → code-review
-> 2. **Execute `/code-simplifier` directly** — run this skill standalone
+> 2. **Execute `/code-simplifier` directly** — run standalone
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, use `AskUserQuestion`:
 
 - **"/workflow-review-changes (Recommended)"** — Review all changes before commit
 - **"/code-review"** — Full code review
@@ -511,34 +508,53 @@ When used standalone (outside a review workflow), run `/workflow-review-changes`
 
 ## AI Agent Integrity Gate (NON-NEGOTIABLE)
 
-> **Completion ≠ Correctness.** Before reporting ANY work done, prove it:
+> **Completion ≠ Correctness.** Before reporting work done, prove it:
 >
-> 1. **Grep every removed name.** Extraction/rename/delete touched N files? Grep confirms 0 dangling refs across ALL file types.
-> 2. **Ask WHY before changing.** Existing values are intentional until proven otherwise. No "fix" without traced rationale.
+> 1. **Grep every removed name.** Extraction/rename/delete → grep confirms 0 dangling refs across ALL file types.
+> 2. **Ask WHY before changing.** Existing values intentional until proven otherwise. No "fix" without traced rationale.
 > 3. **Verify ALL outputs.** One build passing ≠ all builds passing. Check every affected stack.
 > 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
-> 5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, and reachable by all consumers.
+> 5. **New artifact = wired artifact.** Created? Prove registered, imported, reachable by all consumers.
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks via `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide
+- **MANDATORY IMPORTANT MUST ATTENTION** add final review task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** READ `docs/project-reference/code-review-rules.md` FIRST
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE modification. Run graph trace when graph.db exists.
+- **MANDATORY IMPORTANT MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep dangling refs after changes.
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER simplify generated code, migrations, vendor files
+- **MANDATORY IMPORTANT MUST ATTENTION** spawn fresh sub-agent for Round 2 review — NEVER declare PASS after Round 1 alone
 
-<!-- SYNC:understand-code-first:reminder -->
+**Anti-Rationalization:**
 
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:design-patterns-quality:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
-    <!-- /SYNC:design-patterns-quality:reminder -->
-    <!-- SYNC:ui-system-context:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
-  <!-- SYNC:critical-thinking-mindset:reminder -->
+| Evasion                           | Rebuttal                                                         |
+| --------------------------------- | ---------------------------------------------------------------- |
+| "Too simple for graph trace"      | Wrong assumptions waste more time. Run trace anyway.             |
+| "Already searched"                | Show `file:line` evidence. No proof = no search.                 |
+| "Just a small simplification"     | Small change at wrong layer cascades. Verify consumers first.    |
+| "Code is self-explanatory"        | Future readers need evidence trail. Document non-obvious intent. |
+| "Simplification is safe"          | NEVER assume safe without grepping all usages first.             |
+| "Round 1 was clean, skip Round 2" | Every fix triggers fresh sub-agent round. No exceptions.         |
+
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break into small todo tasks using TaskCreate.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

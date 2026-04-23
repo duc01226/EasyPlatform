@@ -221,6 +221,33 @@ function stripSedAwkPatterns(cmd) {
 }
 
 /**
+ * Strip grep/ripgrep pattern arguments from command before path extraction.
+ * Grep patterns often contain slashes (e.g., "<!-- /SYNC:", "/api/v2/")
+ * that trigger false-positive path detection.
+ *
+ * Uses [^'"]* to consume all flag forms (--type js, -A 3, -c, etc.) before
+ * the first quoted string — simpler and more robust than a flags-only pattern
+ * which fails on space-separated flag values like `rg --type js "pattern"`.
+ *
+ * Handles: grep "pattern", grep -c "pattern", rg --type js "pattern",
+ *          grep -A 3 "pattern", rg "pattern", grep -E 'pattern'
+ *
+ * @param {string} cmd - Shell command string
+ * @returns {string} Command with grep pattern content replaced by empty strings
+ */
+function stripGrepPatterns(cmd) {
+    const tools = '(?:grep|egrep|fgrep|rg|ripgrep)';
+
+    // Single-quoted patterns — consume everything up to first quote as flags
+    let result = cmd.replace(new RegExp(`(\\b${tools}\\b[^']*)'[^']*'`, 'g'), "$1''");
+
+    // Double-quoted patterns — consume everything up to first quote as flags
+    result = result.replace(new RegExp(`(\\b${tools}\\b[^'"]*)"(?:[^"\\\\]|\\\\.)*"`, 'g'), '$1""');
+
+    return result;
+}
+
+/**
  * Extract file paths from tool input
  * @param {Object} toolInput - Tool input object
  * @param {string} toolName - Name of the tool being used
@@ -242,9 +269,10 @@ function extractPaths(toolInput, toolName) {
 
     // Bash command parsing
     if (toolInput.command) {
-        // Strip inline code and sed/awk patterns to prevent false positives
+        // Strip inline code and pattern-argument tools to prevent false positives
         let cmd = stripInlineCode(toolInput.command);
         cmd = stripSedAwkPatterns(cmd);
+        cmd = stripGrepPatterns(cmd);
 
         // Skip path extraction for commands running inside containers
         // (docker exec, docker run, kubectl exec, etc.) — paths are container-internal
@@ -355,5 +383,6 @@ module.exports = {
     extractPaths,
     extractMatches,
     stripInlineCode,
-    stripSedAwkPatterns
+    stripSedAwkPatterns,
+    stripGrepPatterns
 };

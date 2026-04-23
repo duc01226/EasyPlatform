@@ -27,7 +27,6 @@
         "CLAUDE_CODE_DISABLE_1M_CONTEXT": "0",
         "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
         "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000",
-        "CLAUDE_CODE_USE_POWERSHELL_TOOL": "1",
         "MCP_TIMEOUT": "30000"
     },
     "hooks": {
@@ -139,6 +138,10 @@
             },
             {
                 "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/python-call-guide.cjs",
+                        "type": "command"
+                    },
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/windows-command-detector.cjs",
                         "type": "command"
@@ -280,6 +283,24 @@
                 "hooks": [
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ba-refinement-context.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Write|Edit|MultiEdit"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/feature-docs-context.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Write|Edit|MultiEdit"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/test-specs-context.cjs",
                         "type": "command"
                     }
                 ],
@@ -498,6 +519,10 @@
             {
                 "hooks": [
                     {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-compact-snapshot.cjs",
+                        "type": "command"
+                    },
+                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prompt-context-assembler.cjs",
                         "type": "command"
                     },
@@ -540,7 +565,7 @@
     "includeCoAuthoredBy": false,
     "model": "sonnet",
     "permissions": {
-        "allow": ["Edit(.claude/**)", "Bash(tmp/**)", "Edit(tmp/**)", "Read(tmp/**)", "Write(tmp/**)", "Glob(tmp/**)"],
+        "allow": ["Edit(.claude/**)", "Write(.claude/**)", "Bash(tmp/**)", "Edit(tmp/**)", "Read(tmp/**)", "Write(tmp/**)", "Glob(tmp/**)"],
         "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)"],
         "defaultMode": "bypassPermissions",
         "deny": [

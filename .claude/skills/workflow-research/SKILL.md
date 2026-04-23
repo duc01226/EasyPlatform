@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Research & Synthesis workflow — research a to
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /web-research -> /deep-research -> /knowledge-synthesis -> /knowledge-review -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -79,3 +81,9 @@ disable-model-invocation: true
 Activate the `research` workflow. Run `/workflow-start research` with the user's prompt as context.
 
 **Steps:** /web-research → /deep-research → /knowledge-synthesis → /knowledge-review → /workflow-end
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /web-research -> /deep-research -> /knowledge-synthesis -> /knowledge-review -> /workflow-end

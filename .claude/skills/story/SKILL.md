@@ -1,8 +1,17 @@
 ---
 name: story
 version: 1.2.0
-description: "[Project Management] Break PBIs into user stories using vertical slicing, SPIDR splitting, and INVEST criteria. Use when creating user stories from PBIs, slicing features, or breaking down requirements. Triggers on keywords like "user story", "create stories", "slice pbi", "story breakdown", "vertical slice", "split story"."
+description: '[Project Management] Break PBIs into user stories using vertical slicing, SPIDR splitting, and INVEST criteria. Use when creating user stories from PBIs, slicing features, or breaking down requirements. Triggers on keywords like "user story", "create stories", "slice pbi", "story breakdown", "vertical slice", "split story".'
 ---
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
@@ -41,14 +50,14 @@ description: "[Project Management] Break PBIs into user stories using vertical s
 > **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `project-structure-reference.md` -- project patterns and structure
->       <!-- SYNC:estimation-framework -->
+>   <!-- SYNC:estimation-framework -->
 >
->     > **Estimation** — Modified Fibonacci: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large) → 13(epic, SHOULD split) → 21(MUST ATTENTION split). Output `story_points` and `complexity` in plan frontmatter. Complexity auto-derived: 1-2=Low, 3-5=Medium, 8=High, 13+=Critical.
+>     > **Estimation** — SP→Man-Days: 1=0.5d/0.25d, 2=1d/0.35d, 3=2d/0.65d, 5=4d/1.0d, 8=6d/1.5d, 13=10d/2.0d (Traditional/AI-assisted, 6hr day). AI speedup grows with task size (~2x→5x). AI assumes Claude Code with good context. AI time = (code_gen × 1.3) + (test_gen × 1.3) — 30% human review per artifact. Output `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in frontmatter.
 >
->                               <!-- /SYNC:estimation-framework -->
+>                                       <!-- /SYNC:estimation-framework -->
 >
 > - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
-> - `docs/test-specs/` — Test specifications by module (read existing TCs for related features; include test story/acceptance criteria for new stories)
+> - `docs/specs/` — Test specifications by module (read existing TCs for related features; include test story/acceptance criteria for new stories)
 >
 > If file not found, search for: project documentation, coding standards, architecture docs.
 
@@ -85,7 +94,7 @@ description: "[Project Management] Break PBIs into user stories using vertical s
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
 - Stories with SP >8 MUST ATTENTION be split; >5 SHOULD be split (see estimation-framework.md)
-- All stories MUST ATTENTION include `story_points` and `complexity` fields
+- All stories MUST ATTENTION include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` fields
 
 ## Greenfield Mode
 
@@ -154,7 +163,7 @@ If running within a workflow (big-feature, greenfield-init, etc.):
 6. Create user stories with GIVEN/WHEN/THEN (min 3 scenarios)
 7. Save to `team-artifacts/pbis/stories/`
 8. **Validate stories** (MANDATORY) - Interview user to confirm slicing, acceptance criteria, and effort
-9. Suggest next: `/test-spec` or `/design-spec`
+9. Suggest next: `/tdd-spec` or `/design-spec`
 
 ### Output
 
@@ -310,6 +319,8 @@ persona: '{User persona}'
 priority: P1 | P2 | P3
 story_points: 1 | 2 | 3 | 5 | 8 | 13
 complexity: Low | Medium | High | Very High
+man_days_traditional: '{ Xd (Yd code + Zd test) — from SP table }'
+man_days_ai: '{ Xd (Yd code + Zd test) — from SP table with AI }'
 sprint: 0 | 1 | 2 | ...
 status: draft | ready | in_progress | done
 module: '{ServiceA | ServiceB | ServiceC | ServiceD}'
@@ -530,7 +541,7 @@ After creating user stories, validate with user.
 | **Role Skill** | `business-analyst`                          |
 | **Command**    | `/story`                                    |
 | **Input**      | `/refine` output (PBI)                      |
-| **Next Steps** | `/test-spec`, `/design-spec`, `/prioritize` |
+| **Next Steps** | `/tdd-spec`, `/design-spec`, `/prioritize` |
 
 ---
 
@@ -591,14 +602,29 @@ Example for a "Create Goal" story:
 
 <!-- SYNC:estimation-framework:reminder -->
 
-- **IMPORTANT MUST ATTENTION** estimate story points using Modified Fibonacci (1-21). SP >8 MUST ATTENTION split, >5 SHOULD split.
-    <!-- /SYNC:estimation-framework:reminder -->
-    <!-- SYNC:ui-system-context:reminder -->
+- **IMPORTANT MUST ATTENTION** estimate story points using Modified Fibonacci (1-21). Output `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`. SP 13 SHOULD split, SP 21 MUST split.
+      <!-- /SYNC:estimation-framework:reminder -->
+      <!-- SYNC:ui-system-context:reminder -->
 - **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

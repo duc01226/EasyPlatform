@@ -103,6 +103,20 @@ async function main() {
         if (reminder) console.log(reminder);
 
         // ═══════════════════════════════════════════════════════════════════════
+        // TASK-PLANNING REMINDER — always injected, no dedup (~15 tokens)
+        // ═══════════════════════════════════════════════════════════════════════
+        console.log(
+            `**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.`
+        );
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // ENGINEERING SPEC HINT — generic lookup guidance for any project
+        // ═══════════════════════════════════════════════════════════════════════
+        console.log(
+            `**[SPEC-LOOKUP]** When investigating domain logic, API contracts, or system architecture: check \`docs/specs/\` for engineering reimplementation specs (ERD + rules + API + events + journeys). Run \`ls docs/specs/\` to discover available app buckets (e.g., bravoTALENTS, bravoGROWTH), then \`ls docs/specs/{app-bucket}/\` to find the specific service spec. Exception: \`accounts\` is flat at \`docs/specs/accounts/\`.`
+        );
+
+        // ═══════════════════════════════════════════════════════════════════════
         // WORKFLOW DETECT — ABSOLUTE LAST: Ensures workflow selection is always
         // the most recent instruction before Claude acts on the prompt.
         // Only fires when confirmationMode === 'always'.

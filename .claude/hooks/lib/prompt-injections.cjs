@@ -91,6 +91,7 @@ function injectCriticalContext(transcriptPath, skipDedup = false) {
     return [
         `**${CRITICAL_THINKING_MARKER}** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.`,
         `**Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.`,
+        `**AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.`,
         ``
     ].join('\n');
 }
@@ -193,7 +194,10 @@ function injectWorkflowProtocol(transcriptPath, confirmationMode) {
 
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK:** Use \`AskUserQuestion\` to present all options with your recommendation: standard workflow, custom workflow (proposed steps + rationale), or execute directly
+3. **ASK (REQUIRED FORMAT):** Use \`AskUserQuestion\` with this structure:
+   - Question: "Which workflow do you want to activate?"
+   - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
+   - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
 4. **ACTIVATE (if confirmed):** Call \`/workflow-start <workflowId>\` for standard; sequence custom steps manually
 5. **CREATE TASKS:** \`TaskCreate\` for ALL workflow steps
 6. **EXECUTE:** Follow each step in sequence`;

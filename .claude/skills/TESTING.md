@@ -12,12 +12,12 @@ Test prompts to verify skills activate correctly. Each section contains prompts 
 
 ## Interactive Skills
 
-### debug
+### debug-investigate
 
 Direct invocation:
 
 ```
-/debug
+/debug-investigate
 ```
 
 Inference test prompts:

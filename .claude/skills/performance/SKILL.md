@@ -1,10 +1,19 @@
 ---
 name: performance
-version: 1.0.0
+version: 2.0.0
 description: '[Debugging] Analyze and optimize performance bottlenecks'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
+> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. For simple tasks, ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -62,53 +71,123 @@ description: '[Debugging] Analyze and optimize performance bottlenecks'
 
 <!-- /SYNC:evidence-based-reasoning -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, cross-service sync (content auto-injected by hook — check for [Injected: ...] header before reading)
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **External Memory:** Write intermediate findings + results to `plans/reports/` — prevents context loss, serves as deliverable.
 
 ## Quick Summary
 
-**Goal:** Analyze and optimize performance bottlenecks in database queries, API endpoints, or frontend rendering.
+**Goal:** Analyze + optimize perf bottlenecks — DB queries, API endpoints, frontend rendering.
 
 **Workflow:**
 
-1. **Profile** — Identify bottlenecks using profiling data or metrics
-2. **Analyze** — Trace hot paths and measure impact
-3. **Optimize** — Apply targeted optimizations with before/after measurements
+1. **Detect** — Classify bottleneck type (DB/API/frontend/memory/N+1/distributed)
+2. **Profile** — Identify hot paths via profiling data/metrics
+3. **Analyze** — Trace execution path + measure impact with `file:line` evidence
+4. **Optimize** — Apply targeted fixes with before/after measurements
+5. **Verify** — Re-measure + confirm improvement, present plan for user approval
 
 **Key Rules:**
 
-- Analysis Mindset: measure before and after, never optimize blindly
-- Evidence-based: every claim needs profiling data or benchmarks
-- Focus on highest-impact bottlenecks first
+- Measure before AND after — NEVER optimize blindly
+- Every claim requires profiling data + `file:line` proof
+- Row-count reduction before projection — higher OOM ROI
 
 <target>$ARGUMENTS</target>
 
-## Analysis Mindset (NON-NEGOTIABLE)
+---
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+## Phase 0: Detect Bottleneck Type
 
-- Do NOT assume a bottleneck location — verify with actual code traces and profiling evidence
-- Every performance claim must include `file:line` evidence
-- If you cannot prove a bottleneck with a code trace, state "suspected, not confirmed"
-- Question assumptions: "Is this really slow?" → trace the actual execution path and query plan
-- Challenge completeness: "Are there other bottlenecks?" → check the full request pipeline
-- No "should improve performance" without proof — measure before and after
+**MANDATORY IMPORTANT MUST ATTENTION** — classify BEFORE analyzing. Detection drives: which dimensions apply, which tools to use, which sub-agent to route to.
 
-> **[IMPORTANT] Database Performance Protocol (MANDATORY):**
->
-> 1. **Paging Required** — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
-> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
-> 3. **OOM/Memory: Row Count Before Projection** — MUST ATTENTION: diagnose unbounded row count BEFORE document size. Triage: (1) Is there a missing DB-level filter for the triggering condition? Push it to the DB — eliminates OOM absolutely. (2) Is each row excessively large (unbounded arrays, blobs)? Apply projection — reduces severity proportionally. Row reduction has higher ROI than projection.
+| Type            | Signals                                      | Primary Investigation                |
+| --------------- | -------------------------------------------- | ------------------------------------ |
+| DB query        | slow SELECT, missing index, full scan        | Query plan + index analysis          |
+| API latency     | slow endpoint, timeout, high p95             | Profiler + call chain trace          |
+| N+1 queries     | loop + DB call, lazy load in serialization   | `graph trace --direction downstream` |
+| Memory/OOM      | unbounded collections, no paging, blob loads | Row count + memory profiler          |
+| Frontend render | slow paint, excessive change detection       | DevTools perf tab + bundle analysis  |
+| Distributed     | cross-service latency, message bus delays    | `trace` for MESSAGE_BUS edges        |
 
-## ⚠️ MANDATORY: Confidence & Evidence Gate
+Anti-pattern: same analysis applied regardless of bottleneck type.
 
-**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with profiling data + `file:line` proof for EVERY claim.
-**95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
+---
 
-Activate `arch-performance-optimization` skill and follow its workflow.
+## Performance Dimensions
 
-**CRITICAL:** Present findings and optimization plan. Wait for explicit user approval before making changes.
+For each dimension: state role → derive failure modes → apply to bottleneck with `file:line` evidence.
+
+### 1. Query Efficiency
+
+**Think:** What data volume loads? Are filters pushed to DB? Do indexes cover all WHERE/JOIN/ORDER BY columns?
+
+- Paging REQUIRED — NEVER unbounded `GetAll()`/`ToList()`/`Find()` without `Skip/Take` or cursor
+- Index REQUIRED — every filter field, FK, sort column needs DB index; verify field order matches query
+- OOM triage order: (1) missing DB-level filter → push to DB (eliminates OOM absolutely); (2) unbounded arrays/blobs → apply projection (reduces severity proportionally). Row reduction higher ROI than projection.
+
+### 2. Hot Path Frequency
+
+**Think:** How often does this code execute? What triggers it? Is there call fan-out?
+
+- `python .claude/scripts/code_graph query callers_of <function> --json` — call frequency + trigger chain
+- `python .claude/scripts/code_graph trace <file> --direction downstream --json` — N+1 cascade, excessive event handlers
+- MESSAGE_BUS edges in trace output = distributed perf bottleneck signals
+
+### 3. Memory Pressure
+
+**Think:** What loads into memory? Is data bounded? Are projections applied before materialization?
+
+- Diagnose unbounded row count BEFORE document size — always row-count first
+- Identify: no pagination, full entity loads, blob fields in list queries
+- Verify projections applied at DB layer, not after `ToList()`
+
+### 4. Concurrency & Parallelism
+
+**Think:** Are parallel ops sharing non-thread-safe resources? Are sequential ops blocking hot path unnecessarily?
+
+- Parallel + repo/UoW → ALWAYS `ExecuteInjectScopedAsync` (new DI scope per iteration), NEVER `ExecuteUowTask` (shared DbContext = silent corruption)
+- Sequential DB calls in loops → batch or `Include()`
+- Unnecessary sequential awaits → identify parallelizable chains
+
+### 5. Frontend Performance
+
+**Think:** What triggers change detection? Is data fetched eagerly when lazy suffices? Is bundle size bounded?
+
+- `OnPush` change detection + `async` pipe for observable streams
+- Lazy-loaded modules for feature routes
+- `trackBy` on `*ngFor` — prevents full DOM re-renders
+- Profile observable chains for unnecessary emissions
+
+---
+
+## ⚠️ Confidence & Evidence Gate
+
+**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` + profiling data + `file:line` for EVERY claim.
+
+| Confidence | Action                      |
+| ---------- | --------------------------- |
+| ≥95%       | Recommend freely            |
+| 80-94%     | Recommend with caveats      |
+| 60-79%     | List unknowns first         |
+| <60%       | STOP — gather more evidence |
+
+---
+
+## Sub-Agent Routing
+
+Route based on detected bottleneck type:
+
+| Bottleneck                                      | Sub-agent                                              |
+| ----------------------------------------------- | ------------------------------------------------------ |
+| DB queries / OOM / backend hot path             | `performance-optimizer` (backend)                      |
+| Security-adjacent (auth queries, PII fields)    | `security-auditor` first, then `performance-optimizer` |
+| Cross-service / caching strategy / architecture | activate `arch-performance-optimization` skill         |
+| Frontend bundle / change detection / rendering  | `performance-optimizer` (frontend focus)               |
+
+**Activate `arch-performance-optimization` skill for architectural-level decisions.**
+
+**CRITICAL:** Present findings + optimization plan. Wait for explicit user approval before making changes.
 
 <!-- SYNC:graph-assisted-investigation -->
 
@@ -175,54 +254,87 @@ Activate `arch-performance-optimization` skill and follow its workflow.
 
 <!-- /SYNC:subagent-return-contract -->
 
-## Graph Intelligence — Performance-Specific
+---
 
-In addition to the SYNC block above, for hot-path analysis:
+## Sub-Agent Type Override
 
-- `python .claude/scripts/code_graph query callers_of <function> --json` — call frequency + who triggers the bottleneck
-- `python .claude/scripts/code_graph trace <bottleneck-file> --direction downstream --json` — downstream cascade (N+1 queries, excessive event handlers)
-- `python .claude/scripts/code_graph batch-query file1 file2 --json` — multi-hotspot analysis
-- Cross-service MESSAGE_BUS edges in trace output reveal distributed performance bottlenecks
+> **MANDATORY:** Performance analysis spawns `performance-optimizer` sub-agent as the **Round 1 proactive lead**, not just a Round 2 challenger.
+> **Rationale:** `performance-optimizer` specializes in N+1 patterns, query plans, bundle analysis, and memory profiling for both backend (.NET/MongoDB/SQL) and frontend (Angular/RxJS). Main agent synthesizes findings — it does not lead analysis alone.
+
+## Recursive Quality Loop
+
+1. **Round 1 (Proactive):** Spawn `performance-optimizer` sub-agent (`subagent_type: "performance-optimizer"`) as the analysis lead. Main agent provides scope context; sub-agent drives all dimension analysis and produces the draft optimization plan.
+2. **Round 2 (Challenge):** Spawn NEW fresh `performance-optimizer` sub-agent — ZERO memory of Round 1. Challenges Round 1 findings: missed bottlenecks, wrong root cause, premature optimization.
+3. Issues found → fix → Round 3 with NEW fresh `performance-optimizer` sub-agent
+4. Max 3 rounds → escalate to user via `AskUserQuestion`
+5. **NEVER declare PASS after Round 1 alone** — main agent rationalizes own work
+
+<!-- SYNC:sub-agent-selection -->
+
+> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
+> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+
+<!-- /SYNC:sub-agent-selection -->
 
 ---
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** Not already in workflow → use `AskUserQuestion`:
 >
 > 1. **Activate `quality-audit` workflow** (Recommended) — performance → sre-review → test
-> 2. **Execute `/performance` directly** — run this skill standalone
+> 2. **Execute `/performance` directly** — standalone
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION** after completing, use `AskUserQuestion`:
 
-- **"/sre-review (Recommended)"** — Production readiness review after optimization
-- **"/changelog"** — Document performance changes
+- **"/sre-review (Recommended)"** — production readiness after optimization
+- **"/changelog"** — document perf changes
 - **"Skip, continue manually"** — user decides
+
+---
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+- **MANDATORY IMPORTANT MUST ATTENTION** classify bottleneck type (Phase 0) BEFORE analyzing — detection drives dimension selection and sub-agent routing
+- **MANDATORY IMPORTANT MUST ATTENTION** measure before AND after every change — NEVER "should improve performance" without proof
+- **MANDATORY IMPORTANT MUST ATTENTION** row-count reduction before projection — push DB filters first (eliminates OOM absolutely)
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small tasks via `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` + profiling data for EVERY claim — `Confidence: X%` required
+- **MANDATORY IMPORTANT MUST ATTENTION** run graph trace before concluding — `callers_of` + `trace --direction downstream` for hot paths
+- **MANDATORY IMPORTANT MUST ATTENTION** wait for explicit user approval before applying changes
+- **MANDATORY IMPORTANT MUST ATTENTION** recursive quality loop — NEVER declare PASS after Round 1 alone
 
-<!-- SYNC:understand-code-first:reminder -->
+**Anti-Rationalization:**
 
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+| Evasion                                       | Rebuttal                                                         |
+| --------------------------------------------- | ---------------------------------------------------------------- |
+| "Bottleneck is obvious, skip profiling"       | Assumption without measurement = guess. Always measure.          |
+| "Already checked code, no N+1"                | Show graph trace output. No proof = no check.                    |
+| "Simple optimization, skip user approval"     | User decides complexity. Always present plan first.              |
+| "Round 2 redundant, Round 1 found everything" | Main agent rationalizes own work. Fresh eyes catch blind spots.  |
+| "Performance type is clear, skip Phase 0"     | Wrong type = wrong dimensions = wasted analysis. Classify first. |
+
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
   <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Break task into small todo tasks via `TaskCreate` BEFORE starting.
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

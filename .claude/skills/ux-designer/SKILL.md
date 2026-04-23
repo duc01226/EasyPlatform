@@ -1,7 +1,7 @@
 ---
 name: ux-designer
 version: 1.0.0
-description: "[Project Management] Assist UX Designers with design specifications, component documentation, accessibility audits, and design-to-development handoffs. Use when creating design specs, documenting components, auditing accessibility, or preparing handoffs. Triggers on keywords like "design spec", "component spec", "accessibility audit", "design handoff", "design system", "design tokens", "UI specification", "wireframe"."
+description: '[Project Management] Assist UX Designers with design specifications, component documentation, accessibility audits, and design-to-development handoffs. Use when creating design specs, documenting components, auditing accessibility, or preparing handoffs. Triggers on keywords like "design spec", "component spec", "accessibility audit", "design handoff", "design system", "design tokens", "UI specification", "wireframe".'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
@@ -359,3 +359,5 @@ Before completing UX artifacts:
       <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
       <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

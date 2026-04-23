@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Code Investigation workflow — codebase explor
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -78,4 +80,12 @@ disable-model-invocation: true
 
 Activate the `investigation` workflow. Run `/workflow-start investigation` with the user's prompt as context.
 
+> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets (e.g., `bravoTALENTS`, `bravoGROWTH`); then `ls docs/specs/{app-bucket}/` to find the specific service spec. Exception: `accounts` is flat at `docs/specs/accounts/`.
+
 **Steps:** /scout → /feature-investigation → /workflow-end
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /workflow-end

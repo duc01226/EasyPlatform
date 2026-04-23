@@ -45,7 +45,7 @@ memory: project
 2. **Analyze requirements** — break into vertical slices, identify acceptance criteria, document business rules
 3. **Write stories** — "As a... I want... So that..." with INVEST criteria and 3+ scenarios each
    3b. **Collaborative Review** — If PBI was drafted by BA Drafters (UX BA + Designer BA), use `/pbi-challenge` for Dev BA PIC review. If drafted by Dev BA PIC, use `/refine-review` for AI self-review.
-4. **Validate** — check completeness, hand off to `test-spec` for test generation
+4. **Validate** — check completeness, hand off to `tdd-spec` for test generation
 
 **Key Rules:**
 
@@ -119,9 +119,9 @@ Report path: `plans/reports/` with naming from `## Naming` hook injection. Conci
 - **IMPORTANT MUST ATTENTION** ALWAYS run `/dor-gate` before considering a PBI grooming-ready
 - **IMPORTANT MUST ATTENTION** ALWAYS use `/pbi-challenge` for collaborative review — not just `/refine-review`
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim about existing code (confidence >80% to act)
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->

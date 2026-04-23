@@ -5,6 +5,8 @@ description: '[Workflow] Trigger Test Verification & Quality workflow — compre
 disable-model-invocation: true
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /integration-test -> /test -> /integration-test -> /integration-test-review -> /integration-test-verify -> /docs-update -> /watzup -> /workflow-end
+
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -95,6 +97,8 @@ Activate the `test-verify` workflow. Run `/workflow-start test-verify` with the 
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /integration-test -> /test -> /integration-test -> /integration-test-review -> /integration-test-verify -> /docs-update -> /watzup -> /workflow-end
+
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
@@ -107,3 +111,7 @@ Activate the `test-verify` workflow. Run `/workflow-start test-verify` with the 
     <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
     <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
