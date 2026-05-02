@@ -1,0 +1,17 @@
+# Team-wide Codex defaults for this repository.
+# Applied when the project is trusted by Codex.
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+
+# Let Codex consume existing Claude project instructions while we migrate.
+project_doc_fallback_filenames = ["CLAUDE.md"]
+
+[agents]
+# Keep delegation predictable and aligned with current team workflow.
+max_threads = 6
+max_depth = 1
+
+[features]
+# Prefer HTTPS streaming on this repo to avoid websocket fallback/reconnect instability.
+responses_websockets = false
+responses_websockets_v2 = false

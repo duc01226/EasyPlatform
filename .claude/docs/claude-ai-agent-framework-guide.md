@@ -717,7 +717,7 @@ Three new review skills create quality checkpoints between artifact-producing st
 | `story-review`    | `/story` (stories)  | Vertical slicing quality, dependency tables, SPIDR      |
 | `tdd-spec-review` | `/tdd-spec` (specs) | TC coverage, traceability to ACs, boundary cases        |
 
-**Added to workflows:** idea-to-pbi, full-feature-lifecycle, idea-to-tdd, pbi-to-tests, big-feature, greenfield-init
+**Added to workflows:** idea-to-pbi, full-feature-lifecycle, pbi-to-tests, big-feature, greenfield-init
 
 **Why this matters:** Without review gates, artifacts flow through workflows unchecked. A vague PBI becomes vague stories which become vague tests. Review gates catch quality issues early when they're cheapest to fix.
 
@@ -741,8 +741,9 @@ Bottom of each skill has condensed `:reminder` variants:
 ```markdown
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification.
-      <!-- /SYNC:understand-code-first:reminder -->
+**MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification.
+
+<!-- /SYNC:understand-code-first:reminder -->
 ```
 
 **Update workflow:** Edit `sync-inline-versions.md` (canonical) → `grep SYNC:tag-name` → update all copies. The `SYNC:shared-protocol-duplication-policy` tag in `code-simplifier` and `development-rules.md` prevents AI from "helpfully" extracting inline content back to file references.
@@ -807,7 +808,7 @@ WORKFLOW CATALOG
 │   ├── batch-operation ─── plan→code→tdd-spec→tdd-spec [direction=sync]→review→test
 │   ├── migration ───────── scout→investigate→plan→code→test→docs
 │   ├── package-upgrade ─── scout→investigate→plan→code→test
-│   ├── idea-to-tdd ─────── idea→refine→tdd-spec ★ TDD pipeline
+│   ├── idea-to-pbi ─────── idea→refine→story→tdd-spec→DoR ★ PBI + TDD pipeline
 │   ├── test-spec-update ── review-changes→tdd-spec→tdd-spec [direction=sync]→integration-test→test
 │   ├── test-to-integration scout→integration-test→test→watzup
 │   ├── e2e-from-recording ─ scout→e2e-test→test→watzup ★ E2E from Chrome recording
@@ -1399,11 +1400,11 @@ flowchart LR
 
 #### TDD Workflows
 
-Two dedicated workflows support test-driven development:
+Dedicated workflows support test-driven development:
 
 | Workflow                          | Sequence                                                                                                    | Use Case                                                                                                  |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **idea-to-tdd**                   | `/idea` → `/refine` → `/tdd-spec`                                                                           | Go from raw idea to test specifications with interactive discovery and testability assessment             |
+| **idea-to-pbi**                   | `/idea` → `/refine` → `/story` → `/tdd-spec` → `/dor-gate`                                                  | Go from raw idea to grooming-ready PBI, stories, and reviewed test specifications                         |
 | **tdd-feature**                   | `/scout` → `/investigate` → `/tdd-spec` → `/plan` → `/cook` → `/integration-test` → `/test` → ...           | Full TDD cycle: write test specs FIRST, then implement, then generate tests and verify                    |
 | **feature-with-integration-test** | `/scout` → `/investigate` → `/plan` → `/tdd-spec` → `/plan` → `/cook` → `/integration-test` → `/test` → ... | Feature workflow with spec-first integration testing: write specs, refine plan, then implement and verify |
 | **pbi-to-tests**                  | `/tdd-spec` → `/quality-gate`                                                                               | Quick path from existing PBI to test specifications using unified TC format                               |
@@ -1460,7 +1461,7 @@ The framework supports AI-assisted development across **every phase** of the sof
 │                     │ /design-spec           │ with TC seeds      │
 │─────────────────────│────────────────────────│────────────────────│
 │  3. TEST SPECS      │ /tdd-spec (unified)    │ TDD-first or      │
-│                     │ idea-to-tdd workflow   │ implement-first    │
+│                     │ idea-to-pbi workflow   │ implement-first    │
 │                     │                        │ test case gen      │
 │─────────────────────│────────────────────────│────────────────────│
 │  4. PLANNING        │ /plan, /plan-review    │ Evidence-based     │
@@ -1586,8 +1587,8 @@ This section provides concrete prompts and expected flows for every test generat
 # Full TDD workflow (recommended)
 /workflow-start tdd-feature
 
-# Idea-to-TDD pipeline
-/workflow-start idea-to-tdd
+# Idea-to-PBI pipeline with test specs
+/workflow-start idea-to-pbi
 ```
 
 **What happens:**
@@ -1660,11 +1661,11 @@ feature-with-integration-test:
 4. Builds 3-way comparison:
 
 ```
-| TC ID     | Feature Doc? | specs/?      | Test Code? | Action           |
-| --------- | ------------ | ------------ | ---------- | ---------------- |
-| TC-GM-001 | ✅            | ✅            | ✅          | None             |
-| TC-GM-025 | ✅            | ❌            | ✅          | Add to dashboard |
-| TC-GM-030 | ❌            | ✅            | ❌          | Add to feat doc  |
+| TC ID     | Feature Doc? | specs/? | Test Code? | Action           |
+| --------- | ------------ | ------- | ---------- | ---------------- |
+| TC-GM-001 | ✅            | ✅       | ✅          | None             |
+| TC-GM-025 | ✅            | ❌       | ✅          | Add to dashboard |
+| TC-GM-030 | ❌            | ✅       | ❌          | Add to feat doc  |
 ```
 
 5. Reconciles: writes missing TCs to whichever system lacks them
@@ -1903,7 +1904,7 @@ test-verify: scout → integration-test (review) → test → integration-test (
 │                          │ /tdd-spec then  │ integration-test   │
 │                          │ /integration-   │                    │
 │                          │  test           │                    │
-│  Idea → specs            │ /idea → /refine │ idea-to-tdd        │
+│  Idea → specs            │ /idea → /refine │ idea-to-pbi        │
 │                          │ → /tdd-spec     │                    │
 │  Review test quality     │ /integration-   │ test-verify        │
 │                          │  test review    │                    │
@@ -3456,7 +3457,7 @@ flowchart TB
 ```
 .claude/
 ├── settings.json ──────── Hook registration (9 events, ~47 hooks)
-├── ccstatusline.json ──── Status line display config (model, context, tokens, git-changes)
+├── ccstatusline.json ──── Status line display config (model, context, tokens, tok/s estimator)
 ├── .ck.json ──────────── Hook-specific config
 ├── .ckignore ─────────── Scout block patterns
 ├── workflows.json ─────── 48 workflow definitions

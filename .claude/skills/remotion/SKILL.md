@@ -828,7 +828,7 @@ const whisperOutput = await transcribe({
 const { captions } = toCaptions({ whisperCppOutput: whisperOutput });
 ```
 
-**Import from .srt:**
+**Import from.srt:**
 
 ```tsx
 import { parseSrt } from '@remotion/captions';

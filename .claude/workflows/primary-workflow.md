@@ -123,19 +123,18 @@ All workflows are defined in `.claude/workflows.json`. Each workflow composes a 
 
 ### Role-Based Handoff Workflows
 
-| Workflow               | Flow                                                                  |
-| ---------------------- | --------------------------------------------------------------------- |
-| **idea-to-pbi**        | PO/BA: idea (or PO artifact) → review → refine → stories → prioritize |
-| **idea-to-tdd**        | PO: idea → refine → TDD specs                                         |
-| **ba-dev-handoff**     | BA → Dev: quality gate → plan                                         |
-| **design-dev-handoff** | Designer → Dev: design spec → plan                                    |
-| **dev-qa-handoff**     | Dev → QA: handoff → test spec                                         |
-| **qa-po-acceptance**   | QA → PO: quality gate → acceptance                                    |
-| **sprint-planning**    | PO: prioritize → dependency → team-sync                               |
-| **sprint-retro**       | PM: status → retrospective                                            |
-| **pre-development**    | QC: quality gate → plan → validate                                    |
-| **pbi-to-tests**       | QA: generate TDD specs from PBI                                       |
-| **pm-reporting**       | PM: status report → dependency analysis                               |
+| Workflow               | Flow                                                                              |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| **idea-to-pbi**        | PO/BA: idea (or PO artifact) → review → refine → stories → TDD specs → prioritize |
+| **ba-dev-handoff**     | BA → Dev: quality gate → plan                                                     |
+| **design-dev-handoff** | Designer → Dev: design spec → plan                                                |
+| **dev-qa-handoff**     | Dev → QA: handoff → test spec                                                     |
+| **qa-po-acceptance**   | QA → PO: quality gate → acceptance                                                |
+| **sprint-planning**    | PO: prioritize → dependency → team-sync                                           |
+| **sprint-retro**       | PM: status → retrospective                                                        |
+| **pre-development**    | QC: quality gate → plan → validate                                                |
+| **pbi-to-tests**       | QA: generate TDD specs from PBI                                                   |
+| **pm-reporting**       | PM: status report → dependency analysis                                           |
 
 ### Content & Research Workflows
 
@@ -163,9 +162,9 @@ All workflows are defined in `.claude/workflows.json`. Each workflow composes a 
 
 ## Closing Reminders
 
-- **MANDATORY IMPORTANT MUST ATTENTION** understand existing code FIRST (read, grep 3+ patterns, graph trace) before ANY modification
-- **MANDATORY IMPORTANT MUST ATTENTION** compile-check after every code file change
-- **MANDATORY IMPORTANT MUST ATTENTION** never use fake data/mocks/cheats just to pass tests — fix real issues
-- **MANDATORY IMPORTANT MUST ATTENTION** activate relevant skills from catalog during the process
-- **MANDATORY IMPORTANT MUST ATTENTION** detect nearest matching workflow from catalog and ask user to confirm activation
-- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding investigation/plan/fix
+**MANDATORY IMPORTANT MUST ATTENTION** understand existing code FIRST (read, grep 3+ patterns, graph trace) before ANY modification
+**MANDATORY IMPORTANT MUST ATTENTION** compile-check after every code file change
+**MANDATORY IMPORTANT MUST ATTENTION** never use fake data/mocks/cheats just to pass tests — fix real issues
+**MANDATORY IMPORTANT MUST ATTENTION** activate relevant skills from catalog during the process
+**MANDATORY IMPORTANT MUST ATTENTION** detect nearest matching workflow from catalog and ask user to confirm activation
+**MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding investigation/plan/fix

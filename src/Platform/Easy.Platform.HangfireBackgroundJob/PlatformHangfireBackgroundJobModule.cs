@@ -85,6 +85,19 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
         // This provides immediate relief for existing oversized documents
         if (UseBackgroundJobStorage() == PlatformHangfireBackgroundJobStorageType.Mongo) await TrimHangfireStateHistoryOnStartupAsync();
 
+        // Delete failed/scheduled jobs that reference types no longer present in the assembly.
+        // Gap: ReplaceAllRecurringBackgroundJobs() removes stale recurring *definitions* but not
+        // already-enqueued *executions* — those retry forever (DefaultAttempts = int.MaxValue).
+        // Run in background: stale jobs retry every 5 min so a brief delay is safe, and we avoid
+        // blocking the startup critical path with O(N) DB round-trips.
+        var staleJobScanPageSize = Math.Max(1, CommonOptions().StaleJobScanPageSize);
+        Util.TaskRunner.QueueActionInBackground(
+            () => ServiceProvider.ExecuteInjectScopedAsync(
+                (PlatformHangfireBackgroundJobScheduler scheduler) =>
+                    scheduler.DeleteStaleEnqueuedJobsAsync(staleJobScanPageSize)),
+            loggerFactory: () => Logger,
+            logFullStackTraceBeforeBackgroundTask: false);
+
         await base.InternalInit(serviceScope);
     }
 

@@ -16,7 +16,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 > **[CRITICAL — TOP 3 RULES]**
 >
 > 1. **MUST ATTENTION Phase 0 graph blast-radius FIRST** — NEVER skip; informs entire review order
-> 2. **NEVER declare PASS after Round 1 alone** — fresh sub-agent review mandatory (Round 2+)
+> 2. **Clean Round 1 ENDS the review.** When issues found, fresh sub-agent re-review mandatory after fixing.
 > 3. **MUST ATTENTION TaskCreate ALL phases** before starting; missing tests MUST surface via `AskUserQuestion` — NOT silently logged
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. Prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
@@ -60,24 +60,6 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-> - **Business terminology in Application/Domain layers.** Comments and naming in Application/Domain must stay business-oriented and technical-agnostic; avoid implementation terms (say `background job`, not `Hangfire background job`).
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
@@ -117,32 +99,99 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 <!-- /SYNC:design-patterns-quality -->
 
+<!-- SYNC:complexity-prevention -->
+
+> **Complexity Prevention (Ousterhout)** — MANDATORY. Measure code by cost of change: one business change should map to one code change. Flag ALL of the following in review:
+>
+> 1. **Change amplification** — small business change forces edits in >3 places → structural flaw. Count edit sites for a plausible future change (add variant, add field, add authorization). >3 = reject.
+> 2. **Cognitive load** — reader must hold too much context to safely modify. Flag deep inheritance, long parameter lists, boolean traps, implicit ordering dependencies.
+> 3. **Cross-cutting duplication at entry points** — logging, error handling, validation, auth, transactions reimplemented per controller/handler/route. Lift to middleware / interceptor / filter / decorator / aspect.
+> 4. **Leaked implementation technology** — repos returning `IQueryable`/`QuerySet`/`Criteria`/raw cursors/ORM entities to callers. Return finished results + intent-revealing methods (`GetActiveVipUsers()` not `Query()`).
+> 5. **Type-switch scattering** — `switch`/`if`-chains on enum/discriminator in >1 place. New variant = new file, not N edits. One factory/registry switch at the boundary OK; scattered switches = reject.
+> 6. **Anemic models** — domain objects with only getters/setters, logic floats in services. Move invariants/behavior onto the object (`order.Checkout()`, not `order.Status = ...`).
+> 7. **Primitive obsession** — raw `string`/`int`/`decimal` for account numbers, emails, money, percentages, date ranges, with re-validation at every entry. Wrap in value objects / records / structs that validate once at construction.
+> 8. **Inline cross-cutting concerns** — authorization/tenant isolation/audit/sanitization hand-written at top of every handler. Flag intent with declarative markers (`@RequirePermission("Order.Delete")`), enforce once centrally.
+> 9. **Shallow modules** — tiny class, big interface (many public methods, many flags, many ctor params) wrapping little logic. A module is deep when a small interface hides a lot of implementation. If interface ≈ implementation cost to learn → inline.
+> 10. **Missing base class for repeated component/handler lifecycle** — 3+ forms/CRUD handlers/list views reimplementing loading/dirty/submit/pagination → extract to base class / hook / composable / mixin / trait.
+> 11. **Premature vs delayed abstraction** — rule-of-three. First occurrence: write it. Second: notice duplication. Third: extract. Don't build generic frameworks before real variation; don't copy-paste for the 4th time.
+> 12. **Embedded utility logic not extracted to helpers** — inline paging loops (`while (hasMore) { skip += take; ... }`), ad-hoc datetime math, string parsing/formatting, collection partitioning, retry/backoff loops, URL/query-string building. If the algorithm is non-trivial AND stack-generic (not business-specific), extract to `util`/`helper`/`extensions` and let consumers call one line. Inline duplicates → duplicated bug surface.
+> 13. **Logic in wrong (higher) layer — downshift to callee** — business/derivation logic written in the caller when the callee owns the data. Defaults: Controller code that should be App Service. App Service code that should be Domain Service or Entity. Component code that should be ViewModel/Store/Service. Caller reaching into callee's data shape to compute something → move the computation behind an intent-revealing method on the callee. Lowest responsible layer wins (Entity > Domain Service > App Service > Controller · Model/VM > Store > Component). Higher-layer placement = duplicated logic when a sibling caller needs the same thing.
+> 14. **Owner owns the rule — extract on first write** — if a caller inlines logic that derives, normalizes, validates, or computes from another type's data, MOVE it to the owning type. Single use is sufficient — the trigger is wrong responsibility, not duplication. Sibling callers always arrive; inline copies drift silently with no compile error and no name to grep. **Common offenders:** _Backend_ — inlined rules in application-layer handlers / commands / queries / services / controllers that belong on the domain entity / value object / domain service. _Frontend_ — inlined derivations / formatting / validation in components that belong on the model / store / view-model / API service. **Fix:** name the rule once as a method (static or instance) on the owning type; callers invoke by name. Future variant → SECOND named method on the owner, never an inline near-duplicate. **Right responsibility first; reuse is the consequence.**
+>
+> **Extraction target — where the named rule lives:**
+>
+> | Shape of the rule                             | Goes to                       |
+> | --------------------------------------------- | ----------------------------- |
+> | Pure function over an entity's own data       | static method on the entity   |
+> | Behavior that mutates / guards entity state   | instance method on the entity |
+> | Always-true invariant on a primitive value    | value object constructor      |
+> | Needs DI (repo / settings / clock)            | helper class registered in DI |
+> | Domain-agnostic algorithm reused across types | util / extension method       |
+> | Pure shape / projection conversion            | DTO mapping                   |
+>
+> **Pre-commit edit-site test (reject if answer is "many"):**
+>
+> | Change Scenario                                 | Should touch              |
+> | ----------------------------------------------- | ------------------------- |
+> | Add new variant (customer type, payment method) | 1 new file                |
+> | Change HTTP error response format               | 1 middleware/filter       |
+> | Add timestamp field to every persisted entity   | 1 base entity/interceptor |
+> | Add authorization to a new endpoint             | 1 declarative marker      |
+> | Swap database/ORM                               | Data layer only           |
+> | Change business calculation rule                | 1 method on owning entity |
+> | Add loading indicator pattern to forms          | 1 base component/hook     |
+> | Add validation rule to a domain primitive       | 1 value-object ctor       |
+> | Change paging/retry/datetime algorithm          | 1 helper/util function    |
+> | Change a derivation of entity data              | 1 method on the entity    |
+>
+> **Operating heuristics:**
+>
+> - Write the call site first.
+> - Count edit sites for plausible future change.
+> - Prefer removing code over adding it.
+> - Surface assumptions at boundaries, hide details inside.
+> - **Pre-reuse scan** — before writing a non-trivial block, grep for similar algorithms (`while.*skip`, `DateTime.*Add`, `split`/`join` chains, paging loops, retry loops). Match existing helper → call it. None exists but pattern is stack-generic → extract to util before second caller appears.
+> - **Layer placement test** — ask "if a sibling caller needed this tomorrow, would they re-derive it?" If yes, the logic is in the wrong layer. Move it down.
+> - **Open-case-for-future-reuse** — if reviewer spots a block that is likely to appear in another feature (domain-agnostic algorithm, shared lifecycle, recurring derivation), do NOT rationalize with pure YAGNI. Either extract now (if cheap) or create a tracked TODO with the exact extraction target so the second caller does not duplicate silently. Silent duplication is the default failure mode.
+> - When in doubt ask: "What would need to change if the requirement shifts?"
+>
+> **The measure of good code is the cost of change.** Not shortest. Not cleverest. Not most abstracted. Cheapest to safely modify having read a small local portion.
+
+<!-- /SYNC:complexity-prevention -->
+
 <!-- SYNC:double-round-trip-review -->
 
-> **Deep Multi-Round Review** — Escalating rounds. Round 1 in main session. Round 2+ and EVERY recursive re-review iteration MUST use a fresh sub-agent.
+> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
-> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output baseline findings.
+> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
-> **Round 2:** MANDATORY fresh sub-agent review — see `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. The sub-agent re-reads ALL files from scratch with ZERO Round 1 memory. It must catch:
+> **Decision after Round 1:**
 >
-> - Cross-cutting concerns missed in Round 1
+> - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
+> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
+>
+> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `Agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
+>
+> - Cross-cutting concerns missed in the prior round
 > - Interaction bugs between changed files
 > - Convention drift (new code vs existing patterns)
 > - Missing pieces that should exist but don't
-> - Subtle edge cases the main session rationalized away
+> - Subtle edge cases the prior round rationalized away
+> - Regressions introduced by the fixes themselves
 >
-> **Round 3+ (recursive after fixes):** After ANY fix cycle, MANDATORY fresh sub-agent re-review. Spawn a **NEW** Agent tool call each iteration — never reuse Round 2's agent. Each new agent re-reads ALL files from scratch with full protocol injection. Continue until PASS or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
+> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
 >
 > **Rules:**
 >
-> - NEVER declare PASS after Round 1 alone
+> - A clean Round 1 ENDS the review — no mandatory Round 2
+> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
 > - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
 > - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via `AskUserQuestion` (do NOT silently loop)
 > - Track round count in conversation context (session-scoped)
-> - Final verdict must incorporate ALL rounds
+> - Final verdict must incorporate ALL rounds executed
 >
-> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2.**
+> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -152,11 +201,11 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 >
 > **Why:** The main agent knows what it (or `/cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
 >
-> **When:** Round 2 of ANY review AND every recursive re-review iteration after fixes. NOT needed when Round 1 already PASSes with zero issues.
+> **When:** ONLY after a fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: fix → fresh sub-agent re-review.
 >
 > **How:**
 >
-> 1. Spawn a NEW `Agent` tool call — choose `subagent_type` based on the review's dominant concern (see Sub-Agent Type Selection in `SYNC:review-protocol-injection`)
+> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
 > 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
 > 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
 > 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
@@ -164,8 +213,9 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 >
 > **Rules:**
 >
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW `Agent` call
-> - NEVER skip fresh-subagent review because "last round was clean" — every fix triggers a fresh round
+> - SKIP fresh sub-agent when the prior round found zero issues (no fixes = nothing new to verify)
+> - NEVER skip fresh sub-agent after a fix cycle — every fix invalidates the prior verdict
+> - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
 > - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
 > - Track iteration count in conversation context (session-scoped, no persistent files)
 
@@ -196,9 +246,9 @@ For large changesets with multiple distinct dominant concerns — spawn ONE sub-
 
 ```
 Agent({
-  description: "Fresh Round {N} review",
-  subagent_type: "{code-reviewer | security-auditor | performance-optimizer | general-purpose}",
-  prompt: `
+description: "Fresh Round {N} review",
+subagent_type: "{code-reviewer | security-auditor | performance-optimizer | general-purpose}",
+prompt: `
 ## Task
 {review-specific task — e.g., "Review all uncommitted changes for code quality" | "Security review of auth changes" | "Review plan files under {plan-dir}" | "Performance review of data access layer changes"}
 
@@ -300,25 +350,25 @@ For EACH category of changed files — THINK, do not fill in a checklist. DO NOT
 Step 1 — Understand the category's role: What is its purpose? What invariants govern it? Who consumes it and what do they expect?
 Step 2 — Read project conventions: grep for reference docs, style guides, READMEs for this area. Examine 3+ existing similar files to surface established patterns.
 Step 3 — Derive concerns from first principles. Apply ALL that are relevant — expand based on domain knowledge:
-  - Correctness: logic matches intent? happy path AND error path traced?
-  - Contracts: interfaces/APIs/events/protocols honored? no implicit coupling introduced?
-  - Project conventions: follows patterns found in Step 2? evidence-confirmed, not assumed?
-  - Security: auth enforced? input validated at boundaries? no secrets in diff?
-  - Performance: unbounded operations? N+1? blocking in async context? unindexed queries?
-  - Maintainability: DRY? single responsibility? complexity reasonable? names reveal intent?
-  - Test coverage: changed paths covered? existing tests still valid after the change?
-  - Documentation: related docs/specs reflect the changes?
+- Correctness: logic matches intent? happy path AND error path traced?
+- Contracts: interfaces/APIs/events/protocols honored? no implicit coupling introduced?
+- Project conventions: follows patterns found in Step 2? evidence-confirmed, not assumed?
+- Security: auth enforced? input validated at boundaries? no secrets in diff?
+- Performance: unbounded operations? N+1? blocking in async context? unindexed queries?
+- Maintainability: DRY? single responsibility? complexity reasonable? names reveal intent?
+- Test coverage: changed paths covered? existing tests still valid after the change?
+- Documentation: related docs/specs reflect the changes?
 Step 4 — For each concern identified: verify with file:line evidence or flag as finding.
 Examples only — your knowledge exceeds this list:
-  - Logic files (any stack): handler/service structure, validation placement, side effect isolation, cross-boundary coupling, data access layer separation
-  - Data/Schema: rollback path, lock impact on table volume, backfill idempotency, index coverage for query patterns, deployment ordering
-  - Config files: all environments covered? no secrets committed? app fails fast if missing?
-  - Infrastructure: dev/prod parity? no hardcoded dev values? pinned versions? CI impact documented?
-  - Styles/Assets: naming conventions? design variables/tokens used (no magic values)? scope correct?
-  - Documentation: accurate? links valid? examples match current code/behavior?
-  - Tests: assertions verify specific outcomes (not just no-exception)? idempotent (repeatable N times)? edge cases covered?
-  - Security artifacts: all code paths reach the gate? negative tests exist? both enforcement AND display control updated?
-  - Build/Tooling: rule changes apply consistently? violations not silently swallowed? CI runtime impact?
+- Logic files (any stack): handler/service structure, validation placement, side effect isolation, cross-boundary coupling, data access layer separation
+- Data/Schema: rollback path, lock impact on table volume, backfill idempotency, index coverage for query patterns, deployment ordering
+- Config files: all environments covered? no secrets committed? app fails fast if missing?
+- Infrastructure: dev/prod parity? no hardcoded dev values? pinned versions? CI impact documented?
+- Styles/Assets: naming conventions? design variables/tokens used (no magic values)? scope correct?
+- Documentation: accurate? links valid? examples match current code/behavior?
+- Tests: assertions verify specific outcomes (not just no-exception)? idempotent (repeatable N times)? edge cases covered?
+- Security artifacts: all code paths reach the gate? negative tests exist? both enforcement AND display control updated?
+- Build/Tooling: rule changes apply consistently? violations not silently swallowed? CI runtime impact?
 
 ## Reference Docs (READ before reviewing)
 {Discover by searching *patterns*, *conventions*, *style-guide*, *architecture*, README at service/module roots — list what you find}
@@ -764,7 +814,7 @@ For EACH changed file, read and **immediately update report** with:
 **Phase 3: Second-Round Review (Conditional Protocol — branch on Phase 0.7 surface)**
 
 > **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above).
-> **INVARIANT:** Phase 3 ALWAYS fires a fresh sub-agent. NEVER declare PASS after Phase 2 alone.
+> **INVARIANT:** Phase 3 fires a fresh sub-agent ONLY after a fix cycle. If Phase 2 finds zero issues, the review ENDS — no Phase 3 needed. If Phase 2 finds issues, fix them, then Phase 3 fresh sub-agent re-review is mandatory.
 
 Check categories from Phase 0.7 — if multiple distinct domains changed (e.g., server-side + client-side), run **Synthesis Mode**. Otherwise run **Holistic Mode**.
 
@@ -1101,62 +1151,6 @@ If `architectureRules` not present in project-config.json, skip silently.
 > 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
 > 5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, reachable by all consumers.
 
-## Closing Reminders
-
-> **[CRITICAL — TOP 3 RULES REPEATED]**
->
-> 1. **MUST ATTENTION Phase 0 graph blast-radius FIRST** — NEVER skip; informs entire review priority order
-> 2. **NEVER declare PASS after Round 1 alone** — fresh sub-agent review mandatory (Round 2+)
-> 3. **MUST ATTENTION TaskCreate ALL phases** before starting; missing tests MUST surface via `AskUserQuestion`
-
-- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
-- **MANDATORY IMPORTANT MUST ATTENTION** add final review todo task to verify work quality
-- **MANDATORY IMPORTANT MUST ATTENTION** discover and READ project-specific reference docs before starting
-- **MANDATORY IMPORTANT MUST ATTENTION** Phase 0 graph blast-radius is FIRST step — NEVER skip it
-- **MANDATORY IMPORTANT MUST ATTENTION** NEVER declare PASS after Round 1 alone — fresh sub-agent review is mandatory
-- **MANDATORY IMPORTANT MUST ATTENTION** documentation staleness check is REQUIRED in every review — flag stale docs even if not auto-fixing
-- **MANDATORY IMPORTANT MUST ATTENTION** missing tests for changed business logic MUST surface to user via `AskUserQuestion` — NOT silently logged
-- **MANDATORY IMPORTANT MUST ATTENTION** run `/why-review` after completing this review to validate design rationale, alternatives considered, and risk assessment
-
-                  <!-- SYNC:understand-code-first:reminder -->
-
-- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
-- **IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
-- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:logic-and-intention-review:reminder -->
-- **IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-      <!-- /SYNC:logic-and-intention-review:reminder -->
-      <!-- SYNC:bug-detection:reminder -->
-- **IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
-      <!-- /SYNC:bug-detection:reminder -->
-      <!-- SYNC:test-spec-verification:reminder -->
-- **IMPORTANT MUST ATTENTION** map changed code paths to test cases. Flag untested paths.
-      <!-- /SYNC:test-spec-verification:reminder -->
-      <!-- SYNC:integration-test-sync-check:reminder -->
-- **IMPORTANT MUST ATTENTION** check changed logic files for matching tests. Surface missing tests via `AskUserQuestion` — mandatory, not advisory.
-      <!-- /SYNC:integration-test-sync-check:reminder -->
-      <!-- SYNC:translation-sync-check:reminder -->
-- **IMPORTANT MUST ATTENTION** for multilingual UI text changes, verify translation updates. If missing, require explicit user decision via `AskUserQuestion`.
-      <!-- /SYNC:translation-sync-check:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze task size and break into many small todo tasks systematically before starting — critical for context preservation.
-
----
-
 ## Related Skills
 
 | Skill                      | Relationship                                                              | When to Call                                                                  |
@@ -1201,9 +1195,106 @@ review-changes (you are here)
 
 ## Prompt-Enhance Closing Anchors
 
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+<!-- SYNC:design-patterns-quality:reminder -->
+
+**IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
+
+<!-- /SYNC:design-patterns-quality:reminder -->
+<!-- SYNC:complexity-prevention:reminder -->
+
+**IMPORTANT MUST ATTENTION** apply complexity prevention — one business change = one code change. Flag change amplification (>3 edit sites for future change), scattered type-switches, anemic models, primitive obsession, leaked technology through abstractions, shallow modules, un-extracted utility logic (paging/datetime/string/retry → helpers), and logic in the wrong higher layer (downshift to callee/entity/VM). Don't rationalize silent duplication with pure YAGNI.
+
+<!-- /SYNC:complexity-prevention:reminder -->
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+<!-- SYNC:logic-and-intention-review:reminder -->
+
+**IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
+
+<!-- /SYNC:logic-and-intention-review:reminder -->
+<!-- SYNC:bug-detection:reminder -->
+
+**IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
+
+<!-- /SYNC:bug-detection:reminder -->
+<!-- SYNC:test-spec-verification:reminder -->
+
+**IMPORTANT MUST ATTENTION** map changed code paths to test cases. Flag untested paths.
+
+<!-- /SYNC:test-spec-verification:reminder -->
+<!-- SYNC:integration-test-sync-check:reminder -->
+
+**IMPORTANT MUST ATTENTION** check changed logic files for matching tests. Surface missing tests via `AskUserQuestion` — mandatory, not advisory.
+
+<!-- /SYNC:integration-test-sync-check:reminder -->
+<!-- SYNC:translation-sync-check:reminder -->
+
+**IMPORTANT MUST ATTENTION** for multilingual UI text changes, verify translation updates. If missing, require explicit user decision via `AskUserQuestion`.
+
+<!-- /SYNC:translation-sync-check:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Business terminology in Application/Domain layers.** Comments and naming in Application/Domain must stay business-oriented and technical-agnostic; avoid implementation terms (say `background job`, not `Hangfire background job`).
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Closing Reminders
+
+> **[CRITICAL — TOP 3 RULES REPEATED]**
+>
+> 1. **MUST ATTENTION Phase 0 graph blast-radius FIRST** — NEVER skip; informs entire review priority order
+> 2. **Clean Round 1 ENDS the review.** When issues found, fresh sub-agent re-review mandatory after fixing.
+> 3. **MUST ATTENTION TaskCreate ALL phases** before starting; missing tests MUST surface via `AskUserQuestion`
+
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
+- **MANDATORY IMPORTANT MUST ATTENTION** add final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** discover and READ project-specific reference docs before starting
+- **MANDATORY IMPORTANT MUST ATTENTION** Phase 0 graph blast-radius is FIRST step — NEVER skip it
+- **MANDATORY IMPORTANT MUST ATTENTION** fresh sub-agent re-review is mandatory ONLY after a fix cycle. Clean Round 1 ENDS the review.
+- **MANDATORY IMPORTANT MUST ATTENTION** documentation staleness check is REQUIRED in every review — flag stale docs even if not auto-fixing
+- **MANDATORY IMPORTANT MUST ATTENTION** missing tests for changed business logic MUST surface to user via `AskUserQuestion` — NOT silently logged
+- **MANDATORY IMPORTANT MUST ATTENTION** run `/why-review` after completing this review to validate design rationale, alternatives considered, and risk assessment
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze task size and break into many small todo tasks systematically before starting — critical for context preservation.
+
+---

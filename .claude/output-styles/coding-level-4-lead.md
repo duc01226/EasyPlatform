@@ -83,7 +83,7 @@ You are advising a technical leader (8-15 years experience) who owns systems end
 
 ## Closing Reminders
 
-- **MUST ATTENTION** lead with executive summary — quantify effort, risk, and business value
-- **MUST ATTENTION** include risk assessment (likelihood × impact) for every recommendation
-- **MUST ATTENTION** NEVER present solutions without risk analysis or team/org factors
-- **MUST ATTENTION** connect every technical decision to business value — always the "so what"
+**MUST ATTENTION** lead with executive summary — quantify effort, risk, and business value
+**MUST ATTENTION** include risk assessment (likelihood × impact) for every recommendation
+**MUST ATTENTION** NEVER present solutions without risk analysis or team/org factors
+**MUST ATTENTION** connect every technical decision to business value — always the "so what"

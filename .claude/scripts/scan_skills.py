@@ -94,11 +94,21 @@ def scan_skills(base_path: Path) -> List[Dict]:
 
     return skills
 
+DESCRIPTION_PREFIX_TO_CATEGORY = {
+    '[decision support]': 'utilities',
+}
+
+
 def categorize_skill(name: str, description: str, content: str) -> str:
     """Categorize skill based on name and content."""
     lower_name = name.lower()
     lower_desc = description.lower()
     lower_content = content[:500].lower()
+
+    # Description-prefix override — explicit `[Category]` tag wins over name heuristics
+    for prefix, bucket in DESCRIPTION_PREFIX_TO_CATEGORY.items():
+        if lower_desc.lstrip().startswith(prefix):
+            return bucket
 
     # AI/ML
     if any(x in lower_name for x in ['ai-', 'gemini', 'multimodal', 'adk']):

@@ -146,5 +146,44 @@ public static partial class Util
                 executionItemsResult = await executeFn();
             }
         }
+
+        /// <summary>
+        /// Executes paging where skip advances only over non-matched items, preventing cursor drift
+        /// when matched items are removed during iteration.
+        /// <para>
+        /// Unlike standard offset paging (skip += pageSize), this advances skip by (pageCount - matchedCount),
+        /// i.e. only over items that were NOT matched/removed. Items that shift position after deletion
+        /// are still visited on the next page.
+        /// </para>
+        /// </summary>
+        /// <param name="executeFn">
+        /// Async function receiving (skip, take). Must return (PageCount, MatchedCount) where PageCount is
+        /// the total items fetched before any filtering, and MatchedCount is how many were successfully
+        /// removed from storage (positions vacated). Passing "found" count instead of "deleted" count will
+        /// cause skip to under-advance, potentially revisiting non-stale items or looping indefinitely.
+        /// </param>
+        /// <param name="pageSize">Number of items per page.</param>
+        /// <param name="cancellationToken"></param>
+        public static async Task ExecuteAdaptiveSkipPagingAsync(
+            Func<int, int, Task<(int PageCount, int MatchedCount)>> executeFn,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var skip = 0;
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var (pageCount, matchedCount) = await executeFn(skip, pageSize);
+
+                if (pageCount == 0) break;
+
+                // Advance skip only over non-matched items — matched items were removed and no longer
+                // occupy positions, so advancing by the full pageSize would overshoot and miss items
+                // that shifted into the current window.
+                skip += Math.Max(0, pageCount - matchedCount);
+
+                if (pageCount < pageSize) break;
+            }
+        }
     }
 }

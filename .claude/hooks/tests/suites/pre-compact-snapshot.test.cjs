@@ -177,7 +177,7 @@ const toolUseTests = [
             const tmpDir = createTempDir('snap-test-');
             try {
                 const transcriptPath = writeTranscript(tmpDir, [
-                    makeToolUseMsg('Bash', { command: 'dotnet build BravoSUITE.sln', description: 'Build solution' })
+                    makeToolUseMsg('Bash', { command: 'dotnet build Example.sln', description: 'Build solution' })
                 ]);
 
                 const result = await runHook(SNAPSHOT_HOOK, { transcript_path: transcriptPath, session_id: sessionId });
@@ -598,7 +598,7 @@ const pipelineTests = [
                 const transcriptLines = [
                     makeTextMsg('user', 'deploy to production'),
                     makeToolUseMsg('Bash', { command: 'kubectl apply -f deployment.yaml', description: 'Deploy' }),
-                    makeToolResultMsg('deployment.apps/bravo-growth configured'),
+                    makeToolResultMsg('deployment.apps/example-service configured'),
                     makeTextMsg('assistant', 'Deployment complete. All pods running.')
                 ];
                 const transcriptPath = writeTranscript(tmpDir, transcriptLines);
@@ -612,7 +612,7 @@ const pipelineTests = [
                 assertTrue(snap.lines.some(l => l.includes('[tool:Bash]')), 'Snapshot should contain Bash tool call');
                 assertTrue(snap.lines.some(l => l.includes('[result]')), 'Snapshot should contain tool result');
                 assertTrue(snap.lines.some(l => l.includes('kubectl apply')), 'Snapshot should contain command value');
-                assertTrue(snap.lines.some(l => l.includes('deployment.apps/bravo-growth')), 'Snapshot should contain result text');
+                assertTrue(snap.lines.some(l => l.includes('deployment.apps/example-service')), 'Snapshot should contain result text');
 
                 // Step 2: PreCompact fires write-compact-marker
                 const markerResult = await runHook(COMPACT_MARKER_HOOK, createPreCompactInput({ session_id: sessionId }));
@@ -624,7 +624,7 @@ const pipelineTests = [
                 assertAllowed(recoveryResult.code);
                 assertContains(recoveryResult.stdout, '## 📋 Context Snapshot (Before Compact)', 'Recovery should inject snapshot header');
                 assertContains(recoveryResult.stdout, 'kubectl apply', 'Recovery should contain tool call command');
-                assertContains(recoveryResult.stdout, 'deployment.apps/bravo-growth', 'Recovery should contain tool result');
+                assertContains(recoveryResult.stdout, 'deployment.apps/example-service', 'Recovery should contain tool result');
 
                 // Snapshot file cleaned up after injection
                 assertFalse(fs.existsSync(ckPaths.getSnapshotPath(sessionId)), 'Snapshot file should be gone after recovery injection');

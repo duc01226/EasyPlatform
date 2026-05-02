@@ -43,7 +43,7 @@ function writeProjectConfig(tmpDir, localizationOverride) {
             {
                 name: 'Frontend Apps',
                 fileExtensions: ['.ts', '.tsx', '.html', '.css', '.scss'],
-                pathRegexes: ['src[\\\\/](WebV2|Web)[\\\\/]', 'libs[\\\\/](platform-core|bravo-common|bravo-domain)[\\\\/]'],
+                pathRegexes: ['src[\\\\/](WebV2|Web)[\\\\/]', 'libs[\\\\/](platform-core|shared-common|shared-domain)[\\\\/]'],
                 patternsDoc: 'docs/project-reference/frontend-patterns-reference.md',
                 rules: []
             }

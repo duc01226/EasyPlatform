@@ -1,4 +1,4 @@
-# BravoSUITE — Spec Principles
+# Project Spec Principles
 
 > **Spec-as-source-of-truth reference.** Every spec skill, workflow, review aligns with this document. In conflict: this document wins.
 
@@ -6,7 +6,7 @@
 
 ## Quick Summary
 
-**Goal:** Define spec quality standards, structure, and AI-implementability requirements across all BravoSUITE spec layers.
+**Goal:** Define spec quality standards, structure, and AI-implementability requirements across project spec layers.
 
 **Key Rules:**
 
@@ -26,13 +26,13 @@ Spec = authoritative description of what system does and why — independent of 
 
 Three maturity levels (Fowler/Thoughtworks 2025):
 
-| Level              | Meaning                                              | BravoSUITE Application       |
+| Level              | Meaning                                              | Project Application          |
 | ------------------ | ---------------------------------------------------- | ---------------------------- |
 | **Spec-first**     | Spec guides initial dev; may drift afterward         | Minimum acceptable           |
 | **Spec-anchored**  | Spec evolves alongside code; updated on every change | Target state                 |
 | **Spec-as-source** | Humans edit specs only; code regenerated from spec   | Future AI-replatforming mode |
 
-BravoSUITE targets **Spec-anchored**. Engineering spec + feature docs updated on every feature completion via `workflow-spec-driven-dev update` and `/docs-update`.
+Projects using this template should target **Spec-anchored**. Engineering spec + feature docs are updated on every feature completion via `workflow-spec-driven-dev update` and `/docs-update`.
 
 ### Why Tech-Agnostic?
 
@@ -47,8 +47,8 @@ Every business rule and TC traces to `[Source: file:line]`. Anti-hallucination c
 ## 2. Spec Levels — The Hierarchy
 
 ```
-Platform (BravoSUITE)
-  └── App Bucket  (bravoTALENTS, bravoGROWTH, bravoSURVEYS, …)
+Platform
+  └── App Bucket or System Group
         └── Service / System  (growth, candidate, surveys, …)
               └── Module  (GoalManagement, KudosFeature, …)
                     └── Feature  (individual detailed-feature doc)
@@ -343,7 +343,7 @@ last_updated: { YYYY-MM-DD }
 - **Identity:** [auto-generated / natural key: field name]
 - **Attributes:**
   | Name | Type | Required | Constraint | Business Meaning |
-  |------|------|----------|------------|-----------------|
+  | ---- | ---- | -------- | ---------- | ---------------- |
 - **Lifecycle:** [states list] OR [append-only / immutable]
 - **Invariants:** [list of rules always enforced — plain language]
 - **Domain Events:** [events published when entity changes state]
@@ -374,13 +374,13 @@ Allowed types: `string`, `number`, `boolean`, `date`, `list`, `map`, `enum (valu
 - **Idempotent:** yes/no — [why]
 - **Input:**
   | Field | Type | Required | Constraint | Description |
-  |---|---|---|---|---|
+  | ----- | ---- | -------- | ---------- | ----------- |
 - **Output (success):**
   | Field | Type | Description |
-  |---|---|---|
+  | ----- | ---- | ----------- |
 - **Errors:**
   | Code | Condition | Retryable |
-  |---|---|---|
+  | ---- | --------- | --------- |
   [Source: path/to/controller:line_range]
 ```
 
@@ -393,7 +393,7 @@ Allowed types: `string`, `number`, `boolean`, `date`, `list`, `map`, `enum (valu
 - **Producer:** [module or system] ← for consumed events
 - **Payload:**
   | Field | Type | Description |
-  |---|---|---|
+  | ----- | ---- | ----------- |
 - **Ordering:** guaranteed / best-effort
 - **Idempotency:** [how duplicate delivery handled]
 - **Failure handling:** [retry / dead-letter / discard]
@@ -493,15 +493,15 @@ last_updated: { YYYY-MM-DD }
 - Martin Fowler: [SpecificationByExample](https://martinfowler.com/bliki/SpecificationByExample.html)
 - Addy Osmani: [How to Write a Good Spec for AI Agents](https://addyosmani.com/blog/good-spec/)
 - Augment Code: [What Is Spec-Driven Development?](https://www.augmentcode.com/guides/what-is-spec-driven-development)
-- BravoSUITE internal: `docs/project-reference/spec-system-reference.md`, spec skill files
+- Project internal: `docs/project-reference/spec-system-reference.md`, spec skill files
 
 ---
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** NEVER bypass canonical locations — QA dashboard NEVER hand-edited; always synced from feature doc Section 15
-- **IMPORTANT MUST ATTENTION** NEVER use tech-specific types (C# types, EF Core, RabbitMQ) in engineering spec A–E files
-- **IMPORTANT MUST ATTENTION** MUST cite `[Source: file:line]` on every business rule and TC — no source = spec unverified
-- **IMPORTANT MUST ATTENTION** apply ambiguity test before marking spec implementation-complete: two engineers, one implementation
-- **IMPORTANT MUST ATTENTION** every feature doc MUST have at least one P0 (auth) TC and one P1 (core workflow) TC
-- **IMPORTANT MUST ATTENTION** spec anti-patterns cause AI hallucination — vague error handling, missing state machines, missing invariants all produce incorrect generated code
+**IMPORTANT MUST ATTENTION** NEVER bypass canonical locations — QA dashboard NEVER hand-edited; always synced from feature doc Section 15
+**IMPORTANT MUST ATTENTION** NEVER use tech-specific types (C# types, EF Core, RabbitMQ) in engineering spec A–E files
+**IMPORTANT MUST ATTENTION** MUST cite `[Source: file:line]` on every business rule and TC — no source = spec unverified
+**IMPORTANT MUST ATTENTION** apply ambiguity test before marking spec implementation-complete: two engineers, one implementation
+**IMPORTANT MUST ATTENTION** every feature doc MUST have at least one P0 (auth) TC and one P1 (core workflow) TC
+**IMPORTANT MUST ATTENTION** spec anti-patterns cause AI hallucination — vague error handling, missing state machines, missing invariants all produce incorrect generated code

@@ -10,7 +10,7 @@ const fs = require('fs');
 
 const SCRIPT_PATH = path.join(__dirname, 'worktree.cjs');
 const STANDALONE_DIR = path.dirname(path.dirname(__dirname)); // worktree dir
-const MONOREPO_DIR = '/home/kai/claudekit';
+const MONOREPO_DIR = process.env.MONOREPO_TEST_DIR || '';
 
 let passed = 0;
 let failed = 0;

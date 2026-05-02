@@ -76,7 +76,7 @@
 **Key rules:**
 
 - NEVER reuse a sub-agent across rounds — every round spawns a NEW `Agent` call
-- NEVER declare PASS after Round 1 alone — main agent rationalizes its own work
+- Clean Round 1 ENDS the review. When issues found, fix → fresh sub-agent re-review (main agent rationalizes its own work; fresh eyes catch dismissed findings).
 - Main agent READS sub-agent reports — NEVER filters or overrides findings
 
 ---

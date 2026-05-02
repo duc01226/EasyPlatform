@@ -38,37 +38,39 @@ grep -rn "MongoDB\|SqlServer\|PostgreSQL\|Redis\|Elasticsearch\|MySQL" --include
 # Auth
 grep -rn "IdentityServer\|Keycloak\|Auth0\|OpenIddict\|Microsoft\.Identity" --include="*.csproj" -i
 # Message brokers
-grep -rn "RabbitMQ\|Kafka\|ServiceBus\|NServiceBus\|MassTransit" --include="*.csproj" -i
+grep -rn "RabbitMQ\|amqp\|Kafka\|kafka\|nats\|ServiceBus\|servicebus\|NServiceBus\|MassTransit\|sqs\|pubsub" -ri --include="*.csproj" --include="package.json" --include="pom.xml" --include="build.gradle" --include="requirements*.txt" --include="go.mod" --include="*.yaml" --include="*.yml"
 # Cloud / infra
 find . -name "Dockerfile" -o -name "docker-compose*.yml" -o -name "*.k8s.yaml" | head -10
 find . -name "*.bicep" -o -name "terraform.tf" -o -name "*.tf" | head -10
 grep -rn "kubernetes\|k8s\|helm\|istio" . --include="*.yaml" --include="*.yml" -l -i
 ```
 
-Build **Tech Stack Inventory** table before proceeding:
+Build **Tech Stack Inventory** table before proceeding (rows below are illustrative — replace with the project's actual detected stack):
 
-| Layer    | Technology            | Version | Notes               |
-| -------- | --------------------- | ------- | ------------------- |
-| Backend  | .NET 9 / ASP.NET Core | 9.x     | CQRS, microservices |
-| Frontend | Angular 19            | 19.x    | Nx monorepo         |
-| Auth     | JWT + IdentityServer  | —       | —                   |
-| ...      | ...                   | ...     | ...                 |
+| Layer     | Technology (example) | Version | Notes                     |
+| --------- | -------------------- | ------- | ------------------------- |
+| Backend   | _detect from repo_   | —       | runtime, framework        |
+| Frontend  | _detect from repo_   | —       | UI framework + tooling    |
+| Auth      | _detect from repo_   | —       | JWT / OIDC / sessions     |
+| Datastore | _detect from repo_   | —       | RDBMS / NoSQL / cache     |
+| Bus       | _detect from repo_   | —       | broker / queue / none     |
+| Infra     | _detect from repo_   | —       | Docker / K8s / serverless |
 
 ### Phase 2: Research CVEs & Attack Patterns Per Stack (SECOND)
 
-For each detected component, synthesize known high-impact attack classes. Use training knowledge + WebSearch verify current CVEs if internet access available.
+For each detected component, synthesize known high-impact attack classes. Use training knowledge + WebSearch verify current CVEs if internet access available. **Rows below are EXAMPLES across common stacks — include only those matching detected components from Phase 1, and add equivalents for any stack not listed (Express, Spring, Django, Rails, Go, etc.).**
 
-| Component                             | Research Target                                                                                                                              |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ASP.NET Core**                      | Mass assignment, model binding bypass, CORS misconfiguration, AntiForgery gaps, middleware ordering bugs, SignalR auth bypass                |
-| **Entity Framework / MongoDB Driver** | NoSQL operator injection (`$where`, `$regex`), LINQ-to-SQL injection via raw queries, unintended full-collection scans                       |
-| **JWT / Bearer Auth**                 | Algorithm confusion (`none`, RS256→HS256), missing claim validation (`aud`, `iss`, `exp`), token sidejacking, JWT in localStorage            |
-| **Angular**                           | Template injection (`bypassSecurityTrust*` misuse), XSS via `DomSanitizer`, CSRF on non-SameSite cookies, supply chain via `ng-add`          |
-| **RabbitMQ**                          | Default credentials, missing TLS, poison message DoS, vhost permission scope, deserialization of untrusted payloads                          |
-| **MongoDB**                           | Operator injection, excessive privilege for service accounts, no field-level PII encryption, replica set auth disabled                       |
-| **Redis**                             | Unauthenticated access, SSRF via eval commands, persistence attack (config rewrite)                                                          |
-| **Docker / K8s**                      | Privileged containers, exposed Docker socket, default service account token auto-mount, RBAC overpermission, secret in ENV vs mounted volume |
-| **npm/NuGet packages**                | `dotnet list package --vulnerable` + `npm audit` for CVEs matching detected versions                                                         |
+| Component class               | Example technologies                                                    | Research Target                                                                                                                      |
+| ----------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **HTTP framework**            | ASP.NET Core, Express, Spring, Django, Rails, Gin                       | Mass assignment, model binding bypass, CORS misconfig, CSRF gaps, middleware ordering bugs, route auth gaps                          |
+| **ORM / data driver**         | EF Core, Hibernate, Sequelize, SQLAlchemy, ActiveRecord, MongoDB driver | (No)SQL operator injection, raw query injection, unintended full-collection / full-table scans                                       |
+| **JWT / Bearer Auth**         | any JWT library                                                         | Algorithm confusion (`none`, RS256→HS256), missing claim validation (`aud`, `iss`, `exp`), token sidejacking, JWT in localStorage    |
+| **SPA frontend**              | Angular, React, Vue, Svelte                                             | Template/HTML injection (sanitizer-bypass APIs), XSS via dangerous-HTML APIs, CSRF on non-SameSite cookies, supply chain via plugins |
+| **Message broker**            | RabbitMQ, Kafka, NATS, SQS, Azure Service Bus                           | Default credentials, missing TLS, poison-message DoS, permission/topic scope, untrusted-payload deserialization                      |
+| **Database**                  | MongoDB, Postgres, MySQL, SQL Server                                    | Operator/SQL injection, excessive service-account privilege, no field-level PII encryption, weak/disabled cluster auth               |
+| **Cache / KV**                | Redis, Memcached                                                        | Unauthenticated access, command/eval injection, persistence/config rewrite attacks                                                   |
+| **Container / orchestration** | Docker, Kubernetes, ECS                                                 | Privileged containers, exposed daemon socket, default SA token auto-mount, RBAC overpermission, secrets in ENV vs mounted            |
+| **Package ecosystem**         | npm, NuGet, Maven, PyPI, RubyGems, Go modules                           | Run ecosystem CVE scanner (`npm audit`, `dotnet list package --vulnerable`, `pip-audit`, `bundle audit`, `govulncheck`, etc.)        |
 
 > If WebSearch available: `site:nvd.nist.gov {technology} {version} CVE` + `{technology} security advisory {current_year}` per major component.
 
@@ -91,16 +93,16 @@ After Phase 1 + Phase 2, proceed OWASP checklist, **prioritizing attack classes 
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -168,6 +170,17 @@ python .claude/scripts/code_graph query tests_for <function> --json             
 ---
 
 ## OWASP Top 10 (2021) Audit Checklist
+
+> **Stack-agnostic checklist.** The grep examples below assume a .NET/Angular stack as a worked example. For every detected stack, **substitute equivalent regex + file-include patterns** before running:
+>
+> | Concept (stack-agnostic)     | .NET example                      | Node/TS example                             | Python example                     | Java example                         |
+> | ---------------------------- | --------------------------------- | ------------------------------------------- | ---------------------------------- | ------------------------------------ |
+> | Controller / route file      | `--include="*Controller.cs"`      | `--include="*.controller.ts"` / `routes/**` | `views.py`, FastAPI router files   | `*Controller.java`, `*Resource.java` |
+> | Config file                  | `appsettings*.json`               | `*.env`, `config/*.json`, `*.config.ts`     | `settings.py`, `*.env`, `*.yaml`   | `application.properties`, `*.yml`    |
+> | DI / startup                 | `Program.cs`, `Startup.cs`        | `main.ts`, `app.module.ts`, `server.ts`     | `wsgi.py`, `asgi.py`, `manage.py`  | `Application.java`, `@Configuration` |
+> | Auth/authorization decorator | `[Authorize]`, `[AllowAnonymous]` | guards, `@UseGuards`, middleware            | `@login_required`, DRF permissions | `@PreAuthorize`, `@RolesAllowed`     |
+>
+> Rule: **detect first, then substitute.** Running .NET regex against a Python repo produces zero findings AND false confidence.
 
 ### A01: Broken Access Control ⚠️ #1 Risk
 
@@ -281,7 +294,7 @@ grep -rn "IFormFile\|MultipartReader" --include="*.cs"
 
 **Find:**
 
-- Default credentials in production (RabbitMQ `guest/guest`, MongoDB `root/rootPassXXX`)
+- Default credentials in production (e.g. broker `guest/guest`, DB `root/root`, admin `admin/admin`, dev seed accounts) — flag any broker/DB/admin credential matching a known vendor default
 - Developer exception page enabled in production
 - TRACE/OPTIONS without restriction
 - Missing security headers: `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Referrer-Policy`
@@ -423,18 +436,19 @@ grep -rn "169\.254\.169\.254\|metadata\.google\|metadata\.azure" --include="*.cs
 grep -rn "CompanyId\|TenantId" --include="*.cs" | grep -v "Claims\|User\." | grep "Request\.\|body\.\|param\."
 ```
 
-### Message Bus Security (RabbitMQ)
+### Message Bus Security (broker-agnostic — RabbitMQ / Kafka / NATS / SQS / Service Bus / etc.)
 
-- **Auth:** Not using default `guest/guest` in non-dev
-- **TLS:** AMQP encrypted in transit (TLS 1.2+)
+- **Auth:** No default vendor credentials in non-dev (e.g. RabbitMQ `guest/guest`, Kafka unauthenticated listeners, open NATS, SQS keys with `*` policy)
+- **TLS:** Broker traffic encrypted in transit (TLS 1.2+); plain-text protocols (AMQP/Kafka PLAINTEXT) only on isolated networks
 - **Validation:** Consumer validates schema before processing; malformed messages don't leak internal details
-- **Poison messages:** Dead letter queues configured; no infinite retry loops exploitable for DoS
-- **AuthZ:** Vhosts + exchange permissions scoped per service; no service with full admin
+- **Poison messages:** Dead-letter queue / DLQ / parking-lot topic configured; no infinite retry loops exploitable for DoS
+- **AuthZ:** Per-service scoped permissions (vhosts/ACLs/IAM policies/topic ACLs); no service with full admin
 - **Content:** No secrets/PII in payloads beyond necessary; sensitive fields encrypted at application layer
 
 ```bash
-grep -rn "RabbitMQ\|rabbitmq\|amqp" --include="appsettings*.json" --include="*.yaml" -i
-grep -rn "IConsumer\|IMessageConsumer\|OnMessage\|HandleMessage" --include="*.cs" -A 10
+# Adapt include globs and identifier patterns to detected broker + language
+grep -rn "RabbitMQ\|amqp\|Kafka\|bootstrap\.servers\|nats://\|servicebus\.windows\.net\|sqs\." -ri
+grep -rn "Consumer\|Subscriber\|MessageHandler\|@KafkaListener\|@RabbitListener\|onMessage" -r -A 10
 ```
 
 ### API Rate Limiting & DoS Protection
@@ -547,20 +561,25 @@ Write to `plans/reports/security-audit-{date}.md`:
 
 ---
 
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
 - **[BLOCKING] MANDATORY PROTOCOL** — Phase 1 (tech stack detect) → Phase 2 (CVE research per stack) → Phase 3 (evaluate). NEVER skip or reorder. No findings before Phase 2 complete.
-- **IMPORTANT MUST ATTENTION** NEVER modify source code — read-only audit only
-- **IMPORTANT MUST ATTENTION** NEVER report findings without `file:line` traced code-path evidence — pattern matching alone is not a finding
-- **IMPORTANT MUST ATTENTION** NEVER expose credentials/secrets/tokens in reports — redact with `[REDACTED]`
-- **IMPORTANT MUST ATTENTION** Write findings to `plans/reports/` after each section — never batch at end
-- **IMPORTANT MUST ATTENTION** Check ALL affected services for cross-cutting concerns (auth, JWT, message bus)
-- **IMPORTANT MUST ATTENTION** Rule out false positives — trace full data flow to sink, verify no upstream neutralization
-- **IMPORTANT MUST ATTENTION** For JWT: verify ALL five flags (`Issuer`, `Audience`, `Lifetime`, `SigningKey`, `Algorithm`) — missing any one is Critical
-- **IMPORTANT MUST ATTENTION** TenantId/CompanyId MUST come from JWT claims, NEVER from request body
-  <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+  **IMPORTANT MUST ATTENTION** NEVER modify source code — read-only audit only
+  **IMPORTANT MUST ATTENTION** NEVER report findings without `file:line` traced code-path evidence — pattern matching alone is not a finding
+  **IMPORTANT MUST ATTENTION** NEVER expose credentials/secrets/tokens in reports — redact with `[REDACTED]`
+  **IMPORTANT MUST ATTENTION** Write findings to `plans/reports/` after each section — never batch at end
+  **IMPORTANT MUST ATTENTION** Check ALL affected services for cross-cutting concerns (auth, JWT, message bus)
+  **IMPORTANT MUST ATTENTION** Rule out false positives — trace full data flow to sink, verify no upstream neutralization
+  **IMPORTANT MUST ATTENTION** For JWT: verify ALL five flags (`Issuer`, `Audience`, `Lifetime`, `SigningKey`, `Algorithm`) — missing any one is Critical
+  **IMPORTANT MUST ATTENTION** TenantId/CompanyId MUST come from JWT claims, NEVER from request body

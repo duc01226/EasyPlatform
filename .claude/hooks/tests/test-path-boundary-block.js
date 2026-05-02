@@ -190,6 +190,142 @@ const bashTests = [
     }
 ];
 
+// =====================================================================
+// Linux-regression tests — Linux paths must NEVER be misclassified as
+// Windows command flags. Run with CLAUDE_TEST_PLATFORM=linux so the
+// outer platform gate exercises the non-Windows branch on any host.
+// Regression: prior win-flag regex unconditionally matched /etc, /var,
+// /usr, /home, /opt, /tmp, /bin, /sbin, /lib, /srv, /mnt, /run, /boot
+// as 1-segment "flags" → boundary bypass on Linux/macOS.
+// =====================================================================
+const linuxRegressionTests = [
+    {
+        name: 'tar with /etc target - should block (Linux)',
+        input: { tool_input: { command: 'tar -czf out.tar.gz /etc' } },
+        expectBlock: true
+    },
+    {
+        name: 'rm -rf /etc - should block (Linux)',
+        input: { tool_input: { command: 'rm -rf /etc' } },
+        expectBlock: true
+    },
+    {
+        name: 'cp -r /home target - should block (Linux)',
+        input: { tool_input: { command: 'cp -r /home target/' } },
+        expectBlock: true
+    },
+    {
+        name: 'cat /var/log/syslog - should block (Linux)',
+        input: { tool_input: { command: 'cat /var/log/syslog' } },
+        expectBlock: true
+    },
+    {
+        name: 'ls /opt - should block (Linux)',
+        input: { tool_input: { command: 'ls /opt' } },
+        expectBlock: true
+    },
+    {
+        name: 'ls /usr - should block (Linux)',
+        input: { tool_input: { command: 'ls /usr' } },
+        expectBlock: true
+    },
+    // Note: /tmp and /var/tmp are intentionally allowlisted in
+    // ck-path-utils.cjs:175-176 for Claude sub-agent task outputs.
+    // Listing them here would falsely flag the regex as broken.
+    {
+        name: 'ls /bin /sbin /lib - should block (Linux)',
+        input: { tool_input: { command: 'ls /bin /sbin /lib' } },
+        expectBlock: true
+    },
+    {
+        name: 'ls /srv /mnt /run /boot - should block (Linux)',
+        input: { tool_input: { command: 'ls /srv /mnt /run /boot' } },
+        expectBlock: true
+    }
+];
+
+// =====================================================================
+// Windows-flag-allow tests — legitimate Windows tool flags must NOT be
+// misclassified as paths. Run with CLAUDE_TEST_PLATFORM=win32 so the
+// outer platform gate exercises the Windows branch on any host.
+// Regression source: real user report where
+//   `... | findstr /I "error CS" ...`
+// triggered "BLOCKED: /I outside project boundary".
+// =====================================================================
+const winFlagAllowTests = [
+    {
+        name: 'findstr /I real-world dotnet build pipe - should allow',
+        input: {
+            tool_input: {
+                command: 'dotnet build src/App.csproj --nologo -v:m 2>&1 | findstr /I "error CS"'
+            }
+        },
+        expectBlock: false
+    },
+    {
+        name: 'findstr /I /N flags - should allow',
+        input: { tool_input: { command: 'findstr /I /N "TODO" src/file.cs' } },
+        expectBlock: false
+    },
+    {
+        name: 'findstr /N /V flags - should allow',
+        input: { tool_input: { command: 'findstr /N /V "skip" log.txt' } },
+        expectBlock: false
+    },
+    {
+        name: 'cmd /C dir - should allow',
+        input: { tool_input: { command: 'cmd /C dir' } },
+        expectBlock: false
+    },
+    {
+        name: 'xcopy /E /I src dst - should allow',
+        input: { tool_input: { command: 'xcopy /E /I src dst' } },
+        expectBlock: false
+    },
+    {
+        name: 'robocopy /MIR - should allow',
+        input: { tool_input: { command: 'robocopy /MIR src dst' } },
+        expectBlock: false
+    }
+];
+
+// =====================================================================
+// findstr pattern strip — quoted search patterns containing /etc/foo
+// must be stripped (line 239 tools regex), only file argument remains.
+// Cross-platform.
+// =====================================================================
+const findstrPatternStripTests = [
+    {
+        name: 'findstr quoted pattern with /etc/foo - should allow (pattern stripped, file is project-local)',
+        input: { tool_input: { command: 'findstr "/etc/foo" src/file.txt' } },
+        expectBlock: false
+    }
+];
+
+// =====================================================================
+// Fuzz: /Word patterns NOT in any known Windows flag list. When cmd has
+// NO Windows-tool token, these MUST be treated as paths and BLOCKED
+// regardless of platform. Documents the platform-gate + tool-token gate
+// as the contract: only legitimate Windows tools get the flag-skip.
+// =====================================================================
+const fuzzNonFlagWordPathTests = [
+    {
+        name: 'cat /optt (typo of /opt, no Win tool) - should block',
+        input: { tool_input: { command: 'cat /optt' } },
+        expectBlock: true
+    },
+    {
+        name: 'ls /varr (typo, no Win tool) - should block',
+        input: { tool_input: { command: 'ls /varr' } },
+        expectBlock: true
+    },
+    {
+        name: 'cat /foobar (arbitrary, no Win tool) - should block',
+        input: { tool_input: { command: 'cat /foobar' } },
+        expectBlock: true
+    }
+];
+
 // Tests for inline code false positives (should ALLOW)
 const inlineCodeTests = [
     {
@@ -479,6 +615,8 @@ async function main() {
     let totalFailed = 0;
 
     // Run all test groups
+    // Tuple format: [name, tests] OR [name, tests, options] where options.env is forwarded to runHook.
+    // CLAUDE_TEST_PLATFORM lets platform-conditional groups run on either host (see path-boundary-block.cjs:isWin).
     const groups = [
         ['Allow Tests (inside project)', allowTests],
         ['Temp Directory Tests', tempDirTests],
@@ -491,11 +629,16 @@ async function main() {
         ['MCP Filesystem Tests', mcpTests],
         ['NotebookEdit Tests', notebookTests],
         ['Config Toggle Tests', configTests],
-        ['Edge Cases', edgeCaseTests]
+        ['Edge Cases', edgeCaseTests],
+        ['Linux Regression (boundary cannot bypass on Linux)', linuxRegressionTests, { env: { CLAUDE_TEST_PLATFORM: 'linux' } }],
+        ['Windows Flag Allow (findstr /I, cmd /C, etc.)', winFlagAllowTests, { env: { CLAUDE_TEST_PLATFORM: 'win32' } }],
+        ['findstr Pattern Strip', findstrPatternStripTests, { env: { CLAUDE_TEST_PLATFORM: 'win32' } }],
+        ['Fuzz: /Word without Win-tool token must block', fuzzNonFlagWordPathTests, { env: { CLAUDE_TEST_PLATFORM: 'win32' } }]
     ];
 
-    for (const [name, tests] of groups) {
-        const { passed, failed } = await runTestGroup(name, tests);
+    for (const group of groups) {
+        const [name, tests, options] = group;
+        const { passed, failed } = await runTestGroup(name, tests, options || {});
         totalPassed += passed;
         totalFailed += failed;
     }

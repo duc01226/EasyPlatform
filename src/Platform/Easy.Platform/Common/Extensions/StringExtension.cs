@@ -237,4 +237,32 @@ public static class StringExtension
 
         return text;
     }
+
+    /// <summary>
+    /// Replaces {{ Placeholder }} tokens in a template string using a key/value dictionary.
+    /// Keys are matched case-insensitively and may contain surrounding whitespace inside the braces.
+    /// Unmatched placeholders are left as-is.
+    /// </summary>
+    /// <example>
+    /// "Dear {{Candidate_Name}}".ReplacePlaceholders(new() { ["Candidate_Name"] = "John" })
+    /// → "Dear John"
+    /// </example>
+    private static readonly Regex PlaceholderRegex = new(@"\{\{\s*([^}]+?)\s*\}\}", RegexOptions.Compiled);
+
+    public static string ReplacePlaceholders(this string template, Dictionary<string, string> placeholders, Regex placeholderRegex = null)
+    {
+        if (string.IsNullOrEmpty(template) || placeholders == null || placeholders.Count == 0)
+            return template ?? string.Empty;
+
+        var lookup = new Dictionary<string, string>(placeholders, StringComparer.OrdinalIgnoreCase);
+        var regex = placeholderRegex ?? PlaceholderRegex;
+
+        return regex.Replace(
+            template,
+            match =>
+            {
+                var key = match.Groups[1].Value;
+                return lookup.TryGetValue(key, out var value) ? value : match.Value;
+            });
+    }
 }

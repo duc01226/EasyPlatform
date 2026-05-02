@@ -14,17 +14,6 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates service names, ports, and file paths. Grep/Glob to confirm before documenting.
-> - **Trace full dependency chain after edits.** Always trace full chain.
-> - **Surface ambiguity before coding.** NEVER pick silently.
-> - **NEVER hardcode port numbers without config file evidence.** Read `launchSettings.json` or `docker-compose.yml` — never infer from memory.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
@@ -70,7 +59,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 **Key Rules:**
 
 - Generic — discover everything dynamically, never hardcode project-specific values
-- **MUST ATTENTION** detect architecture type FIRST — scan depth and sub-agent focus depend on it
+  **MUST ATTENTION** detect architecture type FIRST — scan depth and sub-agent focus depend on it
 - ALL port numbers must be read from actual config files — never infer from memory
 
 ---
@@ -199,36 +188,55 @@ Read full report. Apply fresh-eyes protocol:
 
 ---
 
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates service names, ports, and file paths. Grep/Glob to confirm before documenting.
+> **Trace full dependency chain after edits.** Always trace full chain.
+> **Surface ambiguity before coding.** NEVER pick silently.
+> **NEVER hardcode port numbers without config file evidence.** Read `launchSettings.json` or `docker-compose.yml` — never infer from memory.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
-- **IMPORTANT MUST ATTENTION** detect architecture type in Phase 0 — sub-agent focus depends on it
-- **IMPORTANT MUST ATTENTION** cite `file:line` for every port number and path — NEVER infer from memory
-- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each service — NEVER batch at end
-- **IMPORTANT MUST ATTENTION** verify ALL Dockerfile paths — spot-check of 3 is insufficient
-- **IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — validates ports and paths
-      <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
+**IMPORTANT MUST ATTENTION** detect architecture type in Phase 0 — sub-agent focus depends on it
+**IMPORTANT MUST ATTENTION** cite `file:line` for every port number and path — NEVER infer from memory
+**IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each service — NEVER batch at end
+**IMPORTANT MUST ATTENTION** verify ALL Dockerfile paths — spot-check of 3 is insufficient
+**IMPORTANT MUST ATTENTION** when Round 1 finds issues, Round 2 fresh-eyes after fixing validates ports and paths. Clean Round 1 ENDS the scan.
 
 **Anti-Rationalization:**
 
-| Evasion                                               | Rebuttal                                                                            |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| "Architecture type obvious from directory names"      | Verify from actual project files — names are not evidence                           |
-| "Port numbers are standard (5000, 8080, etc.)"        | Read config files — NEVER infer ports from framework conventions                    |
-| "Checked 3 Dockerfile paths, that's enough"           | Glob-verify ALL paths — partial verification hides missing services                 |
-| "Framework versions obvious from project type"        | Read `package.json`/`.csproj` for exact versions — never assume                     |
-| "Round 2 verification not needed for structural scan" | Port numbers and paths are the most hallucination-prone data. Fresh-eyes mandatory. |
-| "project-config.json not needed if repo looks clear"  | Config file provides expected service catalog — use it to detect missing services   |
+| Evasion                                              | Rebuttal                                                                                                                                          |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Architecture type obvious from directory names"     | Verify from actual project files — names are not evidence                                                                                         |
+| "Port numbers are standard (5000, 8080, etc.)"       | Read config files — NEVER infer ports from framework conventions                                                                                  |
+| "Checked 3 Dockerfile paths, that's enough"          | Glob-verify ALL paths — partial verification hides missing services                                                                               |
+| "Framework versions obvious from project type"       | Read `package.json`/`.csproj` for exact versions — never assume                                                                                   |
+| "Skip Round 2 even when Round 1 found issues"        | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — port numbers and paths are the most hallucination-prone data. |
+| "project-config.json not needed if repo looks clear" | Config file provides expected service catalog — use it to detect missing services                                                                 |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and break into small todo tasks and sub-tasks using TaskCreate.

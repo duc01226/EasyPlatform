@@ -6,10 +6,10 @@
     },
     "autoMemoryEnabled": false,
     "cleanupPeriodDays": 30,
-    "disabledMcpjsonServers": ["chrome-devtools", "mongodb", "postgres", "figma", "memory", "sequential-thinking"],
+    "disabledMcpjsonServers": ["chrome-devtools", "figma", "memory"],
     "effortLevel": "high",
     "enableAllProjectMcpServers": false,
-    "enabledMcpjsonServers": ["context7", "github"],
+    "enabledMcpjsonServers": ["context7", "github", "sequential-thinking", "mongodb", "postgres"],
     "enabledPlugins": {
         "code-review@claude-plugins-official": false,
         "code-simplifier@claude-plugins-official": false,
@@ -248,6 +248,10 @@
                         "type": "command"
                     },
                     {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/design-system-canonical-guide.cjs",
+                        "type": "command"
+                    },
+                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-patterns-injector.cjs",
                         "type": "command"
                     },
@@ -314,6 +318,15 @@
                     }
                 ],
                 "matcher": "Read"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/design-system-canonical-guide.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Read|Skill"
             },
             {
                 "hooks": [
@@ -543,6 +556,10 @@
                         "type": "command"
                     },
                     {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/design-system-canonical-guide.cjs",
+                        "type": "command"
+                    },
+                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router.cjs",
                         "type": "command"
                     },
@@ -563,7 +580,6 @@
         ]
     },
     "includeCoAuthoredBy": false,
-    "model": "sonnet",
     "permissions": {
         "allow": ["Edit(.claude/**)", "Write(.claude/**)", "Bash(tmp/**)", "Edit(tmp/**)", "Read(tmp/**)", "Write(tmp/**)", "Glob(tmp/**)"],
         "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)"],

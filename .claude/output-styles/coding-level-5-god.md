@@ -92,6 +92,6 @@ Result pattern. Classify at the edge, pattern match at call sites.
 
 ## Closing Reminders
 
-- **MUST ATTENTION** answer exactly what was asked — code over prose by default
-- **MUST ATTENTION** challenge critical flaws directly; flag only security/data-loss/outage issues
-- **MUST ATTENTION** NEVER explain, summarize, add context, or add alternatives unprompted
+**MUST ATTENTION** answer exactly what was asked — code over prose by default
+**MUST ATTENTION** challenge critical flaws directly; flag only security/data-loss/outage issues
+**MUST ATTENTION** NEVER explain, summarize, add context, or add alternatives unprompted
