@@ -296,14 +296,14 @@ After completing code changes, check for stale documentation:
 
 ## Closing Reminders
 
-- **MANDATORY IMPORTANT MUST ATTENTION** understand existing code FIRST — read, grep 3+ patterns, run graph trace before ANY modification
-- **MANDATORY IMPORTANT MUST ATTENTION** follow Code Step Rule — no blank line = same step (parallel), blank line = new step (consume all previous outputs). Fix via extract function or chaining.
-- **MANDATORY IMPORTANT MUST ATTENTION** place logic in LOWEST layer: Entity/Model > Service > Component/Handler
-- **MANDATORY IMPORTANT MUST ATTENTION** ensure zero broken builds — code must compile with no syntax errors
-- **MANDATORY IMPORTANT MUST ATTENTION** follow YAGNI/KISS/DRY — no speculative abstractions
-- **MANDATORY IMPORTANT MUST ATTENTION** apply surgical changes (context-aware) — bug fix: diff test (every line traces to the bug). Review/enhancement: implement improvements you see AND announce them explicitly. Never silently scope-creep either way.
-- **MANDATORY IMPORTANT MUST ATTENTION** surface ambiguity before coding — list assumptions (scope/format/volume/constraints), present interpretations with effort estimates, push back when simpler exists. Never pick silently.
-- **MANDATORY IMPORTANT MUST ATTENTION** define verifiable success criteria per task — step → verify: [observable check], not "make it work"
-- **MANDATORY IMPORTANT MUST ATTENTION** run doc review at session wrap-up (map changed files → affected docs)
-- **MANDATORY IMPORTANT MUST ATTENTION** activate relevant skills from catalog during the process
-- **MANDATORY IMPORTANT MUST ATTENTION** names express PURPOSE not CONTENT — "OrXxx/AndYyy" joining roles/types/statuses = content-driven = rename. "Or" in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) is fine.
+**MANDATORY IMPORTANT MUST ATTENTION** understand existing code FIRST — read, grep 3+ patterns, run graph trace before ANY modification
+**MANDATORY IMPORTANT MUST ATTENTION** follow Code Step Rule — no blank line = same step (parallel), blank line = new step (consume all previous outputs). Fix via extract function or chaining.
+**MANDATORY IMPORTANT MUST ATTENTION** place logic in LOWEST layer: Entity/Model > Service > Component/Handler
+**MANDATORY IMPORTANT MUST ATTENTION** ensure zero broken builds — code must compile with no syntax errors
+**MANDATORY IMPORTANT MUST ATTENTION** follow YAGNI/KISS/DRY — no speculative abstractions
+**MANDATORY IMPORTANT MUST ATTENTION** apply surgical changes (context-aware) — bug fix: diff test (every line traces to the bug). Review/enhancement: implement improvements you see AND announce them explicitly. Never silently scope-creep either way.
+**MANDATORY IMPORTANT MUST ATTENTION** surface ambiguity before coding — list assumptions (scope/format/volume/constraints), present interpretations with effort estimates, push back when simpler exists. Never pick silently.
+**MANDATORY IMPORTANT MUST ATTENTION** define verifiable success criteria per task — step → verify: [observable check], not "make it work"
+**MANDATORY IMPORTANT MUST ATTENTION** run doc review at session wrap-up (map changed files → affected docs)
+**MANDATORY IMPORTANT MUST ATTENTION** activate relevant skills from catalog during the process
+**MANDATORY IMPORTANT MUST ATTENTION** names express PURPOSE not CONTENT — "OrXxx/AndYyy" joining roles/types/statuses = content-driven = rename. "Or" in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) is fine.

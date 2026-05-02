@@ -13,17 +13,6 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates file paths and counts. Glob to confirm existence before documenting.
-> - **Trace full dependency chain after edits.** Always trace full chain.
-> - **Surface ambiguity before coding.** NEVER pick silently.
-> - **Update docs that embed canonical data when source changes.** Docs inlining counts go stale silently.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
@@ -69,7 +58,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 - Generic — discover everything dynamically, never hardcode project-specific values
 - ALL file counts must be verified via glob, not copied from existing content
-- **MUST ATTENTION** evidence gate required for EVERY count claim — never estimate
+  **MUST ATTENTION** evidence gate required for EVERY count claim — never estimate
 
 ---
 
@@ -209,26 +198,45 @@ Write to `docs/project-reference/docs-index-reference.md` with sections:
 
 ---
 
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs in the skill output itself, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates file paths and counts. Glob to confirm existence before documenting.
+> **Trace full dependency chain after edits.** Always trace full chain.
+> **Surface ambiguity before coding.** NEVER pick silently.
+> **Update docs that embed canonical data when source changes.** Docs inlining counts go stale silently.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
-- **IMPORTANT MUST ATTENTION** detect doc organization type in Phase 0 — scan approach depends on it
-- **IMPORTANT MUST ATTENTION** evidence gate for EVERY count — glob to verify, NEVER estimate or copy from existing content
-- **IMPORTANT MUST ATTENTION** write findings incrementally after each category — NEVER batch at end
-- **IMPORTANT MUST ATTENTION** run uncategorized file discovery — NEVER silently omit files that don't fit categories
-- **IMPORTANT MUST ATTENTION** Phase 5 fresh-eyes verification is mandatory before writing final doc
-      <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs in the skill output itself, 1 example per pattern, lead with answer.
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
+**IMPORTANT MUST ATTENTION** detect doc organization type in Phase 0 — scan approach depends on it
+**IMPORTANT MUST ATTENTION** evidence gate for EVERY count — glob to verify, NEVER estimate or copy from existing content
+**IMPORTANT MUST ATTENTION** write findings incrementally after each category — NEVER batch at end
+**IMPORTANT MUST ATTENTION** run uncategorized file discovery — NEVER silently omit files that don't fit categories
+**IMPORTANT MUST ATTENTION** Phase 5 fresh-eyes verification is mandatory before writing final doc
 
 **Anti-Rationalization:**
 

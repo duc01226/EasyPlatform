@@ -13,18 +13,6 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Always trace full chain.
-> - **Holistic-first — resist nearest-attention trap.** List EVERY precondition before forming hypothesis.
-> - **Surgical changes — apply diff test.** Every changed line traces directly to the task.
-> - **Surface ambiguity before coding.** Multiple interpretations → present each with effort estimate. NEVER pick silently.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
@@ -57,7 +45,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 ## Quick Summary
 
-**Goal:** Scan project codebase for established conventions, lint rules, common patterns, and anti-patterns → populate `docs/project-reference/code-review-rules.md` with actionable review rules and checklists. (content auto-injected by hook — check for [Injected: ...] header before reading)
+**Goal:** Scan project codebase for established conventions, lint rules, common patterns, and anti-patterns → populate `docs/project-reference/code-review-rules.md` with actionable review rules and checklists. (content auto-injected by hook — check for [Injected:...] header before reading)
 
 **Workflow:**
 
@@ -72,7 +60,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 - Derive rules from ACTUAL codebase patterns, not generic best practices
 - Every rule has a "DO" example from the project with `file:line`
 - Focus on project-specific conventions that differ from framework defaults
-- **MUST ATTENTION** detect project scope FIRST — agent routing depends on it
+  **MUST ATTENTION** detect project scope FIRST — agent routing depends on it
 
 ---
 
@@ -205,26 +193,46 @@ Read report. Apply evidence confidence to classify each rule:
 
 ---
 
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Always trace full chain.
+> **Holistic-first — resist nearest-attention trap.** List EVERY precondition before forming hypothesis.
+> **Surgical changes — apply diff test.** Every changed line traces directly to the task.
+> **Surface ambiguity before coding.** Multiple interpretations → present each with effort estimate. NEVER pick silently.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
-- **IMPORTANT MUST ATTENTION** detect project scope FIRST in Phase 0 — agent routing depends on it
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **IMPORTANT MUST ATTENTION** derive rules from ACTUAL patterns — generic best practices are forbidden
-- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally — NEVER batch at end
-- **IMPORTANT MUST ATTENTION** two review rounds — Round 2 fresh sub-agent catches what main agent missed
-      <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
+**IMPORTANT MUST ATTENTION** detect project scope FIRST in Phase 0 — agent routing depends on it
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+**IMPORTANT MUST ATTENTION** derive rules from ACTUAL patterns — generic best practices are forbidden
+**IMPORTANT MUST ATTENTION** sub-agents write findings incrementally — NEVER batch at end
+**IMPORTANT MUST ATTENTION** two review rounds — Round 2 fresh sub-agent catches what main agent missed
 
 **Anti-Rationalization:**
 

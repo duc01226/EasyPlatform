@@ -61,17 +61,21 @@ description: '[Category] Replace with description and trigger keywords.'
 
 ---
 
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+
 ## Closing Reminders
 
-  <!-- SYNC:understand-code-first:reminder -->
-
-- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-    <!-- SYNC:evidence-based-reasoning:reminder -->
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+**IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+**IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

@@ -122,7 +122,7 @@ Each phase file contains:
 
 ## Closing Reminders
 
-- **MANDATORY IMPORTANT MUST ATTENTION** update docs after every feature, milestone, bug fix, or security patch
-- **MANDATORY IMPORTANT MUST ATTENTION** read current doc state before updating — never overwrite blindly
-- **MANDATORY IMPORTANT MUST ATTENTION** save plans in `./plans/` with timestamp naming and structured phase files
-- **MANDATORY IMPORTANT MUST ATTENTION** follow development-rules.md in all phase files (YAGNI/KISS/DRY, class responsibility, evidence-based)
+**MANDATORY IMPORTANT MUST ATTENTION** update docs after every feature, milestone, bug fix, or security patch
+**MANDATORY IMPORTANT MUST ATTENTION** read current doc state before updating — never overwrite blindly
+**MANDATORY IMPORTANT MUST ATTENTION** save plans in `./plans/` with timestamp naming and structured phase files
+**MANDATORY IMPORTANT MUST ATTENTION** follow development-rules.md in all phase files (YAGNI/KISS/DRY, class responsibility, evidence-based)

@@ -14,23 +14,6 @@ description: '[Documentation] Create or update business feature documentation. M
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 ## Quick Summary
 
 **[IMPORTANT] TaskCreate** — Break ALL work into small tasks BEFORE starting. For simple tasks, ask user whether to skip.
@@ -959,30 +942,6 @@ _Reference: `docs/project-reference/spec-principles.md` Section 4 (AI-Implementa
 
 ---
 
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Break work into small `TaskCreate` tasks BEFORE starting — do NOT write single line of output without task list
-- **IMPORTANT MUST ATTENTION [BLOCKING]** EVERY test case MUST have verifiable code evidence (`FilePath:LineNumber`) — no exceptions
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Run Use Case Enumeration (Step 1-INIT.1.5) BEFORE any extraction — minimum TC count derives from this inventory
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Existing TCs MUST NOT be overwritten during UPDATE mode — Section 15 owned by `/tdd-spec` after INIT
-- **IMPORTANT MUST ATTENTION [REQUIRED]** 17 sections MUST match master template in exact order
-- **IMPORTANT MUST ATTENTION [REQUIRED]** ALWAYS update CHANGELOG.md and Section 17 (Version History) when modifying docs
-- **IMPORTANT MUST ATTENTION [REQUIRED]** Search codebase for 3+ similar patterns before creating new code
-- **IMPORTANT MUST ATTENTION [REQUIRED]** Add final review task to verify work quality
-      <!-- SYNC:evidence-based-reasoning:reminder -->
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
-
-**[TASK-PLANNING]** MUST ATTENTION analyze task scope and break into small todo tasks/sub-tasks via TaskCreate before acting.
-
----
-
 ## Related Skills
 
 | Skill                        | Relationship                                                                      | When to Call                                                                                        |
@@ -1033,8 +992,8 @@ feature-docs (you are here)
 
 > **[REQUIRED]** Every feature doc managed by this skill must have a `## Related Documentation` section:
 >
-> - **INIT mode:** INSERT the section (place immediately after frontmatter, before Section 1 content)
-> - **UPDATE mode:** VERIFY the section exists and links are current; add it if missing from an older doc
+> **INIT mode:** INSERT the section (place immediately after frontmatter, before Section 1 content)
+> **UPDATE mode:** VERIFY the section exists and links are current; add it if missing from an older doc
 >
 > Do not re-add if already present. Check before marking this skill complete.
 
@@ -1059,3 +1018,50 @@ This section enables:
 - Humans navigating from business doc → engineering detail → test evidence
 - `/docs-update` detecting when spec bundle was updated but business doc wasn't
 - Future AI sessions knowing what exists without a full scan
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+**AI Mistake Prevention** — Failure modes to avoid on every task:
+
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Closing Reminders
+
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Break work into small `TaskCreate` tasks BEFORE starting — do NOT write single line of output without task list
+- **IMPORTANT MUST ATTENTION [BLOCKING]** EVERY test case MUST have verifiable code evidence (`FilePath:LineNumber`) — no exceptions
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Run Use Case Enumeration (Step 1-INIT.1.5) BEFORE any extraction — minimum TC count derives from this inventory
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Existing TCs MUST NOT be overwritten during UPDATE mode — Section 15 owned by `/tdd-spec` after INIT
+- **IMPORTANT MUST ATTENTION [REQUIRED]** 17 sections MUST match master template in exact order
+- **IMPORTANT MUST ATTENTION [REQUIRED]** ALWAYS update CHANGELOG.md and Section 17 (Version History) when modifying docs
+- **IMPORTANT MUST ATTENTION [REQUIRED]** Search codebase for 3+ similar patterns before creating new code
+- **IMPORTANT MUST ATTENTION [REQUIRED]** Add final review task to verify work quality
+
+**[TASK-PLANNING]** MUST ATTENTION analyze task scope and break into small todo tasks/sub-tasks via TaskCreate before acting.
+
+---

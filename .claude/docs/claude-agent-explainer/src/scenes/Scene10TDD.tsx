@@ -32,7 +32,7 @@ const MODES = [
 ];
 
 const TDD_WORKFLOWS = [
-    { name: 'idea-to-tdd', seq: '/idea → /refine → /tdd-spec', use: 'Idea → testable specs' },
+    { name: 'idea-to-pbi', seq: '/idea → /refine → /story → /tdd-spec', use: 'Idea → PBI + test specs' },
     { name: 'tdd-feature', seq: '/scout → /tdd-spec → /plan → /cook → /integration-test → /test', use: 'Full TDD cycle' },
     { name: 'pbi-to-tests', seq: '/tdd-spec → /quality-gate', use: 'PBI → test specs fast' },
     { name: 'e2e-from-recording', seq: '/scout → /e2e-test → /test → /watzup', use: 'Chrome recording → Playwright' }

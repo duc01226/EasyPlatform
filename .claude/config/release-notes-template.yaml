@@ -1,6 +1,6 @@
 # Release Notes Template Configuration
 # Single source of truth for Claude and Copilot skills
-# Run: node scripts/release-notes/generate-skills.cjs to regenerate
+# No generator script — when commit_mapping or sections change here, hand-sync .claude/skills/release-notes/README.md to match.
 
 version: 1.0.0
 

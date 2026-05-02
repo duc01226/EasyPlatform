@@ -13,23 +13,6 @@ description: '[Implementation] Use when the user asks to implement a new feature
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:**
 
 <!-- SYNC:understand-code-first -->
@@ -131,7 +114,7 @@ Populate the `## Progress` section with:
 - **Current Operation**: "initialization"
 - **Current Focus**: "[original task summary]"
 
-Next, do semantic search and grep search all keywords of the task to find all related files, prioritizing the discovery of core logic files like **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components .ts**.
+Next, do semantic search and grep search all keywords of the task to find all related files, prioritizing the discovery of core logic files like **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components.ts**.
 
 **CRITICAL:** Save ALL file paths immediately as a numbered list under a `## File List` heading.
 
@@ -144,7 +127,7 @@ After semantic search, perform additional targeted searches to ensure no critica
 - `grep search` with patterns: `.*Helper.*{EntityName}|{EntityName}.*Helper`
 - All files (include pattern: `**/*.{cs,ts,html}`)
 
-High Priority files MUST ATTENTION be analyzed: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components .ts**.
+High Priority files MUST ATTENTION be analyzed: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components.ts**.
 
 Update the `Total Items` count in the `## Progress` section.
 
@@ -154,7 +137,7 @@ Update the `Total Items` count in the `## Progress` section.
 
 Count total files in file list, split it into many batches of 10 files in priority order, each group insert in the current todo list new task for Analyze each batch of files group for all of files in file list.
 
-**CRITICAL:** You must analyze all files in the file list identified as belonging to the highest IMPORTANT priority categories: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components .ts**.
+**CRITICAL:** You must analyze all files in the file list identified as belonging to the highest IMPORTANT priority categories: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components.ts**.
 
 For each file in the `## File List` (following the prioritized order if applicable), read and analyze it, add result into `## Knowledge Graph` section. The heading of each analyzed file must have the item order number in heading. Each file analyzing result detail the following information:
 
@@ -359,6 +342,37 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 
 ---
 
+<!-- SYNC:understand-code-first:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
@@ -366,14 +380,5 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
   **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-  <!-- SYNC:understand-code-first:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

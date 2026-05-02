@@ -24,16 +24,16 @@ memory: project
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -106,16 +106,21 @@ Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening 
 
 ---
 
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** NEVER mock infrastructure in integration tests — use real DI containers against live infrastructure
-- **IMPORTANT MUST ATTENTION** NEVER share test state between test classes — every class is isolated via `[Collection("...")]`
-- **IMPORTANT MUST ATTENTION** ALWAYS verify traceability before marking complete — every test must map to a `TC-{FEATURE}-{NNN}` spec ID
-- **IMPORTANT MUST ATTENTION** ALWAYS activate `integration-test` skill before generating any test code
-- **IMPORTANT MUST ATTENTION** ALWAYS use `IntegrationTestHelper.UniqueName()` for test data — never hardcoded strings that cause cross-run pollution
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** NEVER mock infrastructure in integration tests — use real DI containers against live infrastructure
+**IMPORTANT MUST ATTENTION** NEVER share test state between test classes — every class is isolated via `[Collection("...")]`
+**IMPORTANT MUST ATTENTION** ALWAYS verify traceability before marking complete — every test must map to a `TC-{FEATURE}-{NNN}` spec ID
+**IMPORTANT MUST ATTENTION** ALWAYS activate `integration-test` skill before generating any test code
+**IMPORTANT MUST ATTENTION** ALWAYS use `IntegrationTestHelper.UniqueName()` for test data — never hardcoded strings that cause cross-run pollution

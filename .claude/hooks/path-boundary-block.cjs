@@ -236,7 +236,7 @@ function stripSedAwkPatterns(cmd) {
  * @returns {string} Command with grep pattern content replaced by empty strings
  */
 function stripGrepPatterns(cmd) {
-    const tools = '(?:grep|egrep|fgrep|rg|ripgrep)';
+    const tools = '(?:grep|egrep|fgrep|rg|ripgrep|findstr)';
 
     // Single-quoted patterns — consume everything up to first quote as flags
     let result = cmd.replace(new RegExp(`(\\b${tools}\\b[^']*)'[^']*'`, 'g'), "$1''");
@@ -288,10 +288,22 @@ function extractPaths(toolInput, toolName) {
         // Redirection targets (> file, >> file) — skip /dev, /proc, /sys
         extractMatches(/>\s*["']?([^\s"'|><&;]+)/g, cmd, m => !/^\/(?:dev|proc|sys)(\/|$)/.test(m)).forEach(p => addPath(p, 'command'));
 
-        // Absolute paths (skip /dev, /proc, /sys)
-        extractMatches(/(?:^|\s)["']?([A-Za-z]:[/\\][^\s"'|><&;]+|\/[^\s"'|><&;]+)/g, cmd, m => !/^\/(?:dev|proc|sys)\//.test(m)).forEach(p =>
-            addPath(p, 'command')
-        );
+        // Absolute paths (skip /dev, /proc, /sys; on Windows also skip cmd flags like /I, /nologo, /v:m
+        // when preceded by a Windows-only tool token). Outer platform gate guarantees Linux/macOS
+        // can never bypass the boundary on /etc, /var, /home, etc.
+        // Test override: CLAUDE_TEST_PLATFORM lets the test suite exercise both branches on either host.
+        const isWin = (process.env.CLAUDE_TEST_PLATFORM || process.platform) === 'win32';
+        const winToolRe = /\b(?:findstr|cmd|xcopy|robocopy|reg|sc|net|tasklist|taskkill|where|attrib)\b/i;
+        const cmdHasWinTool = isWin && winToolRe.test(cmd);
+        extractMatches(/(?:^|\s)["']?([A-Za-z]:[/\\][^\s"'|><&;]+|\/[^\s"'|><&;]+)/g, cmd, m => {
+            if (/^\/(?:dev|proc|sys)\//.test(m)) return false;
+            // Windows command flags: /Letter, /Word, or /Word:value — no nested path separators.
+            // Skip ONLY on Windows AND when the command line contains a Windows-only tool token
+            // (findstr, cmd, xcopy, etc.). This prevents Linux paths /etc, /var, /home from
+            // being misclassified as flags.
+            if (cmdHasWinTool && /^\/[A-Za-z][A-Za-z0-9_-]*(?::[^\s/\\]*)?$/.test(m)) return false;
+            return true;
+        }).forEach(p => addPath(p, 'command'));
     }
 
     return paths;

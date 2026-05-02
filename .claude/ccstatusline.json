@@ -58,8 +58,11 @@
             },
             {
                 "id": "13",
-                "type": "git-changes",
-                "color": "yellow"
+                "type": "custom-command",
+                "color": "green",
+                "commandPath": "node .claude/scripts/statusline-tps.cjs",
+                "timeout": 3000,
+                "maxWidth": 24
             }
         ],
         [],

@@ -28,6 +28,7 @@
  *   CLAUDE_MD            → prompt-context-assembler-claude
  *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler-project-config
  *   DESIGN_SYSTEM        → design-system-context
+ *   DESIGN_SYSTEM_CANONICAL_GUIDE → design-system-canonical-guide (UserPromptSubmit + PreToolUse Read/Edit html/css/scss)
  *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
  *   PYTHON_GUIDE         → python-call-guide (PreToolUse: Bash)
  *
@@ -220,6 +221,7 @@ const CONTENT_SOURCES = {
         extraLines: 10,
         fallback: 200
     },
+    DESIGN_SYSTEM_CANONICAL_GUIDE: { type: 'fixed', value: 50 },
     LESSON_LEARNED: { type: 'fixed', value: 100 },
     WORKFLOW_PROTOCOL: { type: 'fixed', value: 100 },
     CRITICAL_THINKING: { type: 'fixed', value: 100 },
@@ -383,5 +385,8 @@ module.exports = {
     GRAPH_GREP_SUGGESTER: '[graph] **STOP AND DECIDE',
 
     /** Marker for python-call-guide PreToolUse injection */
-    PYTHON_GUIDE: '[python-guide]'
+    PYTHON_GUIDE: '[python-guide]',
+
+    /** Marker for design-system canonical guide (UserPromptSubmit + PreToolUse html/css/scss) */
+    DESIGN_SYSTEM_CANONICAL_GUIDE: '[design-system-canonical-guide]'
 };

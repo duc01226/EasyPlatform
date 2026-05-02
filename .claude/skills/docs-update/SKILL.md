@@ -57,23 +57,6 @@ git diff → Triage → Phase 1: Project Docs (inline)
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 <!-- SYNC:subagent-return-contract -->
 
 > **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
@@ -322,7 +305,7 @@ If `docs/specs/` empty or not found → skip Phase 2.5.
 **Disambiguation rule:**
 
 - Filter out dated folders (`YYMMDD-*` pattern) — legacy artifacts
-- Dirs at `docs/specs/` = **app-bucket** names (e.g., `bravoTALENTS`, `bravoGROWTH`). Exception: `accounts/` is flat.
+- Dirs at `docs/specs/` may be **app-bucket** names or flat system names, depending on the host project.
 - Probe `ls docs/specs/{app-bucket}/` to find system-name
 - ONE stable system-name → use `{app-bucket}/{system-name}`
 - MULTIPLE stable system-names → map changed service files to system-name via `00-module-registry.md`; update matching only
@@ -529,20 +512,58 @@ $ARGUMENTS
 
 ---
 
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **MUST ATTENTION** create ALL 8 tasks via `TaskCreate` BEFORE any action — see Mandatory Task Creation table
-- **MUST ATTENTION** follow fixed step-skill order: `0 -> 1 -> 2 -> 2.5 -> 3 -> 4 -> 5 -> final review` — NEVER reorder without explicit user approval
-- **MUST ATTENTION** for EVERY step: set task `in_progress` BEFORE execution, set `completed` AFTER execution with evidence or skip reason
-- **MUST ATTENTION** if task tooling unavailable, use equivalent 8-step plan tracker and keep statuses synced per step
-- **MUST ATTENTION** `docs-update` is a router ONLY — NEVER write Section 15, edit `docs/specs/` files, or duplicate sub-skill logic
-- **MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
-- **MUST ATTENTION** dedup module list before passing to sub-skills — same module backend + frontend = ONE entry
-- **MUST ATTENTION** skip phases with no impact but ALWAYS mark task `completed` with reason — NEVER silently omit
-- **MUST ATTENTION** Phase 2.5 runs `/spec-discovery [mode=update]` — syncs engineering spec bundle with code changes
-- **MUST ATTENTION** Phase 3 runs `/tdd-spec` — syncs test case specs in feature docs Section 15
-- **MUST ATTENTION** Phase 4 runs `/tdd-spec [direction=sync]` — pushes TCs to QA dashboard
-- **MUST ATTENTION** final review task (#8) verifies all impacted docs updated, no phases skipped without justification
+**MUST ATTENTION** create ALL 8 tasks via `TaskCreate` BEFORE any action — see Mandatory Task Creation table
+**MUST ATTENTION** follow fixed step-skill order: `0 -> 1 -> 2 -> 2.5 -> 3 -> 4 -> 5 -> final review` — NEVER reorder without explicit user approval
+**MUST ATTENTION** for EVERY step: set task `in_progress` BEFORE execution, set `completed` AFTER execution with evidence or skip reason
+**MUST ATTENTION** if task tooling unavailable, use equivalent 8-step plan tracker and keep statuses synced per step
+**MUST ATTENTION** `docs-update` is a router ONLY — NEVER write Section 15, edit `docs/specs/` files, or duplicate sub-skill logic
+**MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
+**MUST ATTENTION** dedup module list before passing to sub-skills — same module backend + frontend = ONE entry
+**MUST ATTENTION** skip phases with no impact but ALWAYS mark task `completed` with reason — NEVER silently omit
+**MUST ATTENTION** Phase 2.5 runs `/spec-discovery [mode=update]` — syncs engineering spec bundle with code changes
+**MUST ATTENTION** Phase 3 runs `/tdd-spec` — syncs test case specs in feature docs Section 15
+**MUST ATTENTION** Phase 4 runs `/tdd-spec [direction=sync]` — pushes TCs to QA dashboard
+**MUST ATTENTION** final review task (#8) verifies all impacted docs updated, no phases skipped without justification
 
 **Anti-Rationalization:**
 
@@ -556,23 +577,4 @@ $ARGUMENTS
 | "I will update tasks later"                  | Invalid. Task status must change before/after each step in real time.  |
 | "I'll run skills first then create tasks"    | Invalid. Create/track tasks first, then execute step-skill calls.      |
 
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
-
 **[BLOCKING]** Create ALL 8 tasks via `TaskCreate` (or equivalent 8-step plan tracker) BEFORE any action. Track each step state live.
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

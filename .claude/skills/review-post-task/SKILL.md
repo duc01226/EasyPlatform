@@ -22,23 +22,6 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:evidence-based-reasoning -->
@@ -164,9 +147,9 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 ```
 Agent({
-  description: "Fresh Round {N} review",
-  subagent_type: "code-reviewer",
-  prompt: `
+description: "Fresh Round {N} review",
+subagent_type: "code-reviewer",
+prompt: `
 ## Task
 {review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
 
@@ -481,53 +464,88 @@ After sub-agent returns:
 > 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
 > 5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, and reachable by all consumers.
 
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-- **IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
-  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
-    <!-- SYNC:understand-code-first:reminder -->
-- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:design-patterns-quality:reminder -->
-- **IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-    <!-- /SYNC:design-patterns-quality:reminder -->
-    <!-- SYNC:double-round-trip-review:reminder -->
-- **IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context).
-    <!-- /SYNC:double-round-trip-review:reminder -->
-    <!-- SYNC:graph-impact-analysis:reminder -->
-- **IMPORTANT MUST ATTENTION** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
-    <!-- /SYNC:graph-impact-analysis:reminder -->
-    <!-- SYNC:logic-and-intention-review:reminder -->
-- **IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-    <!-- /SYNC:logic-and-intention-review:reminder -->
-    <!-- SYNC:bug-detection:reminder -->
-- **IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
-    <!-- /SYNC:bug-detection:reminder -->
-    <!-- SYNC:test-spec-verification:reminder -->
-- **IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
-    <!-- /SYNC:test-spec-verification:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
 
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+<!-- SYNC:design-patterns-quality:reminder -->
+
+**IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
+
+<!-- /SYNC:design-patterns-quality:reminder -->
+<!-- SYNC:double-round-trip-review:reminder -->
+
+**IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context).
+
+<!-- /SYNC:double-round-trip-review:reminder -->
+<!-- SYNC:graph-impact-analysis:reminder -->
+
+**IMPORTANT MUST ATTENTION** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
+
+<!-- /SYNC:graph-impact-analysis:reminder -->
+<!-- SYNC:logic-and-intention-review:reminder -->
+
+**IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
+
+<!-- /SYNC:logic-and-intention-review:reminder -->
+<!-- SYNC:bug-detection:reminder -->
+
+**IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
+
+<!-- /SYNC:bug-detection:reminder -->
+<!-- SYNC:test-spec-verification:reminder -->
+
+**IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
+
+<!-- /SYNC:test-spec-verification:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Closing Reminders
+
+**IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+**IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+**IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+**IMPORTANT MUST ATTENTION** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
+**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

@@ -31,7 +31,7 @@ Mode rules:
 
 ## Step 2: Collect Seeder Evidence
 
-Run evidence-first scans (adapt to stack, examples below for .NET projects):
+Run evidence-first scans (adapt to stack, examples below for.NET projects):
 
 ```bash
 rg -n "DataSeeder|SeedData|CanSeedTestingData|SeedingMinimumDummyItemsCount|ExecuteInjectScopedAsync|ExecuteUowTask" src
@@ -90,7 +90,7 @@ Report sections:
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim
-- **IMPORTANT MUST ATTENTION** use surgical updates in sync mode (do not rewrite entire doc)
-- **IMPORTANT MUST ATTENTION** verify DI-scope safety guidance (`ExecuteInjectScopedAsync`) against real source usage
-- **IMPORTANT MUST ATTENTION** run one graph trace when graph DB is available
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim
+**IMPORTANT MUST ATTENTION** use surgical updates in sync mode (do not rewrite entire doc)
+**IMPORTANT MUST ATTENTION** verify DI-scope safety guidance (`ExecuteInjectScopedAsync`) against real source usage
+**IMPORTANT MUST ATTENTION** run one graph trace when graph DB is available

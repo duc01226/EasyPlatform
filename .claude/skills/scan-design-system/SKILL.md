@@ -13,17 +13,6 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates component names/token values. Grep to confirm existence before documenting.
-> - **NEVER invent variable values, hex colors, or mixin signatures.** Grep to confirm before documenting.
-> - **Trace full dependency chain after edits.** Always trace full chain.
-> - **Surface ambiguity before coding.** NEVER pick silently.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
@@ -56,7 +45,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 ## Quick Summary
 
-**Goal:** Scan project for design system artifacts → populate `docs/project-reference/design-system/README.md` with overview, app-to-documentation mapping, design token inventory, and component catalog. (content auto-injected by hook — check for [Injected: ...] header before reading)
+**Goal:** Scan project for design system artifacts → populate `docs/project-reference/design-system/README.md` with overview, app-to-documentation mapping, design token inventory, and component catalog. (content auto-injected by hook — check for [Injected:...] header before reading)
 
 **Workflow:**
 
@@ -70,7 +59,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 - Generic — works with any design system approach
 - Discover organization dynamically from file system
-- **MUST ATTENTION** detect design system TYPE first — agent emphasis depends on type
+  **MUST ATTENTION** detect design system TYPE first — agent emphasis depends on type
 - Every reference must point to real files — NEVER fabricate component names or token values
 
 ---
@@ -217,26 +206,45 @@ When init mode detected (canonical doc missing or placeholder):
 
 ---
 
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates component names/token values. Grep to confirm existence before documenting.
+> **NEVER invent variable values, hex colors, or mixin signatures.** Grep to confirm before documenting.
+> **Trace full dependency chain after edits.** Always trace full chain.
+> **Surface ambiguity before coding.** NEVER pick silently.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
-- **IMPORTANT MUST ATTENTION** detect design system TYPE in Phase 0 — agent emphasis depends on it
-- **IMPORTANT MUST ATTENTION** NEVER invent variable values, hex colors, or mixin signatures — Grep to confirm
-- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each category — NEVER batch at end
-- **IMPORTANT MUST ATTENTION** Gap Analysis section is mandatory — document what's missing, not just what exists
-- **IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — validates paths and token values
-      <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
+**IMPORTANT MUST ATTENTION** detect design system TYPE in Phase 0 — agent emphasis depends on it
+**IMPORTANT MUST ATTENTION** NEVER invent variable values, hex colors, or mixin signatures — Grep to confirm
+**IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each category — NEVER batch at end
+**IMPORTANT MUST ATTENTION** Gap Analysis section is mandatory — document what's missing, not just what exists
+**IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — validates paths and token values
 
 **Anti-Rationalization:**
 

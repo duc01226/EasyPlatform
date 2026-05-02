@@ -1,0 +1,790 @@
+---
+name: fix-parallel
+description: '[Implementation] Analyze & fix issues with parallel fullstack-developer agents'
+---
+
+> Codex compatibility note:
+>
+> - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
+> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.
+> - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
+> - User-question prompts mean to ask the user directly in Codex.
+> - Ignore Claude-specific mode-switch instructions when they appear.
+> - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
+> - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
+> - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
+
+<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->
+
+## Codex Project-Reference Loading (No Hooks)
+
+Codex does not receive Claude hook-based doc injection.
+When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.
+
+**Always read:**
+
+- `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
+- `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
+
+**Situation-based docs:**
+
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
+- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Integration test implementation/review: `integration-test-reference.md`
+- E2E test implementation/review: `e2e-test-reference.md`
+- Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
+
+Do not read all docs blindly. Start from `docs-index-reference.md`, then open only relevant files for the task.
+
+<!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
+
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
+
+<!-- SYNC:double-round-trip-review -->
+
+> **Deep Multi-Round Review** — Escalating rounds. Round 1 in main session. Round 2+ and EVERY recursive re-review iteration MUST use a fresh sub-agent.
+>
+> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output baseline findings.
+>
+> **Round 2:** MANDATORY fresh sub-agent review — see `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. The sub-agent re-reads ALL files from scratch with ZERO Round 1 memory. It must catch:
+>
+> - Cross-cutting concerns missed in Round 1
+> - Interaction bugs between changed files
+> - Convention drift (new code vs existing patterns)
+> - Missing pieces that should exist but don't
+> - Subtle edge cases the main session rationalized away
+>
+> **Round 3+ (recursive after fixes):** After ANY fix cycle, MANDATORY fresh sub-agent re-review. Spawn a **NEW** `spawn_agent` tool call each iteration — never reuse Round 2's agent. Each new agent re-reads ALL files from scratch with full protocol injection. Continue until PASS or **3 fresh-subagent rounds max**, then escalate to user via a direct user question.
+>
+> **Rules:**
+>
+> - NEVER declare PASS after Round 1 alone
+> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
+> - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
+> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via a direct user question (do NOT silently loop)
+> - Track round count in conversation context (session-scoped)
+> - Final verdict must incorporate ALL rounds
+>
+> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2.**
+
+<!-- /SYNC:double-round-trip-review -->
+
+<!-- SYNC:fresh-context-review -->
+
+> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
+>
+> **Why:** The main agent knows what it (or `$cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
+>
+> **When:** Round 2 of ANY review AND every recursive re-review iteration after fixes. NOT needed when Round 1 already PASSes with zero issues.
+>
+> **How:**
+>
+> 1. Spawn a NEW `spawn_agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
+> 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
+> 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
+> 5. Main agent reads the report, integrates findings into its own report, DOES NOT override or filter
+>
+> **Rules:**
+>
+> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW `spawn_agent` call
+> - NEVER skip fresh-subagent review because "last round was clean" — every fix triggers a fresh round
+> - Max 3 fresh-subagent rounds per review — escalate via a direct user question if still failing; do NOT silently loop or fall back to any prior protocol
+> - Track iteration count in conversation context (session-scoped, no persistent files)
+
+<!-- /SYNC:fresh-context-review -->
+
+<!-- SYNC:review-protocol-injection -->
+
+> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
+>
+> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 10 protocol bodies pre-embedded.
+
+### Subagent Type Selection
+
+- `code-reviewer` — for code reviews (reviewing source files, git diffs, implementation)
+- `general-purpose` — for plan / doc / artifact reviews (reviewing markdown plans, docs, specs)
+
+### Canonical Agent Call Template (Copy Verbatim)
+
+```
+spawn_agent({
+description: "Fresh Round {N} review",
+agent_type: "code-reviewer",
+prompt: `
+## Task
+{review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
+
+## Round
+Round {N}. You have ZERO memory of prior rounds. Re-read all target files from scratch via your own tool calls. Do NOT trust anything from the main agent beyond this prompt.
+
+## Protocols (follow VERBATIM — these are non-negotiable)
+
+### Evidence-Based Reasoning
+Speculation is FORBIDDEN. Every claim needs proof.
+1. Cite file:line, grep results, or framework docs for EVERY claim
+2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+3. Cross-service validation required for architectural changes
+4. "I don't have enough evidence" is valid and expected output
+BLOCKED until: Evidence file path (file:line) provided; Grep search performed; 3+ similar patterns found; Confidence level stated.
+Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because".
+If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+### Bug Detection
+MUST check categories 1-4 for EVERY review. Never skip.
+1. Null Safety: Can params/returns be null? Are they guarded? Optional chaining gaps? .find() returns checked?
+2. Boundary Conditions: Off-by-one (< vs <=)? Empty collections handled? Zero/negative values? Max limits?
+3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
+4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
+5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
+6. Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
+Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
+
+### Design Patterns Quality
+Priority checks for every code change:
+1. DRY via OOP: Same-suffix classes (*Entity, *Dto, *Service) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+2. Right Responsibility: Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
+3. SOLID: Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
+4. After extraction/move/rename: Grep ENTIRE scope for dangling references. Zero tolerance.
+5. YAGNI gate: NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
+Anti-patterns to flag: God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
+
+### Logic & Intention Review
+Verify WHAT code does matches WHY it was changed.
+1. Change Intention Check: Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
+2. Happy Path Trace: Walk through one complete success scenario through changed code.
+3. Error Path Trace: Walk through one failure/edge case scenario through changed code.
+4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
+NEVER mark review PASS without completing both traces (happy + error path).
+
+### Test Spec Verification
+Map changed code to test specifications.
+1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
+2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
+3. New functions/endpoints/handlers → flag for test spec creation.
+4. Verify TC evidence fields point to actual code (file:line, not stale references).
+5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+6. If no specs exist → log gap and recommend $tdd-spec.
+NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
+
+### Fix-Layer Accountability
+NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
+MANDATORY before ANY fix:
+1. Trace full data flow — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where bad state ENTERS, not where it CRASHES.
+2. Identify the invariant owner — Which layer's contract guarantees this value is valid? Fix at the LOWEST layer that owns the invariant, not the highest layer that consumes it.
+3. One fix, maximum protection — If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
+4. Verify no bypass paths — Confirm all data flows through the fix point. Check for direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
+BLOCKED until: Full data flow traced (origin → crash); Invariant owner identified with file:line evidence; All access sites audited (grep count); Fix layer justified (lowest layer that protects most consumers).
+Anti-patterns (REJECT): "Fix it where it crashes" (crash site ≠ cause site, trace upstream); "Add defensive checks at every consumer" (scattered defense = wrong layer); "Both fix is safer" (pick ONE authoritative layer).
+
+### Rationalization Prevention
+AI skips steps via these evasions. Recognize and reject:
+- "Too simple for a plan" → Simple + wrong assumptions = wasted time. Plan anyway.
+- "I'll test after" → RED before GREEN. Write/verify test first.
+- "Already searched" → Show grep evidence with file:line. No proof = no search.
+- "Just do it" → Still need task tracking. Skip depth, never skip tracking.
+- "Just a small fix" → Small fix in wrong location cascades. Verify file:line first.
+- "Code is self-explanatory" → Future readers need evidence trail. Document anyway.
+- "Combine steps to save time" → Combined steps dilute focus. Each step has distinct purpose.
+
+### Graph-Assisted Investigation
+MANDATORY when .code-graph/graph.db exists.
+HARD-GATE: MUST run at least ONE graph command on key files before concluding any investigation.
+Pattern: Grep finds files → trace --direction both reveals full system flow → Grep verifies details.
+- Investigation/Scout: trace --direction both on 2-3 entry files
+- Fix/Debug: callers_of on buggy function + tests_for
+- Feature/Enhancement: connections on files to be modified
+- Code Review: tests_for on changed functions
+- Blast Radius: trace --direction downstream
+CLI: python .claude/scripts/code_graph {command} --json. Use --node-mode file first (10-30x less noise), then --node-mode function for detail.
+
+### Understand Code First
+HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+1. Search 3+ similar patterns (grep/glob) — cite file:line evidence.
+2. Read existing files in target area — understand structure, base classes, conventions.
+3. Run python .claude/scripts/code_graph trace <file> --direction both --json when .code-graph/graph.db exists.
+4. Map dependencies via connections or callers_of — know what depends on your target.
+5. Write investigation to .ai/workspace/analysis/ for non-trivial tasks (3+ files).
+6. Re-read analysis file before implementing — never work from memory alone.
+7. NEVER invent new patterns when existing ones work — match exactly or document deviation.
+BLOCKED until: Read target files; Grep 3+ patterns; Graph trace (if graph.db exists); Assumptions verified with evidence.
+
+## Reference Docs (READ before reviewing)
+- docs/project-reference/code-review-rules.md
+- {skill-specific reference docs — e.g., integration-test-reference.md for integration-test-review; backend-patterns-reference.md for backend reviews; frontend-patterns-reference.md for frontend reviews}
+
+## Target Files
+{explicit file list OR "run git diff to see uncommitted changes" OR "read all files under {plan-dir}"}
+
+## Output
+Write a structured report to plans/reports/{review-type}-round{N}-{date}.md with sections:
+- Status: PASS | FAIL
+- Issue Count: {number}
+- Critical Issues (with file:line evidence)
+- High Priority Issues (with file:line evidence)
+- Medium / Low Issues
+- Cross-cutting findings
+
+Return the report path and status to the main agent.
+Every finding MUST have file:line evidence. Speculation is forbidden.
+`
+})
+```
+
+### Rules
+
+- DO copy the template wholesale — including all 10 embedded protocol sections
+- DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
+- DO choose `code-reviewer` subagent_type for code reviews and `general-purpose` for plan / doc / artifact reviews
+- DO NOT paraphrase, summarize, or skip any protocol section
+- DO NOT pass file contents inline — the sub-agent reads via its own tool calls so it has a fresh context
+- DO NOT reference protocols by file path or tag name — the bodies are already embedded above
+- DO NOT introduce placeholder markers for the protocols — they must stay literally expanded
+
+<!-- /SYNC:review-protocol-injection -->
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (Codex has no hook injection — open this file directly before proceeding)
+
+<!-- SYNC:estimation-framework -->
+
+> **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
+>
+> **Method:**
+>
+> 1. **Blast Radius pass** (below) — drives code AND test cost
+> 2. Decompose phases → hours/phase → `bottom_up_hours = Σ phase_hours`
+> 3. `likely_days = ceil(bottom_up_hours / 6) × productivity_factor`
+> 4. Sum **Risk Margin** (base + add-ons) → `max_days = likely_days × (1 + margin)`
+> 5. `min_days = likely_days × 0.9`
+> 6. Output as range when `likely_days ≥3`; single point allowed `<3` (still record margin)
+> 7. `man_days_ai` = same range × AI speedup
+> 8. `story_points` DERIVED from `likely_days` via SP-Days — NEVER driver. Disagreement >50% → trust bottom-up
+>
+> **Productivity factor:** 0.8 strong scaffolding+codegen+AI hooks · 1.0 mature default · 1.2 weak patterns · 1.5 greenfield
+>
+> **Cost Driver Heuristic (apply BEFORE work-type row):**
+>
+> - **UI dominates** in CRUD/business apps — 1.5-3x backend (states, validation, responsive, a11y, polish)
+> - **Backend dominates ONLY:** multi-aggregate invariants, cross-service contracts, schema migrations, heavy query/perf, new event flows
+>
+> **Reuse-vs-Create axis (PRIMARY lever, per layer):**
+>
+> | UI tier                                      | Cost     |
+> | -------------------------------------------- | -------- |
+> | Reuse component on existing screen           | 0.1-0.3d |
+> | Add control/column to existing screen        | 0.3-0.8d |
+> | Compose components into NEW screen           | 1-2d     |
+> | NEW screen, custom layout/states/validation  | 2-4d     |
+> | NEW shared/common component (themed, tested) | 3-6d+    |
+>
+> | Backend tier                                         | Cost      |
+> | ---------------------------------------------------- | --------- |
+> | Reuse query/handler from new place                   | 0.1-0.3d  |
+> | Small update existing handler/entity                 | 0.3-0.8d  |
+> | NEW query on existing repo/model                     | 0.5-1d    |
+> | NEW command/handler on existing aggregate (additive) | 1-2d      |
+> | NEW aggregate/entity (repo, validation, events)      | 2-4d      |
+> | NEW cross-service contract OR schema migration       | 2-4d each |
+> | Multi-aggregate invariant / heavy domain rule        | 3-5d      |
+>
+> **Rule:** Sum tiers across UI+backend+tests, apply productivity factor. Reuse short-circuits tiers — call out.
+>
+> **Test-Scope drivers (compute test_count EXPLICITLY — "+tests" hand-wave is #1 failure):**
+>
+> | Driver                            | Count                                                  |
+> | --------------------------------- | ------------------------------------------------------ |
+> | Happy-path journeys               | 1 per story / AC main flow                             |
+> | State-machine transitions         | reachable transitions × allowed actors                 |
+> | Multi-entity state combos         | state(A) × state(B) — REACHABLE only, not Cartesian    |
+> | Authorization matrix              | (owner, non-owner, elevated, unauth) × each mutation   |
+> | Validation rules                  | 1 per required field / boundary / format / cross-field |
+> | UI states (per new screen/dialog) | happy, loading, empty, error, partial — present only   |
+> | Negative paths / invariants       | 1 per violatable business rule                         |
+>
+> | Test tier (Trad, incl. setup+assert+flake) | Cost     |
+> | ------------------------------------------ | -------- |
+> | 1-5 cases, fixtures reused                 | 0.3-0.5d |
+> | 6-12 cases, 1 new fixture                  | 0.5-1d   |
+> | 13-25 cases, multi-entity setup            | 1-2d     |
+> | 26-50 cases OR new state-machine coverage  | 2-3d     |
+> | >50 cases OR full E2E journey              | 3-5d     |
+>
+> **Test multipliers:** new fixture/seed harness +0.5d · cross-service/bus assertion +0.3d each · UI E2E ×1.5 · each new role +1-2 cases
+>
+> **Blast Radius (mandatory pre-pass — affects code AND test):**
+>
+> 1. Files/components directly modified — count
+> 2. Of those, "complex" (>500 LOC, multi-handler, central, frequently-modified) — count
+> 3. Downstream consumers (callers, event subscribers, cross-service) — list
+> 4. Shared/common code touched (multi-app blast) — yes/no
+> 5. Regression scope — areas needing re-test
+>
+> **Rule:** Complex touch → add `risk_factors`. Each downstream consumer → +1-3 regression cases. Blast >5 areas OR >2 complex → re-evaluate SPLIT before estimating.
+>
+> **Risk Margin (drives max bound):**
+>
+> | likely_days         | Base margin                     |
+> | ------------------- | ------------------------------- |
+> | <1d trivial         | +10%                            |
+> | 1-2d small additive | +20%                            |
+> | 3-4d real feature   | +35%                            |
+> | 5-7d large          | +50%                            |
+> | 8-10d very large    | +75%                            |
+> | >10d                | +100% AND **flag SHOULD SPLIT** |
+>
+> **Risk-factor add-ons (additive — enumerate in `risk_factors`):**
+>
+> | Factor                                                                | +margin |
+> | --------------------------------------------------------------------- | ------- |
+> | `touches-complex-existing-feature` (>500 LOC, multi-handler, central) | +20%    |
+> | `cross-service-contract` change                                       | +25%    |
+> | `schema-migration-on-populated-data`                                  | +25%    |
+> | `new-tech-or-unfamiliar-pattern`                                      | +30%    |
+> | `regression-fan-out` (≥3 downstream areas re-test)                    | +20%    |
+> | `performance-or-latency-critical`                                     | +20%    |
+> | `concurrency-race-event-ordering`                                     | +25%    |
+> | `shared-common-code` (multi-consumer/multi-app)                       | +25%    |
+> | `unclear-requirements-or-design`                                      | +30%    |
+>
+> **Collapse rule:** total margin >100% → STOP, split (padding past 2x is dishonesty). Margin <15% on `likely_days ≥5` → under-estimated, widen.
+>
+> **Work-Type Caps (hard ceilings on `likely_days`):**
+> | Work type | Max SP | Max likely |
+> | --- | --- | --- |
+> | Single field / config flag / style fix | 1 | 0.5d |
+> | Add property to existing model + bind to existing UI | 2 | 1d |
+> | **Additive endpoint + minor UI control** (button/menu/column), reuses fixtures | **3** | **2-3d** |
+> | Additive endpoint + **NEW UI surface** OR additive multi-layer + new domain rule + 2+ test files | 5 | 3-5d |
+> | NEW model/aggregate OR migration OR cross-module contract OR heavy test (>1.5d) OR NEW UI + non-trivial backend | 8 | 5-7d |
+> | NEW UI surface + (NEW aggregate OR migration OR cross-service contract) | 13 | SHOULD split |
+> | Cross-service contract + migration combined | 13 | SHOULD split |
+> | Beyond | 21 | MUST split |
+>
+> **SP→Days (validation only):** 1=0.5d/0.25d · 2=1d/0.35d · 3=2d/0.65d · 5=4d/1.0d · 8=6d/1.5d · 13=10d/2.0d (Trad/AI likely)
+> **AI speedup:** SP 1≈2x · 2-3≈3x · 5-8≈4x · 13+≈5x. AI cost = `(code_gen × 1.3) + (test_gen × 1.3)` (30% review overhead).
+>
+> **MANDATORY frontmatter:**
+>
+> ```yaml
+> story_points: <n>
+> complexity: low | medium | high | critical
+> man_days_traditional: '<min>-<max>d' # range when likely ≥3d; '<N>d' when <3d
+> man_days_ai: '<min>-<max>d'
+> risk_margin_pct: <n> # base + add-ons
+> risk_factors: [touches-complex-existing-feature, regression-fan-out] # closed-list from add-ons; [] if none
+> blast_radius:
+>     touched_areas: <n>
+>     complex_touched: <n>
+>     downstream_consumers: [list or count]
+>     shared_common_code: yes | no
+> estimate_scope_included: [code, integration-tests, frontend, i18n, docs]
+> estimate_scope_excluded: [unit-tests, e2e, perf, deployment, code-review-rounds]
+> estimate_reasoning: |
+>     5-7 lines covering:
+>     (a) UI tier — row applied
+>     (b) Backend tier — row applied
+>     (c) Test scope — case breakdown by driver, file count, fixtures, tier row
+>     (d) Cost driver — dominant tier + why
+>     (e) Blast radius — touched, complex, regression scope
+>     (f) Risk factors — list driving margin; why not larger/smaller
+>     Example: "UI: compose Form/Table/Dialog → NEW screen (~1.5d). Backend: NEW command on existing aggregate,
+>     reuses validation+repo (~1d). Tests: 4 transitions × 2 actors + 3 validation + 2 UI states = 13 cases,
+>     1 new fixture → tier 13-25 ~1.5d. Driver: UI composition + new states. Blast: 4 areas, 1 complex.
+>     Risk: base 35% + touches-complex +20% = 55% → max 3.9d → range 2.5-4d."
+> ```
+>
+> **Sanity self-check:**
+>
+> - `likely_days ≥3d` and single-point? → reject, must be range
+> - Margin <15% on `likely_days ≥5d`? → under-estimated, widen
+> - Margin >100%? → STOP, split instead of buffer
+> - Complex existing feature touched, no regression budget in `(c)`? → reject
+> - Blast `>5` areas OR `>2` complex, no split discussion? → reject
+> - Purely additive on existing model AND existing UI? → cap SP 3 unless tests >1.5d
+> - NEW UI surface (page/complex form/dashboard)? → SP 5+ even if backend one endpoint
+> - Backend cross-service / migration / multi-aggregate? → SP 8+ regardless of UI
+> - `bottom_up_hours / 6` vs SP-Days disagreement >50%? → trust bottom-up, downgrade SP
+> - Without tests, SP drops ≥1 bucket? → tests dominate; state explicitly
+> - Reasoning called out UI vs backend vs blast vs risk factors? → if missing, add
+
+<!-- /SYNC:estimation-framework -->
+
+<!-- SYNC:red-flag-stop-conditions -->
+
+> **Red Flag Stop Conditions** — STOP and escalate to user via ask the user directly when:
+>
+> 1. Confidence drops below 60% on any critical decision
+> 2. Changes would affect >20 files (blast radius too large)
+> 3. Cross-service boundary is being crossed
+> 4. Security-sensitive code (auth, crypto, PII handling)
+> 5. Breaking change detected (interface, API contract, DB schema)
+> 6. Test coverage would decrease after changes
+> 7. Approach requires technology/pattern not in the project
+>
+> **NEVER proceed past a red flag without explicit user approval.**
+
+<!-- /SYNC:red-flag-stop-conditions -->
+
+> **Skill Variant:** Variant of `$fix` — parallel multi-issue resolution using subagents.
+
+## Quick Summary
+
+**Goal:** Fix multiple independent issues simultaneously using parallel fullstack-developer subagents.
+
+**Workflow:**
+
+1. **Triage** — Classify issues and verify independence (no shared files)
+2. **Assign** — Distribute issues to parallel subagents with strict file ownership
+3. **Execute** — Subagents fix issues independently
+4. **Merge** — Review and integrate all fixes
+
+**Key Rules:**
+
+- Debug Mindset: every claim needs `file:line` evidence
+- Issues MUST ATTENTION be independent (no overlapping file modifications)
+- Each subagent owns specific files; no cross-boundary edits
+
+<!-- SYNC:root-cause-debugging -->
+
+> **Root Cause Debugging** — Systematic approach, never guess-and-check.
+>
+> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
+> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
+> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
+> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
+> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
+> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
+>
+> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
+
+<!-- /SYNC:root-cause-debugging -->
+
+### Frontend/UI Context (if applicable)
+
+> When this task involves frontend or UI changes,
+
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST ATTENTION READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
+## Debug Mindset (NON-NEGOTIABLE)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+- Do NOT assume the first hypothesis is correct — verify with actual code traces
+- Every root cause claim must include `file:line` evidence
+- If you cannot prove a root cause with a code trace, state "hypothesis, not confirmed"
+- Question assumptions: "Is this really the cause?" → trace the actual execution path
+- Challenge completeness: "Are there other contributing factors?" → check related code paths
+- No "should fix it" without proof — verify the fix addresses the traced root cause
+
+## ⚠️ MANDATORY: Confidence & Evidence Gate
+
+**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
+**95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
+
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause analysis + plan creation, MUST ATTENTION present findings + proposed fix plan to user via a direct user question and get explicit approval BEFORE any code changes. No silent fixes.
+
+**Ultrathink parallel** to fix: <issues>$ARGUMENTS</issues>
+
+**IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
+
+## Workflow
+
+### 1. Issue Analysis
+
+- Use `debugger` subagent to analyze root causes
+- Use `$scout-ext` to find related files
+- Categorize issues by scope/area (frontend, backend, auth, payments, etc.)
+- Identify dependencies between issues
+- **External Memory**: Each parallel agent writes findings to `.ai/workspace/analysis/{issue-name}-{agent}.analysis.md`. Main agent re-reads all before coordinating fixes.
+
+### 2. Parallel Fix Planning
+
+- Trigger `$plan-parallel <detailed-fix-instructions>` for parallel-executable fix plan
+- Wait for plan with dependency graph, execution strategy, file ownership matrix
+- Group independent fixes for parallel execution
+- Sequential fixes for dependent issues
+- **🛑 Present root cause + fix plan → a direct user question → wait for user approval before launching agents.**
+
+### 3. Parallel Fix Implementation
+
+- Read `plan.md` for dependency graph
+- Launch multiple `fullstack-developer` agents in PARALLEL for independent fixes
+    - Example: "Fix auth + Fix payments + Fix UI" → launch 3 agents simultaneously
+    - Pass phase file path: `{plan-dir}/phase-XX-*.md`
+    - Include environment info
+- Wait for all parallel fixes complete before dependent fixes
+- Sequential fixes: launch one agent at a time
+
+**Subagent Context Discipline:**
+
+- **Provide full task text** — paste task content into subagent prompt; don't make subagent read plan file
+- **"Ask questions before starting"** — subagent should surface uncertainties before implementing
+- **Self-review before reporting** — subagent checks completeness, quality, YAGNI before returning results
+
+### 4. Testing
+
+- Use `tester` subagent for full test suite
+- NO fake data/mocks/cheats
+- Verify all issues resolved
+- If fail: use `debugger`, fix, repeat
+
+### 5. Code Review
+
+<!-- SYNC:two-stage-task-review -->
+
+> **Two-Stage Task Review** — Both stages MUST ATTENTION complete before marking task done.
+>
+> **Stage 1: Self-review** — Immediately after implementation:
+>
+> - Requirements met? No regressions? Code quality acceptable?
+>
+> **Stage 2: Cross-review** — Via `code-reviewer` subagent:
+>
+> - Catches blind spots, convention drift, missed edge cases
+>
+> **NEVER skip Stage 2.** Self-review alone misses 40%+ of issues.
+
+<!-- /SYNC:two-stage-task-review -->
+
+    1. First: dispatch `spec-compliance-reviewer` to verify each fix matches its spec
+    2. Only after spec passes: dispatch `code-reviewer` for quality review
+
+- Verify fixes don't introduce regressions
+- If critical issues: fix, retest
+
+### 6. Project Management & Docs
+
+- If approved: use `project-manager` + `docs-manager` in parallel
+- Update plan files, docs, roadmap
+- If rejected: fix and repeat
+
+### 7. Prove Fix
+
+- **MANDATORY:** Run `$prove-fix` for EACH parallel fix
+- Build code proof traces per change with confidence scores
+- If any change scores < 80%, return to debug for that fix
+
+### 8. Final Report
+
+- Summary of all fixes from parallel phases
+- Verification status per issue (include prove-fix confidence scores)
+- Ask to commit (use `git-manager` if yes)
+
+**Example:** Fix 1 (auth) + Fix 2 (payments) + Fix 3 (UI) → Launch 3 fullstack-developer agents → Wait → Prove each fix → Fix 4 (integration) sequential
+
+---
+
+## Next Steps (Standalone: MUST ATTENTION ask user via a direct user question. Skip if inside workflow.)
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (fixes applied). This ensures prove-fix, review, testing, and docs steps aren't skipped.
+- **"$prove-fix"** — Prove fix correctness with code traces
+- **"$test"** — Run tests to verify fixes
+- **"Skip, continue manually"** — user decides
+
+> If already inside a workflow, skip — the workflow handles sequencing.
+
+<!-- SYNC:understand-code-first:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+  <!-- /SYNC:understand-code-first:reminder -->
+  <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:estimation-framework:reminder -->
+- **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
+      <!-- /SYNC:estimation-framework:reminder -->
+          <!-- SYNC:red-flag-stop-conditions:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
+  <!-- /SYNC:red-flag-stop-conditions:reminder -->
+  <!-- SYNC:ui-system-context:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+  <!-- /SYNC:ui-system-context:reminder -->
+  <!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Closing Reminders
+
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
+
+<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
+
+## Hookless Prompt Protocol Mirror (Auto-Synced)
+
+Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
+
+## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
+
+1. **DETECT:** Match prompt against workflow catalog
+2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
+3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure:
+    - Question: "Which workflow do you want to activate?"
+    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
+    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
+4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
+5. **CREATE TASKS:** task tracking for ALL workflow steps
+6. **EXECUTE:** Follow each step in sequence
+   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
+
+## Learned Lessons
+
+# Lessons Learned
+
+> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
+
+## Quick Summary
+
+**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
+
+**Top Rules (apply always):**
+
+- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
+- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
+- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
+- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
+- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
+- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
+
+---
+
+## Debugging & Root Cause Reasoning
+
+- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. Cheapest check first.
+- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug in caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
+- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
+- [2026-04-01] **Code is caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
+
+## Architecture Invariants
+
+- [2026-03-31] **ParallelAsync + repo/UoW MUST use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
+- [2026-03-31] **Bus message naming MUST include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) are leaders. Feature services (Growth, Talents) sending to core MUST use `{CoreServiceName}...RequestBusMessage` — never define own event for core to consume.
+
+## Naming & Abstraction
+
+- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what it guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
+
+## Environment & Tooling
+
+- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be in bash PATH under those names. Check: `where python` / `where py`. Prefer `py` (Windows Python Launcher) for one-liners, `node` if JS alternative exists.
+
+> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons in `.claude/hooks/lib/prompt-injections.cjs`.
+
+---
+
+## Closing Reminders
+
+- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
+- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
+- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
+- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
+- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
+- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
+- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
+
+## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
+
+Break work into small tasks (task tracking) before starting. Add final task: "Analyze AI mistakes & lessons learned".
+
+**Extract lessons — ROOT CAUSE ONLY, not symptom fixes:**
+
+1. Name the FAILURE MODE (reasoning/assumption failure), not symptom — "assumed API existed without reading source" not "used wrong enum value".
+2. Generality test: does this failure mode apply to ≥3 contexts/codebases? If not, abstract one level up.
+3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
+4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
+5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
+6. **Auto-fix gate:** "Could `$code-review`/`/simplify`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+7. BOTH gates pass → ask user to run `$learn`.
+   **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
+
+<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

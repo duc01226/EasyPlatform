@@ -13,23 +13,6 @@ description: '[Skill Management] Expand caveman-compressed text back into fluent
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 ## Quick Summary
 
 **Goal:** Two-phase restoration of any caveman-compressed markdown file: (1) Language Expansion — reconstruct fluent, grammatically correct English from compressed text while preserving ALL semantic content; (2) Prompt Enhancement — apply AI attention anchoring so AI reads and follows all instructions.
@@ -242,10 +225,10 @@ Applies after expansion. Source: Anthropic prompt engineering guide, Stanford "l
 >
 > ## Closing Reminders
 >
-> - **IMPORTANT MUST ATTENTION** [echo rule #1 from the top section]
-> - **IMPORTANT MUST ATTENTION** [echo rule #2]
-> - **IMPORTANT MUST ATTENTION** [echo rule #3]
-> - **IMPORTANT MUST ATTENTION** add a final review task to verify work quality
+> **IMPORTANT MUST ATTENTION** [echo rule #1 from the top section]
+> **IMPORTANT MUST ATTENTION** [echo rule #2]
+> **IMPORTANT MUST ATTENTION** [echo rule #3]
+> **IMPORTANT MUST ATTENTION** add a final review task to verify work quality
 > ```
 >
 > Pick 3-5 rules AI most commonly violates. Bottom section re-anchors attention after the long middle.
@@ -329,21 +312,41 @@ For each `.claude/` protocol reference:
 
 ---
 
+<!-- SYNC:ai-mistake-prevention -->
+
+**AI Mistake Prevention** — Failure modes to avoid on every task:
+**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** apply language expansion FIRST before any structural enhancement — never skip Phase 1
-- **IMPORTANT MUST ATTENTION** preserve ALL facts, numbers, technical terms, and `file:line` references exactly — never invent or paraphrase content
-- **IMPORTANT MUST ATTENTION** never modify code blocks, YAML frontmatter, structured tables, or SYNC tags during expansion
-- **IMPORTANT MUST ATTENTION** verify rule density post-expansion ≥ pre-expansion — expansion must not dilute signal below the original
-- **IMPORTANT MUST ATTENTION** apply primacy-recency anchoring — 3 critical rules in first 5 AND last 5 lines of every enhanced file
-- **IMPORTANT MUST ATTENTION** add inline summaries only for `.claude/` protocol files, never for `docs/` project-specific files
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
-- **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** apply language expansion FIRST before any structural enhancement — never skip Phase 1
+**IMPORTANT MUST ATTENTION** preserve ALL facts, numbers, technical terms, and `file:line` references exactly — never invent or paraphrase content
+**IMPORTANT MUST ATTENTION** never modify code blocks, YAML frontmatter, structured tables, or SYNC tags during expansion
+**IMPORTANT MUST ATTENTION** verify rule density post-expansion ≥ pre-expansion — expansion must not dilute signal below the original
+**IMPORTANT MUST ATTENTION** apply primacy-recency anchoring — 3 critical rules in first 5 AND last 5 lines of every enhanced file
+**IMPORTANT MUST ATTENTION** add inline summaries only for `.claude/` protocol files, never for `docs/` project-specific files
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.
+**IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

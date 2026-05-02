@@ -10,4 +10,7 @@ public class PlatformHangfireCommonOptions
     /// Define how long a succeeded job should stayed before being deleted
     /// </summary>
     public int JobSucceededExpirationTimeoutSeconds { get; set; } = 180;
+
+    /// <summary>Page size for the startup stale-job scan.</summary>
+    public int StaleJobScanPageSize { get; set; } = 500;
 }

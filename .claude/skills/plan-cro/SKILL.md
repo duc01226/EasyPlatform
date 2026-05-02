@@ -14,23 +14,6 @@ disable-model-invocation: false
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 <!-- SYNC:understand-code-first -->
 
 > **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
@@ -186,28 +169,27 @@ Activate `planning` skill.
 - If the user provides a URL, use `web_fetch` tool to fetch the content of the URL and analyze the current issues.
 - You can use screenshot capture tools along with `ai-multimodal` skill to capture screenshots of the exact parent container and analyze the current issues with the appropriate Gemini analysis skills (`ai-multimodal`, `gemini-video-understanding`, or `gemini-document-processing`).
 - Use `/scout-ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
-- Use `planner` agent to create a comprehensive CRO plan following the progressive disclosure structure:
-    - Create a directory using naming pattern from `## Naming` section.
-    - Every `plan.md` MUST ATTENTION start with YAML frontmatter:
+- Use `planner` agent to create a comprehensive CRO plan following the progressive disclosure structure: - Create a directory using naming pattern from `## Naming` section. - Every `plan.md` MUST ATTENTION start with YAML frontmatter:
 
-        ```yaml
-        ---
-        title: '{Brief title}'
-        description: '{One sentence for card preview}'
-        status: pending
-        priority: P2
-        effort: { sum of phases, e.g., 4h }
-        branch: { current git branch }
-        tags: [cro, conversion]
-        created: { YYYY-MM-DD }
-        ---
-        ```
+              ```yaml
+              ---
+              title: '{Brief title}'
+              description: '{One sentence for card preview}'
+              status: pending
+              priority: P2
+              effort: { sum of phases, e.g., 4h }
+              branch: { current git branch }
+              tags: [cro, conversion]
+              created: { YYYY-MM-DD }
+              ---
+              ```
 
-    - Save the overview access point at `plan.md`, keep it generic, under 80 lines, and list each phase with status/progress and links.
-    - For each phase, add `phase-XX-phase-name.md` files containing sections (Context links, Overview with date/priority/statuses, Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps).
-    - Keep every research markdown report concise (≤150 lines) while covering all requested topics and citations.
-      **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-      **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+          - Save the overview access point at `plan.md`, keep it generic, under 80 lines, and list each phase with status/progress and links.
+          - For each phase, add `phase-XX-phase-name.md` files containing sections (Context links, Overview with date/priority/statuses, Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps).
+          - Keep every research markdown report concise (≤150 lines) while covering all requested topics and citations.
+
+    **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
+    **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
 
 ## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
 
@@ -228,6 +210,46 @@ Activate `planning` skill.
 
 ---
 
+<!-- SYNC:plan-quality:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+      <!-- /SYNC:plan-quality:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in plan/PBI frontmatter. Use SP table: SP 1=0.5d/0.25d, SP 2=1d/0.35d, SP 3=2d/0.65d, SP 5=4d/1.0d, SP 8=6d/1.5d · SP 13=10d/2.0d. SP 13 SHOULD split, SP 21 MUST split.
+      <!-- /SYNC:estimation-framework:reminder -->
+      <!-- SYNC:iterative-phase-quality:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+      <!-- /SYNC:iterative-phase-quality:reminder -->
+      <!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
@@ -235,23 +257,5 @@ Activate `planning` skill.
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
 - **MANDATORY IMPORTANT MUST ATTENTION** include Test Specifications section and story_points in plan frontmatter
-  <!-- SYNC:plan-quality:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-    <!-- /SYNC:plan-quality:reminder -->
-    <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:estimation-framework:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` in plan/PBI frontmatter. Use SP table: SP 1=0.5d/0.25d, SP 2=1d/0.35d, SP 3=2d/0.65d, SP 5=4d/1.0d, SP 8=6d/1.5d · SP 13=10d/2.0d. SP 13 SHOULD split, SP 21 MUST split.
-  <!-- /SYNC:estimation-framework:reminder -->
-  <!-- SYNC:iterative-phase-quality:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-  <!-- /SYNC:iterative-phase-quality:reminder -->
-  <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

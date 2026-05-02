@@ -1,0 +1,677 @@
+---
+name: chrome-devtools
+description: '[AI & Tools] Browser automation, debugging, and performance analysis using Puppeteer CLI scripts. Use for automating browsers, taking screenshots, analyzing performance, monitoring network traffic, web scraping, form automation, and JavaScript debugging.'
+---
+
+> Codex compatibility note:
+>
+> - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
+> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.
+> - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
+> - User-question prompts mean to ask the user directly in Codex.
+> - Ignore Claude-specific mode-switch instructions when they appear.
+> - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
+> - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
+> - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
+
+<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->
+
+## Codex Project-Reference Loading (No Hooks)
+
+Codex does not receive Claude hook-based doc injection.
+When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.
+
+**Always read:**
+
+- `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
+- `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
+
+**Situation-based docs:**
+
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
+- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Integration test implementation/review: `integration-test-reference.md`
+- E2E test implementation/review: `e2e-test-reference.md`
+- Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
+
+Do not read all docs blindly. Start from `docs-index-reference.md`, then open only relevant files for the task.
+
+<!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
+
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+## Quick Summary
+
+**Goal:** Automate browser interactions, debugging, and performance analysis using Puppeteer CLI scripts with persistent sessions.
+
+**Workflow:**
+
+1. **Discover Structure** — Use `aria-snapshot.js` to get ARIA tree of unknown pages
+2. **Interact by Ref** — Use `select-ref.js` to click, fill, hover elements by stable refs
+3. **Capture Evidence** — Take screenshots, collect console logs, monitor network traffic
+4. **Analyze** — Performance profiling, accessibility audits, visual regression checks
+
+**Key Rules:**
+
+- Use headed mode on Windows/macOS, headless only on Linux/WSL/CI
+- All scripts output JSON for structured processing
+- Store snapshots in `.claude/chrome-devtools/snapshots/` with timestamps
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+# Chrome DevTools Agent Skill
+
+Browser automation via Puppeteer scripts with persistent sessions. All scripts output JSON.
+
+## Skill Location
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+
+```bash
+# Detect skill location
+SKILL_DIR=""
+if [ -d ".claude/skills/chrome-devtools/scripts" ]; then
+  SKILL_DIR=".claude/skills/chrome-devtools/scripts"
+elif [ -d "$HOME/.claude/skills/chrome-devtools/scripts" ]; then
+  SKILL_DIR="$HOME/.claude/skills/chrome-devtools/scripts"
+fi
+cd "$SKILL_DIR"
+```
+
+## Choosing Your Approach
+
+| Scenario                   | Approach                                           |
+| -------------------------- | -------------------------------------------------- |
+| **Source-available sites** | Read source code first, write selectors directly   |
+| **Unknown layouts**        | Use `aria-snapshot.js` for semantic discovery      |
+| **Visual inspection**      | Take screenshots to verify rendering               |
+| **Debug issues**           | Collect console logs, analyze with session storage |
+| **Accessibility audit**    | Use ARIA snapshot for semantic structure analysis  |
+
+## Automation Browsing Running Mode
+
+- Detect current OS and launch browser as headless only when running on Linux, WSL, or CI environments.
+- For macOS/Windows, browser always runs in headed mode for better debugging.
+- Run multiple scripts/sessions in parallel to simulate real user interactions.
+- Run multiple scripts/sessions in parallel to simulate different device types (mobile, tablet, desktop).
+- Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+
+## ARIA Snapshot (Element Discovery)
+
+When page structure is unknown, use `aria-snapshot.js` to get a YAML-formatted accessibility tree with semantic roles, accessible names, states, and stable element references.
+
+### Get ARIA Snapshot
+
+```bash
+# Generate ARIA snapshot and output to stdout
+node aria-snapshot.js --url https://example.com
+
+# Save to file in snapshots directory
+node aria-snapshot.js --url https://example.com --output ./.claude/chrome-devtools/snapshots/page.yaml
+```
+
+### Example YAML Output
+
+```yaml
+- banner:
+  - link "Hacker News" [ref=e1]
+    /url: https://news.ycombinator.com
+  - navigation:
+    - link "new" [ref=e2]
+    - link "past" [ref=e3]
+    - link "comments" [ref=e4]
+- main:
+  - list:
+    - listitem:
+      - link "Show HN: My new project" [ref=e8]
+      - text: "128 points by user 3 hours ago"
+- contentinfo:
+  - textbox [ref=e10]
+    /placeholder: "Search"
+```
+
+### Interpreting ARIA Notation
+
+| Notation        | Meaning                                    |
+| --------------- | ------------------------------------------ |
+| `[ref=eN]`      | Stable identifier for interactive elements |
+| `[checked]`     | Checkbox/radio is selected                 |
+| `[disabled]`    | Element is inactive                        |
+| `[expanded]`    | Accordion/dropdown is open                 |
+| `[level=N]`     | Heading hierarchy (1-6)                    |
+| `/url:`         | Link destination                           |
+| `/placeholder:` | Input placeholder text                     |
+| `/value:`       | Current input value                        |
+
+### Interact by Ref
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+Use `select-ref.js` to interact with elements by their ref:
+
+```bash
+# Click element with ref e5
+node select-ref.js --ref e5 --action click
+
+# Fill input with ref e10
+node select-ref.js --ref e10 --action fill --value "search query"
+
+# Get text content
+node select-ref.js --ref e8 --action text
+
+# Screenshot specific element
+node select-ref.js --ref e1 --action screenshot --output ./logo.png
+
+# Focus element
+node select-ref.js --ref e10 --action focus
+
+# Hover over element
+node select-ref.js --ref e5 --action hover
+```
+
+### Store Snapshots
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+Store snapshots for analysis in `<project>/.claude/chrome-devtools/snapshots/`:
+
+```bash
+# Create snapshots directory
+mkdir -p .claude/chrome-devtools/snapshots
+
+# Capture and store with timestamp
+SESSION="$(date +%Y%m%d-%H%M%S)"
+node aria-snapshot.js --url https://example.com --output .claude/chrome-devtools/snapshots/$SESSION.yaml
+```
+
+### Workflow: Unknown Page Structure
+
+1. **Get snapshot** to discover elements:
+
+    ```bash
+    node aria-snapshot.js --url https://example.com
+    ```
+
+2. **Identify target** from YAML output (e.g., `[ref=e5]` for a button)
+
+3. **Interact by ref**:
+
+    ```bash
+    node select-ref.js --ref e5 --action click
+    ```
+
+4. **Verify result** with screenshot or new snapshot:
+    ```bash
+    node screenshot.js --output ./result.png
+    ```
+
+## Local HTML Files
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+**IMPORTANT**: Never browse local HTML files via `file://` protocol. Always serve via local server:
+**Why**: `file://` protocol blocks many browser features (CORS, ES modules, fetch API, service workers). Local server ensures proper HTTP behavior.
+
+```bash
+# Option 1: npx serve (recommended)
+npx serve ./dist -p 3000 &
+node navigate.js --url http://localhost:3000
+
+# Option 2: Python http.server
+python -m http.server 3000 --directory ./dist &
+node navigate.js --url http://localhost:3000
+```
+
+**Note**: when port 3000 is busy, find an available port with `lsof -i:3000` and use a different one.
+
+## Quick Start
+
+```bash
+# Install dependencies
+cd .claude/skills/chrome-devtools/scripts
+npm install  # Installs puppeteer, sharp, debug, yargs
+
+# Test (browser stays running for session reuse)
+node navigate.js --url https://example.com
+# Output: {"success": true, "url": "...", "title": "..."}
+```
+
+**Linux/WSL only**: Run `./install-deps.sh` first for Chrome system libraries.
+
+## Session Persistence
+
+Browser state persists across script executions via WebSocket endpoint file (`.browser-session.json`).
+
+**Default behavior**: Scripts disconnect but keep browser running for session reuse.
+
+```bash
+# First script: launches browser, navigates, disconnects (browser stays running)
+node navigate.js --url https://example.com/login
+
+# Subsequent scripts: connect to existing browser, reuse page state
+node fill.js --selector "#email" --value "user@example.com"
+node fill.js --selector "#password" --value "secret"
+node click.js --selector "button[type=submit]"
+
+# Close browser when done
+node navigate.js --url about:blank --close true
+```
+
+**Session management**:
+
+- `--close true`: Close browser and clear session
+- Default (no flag): Keep browser running for next script
+
+## Available Scripts
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+All in `.claude/skills/chrome-devtools/scripts/`:
+
+| Script             | Purpose                                             |
+| ------------------ | --------------------------------------------------- |
+| `navigate.js`      | Navigate to URLs                                    |
+| `screenshot.js`    | Capture screenshots (auto-compress >5MB via Sharp)  |
+| `click.js`         | Click elements                                      |
+| `fill.js`          | Fill form fields                                    |
+| `evaluate.js`      | Execute JS in page context                          |
+| `snapshot.js`      | Extract interactive elements (JSON format)          |
+| `aria-snapshot.js` | Get ARIA accessibility tree (YAML format with refs) |
+| `select-ref.js`    | Interact with elements by ref from ARIA snapshot    |
+| `console.js`       | Monitor console messages/errors                     |
+| `network.js`       | Track HTTP requests/responses                       |
+| `performance.js`   | Measure Core Web Vitals                             |
+
+## Workflow Loop
+
+1. **Execute** focused script for single task
+2. **Observe** JSON output
+3. **Assess** completion status
+4. **Decide** next action
+5. **Repeat** until done
+
+## Writing Custom Test Scripts
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+For complex automation, write scripts to `<project>/.claude/chrome-devtools/tmp/`:
+
+```bash
+# Create tmp directory for test scripts
+mkdir -p $SKILL_DIR/.claude/chrome-devtools/tmp
+
+# Write a test script
+cat > $SKILL_DIR/.claude/chrome-devtools/tmp/login-test.js << 'EOF'
+import { getBrowser, getPage, disconnectBrowser, outputJSON } from '../scripts/lib/browser.js';
+
+async function loginTest() {
+  const browser = await getBrowser();
+  const page = await getPage(browser);
+
+  await page.goto('https://example.com/login');
+  await page.type('#email', 'user@example.com');
+  await page.type('#password', 'secret');
+  await page.click('button[type=submit]');
+  await page.waitForNavigation();
+
+  outputJSON({
+    success: true,
+    url: page.url(),
+    title: await page.title()
+  });
+
+  await disconnectBrowser();
+}
+
+loginTest();
+EOF
+
+# Run the test
+node $SKILL_DIR/.claude/chrome-devtools/tmp/login-test.js
+```
+
+**Key principles for custom scripts**:
+
+- Single-purpose: one script, one task
+- Always call `disconnectBrowser()` at the end (keeps browser running)
+- Use `closeBrowser()` only when ending session completely
+- Output JSON for easy parsing
+- Plain JavaScript only in `page.evaluate()` callbacks
+
+## Screenshots
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+Store screenshots for analysis in `<project>/.claude/chrome-devtools/screenshots/`:
+
+```bash
+# Basic screenshot
+node screenshot.js --url https://example.com --output ./.claude/chrome-devtools/screenshots/page.png
+
+# Full page
+node screenshot.js --url https://example.com --output ./.claude/chrome-devtools/screenshots/page.png --full-page true
+
+# Specific element
+node screenshot.js --url https://example.com --selector ".main-content" --output ./.claude/chrome-devtools/screenshots/element.png
+```
+
+### Auto-Compression (Sharp)
+
+Screenshots >5MB auto-compress using Sharp (4-5x faster than ImageMagick):
+
+```bash
+# Default: compress if >5MB
+node screenshot.js --url https://example.com --output ./.claude/chrome-devtools/screenshots/page.png
+
+# Custom threshold (3MB)
+node screenshot.js --url https://example.com --output ./.claude/chrome-devtools/screenshots/page.png --max-size 3
+
+# Disable compression
+node screenshot.js --url https://example.com --output ./.claude/chrome-devtools/screenshots/page.png --no-compress
+```
+
+Store screenshots for analysis in `<project>/.claude/chrome-devtools/screenshots/`.
+
+## Console Log Collection & Analysis
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+
+### Capture Logs
+
+```bash
+# Capture all logs for 10 seconds
+node console.js --url https://example.com --duration 10000
+
+# Filter by type
+node console.js --url https://example.com --types error,warn --duration 5000
+```
+
+### Session Storage Pattern
+
+Store logs for analysis in `<project>/.claude/chrome-devtools/logs/<session>/`:
+
+```bash
+# Create session directory
+SESSION="$(date +%Y%m%d-%H%M%S)"
+mkdir -p .claude/chrome-devtools/logs/$SESSION
+
+# Capture and store
+node console.js --url https://example.com --duration 10000 > .claude/chrome-devtools/logs/$SESSION/console.json
+node network.js --url https://example.com > .claude/chrome-devtools/logs/$SESSION/network.json
+
+# View errors
+jq '.messages[] | select(.type=="error")' .claude/chrome-devtools/logs/$SESSION/console.json
+```
+
+### Root Cause Analysis
+
+```bash
+# 1. Check for JavaScript errors
+node console.js --url https://example.com --types error,pageerror --duration 5000 | jq '.messages'
+
+# 2. Correlate with network failures
+node network.js --url https://example.com | jq '.requests[] | select(.response.status >= 400)'
+
+# 3. Check specific error stack traces
+node console.js --url https://example.com --types error --duration 5000 | jq '.messages[].stack'
+```
+
+## Finding Elements
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+Use `snapshot.js` to discover selectors before interacting:
+
+```bash
+# Get all interactive elements
+node snapshot.js --url https://example.com | jq '.elements[] | {tagName, text, selector}'
+
+# Find buttons
+node snapshot.js --url https://example.com | jq '.elements[] | select(.tagName=="button")'
+
+# Find by text content
+node snapshot.js --url https://example.com | jq '.elements[] | select(.text | contains("Submit"))'
+```
+
+## Error Recovery
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+If script fails:
+
+```bash
+# 1. Capture current state (without navigating to preserve state)
+node screenshot.js --output ./.claude/skills/chrome-devtools/screenshots/debug.png
+
+# 2. Get console errors
+node console.js --url about:blank --types error --duration 1000
+
+# 3. Discover correct selector
+node snapshot.js | jq '.elements[] | select(.text | contains("Submit"))'
+
+# 4. Try XPath if CSS fails
+node click.js --selector "//button[contains(text(),'Submit')]"
+```
+
+## Common Patterns
+
+### Web Scraping
+
+```bash
+node evaluate.js --url https://example.com --script "
+  Array.from(document.querySelectorAll('.item')).map(el => ({
+    title: el.querySelector('h2')?.textContent,
+    link: el.querySelector('a')?.href
+  }))
+" | jq '.result'
+```
+
+### Form Automation
+
+```bash
+node navigate.js --url https://example.com/form
+node fill.js --selector "#search" --value "query"
+node click.js --selector "button[type=submit]"
+```
+
+### Performance Testing
+
+```bash
+node performance.js --url https://example.com | jq '.vitals'
+```
+
+## Script Options
+
+All scripts support:
+
+- `--headless false` - Show browser window
+- `--close true` - Close browser completely (default: stay running)
+- `--timeout 30000` - Set timeout (ms)
+- `--wait-until networkidle2` - Wait strategy
+  Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+
+## Troubleshooting
+
+Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+
+| Error                             | Solution                                      |
+| --------------------------------- | --------------------------------------------- |
+| `Cannot find package 'puppeteer'` | Run `npm install` in scripts directory        |
+| `libnss3.so` missing (Linux)      | Run `./install-deps.sh`                       |
+| Element not found                 | Use `snapshot.js` to find correct selector    |
+| Script hangs                      | Use `--timeout 60000` or `--wait-until load`  |
+| Screenshot >5MB                   | Auto-compressed; use `--max-size 3` for lower |
+| Session stale                     | Delete `.browser-session.json` and retry      |
+
+### Screenshot Analysis: Missing Images
+
+If images don't appear in screenshots, they may be waiting for animation triggers:
+
+1. **Scroll-triggered animations**: Scroll element into view first
+
+    ```bash
+    node evaluate.js --script "document.querySelector('.lazy-image').scrollIntoView()"
+    # Wait for animation
+    node evaluate.js --script "await new Promise(r => setTimeout(r, 1000))"
+    node screenshot.js --output ./result.png
+    ```
+
+2. **Sequential animation queue**: Wait longer and retry
+
+    ```bash
+    # First attempt
+    node screenshot.js --url http://localhost:3000 --output ./attempt1.png
+
+    # Wait for animations to complete
+    node evaluate.js --script "await new Promise(r => setTimeout(r, 2000))"
+
+    # Retry screenshot
+    node screenshot.js --output ./attempt2.png
+    ```
+
+3. **Intersection Observer animations**: Trigger by scrolling through page
+    ```bash
+    node evaluate.js --script "window.scrollTo(0, document.body.scrollHeight)"
+    node evaluate.js --script "await new Promise(r => setTimeout(r, 1500))"
+    node evaluate.js --script "window.scrollTo(0, 0)"
+    node screenshot.js --output ./full-loaded.png --full-page true
+    ```
+
+## Reference Documentation
+
+- `./references/cdp-domains.md` - Chrome DevTools Protocol domains
+- `./references/puppeteer-reference.md` - Puppeteer API patterns
+- `./references/performance-guide.md` - Core Web Vitals optimization
+- `./scripts/README.md` - Detailed script options
+
+---
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Closing Reminders
+
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
+
+<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
+
+## Hookless Prompt Protocol Mirror (Auto-Synced)
+
+Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
+
+## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
+
+1. **DETECT:** Match prompt against workflow catalog
+2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
+3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure:
+    - Question: "Which workflow do you want to activate?"
+    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
+    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
+4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
+5. **CREATE TASKS:** task tracking for ALL workflow steps
+6. **EXECUTE:** Follow each step in sequence
+   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
+
+## Learned Lessons
+
+# Lessons Learned
+
+> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
+
+## Quick Summary
+
+**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
+
+**Top Rules (apply always):**
+
+- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
+- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
+- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
+- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
+- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
+- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
+
+---
+
+## Debugging & Root Cause Reasoning
+
+- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. Cheapest check first.
+- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug in caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
+- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
+- [2026-04-01] **Code is caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
+
+## Architecture Invariants
+
+- [2026-03-31] **ParallelAsync + repo/UoW MUST use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
+- [2026-03-31] **Bus message naming MUST include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) are leaders. Feature services (Growth, Talents) sending to core MUST use `{CoreServiceName}...RequestBusMessage` — never define own event for core to consume.
+
+## Naming & Abstraction
+
+- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what it guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
+
+## Environment & Tooling
+
+- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be in bash PATH under those names. Check: `where python` / `where py`. Prefer `py` (Windows Python Launcher) for one-liners, `node` if JS alternative exists.
+
+> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons in `.claude/hooks/lib/prompt-injections.cjs`.
+
+---
+
+## Closing Reminders
+
+- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
+- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
+- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
+- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
+- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
+- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
+- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
+
+## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
+
+Break work into small tasks (task tracking) before starting. Add final task: "Analyze AI mistakes & lessons learned".
+
+**Extract lessons — ROOT CAUSE ONLY, not symptom fixes:**
+
+1. Name the FAILURE MODE (reasoning/assumption failure), not symptom — "assumed API existed without reading source" not "used wrong enum value".
+2. Generality test: does this failure mode apply to ≥3 contexts/codebases? If not, abstract one level up.
+3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
+4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
+5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
+6. **Auto-fix gate:** "Could `$code-review`/`/simplify`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+7. BOTH gates pass → ask user to run `$learn`.
+   **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
+
+<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

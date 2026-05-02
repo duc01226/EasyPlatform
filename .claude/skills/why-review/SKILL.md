@@ -483,6 +483,30 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 - **"/code"** — If implementing a simpler change
 - **"Skip, continue manually"** — user decides
 
+### Additionally — conditional /llm-council escalation
+
+After the existing `## Next Steps` AskUserQuestion call completes, **evaluate the gate**:
+
+**Read** the active plan's `plan.md` frontmatter (or PBI artifact frontmatter when invoked outside a plan). **Gate fires** when ANY of these 8 conditions evaluates true (per Phase 01 design contract §2 Gate Evaluation Procedure):
+
+1. `cross_service_impact` ≠ `NONE` (value is `PARTIAL` or `FULL`; case-insensitive)
+2. `breaking_changes` === `true` (lenient boolean coercion: `true`, `'true'`, `True` fire; `false`/missing do NOT)
+3. `complexity` ∈ {`high`, `critical`} (case-insensitive) **OR** `story_points` >= 13 (numeric, after string→int coercion)
+4. `new_framework` === `true`
+5. `irreversible` === `true`
+6. `security_critical` === `true`
+7. `performance_critical` === `true`
+8. `cost_high` === `true`
+
+**Absent fields default to no-fire** — the gate is opt-in via frontmatter, never opt-out.
+
+**If gate fires**, immediately follow with a **SECOND** `AskUserQuestion` invocation (separate from the existing `## Next Steps` call — do NOT merge bullet lists):
+
+- **"Escalate to /llm-council (Recommended)"** — Gate fired (high-stakes signal detected). Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when `/why-review` alone is insufficient. Cheaper alternatives already exhausted at this point: `/plan-validate` is the prior rung.
+- **"Skip — proceed without council"** — Acknowledge the gate; proceed with current decision anyway.
+
+**If gate does NOT fire**, do NOT mention `/llm-council` (avoids cost normalization). The skill ends after the existing `## Next Steps` prompt.
+
 ## Closing Reminders
 
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
@@ -493,12 +517,12 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
 - **MANDATORY IMPORTANT MUST ATTENTION** execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context) — never skip or combine with Round 1.
 - **MANDATORY IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-    <!-- SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
 

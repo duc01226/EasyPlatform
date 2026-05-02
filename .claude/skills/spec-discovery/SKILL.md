@@ -23,23 +23,6 @@ description: 'Reverse-engineer a complete, tech-agnostic specification bundle fr
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 ---
 
 ## What Is Spec Discovery?
@@ -588,18 +571,18 @@ extraction_mode: init|update
 
 ```mermaid
 erDiagram
-    EntityA {
-        string id PK
-        string name
-        string status
-    }
-    EntityB {
-        string id PK
-        string entityAId FK
-        number quantity
-    }
-    EntityA ||--o{ EntityB : "contains"
-    EntityA }o--|| EntityC : "belongs to"
+ EntityA {
+ string id PK
+ string name
+ string status
+ }
+ EntityB {
+ string id PK
+ string entityAId FK
+ number quantity
+ }
+ EntityA ||--o{ EntityB: "contains"
+ EntityA }o--|| EntityC: "belongs to"
 ```
 
 [Source: path/to/entity-files.ext:line_range]
@@ -648,17 +631,17 @@ When entity A has a FK → entity B AND entity B has a FK → entity A (mutual r
 ````markdown
 ```mermaid
 erDiagram
-    EntityA {
-        string id PK
-        string entityBId FK
-    }
-    EntityB {
-        string id PK
-        string entityAId FK
-    }
-    EntityA }o--|| EntityB : "primary owner"
-    EntityB }o--o| EntityA : "back-reference (optional)"
-    %% [CIRCULAR: EntityA ↔ EntityB — primary ownership in EntityB]
+ EntityA {
+ string id PK
+ string entityBId FK
+ }
+ EntityB {
+ string id PK
+ string entityAId FK
+ }
+ EntityA }o--|| EntityB: "primary owner"
+ EntityB }o--o| EntityA: "back-reference (optional)"
+ %% [CIRCULAR: EntityA ↔ EntityB — primary ownership in EntityB]
 ```
 ````
 
@@ -831,12 +814,12 @@ Re-checking runs in the main session — spawn fresh sub-agent only if re-check 
 > ```markdown
 > ## Related Documentation
 >
-> - **Business Feature Doc:** `docs/business-features/{Module}/README.md`
->   _(primary stakeholder view; Sections 1-14 business context, Section 15 test cases)_
-> - **QA Spec Dashboard:** `docs/specs/{Module}/README.md`
->   _(TC execution status, integration test traceability)_
-> - **Integration Tests:** `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/`
->   _(subcutaneous tests; each test annotated with [Trait("TestSpec", "TC-{MODULE}-{NNN}")])_
+> **Business Feature Doc:** `docs/business-features/{Module}/README.md`
+> _(primary stakeholder view; Sections 1-14 business context, Section 15 test cases)_
+> **QA Spec Dashboard:** `docs/specs/{Module}/README.md`
+> _(TC execution status, integration test traceability)_
+> **Integration Tests:** `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/`
+> _(subcutaneous tests; each test annotated with [Trait("TestSpec", "TC-{MODULE}-{NNN}")])_
 > ```
 >
 > If the business feature doc or QA dashboard doesn't exist yet, write the path with `(not yet created)`.
@@ -1122,46 +1105,6 @@ Track completeness in `docs/specs/{app-bucket}/{system-name}/README.md`. Each se
 
 ---
 
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Run Step 1.5 (Use Case Enumeration) BEFORE plan — enumerate ALL operations, build actor catalog, write Use Case Inventory to 00-module-registry.md
-- **IMPORTANT MUST ATTENTION [BLOCKING]** `TaskCreate` one task per **operation group** per phase (not per module per phase) — verify TaskList count ≥ `sum(operation_groups × phase_count)` before `/plan-review`
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Phase A.ERD mandatory — generate Mermaid erDiagram in `01-domain-erd.md` after all entities extracted; foundational artifact all other phases reference
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Scout FULL codebase holistically BEFORE plan — plan requires complete module registry
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Write spec output after EACH task — NEVER accumulate; large codebases overflow context
-- **IMPORTANT MUST ATTENTION [BLOCKING]** 4+ modules → spawn ALL sub-agents in ONE message; inline extraction with 4+ modules is a violation
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Confirm scope via `AskUserQuestion` BEFORE Step 1 — NEVER auto-start
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Context compaction/session resume → `TaskList` FIRST, read completeness tracker, NEVER re-run scout or plan
-- **IMPORTANT MUST ATTENTION [BLOCKING]** After any fix in quality review → spawn fresh `code-reviewer` sub-agent (max 2 rounds) — NEVER inline re-review
-- **IMPORTANT MUST ATTENTION [REQUIRED]** All output tech-agnostic — no framework names, no language constructs
-- **IMPORTANT MUST ATTENTION [REQUIRED]** Every claim cites `[Source: file:line]` — mark `[UNVERIFIED]` rather than guessing
-
-**Anti-Rationalization:**
-
-| Evasion                                              | Rebuttal                                                                                     |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| "Only 2–3 modules, skip sub-agents"                  | BLOCKING SCALE GATE applies at 4+. Count modules first, then decide.                         |
-| "Already scouted, skip Step 1.5"                     | Step 1.5 MANDATORY after Step 1. Show Use Case Inventory as proof before proceeding.         |
-| "module_count × phase_count is the plan formula"     | NEVER — use `sum(operation_groups × phase_count)`. Module formula undercounts large modules. |
-| "Context compacted, re-run scout to rebuild context" | TaskList FIRST. Registry + task list survive compaction. NEVER re-scout in resumed session.  |
-| "Wrote spec file, marking complete"                  | VERIFY — re-read written spec against source. Mark `[UNVERIFIED]`, not blank.                |
-| "Fresh sub-agent overkill for small fix"             | Mandatory after ANY fix loop. Main agent rationalizes its own output. Max 2 rounds.          |
-| "Scope is clear, skip Step 0 AskUserQuestion"        | BLOCKING — NEVER auto-start. Scope, mode, and system name MUST be confirmed first.           |
-
-            <!-- SYNC:critical-thinking-mindset:reminder -->
-
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
-
-**[TASK-PLANNING]** MUST ATTENTION analyze task scope and break into small todo tasks/sub-tasks via TaskCreate before acting.
-
-> **[IMPORTANT]** Break into many small todo tasks systematically before starting — this is critical.
-
----
-
 ## Related Skills
 
 | Skill                        | Relationship                                                                    | When to Call                                                              |
@@ -1226,9 +1169,68 @@ On update: verify links present and correct.
 
 ## Prompt-Enhance Closing Anchors
 
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Closing Reminders
+
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Run Step 1.5 (Use Case Enumeration) BEFORE plan — enumerate ALL operations, build actor catalog, write Use Case Inventory to 00-module-registry.md
+- **IMPORTANT MUST ATTENTION [BLOCKING]** `TaskCreate` one task per **operation group** per phase (not per module per phase) — verify TaskList count ≥ `sum(operation_groups × phase_count)` before `/plan-review`
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Phase A.ERD mandatory — generate Mermaid erDiagram in `01-domain-erd.md` after all entities extracted; foundational artifact all other phases reference
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Scout FULL codebase holistically BEFORE plan — plan requires complete module registry
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Write spec output after EACH task — NEVER accumulate; large codebases overflow context
+- **IMPORTANT MUST ATTENTION [BLOCKING]** 4+ modules → spawn ALL sub-agents in ONE message; inline extraction with 4+ modules is a violation
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Confirm scope via `AskUserQuestion` BEFORE Step 1 — NEVER auto-start
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Context compaction/session resume → `TaskList` FIRST, read completeness tracker, NEVER re-run scout or plan
+- **IMPORTANT MUST ATTENTION [BLOCKING]** After any fix in quality review → spawn fresh `code-reviewer` sub-agent (max 2 rounds) — NEVER inline re-review
+- **IMPORTANT MUST ATTENTION [REQUIRED]** All output tech-agnostic — no framework names, no language constructs
+- **IMPORTANT MUST ATTENTION [REQUIRED]** Every claim cites `[Source: file:line]` — mark `[UNVERIFIED]` rather than guessing
+
+**Anti-Rationalization:**
+
+| Evasion                                              | Rebuttal                                                                                     |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| "Only 2–3 modules, skip sub-agents"                  | BLOCKING SCALE GATE applies at 4+. Count modules first, then decide.                         |
+| "Already scouted, skip Step 1.5"                     | Step 1.5 MANDATORY after Step 1. Show Use Case Inventory as proof before proceeding.         |
+| "module_count × phase_count is the plan formula"     | NEVER — use `sum(operation_groups × phase_count)`. Module formula undercounts large modules. |
+| "Context compacted, re-run scout to rebuild context" | TaskList FIRST. Registry + task list survive compaction. NEVER re-scout in resumed session.  |
+| "Wrote spec file, marking complete"                  | VERIFY — re-read written spec against source. Mark `[UNVERIFIED]`, not blank.                |
+| "Fresh sub-agent overkill for small fix"             | Mandatory after ANY fix loop. Main agent rationalizes its own output. Max 2 rounds.          |
+| "Scope is clear, skip Step 0 AskUserQuestion"        | BLOCKING — NEVER auto-start. Scope, mode, and system name MUST be confirmed first.           |
+
+**[TASK-PLANNING]** MUST ATTENTION analyze task scope and break into small todo tasks/sub-tasks via TaskCreate before acting.
+
+> **[IMPORTANT]** Break into many small todo tasks systematically before starting — this is critical.
+
+---

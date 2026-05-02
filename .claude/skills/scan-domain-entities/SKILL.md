@@ -13,17 +13,6 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates entity class names, property names, relationship types. Grep to confirm existence before documenting.
-> - **Trace full dependency chain after edits.** Always trace full chain.
-> - **Holistic-first — resist nearest-attention trap.** List EVERY precondition before forming hypothesis.
-> - **Surface ambiguity before coding.** NEVER pick silently.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
@@ -56,7 +45,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 ## Quick Summary
 
-**Goal:** Scan project codebase → populate `docs/project-reference/domain-entities-reference.md` with domain entities, data models, DTOs, aggregate boundaries, cross-service entity sync maps, and Mermaid ER diagrams. (content auto-injected by hook — check for [Injected: ...] header before reading)
+**Goal:** Scan project codebase → populate `docs/project-reference/domain-entities-reference.md` with domain entities, data models, DTOs, aggregate boundaries, cross-service entity sync maps, and Mermaid ER diagrams. (content auto-injected by hook — check for [Injected:...] header before reading)
 
 **Workflow:**
 
@@ -69,7 +58,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 **Key Rules:**
 
 - Generic — works with any framework (.NET, Node.js, Java, Python, game engines)
-- **MUST ATTENTION** detect BOTH framework AND architecture type before sub-agents launch
+  **MUST ATTENTION** detect BOTH framework AND architecture type before sub-agents launch
 - For microservices: unify cross-service entities (owner vs consumer)
 - Detail level: summary + key properties (IDs, FKs, status fields) — NOT full property listing
 
@@ -215,26 +204,45 @@ Read full report. Apply fresh-eyes protocol:
 
 ---
 
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates entity class names, property names, relationship types. Grep to confirm existence before documenting.
+> **Trace full dependency chain after edits.** Always trace full chain.
+> **Holistic-first — resist nearest-attention trap.** List EVERY precondition before forming hypothesis.
+> **Surface ambiguity before coding.** NEVER pick silently.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per sub-agent, one per service
-- **IMPORTANT MUST ATTENTION** detect BOTH framework AND architecture type in Phase 0 — sub-agents depend on both
-- **IMPORTANT MUST ATTENTION** cite `file:line` for every entity example — NEVER fabricate class names or property names
-- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each service — NEVER batch at end
-- **IMPORTANT MUST ATTENTION** coverage report is mandatory — list services with NO entities found
-- **IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — validates `file:line` and class names
-      <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per sub-agent, one per service
+**IMPORTANT MUST ATTENTION** detect BOTH framework AND architecture type in Phase 0 — sub-agents depend on both
+**IMPORTANT MUST ATTENTION** cite `file:line` for every entity example — NEVER fabricate class names or property names
+**IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each service — NEVER batch at end
+**IMPORTANT MUST ATTENTION** coverage report is mandatory — list services with NO entities found
+**IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — validates `file:line` and class names
 
 **Anti-Rationalization:**
 

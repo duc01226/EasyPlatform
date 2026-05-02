@@ -24,22 +24,29 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
+<!-- SYNC:project-reference-docs-guide -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
+> **Project Reference Docs** — `docs/project-reference/` initialized by session hooks. Many are auto-injected into context — check for `[Injected: ...]` header before reading manually.
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> | Document                                   | When to Read                                                          | Auto-Injected?   |
+> | ------------------------------------------ | --------------------------------------------------------------------- | ---------------- |
+> | `backend-patterns-reference.md`            | Any `.cs` edit — CQRS, repositories, validation, events               | ✓ on `.cs` edits |
+> | `frontend-patterns-reference.md`           | Any `.ts`/`.html` edit — base classes, stores, API services           | ✓ on `.ts` edits |
+> | `domain-entities-reference.md`             | Task touches entities, models, or cross-service sync                  | ✓ via hook       |
+> | `design-system/design-system-canonical.md` | Any `.html`/`.scss`/`.css` edit — tokens, BEM, components             | ✓ via hook       |
+> | `integration-test-reference.md`            | Writing or reviewing integration tests                                | ✓ via hook       |
+> | `code-review-rules.md`                     | Any code review — project-specific rules & checklists                 | ✓ via hook       |
+> | `scss-styling-guide.md`                    | `.scss`/`.css` changes — BEM, mixins, variables                       | —                |
+> | `design-system/README.md`                  | UI work — design system overview, component inventory                 | —                |
+> | `feature-docs-reference.md`                | Updating `docs/business-features/**` docs                             | ✓ via hook       |
+> | `spec-principles.md`                       | Writing TDD specs or test cases                                       | —                |
+> | `e2e-test-reference.md`                    | E2E test work — page objects, framework architecture                  | —                |
+> | `seed-test-data-reference.md`              | Seed/test data scripts — seeder patterns, DI scope safety             | —                |
+> | `project-structure-reference.md`           | Unfamiliar service area — project layout, tech stack, module registry | ✓ via hook       |
+> | `lessons.md`                               | Any task — project-specific hard-won lessons                          | ✓ via hook       |
+> | `docs-index-reference.md`                  | Searching for docs — full keyword-to-doc lookup                       | —                |
 
-<!-- /SYNC:ai-mistake-prevention -->
+<!-- /SYNC:project-reference-docs-guide -->
 
 <!-- SYNC:understand-code-first -->
 
@@ -110,9 +117,9 @@ Choose sub-agent type based on plan type detected in Phase 0:
 
 ```
 Agent({
-  description: "Fresh Round {N} review",
-  subagent_type: "code-reviewer",
-  prompt: `
+description: "Fresh Round {N} review",
+subagent_type: "code-reviewer",
+prompt: `
 ## Task
 {review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
 
@@ -760,6 +767,64 @@ After the sub-agent returns:
 - **"/cook" or "/code"** — If plan is approved and ready for implementation
 - **"Skip, continue manually"** — user decides
 
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+<!-- SYNC:double-round-trip-review:reminder -->
+
+**IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone. Note: Round 3 (adversarial simulation) is MANDATORY even on PASS — it is not triggered only by FAIL. The SYNC:double-round-trip-review protocol describes a 2-round minimum; plan-review extends this to 3 rounds. Round 3 = the adversarial sub-agent from the Adversarial Review Mindset section above.
+
+<!-- /SYNC:double-round-trip-review:reminder -->
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+<!-- SYNC:cross-service-check:reminder -->
+
+**IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
+
+<!-- /SYNC:cross-service-check:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
 **MANDATORY IMPORTANT MUST ATTENTION** plans must not hallucinate — every claim about existing source code needs `file:line` proof. Unverified paths, class names, or behaviors = FAIL.
@@ -770,37 +835,6 @@ After the sub-agent returns:
 **MANDATORY IMPORTANT MUST ATTENTION** run `/why-review` after completing this skill to validate design rationale, alternatives considered, and risk assessment.
 **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
-<!-- SYNC:understand-code-first:reminder -->
-
-- **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:double-round-trip-review:reminder -->
-- **IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone. Note: Round 3 (adversarial simulation) is MANDATORY even on PASS — it is not triggered only by FAIL. The SYNC:double-round-trip-review protocol describes a 2-round minimum; plan-review extends this to 3 rounds. Round 3 = the adversarial sub-agent from the Adversarial Review Mindset section above.
-    <!-- /SYNC:double-round-trip-review:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
-- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-  <!-- /SYNC:graph-assisted-investigation:reminder -->
-  <!-- SYNC:cross-service-check:reminder -->
-- **IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
-  <!-- /SYNC:cross-service-check:reminder -->
-  <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
-
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

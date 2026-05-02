@@ -1,0 +1,425 @@
+{
+    "PostToolUse": [
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/tool-output-swap.cjs"
+                }
+            ],
+            "matcher": "Read|Grep|Glob"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/graph-grep-suggester.cjs"
+                }
+            ],
+            "matcher": "Grep|Glob"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/bash-cleanup.cjs"
+                }
+            ],
+            "matcher": "Bash"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/post-edit-prettier.cjs"
+                }
+            ],
+            "matcher": "Edit|Write|MultiEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/graph-auto-update.cjs"
+                }
+            ],
+            "matcher": "Edit|Write|MultiEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/todo-tracker.cjs"
+                }
+            ],
+            "matcher": "TaskCreate|TaskUpdate"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/workflow-step-tracker.cjs"
+                }
+            ],
+            "matcher": "Skill"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/post-agent-validator.cjs"
+                }
+            ],
+            "matcher": "Agent"
+        }
+    ],
+    "PreToolUse": [
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/notify-waiting.js"
+                }
+            ],
+            "matcher": "AskUserQuestion"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/python-call-guide.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/windows-command-detector.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/git-commit-block.cjs"
+                }
+            ],
+            "matcher": "Bash"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/scout-block.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/privacy-block.cjs"
+                }
+            ],
+            "matcher": "Bash|Glob|Grep|Read|Edit|Write|NotebookEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/path-boundary-block.cjs"
+                }
+            ],
+            "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/edit-enforcement.cjs"
+                }
+            ],
+            "matcher": "Edit|Write|MultiEdit|NotebookEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/skill-enforcement.cjs"
+                }
+            ],
+            "matcher": "Skill"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/workflow-task-guard.cjs"
+                }
+            ],
+            "matcher": "TaskUpdate"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/graph-context-injector.cjs"
+                }
+            ],
+            "matcher": "Skill|Agent"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/code-review-rules-injector.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/dev-rules-injector.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/mindset-injector.cjs"
+                }
+            ],
+            "matcher": "Skill|Agent|Edit|Write|MultiEdit|TaskCreate|TaskUpdate"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/mindset-compact-injector.cjs"
+                }
+            ],
+            "matcher": "Read|Grep|Glob|Bash"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/knowledge-context.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/design-system-context.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/design-system-canonical-guide.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/code-patterns-injector.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/backend-context.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/frontend-context.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/scss-styling-context.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/lessons-injector.cjs"
+                }
+            ],
+            "matcher": "Edit|Write|MultiEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/role-context-injector.cjs"
+                }
+            ],
+            "matcher": "Write"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/ba-refinement-context.cjs"
+                }
+            ],
+            "matcher": "Write|Edit|MultiEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/feature-docs-context.cjs"
+                }
+            ],
+            "matcher": "Write|Edit|MultiEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/test-specs-context.cjs"
+                }
+            ],
+            "matcher": "Write|Edit|MultiEdit"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/figma-context-extractor.cjs"
+                }
+            ],
+            "matcher": "Read"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/design-system-canonical-guide.cjs"
+                }
+            ],
+            "matcher": "Read|Skill"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/artifact-path-resolver.cjs"
+                }
+            ],
+            "matcher": "Write"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/path-boundary-block.cjs"
+                }
+            ],
+            "matcher": "mcp__filesystem__*"
+        }
+    ],
+    "SessionStart": [
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/session-init.cjs"
+                }
+            ],
+            "matcher": "startup|resume"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/post-compact-recovery.cjs"
+                }
+            ],
+            "matcher": "startup|resume"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/session-resume.cjs"
+                }
+            ],
+            "matcher": "startup|resume"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/session-init-docs.cjs"
+                }
+            ],
+            "matcher": "startup|resume"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/graph-session-init.cjs"
+                }
+            ],
+            "matcher": "startup|resume"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/workflow-router.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/prompt-context-assembler.cjs"
+                }
+            ],
+            "matcher": "startup|resume"
+        }
+    ],
+    "Stop": [
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/notify-waiting.js"
+                }
+            ]
+        }
+    ],
+    "UserPromptSubmit": [
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/init-prompt-gate.cjs"
+                }
+            ]
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/pre-compact-snapshot.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/prompt-context-assembler.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/prompt-context-assembler-docs.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/prompt-context-assembler-docs-p2.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/prompt-context-assembler-claude.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/prompt-context-assembler-project-config.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/design-system-canonical-guide.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/workflow-router.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/workflow-router-p2.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/workflow-router-p3.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/prompt-context-assembler-closers.cjs"
+                }
+            ]
+        }
+    ]
+}

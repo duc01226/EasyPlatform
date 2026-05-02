@@ -13,17 +13,6 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
-> - **Trace full dependency chain after edits.** Always trace full chain.
-> - **Surface ambiguity before coding.** NEVER pick silently.
-> - **NEVER hardcode file counts in docs.** Use grep-expression stats, not hardcoded numbers.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
@@ -56,7 +45,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 ## Quick Summary
 
-**Goal:** Scan E2E test codebase → populate `docs/project-reference/e2e-test-reference.md` with architecture, base classes, page objects, step definitions, configuration, and best practices. (content auto-injected by hook — check for [Injected: ...] header before reading)
+**Goal:** Scan E2E test codebase → populate `docs/project-reference/e2e-test-reference.md` with architecture, base classes, page objects, step definitions, configuration, and best practices. (content auto-injected by hook — check for [Injected:...] header before reading)
 
 **Workflow:**
 
@@ -70,7 +59,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 - Generic — works with any E2E framework (Selenium, Playwright, Cypress, WebdriverIO, etc.)
 - BDD frameworks (SpecFlow, Cucumber, Behave) are E2E — scan feature files and step definitions
-- **MUST ATTENTION** detect framework FIRST — agent routing depends on it
+  **MUST ATTENTION** detect framework FIRST — agent routing depends on it
 - Every code example from actual project files with `file:line`
 
 ---
@@ -223,26 +212,45 @@ Note: stats use grep expressions, NOT hardcoded counts.
 
 ---
 
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
+> **Trace full dependency chain after edits.** Always trace full chain.
+> **Surface ambiguity before coding.** NEVER pick silently.
+> **NEVER hardcode file counts in docs.** Use grep-expression stats, not hardcoded numbers.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
-- **IMPORTANT MUST ATTENTION** detect framework in Phase 0 — agent routing depends on BDD vs non-BDD
-- **IMPORTANT MUST ATTENTION** cite `file:line` for every code example — NEVER fabricate class names
-- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each file — NEVER batch at end
-- **IMPORTANT MUST ATTENTION** NEVER hardcode file counts — use grep expressions in project-config.json stats
-- **IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — NEVER declare PASS after Round 1
-      <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting
+**IMPORTANT MUST ATTENTION** detect framework in Phase 0 — agent routing depends on BDD vs non-BDD
+**IMPORTANT MUST ATTENTION** cite `file:line` for every code example — NEVER fabricate class names
+**IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each file — NEVER batch at end
+**IMPORTANT MUST ATTENTION** NEVER hardcode file counts — use grep expressions in project-config.json stats
+**IMPORTANT MUST ATTENTION** Round 2 fresh-eyes is non-negotiable — NEVER declare PASS after Round 1
 
 **Anti-Rationalization:**
 

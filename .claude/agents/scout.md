@@ -25,16 +25,16 @@ memory: project
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -86,8 +86,8 @@ memory: project
     python .claude/scripts/code_graph batch-query <file1> <file2> --json
     ```
 
-    If graph returns "ambiguous", use `search --kind` to disambiguate, then retry with the qualified name.
-    Graph results get HIGHER priority than grep matches. Then grep again to verify content if needed.
+If graph returns "ambiguous", use `search --kind` to disambiguate, then retry with the qualified name.
+Graph results get HIGHER priority than grep matches. Then grep again to verify content if needed.
 
 ### Grep-First Protocol
 
@@ -106,46 +106,48 @@ When user prompt is semantic (not file-specific), grep/glob/search FIRST to find
 
 ## Search Patterns by Priority
 
+> **Stack-agnostic.** Read `project-structure-reference.md` and `backend-patterns-reference.md` / `frontend-patterns-reference.md` for the project's actual layout, file extensions, and naming conventions. Build the glob patterns from what's documented there. Examples below are templates — adapt the directory names, file extensions, and keywords to the detected stack.
+
 ```bash
-# HIGH PRIORITY - Core Logic (MUST ATTENTION FIND)
-**/Domain/Entities/**/*{keyword}*.cs
-**/UseCaseCommands/**/*{keyword}*.cs
-**/UseCaseQueries/**/*{keyword}*.cs
-**/UseCaseEvents/**/*{keyword}*.cs
-**/*{keyword}*.component.ts
-**/*{keyword}*.store.ts
+# HIGH PRIORITY — Core Logic (entities, commands, queries, event handlers, UI components)
+**/{domain-or-entity-dir}/**/*{keyword}*.{ext}
+**/{command-or-handler-dir}/**/*{keyword}*.{ext}
+**/{query-or-read-dir}/**/*{keyword}*.{ext}
+**/{event-handler-dir}/**/*{keyword}*.{ext}
+**/*{keyword}*.{ui-component-ext}
 
-# MEDIUM PRIORITY - Infrastructure
-**/Controllers/**/*{keyword}*.cs
-**/BackgroundJobs/**/*{keyword}*.cs
-**/*Consumer*{keyword}*.cs
-**/*{keyword}*-api.service.ts
+# MEDIUM PRIORITY — Infrastructure (controllers/routes, jobs, consumers, API services)
+**/{controllers-or-routes-dir}/**/*{keyword}*.{ext}
+**/{jobs-or-workers-dir}/**/*{keyword}*.{ext}
+**/*{keyword}*{consumer-suffix}.{ext}
+**/*{keyword}*{api-service-suffix}.{ui-ext}
 
-# LOW PRIORITY - Supporting
-**/*{keyword}*Helper*.cs
-**/*{keyword}*Service*.cs
-**/*{keyword}*.html
+# LOW PRIORITY — Supporting (helpers, services, templates)
+**/*{keyword}*{helper-suffix}.{ext}
+**/*{keyword}*{service-suffix}.{ext}
+**/*{keyword}*.{template-ext}
 ```
 
 ## Grep Patterns for Deep Search
 
-```bash
-# Domain entities
-grep: "class.*{EntityName}.*:.*RootEntity"
+> **Stack-agnostic.** Substitute project-specific base classes, suffixes, and decorators per `backend-patterns-reference.md` / `frontend-patterns-reference.md`. The categories below (entity, command/query, event handler, consumer, UI) are universal; the regexes are stack-specific.
 
-# Commands & Queries
+```bash
+# Domain entities — adapt to project base class / decorator
+grep: "(class|interface|record|type)\s+.*{EntityName}.*(:|extends|implements)\s+.*{EntityBaseClass}"
+
+# Commands & Queries — adapt suffix/prefix conventions
 grep: ".*Command.*{EntityName}|{EntityName}.*Command"
 grep: ".*Query.*{EntityName}|{EntityName}.*Query"
 
-# Event Handlers
-grep: ".*EventHandler.*{EntityName}"
+# Event handlers — adapt to project's handler naming
+grep: ".*(EventHandler|Handler|Listener|Subscriber).*{EntityName}"
 
-# Consumers (cross-service)
-grep: ".*Consumer.*{EntityName}"
-grep: "MessageBusConsumer.*{EntityName}"
+# Consumers (cross-service message bus) — adapt to project's consumer naming
+grep: ".*(Consumer|Subscriber|MessageHandler).*{EntityName}"
 
-# Frontend
-grep: "{feature-name}" in **/*.ts
+# Frontend — adapt to project's UI extensions
+grep: "{feature-name}" in **/*.{ui-ext}
 ```
 
 ## Output
@@ -159,28 +161,28 @@ grep: "{feature-name}" in **/*.ts
 
 ### High Priority - Core Logic (MUST ATTENTION ANALYZE)
 
-1. `path/to/Entity.cs`
-2. `path/to/SaveEntityCommand.cs`
+1. `path/to/entity.{ext}`
+2. `path/to/save-entity-command.{ext}`
 
 ### Medium Priority - Infrastructure
 
-3. `path/to/EntityController.cs`
+3. `path/to/entity-controller-or-route.{ext}`
 
 ### Low Priority - Supporting
 
-4. `path/to/EntityHelper.cs`
+4. `path/to/entity-helper.{ext}`
 
 ### Frontend Files
 
-5. `path/to/entity-list.component.ts`
+5. `path/to/entity-list-component.{ui-ext}`
 
 **Total Files Found:** N
 
 ### Suggested Starting Points
 
-1. Entity.cs - Domain entity with business rules
-2. SaveEntityCommand.cs - Main CRUD command handler
-3. entity-list.component.ts - Frontend entry point
+1. Entity file - Domain entity with business rules
+2. Save/Create command file - Main CRUD command handler
+3. Frontend list/entry component - UI entry point
 
 ### Cross-Service Integration Points
 
@@ -224,16 +226,21 @@ When Read fails with "exceeds maximum allowed tokens":
 
 ---
 
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** NEVER guess file paths — only report files confirmed via Grep/Glob results
-- **IMPORTANT MUST ATTENTION** NEVER skip graph expand after finding entry files — without graph, cross-service dependencies are invisible
-- **IMPORTANT MUST ATTENTION** ALWAYS identify cross-service consumers AND their producers — never report one side only
-- **IMPORTANT MUST ATTENTION** ALWAYS provide top 3 suggested starting points — raw file lists without priority are not useful
-- **IMPORTANT MUST ATTENTION** ALWAYS prioritize files by relevance: Entities → Commands/Queries → EventHandlers → Controllers → Supporting
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** NEVER guess file paths — only report files confirmed via Grep/Glob results
+**IMPORTANT MUST ATTENTION** NEVER skip graph expand after finding entry files — without graph, cross-service dependencies are invisible
+**IMPORTANT MUST ATTENTION** ALWAYS identify cross-service consumers AND their producers — never report one side only
+**IMPORTANT MUST ATTENTION** ALWAYS provide top 3 suggested starting points — raw file lists without priority are not useful
+**IMPORTANT MUST ATTENTION** ALWAYS prioritize files by relevance: Entities → Commands/Queries → Event Handlers → Controllers/Routes → Supporting (adapt these layer names to the project's actual architecture per `project-structure-reference.md`)

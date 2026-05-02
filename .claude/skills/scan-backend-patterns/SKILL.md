@@ -13,19 +13,6 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Always trace full chain.
-> - **Holistic-first — resist nearest-attention trap.** List EVERY precondition (config, env, DI regs, data) before forming code-layer hypothesis.
-> - **Surgical changes — apply diff test.** Every changed line traces directly to the task. Announce enhancements explicitly.
-> - **Surface ambiguity before coding.** Multiple interpretations → present each with effort estimate. NEVER pick silently.
-> - **Assume existing values intentional.** Ask WHY before changing constants/limits/flags.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
@@ -58,7 +45,7 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 ## Quick Summary
 
-**Goal:** Scan backend codebase → populate `docs/project-reference/backend-patterns-reference.md` with actual patterns (repositories, CQRS, validation, entities, events, migrations, DI, authorization). Every example from real project files with `file:line`. (content auto-injected by hook — check for [Injected: ...] header before reading)
+**Goal:** Scan backend codebase → populate `docs/project-reference/backend-patterns-reference.md` with actual patterns (repositories, CQRS, validation, entities, events, migrations, DI, authorization). Every example from real project files with `file:line`. (content auto-injected by hook — check for [Injected:...] header before reading)
 
 **Workflow:**
 
@@ -71,9 +58,10 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 **Key Rules:**
 
-- **MUST ATTENTION** detect framework FIRST — scan strategy derives from framework, not hardcoded
-- **MUST ATTENTION** every code example from actual project files with `file:line` — NEVER fabricate
-- **MUST ATTENTION** run graph command on key files before concluding — grep finds text, graph finds structure
+**MUST ATTENTION** detect framework FIRST — scan strategy derives from framework, not hardcoded
+**MUST ATTENTION** every code example from actual project files with `file:line` — NEVER fabricate
+**MUST ATTENTION** run graph command on key files before concluding — grep finds text, graph finds structure
+
 - Surgical update only — NEVER rewrite entire doc, NEVER remove section without evidence it's obsolete
 
 ---
@@ -234,28 +222,49 @@ Read full report. Apply fresh-eyes protocol:
 
 ---
 
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Always trace full chain.
+> **Holistic-first — resist nearest-attention trap.** List EVERY precondition (config, env, DI regs, data) before forming code-layer hypothesis.
+> **Surgical changes — apply diff test.** Every changed line traces directly to the task. Announce enhancements explicitly.
+> **Surface ambiguity before coding.** Multiple interpretations → present each with effort estimate. NEVER pick silently.
+> **Assume existing values intentional.** Ask WHY before changing constants/limits/flags.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one task per sub-agent, one per phase
-- **IMPORTANT MUST ATTENTION** detect framework FIRST in Phase 0 — all grep terms derive from detection, never hardcoded
-- **IMPORTANT MUST ATTENTION** cite `file:line` for every pattern (confidence >80% to document; <60% omit)
-- **IMPORTANT MUST ATTENTION** run graph command on key files — grep finds text, graph finds structure (callers, event chains, blast radius)
-- **IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each file — NEVER batch at end (context loss)
-- **IMPORTANT MUST ATTENTION** read existing doc FIRST, diff findings, surgical update only — NEVER rewrite entire doc
-- **IMPORTANT MUST ATTENTION** Anti-Patterns section requires real `file:line` violations — NEVER fabricate hypothetical examples
-- **IMPORTANT MUST ATTENTION** multi-round fresh-eyes review — main agent rationalizes its own mistakes; Round 2 sub-agent catches what main agent dismissed
-      <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one task per sub-agent, one per phase
+**IMPORTANT MUST ATTENTION** detect framework FIRST in Phase 0 — all grep terms derive from detection, never hardcoded
+**IMPORTANT MUST ATTENTION** cite `file:line` for every pattern (confidence >80% to document; <60% omit)
+**IMPORTANT MUST ATTENTION** run graph command on key files — grep finds text, graph finds structure (callers, event chains, blast radius)
+**IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each file — NEVER batch at end (context loss)
+**IMPORTANT MUST ATTENTION** read existing doc FIRST, diff findings, surgical update only — NEVER rewrite entire doc
+**IMPORTANT MUST ATTENTION** Anti-Patterns section requires real `file:line` violations — NEVER fabricate hypothetical examples
+**IMPORTANT MUST ATTENTION** multi-round fresh-eyes review — main agent rationalizes its own mistakes; Round 2 sub-agent catches what main agent dismissed
 
 **Anti-Rationalization:**
 

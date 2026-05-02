@@ -21,6 +21,19 @@
     "name": "easyplatform-tooling",
     "private": true,
     "scripts": {
+        "code:sync": "npm run codex:sync",
+        "code:sync:context": "npm run codex:sync:context",
+        "code:sync:copy-skills": "npm run codex:sync:copy-skills",
+        "code:sync:hooks": "npm run codex:sync:hooks",
+        "codex:migrate": "node scripts/codex/migrate-claude-to-codex.mjs",
+        "codex:normalize:skill-frontmatter": "node scripts/codex/migrate-claude-to-codex.mjs --normalize-source-skills",
+        "codex:sync": "npm run codex:migrate && npm run codex:sync:hooks && npm run codex:sync:context && npm run codex:verify:workflow-cycle && npm run codex:verify:skill-protocol",
+        "codex:sync:context": "node scripts/codex/sync-context-workflows.mjs",
+        "codex:sync:copy-skills": "node scripts/codex/migrate-claude-to-codex.mjs --copy-skills && npm run codex:sync:hooks && npm run codex:sync:context && npm run codex:verify:workflow-cycle && npm run codex:verify:skill-protocol",
+        "codex:sync:hooks": "node scripts/codex/sync-hooks.mjs",
+        "codex:test:tooling": "node --test scripts/codex/tests/*.test.mjs",
+        "codex:verify:skill-protocol": "node scripts/codex/verify-skill-protocol-compliance.mjs",
+        "codex:verify:workflow-cycle": "node scripts/codex/verify-workflow-cycle-compliance.mjs",
         "prepare": "husky install"
     },
     "version": "1.0.0"

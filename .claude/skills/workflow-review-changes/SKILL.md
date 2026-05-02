@@ -13,7 +13,9 @@ description: '[Workflow] Trigger Review Current Changes workflow — review, fix
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-**IMPORTANT MANDATORY Steps:** /review-changes -> **[parallel batch]** /review-architecture + /review-domain-entities (if entity changes) + /performance + /integration-test-review + /security -> /code-simplifier -> /code-review -> /integration-test-verify -> /plan -> /plan-validate -> /why-review -> /cook -> **fresh sub-agent re-review gate** -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /review-changes -> /review-architecture -> /review-domain-entities -> /performance -> /integration-test-review -> /security -> /code-simplifier -> /code-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review-changes -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING SEQUENCING]** Step 1 `/review-changes` is SEQUENTIAL and MUST run FIRST — it produces the baseline (surface analysis + integration-test/translation gap detection) consumed by all downstream reviewers. Steps 2–6 (`/review-architecture`, `/review-domain-entities`, `/performance`, `/integration-test-review`, `/security`) form a PARALLEL BATCH — spawn all in ONE message via `Agent` tool calls (`subagent_type: "code-reviewer"`). Step 7 `/code-simplifier` is SEQUENTIAL and waits until ALL parallel batch sub-agents return + consolidation summary is built. Steps 8+ proceed sequentially as listed.
 
 > **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review-changes` workflow (16 steps). When invoked as a step inside a parent workflow (e.g., `feature`, `bugfix`, `refactor`), it MUST execute via `Agent` tool (`subagent_type: "code-reviewer"`) — NEVER as an inline `Skill` tool call. Inline execution absorbs 16 steps of context into the parent session.
 >
@@ -32,23 +34,29 @@ description: '[Workflow] Trigger Review Current Changes workflow — review, fix
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
+<!-- SYNC:project-reference-docs-guide -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
+> **Project Reference Docs** — `docs/project-reference/` initialized by session hooks. Many are auto-injected into context — check for `[Injected: ...]` header before reading manually.
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-> - **Business terminology in Application/Domain layers.** Comments and naming in Application/Domain must stay business-oriented and technical-agnostic; avoid implementation terms (say `background job`, not `Hangfire background job`).
+> | Document                                   | When to Read                                                          | Auto-Injected?   |
+> | ------------------------------------------ | --------------------------------------------------------------------- | ---------------- |
+> | `backend-patterns-reference.md`            | Any `.cs` edit — CQRS, repositories, validation, events               | ✓ on `.cs` edits |
+> | `frontend-patterns-reference.md`           | Any `.ts`/`.html` edit — base classes, stores, API services           | ✓ on `.ts` edits |
+> | `domain-entities-reference.md`             | Task touches entities, models, or cross-service sync                  | ✓ via hook       |
+> | `design-system/design-system-canonical.md` | Any `.html`/`.scss`/`.css` edit — tokens, BEM, components             | ✓ via hook       |
+> | `integration-test-reference.md`            | Writing or reviewing integration tests                                | ✓ via hook       |
+> | `code-review-rules.md`                     | Any code review — project-specific rules & checklists                 | ✓ via hook       |
+> | `scss-styling-guide.md`                    | `.scss`/`.css` changes — BEM, mixins, variables                       | —                |
+> | `design-system/README.md`                  | UI work — design system overview, component inventory                 | —                |
+> | `feature-docs-reference.md`                | Updating `docs/business-features/**` docs                             | ✓ via hook       |
+> | `spec-principles.md`                       | Writing TDD specs or test cases                                       | —                |
+> | `e2e-test-reference.md`                    | E2E test work — page objects, framework architecture                  | —                |
+> | `seed-test-data-reference.md`              | Seed/test data scripts — seeder patterns, DI scope safety             | —                |
+> | `project-structure-reference.md`           | Unfamiliar service area — project layout, tech stack, module registry | ✓ via hook       |
+> | `lessons.md`                               | Any task — project-specific hard-won lessons                          | ✓ via hook       |
+> | `docs-index-reference.md`                  | Searching for docs — full keyword-to-doc lookup                       | —                |
 
-<!-- /SYNC:ai-mistake-prevention -->
+<!-- /SYNC:project-reference-docs-guide -->
 
 Activate the `review-changes` workflow. Run `/workflow-start review-changes` with the user's prompt as context.
 
@@ -97,11 +105,11 @@ NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional task
 
 > **Translation Sync:** The `/review-changes` skill (task #1) includes a **mandatory** multilingual UI translation-sync check. When UI text changes in multilingual projects without locale updates, the skill uses `AskUserQuestion` for an explicit user decision — NOT purely advisory.
 
-> **Docs Update:** `/docs-update` MUST run after EVERY review — it performs Phase 0 triage and fast-exits automatically when only non-business-code files changed (`.claude/**`, config). When business code is in the changeset, it WILL invoke: Phase 2 `/feature-docs` (business feature doc update), Phase 2.5 `/spec-discovery update` (engineering spec sync — if `docs/specs/` bundle exists; note: dirs found are app buckets like `bravoTALENTS/`, not service names — probe `ls docs/specs/{app-bucket}/` to find a specific service), Phase 3 `/tdd-spec` (test spec sync), Phase 4 `/tdd-spec [direction=sync]` (dashboard sync). Never skip based on review PASS status alone.
+> **Docs Update:** `/docs-update` MUST run after EVERY review — it performs Phase 0 triage and fast-exits automatically when only non-business-code files changed (`.claude/**`, config). When business code is in the changeset, it WILL invoke: Phase 2 `/feature-docs` (business feature doc update), Phase 2.5 `/spec-discovery update` (engineering spec sync — if `docs/specs/` bundle exists; note: dirs may be app buckets or flat system folders — probe `ls docs/specs/{name}/` to find a specific service), Phase 3 `/tdd-spec` (test spec sync), Phase 4 `/tdd-spec [direction=sync]` (dashboard sync). Never skip based on review PASS status alone.
 
 ---
 
-## Parallel Review Phase (Steps 2–5) — EXECUTION PROTOCOL
+## Parallel Review Phase (Steps 2–6) — EXECUTION PROTOCOL
 
 > **Note:** Steps 2–6 are ARCHITECTURAL/SECURITY reviewers (architecture compliance, DDD entities,
 > performance, integration test quality, security vulnerabilities). They are separate from the
@@ -309,35 +317,59 @@ Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-ag
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /review-changes -> **[parallel batch]** /review-architecture + /review-domain-entities (if entity changes) + /performance + /integration-test-review + /security -> /code-simplifier -> /code-review -> /integration-test-verify -> /plan -> /plan-validate -> /why-review -> /cook -> **fresh sub-agent re-review gate** -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /review-changes -> /review-architecture -> /review-domain-entities -> /performance -> /integration-test-review -> /security -> /code-simplifier -> /code-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review-changes -> /docs-update -> /watzup -> /workflow-end
 
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — create ALL 16 tasks immediately
-- **IMPORTANT MUST ATTENTION** after fixes in `/cook`, spawn a NEW `code-reviewer` sub-agent via the `Agent` tool per `SYNC:fresh-context-review` — NEVER re-review with the main agent
-- **IMPORTANT MUST ATTENTION** track fresh-subagent round count in conversation context (session-scoped, no persistent files) — max 3 rounds, escalate via `AskUserQuestion` if exceeded
-- **IMPORTANT MUST ATTENTION** PASS means a fresh sub-agent round finds ZERO Critical/High issues WITHOUT needing fixes — only then are changes ready to commit
-- **IMPORTANT MUST ATTENTION** skip steps 9-13 when all reviews PASS and tests pass (no fixes needed)
-- **IMPORTANT MUST ATTENTION** each step MUST invoke its `Skill` tool — marking completed without invocation is a violation
-- **IMPORTANT MUST ATTENTION** treat multilingual UI translation gaps as mandatory user-decision gates — no silent pass when locale updates are missing
-  <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+> **[BLOCKING SEQUENCING]** Step 1 `/review-changes` is SEQUENTIAL and MUST run FIRST — it produces the baseline (surface analysis + integration-test/translation gap detection) consumed by all downstream reviewers. Steps 2–6 (`/review-architecture`, `/review-domain-entities`, `/performance`, `/integration-test-review`, `/security`) form a PARALLEL BATCH — spawn all in ONE message via `Agent` tool calls (`subagent_type: "code-reviewer"`). Step 7 `/code-simplifier` is SEQUENTIAL and waits until ALL parallel batch sub-agents return + consolidation summary is built. Steps 8+ proceed sequentially as listed.
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
 
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Business terminology in Application/Domain layers.** Comments and naming in Application/Domain must stay business-oriented and technical-agnostic; avoid implementation terms (say `background job`, not `Hangfire background job`).
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Closing Reminders
+
+**IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — create ALL 16 tasks immediately
+**IMPORTANT MUST ATTENTION** after fixes in `/cook`, spawn a NEW `code-reviewer` sub-agent via the `Agent` tool per `SYNC:fresh-context-review` — NEVER re-review with the main agent
+**IMPORTANT MUST ATTENTION** track fresh-subagent round count in conversation context (session-scoped, no persistent files) — max 3 rounds, escalate via `AskUserQuestion` if exceeded
+**IMPORTANT MUST ATTENTION** PASS means a fresh sub-agent round finds ZERO Critical/High issues WITHOUT needing fixes — only then are changes ready to commit
+**IMPORTANT MUST ATTENTION** skip steps 9-13 when all reviews PASS and tests pass (no fixes needed)
+**IMPORTANT MUST ATTENTION** each step MUST invoke its `Skill` tool — marking completed without invocation is a violation
+**IMPORTANT MUST ATTENTION** treat multilingual UI translation gaps as mandatory user-decision gates — no silent pass when locale updates are missing
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

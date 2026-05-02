@@ -14,17 +14,6 @@ description: '[Documentation] Orchestrate all UI system scans in parallel: desig
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify sub-skill results after completion.** Sub-skills may complete with partial output. Grep-verify each output doc has real content before declaring success.
-> - **Do NOT skip a sub-skill because the others found nothing.** Each scan is independent — one empty result does not imply others will be empty.
-> - **Surface ambiguity before coding.** NEVER pick silently.
-> - **Check downstream references before deleting.** Map referencing files before removal.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 <!-- SYNC:output-quality-principles -->
 
 > **Output Quality** — Token efficiency without sacrificing quality.
@@ -55,7 +44,7 @@ description: '[Documentation] Orchestrate all UI system scans in parallel: desig
 - Skip entirely if project has no frontend code
 - All 3 scans run in PARALLEL for speed
 - Does NOT modify application code — only populates `docs/project-reference/`
-- **MUST ATTENTION** verify each sub-skill output doc after completion — never trust "it ran" without checking
+  **MUST ATTENTION** verify each sub-skill output doc after completion — never trust "it ran" without checking
 
 ---
 
@@ -177,18 +166,33 @@ This skill replaces 3 separate scan entries in the `project-config` scan table:
 
 ---
 
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify sub-skill results after completion.** Sub-skills may complete with partial output. Grep-verify each output doc has real content before declaring success.
+> **Do NOT skip a sub-skill because the others found nothing.** Each scan is independent — one empty result does not imply others will be empty.
+> **Surface ambiguity before coding.** NEVER pick silently.
+> **Check downstream references before deleting.** Map referencing files before removal.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per sub-skill, one per verification, one for summary
-- **IMPORTANT MUST ATTENTION** run pre-flight check in Phase 0 — never launch scans on backend-only projects
-- **IMPORTANT MUST ATTENTION** verify each sub-skill output doc has real content — "it ran" ≠ "it produced output"
-- **IMPORTANT MUST ATTENTION** summary must come from actual verified doc content — NEVER fabricate token counts or component names
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per sub-skill, one per verification, one for summary
+**IMPORTANT MUST ATTENTION** run pre-flight check in Phase 0 — never launch scans on backend-only projects
+**IMPORTANT MUST ATTENTION** verify each sub-skill output doc has real content — "it ran" ≠ "it produced output"
+**IMPORTANT MUST ATTENTION** summary must come from actual verified doc content — NEVER fabricate token counts or component names
 
 **Anti-Rationalization:**
 

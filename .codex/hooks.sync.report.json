@@ -1,0 +1,60 @@
+{
+    "generated_at": "2026-05-02T01:26:40.072Z",
+    "source": ".claude/settings.json",
+    "target": ".codex/hooks.json",
+    "notes": [
+        "Codex hooks are currently disabled on Windows runtimes.",
+        "Tool matcher capabilities may vary by Codex runtime; source matchers are preserved when possible.",
+        "UserPromptSubmit and Stop now preserve source matcher filters when present.",
+        "Claude startup auto-install hooks are intentionally omitted from Codex hooks."
+    ],
+    "converted_events": [
+        {
+            "event": "PostToolUse",
+            "groups": 8
+        },
+        {
+            "event": "PreToolUse",
+            "groups": 19
+        },
+        {
+            "event": "SessionStart",
+            "groups": 6
+        },
+        {
+            "event": "Stop",
+            "groups": 1
+        },
+        {
+            "event": "UserPromptSubmit",
+            "groups": 2
+        }
+    ],
+    "skipped_events": [
+        {
+            "event": "Notification",
+            "reason": "unsupported-by-codex"
+        },
+        {
+            "event": "PreCompact",
+            "reason": "unsupported-by-codex"
+        },
+        {
+            "event": "SessionEnd",
+            "reason": "unsupported-by-codex"
+        },
+        {
+            "event": "SubagentStart",
+            "reason": "unsupported-by-codex"
+        }
+    ],
+    "converted_groups_total": 36,
+    "skipped_groups": [
+        {
+            "event": "SessionStart",
+            "group_index": 3,
+            "matcher": "startup",
+            "reason": "disabled-for-codex-startup-auto-install"
+        }
+    ]
+}

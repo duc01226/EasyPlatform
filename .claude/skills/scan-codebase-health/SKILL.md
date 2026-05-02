@@ -13,17 +13,6 @@ description: '[Documentation] Detect codebase health issues: unused exports, doc
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
-> - **Trace full dependency chain after edits.** Always trace full chain.
-> - **Holistic-first — resist nearest-attention trap.** List EVERY precondition before forming hypothesis.
-> - **Surface ambiguity before coding.** NEVER pick silently.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 <!-- SYNC:output-quality-principles -->
 
 > **Output Quality** — Token efficiency without sacrificing quality.
@@ -55,7 +44,7 @@ description: '[Documentation] Detect codebase health issues: unused exports, doc
 - Generic — reads all paths from project-config.json, never hardcodes project names
 - Graceful degradation — graph-dependent checks skipped if `.code-graph/graph.db` not found
 - Report format — each finding has `file:line`, category, severity (HIGH/MEDIUM/LOW), suggested action
-- **MUST ATTENTION** NEVER report a finding without `file:line` proof
+  **MUST ATTENTION** NEVER report a finding without `file:line` proof
 
 ---
 
@@ -141,7 +130,7 @@ For key exported symbols in source files:
 
 **Skip if `.code-graph/graph.db` does not exist — log "Phase 4 skipped: no graph.db".**
 
-Find source files (.ts, .cs, .py, etc.) with zero inbound edges:
+Find source files (.ts,.cs,.py, etc.) with zero inbound edges:
 
 1. Run `python .claude/scripts/code_graph query importers_of <file> --json`
 2. Flag files with zero importers as LOW severity (may be entry points)
@@ -233,23 +222,40 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 
 ---
 
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
+> **Trace full dependency chain after edits.** Always trace full chain.
+> **Holistic-first — resist nearest-attention trap.** List EVERY precondition before forming hypothesis.
+> **Surface ambiguity before coding.** NEVER pick silently.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per phase
-- **IMPORTANT MUST ATTENTION** detect available tooling in Phase 0 — never assume graph.db exists
-- **IMPORTANT MUST ATTENTION** NEVER report a finding without `file:line` evidence
-- **IMPORTANT MUST ATTENTION** write findings incrementally after each phase — NEVER batch at end
-- **IMPORTANT MUST ATTENTION** severity thresholds are concrete: HIGH = runtime failure risk; MEDIUM = drift/dead code; LOW = cleanup candidate
-- **IMPORTANT MUST ATTENTION** Phase 8 fresh-eyes review is mandatory — prevents false positives from rationalization
-      <!-- SYNC:output-quality-principles:reminder -->
-- **IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-      <!-- /SYNC:output-quality-principles:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** critical thinking — every claim needs traced proof, confidence >80% to act. Never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** AI mistake prevention — holistic-first, fix at responsible layer, surface ambiguity before coding, re-read after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per phase
+**IMPORTANT MUST ATTENTION** detect available tooling in Phase 0 — never assume graph.db exists
+**IMPORTANT MUST ATTENTION** NEVER report a finding without `file:line` evidence
+**IMPORTANT MUST ATTENTION** write findings incrementally after each phase — NEVER batch at end
+**IMPORTANT MUST ATTENTION** severity thresholds are concrete: HIGH = runtime failure risk; MEDIUM = drift/dead code; LOW = cleanup candidate
+**IMPORTANT MUST ATTENTION** Phase 8 fresh-eyes review is mandatory — prevents false positives from rationalization
 
 **Anti-Rationalization:**
 

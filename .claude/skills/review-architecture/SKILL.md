@@ -1,7 +1,7 @@
 ---
 name: review-architecture
 version: 1.2.0
-description: '[Code Quality] Architecture compliance review — clean architecture layers, messaging, service boundaries, CQRS, v1/v2, repos, entity event handlers. Default: changed files only.'
+description: '[Code Quality] Architecture compliance review — clean architecture layers, messaging, service boundaries, CQRS, service pattern eras (legacy vs modern split), repos, entity event handlers. Default: changed files only.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -21,23 +21,6 @@ description: '[Code Quality] Architecture compliance review — clean architectu
 > **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -279,7 +262,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ## Quick Summary
 
-**Goal:** Validate code changes comply with project architecture — clean architecture, messaging, service boundaries, CQRS, v1/v2, repositories, entity event handlers.
+**Goal:** Validate code changes comply with project architecture — repository layout, tooling boundaries, generated artifact ownership, command flows, and project-specific implementation patterns.
 
 **Default scope:** All uncommitted changes (staged + unstaged). Override: specify files, directories, services, or full codebase.
 
@@ -287,9 +270,8 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 >
 > 1. `docs/project-reference/backend-patterns-reference.md` — CQRS, messaging, repos, validation, entity events, layer rules **(READ FIRST — primary rules source)**
 > 2. `docs/project-reference/project-structure-reference.md` — service map, layer structure, DB ownership
-> 3. `docs/project-reference/adr-service-pattern-v1-v2-split.md` — v1/v2 auth/permissions/observability differences
-> 4. `docs/project-reference/frontend-patterns-reference.md` — component hierarchy, store, API patterns **(frontend files only)**
-> 5. `docs/project-reference/code-review-rules.md` — anti-patterns, conventions **(may be auto-injected by hook — check [Injected: ...] header first)**
+> 3. `docs/project-reference/frontend-patterns-reference.md` — component hierarchy, store, API patterns **(frontend files only)**
+> 4. `docs/project-reference/code-review-rules.md` — anti-patterns, conventions **(may be auto-injected by hook — check [Injected: ...] header first)**
 >
 > Not found → search: "architecture documentation", "service patterns", "messaging patterns". Rules come from docs — NOT general knowledge.
 
@@ -329,7 +311,6 @@ Skeptical. Every claim needs traced proof, confidence >80%.
 
 - MUST ATTENTION read `docs/project-reference/backend-patterns-reference.md` — extract messaging naming, layer rules, CQRS patterns, repo rules, entity event handler patterns, validation patterns
 - MUST ATTENTION read `docs/project-reference/project-structure-reference.md` — extract service map, layer structure, DB ownership
-- MUST ATTENTION read `docs/project-reference/adr-service-pattern-v1-v2-split.md` — extract v1/v2 differences, which services are v1 vs v2
 - If frontend files in scope: MUST ATTENTION read `docs/project-reference/frontend-patterns-reference.md`
 - `code-review-rules.md` auto-injected by hook — check conversation context before reading
 
@@ -490,24 +471,15 @@ BLOCKED: {filePath}:{line} uses generic IPlatformRootRepository instead of servi
 
 ---
 
-### Category 5: V1/V2 Service Pattern — Severity: BLOCKED (new services) / WARN (existing)
+### Category 5: Service Pattern Era (Legacy vs Modern Split) — Severity: BLOCKED (new services) / WARN (existing)
 
-**Think:** Is this a new service (must be v2) or existing v1 service (expect v1 patterns)? Is v2 pattern being partially mixed into v1 without full migration?
+**Think:** When a project distinguishes legacy vs modern service patterns (e.g., auth scheme, telemetry stack, permission model, language-version syntax), is this a new service (must follow modern) or an existing legacy service (expect legacy patterns)? Is the modern pattern being partially mixed into a legacy service without a full migration?
 
-**New services (BLOCKED if v1 pattern used):**
+**New services — BLOCKED if any legacy-only pattern is used.** Identify the project's modern-pattern checklist from injected reference docs (e.g., `project-structure-reference.md`, ADRs, scaffolding templates) and verify every item.
 
-- MUST use multi-scheme auth (JWT Bearer + Azure AD Teams)
-- MUST use `UsePermissionProviderClaimGenerationByProductScope()`
-- MUST use OpenTelemetry via Aspire (NO ApplicationInsights)
-- MUST use modern C# collection syntax `[...]`
+**Existing legacy services — WARN if modern patterns are partially mixed without full migration.** Do not flag legacy patterns as violations in their own context; flag them only when partial mixing creates inconsistency.
 
-**Existing v1 services (WARN if new v2 patterns mixed without full migration):**
-
-- Single JWT Bearer expected — don't flag as violation
-- `UsePermissionProviderClaimGeneration()` without params expected
-- Warn if ApplicationInsights still present (being deprecated)
-
-**Determine v1 vs v2:** Growth = v2 standard. All other services = v1 legacy. Check `project-structure-reference.md`.
+**Determining era:** Read the project's reference docs at review time — service-pattern era assignments are project-specific and listed authoritatively there. Do NOT hardcode service names in this skill.
 
 ---
 
@@ -622,7 +594,7 @@ Update report with final sections:
 - Messaging Patterns: {PASS/WARN/BLOCKED}
 - CQRS Compliance: {PASS/WARN/BLOCKED}
 - Repository Patterns: {PASS/WARN/BLOCKED}
-- V1/V2 Compliance: {PASS/WARN/BLOCKED}
+- Service Pattern Era: {PASS/WARN/BLOCKED}
 - Entity Event Handlers: {PASS/WARN/BLOCKED}
 - Service Boundaries: {PASS/WARN/BLOCKED}
 - Frontend Architecture: {PASS/WARN/BLOCKED/N/A}
@@ -672,16 +644,64 @@ Before reporting ANY work done:
 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints
 5. **New artifact = wired artifact.** Created something? Prove registered, imported, reachable by all consumers
 
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
-- **MUST ATTENTION** break work into small tasks using `TaskCreate` BEFORE starting
-- **MUST ATTENTION** read project architecture docs BEFORE reviewing — rules come from docs, not general knowledge
-- **MUST ATTENTION** every violation requires `file:line` proof — NEVER speculate
-- **MUST ATTENTION** grep 3+ counterexamples before flagging any pattern violation
-- **MUST ATTENTION** run at least ONE graph command on key files when graph.db exists
-- **MUST ATTENTION** NEVER fix code — review and report only
-- **MUST ATTENTION** apply `Think:` reasoning prompt before checking each category — derive violations, don't recite checklists
-- **MUST ATTENTION** use `AskUserQuestion` to present next steps after completing review
+**MUST ATTENTION** break work into small tasks using `TaskCreate` BEFORE starting
+**MUST ATTENTION** read project architecture docs BEFORE reviewing — rules come from docs, not general knowledge
+**MUST ATTENTION** every violation requires `file:line` proof — NEVER speculate
+**MUST ATTENTION** grep 3+ counterexamples before flagging any pattern violation
+**MUST ATTENTION** run at least ONE graph command on key files when graph.db exists
+**MUST ATTENTION** NEVER fix code — review and report only
+**MUST ATTENTION** apply `Think:` reasoning prompt before checking each category — derive violations, don't recite checklists
+**MUST ATTENTION** use `AskUserQuestion` to present next steps after completing review
 
 **Anti-Rationalization:**
 
@@ -692,28 +712,3 @@ Before reporting ANY work done:
 | "Just flag obvious violations"       | Gray areas matter most. Apply `Think:` prompt to all 8 categories. |
 | "Graph not needed here"              | Run ONE trace. 5 seconds → full blast radius revealed.             |
 | "Skill reviews only changed files"   | Default scope, not a limit. User can override.                     |
-
-<!-- SYNC:evidence-based-reasoning:reminder -->
-
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
-- **IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

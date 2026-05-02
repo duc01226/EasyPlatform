@@ -1,7 +1,12 @@
 {
     "mcpServers": {
+        "chrome-devtools": {
+            "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest"],
+            "command": "cmd",
+            "description": "Chrome browser automation (navigate, click, screenshot, network/console inspection)"
+        },
         "context7": {
-            "args": ["/c", "npx", "-y", "dotenv-cli", "-e", ".env.local", "--", "npx", "-y", "@upstash/context7-mcp@latest"],
+            "args": ["/c", "npx", "-y", "dotenv-cli", "-e", ".env", "--", "npx", "-y", "@upstash/context7-mcp@2.1.0"],
             "command": "cmd",
             "description": "Context7 for up-to-date library documentation"
         },
@@ -11,13 +16,24 @@
             "description": "Figma design extraction for PBI-driven development"
         },
         "github": {
-            "args": ["/c", "npx", "-y", "dotenv-cli", "-e", ".env.local", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
-            "command": "cmd"
+            "args": ["/c", "npx", "-y", "dotenv-cli", "-e", ".env", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
+            "command": "cmd",
+            "description": "GitHub API operations (issues, PRs, repos)"
         },
         "memory": {
             "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory"],
             "command": "cmd",
             "description": "Persistent memory for cross-session knowledge"
+        },
+        "mongodb": {
+            "args": ["/c", "npx", "-y", "dotenv-cli", "-e", ".env", "--", "npx", "-y", "mongodb-mcp-server", "--readOnly"],
+            "command": "cmd",
+            "description": "MongoDB local (READ-ONLY). Requires MDB_MCP_CONNECTION_STRING in .env"
+        },
+        "postgres": {
+            "args": ["/c", "npx", "-y", "dotenv-cli", "-e", ".env", "--", "cmd", "/c", "npx -y @modelcontextprotocol/server-postgres %POSTGRES_MCP_URL%"],
+            "command": "cmd",
+            "description": "PostgreSQL local (READ-ONLY by server design). Requires POSTGRES_MCP_URL in .env"
         },
         "sequential-thinking": {
             "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],

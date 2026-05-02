@@ -2,7 +2,7 @@
 name: workflow-spec-driven-dev
 version: 2.1.0
 last_reviewed: 2026-04-21
-description: '[Workflow] Unified spec-driven development workflow — maintains both engineering spec bundle (docs/specs/{app-bucket}/{system-name}/) and business feature docs (docs/business-features/) in sync. Exception: accounts stays flat at docs/specs/accounts/. Modes: init-full (zero → both layers), update (code change → incremental sync both layers), audit (staleness check both layers). Replaces and merges workflow-spec-discovery + standalone feature-docs init. Use for: initial spec generation, ongoing spec maintenance, quarterly spec audits, tech migration specs, onboarding, compliance documentation, clone/fork briefs.'
+description: '[Workflow] Unified spec-driven development workflow — maintains both engineering spec bundle (docs/specs/{app-bucket}/{system-name}/ — directories may also be flat system folders depending on host project) and business feature docs (docs/business-features/) in sync. Modes: init-full (zero → both layers), update (code change → incremental sync both layers), audit (staleness check both layers). Replaces and merges workflow-spec-discovery + standalone feature-docs init. Use for: initial spec generation, ongoing spec maintenance, quarterly spec audits, tech migration specs, onboarding, compliance documentation, clone/fork briefs.'
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,7 @@ disable-model-invocation: true
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-**IMPORTANT MANDATORY Steps:** mode-detection -> discovery-scout -> size-evaluation -> extraction-plan -> plan-review -> plan-validation -> execute-mode-sequence -> review-artifact -> watzup -> workflow-end
+**IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
 
 > **[BLOCKING]** Invoke `Skill` tool for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
 > **[BLOCKING]** Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0.
@@ -34,16 +34,16 @@ disable-model-invocation: true
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -105,11 +105,11 @@ disable-model-invocation: true
 
 **Mode Routing:**
 
-| Mode        | When to Use                                  | Step Sequence                                                                                                                                                             |
-| ----------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `init-full` | Zero — no specs, no feature docs             | scout → **size-evaluation** → **plan** → **plan-review** → **plan-validate** → spec-discovery(init) → feature-docs(init) → review-artifact → watzup → workflow-end        |
-| `update`    | Code changed, new requirement, new PBI       | workflow-review-changes → spec-discovery(update) → feature-docs(update) → **tdd-spec(update)** → tdd-spec [direction=sync](sync) → review-changes → watzup → workflow-end |
-| `audit`     | Quarterly health check, verify doc freshness | scout → spec-discovery(audit) → feature-docs(audit) → review-artifact → watzup → workflow-end                                                                             |
+| Mode        | When to Use                                  | Step Sequence                                                                                                                                                                                                                 |
+| ----------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `init-full` | Zero — no specs, no feature docs             | scout → **size-evaluation** → **plan** → **plan-review** → **plan-validate** → spec-discovery(init) → feature-docs(init) → review-artifact → **docs-update(final sync)** → watzup → workflow-end                              |
+| `update`    | Code changed, new requirement, new PBI       | workflow-review-changes → spec-discovery(update) → feature-docs(update) → **tdd-spec(update)** → **tdd-spec-review** → tdd-spec [direction=sync](sync) → review-changes → **docs-update(final sync)** → watzup → workflow-end |
+| `audit`     | Quarterly health check, verify doc freshness | scout → spec-discovery(audit) → feature-docs(audit) → review-artifact → **docs-update(final sync)** → watzup → workflow-end                                                                                                   |
 
 **Key Rules:**
 
@@ -149,9 +149,9 @@ Check for existing spec dirs:
 ls docs/specs/ 2>/dev/null
 ```
 
-- Dirs found → each is an `{app-bucket}` (e.g., `bravoTALENTS`, `bravoGROWTH`, `bravoSURVEYS`, `bravoINSIGHTS`, `CandidateApp`, `SupportingServices`). **Exception:** `accounts/` stays flat (no app-bucket level). To find a specific `{system-name}`, probe `ls docs/specs/{app-bucket}/`.
-- Empty → ask: "System name for spec path? Use a single service name (e.g., `growth`, `candidate`) under its app bucket (e.g., `bravoGROWTH/growth`, `bravoTALENTS/candidate`)."
-- **Note:** The path is now two-level: `docs/specs/{app-bucket}/{system-name}/`. Exception: `accounts` stays at `docs/specs/accounts/` (flat). For BravoSUITE, the per-service layout is preferred — one dir per service under its app bucket.
+- Dirs found → each may be an `{app-bucket}` or a flat `{system-name}` depending on the host project. To find a specific `{system-name}`, probe `ls docs/specs/{name}/`.
+- Empty → ask: "System name for spec path? Use the host project's docs/specs layout."
+- **Note:** Prefer the layout already present in the host project. Do not invent an app-bucket level when the project uses flat system directories.
 
 Present detected mode with reasoning. User confirms before proceeding.
 
@@ -278,6 +278,12 @@ TaskCreate: "size-evaluation — count modules, estimate total_tasks, decide spl
   → Gap found → fix task → re-investigate → fix → spawn fresh code-reviewer sub-agent (max 2 rounds)
   → NEVER inline re-review — main agent rationalizes its own output
 
+/docs-update
+  → Near-final synchronization sweep across project docs, business feature docs, engineering specs, and TDD/spec dashboards
+  → MUST run after review-artifact fixes and before /watzup
+  → Verify feature docs Section 15, docs/specs dashboards, and module indexes are synchronized
+  → Report skipped sub-phases explicitly when no impacted docs exist
+
 /watzup
   → Session summary:
     - Spec bundle: N modules, X files, ~Y lines, completeness matrix (module × phase ✅/⚠️/❌)
@@ -347,6 +353,11 @@ Code changed (new feature, bug fix, refactor, new PBI). Sync both layers increme
   → TC ID collision prevention: grep existing IDs before assigning new ones
   → Do NOT overwrite Tested TCs — append new TCs and mark stale TCs for review
 
+/tdd-spec-review
+  → Review updated/planned TCs for invariant coverage, GIVEN/WHEN/THEN completeness, stale TC handling, and duplicate TC IDs
+  → SKIP THIS STEP if /tdd-spec was skipped because there were no TC changes — mark as "Skipped: no TC changes"
+  → BLOCK sync if review finds missing invariants, ambiguous expected behavior, or TC/code/spec drift
+
 /tdd-spec [direction=sync] [direction=forward]
   → Forward sync: feature doc Section 15 → docs/specs/ dashboard
   → SKIP THIS STEP if: no TC changes in this update cycle
@@ -357,6 +368,12 @@ Code changed (new feature, bug fix, refactor, new PBI). Sync both layers increme
   → Verify: spec changes match code changes (no over/under documentation)
   → Verify: feature doc sections updated match impact map
   → Verify: new TCs cover all new functionality (no coverage gaps)
+
+/docs-update
+  → Near-final synchronization sweep across project docs, business feature docs, engineering specs, and TDD/spec dashboards
+  → MUST run after review-changes fixes and before /watzup
+  → Verify feature docs Section 15, docs/specs dashboards, and module indexes are synchronized
+  → Report skipped sub-phases explicitly when no impacted docs exist
 
 /watzup
   → Summary: modules updated, spec files changed, feature doc sections changed, TCs added/updated
@@ -373,8 +390,11 @@ Triggering update from new PBI or requirement (not code change):
 After /workflow-review-changes:
   → User provides PBI text or requirement description
   → Map requirement → affected domain entities → affected modules
+  → /dor-gate: required when a new/changed PBI is being made implementation-ready; PASS or WARN required before planned specs/TCs become implementation guidance
+  → /pbi-mockup: required when the PBI changes user-facing UI or user journeys; skip with reason for backend-only/non-UI requirements
   → Treat as "speculative update": add new sections/rules to spec files marked [PLANNED — not yet implemented]
   → Add corresponding TCs in feature doc Section 15 marked Status: Planned
+  → /tdd-spec-review: review planned TCs before syncing them into docs/specs dashboards
   → These become implementation guidance, not verified spec
 ```
 
@@ -419,6 +439,12 @@ Budget multiplier: If last audit was >90 days ago → ×1.5 (more drift expected
   → Produce: plans/reports/spec-audit-{date}-{system-name}.md
   → Include: total stale coverage %, estimated update effort, priority order
 
+/docs-update
+  → Near-final synchronization sweep across project docs, business feature docs, engineering specs, and TDD/spec dashboards
+  → MUST run after review-artifact audit conclusions and before /watzup
+  → Verify audit outputs, feature docs, specs indexes, and TDD/spec dashboards remain consistent
+  → Report skipped sub-phases explicitly when no impacted docs exist
+
 /watzup
   → Present action plan: which modules/features to update first
   → Recommend: run update mode scoped to stale modules
@@ -430,15 +456,19 @@ Budget multiplier: If last audit was >90 days ago → ×1.5 (more drift expected
 
 ## Conditional Skip Rules
 
-| Step                          | Skip When                                                                      |
-| ----------------------------- | ------------------------------------------------------------------------------ |
-| Phase A.ERD in init           | Never — ERD mandatory with Phase A                                             |
-| `/feature-docs` in init-full  | User explicitly requests spec-only output                                      |
-| `/spec-discovery` in update   | `docs/specs/{app-bucket}/{system-name}/` doesn't exist (run init-full instead) |
-| `/review-artifact` audit pass | No gaps found in both layers AND no UNVERIFIED items                           |
-| Phase C (API)                 | Internal library with no public endpoints                                      |
-| Phase D (Events)              | No async messaging or background jobs                                          |
-| Phase E (Journeys)            | Backend-only scope, no user-facing UI                                          |
+| Step                           | Skip When                                                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Phase A.ERD in init            | Never — ERD mandatory with Phase A                                                                             |
+| `/feature-docs` in init-full   | User explicitly requests spec-only output                                                                      |
+| `/spec-discovery` in update    | `docs/specs/{app-bucket}/{system-name}/` doesn't exist (run init-full instead)                                 |
+| `/dor-gate` in update          | Update source is code diff only, existing PBI is already DoR-ready, or no PBI readiness decision is being made |
+| `/pbi-mockup` in update        | Backend-only/non-UI requirement, code diff only, or existing mockup already covers the change                  |
+| `/tdd-spec-review` in update   | `/tdd-spec` skipped because there were no TC changes                                                           |
+| `/docs-update` near-final sync | Never skip entirely; sub-phases may be skipped only with explicit reason in the docs-update report             |
+| `/review-artifact` audit pass  | No gaps found in both layers AND no UNVERIFIED items                                                           |
+| Phase C (API)                  | Internal library with no public endpoints                                                                      |
+| Phase D (Events)               | No async messaging or background jobs                                                                          |
+| Phase E (Journeys)             | Backend-only scope, no user-facing UI                                                                          |
 
 ---
 
@@ -475,6 +505,7 @@ docs-update (as workflow step):
   Phase 2: /feature-docs update mode (existing)
   Phase 2.5: /spec-discovery update mode (NEW — if docs/specs/{app-bucket}/{system-name}/ exists AND spec_discovery_update != false in project-config.json)
   Phase 3: /tdd-spec (existing)
+  Phase 3.5: /tdd-spec-review (required when Phase 3 changes TCs)
   Phase 4: /tdd-spec [direction=sync] (existing)
 ```
 
@@ -512,7 +543,18 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** mode-detection -> discovery-scout -> size-evaluation -> extraction-plan -> plan-review -> plan-validation -> execute-mode-sequence -> review-artifact -> watzup -> workflow-end
+**IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 
@@ -533,14 +575,3 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 - **[REQUIRED]** Apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

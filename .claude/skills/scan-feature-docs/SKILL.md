@@ -14,17 +14,6 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> - **Verify AI-generated content against actual code.** AI hallucinates file paths and section headings. Glob to confirm existence before documenting.
-> - **Trace full dependency chain after edits.** Always trace full chain.
-> - **Surface ambiguity before coding.** NEVER pick silently.
-> - **Check downstream references before deleting.** Map referencing files before removal.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
@@ -81,12 +70,12 @@ test -f docs/project-reference/feature-docs-reference.md && echo "SYNC mode" || 
 
 Detect documentation structure type:
 
-| Signal                                      | Type                            | Scan Approach                       |
-| ------------------------------------------- | ------------------------------- | ----------------------------------- |
-| `docs/business-features/{App}/` directories | BravoSUITE-style (app-bucketed) | Scan per-app, map to services       |
-| `docs/features/{Feature}.md` flat structure | Feature-per-file                | Scan each file, derive categories   |
-| `wiki/` or external doc system links        | Wiki-based                      | Scan wiki references, note external |
-| README.md embedded in service dirs          | Source-embedded                 | Scan `src/**/*.md` files            |
+| Signal                                      | Type                      | Scan Approach                       |
+| ------------------------------------------- | ------------------------- | ----------------------------------- |
+| `docs/business-features/{App}/` directories | App-bucketed feature docs | Scan per-app, map to services       |
+| `docs/features/{Feature}.md` flat structure | Feature-per-file          | Scan each file, derive categories   |
+| `wiki/` or external doc system links        | Wiki-based                | Scan wiki references, note external |
+| README.md embedded in service dirs          | Source-embedded           | Scan `src/**/*.md` files            |
 
 **Path:** INIT → Phase 1 → Phase 2 (full scan) → Phase 3 (full write) → Phase 4 (verify)
 **Path:** SYNC → Phase 0 read existing → Phase 1 → Phase 2 (diff scan, new/changed only) → Phase 3 (targeted update) → Phase 4 (verify)
@@ -185,6 +174,31 @@ Read report. Apply fresh-eyes protocol:
 
 ---
 
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+- **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+  <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+  <!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates file paths and section headings. Glob to confirm existence before documenting.
+> **Trace full dependency chain after edits.** Always trace full chain.
+> **Surface ambiguity before coding.** NEVER pick silently.
+> **Check downstream references before deleting.** Map referencing files before removal.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
 ## Closing Reminders
 
 - **[REQUIRED]** break work into small `TaskCreate` tasks BEFORE starting
@@ -193,15 +207,6 @@ Read report. Apply fresh-eyes protocol:
 - **[REQUIRED]** sub-agents write findings incrementally after each section — NEVER batch at end
 - **[REQUIRED]** Coverage Gaps section is mandatory — NEVER silently omit undocumented apps
 - **[REQUIRED]** Round 2 fresh-eyes validation before writing final doc
-      <!-- SYNC:scan-and-update-reference-doc:reminder -->
-- **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **Anti-Rationalization:**
 

@@ -606,6 +606,13 @@ Validate architecture against these principles — flag violations in report:
 - **"/refine"** — If need to create PBIs first
 - **"Skip, continue manually"** — user decides
 
+### Council escalation (always-offer, second prompt)
+
+After the existing `## Next Steps` prompt above resolves, present a **second**, independent `AskUserQuestion` call (do NOT merge into the first):
+
+- **"Skip council — proceed (Recommended)"** — Continue with the architecture decision as-is. Recommended default.
+- **"Escalate to /llm-council"** — Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when this architecture pick is hard to reverse and you need adversarial framing. Cheaper alternatives: `/why-review`, `/plan-validate` (run these first if you haven't).
+
 ## Closing Reminders
 
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
@@ -615,10 +622,10 @@ Validate architecture against these principles — flag violations in report:
   <!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 

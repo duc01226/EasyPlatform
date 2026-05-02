@@ -158,7 +158,7 @@
 
 ## SYNC:cross-service-check:reminder
 
-- **IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
+**IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
 
 ---
 
@@ -341,6 +341,66 @@
 > 2. **One focused pass per dimension** — Dedicate single-focus attention to EACH dimension in sequence. Do NOT mix concerns across passes.
 > 3. **Threshold: 3+ similar patterns = MANDATORY extraction** — Not optional suggestion. Flag as mandatory structural fix requiring action.
 > 4. **2+ violations of same kind = structural finding** — Report as "pattern problem" needing architectural resolution, not a list of individual instances.
+
+---
+
+## SYNC:complexity-prevention
+
+> **Complexity Prevention (Ousterhout)** — MANDATORY. Measure code by cost of change: one business change should map to one code change. Flag ALL of the following in review:
+>
+> 1. **Change amplification** — small business change forces edits in >3 places → structural flaw. Count edit sites for a plausible future change (add variant, add field, add authorization). >3 = reject.
+> 2. **Cognitive load** — reader must hold too much context to safely modify. Flag deep inheritance, long parameter lists, boolean traps, implicit ordering dependencies.
+> 3. **Cross-cutting duplication at entry points** — logging, error handling, validation, auth, transactions reimplemented per controller/handler/route. Lift to middleware / interceptor / filter / decorator / aspect.
+> 4. **Leaked implementation technology** — repos returning `IQueryable`/`QuerySet`/`Criteria`/raw cursors/ORM entities to callers. Return finished results + intent-revealing methods (`GetActiveVipUsers()` not `Query()`).
+> 5. **Type-switch scattering** — `switch`/`if`-chains on enum/discriminator in >1 place. New variant = new file, not N edits. One factory/registry switch at the boundary OK; scattered switches = reject.
+> 6. **Anemic models** — domain objects with only getters/setters, logic floats in services. Move invariants/behavior onto the object (`order.Checkout()`, not `order.Status = ...`).
+> 7. **Primitive obsession** — raw `string`/`int`/`decimal` for account numbers, emails, money, percentages, date ranges, with re-validation at every entry. Wrap in value objects / records / structs that validate once at construction.
+> 8. **Inline cross-cutting concerns** — authorization/tenant isolation/audit/sanitization hand-written at top of every handler. Flag intent with declarative markers (`@RequirePermission("Order.Delete")`), enforce once centrally.
+> 9. **Shallow modules** — tiny class, big interface (many public methods, many flags, many ctor params) wrapping little logic. A module is deep when a small interface hides a lot of implementation. If interface ≈ implementation cost to learn → inline.
+> 10. **Missing base class for repeated component/handler lifecycle** — 3+ forms/CRUD handlers/list views reimplementing loading/dirty/submit/pagination → extract to base class / hook / composable / mixin / trait.
+> 11. **Premature vs delayed abstraction** — rule-of-three. First occurrence: write it. Second: notice duplication. Third: extract. Don't build generic frameworks before real variation; don't copy-paste for the 4th time.
+> 12. **Embedded utility logic not extracted to helpers** — inline paging loops (`while (hasMore) { skip += take; ... }`), ad-hoc datetime math, string parsing/formatting, collection partitioning, retry/backoff loops, URL/query-string building. If the algorithm is non-trivial AND stack-generic (not business-specific), extract to `util`/`helper`/`extensions` and let consumers call one line. Inline duplicates → duplicated bug surface.
+> 13. **Logic in wrong (higher) layer — downshift to callee** — business/derivation logic written in the caller when the callee owns the data. Defaults: Controller code that should be App Service. App Service code that should be Domain Service or Entity. Component code that should be ViewModel/Store/Service. Caller reaching into callee's data shape to compute something → move the computation behind an intent-revealing method on the callee. Lowest responsible layer wins (Entity > Domain Service > App Service > Controller · Model/VM > Store > Component). Higher-layer placement = duplicated logic when a sibling caller needs the same thing.
+> 14. **Owner owns the rule — extract on first write** — if a caller inlines logic that derives, normalizes, validates, or computes from another type's data, MOVE it to the owning type. Single use is sufficient — the trigger is wrong responsibility, not duplication. Sibling callers always arrive; inline copies drift silently with no compile error and no name to grep. **Common offenders:** _Backend_ — inlined rules in application-layer handlers / commands / queries / services / controllers that belong on the domain entity / value object / domain service. _Frontend_ — inlined derivations / formatting / validation in components that belong on the model / store / view-model / API service. **Fix:** name the rule once as a method (static or instance) on the owning type; callers invoke by name. Future variant → SECOND named method on the owner, never an inline near-duplicate. **Right responsibility first; reuse is the consequence.**
+>
+> **Extraction target — where the named rule lives:**
+>
+> | Shape of the rule                             | Goes to                       |
+> | --------------------------------------------- | ----------------------------- |
+> | Pure function over an entity's own data       | static method on the entity   |
+> | Behavior that mutates / guards entity state   | instance method on the entity |
+> | Always-true invariant on a primitive value    | value object constructor      |
+> | Needs DI (repo / settings / clock)            | helper class registered in DI |
+> | Domain-agnostic algorithm reused across types | util / extension method       |
+> | Pure shape / projection conversion            | DTO mapping                   |
+>
+> **Pre-commit edit-site test (reject if answer is "many"):**
+>
+> | Change Scenario                                 | Should touch              |
+> | ----------------------------------------------- | ------------------------- |
+> | Add new variant (customer type, payment method) | 1 new file                |
+> | Change HTTP error response format               | 1 middleware/filter       |
+> | Add timestamp field to every persisted entity   | 1 base entity/interceptor |
+> | Add authorization to a new endpoint             | 1 declarative marker      |
+> | Swap database/ORM                               | Data layer only           |
+> | Change business calculation rule                | 1 method on owning entity |
+> | Add loading indicator pattern to forms          | 1 base component/hook     |
+> | Add validation rule to a domain primitive       | 1 value-object ctor       |
+> | Change paging/retry/datetime algorithm          | 1 helper/util function    |
+> | Change a derivation of entity data              | 1 method on the entity    |
+>
+> **Operating heuristics:**
+>
+> - Write the call site first.
+> - Count edit sites for plausible future change.
+> - Prefer removing code over adding it.
+> - Surface assumptions at boundaries, hide details inside.
+> - **Pre-reuse scan** — before writing a non-trivial block, grep for similar algorithms (`while.*skip`, `DateTime.*Add`, `split`/`join` chains, paging loops, retry loops). Match existing helper → call it. None exists but pattern is stack-generic → extract to util before second caller appears.
+> - **Layer placement test** — ask "if a sibling caller needed this tomorrow, would they re-derive it?" If yes, the logic is in the wrong layer. Move it down.
+> - **Open-case-for-future-reuse** — if reviewer spots a block that is likely to appear in another feature (domain-agnostic algorithm, shared lifecycle, recurring derivation), do NOT rationalize with pure YAGNI. Either extract now (if cheap) or create a tracked TODO with the exact extraction target so the second caller does not duplicate silently. Silent duplication is the default failure mode.
+> - When in doubt ask: "What would need to change if the requirement shifts?"
+>
+> **The measure of good code is the cost of change.** Not shortest. Not cleverest. Not most abstracted. Cheapest to safely modify having read a small local portion.
 
 ---
 
@@ -542,6 +602,30 @@
 
 ---
 
+## SYNC:project-reference-docs-guide
+
+> **Project Reference Docs** — `docs/project-reference/` initialized by session hooks. Many are auto-injected into context — check for `[Injected: ...]` header before reading manually.
+>
+> | Document                                   | When to Read                                                          | Auto-Injected?   |
+> | ------------------------------------------ | --------------------------------------------------------------------- | ---------------- |
+> | `backend-patterns-reference.md`            | Any `.cs` edit — CQRS, repositories, validation, events               | ✓ on `.cs` edits |
+> | `frontend-patterns-reference.md`           | Any `.ts`/`.html` edit — base classes, stores, API services           | ✓ on `.ts` edits |
+> | `domain-entities-reference.md`             | Task touches entities, models, or cross-service sync                  | ✓ via hook       |
+> | `design-system/design-system-canonical.md` | Any `.html`/`.scss`/`.css` edit — tokens, BEM, components             | ✓ via hook       |
+> | `integration-test-reference.md`            | Writing or reviewing integration tests                                | ✓ via hook       |
+> | `code-review-rules.md`                     | Any code review — project-specific rules & checklists                 | ✓ via hook       |
+> | `scss-styling-guide.md`                    | `.scss`/`.css` changes — BEM, mixins, variables                       | —                |
+> | `design-system/README.md`                  | UI work — design system overview, component inventory                 | —                |
+> | `feature-docs-reference.md`                | Updating `docs/business-features/**` docs                             | ✓ via hook       |
+> | `spec-principles.md`                       | Writing TDD specs or test cases                                       | —                |
+> | `e2e-test-reference.md`                    | E2E test work — page objects, framework architecture                  | —                |
+> | `seed-test-data-reference.md`              | Seed/test data scripts — seeder patterns, DI scope safety             | —                |
+> | `project-structure-reference.md`           | Unfamiliar service area — project layout, tech stack, module registry | ✓ via hook       |
+> | `lessons.md`                               | Any task — project-specific hard-won lessons                          | ✓ via hook       |
+> | `docs-index-reference.md`                  | Searching for docs — full keyword-to-doc lookup                       | —                |
+
+---
+
 ## SYNC:shared-protocol-duplication-policy
 
 > **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
@@ -652,10 +736,10 @@ MANDATORY for any bugfix review. Produce input-state × pre-fix × post-fix × d
 - Any "REGRESSION" delta → review returns FAIL until a preservation test is added.
 - Narrative descriptions do NOT substitute for the matrix.
 Example rows (external-record sync fix):
-| Input | Pre-fix | Post-fix | Delta |
-|-------|---------|----------|-------|
-| Record exists (valid) | Reused | Always recreated → orphan | REGRESSION |
-| Record missing (404) | Error | Recreated | Fixed |
+| Input                 | Pre-fix | Post-fix                  | Delta      |
+| --------------------- | ------- | ------------------------- | ---------- |
+| Record exists (valid) | Reused  | Always recreated → orphan | REGRESSION |
+| Record missing (404)  | Error   | Recreated                 | Fixed      |
 
 ### Fix-Layer Accountability
 NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
@@ -845,10 +929,10 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 >
 > ## Closing Reminders
 >
-> - **IMPORTANT MUST ATTENTION** [echo rule #1 from the top section]
-> - **IMPORTANT MUST ATTENTION** [echo rule #2]
-> - **IMPORTANT MUST ATTENTION** [echo rule #3]
-> - **IMPORTANT MUST ATTENTION** add a final review task to verify work quality
+> **IMPORTANT MUST ATTENTION** [echo rule #1 from the top section]
+> **IMPORTANT MUST ATTENTION** [echo rule #2]
+> **IMPORTANT MUST ATTENTION** [echo rule #3]
+> **IMPORTANT MUST ATTENTION** add a final review task to verify work quality
 > ```
 >
 > Pick 3-5 rules AI most commonly violates. Bottom section re-anchors attention after the long middle.
@@ -911,16 +995,16 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 ---
 

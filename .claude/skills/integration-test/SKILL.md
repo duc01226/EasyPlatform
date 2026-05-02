@@ -43,23 +43,6 @@ context-budget: high
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 **Prerequisites — MUST ATTENTION READ before executing:**
 
 > **`references/integration-test-patterns.md`** — canonical test templates: collection attributes, base class usage, TC annotation format, async polling helpers, unique name generators, DB assertion patterns. Read before writing ANY test.
@@ -773,51 +756,6 @@ MUST ATTENTION verify ALL of the following:
 - **"/workflow-review-changes"** — Review all changes before committing
 - **"Skip, continue manually"** — user decides
 
-## Closing Reminders
-
-- **MANDATORY IMPORTANT MUST ATTENTION** NEVER write smoke-only tests — read handler/entity/event source, assert specific field values
-- **MANDATORY IMPORTANT MUST ATTENTION** ALWAYS use async polling for ALL DB assertions — no exceptions
-- **MANDATORY IMPORTANT MUST ATTENTION** `TaskCreate` — break ALL work into small tasks BEFORE starting
-- **MANDATORY IMPORTANT MUST ATTENTION** `AskUserQuestion` — validate decisions with user. NEVER auto-decide.
-- **MANDATORY IMPORTANT MUST ATTENTION** READ `references/integration-test-patterns.md` BEFORE writing any test
-- **MANDATORY IMPORTANT MUST ATTENTION** NEVER create `Queries/` or `Commands/` folders — organize by domain feature
-- **MANDATORY IMPORTANT MUST ATTENTION** NEVER generate tests without TC annotation — auto-create in Section 15 if missing
-- **MANDATORY IMPORTANT MUST ATTENTION** NEVER mark done until tests pass via `/integration-test-verify`
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns, cite `file:line` before modifying anything
-
-<!-- SYNC:understand-code-first:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** run graph trace when graph.db exists. Grep 3+ patterns, cite `file:line`.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:graph-impact-analysis:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-    <!-- /SYNC:graph-impact-analysis:reminder -->
-    <!-- SYNC:red-flag-stop-conditions:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-    <!-- /SYNC:red-flag-stop-conditions:reminder -->
-    <!-- SYNC:rationalization-prevention:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-    <!-- /SYNC:rationalization-prevention:reminder -->
-    <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** holistic-first debugging, fix at responsible layer, surface ambiguity before coding.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
-
-**Anti-Rationalization:**
-
-| Evasion                            | Rebuttal                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------- |
-| "Test is simple, skip TC lookup"   | TC traceability = test value. Skip = untraceable test.                    |
-| "Async polling not needed here"    | ALL DB assertions need polling. Handler type irrelevant.                  |
-| "Already searched patterns"        | Show `file:line` evidence. No proof = no search.                          |
-| "Smoke test is fine for now"       | Smoke-only FORBIDDEN. Assert specific field values.                       |
-| "REVIEW: one pass is enough"       | Low confidence → spawn fresh sub-agent. Never declare PASS after Round 1. |
-| "Skip task creation, it's obvious" | TaskCreate is non-negotiable. Tracking prevents context loss.             |
-
----
-
 ## Related Skills
 
 | Skill                        | Relationship                                                                         | When to Call                                                                                               |
@@ -873,9 +811,74 @@ integration-test (you are here)
 
 ## Prompt-Enhance Closing Anchors
 
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** run graph trace when graph.db exists. Grep 3+ patterns, cite `file:line`.
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:graph-impact-analysis:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
+      <!-- /SYNC:graph-impact-analysis:reminder -->
+      <!-- SYNC:red-flag-stop-conditions:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
+      <!-- /SYNC:red-flag-stop-conditions:reminder -->
+      <!-- SYNC:rationalization-prevention:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+      <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Closing Reminders
+
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER write smoke-only tests — read handler/entity/event source, assert specific field values
+- **MANDATORY IMPORTANT MUST ATTENTION** ALWAYS use async polling for ALL DB assertions — no exceptions
+- **MANDATORY IMPORTANT MUST ATTENTION** `TaskCreate` — break ALL work into small tasks BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** `AskUserQuestion` — validate decisions with user. NEVER auto-decide.
+- **MANDATORY IMPORTANT MUST ATTENTION** READ `references/integration-test-patterns.md` BEFORE writing any test
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER create `Queries/` or `Commands/` folders — organize by domain feature
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER generate tests without TC annotation — auto-create in Section 15 if missing
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER mark done until tests pass via `/integration-test-verify`
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns, cite `file:line` before modifying anything
+
+**Anti-Rationalization:**
+
+| Evasion                            | Rebuttal                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------- |
+| "Test is simple, skip TC lookup"   | TC traceability = test value. Skip = untraceable test.                    |
+| "Async polling not needed here"    | ALL DB assertions need polling. Handler type irrelevant.                  |
+| "Already searched patterns"        | Show `file:line` evidence. No proof = no search.                          |
+| "Smoke test is fine for now"       | Smoke-only FORBIDDEN. Assert specific field values.                       |
+| "REVIEW: one pass is enough"       | Low confidence → spawn fresh sub-agent. Never declare PASS after Round 1. |
+| "Skip task creation, it's obvious" | TaskCreate is non-negotiable. Tracking prevents context loss.             |
+
+---

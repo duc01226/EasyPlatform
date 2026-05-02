@@ -427,6 +427,79 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         });
     }
 
+    /// <summary>Deletes failed/scheduled jobs whose invocation type no longer exists in the assembly.</summary>
+    public async Task DeleteStaleEnqueuedJobsAsync(int pageSize)
+    {
+        var logger = serviceProvider.GetService<ILogger<PlatformHangfireBackgroundJobScheduler>>();
+
+        try
+        {
+            var monitoringApi = JobStorage.Current.GetMonitoringApi();
+
+            // Job == null when type resolution fails or invocation data is corrupted — both are unable to execute and safe to delete.
+            await Task.WhenAll(
+                DeleteStaleJobsInStateAsync((skip, take) =>
+                {
+                    var page = monitoringApi.FailedJobs(skip, take);
+                    return (page.Count, page.Where(x => x.Value?.Job == null).Select(x => x.Key));
+                }),
+                DeleteStaleJobsInStateAsync((skip, take) =>
+                {
+                    var page = monitoringApi.ScheduledJobs(skip, take);
+                    return (page.Count, page.Where(x => x.Value?.Job == null).Select(x => x.Key));
+                }));
+
+            logger?.LogInformation("[Hangfire] Startup stale job scan complete — states checked: Failed, Scheduled.");
+        }
+        catch (Exception ex)
+        {
+            // Non-blocking: startup must not fail if cleanup fails
+            logger?.LogWarning(ex, "[Hangfire] Failed to clean stale jobs on startup. Affected jobs will continue to retry.");
+        }
+
+        async Task DeleteStaleJobsInStateAsync(Func<int, int, (int PageCount, IEnumerable<string> StaleIds)> getPage)
+        {
+            await Util.Pager.ExecuteAdaptiveSkipPagingAsync(
+                async (skip, take) =>
+                {
+                    var (pageCount, staleIds) = await Task.Run(() =>
+                    {
+                        try
+                        {
+                            return getPage(skip, take);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Some jobs may have incomplete state data (missing ExceptionDetails etc.)
+                            // causing the monitoring API to throw — stop scan for this state entirely.
+                            logger?.LogWarning(ex, "[Hangfire] Could not read jobs page (skip={Skip}). Stopping scan.", skip);
+                            return (0, Enumerable.Empty<string>());
+                        }
+                    });
+
+                    var staleList = staleIds.ToList();
+
+                    var deleteResults = await staleList.ParallelAsync(async jobId =>
+                    {
+                        try
+                        {
+                            return await Task.Run(() => BackgroundJob.Delete(jobId));
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.LogWarning(ex, "[Hangfire] Could not delete stale job {JobId}. Skipping.", jobId);
+                            return false;
+                        }
+                    });
+
+                    // Return successfully deleted count (not found count) so the adaptive pager advances
+                    // skip correctly — undeleted items still occupy their positions in storage.
+                    return (pageCount, deleteResults.Count(deleted => deleted));
+                },
+                pageSize: pageSize);
+        }
+    }
+
     public static string EnsureValidToUpsertRecurringJob(Type jobExecutorType, Func<string>? cronExpression)
     {
         EnsureJobExecutorTypeValid(jobExecutorType);
