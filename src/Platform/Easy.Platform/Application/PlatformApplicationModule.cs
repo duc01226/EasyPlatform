@@ -207,7 +207,7 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
 
                     if (inNewScope)
                     {
-                        using (var newScope = ServiceProvider.CreateTrackedScope())
+                        await using (var newScope = ServiceProvider.CreateTrackedScope())
                         {
                             var dataSeeder = newScope.ServiceProvider.GetService(seeder.GetType()).As<IPlatformApplicationDataSeeder>();
 

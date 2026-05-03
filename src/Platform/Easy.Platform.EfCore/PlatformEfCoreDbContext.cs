@@ -856,28 +856,39 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         await RootServiceProvider.ExecuteInjectScopedAsync(async (TDbContext context) => await fn(context));
     }
 
+    // Serialized via ContextThreadSafeLock: EF Core/Npgsql connectors are not thread-safe; concurrent
+    // SaveChangesAsync on a shared DbContext (e.g. ParallelAsync over a captured outbox producer) interleaves
+    // protocol messages on a single connection and surfaces as "BindComplete while expecting ReadyForQueryMessage" on dispose.
+    // Contract: callers MUST NOT hold ContextThreadSafeLock when invoking SaveChangesAsync. Existing CRUD paths
+    // (CreateAsync/UpdateAsync/DeleteAsync) release the lock before triggering entity events, so event handlers
+    // and UoW commit reach this method without holding it.
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var result = await base.SaveChangesAsync(cancellationToken);
+        return await ContextThreadSafeLock.ExecuteLockActionAsync(
+            async () =>
+            {
+                try
+                {
+                    var result = await base.SaveChangesAsync(cancellationToken);
 
-            MappedUnitOfWork?.ClearCachedExistingOriginalEntity();
+                    MappedUnitOfWork?.ClearCachedExistingOriginalEntity();
 
-            return result;
-        }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            ChangeTracker
-                .Entries()
-                .Where(p => p.State == EntityState.Modified || p.State == EntityState.Added || p.State == EntityState.Deleted)
-                .Select(p => p.Entity.As<IEntity>()?.GetId()?.ToString())
-                .WhereNotNull()
-                .ForEach(id => MappedUnitOfWork?.RemoveCachedExistingOriginalEntity(id));
-            ChangeTracker.Clear();
+                    return result;
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    ChangeTracker
+                        .Entries()
+                        .Where(p => p.State == EntityState.Modified || p.State == EntityState.Added || p.State == EntityState.Deleted)
+                        .Select(p => p.Entity.As<IEntity>()?.GetId()?.ToString())
+                        .WhereNotNull()
+                        .ForEach(id => MappedUnitOfWork?.RemoveCachedExistingOriginalEntity(id));
+                    ChangeTracker.Clear();
 
-            throw new PlatformDomainRowVersionConflictException($"Save changes has conflicted version. {ex.Message}", ex);
-        }
+                    throw new PlatformDomainRowVersionConflictException($"Save changes has conflicted version. {ex.Message}", ex);
+                }
+            },
+            cancellationToken);
     }
 
     /// <summary>
