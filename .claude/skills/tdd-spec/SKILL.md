@@ -16,15 +16,6 @@ triggers: 'tdd spec, tdd test, test driven, write test specs, create test cases,
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-# TDD Spec — Test-Driven Specification Writer
-
 ## Quick Summary
 
 **[IMPORTANT] `TaskCreate` BEFORE any work. NEVER skip task creation.**
@@ -285,7 +276,7 @@ triggers: 'tdd spec, tdd test, test driven, write test specs, create test cases,
 > > **`.claude/skills/tdd-spec/references/tdd-spec-template.md`** — TC format template: GWT structure, Evidence field, decade-numbering, Preservation Tests section (mandatory for bugfixes). Read before generating any TC.
 >
 > - `.claude/skills/tdd-spec/references/tdd-spec-template.md` — TC template format
-> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (content auto-injected by hook — check for [Injected: ...] header before reading)
+> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read directly when relevant; do not rely on hook-injected conversation text)
 > - `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
 > - `docs/specs/` — Existing TCs by module — read BEFORE generating to avoid ID collisions
 
@@ -393,9 +384,9 @@ Skip confirmation only when mode explicit in `$ARGUMENTS` AND feature name unamb
 
 **Must read FIRST:**
 
-1. `docs/project-reference/feature-docs-reference.md` — correct `{FEATURE}` code for TC IDs (content auto-injected by hook — check for [Injected: ...] header before reading)
+1. `docs/project-reference/feature-docs-reference.md` — correct `{FEATURE}` code for TC IDs (read directly when relevant; do not rely on hook-injected conversation text)
 2. Target feature doc — Section 15 exists? Read existing TCs to avoid ID collisions
-3. `docs/project-reference/spec-principles.md` — Section 7 (TC Coverage Mapping), minimum categories and depth (content auto-injected by hook — check for [Injected: ...] header before reading)
+3. `docs/project-reference/spec-principles.md` — Section 7 (TC Coverage Mapping), minimum categories and depth (read directly when relevant; do not rely on hook-injected conversation text)
 
 **Spec Readiness Gate (BLOCKING — implement-first and update modes only):**
 
@@ -992,6 +983,57 @@ TC-REG-001: GIVEN payment processed WHEN amount > limit THEN reject with Payment
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+# TDD Spec — Test-Driven Specification Writer
+
 <!-- SYNC:rationalization-prevention:reminder -->
 
 **IMPORTANT MUST ATTENTION** NEVER skip steps via "too simple" or "already searched" evasions — plan anyway, test first, show grep evidence.
@@ -1015,8 +1057,8 @@ TC-REG-001: GIVEN payment processed WHEN amount > limit THEN reject with Payment
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
-          <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
@@ -1042,6 +1084,27 @@ TC-REG-001: GIVEN payment processed WHEN amount > limit THEN reject with Payment
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

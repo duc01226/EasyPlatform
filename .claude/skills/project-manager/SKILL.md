@@ -4,15 +4,6 @@ version: 1.1.0
 description: '[Project Management] Generate project status reports, track dependencies, manage risk registers, and facilitate team sync meetings. Triggers: project status, sprint tracking, risk assessment, project timeline, blocker report, meeting agenda.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Generate project status reports, track dependencies, manage risks, and facilitate team sync meetings.
@@ -170,6 +161,16 @@ Generate meeting agenda covering: sprint health, role updates, blockers, risks, 
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

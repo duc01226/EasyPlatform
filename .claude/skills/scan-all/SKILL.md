@@ -4,29 +4,6 @@ version: 1.0.0
 description: '[Documentation] Orchestrate all reference doc scans in parallel. Refreshes all 12 scanned docs/project-reference/ files and clears the staleness gate. Use for project onboarding, periodic refresh, or when the staleness gate blocks prompts.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
 **Goal:** Run all 12 scan-\* skills in parallel and clear the staleness gate.
@@ -141,6 +118,29 @@ After all scans complete, report:
 - Knowledge graph rebuilt via /graph-build"
 
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
 
 <!-- SYNC:output-quality-principles:reminder -->
 

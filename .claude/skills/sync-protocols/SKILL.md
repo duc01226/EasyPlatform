@@ -4,21 +4,6 @@ version: 1.0.0
 description: '[Skill Management] Sync SYNC-tagged protocol content from canonical source to all skills. Use when shared protocol checklists change and need propagation across skills.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:shared-protocol-duplication-policy -->
-
-> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
-
-<!-- /SYNC:shared-protocol-duplication-policy -->
-
 ## Quick Summary
 
 **Goal:** Two operations — (A) propagate updated content for existing SYNC: blocks across all skills, or (B) add a new SYNC: block to all skill/agent files that don't have it yet.
@@ -128,6 +113,22 @@ BLOCKS = {
 REMINDERS = {
 # ... existing reminders ...
 "new-block-name": """\
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
+
 <!-- SYNC:new-block-name:reminder -->
 **MUST ATTENTION** [one-line summary of the rule].
 <!-- /SYNC:new-block-name:reminder -->""",

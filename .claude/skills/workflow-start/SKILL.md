@@ -4,64 +4,6 @@ version: 1.0.0
 description: "[Skill Management] Activate a workflow from the injected catalog. Use when starting a detected workflow, initializing workflow state, or activating a workflow sequence. Triggers on 'start workflow', 'activate workflow', 'workflow-start', 'begin workflow'."
 ---
 
-**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
-
-> **[MANDATORY]** `TaskCreate` FIRST — break every workflow into tasks before any action. NEVER skip.
-> **[MANDATORY]** `AskUserQuestion` ALWAYS — present 3 options, NEVER auto-activate.
-> **[MANDATORY]** `Skill` tool REQUIRED per step — NEVER mark a task `completed` without invoking it.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
-
 ## Quick Summary
 
 **Goal:** Detect user intent → present catalog/custom options → activate with full TaskCreate plan.
@@ -310,6 +252,65 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
+
+> **[MANDATORY]** `TaskCreate` FIRST — break every workflow into tasks before any action. NEVER skip.
+> **[MANDATORY]** `AskUserQuestion` ALWAYS — present 3 options, NEVER auto-activate.
+> **[MANDATORY]** `Skill` tool REQUIRED per step — NEVER mark a task `completed` without invoking it.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

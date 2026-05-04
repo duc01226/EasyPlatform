@@ -14,15 +14,6 @@ license: Complete terms in LICENSE.txt
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Create distinctive, production-grade frontend interfaces with high design quality, avoiding generic AI aesthetics.
@@ -55,7 +46,7 @@ license: Complete terms in LICENSE.txt
 
 <!-- /SYNC:ui-system-context -->
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
@@ -180,11 +171,20 @@ Remember: Claude is capable of extraordinary creative work. Don't hold back, sho
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:ui-system-context:reminder -->
+    <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >

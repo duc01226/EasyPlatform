@@ -15,83 +15,6 @@ disable-model-invocation: true
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-**IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
-
-> **[BLOCKING]** Invoke `Skill` tool for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
-> **[BLOCKING]** Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0.
-> **[BLOCKING]** Spawn sub-agents for 4+ modules in ONE message — NEVER sequential spawning.
-> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) `TaskList` FIRST — resume existing, NEVER create duplicates; (2) read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table — skip already-extracted modules (✅); (3) NEVER re-run `/scout` or `/plan` in a resumed session.
-> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any extraction/update/audit step — it is the shared spec quality baseline for both engineering spec and feature-doc layers.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — Sub-agent MUST return ONLY this structure. Main agent reads only summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` ONLY when: (a) resolving specific blocker, or (b) building fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — never held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
-
 ## Quick Summary
 
 **Goal:** Single entry point for spec-driven doc generation and maintenance. Two output layers, one workflow.
@@ -555,6 +478,105 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+**IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
+
+> **[BLOCKING]** Invoke `Skill` tool for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
+> **[BLOCKING]** Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0.
+> **[BLOCKING]** Spawn sub-agents for 4+ modules in ONE message — NEVER sequential spawning.
+> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) `TaskList` FIRST — resume existing, NEVER create duplicates; (2) read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table — skip already-extracted modules (✅); (3) NEVER re-run `/scout` or `/plan` in a resumed session.
+> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any extraction/update/audit step — it is the shared spec quality baseline for both engineering spec and feature-doc layers.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — Sub-agent MUST return ONLY this structure. Main agent reads only summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` ONLY when: (a) resolving specific blocker, or (b) building fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — never held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

@@ -13,15 +13,6 @@ description: '[Project Management] Create UI/UX design specifications from requi
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Create structured UI/UX design specification documents from requirements or PBIs for developer handoff.
@@ -40,7 +31,7 @@ description: '[Project Management] Create UI/UX design specifications from requi
 - If wireframe image provided → auto-routes to `/wireframe-to-spec` for structured analysis
 - If screenshot provided → uses `ai-multimodal` for design extraction
 - Reference existing design system tokens from `docs/project-reference/design-system/`
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
 - Include accessibility requirements (keyboard nav, ARIA labels, contrast)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -235,11 +226,20 @@ For ANY visual input: extract design context FIRST, then proceed to spec generat
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:ui-system-context:reminder -->
+    <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >

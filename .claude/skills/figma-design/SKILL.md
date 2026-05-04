@@ -4,15 +4,6 @@ version: 1.0.0
 description: '[Frontend] Extract design context from Figma URLs via MCP, REST API, or screenshot fallback. Produces structured design tokens, component inventory, and layout specs for design-spec consumption. Triggers on figma url, figma design, extract figma, figma to code.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Extract structured design context from Figma designs for downstream use by `design-spec` and planning skills.
@@ -44,7 +35,7 @@ description: '[Frontend] Extract design context from Figma URLs via MCP, REST AP
 
 <!-- /SYNC:ui-system-context -->
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
@@ -141,6 +132,15 @@ Save to `team-artifacts/design-specs/{YYMMDD}-figma-extract-{slug}.md`:
 - `.claude/hooks/figma-context-extractor.cjs` — URL detection hook
 
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
 
 <!-- SYNC:ui-system-context:reminder -->
 

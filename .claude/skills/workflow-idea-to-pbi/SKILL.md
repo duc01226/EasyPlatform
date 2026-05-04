@@ -5,75 +5,6 @@ description: '[Workflow] Trigger Idea to PBI workflow — capture or review idea
 disable-model-invocation: true
 ---
 
-**IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /handoff -> /refine -> /why-review -> /refine-review -> /why-review -> /story -> /why-review -> /story-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
-
-Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
-
-**Steps:**
-/idea → /review-artifact (conditional) → /handoff (conditional) → /refine → /refine-review → /why-review → /story → /story-review → /tdd-spec → /tdd-spec-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /docs-update → /watzup → /workflow-end
-
-> **Conditional steps:**
->
-> - `/review-artifact` — skip if no existing artifact/ticket/PRD; proceed straight to `/refine`
-> - `/handoff` — skip if no formal PO→BA handoff needed
-> - `/pbi-mockup` — skip if PBI is backend-only (no UI changes)
-
----
-
 ## Quick Summary
 
 **Goal:** [Workflow] Trigger Idea to PBI workflow — capture or review idea/artifact, optional handoff, refine to PBI, validate design rationale, create stories, generate TDD test specs, challenge review, DoR gate, mockup, prioritize.
@@ -255,6 +186,91 @@ Purpose:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+**IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /handoff -> /refine -> /why-review -> /refine-review -> /why-review -> /story -> /why-review -> /story-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
+Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
+
+**Steps:**
+/idea → /review-artifact (conditional) → /handoff (conditional) → /refine → /refine-review → /why-review → /story → /story-review → /tdd-spec → /tdd-spec-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /docs-update → /watzup → /workflow-end
+
+> **Conditional steps:**
+>
+> - `/review-artifact` — skip if no existing artifact/ticket/PRD; proceed straight to `/refine`
+> - `/handoff` — skip if no formal PO→BA handoff needed
+> - `/pbi-mockup` — skip if PBI is backend-only (no UI changes)
+
+---
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -265,6 +281,13 @@ Purpose:
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

@@ -5,6 +5,121 @@ description: '[Implementation] Run test suite and fix issues'
 disable-model-invocation: false
 ---
 
+## Quick Summary
+
+**Goal:** Run test suites, analyze failures, and fix the underlying code or test issues.
+
+**Workflow:**
+
+1. **Run** — Execute test suite and capture results
+2. **Analyze** — Identify failing tests, classify as code bug vs test issue
+3. **Fix** — Apply targeted fix to code or test
+
+**Key Rules:**
+
+- Debug Mindset: every claim needs `file:line` evidence
+- Distinguish between code bugs and flawed test expectations
+- Run tests again after fix to confirm all pass
+
+<!-- SYNC:root-cause-debugging -->
+
+> **Root Cause Debugging** — Systematic approach, never guess-and-check.
+>
+> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
+> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
+> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
+> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
+> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
+> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
+>
+> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
+
+<!-- /SYNC:root-cause-debugging -->
+
+Analyze the skills catalog and activate the skills that are needed for the task during the process.
+
+## Debug Mindset (NON-NEGOTIABLE)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+- Do NOT assume the first hypothesis is correct — verify with actual code traces
+- Every root cause claim must include `file:line` evidence
+- If you cannot prove a root cause with a code trace, state "hypothesis, not confirmed"
+- Question assumptions: "Is this really the cause?" → trace the actual execution path
+- Challenge completeness: "Are there other contributing factors?" → check related code paths
+- No "should fix it" without proof — verify the fix addresses the traced root cause
+
+## ⚠️ MANDATORY: Confidence & Evidence Gate
+
+**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
+**95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
+
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause analysis + plan creation, MUST ATTENTION present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
+## Reported Issues:
+
+<issues>$ARGUMENTS</issues>
+
+## Workflow:
+
+1. Use `tester` subagent to compile the code and fix all syntax errors if any.
+2. Use `tester` subagent to run the tests and report back to main agent.
+    - **External Memory**: Write test failure analysis to `.ai/workspace/analysis/{test-issue}.analysis.md`. Re-read before fixing.
+3. If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then report back to main agent.
+4. Use `planner` subagent to create an implementation plan based on the reports, then report back to main agent.
+5. **🛑 Present root cause + fix plan → `AskUserQuestion` → wait for user approval.**
+6. Use main agent to implement the plan step by step.
+7. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
+8. Use `code-reviewer` subagent to quickly review the code changes and make sure it meets requirements, then report back to main agent.
+9. If there are issues or failed tests, repeat from step 2.
+10. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
+
+- **After fixing, MUST ATTENTION run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.
+
+---
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -46,7 +161,7 @@ disable-model-invocation: false
 
 <!-- /SYNC:evidence-based-reasoning -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
 - `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
 
 <!-- SYNC:estimation-framework -->
@@ -217,90 +332,17 @@ disable-model-invocation: false
 
 > **Skill Variant:** Variant of `/fix` — test suite failure diagnosis and resolution.
 
-## Quick Summary
-
-**Goal:** Run test suites, analyze failures, and fix the underlying code or test issues.
-
-**Workflow:**
-
-1. **Run** — Execute test suite and capture results
-2. **Analyze** — Identify failing tests, classify as code bug vs test issue
-3. **Fix** — Apply targeted fix to code or test
-
-**Key Rules:**
-
-- Debug Mindset: every claim needs `file:line` evidence
-- Distinguish between code bugs and flawed test expectations
-- Run tests again after fix to confirm all pass
-
-<!-- SYNC:root-cause-debugging -->
-
-> **Root Cause Debugging** — Systematic approach, never guess-and-check.
->
-> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
-> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
-> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
-> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
-> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
-> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
->
-> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
-
-<!-- /SYNC:root-cause-debugging -->
-
-Analyze the skills catalog and activate the skills that are needed for the task during the process.
-
-## Debug Mindset (NON-NEGOTIABLE)
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-- Do NOT assume the first hypothesis is correct — verify with actual code traces
-- Every root cause claim must include `file:line` evidence
-- If you cannot prove a root cause with a code trace, state "hypothesis, not confirmed"
-- Question assumptions: "Is this really the cause?" → trace the actual execution path
-- Challenge completeness: "Are there other contributing factors?" → check related code paths
-- No "should fix it" without proof — verify the fix addresses the traced root cause
-
-## ⚠️ MANDATORY: Confidence & Evidence Gate
-
-**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
-**95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
-
-> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause analysis + plan creation, MUST ATTENTION present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
-
-## Reported Issues:
-
-<issues>$ARGUMENTS</issues>
-
-## Workflow:
-
-1. Use `tester` subagent to compile the code and fix all syntax errors if any.
-2. Use `tester` subagent to run the tests and report back to main agent.
-    - **External Memory**: Write test failure analysis to `.ai/workspace/analysis/{test-issue}.analysis.md`. Re-read before fixing.
-3. If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then report back to main agent.
-4. Use `planner` subagent to create an implementation plan based on the reports, then report back to main agent.
-5. **🛑 Present root cause + fix plan → `AskUserQuestion` → wait for user approval.**
-6. Use main agent to implement the plan step by step.
-7. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
-8. Use `code-reviewer` subagent to quickly review the code changes and make sure it meets requirements, then report back to main agent.
-9. If there are issues or failed tests, repeat from step 2.
-10. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
-
-- **After fixing, MUST ATTENTION run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.
-
----
-
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
-  <!-- SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
-          <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
@@ -326,6 +368,27 @@ Analyze the skills catalog and activate the skills that are needed for the task 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

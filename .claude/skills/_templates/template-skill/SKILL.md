@@ -4,6 +4,26 @@ version: 1.0.0
 description: '[Category] Replace with description and trigger keywords.'
 ---
 
+## Quick Summary
+
+**Goal:** [One sentence — what this skill achieves].
+
+**Workflow:**
+
+1. **[Step 1]** — [description]
+2. **[Step 2]** — [description]
+
+**Key Rules:**
+
+- [Most critical constraint]
+- [Second constraint]
+
+# [Skill Title]
+
+[Insert instructions below]
+
+---
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -40,26 +60,6 @@ description: '[Category] Replace with description and trigger keywords.'
 > **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
 
 <!-- /SYNC:evidence-based-reasoning -->
-
-## Quick Summary
-
-**Goal:** [One sentence — what this skill achieves].
-
-**Workflow:**
-
-1. **[Step 1]** — [description]
-2. **[Step 2]** — [description]
-
-**Key Rules:**
-
-- [Most critical constraint]
-- [Second constraint]
-
-# [Skill Title]
-
-[Insert instructions below]
-
----
 
 <!-- SYNC:understand-code-first:reminder -->
 

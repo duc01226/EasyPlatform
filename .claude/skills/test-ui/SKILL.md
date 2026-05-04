@@ -5,33 +5,6 @@ description: '[Testing] Full-site QA audit (accessibility, performance, security
 disable-model-invocation: false
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:evidence-based-reasoning -->
-
-> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
->
-> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
-> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
-> 3. Cross-service validation required for architectural changes
-> 4. "I don't have enough evidence" is valid and expected output
->
-> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
->
-> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
-> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
-
-<!-- /SYNC:evidence-based-reasoning -->
-
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
-
 ## Quick Summary
 
 **Goal:** Run comprehensive UI tests on a website and generate a detailed visual report.
@@ -157,6 +130,33 @@ How to write reports:
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
 
 <!-- SYNC:evidence-based-reasoning:reminder -->
 

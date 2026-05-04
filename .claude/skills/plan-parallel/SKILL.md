@@ -5,6 +5,245 @@ description: '[Planning] Create detailed plan with parallel-executable phases'
 disable-model-invocation: false
 ---
 
+## Quick Summary
+
+**Goal:** Create a detailed implementation plan with phases optimized for parallel execution by multiple agents.
+
+**Workflow:**
+
+1. **Research** — Spawn up to 2 researcher agents in parallel for different aspects
+2. **Analyze Codebase** — Read summary docs; scout if summary is stale (>3 days)
+3. **Plan Creation** — Planner subagent creates parallel-optimized phases with exclusive file ownership
+4. **User Review** — Present plan for confirmation; optionally validate via interview
+
+**Key Rules:**
+
+- Each phase MUST ATTENTION have exclusive file ownership -- no file modified by multiple phases
+- Phases must be independently executable with clear dependency matrix
+- Planning-only skill -- never implement code, always get user approval first
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+Activate `planning` skill.
+
+## PLANNING-ONLY — Collaboration Required
+
+> **DO NOT** use the `EnterPlanMode` tool — you are ALREADY in a planning workflow.
+> **DO NOT** implement or execute any code changes.
+> **COLLABORATE** with the user: ask decision questions, present options with recommendations.
+> After plan creation, ALWAYS run `/plan-review` to validate the plan.
+> ASK user to confirm the plan before any next step.
+
+## Your mission
+
+<task>
+$ARGUMENTS
+</task>
+
+## Workflow
+
+1. Create a directory using naming pattern from `## Naming` section in injected context.
+   Make sure you pass the directory path to every subagent during the process.
+2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
+3. Use multiple `researcher` agents (max 2 agents) in parallel to research for this task:
+   Each agent research for a different aspect of the task and are allowed to perform max 5 tool calls.
+4. Analyze the codebase by reading `backend-patterns-reference.md`, `frontend-patterns-reference.md`, and `project-structure-reference.md` file.
+   **ONLY PERFORM THIS FOLLOWING STEP IF reference docs are placeholders or older than 3 days**: Use `/scout <instructions>` slash command to search the codebase for files needed to complete the task.
+5. Main agent gathers all research and scout report filepaths, and pass them to `planner` subagent with the prompt to create a parallel-optimized implementation plan.
+6. Main agent receives the implementation plan from `planner` subagent, and ask user to review the plan
+
+## Post-Plan Validation (Optional)
+
+After plan creation, offer validation interview to confirm decisions before implementation.
+
+**Check `## Plan Context` -> `Validation: mode=X, questions=MIN-MAX`:**
+
+| Mode     | Behavior                                                                         |
+| -------- | -------------------------------------------------------------------------------- |
+| `prompt` | Ask user: "Validate this plan with a brief interview?" -> Yes (Recommended) / No |
+| `auto`   | Automatically execute `/plan-validate {plan-path}`                               |
+| `off`    | Skip validation step entirely                                                    |
+
+**If mode is `prompt`:** Use `AskUserQuestion` tool with options above.
+**If user chooses validation or mode is `auto`:** Execute `/plan-validate {plan-path}` SlashCommand.
+
+## Special Requirements for Parallel Execution
+
+**CRITICAL:** The planner subagent must create phases that:
+
+1. **Can be executed independently** - Each phase should be self-contained with no runtime dependencies on other phases
+2. **Have clear boundaries** - No file overlap between phases (each file should only be modified in ONE phase)
+3. **Separate concerns logically** - Group by architectural layer, feature domain, or technology stack
+4. **Minimize coupling** - Phases should communicate through well-defined interfaces only
+5. **Include dependency matrix** - Clearly document which phases must run sequentially vs in parallel
+
+**Parallelization Strategy:**
+
+- Group frontend/backend/database work into separate phases when possible
+- Separate infrastructure setup from application logic
+- Isolate different feature domains (e.g., auth vs profile vs payments)
+- Split by file type/directory (e.g., components vs services vs models)
+- Create independent test phases per module
+
+**Phase Organization Example:**
+
+```
+Phase 01: Database Schema (can run independently)
+Phase 02: Backend API Layer (can run independently)
+Phase 03: Frontend Components (can run independently)
+Phase 04: Integration Tests (depends on 01, 02, 03)
+```
+
+## Output Requirements
+
+**Plan Directory Structure** (use `Plan dir:` from `## Naming` section)
+
+```
+{plan-dir}/
+├── research/
+│   ├── researcher-XX-report.md
+│   └── ...
+├── reports/
+│   ├── XX-report.md
+│   └── ...
+├── scout/
+│   ├── scout-XX-report.md
+│   └── ...
+├── plan.md
+├── phase-XX-phase-name-here.md
+└── ...
+```
+
+**Research Output Requirements**
+
+- Ensure every research markdown report remains concise (<=150 lines) while covering all requested topics and citations.
+
+**Plan File Specification**
+
+- Every `plan.md` MUST ATTENTION start with YAML frontmatter:
+
+    ```yaml
+    ---
+    title: '{Brief title}'
+    description: '{One sentence for card preview}'
+    status: pending
+    priority: P2
+    story_points: { 1-21 modified fibonacci }
+    complexity: '{ Low | Medium | High | Critical }'
+    man_days_traditional: '{ e.g., 4d (2.5d code + 1.5d test) }'
+    man_days_ai: '{ e.g., 2d (1.3d code + 0.7d test) }'
+    effort: { sum of phases, e.g., 4h }
+    branch: { current git branch }
+    tags: [relevant, tags]
+    created: { YYYY-MM-DD }
+    ---
+    ```
+
+- Save the overview access point at `{plan-dir}/plan.md`. Keep it generic, under 80 lines, and list each implementation phase with status, progress, parallelization group, and links to phase files.
+- For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` containing the following sections in order:
+    - Context links (reference parent plan, dependencies, docs)
+    - **Parallelization Info** (which phases can run concurrently, which must wait)
+    - Overview (date, description, priority, implementation status, review status)
+    - Key Insights
+    - Requirements
+    - Architecture
+    - **Related code files** (MUST ATTENTION be exclusive to this phase - no overlap with other phases)
+    - **File Ownership** (explicit list of files this phase owns/modifies)
+    - Implementation Steps
+    - Todo list
+    - Success Criteria
+    - **Conflict Prevention** (how this phase avoids conflicts with parallel phases)
+    - Risk Assessment
+    - Security Considerations
+    - Next steps
+
+**Main plan.md must include:**
+
+- Dependency graph showing which phases can run in parallel
+- Execution strategy (e.g., "Phases 1-3 parallel, then Phase 4")
+- File ownership matrix (which phase owns which files)
+
+## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
+
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality and identify fixes/enhancements
+- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these final tasks:
+    1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
+    2. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    4. **Task: "Re-evaluate estimation against finalized plan"** — Pre-completion estimates anchor on scope guesses; finalized phases reveal true cost. After phases/TCs/decisions are locked: (a) re-derive `bottom_up_hours = Σ phase_hours` from finalized phase files; (b) recompute `likely_days`, `risk_margin_pct`, `min-max range` per `SYNC:estimation-framework`; (c) compare to current frontmatter `man_days_traditional` / `story_points`. If `|delta| > 20%` → UPDATE frontmatter, add `reestimate_delta_pct: <signed>` + 1-line `reestimate_reason`. If `|delta| > 50%` → flag `SHOULD-RESCOPE` and surface to user via `AskUserQuestion` before implementation.
+
+## Important Notes
+
+**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
+**IMPORTANT:** Ensure token efficiency while maintaining high quality.
+**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
+**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+**IMPORTANT:** Each phase MUST ATTENTION have exclusive file ownership - no file can be modified by multiple phases.
+
+## REMINDER — Planning-Only Command
+
+> **DO NOT** use `EnterPlanMode` tool.
+> **DO NOT** start implementing.
+> **ALWAYS** validate with `/plan-review` after plan creation.
+> **ASK** user to confirm the plan before any implementation begins.
+> **ASK** user decision questions with your recommendations when multiple approaches exist.
+
+---
+
+## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
+- **"/plan-review"** — Auto-review plan for validity and best practices
+- **"/plan-validate"** — Interview user to confirm plan decisions
+- **"Skip, continue manually"** — user decides
+
+> If already inside a workflow, skip — the workflow handles sequencing.
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -13,6 +252,30 @@ disable-model-invocation: false
 > **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:sequential-thinking-protocol -->
+
+> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
+>
+> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
+>
+> **Format (explicit mode — visible thought trail):**
+>
+> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
+> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
+> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
+> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
+> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
+>
+> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
+>
+> **Stop conditions:** confidence <80% on any critical decision → escalate via AskUserQuestion · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+>
+> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
+>
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+
+<!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:understand-code-first -->
 
@@ -227,203 +490,6 @@ disable-model-invocation: false
 
 - `docs/specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
-## Quick Summary
-
-**Goal:** Create a detailed implementation plan with phases optimized for parallel execution by multiple agents.
-
-**Workflow:**
-
-1. **Research** — Spawn up to 2 researcher agents in parallel for different aspects
-2. **Analyze Codebase** — Read summary docs; scout if summary is stale (>3 days)
-3. **Plan Creation** — Planner subagent creates parallel-optimized phases with exclusive file ownership
-4. **User Review** — Present plan for confirmation; optionally validate via interview
-
-**Key Rules:**
-
-- Each phase MUST ATTENTION have exclusive file ownership -- no file modified by multiple phases
-- Phases must be independently executable with clear dependency matrix
-- Planning-only skill -- never implement code, always get user approval first
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-Activate `planning` skill.
-
-## PLANNING-ONLY — Collaboration Required
-
-> **DO NOT** use the `EnterPlanMode` tool — you are ALREADY in a planning workflow.
-> **DO NOT** implement or execute any code changes.
-> **COLLABORATE** with the user: ask decision questions, present options with recommendations.
-> After plan creation, ALWAYS run `/plan-review` to validate the plan.
-> ASK user to confirm the plan before any next step.
-
-## Your mission
-
-<task>
-$ARGUMENTS
-</task>
-
-## Workflow
-
-1. Create a directory using naming pattern from `## Naming` section in injected context.
-   Make sure you pass the directory path to every subagent during the process.
-2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
-3. Use multiple `researcher` agents (max 2 agents) in parallel to research for this task:
-   Each agent research for a different aspect of the task and are allowed to perform max 5 tool calls.
-4. Analyze the codebase by reading `backend-patterns-reference.md`, `frontend-patterns-reference.md`, and `project-structure-reference.md` file.
-   **ONLY PERFORM THIS FOLLOWING STEP IF reference docs are placeholders or older than 3 days**: Use `/scout <instructions>` slash command to search the codebase for files needed to complete the task.
-5. Main agent gathers all research and scout report filepaths, and pass them to `planner` subagent with the prompt to create a parallel-optimized implementation plan.
-6. Main agent receives the implementation plan from `planner` subagent, and ask user to review the plan
-
-## Post-Plan Validation (Optional)
-
-After plan creation, offer validation interview to confirm decisions before implementation.
-
-**Check `## Plan Context` -> `Validation: mode=X, questions=MIN-MAX`:**
-
-| Mode     | Behavior                                                                         |
-| -------- | -------------------------------------------------------------------------------- |
-| `prompt` | Ask user: "Validate this plan with a brief interview?" -> Yes (Recommended) / No |
-| `auto`   | Automatically execute `/plan-validate {plan-path}`                               |
-| `off`    | Skip validation step entirely                                                    |
-
-**If mode is `prompt`:** Use `AskUserQuestion` tool with options above.
-**If user chooses validation or mode is `auto`:** Execute `/plan-validate {plan-path}` SlashCommand.
-
-## Special Requirements for Parallel Execution
-
-**CRITICAL:** The planner subagent must create phases that:
-
-1. **Can be executed independently** - Each phase should be self-contained with no runtime dependencies on other phases
-2. **Have clear boundaries** - No file overlap between phases (each file should only be modified in ONE phase)
-3. **Separate concerns logically** - Group by architectural layer, feature domain, or technology stack
-4. **Minimize coupling** - Phases should communicate through well-defined interfaces only
-5. **Include dependency matrix** - Clearly document which phases must run sequentially vs in parallel
-
-**Parallelization Strategy:**
-
-- Group frontend/backend/database work into separate phases when possible
-- Separate infrastructure setup from application logic
-- Isolate different feature domains (e.g., auth vs profile vs payments)
-- Split by file type/directory (e.g., components vs services vs models)
-- Create independent test phases per module
-
-**Phase Organization Example:**
-
-```
-Phase 01: Database Schema (can run independently)
-Phase 02: Backend API Layer (can run independently)
-Phase 03: Frontend Components (can run independently)
-Phase 04: Integration Tests (depends on 01, 02, 03)
-```
-
-## Output Requirements
-
-**Plan Directory Structure** (use `Plan dir:` from `## Naming` section)
-
-```
-{plan-dir}/
-├── research/
-│   ├── researcher-XX-report.md
-│   └── ...
-├── reports/
-│   ├── XX-report.md
-│   └── ...
-├── scout/
-│   ├── scout-XX-report.md
-│   └── ...
-├── plan.md
-├── phase-XX-phase-name-here.md
-└── ...
-```
-
-**Research Output Requirements**
-
-- Ensure every research markdown report remains concise (<=150 lines) while covering all requested topics and citations.
-
-**Plan File Specification**
-
-- Every `plan.md` MUST ATTENTION start with YAML frontmatter:
-
-    ```yaml
-    ---
-    title: '{Brief title}'
-    description: '{One sentence for card preview}'
-    status: pending
-    priority: P2
-    story_points: { 1-21 modified fibonacci }
-    complexity: '{ Low | Medium | High | Critical }'
-    man_days_traditional: '{ e.g., 4d (2.5d code + 1.5d test) }'
-    man_days_ai: '{ e.g., 2d (1.3d code + 0.7d test) }'
-    effort: { sum of phases, e.g., 4h }
-    branch: { current git branch }
-    tags: [relevant, tags]
-    created: { YYYY-MM-DD }
-    ---
-    ```
-
-- Save the overview access point at `{plan-dir}/plan.md`. Keep it generic, under 80 lines, and list each implementation phase with status, progress, parallelization group, and links to phase files.
-- For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` containing the following sections in order:
-    - Context links (reference parent plan, dependencies, docs)
-    - **Parallelization Info** (which phases can run concurrently, which must wait)
-    - Overview (date, description, priority, implementation status, review status)
-    - Key Insights
-    - Requirements
-    - Architecture
-    - **Related code files** (MUST ATTENTION be exclusive to this phase - no overlap with other phases)
-    - **File Ownership** (explicit list of files this phase owns/modifies)
-    - Implementation Steps
-    - Todo list
-    - Success Criteria
-    - **Conflict Prevention** (how this phase avoids conflicts with parallel phases)
-    - Risk Assessment
-    - Security Considerations
-    - Next steps
-
-**Main plan.md must include:**
-
-- Dependency graph showing which phases can run in parallel
-- Execution strategy (e.g., "Phases 1-3 parallel, then Phase 4")
-- File ownership matrix (which phase owns which files)
-
-## **IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
-
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
-- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these final tasks:
-    1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
-    2. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-    3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
-    4. **Task: "Re-evaluate estimation against finalized plan"** — Pre-completion estimates anchor on scope guesses; finalized phases reveal true cost. After phases/TCs/decisions are locked: (a) re-derive `bottom_up_hours = Σ phase_hours` from finalized phase files; (b) recompute `likely_days`, `risk_margin_pct`, `min-max range` per `SYNC:estimation-framework`; (c) compare to current frontmatter `man_days_traditional` / `story_points`. If `|delta| > 20%` → UPDATE frontmatter, add `reestimate_delta_pct: <signed>` + 1-line `reestimate_reason`. If `|delta| > 50%` → flag `SHOULD-RESCOPE` and surface to user via `AskUserQuestion` before implementation.
-
-## Important Notes
-
-**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
-**IMPORTANT:** Ensure token efficiency while maintaining high quality.
-**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
-**IMPORTANT:** Each phase MUST ATTENTION have exclusive file ownership - no file can be modified by multiple phases.
-
-## REMINDER — Planning-Only Command
-
-> **DO NOT** use `EnterPlanMode` tool.
-> **DO NOT** start implementing.
-> **ALWAYS** validate with `/plan-review` after plan creation.
-> **ASK** user to confirm the plan before any implementation begins.
-> **ASK** user decision questions with your recommendations when multiple approaches exist.
-
----
-
-## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If this skill was called **outside a workflow**, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan created). This ensures review, validation, implementation, and testing steps aren't skipped.
-- **"/plan-review"** — Auto-review plan for validity and best practices
-- **"/plan-validate"** — Interview user to confirm plan decisions
-- **"Skip, continue manually"** — user decides
-
-> If already inside a workflow, skip — the workflow handles sequencing.
-
 <!-- SYNC:understand-code-first:reminder -->
 
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
@@ -432,8 +498,8 @@ Phase 04: Integration Tests (depends on 01, 02, 03)
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:plan-quality:reminder -->
 
 **IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
 
@@ -464,11 +530,38 @@ Phase 04: Integration Tests (depends on 01, 02, 03)
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
+<!-- SYNC:sequential-thinking-protocol:reminder -->
+
+**MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
+
+<!-- /SYNC:sequential-thinking-protocol:reminder -->
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

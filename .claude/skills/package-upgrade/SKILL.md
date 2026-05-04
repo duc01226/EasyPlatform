@@ -4,15 +4,6 @@ version: 1.0.1
 description: '[Code Quality] Use when the user asks to analyze package upgrades, check for outdated dependencies, plan npm/NuGet updates, or assess breaking changes in package updates. Triggers on keywords like "upgrade packages", "outdated", "npm update", "breaking changes", "dependency upgrade", "package update", "version upgrade".'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Analyze npm package dependencies, research latest versions and breaking changes, and generate a phased upgrade plan.
@@ -220,11 +211,20 @@ Before marking complete, provide:
 
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:ai-mistake-prevention -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >

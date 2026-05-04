@@ -41,6 +41,45 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
+>
+> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
+>
+> ### Child skill contract (this skill, when nested)
+>
+> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
+> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
+> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
+> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
+> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
+> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
+>
+> ### Orchestrator contract (`workflow-*` skills)
+>
+> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
+> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
+> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
+> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
+>
+> ### Standalone invocation
+>
+> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
+>
+> ### Anti-rationalization
+>
+> | Excuse                                        | Rebuttal                                                                                                           |
+> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
+> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
+> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
+> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
+>
+> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+
+<!-- /SYNC:nested-task-creation -->
+
 **IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $excalidraw-diagram -> $workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
@@ -142,6 +181,14 @@ Activate the `visualize` workflow. Run `$workflow-start visualize` with the user
 
 ---
 
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
+- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
+- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+
+<!-- /SYNC:nested-task-creation:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION** apply Phase 1 compression before structural enhancement; preserve semantic meaning.
@@ -169,6 +216,61 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
+
+## Learned Lessons
+
+# Lessons Learned
+
+> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
+
+## Quick Summary
+
+**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
+
+**Top Rules (apply always):**
+
+- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
+- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
+- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
+- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
+- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
+- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
+
+---
+
+## Debugging & Root Cause Reasoning
+
+- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. Cheapest check first.
+- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug in caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
+- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
+- [2026-04-01] **Code is caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
+
+## Architecture Invariants
+
+- [2026-03-31] **ParallelAsync + repo/UoW MUST use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
+- [2026-03-31] **Bus message naming MUST include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) are leaders. Feature services (Growth, Talents) sending to core MUST use `{CoreServiceName}...RequestBusMessage` — never define own event for core to consume.
+
+## Naming & Abstraction
+
+- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what it guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
+
+## Environment & Tooling
+
+- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be in bash PATH under those names. Check: `where python` / `where py`. Prefer `py` (Windows Python Launcher) for one-liners, `node` if JS alternative exists.
+
+> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons in `.claude/hooks/lib/prompt-injections.cjs`.
+
+---
+
+## Closing Reminders
+
+- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
+- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
+- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
+- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
+- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
+- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
+- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

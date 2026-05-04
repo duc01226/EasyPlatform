@@ -13,47 +13,6 @@ description: '[Process] End the active workflow and clear state. Auto-added as l
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-**IMPORTANT MANDATORY Steps:** integration-test-coverage-check -> spec-tdd-test-sync-gate -> verify-task-completion -> verify-workflow-state -> announce-workflow-completion -> clear-workflow-state
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:project-reference-docs-guide -->
-
-> **Project Reference Docs** — `docs/project-reference/` initialized by session hooks. Many are auto-injected into context — check for `[Injected: ...]` header before reading manually.
->
-> | Document                                   | When to Read                                                          | Auto-Injected?   |
-> | ------------------------------------------ | --------------------------------------------------------------------- | ---------------- |
-> | `backend-patterns-reference.md`            | Any `.cs` edit — CQRS, repositories, validation, events               | ✓ on `.cs` edits |
-> | `frontend-patterns-reference.md`           | Any `.ts`/`.html` edit — base classes, stores, API services           | ✓ on `.ts` edits |
-> | `domain-entities-reference.md`             | Task touches entities, models, or cross-service sync                  | ✓ via hook       |
-> | `design-system/design-system-canonical.md` | Any `.html`/`.scss`/`.css` edit — tokens, BEM, components             | ✓ via hook       |
-> | `integration-test-reference.md`            | Writing or reviewing integration tests                                | ✓ via hook       |
-> | `code-review-rules.md`                     | Any code review — project-specific rules & checklists                 | ✓ via hook       |
-> | `scss-styling-guide.md`                    | `.scss`/`.css` changes — BEM, mixins, variables                       | —                |
-> | `design-system/README.md`                  | UI work — design system overview, component inventory                 | —                |
-> | `feature-docs-reference.md`                | Updating `docs/business-features/**` docs                             | ✓ via hook       |
-> | `spec-principles.md`                       | Writing TDD specs or test cases                                       | —                |
-> | `e2e-test-reference.md`                    | E2E test work — page objects, framework architecture                  | —                |
-> | `seed-test-data-reference.md`              | Seed/test data scripts — seeder patterns, DI scope safety             | —                |
-> | `project-structure-reference.md`           | Unfamiliar service area — project layout, tech stack, module registry | ✓ via hook       |
-> | `lessons.md`                               | Any task — project-specific hard-won lessons                          | ✓ via hook       |
-> | `docs-index-reference.md`                  | Searching for docs — full keyword-to-doc lookup                       | —                |
-
-<!-- /SYNC:project-reference-docs-guide -->
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-# Workflow End
-
-Finalize and close the active workflow, clearing state so the next user prompt triggers fresh workflow detection.
-
----
-
 ## Quick Summary
 
 **Goal:** [Process] End the active workflow and clear state. Auto-added as last step of every workflow. Clears workflow tracking so next prompt gets fresh workflow detection.
@@ -136,6 +95,37 @@ This skill is the **last step of every workflow sequence**. It runs automaticall
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+**IMPORTANT MANDATORY Steps:** integration-test-coverage-check -> spec-tdd-test-sync-gate -> verify-task-completion -> verify-workflow-state -> announce-workflow-completion -> clear-workflow-state
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+# Workflow End
+
+Finalize and close the active workflow, clearing state so the next user prompt triggers fresh workflow detection.
+
+---
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -146,6 +136,13 @@ This skill is the **last step of every workflow sequence**. It runs automaticall
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
 
 ## Closing Reminders
 

@@ -5,6 +5,52 @@ description: '[Workflow] Trigger Bug Fix workflow — systematic debugging with 
 disable-model-invocation: true
 ---
 
+## Quick Summary
+
+**Goal:** [Workflow] Trigger Bug Fix workflow — systematic debugging with root cause investigation, fix, and verification.
+
+**Workflow:**
+
+1. **Detect** — classify request scope and target artifacts.
+2. **Execute** — apply required steps with evidence-backed actions.
+3. **Verify** — confirm constraints, output quality, and completion evidence.
+
+**Key Rules:**
+
+- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
+- MUST ATTENTION keep task tracking updated as each step starts/completes.
+- NEVER skip mandatory workflow or skill gates.
+
+## Repeated Steps Disambiguation (CRITICAL for task creation)
+
+| Step                | Occurrence | Task Description                                          |
+| ------------------- | ---------- | --------------------------------------------------------- |
+| `/integration-test` | 1st        | INT-TEST₁ — RED phase: write regression test, expect FAIL |
+| `/integration-test` | 2nd        | INT-TEST₂ — GREEN phase: re-run after fix, expect PASS    |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /debug-investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
+---
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
 **IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /debug-investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
@@ -94,36 +140,12 @@ Activate the `bugfix` workflow. Run `/workflow-start bugfix` with the user's pro
 > **Second `/integration-test` (GREEN phase):** Re-run integration tests after the fix — expect all to PASS. Confirms the fix works AND the regression guard is in place.
 > **`/integration-test-review`:** Verify tests have real assertion value (not smoke/existence-only checks).
 
-## Quick Summary
+<!-- SYNC:nested-task-creation:reminder -->
 
-**Goal:** [Workflow] Trigger Bug Fix workflow — systematic debugging with root cause investigation, fix, and verification.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
-**Workflow:**
-
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
-
-**Key Rules:**
-
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- NEVER skip mandatory workflow or skill gates.
-
-## Repeated Steps Disambiguation (CRITICAL for task creation)
-
-| Step                | Occurrence | Task Description                                          |
-| ------------------- | ---------- | --------------------------------------------------------- |
-| `/integration-test` | 1st        | INT-TEST₁ — RED phase: write regression test, expect FAIL |
-| `/integration-test` | 2nd        | INT-TEST₂ — GREEN phase: re-run after fix, expect PASS    |
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /debug-investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
-
----
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

@@ -13,122 +13,6 @@ description: '[Code Quality] Simplifies and refines code for clarity, consistenc
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. For simple tasks, MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
-
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
-> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
-
-<!-- SYNC:design-patterns-quality -->
-
-> **Design Patterns Quality** — Priority checks for every code change:
->
-> 1. **DRY via OOP:** Identify classes/modules with the same purpose, naming pattern, or lifecycle. Apply your knowledge of the project's language/framework to determine the idiomatic abstraction (base class, mixin, trait, protocol, decorator). 3+ similar patterns → extract to shared abstraction.
-> 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
-> 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
-> 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
-> 5. **YAGNI gate:** NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
->
-> **Anti-patterns to flag:** God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
->
-> **Serial Attention for Design Quality** — DO NOT scan all quality concerns simultaneously. Split attention misses violations that focused passes catch.
->
-> 1. **Identify applicable dimensions** — Based on the code's language, domain, and patterns, determine which quality dimensions apply: DRY, SOLID principles (SRP/OCP/LSP/ISP/DIP), OOP idioms, cohesion/coupling, GRASP, Law of Demeter, CQRS invariants, etc. Your list is NOT fixed — derive from what the code actually does.
-> 2. **One focused pass per dimension** — Dedicate single-focus attention to EACH dimension in sequence. Do NOT mix concerns across passes.
-> 3. **Threshold: 3+ similar patterns = MANDATORY extraction** — Not optional suggestion. Flag as mandatory structural fix requiring action.
-> 4. **2+ violations of same kind = structural finding** — Report as "pattern problem" needing architectural resolution, not a list of individual instances.
-
-<!-- /SYNC:design-patterns-quality -->
-
-<!-- SYNC:complexity-prevention -->
-
-> **Complexity Prevention (Ousterhout)** — MANDATORY. Measure code by cost of change: one business change should map to one code change. Flag ALL of the following in review:
->
-> 1. **Change amplification** — small business change forces edits in >3 places → structural flaw. Count edit sites for a plausible future change (add variant, add field, add authorization). >3 = reject.
-> 2. **Cognitive load** — reader must hold too much context to safely modify. Flag deep inheritance, long parameter lists, boolean traps, implicit ordering dependencies.
-> 3. **Cross-cutting duplication at entry points** — logging, error handling, validation, auth, transactions reimplemented per controller/handler/route. Lift to middleware / interceptor / filter / decorator / aspect.
-> 4. **Leaked implementation technology** — repos returning `IQueryable`/`QuerySet`/`Criteria`/raw cursors/ORM entities to callers. Return finished results + intent-revealing methods (`GetActiveVipUsers()` not `Query()`).
-> 5. **Type-switch scattering** — `switch`/`if`-chains on enum/discriminator in >1 place. New variant = new file, not N edits. One factory/registry switch at the boundary OK; scattered switches = reject.
-> 6. **Anemic models** — domain objects with only getters/setters, logic floats in services. Move invariants/behavior onto the object (`order.Checkout()`, not `order.Status = ...`).
-> 7. **Primitive obsession** — raw `string`/`int`/`decimal` for account numbers, emails, money, percentages, date ranges, with re-validation at every entry. Wrap in value objects / records / structs that validate once at construction.
-> 8. **Inline cross-cutting concerns** — authorization/tenant isolation/audit/sanitization hand-written at top of every handler. Flag intent with declarative markers (`@RequirePermission("Order.Delete")`), enforce once centrally.
-> 9. **Shallow modules** — tiny class, big interface (many public methods, many flags, many ctor params) wrapping little logic. A module is deep when a small interface hides a lot of implementation. If interface ≈ implementation cost to learn → inline.
-> 10. **Missing base class for repeated component/handler lifecycle** — 3+ forms/CRUD handlers/list views reimplementing loading/dirty/submit/pagination → extract to base class / hook / composable / mixin / trait.
-> 11. **Premature vs delayed abstraction** — rule-of-three. First occurrence: write it. Second: notice duplication. Third: extract. Don't build generic frameworks before real variation; don't copy-paste for the 4th time.
-> 12. **Embedded utility logic not extracted to helpers** — inline paging loops (`while (hasMore) { skip += take; ... }`), ad-hoc datetime math, string parsing/formatting, collection partitioning, retry/backoff loops, URL/query-string building. If the algorithm is non-trivial AND stack-generic (not business-specific), extract to `util`/`helper`/`extensions` and let consumers call one line. Inline duplicates → duplicated bug surface.
-> 13. **Logic in wrong (higher) layer — downshift to callee** — business/derivation logic written in the caller when the callee owns the data. Defaults: Controller code that should be App Service. App Service code that should be Domain Service or Entity. Component code that should be ViewModel/Store/Service. Caller reaching into callee's data shape to compute something → move the computation behind an intent-revealing method on the callee. Lowest responsible layer wins (Entity > Domain Service > App Service > Controller · Model/VM > Store > Component). Higher-layer placement = duplicated logic when a sibling caller needs the same thing.
-> 14. **Owner owns the rule — extract on first write** — if a caller inlines logic that derives, normalizes, validates, or computes from another type's data, MOVE it to the owning type. Single use is sufficient — the trigger is wrong responsibility, not duplication. Sibling callers always arrive; inline copies drift silently with no compile error and no name to grep. **Common offenders:** _Backend_ — inlined rules in application-layer handlers / commands / queries / services / controllers that belong on the domain entity / value object / domain service. _Frontend_ — inlined derivations / formatting / validation in components that belong on the model / store / view-model / API service. **Fix:** name the rule once as a method (static or instance) on the owning type; callers invoke by name. Future variant → SECOND named method on the owner, never an inline near-duplicate. **Right responsibility first; reuse is the consequence.**
->
-> **Extraction target — where the named rule lives:**
->
-> | Shape of the rule                             | Goes to                       |
-> | --------------------------------------------- | ----------------------------- |
-> | Pure function over an entity's own data       | static method on the entity   |
-> | Behavior that mutates / guards entity state   | instance method on the entity |
-> | Always-true invariant on a primitive value    | value object constructor      |
-> | Needs DI (repo / settings / clock)            | helper class registered in DI |
-> | Domain-agnostic algorithm reused across types | util / extension method       |
-> | Pure shape / projection conversion            | DTO mapping                   |
->
-> **Pre-commit edit-site test (reject if answer is "many"):**
->
-> | Change Scenario                                 | Should touch              |
-> | ----------------------------------------------- | ------------------------- |
-> | Add new variant (customer type, payment method) | 1 new file                |
-> | Change HTTP error response format               | 1 middleware/filter       |
-> | Add timestamp field to every persisted entity   | 1 base entity/interceptor |
-> | Add authorization to a new endpoint             | 1 declarative marker      |
-> | Swap database/ORM                               | Data layer only           |
-> | Change business calculation rule                | 1 method on owning entity |
-> | Add loading indicator pattern to forms          | 1 base component/hook     |
-> | Add validation rule to a domain primitive       | 1 value-object ctor       |
-> | Change paging/retry/datetime algorithm          | 1 helper/util function    |
-> | Change a derivation of entity data              | 1 method on the entity    |
->
-> **Operating heuristics:**
->
-> - Write the call site first.
-> - Count edit sites for plausible future change.
-> - Prefer removing code over adding it.
-> - Surface assumptions at boundaries, hide details inside.
-> - **Pre-reuse scan** — before writing a non-trivial block, grep for similar algorithms (`while.*skip`, `DateTime.*Add`, `split`/`join` chains, paging loops, retry loops). Match existing helper → call it. None exists but pattern is stack-generic → extract to util before second caller appears.
-> - **Layer placement test** — ask "if a sibling caller needed this tomorrow, would they re-derive it?" If yes, the logic is in the wrong layer. Move it down.
-> - **Open-case-for-future-reuse** — if reviewer spots a block that is likely to appear in another feature (domain-agnostic algorithm, shared lifecycle, recurring derivation), do NOT rationalize with pure YAGNI. Either extract now (if cheap) or create a tracked TODO with the exact extraction target so the second caller does not duplicate silently. Silent duplication is the default failure mode.
-> - When in doubt ask: "What would need to change if the requirement shifts?"
->
-> **The measure of good code is the cost of change.** Not shortest. Not cleverest. Not most abstracted. Cheapest to safely modify having read a small local portion.
-
-<!-- /SYNC:complexity-prevention -->
-
-- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
-
-> **External Memory:** Complex/lengthy work → write findings to `plans/reports/`. Prevents context loss, serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence (confidence >80% to act, <80% verify first).
-
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns for base class extraction. Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION inherit common base. Verify stack has linting/analyzer configured.
-
 ## Quick Summary
 
 **Goal:** Simplify and refine code for clarity, consistency, maintainability — preserving all functionality.
@@ -613,6 +497,123 @@ When used standalone (outside a review workflow), run `/workflow-review-changes`
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. For simple tasks, MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:design-patterns-quality -->
+
+> **Design Patterns Quality** — Priority checks for every code change:
+>
+> 1. **DRY via OOP:** Identify classes/modules with the same purpose, naming pattern, or lifecycle. Apply your knowledge of the project's language/framework to determine the idiomatic abstraction (base class, mixin, trait, protocol, decorator). 3+ similar patterns → extract to shared abstraction.
+> 2. **Right Responsibility:** Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
+> 3. **SOLID:** Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
+> 4. **After extraction/move/rename:** Grep ENTIRE scope for dangling references. Zero tolerance.
+> 5. **YAGNI gate:** NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
+>
+> **Anti-patterns to flag:** God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
+>
+> **Serial Attention for Design Quality** — DO NOT scan all quality concerns simultaneously. Split attention misses violations that focused passes catch.
+>
+> 1. **Identify applicable dimensions** — Based on the code's language, domain, and patterns, determine which quality dimensions apply: DRY, SOLID principles (SRP/OCP/LSP/ISP/DIP), OOP idioms, cohesion/coupling, GRASP, Law of Demeter, CQRS invariants, etc. Your list is NOT fixed — derive from what the code actually does.
+> 2. **One focused pass per dimension** — Dedicate single-focus attention to EACH dimension in sequence. Do NOT mix concerns across passes.
+> 3. **Threshold: 3+ similar patterns = MANDATORY extraction** — Not optional suggestion. Flag as mandatory structural fix requiring action.
+> 4. **2+ violations of same kind = structural finding** — Report as "pattern problem" needing architectural resolution, not a list of individual instances.
+
+<!-- /SYNC:design-patterns-quality -->
+
+<!-- SYNC:complexity-prevention -->
+
+> **Complexity Prevention (Ousterhout)** — MANDATORY. Measure code by cost of change: one business change should map to one code change. Flag ALL of the following in review:
+>
+> 1. **Change amplification** — small business change forces edits in >3 places → structural flaw. Count edit sites for a plausible future change (add variant, add field, add authorization). >3 = reject.
+> 2. **Cognitive load** — reader must hold too much context to safely modify. Flag deep inheritance, long parameter lists, boolean traps, implicit ordering dependencies.
+> 3. **Cross-cutting duplication at entry points** — logging, error handling, validation, auth, transactions reimplemented per controller/handler/route. Lift to middleware / interceptor / filter / decorator / aspect.
+> 4. **Leaked implementation technology** — repos returning `IQueryable`/`QuerySet`/`Criteria`/raw cursors/ORM entities to callers. Return finished results + intent-revealing methods (`GetActiveVipUsers()` not `Query()`).
+> 5. **Type-switch scattering** — `switch`/`if`-chains on enum/discriminator in >1 place. New variant = new file, not N edits. One factory/registry switch at the boundary OK; scattered switches = reject.
+> 6. **Anemic models** — domain objects with only getters/setters, logic floats in services. Move invariants/behavior onto the object (`order.Checkout()`, not `order.Status = ...`).
+> 7. **Primitive obsession** — raw `string`/`int`/`decimal` for account numbers, emails, money, percentages, date ranges, with re-validation at every entry. Wrap in value objects / records / structs that validate once at construction.
+> 8. **Inline cross-cutting concerns** — authorization/tenant isolation/audit/sanitization hand-written at top of every handler. Flag intent with declarative markers (`@RequirePermission("Order.Delete")`), enforce once centrally.
+> 9. **Shallow modules** — tiny class, big interface (many public methods, many flags, many ctor params) wrapping little logic. A module is deep when a small interface hides a lot of implementation. If interface ≈ implementation cost to learn → inline.
+> 10. **Missing base class for repeated component/handler lifecycle** — 3+ forms/CRUD handlers/list views reimplementing loading/dirty/submit/pagination → extract to base class / hook / composable / mixin / trait.
+> 11. **Premature vs delayed abstraction** — rule-of-three. First occurrence: write it. Second: notice duplication. Third: extract. Don't build generic frameworks before real variation; don't copy-paste for the 4th time.
+> 12. **Embedded utility logic not extracted to helpers** — inline paging loops (`while (hasMore) { skip += take; ... }`), ad-hoc datetime math, string parsing/formatting, collection partitioning, retry/backoff loops, URL/query-string building. If the algorithm is non-trivial AND stack-generic (not business-specific), extract to `util`/`helper`/`extensions` and let consumers call one line. Inline duplicates → duplicated bug surface.
+> 13. **Logic in wrong (higher) layer — downshift to callee** — business/derivation logic written in the caller when the callee owns the data. Defaults: Controller code that should be App Service. App Service code that should be Domain Service or Entity. Component code that should be ViewModel/Store/Service. Caller reaching into callee's data shape to compute something → move the computation behind an intent-revealing method on the callee. Lowest responsible layer wins (Entity > Domain Service > App Service > Controller · Model/VM > Store > Component). Higher-layer placement = duplicated logic when a sibling caller needs the same thing.
+> 14. **Owner owns the rule — extract on first write** — if a caller inlines logic that derives, normalizes, validates, or computes from another type's data, MOVE it to the owning type. Single use is sufficient — the trigger is wrong responsibility, not duplication. Sibling callers always arrive; inline copies drift silently with no compile error and no name to grep. **Common offenders:** _Backend_ — inlined rules in application-layer handlers / commands / queries / services / controllers that belong on the domain entity / value object / domain service. _Frontend_ — inlined derivations / formatting / validation in components that belong on the model / store / view-model / API service. **Fix:** name the rule once as a method (static or instance) on the owning type; callers invoke by name. Future variant → SECOND named method on the owner, never an inline near-duplicate. **Right responsibility first; reuse is the consequence.**
+>
+> **Extraction target — where the named rule lives:**
+>
+> | Shape of the rule                             | Goes to                       |
+> | --------------------------------------------- | ----------------------------- |
+> | Pure function over an entity's own data       | static method on the entity   |
+> | Behavior that mutates / guards entity state   | instance method on the entity |
+> | Always-true invariant on a primitive value    | value object constructor      |
+> | Needs DI (repo / settings / clock)            | helper class registered in DI |
+> | Domain-agnostic algorithm reused across types | util / extension method       |
+> | Pure shape / projection conversion            | DTO mapping                   |
+>
+> **Pre-commit edit-site test (reject if answer is "many"):**
+>
+> | Change Scenario                                 | Should touch              |
+> | ----------------------------------------------- | ------------------------- |
+> | Add new variant (customer type, payment method) | 1 new file                |
+> | Change HTTP error response format               | 1 middleware/filter       |
+> | Add timestamp field to every persisted entity   | 1 base entity/interceptor |
+> | Add authorization to a new endpoint             | 1 declarative marker      |
+> | Swap database/ORM                               | Data layer only           |
+> | Change business calculation rule                | 1 method on owning entity |
+> | Add loading indicator pattern to forms          | 1 base component/hook     |
+> | Add validation rule to a domain primitive       | 1 value-object ctor       |
+> | Change paging/retry/datetime algorithm          | 1 helper/util function    |
+> | Change a derivation of entity data              | 1 method on the entity    |
+>
+> **Operating heuristics:**
+>
+> - Write the call site first.
+> - Count edit sites for plausible future change.
+> - Prefer removing code over adding it.
+> - Surface assumptions at boundaries, hide details inside.
+> - **Pre-reuse scan** — before writing a non-trivial block, grep for similar algorithms (`while.*skip`, `DateTime.*Add`, `split`/`join` chains, paging loops, retry loops). Match existing helper → call it. None exists but pattern is stack-generic → extract to util before second caller appears.
+> - **Layer placement test** — ask "if a sibling caller needed this tomorrow, would they re-derive it?" If yes, the logic is in the wrong layer. Move it down.
+> - **Open-case-for-future-reuse** — if reviewer spots a block that is likely to appear in another feature (domain-agnostic algorithm, shared lifecycle, recurring derivation), do NOT rationalize with pure YAGNI. Either extract now (if cheap) or create a tracked TODO with the exact extraction target so the second caller does not duplicate silently. Silent duplication is the default failure mode.
+> - When in doubt ask: "What would need to change if the requirement shifts?"
+>
+> **The measure of good code is the cost of change.** Not shortest. Not cleverest. Not most abstracted. Cheapest to safely modify having read a small local portion.
+
+<!-- /SYNC:complexity-prevention -->
+
+- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+> **External Memory:** Complex/lengthy work → write findings to `plans/reports/`. Prevents context loss, serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence (confidence >80% to act, <80% verify first).
+
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns for base class extraction. Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION inherit common base. Verify stack has linting/analyzer configured.
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

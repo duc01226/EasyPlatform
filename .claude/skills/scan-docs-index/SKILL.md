@@ -4,45 +4,6 @@ version: 2.0.0
 description: '[Documentation] Scan project and populate/sync docs/project-reference/docs-index-reference.md with documentation tree, file counts, category breakdown, doc relationships, and lookup table.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
-
-<!-- SYNC:scan-and-update-reference-doc -->
-
-> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
->
-> 1. **Read existing doc** first — understand structure and manual annotations
-> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
-> 3. **Scan codebase** (grep/glob) for current state
-> 4. **Diff** findings vs doc — identify stale sections only
-> 5. **Update ONLY** diverged sections. Preserve manual annotations.
-> 6. **Update metadata** (date, version) in frontmatter/header
-> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
-
-<!-- /SYNC:scan-and-update-reference-doc -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — stale instantly
-> 2. No directory trees — use 1-line path conventions
-> 3. No TOCs — AI reads linearly
-> 4. One example per pattern — only if non-obvious
-> 5. Lead with answer, not reasoning
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
 **Goal:** Scan the project's `docs/` directory → populate `docs/project-reference/docs-index-reference.md` with accurate documentation tree, file counts by category, doc relationships, and keyword-to-doc lookup table.
@@ -197,6 +158,45 @@ Write to `docs/project-reference/docs-index-reference.md` with sections:
 ```
 
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
+<!-- SYNC:scan-and-update-reference-doc -->
+
+> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
+>
+> 1. **Read existing doc** first — understand structure and manual annotations
+> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
+> 3. **Scan codebase** (grep/glob) for current state
+> 4. **Diff** findings vs doc — identify stale sections only
+> 5. **Update ONLY** diverged sections. Preserve manual annotations.
+> 6. **Update metadata** (date, version) in frontmatter/header
+> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
+
+<!-- /SYNC:scan-and-update-reference-doc -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — stale instantly
+> 2. No directory trees — use 1-line path conventions
+> 3. No TOCs — AI reads linearly
+> 4. One example per pattern — only if non-obvious
+> 5. Lead with answer, not reasoning
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end
+
+<!-- /SYNC:output-quality-principles -->
 
 <!-- SYNC:scan-and-update-reference-doc:reminder -->
 

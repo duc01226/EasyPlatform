@@ -13,23 +13,6 @@ description: '[Architecture] Analyze business domain: bounded contexts, aggregat
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY decision point — validate every bounded context and entity relationship with user.
-**MANDATORY IMPORTANT MUST ATTENTION** produce ERD diagram (Mermaid) and domain model report with confidence %.
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
----
-
 ## Quick Summary
 
 **Goal:** Analyze business domain: bounded contexts, aggregates, entities, VOs, domain events, cross-context relationships. Generate domain model report + ERD.
@@ -555,7 +538,7 @@ public static Expression<Func<Employee, bool>> ByDepartmentExpression(string dep
 1. Glob `plans/*/plan.md` sorted by modification time — find active plan directory
 2. Read `plan.md` — project scope, goals, prior decisions
 3. Read all `{plan-dir}/research/*.md` — avoid duplicating prior work
-4. Read `docs/project-reference/domain-entities-reference.md` (if exists) — project's single source of truth for domain entities (content auto-injected by hook — check for [Injected: ...] header before reading separately)
+4. Read `docs/project-reference/domain-entities-reference.md` (if exists) — project's single source of truth for domain entities (read directly when relevant; do not rely on hook-injected conversation text)
 5. Set `{plan-dir}` variable — all outputs write to this directory
 
 If no plan directory, create using naming convention from session context.
@@ -860,6 +843,24 @@ Report must be **≤250 lines**. Use tables over prose.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY decision point — validate every bounded context and entity relationship with user.
+**MANDATORY IMPORTANT MUST ATTENTION** produce ERD diagram (Mermaid) and domain model report with confidence %.
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+---
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

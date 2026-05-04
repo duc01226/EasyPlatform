@@ -5,6 +5,76 @@ description: '[Workflow] Trigger Feature Implementation workflow — implement a
 disable-model-invocation: true
 ---
 
+## Quick Summary
+
+**Goal:** [Workflow] Trigger Feature Implementation workflow — implement a well-defined feature with investigation, planning, implementation, and review.
+
+**Workflow:**
+
+1. **Detect** — classify request scope and target artifacts.
+2. **Execute** — apply required steps with evidence-backed actions.
+3. **Verify** — confirm constraints, output quality, and completion evidence.
+
+**Key Rules:**
+
+- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
+- MUST ATTENTION keep task tracking updated as each step starts/completes.
+- NEVER skip mandatory workflow or skill gates.
+
+## Repeated Steps Disambiguation (CRITICAL for task creation)
+
+This workflow has steps that appear multiple times. When creating tasks, use these descriptions to distinguish them:
+
+| Step               | Occurrence   | Task Description                                 |
+| ------------------ | ------------ | ------------------------------------------------ |
+| `/plan`            | 1st (pos 3)  | PLAN₁: Investigation-based implementation plan   |
+| `/plan`            | 2nd (pos 9)  | PLAN₂: Sprint-ready plan incorporating TDD specs |
+| `/plan-review`     | 1st (pos 4)  | Review PLAN₁                                     |
+| `/plan-review`     | 2nd (pos 10) | Review PLAN₂                                     |
+| `/tdd-spec`        | 1st (pos 7)  | TDD-SPEC₁: Pre-implementation test specs         |
+| `/tdd-spec`        | 2nd (pos 11) | TDD-SPEC₂: Post-implementation test spec update  |
+| `/tdd-spec-review` | 1st (pos 8)  | Review TDD-SPEC₁                                 |
+| `/tdd-spec-review` | 2nd (pos 12) | Review TDD-SPEC₂                                 |
+
+**NEVER deduplicate** — each occurrence is a distinct task with a different purpose.
+
+---
+
+## Conditional UI Planning
+
+When a feature involves UI changes (detected during `/scout` or `/feature-investigation`):
+
+- If image/wireframe/Figma URL is provided → route to `/wireframe-to-spec` or `/figma-design` before `/plan`
+- If `/plan` detects frontend phases → ensure `ui-wireframe-protocol.md` sections are included in plan phases
+- This is advisory — NOT a mandatory workflow step change. The existing workflow sequence remains unchanged.
+
+## Closing Rule
+
+Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `TaskUpdate completed`. No shortcuts.
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /domain-analysis -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
+---
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
 **IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /domain-analysis -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
@@ -86,60 +156,12 @@ Activate the `feature` workflow. Run `/workflow-start feature` with the user's p
 
 > **[PERFORMANCE EXCEPTION]** If this feature is a performance enhancement (query optimization, caching, throughput improvement, latency reduction), skip `/tdd-spec` (both occurrences), `/tdd-spec-review` (both occurrences), PLAN₂ + its `/plan-review`, `/tdd-spec [direction=sync]`, `/integration-test`, `/integration-test-review`, and `/integration-test-verify`. Do NOT skip `/cook` — implementation still runs. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead.
 
-## Quick Summary
+<!-- SYNC:nested-task-creation:reminder -->
 
-**Goal:** [Workflow] Trigger Feature Implementation workflow — implement a well-defined feature with investigation, planning, implementation, and review.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
-**Workflow:**
-
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
-
-**Key Rules:**
-
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- NEVER skip mandatory workflow or skill gates.
-
-## Repeated Steps Disambiguation (CRITICAL for task creation)
-
-This workflow has steps that appear multiple times. When creating tasks, use these descriptions to distinguish them:
-
-| Step               | Occurrence   | Task Description                                 |
-| ------------------ | ------------ | ------------------------------------------------ |
-| `/plan`            | 1st (pos 3)  | PLAN₁: Investigation-based implementation plan   |
-| `/plan`            | 2nd (pos 9)  | PLAN₂: Sprint-ready plan incorporating TDD specs |
-| `/plan-review`     | 1st (pos 4)  | Review PLAN₁                                     |
-| `/plan-review`     | 2nd (pos 10) | Review PLAN₂                                     |
-| `/tdd-spec`        | 1st (pos 7)  | TDD-SPEC₁: Pre-implementation test specs         |
-| `/tdd-spec`        | 2nd (pos 11) | TDD-SPEC₂: Post-implementation test spec update  |
-| `/tdd-spec-review` | 1st (pos 8)  | Review TDD-SPEC₁                                 |
-| `/tdd-spec-review` | 2nd (pos 12) | Review TDD-SPEC₂                                 |
-
-**NEVER deduplicate** — each occurrence is a distinct task with a different purpose.
-
----
-
-## Conditional UI Planning
-
-When a feature involves UI changes (detected during `/scout` or `/feature-investigation`):
-
-- If image/wireframe/Figma URL is provided → route to `/wireframe-to-spec` or `/figma-design` before `/plan`
-- If `/plan` detects frontend phases → ensure `ui-wireframe-protocol.md` sections are included in plan phases
-- This is advisory — NOT a mandatory workflow step change. The existing workflow sequence remains unchanged.
-
-## Closing Rule
-
-Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `TaskUpdate completed`. No shortcuts.
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /domain-analysis -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
-
----
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

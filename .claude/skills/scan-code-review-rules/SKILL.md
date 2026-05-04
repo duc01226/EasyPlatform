@@ -4,48 +4,9 @@ version: 2.0.0
 description: '[Documentation] Scan project and populate/sync docs/project-reference/code-review-rules.md with code conventions, anti-patterns, architecture rules, and review checklists.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
-
-<!-- SYNC:scan-and-update-reference-doc -->
-
-> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
->
-> 1. **Read existing doc** first — understand structure and manual annotations
-> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
-> 3. **Scan codebase** (grep/glob) for current patterns
-> 4. **Diff** findings vs doc — identify stale sections only
-> 5. **Update ONLY** diverged sections. Preserve manual annotations.
-> 6. **Update metadata** (date, version) in frontmatter/header
-> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
-
-<!-- /SYNC:scan-and-update-reference-doc -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — stale instantly
-> 2. No directory trees — use 1-line path conventions
-> 3. No TOCs — AI reads linearly
-> 4. One example per pattern — only if non-obvious
-> 5. Lead with answer, not reasoning
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
-**Goal:** Scan project codebase for established conventions, lint rules, common patterns, and anti-patterns → populate `docs/project-reference/code-review-rules.md` with actionable review rules and checklists. (content auto-injected by hook — check for [Injected:...] header before reading)
+**Goal:** Scan project codebase for established conventions, lint rules, common patterns, and anti-patterns → populate `docs/project-reference/code-review-rules.md` with actionable review rules and checklists. (read directly when relevant; do not rely on hook-injected conversation text)
 
 **Workflow:**
 
@@ -192,6 +153,45 @@ Read report. Apply evidence confidence to classify each rule:
 6. Report: sections updated, rules count, anti-patterns discovered
 
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
+<!-- SYNC:scan-and-update-reference-doc -->
+
+> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
+>
+> 1. **Read existing doc** first — understand structure and manual annotations
+> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
+> 3. **Scan codebase** (grep/glob) for current patterns
+> 4. **Diff** findings vs doc — identify stale sections only
+> 5. **Update ONLY** diverged sections. Preserve manual annotations.
+> 6. **Update metadata** (date, version) in frontmatter/header
+> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
+
+<!-- /SYNC:scan-and-update-reference-doc -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — stale instantly
+> 2. No directory trees — use 1-line path conventions
+> 3. No TOCs — AI reads linearly
+> 4. One example per pattern — only if non-obvious
+> 5. Lead with answer, not reasoning
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end
+
+<!-- /SYNC:output-quality-principles -->
 
 <!-- SYNC:scan-and-update-reference-doc:reminder -->
 

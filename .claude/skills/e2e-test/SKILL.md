@@ -12,26 +12,6 @@ description: '[Testing] Use when generating, updating, or maintaining E2E tests 
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-# Skill: e2e-test
-
-**Category:** [Testing]
-**Trigger:** e2e test, e2e from recording, generate e2e, playwright test, cypress test, selenium test, webdriver, puppeteer
-
-Generate and maintain E2E tests using the project's configured testing framework.
-
-- `docs/specs/` — Test specifications by module (read existing TCs for E2E scenario coverage; match TC codes to E2E test implementations)
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
----
-
 ## Quick Summary
 
 **Goal:** [Testing] Use when generating, updating, or maintaining E2E tests from recordings, specs, or code changes. Supports Playwright, Selenium, Cypress, and other frameworks.
@@ -242,6 +222,27 @@ Spawn `e2e-runner` sub-agent for:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+# Skill: e2e-test
+
+**Category:** [Testing]
+**Trigger:** e2e test, e2e from recording, generate e2e, playwright test, cypress test, selenium test, webdriver, puppeteer
+
+Generate and maintain E2E tests using the project's configured testing framework.
+
+- `docs/specs/` — Test specifications by module (read existing TCs for E2E scenario coverage; match TC codes to E2E test implementations)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+---
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

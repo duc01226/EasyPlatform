@@ -4,17 +4,6 @@ version: 1.1.0
 description: '[Planning] Start a new project from scratch with full waterfall inception — idea, research, domain modeling, tech stack, and implementation plan'
 ---
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY stage — validate decisions before proceeding.
-**MANDATORY IMPORTANT MUST ATTENTION** NEVER ask tech stack upfront — business analysis and domain modeling first.
-
 ## Quick Summary
 
 **Goal:** Guide greenfield project inception from raw idea to an approved, implementable project plan using a full waterfall process.
@@ -123,6 +112,18 @@ After completion, recommend next step: `/cook` to scaffold the project structure
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY stage — validate decisions before proceeding.
+**MANDATORY IMPORTANT MUST ATTENTION** NEVER ask tech stack upfront — business analysis and domain modeling first.
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

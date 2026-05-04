@@ -5,6 +5,157 @@ description: '[Implementation] Analyze and fix UI issues'
 disable-model-invocation: false
 ---
 
+## Quick Summary
+
+**Goal:** Diagnose and fix UI/UX issues including layout, styling, responsiveness, and visual bugs.
+
+**Workflow:**
+
+1. **Identify** — Locate the component/template causing the visual issue
+2. **Diagnose** — Trace CSS/HTML/component logic to find root cause
+3. **Fix** — Apply targeted fix (SCSS, template, component logic)
+4. **Verify** — Check responsive behavior and cross-browser rendering
+
+**Key Rules:**
+
+- Debug Mindset: every claim needs `file:line` evidence
+- Always use BEM classes on template elements
+- Check responsive breakpoints when fixing layout issues
+
+**Pre-read (design system):** Load `designSystem.canonicalDoc` + `tokenFiles` from `docs/project-config.json` so fixes use real token names (`--brand-*`, `$brand-*`) and canonical component classes — not invented values.
+
+<!-- SYNC:root-cause-debugging -->
+
+> **Root Cause Debugging** — Systematic approach, never guess-and-check.
+>
+> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
+> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
+> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
+> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
+> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
+> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
+>
+> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
+
+<!-- /SYNC:root-cause-debugging -->
+
+## Debug Mindset (NON-NEGOTIABLE)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+- Do NOT assume the first hypothesis is correct — verify with actual code traces
+- Every root cause claim must include `file:line` evidence
+- If you cannot prove a root cause with a code trace, state "hypothesis, not confirmed"
+- Question assumptions: "Is this really the cause?" → trace the actual execution path
+- Challenge completeness: "Are there other contributing factors?" → check related code paths
+- No "should fix it" without proof — verify the fix addresses the traced root cause
+
+## ⚠️ MANDATORY: Confidence & Evidence Gate
+
+**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
+**95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
+
+## Required Skills (Priority Order)
+
+1. **`ui-ux-pro-max`** - Design intelligence database
+2. **`web-design-guidelines`** - Design principles
+3. **`frontend-design`** - Implementation patterns
+
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After identifying UI root cause, MUST ATTENTION present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
+Use `ui-ux-designer` subagent to read and analyze `./docs/design-guidelines.md` then fix the following issues:
+<issue>$ARGUMENTS</issue>
+
+## Workflow
+
+**FIRST**: Run `ui-ux-pro-max` searches to understand context and common issues:
+
+```bash
+python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<product-type>" --domain product
+python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<style-keywords>" --domain style
+python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "accessibility" --domain ux
+python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "z-index animation" --domain ux
+```
+
+If the user provides a screenshots or videos, use `ai-multimodal` skill to describe as detailed as possible the issue, make sure developers can predict the root causes easily based on the description.
+
+1. Use `ui-ux-designer` subagent to implement the fix step by step.
+2. Use screenshot capture tools along with `ai-multimodal` skill to take screenshots of the implemented fix (at the exact parent container, don't take screenshot of the whole page) and use the appropriate Gemini analysis skills (`ai-multimodal`, `video-analysis`, or `document-extraction`) to analyze those outputs so the result matches the design guideline and addresses all issues.
+
+- If the issues are not addressed, repeat the process until all issues are addressed.
+
+3. Use `chrome-devtools` skill to analyze the implemented fix and make sure it matches the design guideline.
+4. Use `tester` agent to test the fix and compile the code to make sure it works, then report back to main agent.
+
+- If there are issues or failed tests, ask main agent to fix all of them and repeat the process until all tests pass.
+
+5. Project Management & Documentation:
+   **If user approves the changes:** Use `project-manager` and `docs-manager` subagents in parallel to update the project progress and documentation:
+    - Use `project-manager` subagent to update the project progress and task status in the given plan file.
+    - Use `docs-manager` subagent to update the docs in `./docs` directory if needed.
+    - Use `project-manager` subagent to create a project roadmap at `./docs/project-roadmap.md` file.
+    - **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
+      **If user rejects the changes:** Ask user to explain the issues and ask main agent to fix all of them and repeat the process.
+6. Final Report:
+
+- Report back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
+- Ask the user if they want to commit and push to git repository, if yes, use `git-manager` subagent to commit and push to git repository.
+- **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
+- **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+
+**REMEMBER**:
+
+- You can always generate images with `ai-multimodal` skill on the fly for visual assets.
+- You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
+- For image editing (removing background, adjusting, cropping), use `media-processing` skill as needed.
+- **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
+
+- **After fixing, MUST ATTENTION run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.
+
+---
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -46,7 +197,7 @@ disable-model-invocation: false
 
 <!-- /SYNC:evidence-based-reasoning -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
 
 <!-- SYNC:estimation-framework -->
 
@@ -214,126 +365,17 @@ disable-model-invocation: false
 
 > **Skill Variant:** Variant of `/fix` — UI/UX visual issue diagnosis and fix.
 
-## Quick Summary
-
-**Goal:** Diagnose and fix UI/UX issues including layout, styling, responsiveness, and visual bugs.
-
-**Workflow:**
-
-1. **Identify** — Locate the component/template causing the visual issue
-2. **Diagnose** — Trace CSS/HTML/component logic to find root cause
-3. **Fix** — Apply targeted fix (SCSS, template, component logic)
-4. **Verify** — Check responsive behavior and cross-browser rendering
-
-**Key Rules:**
-
-- Debug Mindset: every claim needs `file:line` evidence
-- Always use BEM classes on template elements
-- Check responsive breakpoints when fixing layout issues
-
-**Pre-read (design system):** Load `designSystem.canonicalDoc` + `tokenFiles` from `docs/project-config.json` so fixes use real token names (`--brand-*`, `$brand-*`) and canonical component classes — not invented values.
-
-<!-- SYNC:root-cause-debugging -->
-
-> **Root Cause Debugging** — Systematic approach, never guess-and-check.
->
-> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
-> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
-> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
-> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
-> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
-> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
->
-> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
-
-<!-- /SYNC:root-cause-debugging -->
-
-## Debug Mindset (NON-NEGOTIABLE)
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-- Do NOT assume the first hypothesis is correct — verify with actual code traces
-- Every root cause claim must include `file:line` evidence
-- If you cannot prove a root cause with a code trace, state "hypothesis, not confirmed"
-- Question assumptions: "Is this really the cause?" → trace the actual execution path
-- Challenge completeness: "Are there other contributing factors?" → check related code paths
-- No "should fix it" without proof — verify the fix addresses the traced root cause
-
-## ⚠️ MANDATORY: Confidence & Evidence Gate
-
-**MANDATORY IMPORTANT MUST ATTENTION** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
-**95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
-
-## Required Skills (Priority Order)
-
-1. **`ui-ux-pro-max`** - Design intelligence database
-2. **`web-design-guidelines`** - Design principles
-3. **`frontend-design`** - Implementation patterns
-
-> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After identifying UI root cause, MUST ATTENTION present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
-
-Use `ui-ux-designer` subagent to read and analyze `./docs/design-guidelines.md` then fix the following issues:
-<issue>$ARGUMENTS</issue>
-
-## Workflow
-
-**FIRST**: Run `ui-ux-pro-max` searches to understand context and common issues:
-
-```bash
-python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<product-type>" --domain product
-python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<style-keywords>" --domain style
-python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "accessibility" --domain ux
-python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "z-index animation" --domain ux
-```
-
-If the user provides a screenshots or videos, use `ai-multimodal` skill to describe as detailed as possible the issue, make sure developers can predict the root causes easily based on the description.
-
-1. Use `ui-ux-designer` subagent to implement the fix step by step.
-2. Use screenshot capture tools along with `ai-multimodal` skill to take screenshots of the implemented fix (at the exact parent container, don't take screenshot of the whole page) and use the appropriate Gemini analysis skills (`ai-multimodal`, `video-analysis`, or `document-extraction`) to analyze those outputs so the result matches the design guideline and addresses all issues.
-
-- If the issues are not addressed, repeat the process until all issues are addressed.
-
-3. Use `chrome-devtools` skill to analyze the implemented fix and make sure it matches the design guideline.
-4. Use `tester` agent to test the fix and compile the code to make sure it works, then report back to main agent.
-
-- If there are issues or failed tests, ask main agent to fix all of them and repeat the process until all tests pass.
-
-5. Project Management & Documentation:
-   **If user approves the changes:** Use `project-manager` and `docs-manager` subagents in parallel to update the project progress and documentation:
-    - Use `project-manager` subagent to update the project progress and task status in the given plan file.
-    - Use `docs-manager` subagent to update the docs in `./docs` directory if needed.
-    - Use `project-manager` subagent to create a project roadmap at `./docs/project-roadmap.md` file.
-    - **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
-      **If user rejects the changes:** Ask user to explain the issues and ask main agent to fix all of them and repeat the process.
-6. Final Report:
-
-- Report back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
-- Ask the user if they want to commit and push to git repository, if yes, use `git-manager` subagent to commit and push to git repository.
-- **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-- **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
-
-**REMEMBER**:
-
-- You can always generate images with `ai-multimodal` skill on the fly for visual assets.
-- You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
-- For image editing (removing background, adjusting, cropping), use `media-processing` skill as needed.
-- **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
-
-- **After fixing, MUST ATTENTION run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.
-
----
-
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
-  <!-- SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
-          <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
@@ -359,6 +401,27 @@ If the user provides a screenshots or videos, use `ai-multimodal` skill to descr
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

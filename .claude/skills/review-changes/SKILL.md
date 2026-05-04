@@ -4,6 +4,10 @@ version: 2.1.0
 description: '[Code Quality] Review all uncommitted changes before commit'
 ---
 
+> **[FINAL PURPOSE REMINDER — MUST ATTENTION CRITICAL]**
+>
+> Ensure the changes is reasonable, no potential bugs or flaws, critical thinking hard.
+
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
 
 > **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
@@ -12,14 +16,6 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 > **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
-
-> **[CRITICAL — TOP 3 RULES]**
->
-> 1. **MUST ATTENTION Phase 0 graph blast-radius FIRST** — NEVER skip; informs entire review order
-> 2. **Clean Round 1 ENDS the review.** When issues found, fresh sub-agent re-review mandatory after fixing.
-> 3. **MUST ATTENTION TaskCreate ALL phases** before starting; missing tests MUST surface via `AskUserQuestion` — NOT silently logged
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. Prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 ## Quick Summary
 
@@ -59,6 +55,30 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 > **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:sequential-thinking-protocol -->
+
+> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
+>
+> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
+>
+> **Format (explicit mode — visible thought trail):**
+>
+> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
+> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
+> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
+> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
+> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
+>
+> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
+>
+> **Stop conditions:** confidence <80% on any critical decision → escalate via AskUserQuestion · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+>
+> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
+>
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+
+<!-- /SYNC:sequential-thinking-protocol -->
 
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
@@ -1202,6 +1222,56 @@ review-changes (you are here)
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+> **[CRITICAL — TOP 3 RULES]**
+>
+> 1. **MUST ATTENTION Phase 0 graph blast-radius FIRST** — NEVER skip; informs entire review order
+> 2. **Clean Round 1 ENDS the review.** When issues found, fresh sub-agent re-review mandatory after fixing.
+> 3. **MUST ATTENTION TaskCreate ALL phases** before starting; missing tests MUST surface via `AskUserQuestion` — NOT silently logged
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. Prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
 <!-- SYNC:understand-code-first:reminder -->
 
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
@@ -1269,11 +1339,38 @@ review-changes (you are here)
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
+<!-- SYNC:sequential-thinking-protocol:reminder -->
+
+**MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
+
+<!-- /SYNC:sequential-thinking-protocol:reminder -->
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 
@@ -1283,6 +1380,7 @@ review-changes (you are here)
 > 2. **Clean Round 1 ENDS the review.** When issues found, fresh sub-agent re-review mandatory after fixing.
 > 3. **MUST ATTENTION TaskCreate ALL phases** before starting; missing tests MUST surface via `AskUserQuestion`
 
+- **MANDATORY IMPORTANT MUST ATTENTION** Nested Task Expansion Contract — when invoked inside a workflow, STILL expand internal phases via `TaskCreate` with `[N.M] $review-changes — phase` prefix and `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` linkage. Workflow row is container, not substitute.
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
 - **MANDATORY IMPORTANT MUST ATTENTION** add final review todo task to verify work quality
@@ -1298,3 +1396,7 @@ review-changes (you are here)
 > **[IMPORTANT]** Analyze task size and break into many small todo tasks systematically before starting — critical for context preservation.
 
 ---
+
+> **[FINAL PURPOSE REMINDER — MUST ATTENTION CRITICAL]**
+>
+> Ensure the changes is reasonable, no potential bugs or flaws, critical thinking hard.

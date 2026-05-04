@@ -4,15 +4,6 @@ version: 1.0.0
 description: '[Skill Management] Expand caveman-compressed text back into fluent English, then apply AI attention anchoring (top/bottom summaries, inline READ summaries, progressive disclosure). Use when reconstructing compressed prompts/docs/skills into readable, well-structured form.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Two-phase restoration of any caveman-compressed markdown file: (1) Language Expansion — reconstruct fluent, grammatically correct English from compressed text while preserving ALL semantic content; (2) Prompt Enhancement — apply AI attention anchoring so AI reads and follows all instructions.
@@ -192,7 +183,7 @@ Applies after expansion. Source: Anthropic prompt engineering guide, Stanford "l
 > **Scope rules:**
 >
 > - `.claude/` protocol files → always add an inline summary (stable, belongs to framework)
-> - `docs/project-reference/` files → NO inline summary (varies per project, auto-injected by hooks). Add: `(content auto-injected by hook — check for [Injected: ...] header before reading)`
+> - `docs/project-reference/` files → NO inline summary (project-specific). Add: `(read directly when relevant; do not rely on hook-injected conversation text)`
 >
 > ### Transform 2: Top Summary Section
 >
@@ -327,6 +318,16 @@ For each `.claude/` protocol reference:
 **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

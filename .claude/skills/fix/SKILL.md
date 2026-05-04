@@ -13,6 +13,233 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
+## Quick Summary
+
+**Goal:** Analyze issues and intelligently route to the best-matching specialized fix command (fix-ci, fix-fast, fix-hard, fix-ui, etc.).
+
+**Workflow:**
+
+1. **Check** — Look for existing plan; if found, route to `/code <plan>`
+2. **Classify** — Match issue type (type errors, UI, CI, logs, tests, general)
+3. **Route** — Delegate to specialized fix variant based on classification
+
+**Key Rules:**
+
+- Debug Mindset is non-negotiable: every claim needs traced proof with `file:line` evidence
+- Never assume first hypothesis is correct — verify with actual code traces
+- Parent skill for all fix-\* variants; routes based on issue keywords
+
+<!-- SYNC:root-cause-debugging -->
+
+> **Root Cause Debugging** — Systematic approach, never guess-and-check.
+>
+> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
+> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
+> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
+> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
+> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
+> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
+>
+> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
+
+<!-- /SYNC:root-cause-debugging -->
+
+### Frontend/UI Context (if applicable)
+
+> When this task involves frontend or UI changes,
+
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST ATTENTION READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
+## Variant Decision Guide
+
+| If the issue is...        | Use                 | Why                                         |
+| ------------------------- | ------------------- | ------------------------------------------- |
+| Type errors (TS/C#)       | `/fix-types`        | Specialized for type system errors          |
+| UI/visual bug             | `/fix-ui`           | Includes visual comparison                  |
+| CI/CD pipeline failure    | `/fix-ci`           | Reads pipeline logs, understands CI context |
+| Test failures             | `/fix-test`         | Focuses on test assertions and mocking      |
+| Log-based investigation   | `/fix-logs`         | Parses log files for root cause             |
+| GitHub issue with context | `/fix-issue`        | Reads issue details, links to code          |
+| Simple/obvious fix        | `/fix-fast`         | Skip deep investigation                     |
+| Complex/multi-file bug    | `/fix-hard`         | Uses subagents for parallel investigation   |
+| Multiple independent bugs | `/fix-parallel`     | Parallel fix execution                      |
+| General/unknown           | `/fix` (this skill) | Routes automatically based on keywords      |
+
+## Debug Mindset (NON-NEGOTIABLE)
+
+> **[ROOT-CAUSE-FIX]** Never patch symptoms. Trace the full call chain to find WHO is responsible. Fix at the correct layer (Entity > Service > Handler). If a fix feels like a workaround, it IS — find the real root cause first.
+
+**Be skeptical. Every claim needs `file:line` traced proof. Confidence >80% to act.**
+
+- NEVER assume first hypothesis is correct — verify with actual code traces
+- MUST ATTENTION include `file:line` evidence for every root cause claim; otherwise state "hypothesis, not confirmed"
+- ALWAYS trace execution path before claiming cause; ALWAYS check related code paths for contributing factors
+- NEVER say "should fix it" without proof the fix addresses the traced root cause
+- **Confidence Gate:** `Confidence: X%` required for EVERY claim. **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
+
+**Analyze issues and route to specialized fix command:**
+<issues>$ARGUMENTS</issues>
+
+## ⚠️ MANDATORY: Plan Before Fix (NON-NEGOTIABLE)
+
+**MANDATORY IMPORTANT MUST ATTENTION** — Before routing to ANY fix variant, you MUST ATTENTION have a validated plan. This applies whether running standalone or within a workflow.
+
+**If no plan exists**, you MUST ATTENTION create todo tasks for and execute these steps IN ORDER before proceeding to fix:
+
+1. **`/plan`** — Create an implementation plan for the fix (root cause analysis + fix approach + affected files)
+2. **`/plan-review`** — Auto-review the plan for validity, correctness, and best practices
+3. **`/plan-validate`** — Validate plan with critical questions interview (get user confirmation)
+
+**Only after plan is validated** → proceed to fix routing below.
+
+**If a plan already exists** (markdown plan file in `plans/`) → skip to fix routing.
+
+## Decision Tree
+
+**1. Check for existing plan:**
+
+- If markdown plan exists → `/code <path-to-plan>`
+- If NO plan exists → **STOP. Run `/plan → /plan-review → /plan-validate` first** (see section above)
+
+**2. Route by issue type (only after plan exists):**
+
+**A) Type Errors** (keywords: type, typescript, tsc, type error)
+→ `/fix-types`
+
+**B) UI/UX Issues** (keywords: ui, ux, design, layout, style, visual, button, component, css, responsive)
+→ `/fix-ui <detailed-description>`
+
+**C) CI/CD Issues** (keywords: github actions, pipeline, ci/cd, workflow, deployment, build failed)
+→ `/fix-ci <github-actions-url-or-description>`
+
+**D) Test Failures** (keywords: test, spec, jest, vitest, failing test, test suite)
+→ `/fix-test <detailed-description>`
+
+**E) Log Analysis** (keywords: logs, error logs, log file, stack trace)
+→ `/fix-logs <detailed-description>`
+
+**F) Multiple Independent Issues** (2+ unrelated issues in different areas)
+→ `/fix-parallel <detailed-description>`
+
+**G) Complex Issues** (keywords: complex, architecture, refactor, major, system-wide, multiple components)
+→ `/fix-hard <detailed-description>`
+
+**H) Simple/Quick Fixes** (default: small bug, single file, straightforward)
+→ `/fix-fast <detailed-description>`
+
+## Graph Intelligence (MANDATORY — DO NOT SKIP when graph.db exists)
+
+If `.code-graph/graph.db` exists, you MUST ATTENTION use graph to enhance analysis with structural queries:
+
+**Without graph, your fix may miss affected callers, consumers, and tests. This step is NOT optional.**
+
+- **Trace callers of buggy function:** `python .claude/scripts/code_graph query callers_of <function> --json`
+- **Find existing tests:** `python .claude/scripts/code_graph query tests_for <function> --json`
+- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+
+### Graph-Assisted Fix Verification
+
+Before and after fixing, use graph trace to understand blast radius:
+
+1. `python .claude/scripts/code_graph trace <file-to-fix> --direction downstream --json` — see all downstream consumers affected by the fix
+2. `python .claude/scripts/code_graph trace <file-to-fix> --direction both --json` — full flow to ensure fix doesn't break upstream or downstream
+
+## MANDATORY: Post-Fix Verification
+
+**After EVERY fix, you MUST ATTENTION run `/prove-fix` to verify correctness.**
+
+`/prove-fix` builds code proof traces (stack-trace-style) per change, assigns confidence percentages, and produces a ship/block verdict. This is non-negotiable — never skip it. If confidence < 80% on any change, return to investigation.
+
+---
+
+## Workflow Recommendation
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+>
+> 1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → plan-review → plan-validate → fix → prove-fix → review → test
+> 2. **Execute `/fix` directly** — still requires `/plan → /plan-review → /plan-validate` before fixing (enforced by Plan Before Fix gate above)
+
+---
+
+## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (fix applied). This ensures prove-fix, review, testing, and docs steps aren't skipped.
+- **"/prove-fix"** — Prove fix correctness with code traces
+- **"/test"** — Run tests to verify fix
+- **"/integration-test"** — Generate/update regression integration tests
+- **"Skip, continue manually"** — user decides
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -73,7 +300,7 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 
 <!-- /SYNC:cross-service-check -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
 
 <!-- SYNC:estimation-framework -->
 
@@ -282,211 +509,26 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-## Quick Summary
-
-**Goal:** Analyze issues and intelligently route to the best-matching specialized fix command (fix-ci, fix-fast, fix-hard, fix-ui, etc.).
-
-**Workflow:**
-
-1. **Check** — Look for existing plan; if found, route to `/code <plan>`
-2. **Classify** — Match issue type (type errors, UI, CI, logs, tests, general)
-3. **Route** — Delegate to specialized fix variant based on classification
-
-**Key Rules:**
-
-- Debug Mindset is non-negotiable: every claim needs traced proof with `file:line` evidence
-- Never assume first hypothesis is correct — verify with actual code traces
-- Parent skill for all fix-\* variants; routes based on issue keywords
-
-<!-- SYNC:root-cause-debugging -->
-
-> **Root Cause Debugging** — Systematic approach, never guess-and-check.
->
-> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
-> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
-> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
-> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
-> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
-> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
->
-> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
-
-<!-- /SYNC:root-cause-debugging -->
-
-### Frontend/UI Context (if applicable)
-
-> When this task involves frontend or UI changes,
-
-<!-- SYNC:ui-system-context -->
-
-> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
->
-> **MUST ATTENTION READ before implementing:**
->
-> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
-> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
-> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
->
-> Reference `docs/project-config.json` for project-specific paths.
-
-<!-- /SYNC:ui-system-context -->
-
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
-- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
-- Design system tokens: `docs/project-reference/design-system/README.md`
-
-## Variant Decision Guide
-
-| If the issue is...        | Use                 | Why                                         |
-| ------------------------- | ------------------- | ------------------------------------------- |
-| Type errors (TS/C#)       | `/fix-types`        | Specialized for type system errors          |
-| UI/visual bug             | `/fix-ui`           | Includes visual comparison                  |
-| CI/CD pipeline failure    | `/fix-ci`           | Reads pipeline logs, understands CI context |
-| Test failures             | `/fix-test`         | Focuses on test assertions and mocking      |
-| Log-based investigation   | `/fix-logs`         | Parses log files for root cause             |
-| GitHub issue with context | `/fix-issue`        | Reads issue details, links to code          |
-| Simple/obvious fix        | `/fix-fast`         | Skip deep investigation                     |
-| Complex/multi-file bug    | `/fix-hard`         | Uses subagents for parallel investigation   |
-| Multiple independent bugs | `/fix-parallel`     | Parallel fix execution                      |
-| General/unknown           | `/fix` (this skill) | Routes automatically based on keywords      |
-
-## Debug Mindset (NON-NEGOTIABLE)
-
-> **[ROOT-CAUSE-FIX]** Never patch symptoms. Trace the full call chain to find WHO is responsible. Fix at the correct layer (Entity > Service > Handler). If a fix feels like a workaround, it IS — find the real root cause first.
-
-**Be skeptical. Every claim needs `file:line` traced proof. Confidence >80% to act.**
-
-- NEVER assume first hypothesis is correct — verify with actual code traces
-- MUST ATTENTION include `file:line` evidence for every root cause claim; otherwise state "hypothesis, not confirmed"
-- ALWAYS trace execution path before claiming cause; ALWAYS check related code paths for contributing factors
-- NEVER say "should fix it" without proof the fix addresses the traced root cause
-- **Confidence Gate:** `Confidence: X%` required for EVERY claim. **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
-
-**Analyze issues and route to specialized fix command:**
-<issues>$ARGUMENTS</issues>
-
-## ⚠️ MANDATORY: Plan Before Fix (NON-NEGOTIABLE)
-
-**MANDATORY IMPORTANT MUST ATTENTION** — Before routing to ANY fix variant, you MUST ATTENTION have a validated plan. This applies whether running standalone or within a workflow.
-
-**If no plan exists**, you MUST ATTENTION create todo tasks for and execute these steps IN ORDER before proceeding to fix:
-
-1. **`/plan`** — Create an implementation plan for the fix (root cause analysis + fix approach + affected files)
-2. **`/plan-review`** — Auto-review the plan for validity, correctness, and best practices
-3. **`/plan-validate`** — Validate plan with critical questions interview (get user confirmation)
-
-**Only after plan is validated** → proceed to fix routing below.
-
-**If a plan already exists** (markdown plan file in `plans/`) → skip to fix routing.
-
-## Decision Tree
-
-**1. Check for existing plan:**
-
-- If markdown plan exists → `/code <path-to-plan>`
-- If NO plan exists → **STOP. Run `/plan → /plan-review → /plan-validate` first** (see section above)
-
-**2. Route by issue type (only after plan exists):**
-
-**A) Type Errors** (keywords: type, typescript, tsc, type error)
-→ `/fix-types`
-
-**B) UI/UX Issues** (keywords: ui, ux, design, layout, style, visual, button, component, css, responsive)
-→ `/fix-ui <detailed-description>`
-
-**C) CI/CD Issues** (keywords: github actions, pipeline, ci/cd, workflow, deployment, build failed)
-→ `/fix-ci <github-actions-url-or-description>`
-
-**D) Test Failures** (keywords: test, spec, jest, vitest, failing test, test suite)
-→ `/fix-test <detailed-description>`
-
-**E) Log Analysis** (keywords: logs, error logs, log file, stack trace)
-→ `/fix-logs <detailed-description>`
-
-**F) Multiple Independent Issues** (2+ unrelated issues in different areas)
-→ `/fix-parallel <detailed-description>`
-
-**G) Complex Issues** (keywords: complex, architecture, refactor, major, system-wide, multiple components)
-→ `/fix-hard <detailed-description>`
-
-**H) Simple/Quick Fixes** (default: small bug, single file, straightforward)
-→ `/fix-fast <detailed-description>`
-
-## Graph Intelligence (MANDATORY — DO NOT SKIP when graph.db exists)
-
-If `.code-graph/graph.db` exists, you MUST ATTENTION use graph to enhance analysis with structural queries:
-
-**Without graph, your fix may miss affected callers, consumers, and tests. This step is NOT optional.**
-
-- **Trace callers of buggy function:** `python .claude/scripts/code_graph query callers_of <function> --json`
-- **Find existing tests:** `python .claude/scripts/code_graph query tests_for <function> --json`
-- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
-
-### Graph-Assisted Fix Verification
-
-Before and after fixing, use graph trace to understand blast radius:
-
-1. `python .claude/scripts/code_graph trace <file-to-fix> --direction downstream --json` — see all downstream consumers affected by the fix
-2. `python .claude/scripts/code_graph trace <file-to-fix> --direction both --json` — full flow to ensure fix doesn't break upstream or downstream
-
-## MANDATORY: Post-Fix Verification
-
-**After EVERY fix, you MUST ATTENTION run `/prove-fix` to verify correctness.**
-
-`/prove-fix` builds code proof traces (stack-trace-style) per change, assigns confidence percentages, and produces a ship/block verdict. This is non-negotiable — never skip it. If confidence < 80% on any change, return to investigation.
-
----
-
-## Workflow Recommendation
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
->
-> 1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → plan-review → plan-validate → fix → prove-fix → review → test
-> 2. **Execute `/fix` directly** — still requires `/plan → /plan-review → /plan-validate` before fixing (enforced by Plan Before Fix gate above)
-
----
-
-## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (fix applied). This ensures prove-fix, review, testing, and docs steps aren't skipped.
-- **"/prove-fix"** — Prove fix correctness with code traces
-- **"/test"** — Run tests to verify fix
-- **"/integration-test"** — Generate/update regression integration tests
-- **"Skip, continue manually"** — user decides
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
-  <!-- SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
+      <!-- SYNC:evidence-based-reasoning:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
-  <!-- SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
-          <!-- SYNC:red-flag-stop-conditions:reminder -->
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:red-flag-stop-conditions:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-  <!-- /SYNC:red-flag-stop-conditions:reminder -->
-  <!-- SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:red-flag-stop-conditions:reminder -->
+      <!-- SYNC:ui-system-context:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
-  <!-- SYNC:fix-layer-accountability:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->
+      <!-- SYNC:fix-layer-accountability:reminder -->
 - **MANDATORY IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
-  <!-- /SYNC:fix-layer-accountability:reminder -->
-  <!-- SYNC:ai-mistake-prevention -->
+      <!-- /SYNC:fix-layer-accountability:reminder -->
+      <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
@@ -512,6 +554,27 @@ Before and after fixing, use graph trace to understand blast radius:
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

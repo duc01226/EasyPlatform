@@ -4,17 +4,6 @@ description: '[Code Intelligence] Sync the code review knowledge graph with curr
 version: 1.0.0
 ---
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-# Sync Graph
-
-Sync the knowledge graph with the current git state by diffing `last_synced_commit` against HEAD.
-
 ## Quick Summary
 
 **Goal:** [Code Intelligence] Sync the code review knowledge graph with current git state. Detects files changed since last sync via git diff and re-parses them. Runs automatically on session start; use manually after pulling code or switching branches.
@@ -115,6 +104,18 @@ This means after `sync`, ALL connections are up-to-date — not just direct code
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+# Sync Graph
+
+Sync the knowledge graph with the current git state by diffing `last_synced_commit` against HEAD.
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

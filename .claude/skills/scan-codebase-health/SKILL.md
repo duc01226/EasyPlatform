@@ -4,29 +4,6 @@ version: 2.0.0
 description: '[Documentation] Detect codebase health issues: unused exports, doc count-drift, orphan files, stale config references. Generic — reads project structure from project-config.json dynamically.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — stale instantly
-> 2. No directory trees — use 1-line path conventions
-> 3. No TOCs — AI reads linearly
-> 4. One example per pattern — only if non-obvious
-> 5. Lead with answer, not reasoning
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
 **Goal:** Detect structural rot in AI-assisted codebases — dead code, count-drift, orphan files, stale configs, dead feature flags, broken cross-references. Works on any project via `docs/project-config.json`.
@@ -221,6 +198,29 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 ```
 
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — stale instantly
+> 2. No directory trees — use 1-line path conventions
+> 3. No TOCs — AI reads linearly
+> 4. One example per pattern — only if non-obvious
+> 5. Lead with answer, not reasoning
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end
+
+<!-- /SYNC:output-quality-principles -->
 
 <!-- SYNC:output-quality-principles:reminder -->
 

@@ -4,15 +4,6 @@ version: 1.0.0
 description: '[Frontend] Convert hand-drawn wireframes, digital wireframes, or UI sketches into structured design specifications. Accepts image inputs and produces ui-wireframe-protocol-formatted specs. Triggers on wireframe, sketch, hand-drawn, mockup image, wireframe to spec, sketch to code.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Bridge image inputs (wireframes, sketches) to structured UI specifications.
@@ -44,7 +35,7 @@ description: '[Frontend] Convert hand-drawn wireframes, digital wireframes, or U
 
 <!-- /SYNC:ui-system-context -->
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
@@ -106,6 +97,15 @@ Output as `team-artifacts/design-specs/{YYMMDD}-wireframe-spec-{slug}.md`
 - If confidence <70%: ask user clarifying questions about ambiguous elements via `AskUserQuestion`
 
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
 
 <!-- SYNC:ui-system-context:reminder -->
 

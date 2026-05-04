@@ -5,6 +5,39 @@ description: '[Workflow] Trigger Database Migration workflow — schema changes,
 disable-model-invocation: true
 ---
 
+## Quick Summary
+
+**Goal:** [Workflow] Trigger Database Migration workflow — schema changes, data migrations, EF migrations with review and testing.
+
+**Workflow:**
+
+1. **Detect** — classify request scope and target artifacts.
+2. **Execute** — apply required steps with evidence-backed actions.
+3. **Verify** — confirm constraints, output quality, and completion evidence.
+
+**Key Rules:**
+
+- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
+- MUST ATTENTION keep task tracking updated as each step starts/completes.
+- NEVER skip mandatory workflow or skill gates.
+
+---
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
 **IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /db-migrate -> /code -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /test -> /docs-update -> /watzup -> /workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
@@ -88,23 +121,12 @@ Activate the `migration` workflow. Run `/workflow-start migration` with the user
 
 **IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /db-migrate -> /code -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /test -> /docs-update -> /watzup -> /workflow-end
 
-## Quick Summary
+<!-- SYNC:nested-task-creation:reminder -->
 
-**Goal:** [Workflow] Trigger Database Migration workflow — schema changes, data migrations, EF migrations with review and testing.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
-**Workflow:**
-
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
-
-**Key Rules:**
-
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- NEVER skip mandatory workflow or skill gates.
-
----
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

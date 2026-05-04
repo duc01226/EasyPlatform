@@ -13,149 +13,6 @@ description: '[DDD Quality] Review domain entities and value objects for DDD des
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** `TaskCreate` for ALL phases BEFORE starting. Mark each completed immediately.
-
-> **CRITICAL RULES** — (1) MUST ATTENTION run Phase 0 project discovery FIRST — discovered conventions override ALL generic rules. (2) When Round 1 finds issues, NEVER declare PASS without fresh sub-agent Round 2 after fixing. Clean Round 1 ENDS the review. (3) NEVER report a finding without `file:line` evidence.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
-
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
-<!-- SYNC:double-round-trip-review -->
-
-> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
->
-> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
->
-> **Decision after Round 1:**
->
-> - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
->
-> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `Agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
->
-> - Cross-cutting concerns missed in the prior round
-> - Interaction bugs between changed files
-> - Convention drift (new code vs existing patterns)
-> - Missing pieces that should exist but don't
-> - Subtle edge cases the prior round rationalized away
-> - Regressions introduced by the fixes themselves
->
-> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
->
-> **Rules:**
->
-> - A clean Round 1 ENDS the review — no mandatory Round 2
-> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
-> - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via `AskUserQuestion` (do NOT silently loop)
-> - Track round count in conversation context (session-scoped)
-> - Final verdict must incorporate ALL rounds executed
->
-> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
-
-<!-- /SYNC:double-round-trip-review -->
-
-<!-- SYNC:fresh-context-review -->
-
-> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
->
-> **Why:** The main agent knows what it (or `/cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
->
-> **When:** ONLY after a fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: fix → fresh sub-agent re-review.
->
-> **How:**
->
-> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
-> 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
-> 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
-> 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
-> 5. Main agent reads the report, integrates findings into its own report, DOES NOT override or filter
->
-> **Rules:**
->
-> - SKIP fresh sub-agent when the prior round found zero issues (no fixes = nothing new to verify)
-> - NEVER skip fresh sub-agent after a fix cycle — every fix invalidates the prior verdict
-> - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
-> - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
-> - Track iteration count in conversation context (session-scoped, no persistent files)
-
-<!-- /SYNC:fresh-context-review -->
-
----
-
-**Prerequisites — MUST ATTENTION discover project-specific rules FIRST:**
-
-> Read `docs/project-reference/` (entity reference, backend patterns, code review rules) and `CLAUDE.md`. Find entity/VO base classes, validation API, domain exception type, persistence annotations. Infer from 3+ existing entity files if no docs exist. NEVER apply generic rules that contradict discovered project conventions.
-
-> **Evidence Gate:** Every finding requires `file:line` proof or grep result. Confidence >80% → report. <60% → state uncertainty explicitly.
-
----
-
-## Mode Detection
-
-**Determine mode BEFORE any other work:**
-
-| Invocation                              | Mode             | Scope                                           |
-| --------------------------------------- | ---------------- | ----------------------------------------------- |
-| `/review-domain-entities` (default)     | **changes**      | Changed domain entity files from `git diff`     |
-| `/review-domain-entities changes`       | **changes**      | Changed domain entity files                     |
-| `/review-domain-entities scan`          | **scan**         | All entity/VO files in domain layer directories |
-| `/review-domain-entities scan <module>` | **scan-service** | Entities in named module only                   |
-
-**Entity file detection — adapt to discovered stack:**
-
-```bash
-# .NET / C#
-git diff --name-only HEAD | grep -E "(Domain|Entities|ValueObjects|AggregatesModel).*\.cs$"
-find src -path "*/Domain/*.cs" -o -path "*/Entities/*.cs" -o -path "*/ValueObjects/*.cs" | grep -v "obj\|bin\|Tests"
-
-# Java / Spring
-git diff --name-only HEAD | grep -E "domain/.*\.java$|entity/.*\.java$"
-find src -path "*/domain/*.java" -o -path "*/entity/*.java" | grep -v "test\|Test"
-
-# TypeScript / Node
-git diff --name-only HEAD | grep -E "\.(entity|vo|value-object|aggregate)\.ts$"
-find src -name "*.entity.ts" -o -name "*.vo.ts" -o -name "*.aggregate.ts" | grep -v "spec\|test"
-
-# Python (Django / SQLAlchemy)
-git diff --name-only HEAD | grep -E "(models|domain)/.*\.py$"
-find src -path "*/domain/*.py" -o -path "*/models/*.py" | grep -v "test\|migration"
-```
-
-If no domain entity files match in changes mode → announce "No domain entity changes detected" and report clean.
-
----
-
 ## Quick Summary
 
 **Goal:** Detect DDD design quality violations in domain entities and value objects across any technology stack. Adapts to project-specific patterns via config/reference docs discovery.
@@ -277,7 +134,6 @@ grep -rn "if.*entity\.\|entity\.\w* = " src/**/Application/UseCaseCommands/ \
 grep -rn "Expression<Func<" src/**/Application/ --include="*.cs" \
     | grep -v "Extensions\|Helper\|Repository" | head -20
 
-
 # ─── Java / Spring ───────────────────────────────────────────────────────
 # CRITICAL: entity equals() by reference (default Object)
 grep -rn "@Entity" src/ --include="*.java" | xargs grep -L "equals\|@EqualsAndHashCode"
@@ -292,7 +148,6 @@ grep -rn "entity\.set\|entity\.status\b" src/**/service/ --include="*.java" | he
 find src -path "*/valueobject*/*.java" -o -path "*/vo*/*.java" \
     | xargs grep -n "public.*set[A-Z]" 2>/dev/null
 
-
 # ─── TypeScript / NestJS ─────────────────────────────────────────────────
 # CRITICAL: entity equality by reference
 grep -rn "class.*Entity" src/ --include="*.entity.ts" | xargs grep -L "equals\|id ==="
@@ -303,7 +158,6 @@ find src -name "*.vo.ts" -o -name "*.value-object.ts" \
 
 # HIGH: business logic in services
 grep -rn "entity\.\w* =" src/**/services/ --include="*.ts" | grep -v "// \|id\b" | head -20
-
 
 # ─── Python (Django / SQLAlchemy) ────────────────────────────────────────
 # HIGH: Model methods doing direct DB access
@@ -728,6 +582,192 @@ MUST ATTENTION use `AskUserQuestion` after completing to present:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+> **[IMPORTANT]** `TaskCreate` for ALL phases BEFORE starting. Mark each completed immediately.
+
+> **CRITICAL RULES** — (1) MUST ATTENTION run Phase 0 project discovery FIRST — discovered conventions override ALL generic rules. (2) When Round 1 finds issues, NEVER declare PASS without fresh sub-agent Round 2 after fixing. Clean Round 1 ENDS the review. (3) NEVER report a finding without `file:line` evidence.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
+<!-- SYNC:double-round-trip-review -->
+
+> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
+>
+> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
+>
+> **Decision after Round 1:**
+>
+> - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
+> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
+>
+> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `Agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
+>
+> - Cross-cutting concerns missed in the prior round
+> - Interaction bugs between changed files
+> - Convention drift (new code vs existing patterns)
+> - Missing pieces that should exist but don't
+> - Subtle edge cases the prior round rationalized away
+> - Regressions introduced by the fixes themselves
+>
+> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
+>
+> **Rules:**
+>
+> - A clean Round 1 ENDS the review — no mandatory Round 2
+> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
+> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
+> - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
+> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via `AskUserQuestion` (do NOT silently loop)
+> - Track round count in conversation context (session-scoped)
+> - Final verdict must incorporate ALL rounds executed
+>
+> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
+
+<!-- /SYNC:double-round-trip-review -->
+
+<!-- SYNC:fresh-context-review -->
+
+> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
+>
+> **Why:** The main agent knows what it (or `/cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
+>
+> **When:** ONLY after a fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: fix → fresh sub-agent re-review.
+>
+> **How:**
+>
+> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
+> 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
+> 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
+> 5. Main agent reads the report, integrates findings into its own report, DOES NOT override or filter
+>
+> **Rules:**
+>
+> - SKIP fresh sub-agent when the prior round found zero issues (no fixes = nothing new to verify)
+> - NEVER skip fresh sub-agent after a fix cycle — every fix invalidates the prior verdict
+> - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
+> - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
+> - Track iteration count in conversation context (session-scoped, no persistent files)
+
+<!-- /SYNC:fresh-context-review -->
+
+---
+
+**Prerequisites — MUST ATTENTION discover project-specific rules FIRST:**
+
+> Read `docs/project-reference/` (entity reference, backend patterns, code review rules) and `CLAUDE.md`. Find entity/VO base classes, validation API, domain exception type, persistence annotations. Infer from 3+ existing entity files if no docs exist. NEVER apply generic rules that contradict discovered project conventions.
+
+> **Evidence Gate:** Every finding requires `file:line` proof or grep result. Confidence >80% → report. <60% → state uncertainty explicitly.
+
+---
+
+## Mode Detection
+
+**Determine mode BEFORE any other work:**
+
+| Invocation                              | Mode             | Scope                                           |
+| --------------------------------------- | ---------------- | ----------------------------------------------- |
+| `/review-domain-entities` (default)     | **changes**      | Changed domain entity files from `git diff`     |
+| `/review-domain-entities changes`       | **changes**      | Changed domain entity files                     |
+| `/review-domain-entities scan`          | **scan**         | All entity/VO files in domain layer directories |
+| `/review-domain-entities scan <module>` | **scan-service** | Entities in named module only                   |
+
+**Entity file detection — adapt to discovered stack:**
+
+```bash
+# .NET / C#
+git diff --name-only HEAD | grep -E "(Domain|Entities|ValueObjects|AggregatesModel).*\.cs$"
+find src -path "*/Domain/*.cs" -o -path "*/Entities/*.cs" -o -path "*/ValueObjects/*.cs" | grep -v "obj\|bin\|Tests"
+
+# Java / Spring
+git diff --name-only HEAD | grep -E "domain/.*\.java$|entity/.*\.java$"
+find src -path "*/domain/*.java" -o -path "*/entity/*.java" | grep -v "test\|Test"
+
+# TypeScript / Node
+git diff --name-only HEAD | grep -E "\.(entity|vo|value-object|aggregate)\.ts$"
+find src -name "*.entity.ts" -o -name "*.vo.ts" -o -name "*.aggregate.ts" | grep -v "spec\|test"
+
+# Python (Django / SQLAlchemy)
+git diff --name-only HEAD | grep -E "(models|domain)/.*\.py$"
+find src -path "*/domain/*.py" -o -path "*/models/*.py" | grep -v "test\|migration"
+```
+
+If no domain entity files match in changes mode → announce "No domain entity changes detected" and report clean.
+
+---
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -748,6 +788,27 @@ MUST ATTENTION use `AskUserQuestion` after completing to present:
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

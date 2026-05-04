@@ -13,17 +13,6 @@ description: '[Code Quality] AI-assisted Dev BA PIC review of PBI drafts. Genera
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim requires `file:line` proof or traced evidence with confidence percentage (>80% to act).
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Help **Dev BA PIC** (Person In Charge — the development Business Analyst responsible for technical review sign-off per squad) review BA drafters' PBI drafts by generating specific, actionable challenge prompts. AI provides analysis; human makes the decision.
@@ -75,7 +64,7 @@ PBI drafts routinely pass informal review without being challenged on architectu
 
 <!-- /SYNC:ui-system-context -->
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
@@ -386,14 +375,49 @@ PBI drafts routinely pass informal review without being challenged on architectu
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim requires `file:line` proof or traced evidence with confidence percentage (>80% to act).
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:sequential-thinking-protocol -->
+
+> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
+>
+> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
+>
+> **Format (explicit mode — visible thought trail):**
+>
+> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
+> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
+> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
+> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
+> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
+>
+> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
+>
+> **Stop conditions:** confidence <80% on any critical decision → escalate via AskUserQuestion · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+>
+> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
+>
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+
+<!-- /SYNC:sequential-thinking-protocol -->
+
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
-  <!-- SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->
+      <!-- SYNC:estimation-framework:reminder -->
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
-          <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:estimation-framework:reminder -->
+    <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
@@ -414,6 +438,12 @@ PBI drafts routinely pass informal review without being challenged on architectu
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
+<!-- SYNC:sequential-thinking-protocol:reminder -->
+
+**MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
+
+<!-- /SYNC:sequential-thinking-protocol:reminder -->
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

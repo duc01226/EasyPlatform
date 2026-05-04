@@ -5,15 +5,6 @@ disable-model-invocation: true
 argument-hint: '<plan-file> | --changes | --pr <number>'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Produce a 3-way estimation calibration report — `pre_impl_estimate` (from plan) vs `true_estimate` (from observed scope) vs `actual_time` (from git/user) — yielding two INDEPENDENT signals: developer execution variance and estimation model calibration variance.
@@ -342,6 +333,15 @@ After ≥5 rows, run pattern detection on the CSV: if `scope_var_pct` is consist
 **IMPORTANT MUST ATTENTION** apply Blast Radius pass on observed diff before applying tier tables
 **IMPORTANT MUST ATTENTION** persist samples to `plans/_estimation-samples.csv` for longitudinal calibration
 **IMPORTANT MUST ATTENTION** state confidence per verdict — uncertainty about actual time goes in caveats
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

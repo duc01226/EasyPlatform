@@ -4,21 +4,6 @@ version: 1.0.0
 description: '[AI & Tools] Sync workflow catalog from workflows.json to GitHub Copilot instructions. Run after adding/removing/modifying workflows to keep copilot-instructions.md up to date. Copilot has no hooks, so this manual sync replaces the auto-injection that Claude Code gets from workflow-router.cjs.'
 ---
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-# Sync Copilot Workflows
-
-Generate and update the workflow catalog in `.github/copilot-instructions.md` from the source of truth `.claude/workflows.json`.
-
----
-
 ## Quick Summary
 
 **Goal:** [AI & Tools] Sync workflow catalog from workflows.json to GitHub Copilot instructions. Run after adding/removing/modifying workflows to keep copilot-instructions.md up to date. Copilot has no hooks, so this manual sync replaces the auto-injection that Claude Code gets from workflow-router.cjs.
@@ -96,6 +81,22 @@ This skill bridges that gap with a one-command sync.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+# Sync Copilot Workflows
+
+Generate and update the workflow catalog in `.github/copilot-instructions.md` from the source of truth `.claude/workflows.json`.
+
+---
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

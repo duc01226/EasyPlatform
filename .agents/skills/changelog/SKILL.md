@@ -64,25 +64,20 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- SYNC:project-reference-docs-guide -->
 
-> **Project Reference Docs** — `docs/project-reference/` initialized by session hooks. Many are auto-injected into context — check for `[Injected: ...]` header before reading manually.
+> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
 >
-> | Document                                   | When to Read                                                          | Auto-Injected?   |
-> | ------------------------------------------ | --------------------------------------------------------------------- | ---------------- |
-> | `backend-patterns-reference.md`            | Any `.cs` edit — CQRS, repositories, validation, events               | ✓ on `.cs` edits |
-> | `frontend-patterns-reference.md`           | Any `.ts`/`.html` edit — base classes, stores, API services           | ✓ on `.ts` edits |
-> | `domain-entities-reference.md`             | Task touches entities, models, or cross-service sync                  | ✓ via hook       |
-> | `design-system/design-system-canonical.md` | Any `.html`/`.scss`/`.css` edit — tokens, BEM, components             | ✓ via hook       |
-> | `integration-test-reference.md`            | Writing or reviewing integration tests                                | ✓ via hook       |
-> | `code-review-rules.md`                     | Any code review — project-specific rules & checklists                 | ✓ via hook       |
-> | `scss-styling-guide.md`                    | `.scss`/`.css` changes — BEM, mixins, variables                       | —                |
-> | `design-system/README.md`                  | UI work — design system overview, component inventory                 | —                |
-> | `feature-docs-reference.md`                | Updating `docs/business-features/**` docs                             | ✓ via hook       |
-> | `spec-principles.md`                       | Writing TDD specs or test cases                                       | —                |
-> | `e2e-test-reference.md`                    | E2E test work — page objects, framework architecture                  | —                |
-> | `seed-test-data-reference.md`              | Seed/test data scripts — seeder patterns, DI scope safety             | —                |
-> | `project-structure-reference.md`           | Unfamiliar service area — project layout, tech stack, module registry | ✓ via hook       |
-> | `lessons.md`                               | Any task — project-specific hard-won lessons                          | ✓ via hook       |
-> | `docs-index-reference.md`                  | Searching for docs — full keyword-to-doc lookup                       | —                |
+> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
+>
+> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
+> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
+> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
+> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
+> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
+> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
+>
+> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
+>
+> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -375,6 +370,13 @@ See `references/keep-a-changelog-format.md` for format specification.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
+- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
 ## Closing Reminders
 
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting.
@@ -405,6 +407,61 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
+
+## Learned Lessons
+
+# Lessons Learned
+
+> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
+
+## Quick Summary
+
+**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
+
+**Top Rules (apply always):**
+
+- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
+- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
+- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
+- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
+- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
+- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
+
+---
+
+## Debugging & Root Cause Reasoning
+
+- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. Cheapest check first.
+- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug in caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
+- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
+- [2026-04-01] **Code is caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
+
+## Architecture Invariants
+
+- [2026-03-31] **ParallelAsync + repo/UoW MUST use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
+- [2026-03-31] **Bus message naming MUST include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) are leaders. Feature services (Growth, Talents) sending to core MUST use `{CoreServiceName}...RequestBusMessage` — never define own event for core to consume.
+
+## Naming & Abstraction
+
+- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what it guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
+
+## Environment & Tooling
+
+- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be in bash PATH under those names. Check: `where python` / `where py`. Prefer `py` (Windows Python Launcher) for one-liners, `node` if JS alternative exists.
+
+> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons in `.claude/hooks/lib/prompt-injections.cjs`.
+
+---
+
+## Closing Reminders
+
+- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
+- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
+- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
+- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
+- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
+- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
+- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

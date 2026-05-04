@@ -4,29 +4,6 @@ version: 1.0.0
 description: '[Documentation] Initialize, update, or refactor CLAUDE.md from project-config.json and codebase scan results. Triggers on: claude.md init, claude.md update, claude.md sync, claude.md refactor, init claude, setup claude, generate claude.md, refresh claude.md.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
 **Goal:** Automate CLAUDE.md lifecycle — generate from project-config.json + template, incrementally update marked sections, or refactor for token efficiency.
@@ -170,6 +147,29 @@ node .claude/skills/claude-md-init/scripts/test-generate-claude-md.cjs
 ```
 
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
 
 <!-- SYNC:output-quality-principles:reminder -->
 

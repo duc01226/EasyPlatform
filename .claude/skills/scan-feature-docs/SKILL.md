@@ -5,33 +5,6 @@ last_reviewed: 2026-04-22
 description: '[Documentation] Scan project and populate/sync docs/project-reference/feature-docs-reference.md with app-to-service mapping, doc structure, templates, and documentation conventions.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
-
-<!-- SYNC:scan-and-update-reference-doc -->
-
-> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
->
-> 1. **Read existing doc** first — understand structure and manual annotations
-> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
-> 3. **Scan codebase** (grep/glob) for current state
-> 4. **Diff** findings vs doc — identify stale sections only
-> 5. **Update ONLY** diverged sections. Preserve manual annotations.
-> 6. **Update metadata** (date, version) in frontmatter/header
-> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
-
-<!-- /SYNC:scan-and-update-reference-doc -->
-
-> **Output note:** This skill's primary output (`feature-docs-reference.md`) MUST include the actual directory tree — it is the source of truth for doc locations. This is intentionally different from spec output documents which suppress directory trees.
-
 ## Quick Summary
 
 **Goal:** Scan existing business feature documentation → populate `docs/project-reference/feature-docs-reference.md` with app-to-service mapping, documentation structure conventions, template usage, and section standards.
@@ -174,11 +147,38 @@ Read report. Apply fresh-eyes protocol:
 
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
+<!-- SYNC:scan-and-update-reference-doc -->
+
+> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
+>
+> 1. **Read existing doc** first — understand structure and manual annotations
+> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
+> 3. **Scan codebase** (grep/glob) for current state
+> 4. **Diff** findings vs doc — identify stale sections only
+> 5. **Update ONLY** diverged sections. Preserve manual annotations.
+> 6. **Update metadata** (date, version) in frontmatter/header
+> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
+
+<!-- /SYNC:scan-and-update-reference-doc -->
+
+> **Output note:** This skill's primary output (`feature-docs-reference.md`) MUST include the actual directory tree — it is the source of truth for doc locations. This is intentionally different from spec output documents which suppress directory trees.
+
 <!-- SYNC:scan-and-update-reference-doc:reminder -->
 
 - **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-  <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-  <!-- SYNC:ai-mistake-prevention -->
+      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+      <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid:
 >

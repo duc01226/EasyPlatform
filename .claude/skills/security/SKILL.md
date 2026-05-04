@@ -16,37 +16,6 @@ context-budget: high
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:evidence-based-reasoning -->
-
-> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
->
-> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
-> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
-> 3. Cross-service validation required for architectural changes
-> 4. "I don't have enough evidence" is valid and expected output
->
-> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
->
-> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
-> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
-
-<!-- /SYNC:evidence-based-reasoning -->
-
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
 ## Quick Summary
 
 **Goal:** Perform security review against OWASP Top 10 and project authorization patterns.
@@ -214,6 +183,37 @@ When graph DB is available, use `trace` to analyze data flow paths for security 
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 <!-- SYNC:evidence-based-reasoning:reminder -->
 

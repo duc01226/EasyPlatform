@@ -4,17 +4,6 @@ description: '[Codex] Run full Codex mirror sync (migrate → hooks → context 
 disable-model-invocation: true
 ---
 
-> **[USER-INVOKED ONLY]** Manually triggered via `/codex-sync`. Claude MUST NOT auto-invoke — `disable-model-invocation: true` enforces this.
-> **[FAILS FAST]** First non-zero stage exit aborts chain. Re-run failing stage manually to debug.
-> **[REPO ROOT]** Orchestrator auto-resolves repo root from its own path. NEVER pass `--cwd`.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Run full Codex mirror sync standalone — equivalent to `npm run codex:sync` without `package.json` or `npm`.
@@ -81,6 +70,17 @@ node .claude/skills/codex-sync/scripts/run-codex-sync.mjs --skip=migrate,hooks
 | "Skip a stage to save time"              | Verifiers (4-7) catch drift; skipping = silent regression risk               |
 | "Auto-invoke since user mentioned codex" | `disable-model-invocation: true` is binding. Wait for explicit `/codex-sync` |
 | "Sync looks idempotent, skip verify"     | Timestamp diffs are normal; structural diffs = bug. Always run verifiers     |
+
+> **[USER-INVOKED ONLY]** Manually triggered via `/codex-sync`. Claude MUST NOT auto-invoke — `disable-model-invocation: true` enforces this.
+> **[FAILS FAST]** First non-zero stage exit aborts chain. Re-run failing stage manually to debug.
+> **[REPO ROOT]** Orchestrator auto-resolves repo root from its own path. NEVER pass `--cwd`.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

@@ -11,19 +11,6 @@ tags:
     - configuration
 ---
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-# Skill: sync-to-copilot
-
-Sync Claude Code knowledge to GitHub Copilot instructions. Two-tier output: project-specific + common protocol.
-
----
-
 ## Quick Summary
 
 **Purpose:** Keep Copilot instructions in sync with Claude Code workflows, dev rules, and project-reference docs.
@@ -234,6 +221,20 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+# Skill: sync-to-copilot
+
+Sync Claude Code knowledge to GitHub Copilot instructions. Two-tier output: project-specific + common protocol.
+
+---
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

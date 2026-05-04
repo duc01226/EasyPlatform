@@ -14,27 +14,6 @@ description: 'Reverse-engineer a complete, tech-agnostic specification bundle fr
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[BLOCKING]** Each phase MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
----
-
-## What Is Spec Discovery?
-
-Reverse of product discovery — existing codebase → reimplementation-grade spec bundle. Docs describe **what system does and why** — stripped of tech choices, implementation details, language constructs. Any team reads bundle, rebuilds on different stack.
-
-**Use Cases:** AI replatforming, stack migration, compliance docs, knowledge capture, spec-driven bootstrap.
-
-**Scale Reality:** Thousands of files, dozens of modules. Scout-first → plan-decompose → investigate-deeply prevents context overrun, ensures complete coverage.
-
----
-
 ## Quick Summary
 
 **Goal:** Reverse-engineer tech-agnostic spec bundle from existing codebase. Stable output at `docs/specs/{app-bucket}/{system-name}/` — change history in SPEC-CHANGELOG.md.
@@ -1192,6 +1171,28 @@ On update: verify links present and correct.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+> **[BLOCKING]** Each phase MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+---
+
+## What Is Spec Discovery?
+
+Reverse of product discovery — existing codebase → reimplementation-grade spec bundle. Docs describe **what system does and why** — stripped of tech choices, implementation details, language constructs. Any team reads bundle, rebuilds on different stack.
+
+**Use Cases:** AI replatforming, stack migration, compliance docs, knowledge capture, spec-driven bootstrap.
+
+**Scale Reality:** Thousands of files, dozens of modules. Scout-first → plan-decompose → investigate-deeply prevents context overrun, ensures complete coverage.
+
+---
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.

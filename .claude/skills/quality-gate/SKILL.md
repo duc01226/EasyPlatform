@@ -13,39 +13,6 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
-> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
-
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
-
-<!-- SYNC:graph-impact-analysis -->
-
-> **Graph Impact Analysis** — When `.code-graph/graph.db` exists, run `blast-radius --json` to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use `trace --direction downstream` for deep chains on high-impact files.
-
-<!-- /SYNC:graph-impact-analysis -->
-
 ## Quick Summary
 
 **Goal:** Verify readiness criteria before proceeding to next phase.
@@ -170,6 +137,39 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+<!-- SYNC:graph-impact-analysis -->
+
+> **Graph Impact Analysis** — When `.code-graph/graph.db` exists, run `blast-radius --json` to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use `trace --direction downstream` for deep chains on high-impact files.
+
+<!-- /SYNC:graph-impact-analysis -->
 
 <!-- SYNC:understand-code-first:reminder -->
 

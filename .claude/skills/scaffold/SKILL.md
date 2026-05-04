@@ -13,74 +13,6 @@ description: '[Architecture] Scaffold project architecture with OOP/SOLID base c
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
-> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
-
-<!-- SYNC:scaffold-production-readiness -->
-
-> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 5 foundations:
->
-> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates. Specific tool choices → `docs/project-reference/` or `project-config.json`.
-> 2. **Error Handling Foundation** — HTTP interceptor, error classification (4xx/5xx taxonomy), user notification, global uncaught handler.
-> 3. **Loading State Management** — counter-based tracker (not boolean toggle), skip-token for background requests, 300ms flicker guard.
-> 4. **Docker Development Environment** — compose profiles (`dev`/`test`/`infra`), multi-stage Dockerfile, health checks on all services, non-root production user.
-> 5. **Integration Points** — document each outbound boundary; configure retry + circuit breaker + timeout; integration tests for happy path and failure path.
->
-> **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
-
-<!-- /SYNC:scaffold-production-readiness -->
-
-<!-- SYNC:harness-setup -->
-
-> **Harness Engineering** — An outer agent harness has two jobs: raise first-attempt quality + provide self-correction feedback loops before human review.
->
-> **Controls split:**
->
-> | Axis        | Type          | Examples                                                                      | Frequency        |
-> | ----------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-> | Feedforward | Computational | `.editorconfig`, strict compiler flags, enforced module boundaries            | Always-on        |
-> | Feedforward | Inferential   | `CLAUDE.md` conventions, skill prompts, architecture notes, pattern catalogs  | Always-on        |
-> | Feedback    | Computational | Linters, type checks, pre-commit hooks, ArchUnit/arch-fitness tests, CI gates | Pre-commit → CI  |
-> | Feedback    | Inferential   | `/code-review` skill, `/sre-review`, `/security`, LLM-as-judge passes         | Post-commit → CI |
->
-> **Three harness types:**
->
-> 1. **Maintainability** — Complexity, duplication, coverage, style. Easiest: rich deterministic tooling.
-> 2. **Architecture fitness** — Module boundaries, dependency direction, performance budgets, observability conventions.
-> 3. **Behaviour** — Functional correctness. Hardest: requires approved fixtures or strong spec-first discipline.
->
-> **Keep quality left:** pre-commit sensors fire first (cheap), CI sensors fire second, post-review last (expensive).
->
-> **Research-driven:** Never hardcode tool choices. Detect tech stack → research ecosystem → present top 2-3 options → user decides. Enforce strictest defaults; loosen only with explicit approval.
->
-> **Harnessability signals:** Strong typing, explicit module boundaries, opinionated frameworks = easier to harness. Treat these as greenfield architectural choices, not just style preferences.
-
-<!-- /SYNC:harness-setup -->
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
 ## Quick Summary
 
 **Goal:** Generate and validate the project's architecture scaffolding — all base classes, interfaces, infrastructure abstractions, and reusable foundation code — BEFORE any feature story implementation begins.
@@ -204,7 +136,7 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 #### Design System Documentation
 
-- [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples (content auto-injected by hook — check for [Injected: ...] header before reading)
+- [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples (read directly when relevant; do not rely on hook-injected conversation text)
 
 ## Code Quality Gate Tooling (MANDATORY MUST ATTENTION — Setup Before Any Feature Code)
 
@@ -354,6 +286,102 @@ Run ALL verification checklists from the production readiness protocol:
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:scaffold-production-readiness -->
+
+> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 5 foundations:
+>
+> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates. Specific tool choices → `docs/project-reference/` or `project-config.json`.
+> 2. **Error Handling Foundation** — HTTP interceptor, error classification (4xx/5xx taxonomy), user notification, global uncaught handler.
+> 3. **Loading State Management** — counter-based tracker (not boolean toggle), skip-token for background requests, 300ms flicker guard.
+> 4. **Docker Development Environment** — compose profiles (`dev`/`test`/`infra`), multi-stage Dockerfile, health checks on all services, non-root production user.
+> 5. **Integration Points** — document each outbound boundary; configure retry + circuit breaker + timeout; integration tests for happy path and failure path.
+>
+> **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
+
+<!-- /SYNC:scaffold-production-readiness -->
+
+<!-- SYNC:harness-setup -->
+
+> **Harness Engineering** — An outer agent harness has two jobs: raise first-attempt quality + provide self-correction feedback loops before human review.
+>
+> **Controls split:**
+>
+> | Axis        | Type          | Examples                                                                      | Frequency        |
+> | ----------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+> | Feedforward | Computational | `.editorconfig`, strict compiler flags, enforced module boundaries            | Always-on        |
+> | Feedforward | Inferential   | `CLAUDE.md` conventions, skill prompts, architecture notes, pattern catalogs  | Always-on        |
+> | Feedback    | Computational | Linters, type checks, pre-commit hooks, ArchUnit/arch-fitness tests, CI gates | Pre-commit → CI  |
+> | Feedback    | Inferential   | `/code-review` skill, `/sre-review`, `/security`, LLM-as-judge passes         | Post-commit → CI |
+>
+> **Three harness types:**
+>
+> 1. **Maintainability** — Complexity, duplication, coverage, style. Easiest: rich deterministic tooling.
+> 2. **Architecture fitness** — Module boundaries, dependency direction, performance budgets, observability conventions.
+> 3. **Behaviour** — Functional correctness. Hardest: requires approved fixtures or strong spec-first discipline.
+>
+> **Keep quality left:** pre-commit sensors fire first (cheap), CI sensors fire second, post-review last (expensive).
+>
+> **Research-driven:** Never hardcode tool choices. Detect tech stack → research ecosystem → present top 2-3 options → user decides. Enforce strictest defaults; loosen only with explicit approval.
+>
+> **Harnessability signals:** Strong typing, explicit module boundaries, opinionated frameworks = easier to harness. Treat these as greenfield architectural choices, not just style preferences.
+
+<!-- /SYNC:harness-setup -->
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
 <!-- SYNC:understand-code-first:reminder -->
 
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
@@ -389,6 +417,20 @@ Run ALL verification checklists from the production readiness protocol:
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

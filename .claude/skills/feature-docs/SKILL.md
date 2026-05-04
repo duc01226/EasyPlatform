@@ -5,15 +5,6 @@ last_reviewed: 2026-04-21
 description: '[Documentation] Create or update business feature documentation. Modes: init (zero-docs → full extraction from source code), update (code change → section-impact sync), audit (staleness detection). Generates 17-section docs with Mermaid ERD, source citations, verified test case evidence. Triggers on: feature docs, business feature documentation, module documentation, document feature, update feature docs.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **[IMPORTANT] TaskCreate** — Break ALL work into small tasks BEFORE starting. For simple tasks, ask user whether to skip.
@@ -45,7 +36,7 @@ description: '[Documentation] Create or update business feature documentation. M
 - Verify every TC-{FEATURE}-{NNN} has `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` in integration tests. Missing → `Status: Untested`
 - Third verification pass finds >5 issues → HALT, re-run verification
 
-> `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (content auto-injected by hook — check for [Injected: ...] header before reading)
+> `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read directly when relevant; do not rely on hook-injected conversation text)
 
 ## Project Pattern Discovery
 
@@ -1018,6 +1009,15 @@ This section enables:
 - Humans navigating from business doc → engineering detail → test evidence
 - `/docs-update` detecting when spec bundle was updated but business doc wasn't
 - Future AI sessions knowing what exists without a full scan
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
 
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
