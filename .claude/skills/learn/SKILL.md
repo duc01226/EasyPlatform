@@ -325,6 +325,16 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+>
+> **Mandatory end tasks are ALWAYS (in order):**
+>
+> 1. "Run **Learn Review** (lesson value + generality + recurrence gate)."
+> 2. "Run `/why-review` to challenge whether the lesson is worth persistent memory."
+> 3. "Run `/prompt-enhance <modified-file>` to optimize lesson content for AI attention anchoring."
+>
+> Do NOT mark the skill complete until all 3 tasks run.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -342,16 +352,6 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
->
-> **Mandatory end tasks are ALWAYS (in order):**
->
-> 1. "Run **Learn Review** (lesson value + generality + recurrence gate)."
-> 2. "Run `/why-review` to challenge whether the lesson is worth persistent memory."
-> 3. "Run `/prompt-enhance <modified-file>` to optimize lesson content for AI attention anchoring."
->
-> Do NOT mark the skill complete until all 3 tasks run.
-
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
@@ -364,6 +364,7 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

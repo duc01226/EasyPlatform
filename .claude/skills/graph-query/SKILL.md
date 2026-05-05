@@ -280,6 +280,10 @@ Returns a multi-level tree of connected nodes grouped by BFS depth, with edge ty
 
 ---
 
+# Graph Query
+
+Query code relationships using the structural knowledge graph. Maps natural language questions to graph CLI queries and formats structured reports.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -304,15 +308,12 @@ Returns a multi-level tree of connected nodes grouped by BFS depth, with edge ty
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Graph Query
-
-Query code relationships using the structural knowledge graph. Maps natural language questions to graph CLI queries and formats structured reports.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

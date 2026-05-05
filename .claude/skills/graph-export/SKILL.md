@@ -88,6 +88,10 @@ These edges are created by the implicit connector and API connector during `buil
 
 ---
 
+# Export Graph
+
+Export the complete knowledge graph from `.code-graph/graph.db` to a readable JSON file.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -112,15 +116,12 @@ These edges are created by the implicit connector and API connector during `buil
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Export Graph
-
-Export the complete knowledge graph from `.code-graph/graph.db` to a readable JSON file.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

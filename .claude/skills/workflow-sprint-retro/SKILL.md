@@ -21,6 +21,18 @@ disable-model-invocation: true
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
 - NEVER skip mandatory workflow or skill gates.
 
+**IMPORTANT MANDATORY Steps:** /status -> /retro -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `sprint-retro` workflow. Run `/workflow-start sprint-retro` with the user's prompt as context.
+
+**Steps:** /status → /retro → /workflow-end
+
+---
+
+**IMPORTANT MANDATORY Steps:** /status -> /retro -> /workflow-end
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -52,10 +64,6 @@ disable-model-invocation: true
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /status -> /retro -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -109,19 +117,12 @@ disable-model-invocation: true
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `sprint-retro` workflow. Run `/workflow-start sprint-retro` with the user's prompt as context.
-
-**Steps:** /status → /retro → /workflow-end
-
----
-
-**IMPORTANT MANDATORY Steps:** /status -> /retro -> /workflow-end
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

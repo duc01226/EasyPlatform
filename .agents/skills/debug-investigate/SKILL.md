@@ -49,368 +49,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:nested-task-creation -->
-
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
->
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
->
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
-
-<!-- /SYNC:nested-task-creation -->
-
-<!-- SYNC:project-reference-docs-guide -->
-
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
->
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
->
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
-
-<!-- /SYNC:project-reference-docs-guide -->
-
-<!-- SYNC:task-tracking-external-report -->
-
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
->
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
->
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
-
-<!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:sequential-thinking-protocol -->
-
-> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
->
-> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
->
-> **Format (explicit mode — visible thought trail):**
->
-> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
-> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
-> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
-> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
-> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
->
-> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
->
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
->
-> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
->
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
-
-<!-- /SYNC:sequential-thinking-protocol -->
-
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
-> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
-
-<!-- SYNC:evidence-based-reasoning -->
-
-> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
->
-> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
-> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
-> 3. Cross-service validation required for architectural changes
-> 4. "I don't have enough evidence" is valid and expected output
->
-> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
->
-> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
-> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
-
-<!-- /SYNC:evidence-based-reasoning -->
-
-<!-- SYNC:cross-service-check -->
-
-> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
->
-> | Boundary            | Grep terms                                                                      |
-> | ------------------- | ------------------------------------------------------------------------------- |
-> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
-> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
-> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
-> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
-> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
-> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
->
-> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
->
-> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
-
-<!-- /SYNC:cross-service-check -->
-
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (Codex has no hook injection — open this file directly before proceeding)
-
-<!-- SYNC:estimation-framework -->
-
-> **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
->
-> **Method:**
->
-> 1. **Blast Radius pass** (below) — drives code AND test cost
-> 2. Decompose phases → hours/phase → `bottom_up_hours = Σ phase_hours`
-> 3. `likely_days = ceil(bottom_up_hours / 6) × productivity_factor`
-> 4. Sum **Risk Margin** (base + add-ons) → `max_days = likely_days × (1 + margin)`
-> 5. `min_days = likely_days × 0.9`
-> 6. Output as range when `likely_days ≥3`; single point allowed `<3` (still record margin)
-> 7. `man_days_ai` = same range × AI speedup
-> 8. `story_points` DERIVED from `likely_days` via SP-Days — NEVER driver. Disagreement >50% → trust bottom-up
->
-> **Productivity factor:** 0.8 strong scaffolding+codegen+AI hooks · 1.0 mature default · 1.2 weak patterns · 1.5 greenfield
->
-> **Cost Driver Heuristic (apply BEFORE work-type row):**
->
-> - **UI dominates** in CRUD/business apps — 1.5-3x backend (states, validation, responsive, a11y, polish)
-> - **Backend dominates ONLY:** multi-aggregate invariants, cross-service contracts, schema migrations, heavy query/perf, new event flows
->
-> **Reuse-vs-Create axis (PRIMARY lever, per layer):**
->
-> | UI tier                                      | Cost     |
-> | -------------------------------------------- | -------- |
-> | Reuse component on existing screen           | 0.1-0.3d |
-> | Add control/column to existing screen        | 0.3-0.8d |
-> | Compose components into NEW screen           | 1-2d     |
-> | NEW screen, custom layout/states/validation  | 2-4d     |
-> | NEW shared/common component (themed, tested) | 3-6d+    |
->
-> | Backend tier                                         | Cost      |
-> | ---------------------------------------------------- | --------- |
-> | Reuse query/handler from new place                   | 0.1-0.3d  |
-> | Small update existing handler/entity                 | 0.3-0.8d  |
-> | NEW query on existing repo/model                     | 0.5-1d    |
-> | NEW command/handler on existing aggregate (additive) | 1-2d      |
-> | NEW aggregate/entity (repo, validation, events)      | 2-4d      |
-> | NEW cross-service contract OR schema migration       | 2-4d each |
-> | Multi-aggregate invariant / heavy domain rule        | 3-5d      |
->
-> **Rule:** Sum tiers across UI+backend+tests, apply productivity factor. Reuse short-circuits tiers — call out.
->
-> **Test-Scope drivers (compute test_count EXPLICITLY — "+tests" hand-wave is #1 failure):**
->
-> | Driver                            | Count                                                  |
-> | --------------------------------- | ------------------------------------------------------ |
-> | Happy-path journeys               | 1 per story / AC main flow                             |
-> | State-machine transitions         | reachable transitions × allowed actors                 |
-> | Multi-entity state combos         | state(A) × state(B) — REACHABLE only, not Cartesian    |
-> | Authorization matrix              | (owner, non-owner, elevated, unauth) × each mutation   |
-> | Validation rules                  | 1 per required field / boundary / format / cross-field |
-> | UI states (per new screen/dialog) | happy, loading, empty, error, partial — present only   |
-> | Negative paths / invariants       | 1 per violatable business rule                         |
->
-> | Test tier (Trad, incl. setup+assert+flake) | Cost     |
-> | ------------------------------------------ | -------- |
-> | 1-5 cases, fixtures reused                 | 0.3-0.5d |
-> | 6-12 cases, 1 new fixture                  | 0.5-1d   |
-> | 13-25 cases, multi-entity setup            | 1-2d     |
-> | 26-50 cases OR new state-machine coverage  | 2-3d     |
-> | >50 cases OR full E2E journey              | 3-5d     |
->
-> **Test multipliers:** new fixture/seed harness +0.5d · cross-service/bus assertion +0.3d each · UI E2E ×1.5 · each new role +1-2 cases
->
-> **Blast Radius (mandatory pre-pass — affects code AND test):**
->
-> 1. Files/components directly modified — count
-> 2. Of those, "complex" (>500 LOC, multi-handler, central, frequently-modified) — count
-> 3. Downstream consumers (callers, event subscribers, cross-service) — list
-> 4. Shared/common code touched (multi-app blast) — yes/no
-> 5. Regression scope — areas needing re-test
->
-> **Rule:** Complex touch → add `risk_factors`. Each downstream consumer → +1-3 regression cases. Blast >5 areas OR >2 complex → re-evaluate SPLIT before estimating.
->
-> **Risk Margin (drives max bound):**
->
-> | likely_days         | Base margin                     |
-> | ------------------- | ------------------------------- |
-> | <1d trivial         | +10%                            |
-> | 1-2d small additive | +20%                            |
-> | 3-4d real feature   | +35%                            |
-> | 5-7d large          | +50%                            |
-> | 8-10d very large    | +75%                            |
-> | >10d                | +100% AND **flag SHOULD SPLIT** |
->
-> **Risk-factor add-ons (additive — enumerate in `risk_factors`):**
->
-> | Factor                                                                | +margin |
-> | --------------------------------------------------------------------- | ------- |
-> | `touches-complex-existing-feature` (>500 LOC, multi-handler, central) | +20%    |
-> | `cross-service-contract` change                                       | +25%    |
-> | `schema-migration-on-populated-data`                                  | +25%    |
-> | `new-tech-or-unfamiliar-pattern`                                      | +30%    |
-> | `regression-fan-out` (≥3 downstream areas re-test)                    | +20%    |
-> | `performance-or-latency-critical`                                     | +20%    |
-> | `concurrency-race-event-ordering`                                     | +25%    |
-> | `shared-common-code` (multi-consumer/multi-app)                       | +25%    |
-> | `unclear-requirements-or-design`                                      | +30%    |
->
-> **Collapse rule:** total margin >100% → STOP, split (padding past 2x is dishonesty). Margin <15% on `likely_days ≥5` → under-estimated, widen.
->
-> **Work-Type Caps (hard ceilings on `likely_days`):**
-> | Work type | Max SP | Max likely |
-> | --- | --- | --- |
-> | Single field / config flag / style fix | 1 | 0.5d |
-> | Add property to existing model + bind to existing UI | 2 | 1d |
-> | **Additive endpoint + minor UI control** (button/menu/column), reuses fixtures | **3** | **2-3d** |
-> | Additive endpoint + **NEW UI surface** OR additive multi-layer + new domain rule + 2+ test files | 5 | 3-5d |
-> | NEW model/aggregate OR migration OR cross-module contract OR heavy test (>1.5d) OR NEW UI + non-trivial backend | 8 | 5-7d |
-> | NEW UI surface + (NEW aggregate OR migration OR cross-service contract) | 13 | SHOULD split |
-> | Cross-service contract + migration combined | 13 | SHOULD split |
-> | Beyond | 21 | MUST split |
->
-> **SP→Days (validation only):** 1=0.5d/0.25d · 2=1d/0.35d · 3=2d/0.65d · 5=4d/1.0d · 8=6d/1.5d · 13=10d/2.0d (Trad/AI likely)
-> **AI speedup:** SP 1≈2x · 2-3≈3x · 5-8≈4x · 13+≈5x. AI cost = `(code_gen × 1.3) + (test_gen × 1.3)` (30% review overhead).
->
-> **MANDATORY frontmatter:**
->
-> ```yaml
-> story_points: <n>
-> complexity: low | medium | high | critical
-> man_days_traditional: '<min>-<max>d' # range when likely ≥3d; '<N>d' when <3d
-> man_days_ai: '<min>-<max>d'
-> risk_margin_pct: <n> # base + add-ons
-> risk_factors: [touches-complex-existing-feature, regression-fan-out] # closed-list from add-ons; [] if none
-> blast_radius:
->     touched_areas: <n>
->     complex_touched: <n>
->     downstream_consumers: [list or count]
->     shared_common_code: yes | no
-> estimate_scope_included: [code, integration-tests, frontend, i18n, docs]
-> estimate_scope_excluded: [unit-tests, e2e, perf, deployment, code-review-rounds]
-> estimate_reasoning: |
->     5-7 lines covering:
->     (a) UI tier — row applied
->     (b) Backend tier — row applied
->     (c) Test scope — case breakdown by driver, file count, fixtures, tier row
->     (d) Cost driver — dominant tier + why
->     (e) Blast radius — touched, complex, regression scope
->     (f) Risk factors — list driving margin; why not larger/smaller
->     Example: "UI: compose Form/Table/Dialog → NEW screen (~1.5d). Backend: NEW command on existing aggregate,
->     reuses validation+repo (~1d). Tests: 4 transitions × 2 actors + 3 validation + 2 UI states = 13 cases,
->     1 new fixture → tier 13-25 ~1.5d. Driver: UI composition + new states. Blast: 4 areas, 1 complex.
->     Risk: base 35% + touches-complex +20% = 55% → max 3.9d → range 2.5-4d."
-> ```
->
-> **Sanity self-check:**
->
-> - `likely_days ≥3d` and single-point? → reject, must be range
-> - Margin <15% on `likely_days ≥5d`? → under-estimated, widen
-> - Margin >100%? → STOP, split instead of buffer
-> - Complex existing feature touched, no regression budget in `(c)`? → reject
-> - Blast `>5` areas OR `>2` complex, no split discussion? → reject
-> - Purely additive on existing model AND existing UI? → cap SP 3 unless tests >1.5d
-> - NEW UI surface (page/complex form/dashboard)? → SP 5+ even if backend one endpoint
-> - Backend cross-service / migration / multi-aggregate? → SP 8+ regardless of UI
-> - `bottom_up_hours / 6` vs SP-Days disagreement >50%? → trust bottom-up, downgrade SP
-> - Without tests, SP drops ≥1 bucket? → tests dominate; state explicitly
-> - Reasoning called out UI vs backend vs blast vs risk factors? → if missing, add
-
-<!-- /SYNC:estimation-framework -->
-<!-- SYNC:red-flag-stop-conditions -->
-
-> **Red Flag Stop Conditions** — STOP and escalate to user via ask the user directly when:
->
-> 1. Confidence drops below 60% on any critical decision
-> 2. Changes would affect >20 files (blast radius too large)
-> 3. Cross-service boundary is being crossed
-> 4. Security-sensitive code (auth, crypto, PII handling)
-> 5. Breaking change detected (interface, API contract, DB schema)
-> 6. Test coverage would decrease after changes
-> 7. Approach requires technology/pattern not in the project
->
-> **NEVER proceed past a red flag without explicit user approval.**
-
-<!-- /SYNC:red-flag-stop-conditions -->
-
-<!-- SYNC:fix-layer-accountability -->
-
-> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
->
-> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
->
-> **MANDATORY before ANY fix:**
->
-> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
-> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
-> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
-> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
->
-> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
->
-> **Anti-patterns (REJECT these):**
->
-> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
-> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
-> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
-
-<!-- /SYNC:fix-layer-accountability -->
-
 ## Quick Summary
 
 **Goal:** Investigate, identify root cause with `file:line` evidence. Investigation-only — hand off to `$fix` for implementation.
@@ -431,66 +69,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - NEVER report root cause without `file:line` evidence
 - NEVER declare confirmed root cause after Round 1 alone (Fresh Eyes required)
 - Output: confirmed root cause OR "hypothesis, not confirmed" + evidence gaps
-
-<!-- SYNC:root-cause-debugging -->
-
-> **Root Cause Debugging** — Systematic approach, never guess-and-check.
->
-> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
-> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
-> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
-> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
-> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
-> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
->
-> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
-
-<!-- /SYNC:root-cause-debugging -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
 
 ## Phase 0: Classify Bug Scenario (BLOCKING — Do Before ANY Investigation)
 
@@ -655,16 +233,69 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 
 ---
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files.
 
-## Prompt-Enhance Closing Anchors
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+<!-- SYNC:root-cause-debugging -->
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+> **Root Cause Debugging** — Systematic approach, never guess-and-check.
+>
+> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
+> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
+> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
+> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
+> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
+> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
+>
+> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
+
+<!-- /SYNC:root-cause-debugging -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -682,6 +313,334 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:sequential-thinking-protocol -->
+
+> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
+>
+> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
+>
+> **Format (explicit mode — visible thought trail):**
+>
+> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
+> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
+> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
+> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
+> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
+>
+> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
+>
+> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+>
+> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
+>
+> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+
+<!-- /SYNC:sequential-thinking-protocol -->
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
+
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
+
+<!-- SYNC:estimation-framework -->
+
+> **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
+>
+> **Method:**
+>
+> 1. **Blast Radius pass** (below) — drives code AND test cost
+> 2. Decompose phases → hours/phase → `bottom_up_hours = Σ phase_hours`
+> 3. `likely_days = ceil(bottom_up_hours / 6) × productivity_factor`
+> 4. Sum **Risk Margin** (base + add-ons) → `max_days = likely_days × (1 + margin)`
+> 5. `min_days = likely_days × 0.9`
+> 6. Output as range when `likely_days ≥3`; single point allowed `<3` (still record margin)
+> 7. `man_days_ai` = same range × AI speedup
+> 8. `story_points` DERIVED from `likely_days` via SP-Days — NEVER driver. Disagreement >50% → trust bottom-up
+>
+> **Productivity factor:** 0.8 strong scaffolding+codegen+AI hooks · 1.0 mature default · 1.2 weak patterns · 1.5 greenfield
+>
+> **Cost Driver Heuristic (apply BEFORE work-type row):**
+>
+> - **UI dominates** in CRUD/business apps — 1.5-3x backend (states, validation, responsive, a11y, polish)
+> - **Backend dominates ONLY:** multi-aggregate invariants, cross-service contracts, schema migrations, heavy query/perf, new event flows
+>
+> **Reuse-vs-Create axis (PRIMARY lever, per layer):**
+>
+> | UI tier                                      | Cost     |
+> | -------------------------------------------- | -------- |
+> | Reuse component on existing screen           | 0.1-0.3d |
+> | Add control/column to existing screen        | 0.3-0.8d |
+> | Compose components into NEW screen           | 1-2d     |
+> | NEW screen, custom layout/states/validation  | 2-4d     |
+> | NEW shared/common component (themed, tested) | 3-6d+    |
+>
+> | Backend tier                                         | Cost      |
+> | ---------------------------------------------------- | --------- |
+> | Reuse query/handler from new place                   | 0.1-0.3d  |
+> | Small update existing handler/entity                 | 0.3-0.8d  |
+> | NEW query on existing repo/model                     | 0.5-1d    |
+> | NEW command/handler on existing aggregate (additive) | 1-2d      |
+> | NEW aggregate/entity (repo, validation, events)      | 2-4d      |
+> | NEW cross-service contract OR schema migration       | 2-4d each |
+> | Multi-aggregate invariant / heavy domain rule        | 3-5d      |
+>
+> **Rule:** Sum tiers across UI+backend+tests, apply productivity factor. Reuse short-circuits tiers — call out.
+>
+> **Test-Scope drivers (compute test_count EXPLICITLY — "+tests" hand-wave is #1 failure):**
+>
+> | Driver                            | Count                                                  |
+> | --------------------------------- | ------------------------------------------------------ |
+> | Happy-path journeys               | 1 per story / AC main flow                             |
+> | State-machine transitions         | reachable transitions × allowed actors                 |
+> | Multi-entity state combos         | state(A) × state(B) — REACHABLE only, not Cartesian    |
+> | Authorization matrix              | (owner, non-owner, elevated, unauth) × each mutation   |
+> | Validation rules                  | 1 per required field / boundary / format / cross-field |
+> | UI states (per new screen/dialog) | happy, loading, empty, error, partial — present only   |
+> | Negative paths / invariants       | 1 per violatable business rule                         |
+>
+> | Test tier (Trad, incl. setup+assert+flake) | Cost     |
+> | ------------------------------------------ | -------- |
+> | 1-5 cases, fixtures reused                 | 0.3-0.5d |
+> | 6-12 cases, 1 new fixture                  | 0.5-1d   |
+> | 13-25 cases, multi-entity setup            | 1-2d     |
+> | 26-50 cases OR new state-machine coverage  | 2-3d     |
+> | >50 cases OR full E2E journey              | 3-5d     |
+>
+> **Test multipliers:** new fixture/seed harness +0.5d · cross-service/bus assertion +0.3d each · UI E2E ×1.5 · each new role +1-2 cases
+>
+> **Blast Radius (mandatory pre-pass — affects code AND test):**
+>
+> 1. Files/components directly modified — count
+> 2. Of those, "complex" (>500 LOC, multi-handler, central, frequently-modified) — count
+> 3. Downstream consumers (callers, event subscribers, cross-service) — list
+> 4. Shared/common code touched (multi-app blast) — yes/no
+> 5. Regression scope — areas needing re-test
+>
+> **Rule:** Complex touch → add `risk_factors`. Each downstream consumer → +1-3 regression cases. Blast >5 areas OR >2 complex → re-evaluate SPLIT before estimating.
+>
+> **Risk Margin (drives max bound):**
+>
+> | likely_days         | Base margin                     |
+> | ------------------- | ------------------------------- |
+> | <1d trivial         | +10%                            |
+> | 1-2d small additive | +20%                            |
+> | 3-4d real feature   | +35%                            |
+> | 5-7d large          | +50%                            |
+> | 8-10d very large    | +75%                            |
+> | >10d                | +100% AND **flag SHOULD SPLIT** |
+>
+> **Risk-factor add-ons (additive — enumerate in `risk_factors`):**
+>
+> | Factor                                                                | +margin |
+> | --------------------------------------------------------------------- | ------- |
+> | `touches-complex-existing-feature` (>500 LOC, multi-handler, central) | +20%    |
+> | `cross-service-contract` change                                       | +25%    |
+> | `schema-migration-on-populated-data`                                  | +25%    |
+> | `new-tech-or-unfamiliar-pattern`                                      | +30%    |
+> | `regression-fan-out` (≥3 downstream areas re-test)                    | +20%    |
+> | `performance-or-latency-critical`                                     | +20%    |
+> | `concurrency-race-event-ordering`                                     | +25%    |
+> | `shared-common-code` (multi-consumer/multi-app)                       | +25%    |
+> | `unclear-requirements-or-design`                                      | +30%    |
+>
+> **Collapse rule:** total margin >100% → STOP, split (padding past 2x is dishonesty). Margin <15% on `likely_days ≥5` → under-estimated, widen.
+>
+> **Work-Type Caps (hard ceilings on `likely_days`):**
+> | Work type | Max SP | Max likely |
+> | --- | --- | --- |
+> | Single field / config flag / style fix | 1 | 0.5d |
+> | Add property to existing model + bind to existing UI | 2 | 1d |
+> | **Additive endpoint + minor UI control** (button/menu/column), reuses fixtures | **3** | **2-3d** |
+> | Additive endpoint + **NEW UI surface** OR additive multi-layer + new domain rule + 2+ test files | 5 | 3-5d |
+> | NEW model/aggregate OR migration OR cross-module contract OR heavy test (>1.5d) OR NEW UI + non-trivial backend | 8 | 5-7d |
+> | NEW UI surface + (NEW aggregate OR migration OR cross-service contract) | 13 | SHOULD split |
+> | Cross-service contract + migration combined | 13 | SHOULD split |
+> | Beyond | 21 | MUST split |
+>
+> **SP→Days (validation only):** 1=0.5d/0.25d · 2=1d/0.35d · 3=2d/0.65d · 5=4d/1.0d · 8=6d/1.5d · 13=10d/2.0d (Trad/AI likely)
+> **AI speedup:** SP 1≈2x · 2-3≈3x · 5-8≈4x · 13+≈5x. AI cost = `(code_gen × 1.3) + (test_gen × 1.3)` (30% review overhead).
+>
+> **MANDATORY frontmatter:**
+>
+> ```yaml
+> story_points: <n>
+> complexity: low | medium | high | critical
+> man_days_traditional: '<min>-<max>d' # range when likely ≥3d; '<N>d' when <3d
+> man_days_ai: '<min>-<max>d'
+> risk_margin_pct: <n> # base + add-ons
+> risk_factors: [touches-complex-existing-feature, regression-fan-out] # closed-list from add-ons; [] if none
+> blast_radius:
+>     touched_areas: <n>
+>     complex_touched: <n>
+>     downstream_consumers: [list or count]
+>     shared_common_code: yes | no
+> estimate_scope_included: [code, integration-tests, frontend, i18n, docs]
+> estimate_scope_excluded: [unit-tests, e2e, perf, deployment, code-review-rounds]
+> estimate_reasoning: |
+>     5-7 lines covering:
+>     (a) UI tier — row applied
+>     (b) Backend tier — row applied
+>     (c) Test scope — case breakdown by driver, file count, fixtures, tier row
+>     (d) Cost driver — dominant tier + why
+>     (e) Blast radius — touched, complex, regression scope
+>     (f) Risk factors — list driving margin; why not larger/smaller
+>     Example: "UI: compose Form/Table/Dialog → NEW screen (~1.5d). Backend: NEW command on existing aggregate,
+>     reuses validation+repo (~1d). Tests: 4 transitions × 2 actors + 3 validation + 2 UI states = 13 cases,
+>     1 new fixture → tier 13-25 ~1.5d. Driver: UI composition + new states. Blast: 4 areas, 1 complex.
+>     Risk: base 35% + touches-complex +20% = 55% → max 3.9d → range 2.5-4d."
+> ```
+>
+> **Sanity self-check:**
+>
+> - `likely_days ≥3d` and single-point? → reject, must be range
+> - Margin <15% on `likely_days ≥5d`? → under-estimated, widen
+> - Margin >100%? → STOP, split instead of buffer
+> - Complex existing feature touched, no regression budget in `(c)`? → reject
+> - Blast `>5` areas OR `>2` complex, no split discussion? → reject
+> - Purely additive on existing model AND existing UI? → cap SP 3 unless tests >1.5d
+> - NEW UI surface (page/complex form/dashboard)? → SP 5+ even if backend one endpoint
+> - Backend cross-service / migration / multi-aggregate? → SP 8+ regardless of UI
+> - `bottom_up_hours / 6` vs SP-Days disagreement >50%? → trust bottom-up, downgrade SP
+> - Without tests, SP drops ≥1 bucket? → tests dominate; state explicitly
+> - Reasoning called out UI vs backend vs blast vs risk factors? → if missing, add
+
+<!-- /SYNC:estimation-framework -->
+
+<!-- SYNC:red-flag-stop-conditions -->
+
+> **Red Flag Stop Conditions** — STOP and escalate to user via ask the user directly when:
+>
+> 1. Confidence drops below 60% on any critical decision
+> 2. Changes would affect >20 files (blast radius too large)
+> 3. Cross-service boundary is being crossed
+> 4. Security-sensitive code (auth, crypto, PII handling)
+> 5. Breaking change detected (interface, API contract, DB schema)
+> 6. Test coverage would decrease after changes
+> 7. Approach requires technology/pattern not in the project
+>
+> **NEVER proceed past a red flag without explicit user approval.**
+
+<!-- /SYNC:red-flag-stop-conditions -->
+
+<!-- SYNC:fix-layer-accountability -->
+
+> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
+>
+> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
+>
+> **MANDATORY before ANY fix:**
+>
+> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
+> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
+> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
+> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
+>
+> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
+>
+> **Anti-patterns (REJECT these):**
+>
+> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
+> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
+> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
+
+<!-- /SYNC:fix-layer-accountability -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -693,6 +652,7 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `$sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -701,25 +661,35 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 
 <!-- SYNC:task-tracking-external-report:reminder -->
 
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

@@ -182,16 +182,13 @@ After validation:
 
 ---
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[BLOCKING]** MUST ATTENTION use `AskUserQuestion` to interview user. Completing without asking ≥1 question = violation.
 
-## Prompt-Enhance Closing Anchors
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+> **External Memory:** Complex/lengthy work → write findings + results to `plans/reports/` — prevents context loss.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim requires `file:line` proof or traced evidence with confidence % (>80% act, <80% verify first).
 
 <!-- SYNC:nested-task-creation -->
 
@@ -221,10 +218,6 @@ After validation:
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[BLOCKING]** MUST ATTENTION use `AskUserQuestion` to interview user. Completing without asking ≥1 question = violation.
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -320,25 +313,6 @@ After validation:
 
 <!-- /SYNC:cross-service-check -->
 
-> **External Memory:** Complex/lengthy work → write findings + results to `plans/reports/` — prevents context loss.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim requires `file:line` proof or traced evidence with confidence % (>80% act, <80% verify first).
-
-<!-- SYNC:understand-code-first:reminder -->
-
-**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-
-<!-- /SYNC:understand-code-first:reminder -->
-<!-- SYNC:plan-quality:reminder -->
-
-**IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-
-<!-- /SYNC:plan-quality:reminder -->
-<!-- SYNC:cross-service-check:reminder -->
-
-**IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
-
-<!-- /SYNC:cross-service-check:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -355,6 +329,25 @@ After validation:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:plan-quality:reminder -->
+
+**IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+
+<!-- /SYNC:plan-quality:reminder -->
+
+<!-- SYNC:cross-service-check:reminder -->
+
+**IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
+
+<!-- /SYNC:cross-service-check:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -366,6 +359,7 @@ After validation:
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -392,6 +386,17 @@ After validation:
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

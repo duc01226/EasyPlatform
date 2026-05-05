@@ -44,6 +44,16 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 
 **IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /scaffold -> /plan-validate -> /why-review -> /cook -> /review-domain-entities -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
 
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /scaffold -> /plan-validate -> /why-review -> /cook -> /review-domain-entities -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `big-feature` workflow. Run `/workflow-start big-feature` with the user's prompt as context.
+
+> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
+
+**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /why-review → /tech-stack-research → /architecture-design → /why-review → /plan → /why-review → /plan-review → /why-review → /refine → /why-review → /refine-review → /story → /why-review → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /tdd-spec → /why-review → /tdd-spec-review → /plan → /why-review → /plan-review → /why-review → /scaffold → /plan-validate → /why-review → /cook → /review-domain-entities → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -75,10 +85,6 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /scaffold -> /plan-validate -> /why-review -> /cook -> /review-domain-entities -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -132,17 +138,12 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `big-feature` workflow. Run `/workflow-start big-feature` with the user's prompt as context.
-
-> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
-
-**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /why-review → /tech-stack-research → /architecture-design → /why-review → /plan → /why-review → /plan-review → /why-review → /refine → /why-review → /refine-review → /story → /why-review → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /tdd-spec → /why-review → /tdd-spec-review → /plan → /why-review → /plan-review → /why-review → /scaffold → /plan-validate → /why-review → /cook → /review-domain-entities → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

@@ -50,6 +50,16 @@ This workflow has steps that appear multiple times. When creating tasks, use the
 
 **IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /tech-stack-research -> /architecture-design -> /plan -> /security -> /performance -> /plan-review -> /refine -> /refine-review -> /story -> /story-review -> /pbi-mockup -> /plan-validate -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /cook -> /review-domain-entities (if domain entity changes) -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /integration-test -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
 
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /tech-stack-research -> /architecture-design -> /plan -> /security -> /performance -> /plan-review -> /refine -> /refine-review -> /story -> /story-review -> /pbi-mockup -> /plan-validate -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /cook -> /review-domain-entities (if domain entity changes) -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /integration-test -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `greenfield-init` workflow. Run `/workflow-start greenfield-init` with the user's prompt as context.
+
+**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /tech-stack-research → /architecture-design → /plan → /security → /performance → /plan-review → /refine → /refine-review → /story → /story-review → /pbi-mockup → /plan-validate → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /scaffold → /linter-setup → /harness-setup → /why-review → /cook → /review-domain-entities (if domain entity changes) → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /integration-test → /test → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+
+---
+
 <!-- SYNC:ai-mistake-prevention -->
 
 **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -80,10 +90,6 @@ This workflow has steps that appear multiple times. When creating tasks, use the
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /tech-stack-research -> /architecture-design -> /plan -> /security -> /performance -> /plan-review -> /refine -> /refine-review -> /story -> /story-review -> /pbi-mockup -> /plan-validate -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /cook -> /review-domain-entities (if domain entity changes) -> /tdd-spec -> /tdd-spec-review -> /plan -> /plan-review -> /integration-test -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -137,17 +143,12 @@ This workflow has steps that appear multiple times. When creating tasks, use the
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `greenfield-init` workflow. Run `/workflow-start greenfield-init` with the user's prompt as context.
-
-**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /tech-stack-research → /architecture-design → /plan → /security → /performance → /plan-review → /refine → /refine-review → /story → /story-review → /pbi-mockup → /plan-validate → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /scaffold → /linter-setup → /harness-setup → /why-review → /cook → /review-domain-entities (if domain entity changes) → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /integration-test → /test → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
-
----
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

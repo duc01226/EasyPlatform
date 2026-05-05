@@ -100,6 +100,10 @@ These edges are rendered alongside structural edges (CALLS, IMPORTS_FROM, INHERI
 
 ---
 
+# Export Graph as Mermaid Diagram
+
+Export a single file's internal graph structure from `.code-graph/graph.db` as a Mermaid flowchart in a markdown file.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -124,15 +128,12 @@ These edges are rendered alongside structural edges (CALLS, IMPORTS_FROM, INHERI
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Export Graph as Mermaid Diagram
-
-Export a single file's internal graph structure from `.code-graph/graph.db` as a Mermaid flowchart in a markdown file.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

@@ -41,35 +41,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:shared-protocol-duplication-policy -->
-
-> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
-
-<!-- /SYNC:shared-protocol-duplication-policy -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
 **Goal:** Create new Claude Code skills with proper structure or scan/fix invalid skill headers across the catalog.
@@ -234,16 +205,35 @@ node .claude/skills/skill-create/scripts/validate-skills.cjs --fix    # Report +
 
 ---
 
-<!-- SYNC:shared-protocol-duplication-policy:reminder -->
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
 
-**IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
+<!-- SYNC:critical-thinking-mindset -->
 
-<!-- /SYNC:shared-protocol-duplication-policy:reminder -->
-<!-- SYNC:output-quality-principles:reminder -->
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
-**IMPORTANT MUST ATTENTION** follow output quality principles: token efficiency, lead with answer, no filler
+<!-- /SYNC:critical-thinking-mindset -->
 
-<!-- /SYNC:output-quality-principles:reminder -->
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -260,11 +250,25 @@ node .claude/skills/skill-create/scripts/validate-skills.cjs --fix    # Report +
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:shared-protocol-duplication-policy:reminder -->
+
+**IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
+
+<!-- /SYNC:shared-protocol-duplication-policy:reminder -->
+
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** follow output quality principles: token efficiency, lead with answer, no filler
+
+<!-- /SYNC:output-quality-principles:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

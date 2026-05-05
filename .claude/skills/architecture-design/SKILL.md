@@ -581,13 +581,24 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 - **"Skip council — proceed (Recommended)"** — Continue with the architecture decision as-is. Recommended default.
 - **"Escalate to /llm-council"** — Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when this architecture pick is hard to reverse and you need adversarial framing. Cheaper alternatives: `/why-review`, `/plan-validate` (run these first if you haven't).
 
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
 ## Closing Reminders
 
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 
-  <!-- SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
     <!-- /SYNC:critical-thinking-mindset:reminder -->
@@ -654,7 +665,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
 
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
 
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
     <!-- /SYNC:ai-mistake-prevention:reminder -->
@@ -662,14 +673,3 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->

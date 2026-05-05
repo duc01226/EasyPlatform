@@ -88,6 +88,10 @@ This means after `sync`, ALL connections are up-to-date — not just direct code
 
 ---
 
+# Sync Graph
+
+Sync the knowledge graph with the current git state by diffing `last_synced_commit` against HEAD.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -112,15 +116,12 @@ This means after `sync`, ALL connections are up-to-date — not just direct code
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Sync Graph
-
-Sync the knowledge graph with the current git state by diffing `last_synced_commit` against HEAD.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

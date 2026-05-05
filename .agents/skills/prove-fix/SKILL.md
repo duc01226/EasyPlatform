@@ -49,62 +49,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
-
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
-> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
-
-<!-- SYNC:fix-layer-accountability -->
-
-> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
->
-> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
->
-> **MANDATORY before ANY fix:**
->
-> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
-> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
-> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
-> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
->
-> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
->
-> **Anti-patterns (REJECT these):**
->
-> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
-> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
-> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
-
-<!-- /SYNC:fix-layer-accountability -->
-
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (Codex has no hook injection — open this file directly before proceeding)
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
 ## Quick Summary
 
 **Goal:** Prove (or disprove) that each fix change is correct by building a code proof trace — like a debugger stack trace — with confidence percentages per change.
@@ -127,20 +71,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 ### Frontend/UI Context (if applicable)
 
 > When this task involves frontend or UI changes,
-
-<!-- SYNC:ui-system-context -->
-
-> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
->
-> **MUST ATTENTION READ before implementing:**
->
-> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
-> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
-> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
->
-> Reference `docs/project-config.json` for project-specific paths.
-
-<!-- /SYNC:ui-system-context -->
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
@@ -370,26 +300,6 @@ CONFIDENCE: 95%
 
 ---
 
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
 > Run `python .claude/scripts/code_graph trace <file> --direction downstream --json` to prove fix doesn't break downstream.
 
 ## Graph Intelligence (RECOMMENDED if graph.db exists)
@@ -448,37 +358,96 @@ This skill is the **mandatory verification gate** between `$fix` and `$code-simp
 - **"$workflow-review-changes"** — Review all changes before commit
 - **"Skip, continue manually"** — user decides
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-## Prompt-Enhance Closing Anchors
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-<!-- SYNC:understand-code-first:reminder -->
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+<!-- SYNC:ui-system-context -->
 
-<!-- /SYNC:understand-code-first:reminder -->
-<!-- SYNC:ui-system-context:reminder -->
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST ATTENTION READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
 
-**IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+<!-- /SYNC:ui-system-context -->
 
-<!-- /SYNC:ui-system-context:reminder -->
-<!-- SYNC:graph-assisted-investigation:reminder -->
+<!-- SYNC:graph-assisted-investigation -->
 
-**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
 
-<!-- /SYNC:graph-assisted-investigation:reminder -->
-<!-- SYNC:fix-layer-accountability:reminder -->
+<!-- /SYNC:graph-assisted-investigation -->
 
-**IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+<!-- SYNC:critical-thinking-mindset -->
 
-<!-- /SYNC:fix-layer-accountability:reminder -->
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:fix-layer-accountability -->
+
+> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
+>
+> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
+>
+> **MANDATORY before ANY fix:**
+>
+> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
+> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
+> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
+> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
+>
+> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
+>
+> **Anti-patterns (REJECT these):**
+>
+> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
+> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
+> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
+
+<!-- /SYNC:fix-layer-accountability -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -494,16 +463,53 @@ This skill is the **mandatory verification gate** between `$fix` and `$code-simp
 **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:ui-system-context:reminder -->
+
+**IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+
+<!-- /SYNC:ui-system-context:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+
+<!-- SYNC:fix-layer-accountability:reminder -->
+
+**IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+
+<!-- /SYNC:fix-layer-accountability:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

@@ -135,16 +135,21 @@ After sub-agent returns:
 > 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
 > 5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, and reachable by all consumers.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-## Prompt-Enhance Closing Anchors
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
+>
+> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)** (read directly when relevant; do not rely on hook-injected conversation text)
+> - `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
+> - `project-structure-reference.md` — service list, directory tree, conventions
+>
+> If files not found, search for: project documentation, coding standards, architecture docs.
+
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 <!-- SYNC:nested-task-creation -->
 
@@ -188,16 +193,12 @@ After sub-agent returns:
 
 <!-- /SYNC:task-tracking-external-report -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
 > **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:evidence-based-reasoning -->
 
@@ -513,53 +514,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:test-spec-verification -->
 
-> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
-
-> **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
->
-> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)** (read directly when relevant; do not rely on hook-injected conversation text)
-> - `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
-> - `project-structure-reference.md` — service list, directory tree, conventions
->
-> If files not found, search for: project documentation, coding standards, architecture docs.
-
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
-
-<!-- SYNC:understand-code-first:reminder -->
-
-**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-
-<!-- /SYNC:understand-code-first:reminder -->
-<!-- SYNC:design-patterns-quality:reminder -->
-
-**IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
-
-<!-- /SYNC:design-patterns-quality:reminder -->
-<!-- SYNC:double-round-trip-review:reminder -->
-
-**IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-
-<!-- /SYNC:double-round-trip-review:reminder -->
-<!-- SYNC:graph-impact-analysis:reminder -->
-
-**IMPORTANT MUST ATTENTION** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
-
-<!-- /SYNC:graph-impact-analysis:reminder -->
-<!-- SYNC:logic-and-intention-review:reminder -->
-
-**IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
-
-<!-- /SYNC:logic-and-intention-review:reminder -->
-<!-- SYNC:bug-detection:reminder -->
-
-**IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
-
-<!-- /SYNC:bug-detection:reminder -->
-<!-- SYNC:test-spec-verification:reminder -->
-
-**IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
-
-<!-- /SYNC:test-spec-verification:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -576,11 +530,55 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:design-patterns-quality:reminder -->
+
+**IMPORTANT MUST ATTENTION** check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
+
+<!-- /SYNC:design-patterns-quality:reminder -->
+
+<!-- SYNC:double-round-trip-review:reminder -->
+
+**IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
+
+<!-- /SYNC:double-round-trip-review:reminder -->
+
+<!-- SYNC:graph-impact-analysis:reminder -->
+
+**IMPORTANT MUST ATTENTION** run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
+
+<!-- /SYNC:graph-impact-analysis:reminder -->
+
+<!-- SYNC:logic-and-intention-review:reminder -->
+
+**IMPORTANT MUST ATTENTION** verify WHAT code does matches WHY it changed. Trace happy + error paths.
+
+<!-- /SYNC:logic-and-intention-review:reminder -->
+
+<!-- SYNC:bug-detection:reminder -->
+
+**IMPORTANT MUST ATTENTION** check null safety, boundaries, error handling, resource management for every review.
+
+<!-- /SYNC:bug-detection:reminder -->
+
+<!-- SYNC:test-spec-verification:reminder -->
+
+**IMPORTANT MUST ATTENTION** map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
+
+<!-- /SYNC:test-spec-verification:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -607,6 +605,17 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

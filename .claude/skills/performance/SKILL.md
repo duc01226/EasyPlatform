@@ -127,6 +127,48 @@ Route based on detected bottleneck type:
 
 **CRITICAL:** Present findings + optimization plan. Wait for explicit user approval before making changes.
 
+---
+
+## Sub-Agent Type Override
+
+> **MANDATORY:** Performance analysis spawns `performance-optimizer` sub-agent as the **Round 1 proactive lead**, not just a Round 2 challenger.
+> **Rationale:** `performance-optimizer` specializes in N+1 patterns, query plans, bundle analysis, and memory profiling for both backend (.NET/MongoDB/SQL) and frontend (Angular/RxJS). Main agent synthesizes findings — it does not lead analysis alone.
+
+## Recursive Quality Loop
+
+1. **Round 1 (Proactive):** Spawn `performance-optimizer` sub-agent (`subagent_type: "performance-optimizer"`) as the analysis lead. Main agent provides scope context; sub-agent drives all dimension analysis and produces the draft optimization plan.
+2. **Round 2 (Challenge):** Spawn NEW fresh `performance-optimizer` sub-agent — ZERO memory of Round 1. Challenges Round 1 findings: missed bottlenecks, wrong root cause, premature optimization.
+3. Issues found → fix → Round 3 with NEW fresh `performance-optimizer` sub-agent
+4. Max 3 rounds → escalate to user via `AskUserQuestion`
+5. **Clean Round 1 ENDS the review.** When issues are found, fix and spawn a fresh sub-agent for Round 2 — main agent rationalizes own work, fresh eyes catch what was dismissed.
+
+---
+
+## Workflow Recommendation
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** Not already in workflow → use `AskUserQuestion`:
+>
+> 1. **Activate `quality-audit` workflow** (Recommended) — performance → sre-review → test
+> 2. **Execute `/performance` directly** — standalone
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION** after completing, use `AskUserQuestion`:
+
+- **"/sre-review (Recommended)"** — production readiness after optimization
+- **"/changelog"** — document perf changes
+- **"Skip, continue manually"** — user decides
+
+---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. For simple tasks, ask user whether to skip.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, cross-service sync (read directly when relevant; do not rely on hook-injected conversation text)
+
+> **External Memory:** Write intermediate findings + results to `plans/reports/` — prevents context loss, serves as deliverable.
+
 <!-- SYNC:graph-assisted-investigation -->
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
@@ -192,59 +234,12 @@ Route based on detected bottleneck type:
 
 <!-- /SYNC:subagent-return-contract -->
 
----
-
-## Sub-Agent Type Override
-
-> **MANDATORY:** Performance analysis spawns `performance-optimizer` sub-agent as the **Round 1 proactive lead**, not just a Round 2 challenger.
-> **Rationale:** `performance-optimizer` specializes in N+1 patterns, query plans, bundle analysis, and memory profiling for both backend (.NET/MongoDB/SQL) and frontend (Angular/RxJS). Main agent synthesizes findings — it does not lead analysis alone.
-
-## Recursive Quality Loop
-
-1. **Round 1 (Proactive):** Spawn `performance-optimizer` sub-agent (`subagent_type: "performance-optimizer"`) as the analysis lead. Main agent provides scope context; sub-agent drives all dimension analysis and produces the draft optimization plan.
-2. **Round 2 (Challenge):** Spawn NEW fresh `performance-optimizer` sub-agent — ZERO memory of Round 1. Challenges Round 1 findings: missed bottlenecks, wrong root cause, premature optimization.
-3. Issues found → fix → Round 3 with NEW fresh `performance-optimizer` sub-agent
-4. Max 3 rounds → escalate to user via `AskUserQuestion`
-5. **Clean Round 1 ENDS the review.** When issues are found, fix and spawn a fresh sub-agent for Round 2 — main agent rationalizes own work, fresh eyes catch what was dismissed.
-
 <!-- SYNC:sub-agent-selection -->
 
 > **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
 > **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
 
 <!-- /SYNC:sub-agent-selection -->
-
----
-
-## Workflow Recommendation
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** Not already in workflow → use `AskUserQuestion`:
->
-> 1. **Activate `quality-audit` workflow** (Recommended) — performance → sre-review → test
-> 2. **Execute `/performance` directly** — standalone
-
----
-
-## Next Steps
-
-**MANDATORY IMPORTANT MUST ATTENTION** after completing, use `AskUserQuestion`:
-
-- **"/sre-review (Recommended)"** — production readiness after optimization
-- **"/changelog"** — document perf changes
-- **"Skip, continue manually"** — user decides
-
----
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -262,8 +257,6 @@ Route based on detected bottleneck type:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. For simple tasks, ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -328,10 +321,6 @@ Route based on detected bottleneck type:
 
 <!-- /SYNC:evidence-based-reasoning -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, cross-service sync (read directly when relevant; do not rely on hook-injected conversation text)
-
-> **External Memory:** Write intermediate findings + results to `plans/reports/` — prevents context loss, serves as deliverable.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -343,11 +332,23 @@ Route based on detected bottleneck type:
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

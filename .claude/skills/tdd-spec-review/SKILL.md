@@ -185,16 +185,14 @@ After sub-agent returns:
 - **"/integration-test"** — Generate integration test code from specs
 - **"Skip, continue manually"** — user decides
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-## Prompt-Enhance Closing Anchors
+> **Evidence Gate:** [BLOCKING] — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+- `docs/specs/` — Test specifications by module (cross-reference during review to verify TC completeness and avoid duplicates)
+- `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
 
 <!-- SYNC:nested-task-creation -->
 
@@ -237,12 +235,6 @@ After sub-agent returns:
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-> **Evidence Gate:** [BLOCKING] — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -511,18 +503,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:graph-impact-analysis -->
 
-- `docs/specs/` — Test specifications by module (cross-reference during review to verify TC completeness and avoid duplicates)
-- `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
-
-<!-- SYNC:double-round-trip-review:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:graph-impact-analysis:reminder -->
-
-**IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-
-<!-- /SYNC:graph-impact-analysis:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -539,6 +519,18 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:double-round-trip-review:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
+    <!-- /SYNC:double-round-trip-review:reminder -->
+
+<!-- SYNC:graph-impact-analysis:reminder -->
+
+**IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
+
+<!-- /SYNC:graph-impact-analysis:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -550,6 +542,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -576,6 +569,17 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

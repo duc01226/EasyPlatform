@@ -68,16 +68,15 @@ This skill is the **last step of every workflow sequence**. It runs automaticall
 
 **IMPORTANT MANDATORY Steps:** integration-test-coverage-check -> spec-tdd-test-sync-gate -> verify-task-completion -> verify-workflow-state -> announce-workflow-completion -> clear-workflow-state
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+**IMPORTANT MANDATORY Steps:** integration-test-coverage-check -> spec-tdd-test-sync-gate -> verify-task-completion -> verify-workflow-state -> announce-workflow-completion -> clear-workflow-state
 
-## Prompt-Enhance Closing Anchors
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+# Workflow End
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+Finalize and close the active workflow, clearing state so the next user prompt triggers fresh workflow detection.
+
+---
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -95,8 +94,6 @@ This skill is the **last step of every workflow sequence**. It runs automaticall
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
-
-**IMPORTANT MANDATORY Steps:** integration-test-coverage-check -> spec-tdd-test-sync-gate -> verify-task-completion -> verify-workflow-state -> announce-workflow-completion -> clear-workflow-state
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -118,19 +115,12 @@ This skill is the **last step of every workflow sequence**. It runs automaticall
 
 <!-- /SYNC:project-reference-docs-guide -->
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-# Workflow End
-
-Finalize and close the active workflow, clearing state so the next user prompt triggers fresh workflow detection.
-
----
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -143,6 +133,17 @@ Finalize and close the active workflow, clearing state so the next user prompt t
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

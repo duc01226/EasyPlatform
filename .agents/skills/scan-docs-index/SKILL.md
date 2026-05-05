@@ -40,45 +40,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
-
-<!-- SYNC:scan-and-update-reference-doc -->
-
-> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
->
-> 1. **Read existing doc** first — understand structure and manual annotations
-> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
-> 3. **Scan codebase** (grep/glob) for current state
-> 4. **Diff** findings vs doc — identify stale sections only
-> 5. **Update ONLY** diverged sections. Preserve manual annotations.
-> 6. **Update metadata** (date, version) in frontmatter/header
-> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
-
-<!-- /SYNC:scan-and-update-reference-doc -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — stale instantly
-> 2. No directory trees — use 1-line path conventions
-> 3. No TOCs — AI reads linearly
-> 4. One example per pattern — only if non-obvious
-> 5. Lead with answer, not reasoning
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
 **Goal:** Scan the project's `docs/` directory → populate `docs/project-reference/docs-index-reference.md` with accurate documentation tree, file counts by category, doc relationships, and keyword-to-doc lookup table.
@@ -234,16 +195,45 @@ Write to `docs/project-reference/docs-index-reference.md` with sections:
 
 ---
 
-<!-- SYNC:scan-and-update-reference-doc:reminder -->
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
 
-**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+**Prerequisites:** **MUST ATTENTION READ** before executing:
 
-<!-- /SYNC:scan-and-update-reference-doc:reminder -->
-<!-- SYNC:output-quality-principles:reminder -->
+<!-- SYNC:critical-thinking-mindset -->
 
-**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs in the skill output itself, 1 example per pattern, lead with answer.
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
 
-<!-- /SYNC:output-quality-principles:reminder -->
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:scan-and-update-reference-doc -->
+
+> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
+>
+> 1. **Read existing doc** first — understand structure and manual annotations
+> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
+> 3. **Scan codebase** (grep/glob) for current state
+> 4. **Diff** findings vs doc — identify stale sections only
+> 5. **Update ONLY** diverged sections. Preserve manual annotations.
+> 6. **Update metadata** (date, version) in frontmatter/header
+> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
+
+<!-- /SYNC:scan-and-update-reference-doc -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — stale instantly
+> 2. No directory trees — use 1-line path conventions
+> 3. No TOCs — AI reads linearly
+> 4. One example per pattern — only if non-obvious
+> 5. Lead with answer, not reasoning
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end
+
+<!-- /SYNC:output-quality-principles -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid:
@@ -254,11 +244,25 @@ Write to `docs/project-reference/docs-index-reference.md` with sections:
 > **Update docs that embed canonical data when source changes.** Docs inlining counts go stale silently.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs in the skill output itself, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

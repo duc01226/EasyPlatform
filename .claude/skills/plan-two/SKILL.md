@@ -118,6 +118,12 @@ After plan creation, use the `AskUserQuestion` tool to ask: "Want me to run `/pl
 
 > If already inside a workflow, skip — the workflow handles sequencing.
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+- `docs/specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
+
+> **Skill Variant:** Variant of `/plan` — creates two alternative implementation approaches for comparison.
+
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -159,8 +165,6 @@ After plan creation, use the `AskUserQuestion` tool to ask: "Want me to run `/pl
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -404,29 +408,6 @@ After plan creation, use the `AskUserQuestion` tool to ask: "Want me to run `/pl
 
 <!-- /SYNC:iterative-phase-quality -->
 
-- `docs/specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
-
-> **Skill Variant:** Variant of `/plan` — creates two alternative implementation approaches for comparison.
-
-<!-- SYNC:understand-code-first:reminder -->
-
-**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-
-<!-- /SYNC:understand-code-first:reminder -->
-<!-- SYNC:estimation-framework:reminder -->
-
-- **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-    <!-- /SYNC:estimation-framework:reminder -->
-    <!-- SYNC:plan-quality:reminder -->
-
-**IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-
-<!-- /SYNC:plan-quality:reminder -->
-<!-- SYNC:iterative-phase-quality:reminder -->
-
-**IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-
-<!-- /SYNC:iterative-phase-quality:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -443,6 +424,30 @@ After plan creation, use the `AskUserQuestion` tool to ask: "Want me to run `/pl
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:estimation-framework:reminder -->
+
+- **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
+    <!-- /SYNC:estimation-framework:reminder -->
+
+<!-- SYNC:plan-quality:reminder -->
+
+**IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+
+<!-- /SYNC:plan-quality:reminder -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:iterative-phase-quality:reminder -->
+
+**IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+
+<!-- /SYNC:iterative-phase-quality:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -454,6 +459,7 @@ After plan creation, use the `AskUserQuestion` tool to ask: "Want me to run `/pl
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

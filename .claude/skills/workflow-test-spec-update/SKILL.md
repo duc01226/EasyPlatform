@@ -21,6 +21,19 @@ disable-model-invocation: true
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
 - NEVER skip mandatory workflow or skill gates.
 
+**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before updating test specs — Section 7 TC coverage mapping is the canonical baseline.
+
+Activate the `test-spec-update` workflow. Run `/workflow-start test-spec-update` with the user's prompt as context.
+
+**Steps:** /workflow-review-changes → /tdd-spec → /why-review → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /test → /docs-update → /workflow-end
+
+---
+
+**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
+
 <!-- SYNC:ai-mistake-prevention -->
 
 **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -51,11 +64,6 @@ disable-model-invocation: true
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
-> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before updating test specs — Section 7 TC coverage mapping is the canonical baseline.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -109,19 +117,12 @@ disable-model-invocation: true
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `test-spec-update` workflow. Run `/workflow-start test-spec-update` with the user's prompt as context.
-
-**Steps:** /workflow-review-changes → /tdd-spec → /why-review → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /test → /docs-update → /workflow-end
-
----
-
-**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

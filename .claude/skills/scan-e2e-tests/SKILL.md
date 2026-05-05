@@ -175,14 +175,14 @@ Note: stats use grep expressions, NOT hardcoded counts.
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
 
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
 > **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
 
@@ -212,16 +212,6 @@ Note: stats use grep expressions, NOT hardcoded counts.
 
 <!-- /SYNC:output-quality-principles -->
 
-<!-- SYNC:scan-and-update-reference-doc:reminder -->
-
-**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-
-<!-- /SYNC:scan-and-update-reference-doc:reminder -->
-<!-- SYNC:output-quality-principles:reminder -->
-
-**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-
-<!-- /SYNC:output-quality-principles:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid:
@@ -232,11 +222,25 @@ Note: stats use grep expressions, NOT hardcoded counts.
 > **NEVER hardcode file counts in docs.** Use grep-expression stats, not hardcoded numbers.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+
+<!-- /SYNC:scan-and-update-reference-doc:reminder -->
+
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

@@ -236,6 +236,12 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 
 **IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
 
+**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
+
+> **[MANDATORY]** `TaskCreate` FIRST — break every workflow into tasks before any action. NEVER skip.
+> **[MANDATORY]** `AskUserQuestion` ALWAYS — present 3 options, NEVER auto-activate.
+> **[MANDATORY]** `Skill` tool REQUIRED per step — NEVER mark a task `completed` without invoking it.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -252,12 +258,6 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
-
-**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
-
-> **[MANDATORY]** `TaskCreate` FIRST — break every workflow into tasks before any action. NEVER skip.
-> **[MANDATORY]** `AskUserQuestion` ALWAYS — present 3 options, NEVER auto-activate.
-> **[MANDATORY]** `Skill` tool REQUIRED per step — NEVER mark a task `completed` without invoking it.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -316,6 +316,7 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

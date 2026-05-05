@@ -76,6 +76,10 @@ For deeper investigation, run via Bash:
 
 ---
 
+# Blast Radius
+
+Analyze the structural impact of current code changes using the knowledge graph.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -100,15 +104,12 @@ For deeper investigation, run via Bash:
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Blast Radius
-
-Analyze the structural impact of current code changes using the knowledge graph.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

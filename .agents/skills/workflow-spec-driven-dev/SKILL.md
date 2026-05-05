@@ -50,122 +50,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:nested-task-creation -->
-
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
->
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
->
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
-
-<!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** $workflow-spec-driven-dev
-
-> **[BLOCKING]** Invoke skill invocation for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
-> **[BLOCKING]** Confirm mode via a direct user question BEFORE any action — NEVER skip Step 0.
-> **[BLOCKING]** Spawn sub-agents for 4+ modules in ONE message — NEVER sequential spawning.
-> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) the current task list FIRST — resume existing, NEVER create duplicates; (2) read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table — skip already-extracted modules (✅); (3) NEVER re-run `$scout` or `$plan-hard` in a resumed session.
-> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any extraction/update/audit step — it is the shared spec quality baseline for both engineering spec and feature-doc layers.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — Sub-agent MUST return ONLY this structure. Main agent reads only summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` ONLY when: (a) resolving specific blocker, or (b) building fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — never held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
-
 ## Quick Summary
 
 **Goal:** Single entry point for spec-driven doc generation and maintenance. Two output layers, one workflow.
@@ -619,6 +503,105 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 
 **IMPORTANT MANDATORY Steps:** $workflow-spec-driven-dev
 
+**IMPORTANT MANDATORY Steps:** $workflow-spec-driven-dev
+
+> **[BLOCKING]** Invoke skill invocation for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
+> **[BLOCKING]** Confirm mode via a direct user question BEFORE any action — NEVER skip Step 0.
+> **[BLOCKING]** Spawn sub-agents for 4+ modules in ONE message — NEVER sequential spawning.
+> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) the current task list FIRST — resume existing, NEVER create duplicates; (2) read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table — skip already-extracted modules (✅); (3) NEVER re-run `$scout` or `$plan-hard` in a resumed session.
+> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any extraction/update/audit step — it is the shared spec quality baseline for both engineering spec and feature-doc layers.
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — Sub-agent MUST return ONLY this structure. Main agent reads only summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` ONLY when: (a) resolving specific blocker, or (b) building fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — never held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
+
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
@@ -629,14 +612,6 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
-<!-- SYNC:nested-task-creation:reminder -->
-
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
-
-<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

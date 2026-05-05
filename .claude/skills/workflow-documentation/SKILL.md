@@ -23,6 +23,20 @@ disable-model-invocation: true
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /docs-update -> /workflow-review-changes -> /review-post-task -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `documentation` workflow. Run `/workflow-start documentation` with the user's prompt as context.
+
+**Steps:** /scout → /investigate → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /docs-update → /workflow-review-changes → /review-post-task → /watzup → /workflow-end
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /docs-update -> /workflow-review-changes -> /review-post-task -> /watzup -> /workflow-end
+
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -37,10 +51,6 @@ disable-model-invocation: true
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /docs-update -> /workflow-review-changes -> /review-post-task -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -110,16 +120,6 @@ disable-model-invocation: true
 > Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
 
 <!-- /SYNC:subagent-return-contract -->
-
-Activate the `documentation` workflow. Run `/workflow-start documentation` with the user's prompt as context.
-
-**Steps:** /scout → /investigate → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /docs-update → /workflow-review-changes → /review-post-task → /watzup → /workflow-end
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /docs-update -> /workflow-review-changes -> /review-post-task -> /watzup -> /workflow-end
 
 <!-- SYNC:nested-task-creation:reminder -->
 

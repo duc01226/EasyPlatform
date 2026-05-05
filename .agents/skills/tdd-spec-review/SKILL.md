@@ -49,85 +49,227 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:nested-task-creation -->
+## Quick Summary
 
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
->
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
->
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+**Goal:** Auto-review test specifications for coverage completeness, TC format correctness, and no missing test cases before implementation proceeds.
 
-<!-- /SYNC:nested-task-creation -->
+**Key distinction:** AI self-review (automatic), NOT user interview.
 
-<!-- SYNC:project-reference-docs-guide -->
+**[BLOCKING] Read** `docs/project-reference/spec-principles.md` — use Section 4 (AI-Implementability Checklist) and Section 7 (TC Coverage Mapping) as review criteria in addition to adversarial techniques below.
 
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
->
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
->
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-<!-- /SYNC:project-reference-docs-guide -->
+## Adversarial Review Mindset (NON-NEGOTIABLE)
 
-<!-- SYNC:task-tracking-external-report -->
+**Default stance: SKEPTIC probing test coverage gaps, not confirming coverage completeness.**
 
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
->
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
->
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
+> **Coverage illusion trap:** A spec with many TCs feels complete. But TCs that test implementation details, trivial happy paths, or vague outcomes provide false coverage confidence. This section forces quality challenge beyond count.
 
-<!-- /SYNC:task-tracking-external-report -->
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Mutation Analysis Mindset**
+For each TC: "If I changed ONE line of the implementation this TC is testing, would this TC fail?" If the TC would still pass after a subtle bug is introduced — it is not testing behavior, it is testing presence. Flag it.
+
+**2. Negative Test Adequacy**
+List the 3 most likely production failures for this feature (invalid input, service timeout, data corruption, race condition). Does at least one TC cover each failure mode? If a production failure has no corresponding TC, it will not be caught until production.
+
+**3. TC Quality Challenge**
+For each TC, check its assertion: "Could this TC PASS even if the feature is broken?" (e.g., "Response is 200 OK" without checking response body). Flag TCs where the assertion is too coarse to catch regressions.
+
+**4. Coverage Gap Hunt**
+Identify code paths that EXIST but have NO corresponding TC. Common gaps: admin/superuser paths, concurrent access, partial data states, idempotency, rollback behavior. If a gap exists — flag it, don't rationalize it.
+
+**5. Boundary Condition Probe**
+For each TC that tests a value (count, length, amount): "Is there a TC for the value-1, value, value+1 boundary?" Off-by-one errors are the most common business logic bug. Also probe: `null` (unset vs empty distinction), empty string vs whitespace-only, max-length overflow, zero and negative values, concurrent write contention on shared state. If boundary TCs for any of these are missing and the domain scenario is realistic, flag them.
+
+**6. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
+
+### Forbidden Patterns
+
+- **"Coverage looks complete"** → Count is NOT quality. Would a mutation pass these TCs?
+- **"Happy path is tested"** → The happy path is the least likely failure mode in production.
+- **"Edge cases included"** → Are they the RIGHT edge cases? Name the 3 most likely production failures.
+- **"Assertions are clear"** → Can the feature be broken while the assertion still passes?
+- **Approving test specs without adversarial quality challenge** → Forbidden.
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+- [ ] Applied mutation analysis to at least 1 TC per feature area
+- [ ] Listed 3 production failure modes and verified TCs cover them
+- [ ] Checked TC assertion specificity (can it pass even if feature breaks?)
+- [ ] Identified at least 1 coverage gap (code path with no TC)
+- [ ] Verified boundary TCs exist for value-based assertions
+- [ ] Generated at least 2 sentences arguing the opposite verdict
+
+If any box is unchecked → adversarial review incomplete. Go back.
+
+## Workflow
+
+1. **Locate test specs** — Find TCs in feature doc Section 15 or `docs/specs/`
+2. **Load source** — Read stories/PBI/acceptance criteria that TCs should cover
+3. **Evaluate checklist** — Score each check
+4. **Calculate coverage** — % of stories/AC with corresponding TCs
+5. **Classify** — PASS/WARN/FAIL
+6. **Output verdict**
+
+## Checklist
+
+### Required (all must pass)
+
+| #   | Check                                                                                                                              | Presence                                                                          | Quality Depth                                                                                               |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 1   | **TC ID format** — All TCs follow `TC-{FEATURE}-{NNN}` format                                                                      | Do all TCs use the `TC-{FEATURE}-{NNN}` pattern?                                  | Are IDs unique per TC? Does the FEATURE code match the actual feature?                                      |
+| 2   | **Story coverage** — Every user story has at least one corresponding TC                                                            | Does every story ID appear in at least one TC?                                    | Does each TC actually test the story behavior, or does it just reference the story ID in a comment?         |
+| 3   | **AC coverage** — Every acceptance criterion has a test case                                                                       | Is every AC traceable to at least one TC?                                         | Does each AC have a TC that would FAIL if the AC is violated?                                               |
+| 4   | **Happy path** — Each story has at least one happy path TC                                                                         | Is a happy path TC present per story?                                             | Does the happy path TC verify the full end-to-end scenario, or just a happy-path stub?                      |
+| 5   | **Error path** — Each story has at least one error/failure TC                                                                      | Is an error/failure TC present per story?                                         | Does the error TC verify the exact error response (code + message), not just that an error occurred?        |
+| 6   | **No duplicates** — No duplicate TCs testing the same scenario                                                                     | Are all TC IDs unique with distinct scenarios?                                    | Are there TCs that test the same scenario with slightly different input? Flag near-duplicates.              |
+| 7   | **Testable assertions** — Each TC has clear expected result (not vague "should work")                                              | Does each TC have a specific expected result?                                     | Is each assertion specific enough to catch regressions? Would it pass if the return value is wrong?         |
+| 8   | **Authorization TCs** — At least 1 TC per story verifying unauthorized access is rejected                                          | Is an authorization TC present per story?                                         | Does the authorization TC test a realistic access scenario, not just "wrong role → 403 without body check"? |
+| 9   | **TC format completeness** — Every TC has Related Files table and IntegrationTest field                                            | Does every TC include a Related Files table and `IntegrationTest:` field?         | Is IntegrationTest populated with `{File}.cs::{MethodName}` (not `Untested` for Tested-status TCs)?         |
+| 10  | **Preservation Tests (bugfix context)** — When fixing a bug, at least 1 TC verifies the pre-fix behavior is no longer reproducible | If this is a bugfix: is there a TC that would have CAUGHT the bug before the fix? | Does the preservation TC assert the exact broken behavior (not just "no exception")?                        |
+
+### Recommended (>=50% should pass)
+
+| #   | Check                                                                                                                                                       | Presence                                                                 | Quality Depth                                                                                                               |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Edge cases** — Boundary values, empty inputs, max limits tested                                                                                           | Are edge case TCs listed?                                                | Are these the RIGHT edge cases? Do they cover the 3 most likely production failure modes for this feature?                  |
+| 2   | **Integration points** — Cross-service scenarios covered                                                                                                    | Are cross-service TCs present where applicable?                          | Do integration TCs verify actual data flow across services, or just that a downstream call was made?                        |
+| 3   | **Performance TCs** — Response time or throughput expectations where relevant; production-like data volume TCs if >1000 records expected (ref: protocol §4) | Are performance TCs present where data volume or SLA expectations exist? | Do performance TCs use production-like data volumes, not toy datasets that trivially pass?                                  |
+| 4   | **Security TCs** — Auth, authorization, input validation tested                                                                                             | Are security TCs present for auth, authz, and input validation?          | Do security TCs attempt realistic attack vectors (SQLi, over-posting, privilege escalation) not just "invalid token → 401"? |
+| 5   | **Seed data TCs** — If feature needs reference data, TCs verify data exists and seeder runs correctly (ref: protocol §2)                                    | If reference data is needed, does a seed data TC exist (or N/A)?         | If present, does the TC assert the exact seeded data shape, not just that the seeder ran without error?                     |
+| 6   | **Data migration TCs** — If schema changes exist, TCs verify data transforms correctly, rollback works, no data loss (ref: protocol §5)                     | If schema changes exist, does a migration TC exist (or N/A)?             | If present, does the TC verify rollback behavior and zero data loss, not just forward migration success?                    |
+
+## Output
+
+```markdown
+## Test Spec Review Result
+
+**Status:** PASS | WARN | FAIL
+**TCs reviewed:** {count}
+**Coverage:** {X}% of stories, {Y}% of acceptance criteria
+
+### Coverage Matrix
+
+| Story/AC | TC IDs | Happy | Error | Edge |
+| -------- | ------ | ----- | ----- | ---- |
+
+### Required ({X}/{Y})
+
+- ✅/❌ Check description
+
+### Recommended ({X}/{Y})
+
+- ✅/⚠️ Check description
+
+### Missing Coverage
+
+- {Stories/AC without TCs}
+
+### Verdict
+
+{PROCEED | REVISE_FIRST}
+```
+
+## Round 2+ : Fresh Sub-Agent Re-Review (MANDATORY)
+
+> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
+
+After completing Round 1 checklist evaluation, spawn a **fresh `general-purpose` sub-agent** for Round 2 using the canonical Agent template from `SYNC:review-protocol-injection` above. Test specification reviews are NOT code reviews — use `agent_type: "general-purpose"`. When constructing the Agent call prompt:
+
+1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
+2. Set `agent_type: "general-purpose"`
+3. Embed the full verbatim body of these SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:fix-layer-accountability` which are not applicable to test specification artifacts)
+4. Set the Task as `"Review the test specification artifacts for coverage completeness and quality. Focus on: implicit assumptions not validated, missing story/AC coverage, edge cases not addressed, cross-references not verified, vague expected results, duplicate TCs, missing authorization TCs."`
+5. Set Target Files as the explicit test specification file paths being reviewed
+6. Set report path as `plans/reports/tdd-spec-review-round{N}-{date}.md`
+
+After sub-agent returns:
+
+1. **Read** the sub-agent's report
+2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
+3. **If FAIL:** fix issues in the specs, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
+4. **Max 3 fresh rounds** — escalate to user via a direct user question if still failing after 3 rounds
+5. **Final verdict** must incorporate findings from ALL rounds
+
+## Key Rules
+
+- **FAIL blocks workflow** — If FAIL, do NOT proceed to implementation.
+- **Coverage 100% required for Tested + Untested TCs** — Every story and AC must have at least one TC with `Status: Tested` or `Status: Untested`. TCs with `Status: Planned` are exempt from coverage calculation — they acknowledge a gap, they are not missing work.
+- **No guessing** — Reference specific TC IDs and story references.
+- **Quality over quantity** — Flag duplicate TCs, prefer fewer meaningful tests.
+
+---
+
+## Workflow Recommendation
+
+> **[BLOCKING]** If you are NOT already in a workflow, use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+>
+> 1. **Activate `pbi-to-tests` workflow** (Recommended) — tdd-spec → tdd-spec-review → quality-gate → workflow-end
+> 2. **Execute `$tdd-spec-review` directly** — run this skill standalone
+
+---
+
+## Next Steps
+
+**[BLOCKING]** After completing this skill, use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"$plan-hard (Recommended)"** — Create implementation plan with validated test specs
+- **"$tdd-spec"** — Re-generate specs if FAIL verdict
+- **"$integration-test"** — Generate integration test code from specs
+- **"Skip, continue manually"** — user decides
 
 > **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 > **Evidence Gate:** [BLOCKING] — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+- `docs/specs/` — Test specifications by module (cross-reference during review to verify TC completeness and avoid duplicates)
+- `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -396,200 +538,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:graph-impact-analysis -->
 
-- `docs/specs/` — Test specifications by module (cross-reference during review to verify TC completeness and avoid duplicates)
-- `docs/project-reference/integration-test-reference.md` — Integration test patterns, fixture setup, seeder conventions, lessons learned (MUST READ before reviewing/writing integration tests)
-
-## Quick Summary
-
-**Goal:** Auto-review test specifications for coverage completeness, TC format correctness, and no missing test cases before implementation proceeds.
-
-**Key distinction:** AI self-review (automatic), NOT user interview.
-
-**[BLOCKING] Read** `docs/project-reference/spec-principles.md` — use Section 4 (AI-Implementability Checklist) and Section 7 (TC Coverage Mapping) as review criteria in addition to adversarial techniques below.
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-## Adversarial Review Mindset (NON-NEGOTIABLE)
-
-**Default stance: SKEPTIC probing test coverage gaps, not confirming coverage completeness.**
-
-> **Coverage illusion trap:** A spec with many TCs feels complete. But TCs that test implementation details, trivial happy paths, or vague outcomes provide false coverage confidence. This section forces quality challenge beyond count.
-
-### Adversarial Techniques (apply ALL before concluding)
-
-**1. Mutation Analysis Mindset**
-For each TC: "If I changed ONE line of the implementation this TC is testing, would this TC fail?" If the TC would still pass after a subtle bug is introduced — it is not testing behavior, it is testing presence. Flag it.
-
-**2. Negative Test Adequacy**
-List the 3 most likely production failures for this feature (invalid input, service timeout, data corruption, race condition). Does at least one TC cover each failure mode? If a production failure has no corresponding TC, it will not be caught until production.
-
-**3. TC Quality Challenge**
-For each TC, check its assertion: "Could this TC PASS even if the feature is broken?" (e.g., "Response is 200 OK" without checking response body). Flag TCs where the assertion is too coarse to catch regressions.
-
-**4. Coverage Gap Hunt**
-Identify code paths that EXIST but have NO corresponding TC. Common gaps: admin/superuser paths, concurrent access, partial data states, idempotency, rollback behavior. If a gap exists — flag it, don't rationalize it.
-
-**5. Boundary Condition Probe**
-For each TC that tests a value (count, length, amount): "Is there a TC for the value-1, value, value+1 boundary?" Off-by-one errors are the most common business logic bug. Also probe: `null` (unset vs empty distinction), empty string vs whitespace-only, max-length overflow, zero and negative values, concurrent write contention on shared state. If boundary TCs for any of these are missing and the domain scenario is realistic, flag them.
-
-**6. Contrarian Pass**
-Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
-
-### Forbidden Patterns
-
-- **"Coverage looks complete"** → Count is NOT quality. Would a mutation pass these TCs?
-- **"Happy path is tested"** → The happy path is the least likely failure mode in production.
-- **"Edge cases included"** → Are they the RIGHT edge cases? Name the 3 most likely production failures.
-- **"Assertions are clear"** → Can the feature be broken while the assertion still passes?
-- **Approving test specs without adversarial quality challenge** → Forbidden.
-
-### Anti-Bias Gate (MANDATORY before finalizing verdict)
-
-- [ ] Applied mutation analysis to at least 1 TC per feature area
-- [ ] Listed 3 production failure modes and verified TCs cover them
-- [ ] Checked TC assertion specificity (can it pass even if feature breaks?)
-- [ ] Identified at least 1 coverage gap (code path with no TC)
-- [ ] Verified boundary TCs exist for value-based assertions
-- [ ] Generated at least 2 sentences arguing the opposite verdict
-
-If any box is unchecked → adversarial review incomplete. Go back.
-
-## Workflow
-
-1. **Locate test specs** — Find TCs in feature doc Section 15 or `docs/specs/`
-2. **Load source** — Read stories/PBI/acceptance criteria that TCs should cover
-3. **Evaluate checklist** — Score each check
-4. **Calculate coverage** — % of stories/AC with corresponding TCs
-5. **Classify** — PASS/WARN/FAIL
-6. **Output verdict**
-
-## Checklist
-
-### Required (all must pass)
-
-| #   | Check                                                                                                                              | Presence                                                                          | Quality Depth                                                                                               |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| 1   | **TC ID format** — All TCs follow `TC-{FEATURE}-{NNN}` format                                                                      | Do all TCs use the `TC-{FEATURE}-{NNN}` pattern?                                  | Are IDs unique per TC? Does the FEATURE code match the actual feature?                                      |
-| 2   | **Story coverage** — Every user story has at least one corresponding TC                                                            | Does every story ID appear in at least one TC?                                    | Does each TC actually test the story behavior, or does it just reference the story ID in a comment?         |
-| 3   | **AC coverage** — Every acceptance criterion has a test case                                                                       | Is every AC traceable to at least one TC?                                         | Does each AC have a TC that would FAIL if the AC is violated?                                               |
-| 4   | **Happy path** — Each story has at least one happy path TC                                                                         | Is a happy path TC present per story?                                             | Does the happy path TC verify the full end-to-end scenario, or just a happy-path stub?                      |
-| 5   | **Error path** — Each story has at least one error/failure TC                                                                      | Is an error/failure TC present per story?                                         | Does the error TC verify the exact error response (code + message), not just that an error occurred?        |
-| 6   | **No duplicates** — No duplicate TCs testing the same scenario                                                                     | Are all TC IDs unique with distinct scenarios?                                    | Are there TCs that test the same scenario with slightly different input? Flag near-duplicates.              |
-| 7   | **Testable assertions** — Each TC has clear expected result (not vague "should work")                                              | Does each TC have a specific expected result?                                     | Is each assertion specific enough to catch regressions? Would it pass if the return value is wrong?         |
-| 8   | **Authorization TCs** — At least 1 TC per story verifying unauthorized access is rejected                                          | Is an authorization TC present per story?                                         | Does the authorization TC test a realistic access scenario, not just "wrong role → 403 without body check"? |
-| 9   | **TC format completeness** — Every TC has Related Files table and IntegrationTest field                                            | Does every TC include a Related Files table and `IntegrationTest:` field?         | Is IntegrationTest populated with `{File}.cs::{MethodName}` (not `Untested` for Tested-status TCs)?         |
-| 10  | **Preservation Tests (bugfix context)** — When fixing a bug, at least 1 TC verifies the pre-fix behavior is no longer reproducible | If this is a bugfix: is there a TC that would have CAUGHT the bug before the fix? | Does the preservation TC assert the exact broken behavior (not just "no exception")?                        |
-
-### Recommended (>=50% should pass)
-
-| #   | Check                                                                                                                                                       | Presence                                                                 | Quality Depth                                                                                                               |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Edge cases** — Boundary values, empty inputs, max limits tested                                                                                           | Are edge case TCs listed?                                                | Are these the RIGHT edge cases? Do they cover the 3 most likely production failure modes for this feature?                  |
-| 2   | **Integration points** — Cross-service scenarios covered                                                                                                    | Are cross-service TCs present where applicable?                          | Do integration TCs verify actual data flow across services, or just that a downstream call was made?                        |
-| 3   | **Performance TCs** — Response time or throughput expectations where relevant; production-like data volume TCs if >1000 records expected (ref: protocol §4) | Are performance TCs present where data volume or SLA expectations exist? | Do performance TCs use production-like data volumes, not toy datasets that trivially pass?                                  |
-| 4   | **Security TCs** — Auth, authorization, input validation tested                                                                                             | Are security TCs present for auth, authz, and input validation?          | Do security TCs attempt realistic attack vectors (SQLi, over-posting, privilege escalation) not just "invalid token → 401"? |
-| 5   | **Seed data TCs** — If feature needs reference data, TCs verify data exists and seeder runs correctly (ref: protocol §2)                                    | If reference data is needed, does a seed data TC exist (or N/A)?         | If present, does the TC assert the exact seeded data shape, not just that the seeder ran without error?                     |
-| 6   | **Data migration TCs** — If schema changes exist, TCs verify data transforms correctly, rollback works, no data loss (ref: protocol §5)                     | If schema changes exist, does a migration TC exist (or N/A)?             | If present, does the TC verify rollback behavior and zero data loss, not just forward migration success?                    |
-
-## Output
-
-```markdown
-## Test Spec Review Result
-
-**Status:** PASS | WARN | FAIL
-**TCs reviewed:** {count}
-**Coverage:** {X}% of stories, {Y}% of acceptance criteria
-
-### Coverage Matrix
-
-| Story/AC | TC IDs | Happy | Error | Edge |
-| -------- | ------ | ----- | ----- | ---- |
-
-### Required ({X}/{Y})
-
-- ✅/❌ Check description
-
-### Recommended ({X}/{Y})
-
-- ✅/⚠️ Check description
-
-### Missing Coverage
-
-- {Stories/AC without TCs}
-
-### Verdict
-
-{PROCEED | REVISE_FIRST}
-```
-
-## Round 2+ : Fresh Sub-Agent Re-Review (MANDATORY)
-
-> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
-
-After completing Round 1 checklist evaluation, spawn a **fresh `general-purpose` sub-agent** for Round 2 using the canonical Agent template from `SYNC:review-protocol-injection` above. Test specification reviews are NOT code reviews — use `agent_type: "general-purpose"`. When constructing the Agent call prompt:
-
-1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
-2. Set `agent_type: "general-purpose"`
-3. Embed the full verbatim body of these SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:fix-layer-accountability` which are not applicable to test specification artifacts)
-4. Set the Task as `"Review the test specification artifacts for coverage completeness and quality. Focus on: implicit assumptions not validated, missing story/AC coverage, edge cases not addressed, cross-references not verified, vague expected results, duplicate TCs, missing authorization TCs."`
-5. Set Target Files as the explicit test specification file paths being reviewed
-6. Set report path as `plans/reports/tdd-spec-review-round{N}-{date}.md`
-
-After sub-agent returns:
-
-1. **Read** the sub-agent's report
-2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
-3. **If FAIL:** fix issues in the specs, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
-4. **Max 3 fresh rounds** — escalate to user via a direct user question if still failing after 3 rounds
-5. **Final verdict** must incorporate findings from ALL rounds
-
-## Key Rules
-
-- **FAIL blocks workflow** — If FAIL, do NOT proceed to implementation.
-- **Coverage 100% required for Tested + Untested TCs** — Every story and AC must have at least one TC with `Status: Tested` or `Status: Untested`. TCs with `Status: Planned` are exempt from coverage calculation — they acknowledge a gap, they are not missing work.
-- **No guessing** — Reference specific TC IDs and story references.
-- **Quality over quantity** — Flag duplicate TCs, prefer fewer meaningful tests.
-
----
-
-## Workflow Recommendation
-
-> **[BLOCKING]** If you are NOT already in a workflow, use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
->
-> 1. **Activate `pbi-to-tests` workflow** (Recommended) — tdd-spec → tdd-spec-review → quality-gate → workflow-end
-> 2. **Execute `$tdd-spec-review` directly** — run this skill standalone
-
----
-
-## Next Steps
-
-**[BLOCKING]** After completing this skill, use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"$plan-hard (Recommended)"** — Create implementation plan with validated test specs
-- **"$tdd-spec"** — Re-generate specs if FAIL verdict
-- **"$integration-test"** — Generate integration test code from specs
-- **"Skip, continue manually"** — user decides
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
-<!-- SYNC:double-round-trip-review:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-    <!-- /SYNC:double-round-trip-review:reminder -->
-    <!-- SYNC:graph-impact-analysis:reminder -->
-
-**IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-
-<!-- /SYNC:graph-impact-analysis:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -606,6 +554,18 @@ After sub-agent returns:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:double-round-trip-review:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
+    <!-- /SYNC:double-round-trip-review:reminder -->
+
+<!-- SYNC:graph-impact-analysis:reminder -->
+
+**IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
+
+<!-- /SYNC:graph-impact-analysis:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -617,6 +577,7 @@ After sub-agent returns:
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `$sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -625,25 +586,35 @@ After sub-agent returns:
 
 <!-- SYNC:task-tracking-external-report:reminder -->
 
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

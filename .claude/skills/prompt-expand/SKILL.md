@@ -23,20 +23,6 @@ description: '[Skill Management] Expand caveman-compressed text back into fluent
 - Language expansion applies to prose only — never modify code blocks, YAML, structured tables, or SYNC tags
 - Expand for clarity and flow, not verbosity — natural English, not padded English
 
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
-
 ---
 
 ## Target File
@@ -140,6 +126,93 @@ Do NOT modify:
 
 Applies after expansion. Source: Anthropic prompt engineering guide, Stanford "lost-in-the-middle" research, 2025-2026 LLM context optimization studies.
 
+#### Transform 4: Structural Clarity Pass
+
+After expansion, apply structural improvements:
+
+**Convert to structured format:**
+
+- Prose paragraphs listing rules → bullet lists
+- Enumerated conditions → decision tables
+- Before/after examples → two-column tables
+
+**Keep as prose:**
+
+- Explanatory context (why a rule exists)
+- Narrative descriptions of workflows
+- Anti-pattern stories and rationale
+
+---
+
+## Process
+
+### Step 1: Read and Analyze
+
+1. Read the target file completely
+2. Record: current line count, rule density (MUST ATTENTION/NEVER/ALWAYS count per 100 lines)
+3. Identify compressed prose regions — very short sentences, missing articles, no connectives
+4. List all READ references → classify as `.claude/` (needs inline summary) or `docs/` (skip)
+5. Note: missing Quick Summary, missing Closing Reminders, tables needing cell expansion
+
+### Step 2: Language Expansion Pass
+
+1. Work through each prose section sequentially
+2. For each compressed sentence or bullet: restore articles, auxiliary verbs, connectives, prepositions
+3. Merge short choppy sentences into natural flowing sentences where logical relationship is clear
+4. Skip code blocks, YAML, SYNC tags, and file paths entirely
+5. After each paragraph, verify that all original facts and constraints are still present
+
+### Step 3: Create Inline Summaries
+
+For each `.claude/` protocol reference:
+
+1. Read the referenced file
+2. Extract 2-3 key rules
+3. Write the blockquote inline summary
+4. Keep the MUST ATTENTION READ instruction on the next line
+
+### Step 4: Add/Fix Top Section
+
+- If Quick Summary is missing → create one from the file's content
+- If present but weak → strengthen with Goal, Workflow, Key Rules structure
+- Ensure protocol summaries appear before the Quick Summary block
+
+### Step 5: Add/Fix Bottom Section
+
+- If Closing Reminders are missing → add the standard section
+- Choose rules that AI most commonly skips (evidence-based, task creation, pattern search)
+- Remove old "IMPORTANT Task Planning Notes" sections if superseded by Closing Reminders
+
+### Step 6: Verify
+
+| Check                 | Pass Condition                                                     |
+| --------------------- | ------------------------------------------------------------------ |
+| No YAML corruption    | Frontmatter intact and parseable                                   |
+| No semantic loss      | All original facts, constraints, numbers, paths present            |
+| Rule density          | Post-expansion ≥ pre-expansion (count MUST ATTENTION/NEVER/ALWAYS) |
+| Fluency               | No remaining 2-5 word telegraphic sentences in prose regions       |
+| Formatting            | Blank lines between sections, headers correct                      |
+| READ classification   | `.claude/` → inline summary added, `docs/` → skipped               |
+| Code blocks untouched | No changes inside ``` fences                                       |
+
+---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
+
 <!-- SYNC:context-engineering-principles -->
 
 > **Context Engineering Principles** — Research-backed principles for prompt quality. Source: Anthropic prompt engineering guide, Stanford "lost-in-the-middle" research, 2025-2026 LLM context optimization studies.
@@ -232,77 +305,6 @@ Applies after expansion. Source: Anthropic prompt engineering guide, Stanford "l
 
 <!-- /SYNC:shared-protocol-duplication-policy -->
 
-#### Transform 4: Structural Clarity Pass
-
-After expansion, apply structural improvements:
-
-**Convert to structured format:**
-
-- Prose paragraphs listing rules → bullet lists
-- Enumerated conditions → decision tables
-- Before/after examples → two-column tables
-
-**Keep as prose:**
-
-- Explanatory context (why a rule exists)
-- Narrative descriptions of workflows
-- Anti-pattern stories and rationale
-
----
-
-## Process
-
-### Step 1: Read and Analyze
-
-1. Read the target file completely
-2. Record: current line count, rule density (MUST ATTENTION/NEVER/ALWAYS count per 100 lines)
-3. Identify compressed prose regions — very short sentences, missing articles, no connectives
-4. List all READ references → classify as `.claude/` (needs inline summary) or `docs/` (skip)
-5. Note: missing Quick Summary, missing Closing Reminders, tables needing cell expansion
-
-### Step 2: Language Expansion Pass
-
-1. Work through each prose section sequentially
-2. For each compressed sentence or bullet: restore articles, auxiliary verbs, connectives, prepositions
-3. Merge short choppy sentences into natural flowing sentences where logical relationship is clear
-4. Skip code blocks, YAML, SYNC tags, and file paths entirely
-5. After each paragraph, verify that all original facts and constraints are still present
-
-### Step 3: Create Inline Summaries
-
-For each `.claude/` protocol reference:
-
-1. Read the referenced file
-2. Extract 2-3 key rules
-3. Write the blockquote inline summary
-4. Keep the MUST ATTENTION READ instruction on the next line
-
-### Step 4: Add/Fix Top Section
-
-- If Quick Summary is missing → create one from the file's content
-- If present but weak → strengthen with Goal, Workflow, Key Rules structure
-- Ensure protocol summaries appear before the Quick Summary block
-
-### Step 5: Add/Fix Bottom Section
-
-- If Closing Reminders are missing → add the standard section
-- Choose rules that AI most commonly skips (evidence-based, task creation, pattern search)
-- Remove old "IMPORTANT Task Planning Notes" sections if superseded by Closing Reminders
-
-### Step 6: Verify
-
-| Check                 | Pass Condition                                                     |
-| --------------------- | ------------------------------------------------------------------ |
-| No YAML corruption    | Frontmatter intact and parseable                                   |
-| No semantic loss      | All original facts, constraints, numbers, paths present            |
-| Rule density          | Post-expansion ≥ pre-expansion (count MUST ATTENTION/NEVER/ALWAYS) |
-| Fluency               | No remaining 2-5 word telegraphic sentences in prose regions       |
-| Formatting            | Blank lines between sections, headers correct                      |
-| READ classification   | `.claude/` → inline summary added, `docs/` → skipped               |
-| Code blocks untouched | No changes inside ``` fences                                       |
-
----
-
 <!-- SYNC:ai-mistake-prevention -->
 
 **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -319,8 +321,6 @@ For each `.claude/` protocol reference:
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
@@ -333,6 +333,7 @@ For each `.claude/` protocol reference:
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

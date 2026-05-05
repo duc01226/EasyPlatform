@@ -49,169 +49,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:nested-task-creation -->
-
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
->
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
->
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
-
-<!-- /SYNC:nested-task-creation -->
-
-<!-- SYNC:project-reference-docs-guide -->
-
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
->
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
->
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
-
-<!-- /SYNC:project-reference-docs-guide -->
-
-<!-- SYNC:task-tracking-external-report -->
-
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
->
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
->
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
-
-<!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:evidence-based-reasoning -->
-
-> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
->
-> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
-> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
-> 3. Cross-service validation required for architectural changes
-> 4. "I don't have enough evidence" is valid and expected output
->
-> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
->
-> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
-> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
-
-<!-- /SYNC:evidence-based-reasoning -->
-
-<!-- SYNC:cross-service-check -->
-
-> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
->
-> | Boundary            | Grep terms                                                                      |
-> | ------------------- | ------------------------------------------------------------------------------- |
-> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
-> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
-> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
-> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
-> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
-> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
->
-> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
->
-> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
-
-<!-- /SYNC:cross-service-check -->
-
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (Codex has no hook injection — open this file directly before proceeding)
-
-<!-- SYNC:rationalization-prevention -->
-
-> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
->
-> | Evasion                      | Rebuttal                                                      |
-> | ---------------------------- | ------------------------------------------------------------- |
-> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
-> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
-> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
-> | "Just do it"                 | Still need task tracking. Skip depth, never skip tracking.    |
-> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
-> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
-> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
-
-<!-- /SYNC:rationalization-prevention -->
-
-<!-- SYNC:fix-layer-accountability -->
-
-> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
->
-> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
->
-> **MANDATORY before ANY fix:**
->
-> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
-> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
-> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
-> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
->
-> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
->
-> **Anti-patterns (REJECT these):**
->
-> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
-> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
-> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
-
-<!-- /SYNC:fix-layer-accountability -->
-
-> **External Memory:** Complex/lengthy work → write findings incrementally to `plans/reports/`. Prevents context loss.
-
-> **Evidence Gate:** MANDATORY MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof with confidence % (>80% act, <80% verify first).
-
 ## Quick Summary
 
 **Goal:** Fast, parallel codebase file discovery to locate all files relevant to a task.
@@ -368,71 +205,6 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 ## Graph Intelligence (MANDATORY when graph.db exists)
 
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
-
 ---
 
 ## Results Format
@@ -508,37 +280,202 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 ---
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-## Prompt-Enhance Closing Anchors
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+> **External Memory:** Complex/lengthy work → write findings incrementally to `plans/reports/`. Prevents context loss.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+> **Evidence Gate:** MANDATORY MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof with confidence % (>80% act, <80% verify first).
 
-<!-- SYNC:evidence-based-reasoning:reminder -->
+<!-- SYNC:graph-assisted-investigation -->
 
-**MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
 
-<!-- /SYNC:evidence-based-reasoning:reminder -->
-<!-- SYNC:rationalization-prevention:reminder -->
+<!-- /SYNC:graph-assisted-investigation -->
 
-**MUST ATTENTION** never skip steps via evasions. Plan anyway. Test first. Show grep evidence with `file:line`.
+<!-- SYNC:incremental-persistence -->
 
-<!-- /SYNC:rationalization-prevention:reminder -->
-<!-- SYNC:graph-assisted-investigation:reminder -->
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
 
-**MUST ATTENTION** run at least ONE graph command on key files before concluding when `.code-graph/graph.db` exists.
+<!-- /SYNC:incremental-persistence -->
 
-<!-- /SYNC:graph-assisted-investigation:reminder -->
-<!-- SYNC:fix-layer-accountability:reminder -->
+<!-- SYNC:subagent-return-contract -->
 
-**MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
 
-<!-- /SYNC:fix-layer-accountability:reminder -->
+<!-- /SYNC:subagent-return-contract -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
+
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
+
+<!-- SYNC:rationalization-prevention -->
+
+> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
+>
+> | Evasion                      | Rebuttal                                                      |
+> | ---------------------------- | ------------------------------------------------------------- |
+> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
+> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
+> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
+> | "Just do it"                 | Still need task tracking. Skip depth, never skip tracking.    |
+> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
+> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
+> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
+
+<!-- /SYNC:rationalization-prevention -->
+
+<!-- SYNC:fix-layer-accountability -->
+
+> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
+>
+> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
+>
+> **MANDATORY before ANY fix:**
+>
+> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
+> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
+> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
+> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
+>
+> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
+>
+> **Anti-patterns (REJECT these):**
+>
+> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
+> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
+> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
+
+<!-- /SYNC:fix-layer-accountability -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -555,11 +492,37 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+**MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+
+<!-- SYNC:rationalization-prevention:reminder -->
+
+**MUST ATTENTION** never skip steps via evasions. Plan anyway. Test first. Show grep evidence with `file:line`.
+
+<!-- /SYNC:rationalization-prevention:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**MUST ATTENTION** run at least ONE graph command on key files before concluding when `.code-graph/graph.db` exists.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+
+<!-- SYNC:fix-layer-accountability:reminder -->
+
+**MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+
+<!-- /SYNC:fix-layer-accountability:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -568,25 +531,35 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 <!-- SYNC:task-tracking-external-report:reminder -->
 
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

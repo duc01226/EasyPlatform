@@ -36,20 +36,6 @@ description: '[Code Quality] Prove fix correctness with code proof traces, confi
 
 > When this task involves frontend or UI changes,
 
-<!-- SYNC:ui-system-context -->
-
-> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
->
-> **MUST ATTENTION READ before implementing:**
->
-> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
-> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
-> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
->
-> Reference `docs/project-config.json` for project-specific paths.
-
-<!-- /SYNC:ui-system-context -->
-
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
@@ -278,26 +264,6 @@ CONFIDENCE: 95%
 
 ---
 
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
 > Run `python .claude/scripts/code_graph trace <file> --direction downstream --json` to prove fix doesn't break downstream.
 
 ## Graph Intelligence (RECOMMENDED if graph.db exists)
@@ -356,18 +322,49 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 - **"/workflow-review-changes"** — Review all changes before commit
 - **"Skip, continue manually"** — user decides
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST ATTENTION READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
+
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -375,8 +372,6 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 > **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
 
@@ -417,32 +412,6 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 
 <!-- /SYNC:fix-layer-accountability -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
-<!-- SYNC:understand-code-first:reminder -->
-
-**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-
-<!-- /SYNC:understand-code-first:reminder -->
-<!-- SYNC:ui-system-context:reminder -->
-
-**IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-
-<!-- /SYNC:ui-system-context:reminder -->
-<!-- SYNC:graph-assisted-investigation:reminder -->
-
-**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-
-<!-- /SYNC:graph-assisted-investigation:reminder -->
-<!-- SYNC:fix-layer-accountability:reminder -->
-
-**IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
-
-<!-- /SYNC:fix-layer-accountability:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -458,16 +427,53 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:ui-system-context:reminder -->
+
+**IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+
+<!-- /SYNC:ui-system-context:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+
+<!-- SYNC:fix-layer-accountability:reminder -->
+
+**IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+
+<!-- /SYNC:fix-layer-accountability:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

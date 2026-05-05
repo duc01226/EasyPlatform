@@ -44,20 +44,6 @@ description: '[Code Quality] Simplifies and refines code for clarity, consistenc
 
 > When task involves frontend/UI changes:
 
-<!-- SYNC:ui-system-context -->
-
-> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
->
-> **MUST ATTENTION READ before implementing:**
->
-> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
-> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
-> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
->
-> Reference `docs/project-config.json` for project-specific paths.
-
-<!-- /SYNC:ui-system-context -->
-
 ## Phase 0: Artifact Detection
 
 **MUST ATTENTION** classify before simplifying — detection drives focus and sub-agent routing:
@@ -199,17 +185,72 @@ function getData() {
 - **Follow patterns** — use platform conventions, never invent
 - **Doc staleness** — cross-ref changed files against feature docs, test specs, READMEs; flag updates needed
 
-<!-- SYNC:shared-protocol-duplication-policy -->
-
-> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
-
-<!-- /SYNC:shared-protocol-duplication-policy -->
-
 ---
 
 ## Fresh Sub-Agent Verification (MANDATORY after simplifications in a review workflow)
 
 After simplifications applied, verification requires **fresh sub-agent review** to eliminate confirmation bias. See SYNC blocks below.
+
+When used standalone (outside a review workflow), run `/workflow-review-changes` to trigger the full review cycle with fresh sub-agent re-review.
+
+## Workflow Recommendation
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in workflow, use `AskUserQuestion` to ask user. Do NOT decide this is "simple enough to skip" — the user decides:
+>
+> 1. **Activate `quality-audit` workflow** (Recommended) — code-simplifier → review-changes → code-review
+> 2. **Execute `/code-simplifier` directly** — run standalone
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, use `AskUserQuestion`:
+
+- **"/workflow-review-changes (Recommended)"** — Review all changes before commit
+- **"/code-review"** — Full code review
+- **"Skip, continue manually"** — user decides
+
+## AI Agent Integrity Gate (NON-NEGOTIABLE)
+
+> **Completion ≠ Correctness.** Before reporting work done, prove it:
+>
+> 1. **Grep every removed name.** Extraction/rename/delete → grep confirms 0 dangling refs across ALL file types.
+> 2. **Ask WHY before changing.** Existing values intentional until proven otherwise. No "fix" without traced rationale.
+> 3. **Verify ALL outputs.** One build passing ≠ all builds passing. Check every affected stack.
+> 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
+> 5. **New artifact = wired artifact.** Created? Prove registered, imported, reachable by all consumers.
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. For simple tasks, MUST ATTENTION ask user whether to skip.
+
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
+- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+> **External Memory:** Complex/lengthy work → write findings to `plans/reports/`. Prevents context loss, serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence (confidence >80% to act, <80% verify first).
+
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns for base class extraction. Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION inherit common base. Verify stack has linting/analyzer configured.
+
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST ATTENTION READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
+
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
 
 <!-- SYNC:double-round-trip-review -->
 
@@ -441,46 +482,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:review-protocol-injection -->
 
-When used standalone (outside a review workflow), run `/workflow-review-changes` to trigger the full review cycle with fresh sub-agent re-review.
-
-## Workflow Recommendation
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in workflow, use `AskUserQuestion` to ask user. Do NOT decide this is "simple enough to skip" — the user decides:
->
-> 1. **Activate `quality-audit` workflow** (Recommended) — code-simplifier → review-changes → code-review
-> 2. **Execute `/code-simplifier` directly** — run standalone
-
----
-
-## Next Steps
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, use `AskUserQuestion`:
-
-- **"/workflow-review-changes (Recommended)"** — Review all changes before commit
-- **"/code-review"** — Full code review
-- **"Skip, continue manually"** — user decides
-
-## AI Agent Integrity Gate (NON-NEGOTIABLE)
-
-> **Completion ≠ Correctness.** Before reporting work done, prove it:
->
-> 1. **Grep every removed name.** Extraction/rename/delete → grep confirms 0 dangling refs across ALL file types.
-> 2. **Ask WHY before changing.** Existing values intentional until proven otherwise. No "fix" without traced rationale.
-> 3. **Verify ALL outputs.** One build passing ≠ all builds passing. Check every affected stack.
-> 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
-> 5. **New artifact = wired artifact.** Created? Prove registered, imported, reachable by all consumers.
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -498,16 +499,12 @@ When used standalone (outside a review workflow), run `/workflow-review-changes`
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. For simple tasks, MUST ATTENTION ask user whether to skip.
-
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
 > **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:understand-code-first -->
 
@@ -606,29 +603,34 @@ When used standalone (outside a review workflow), run `/workflow-review-changes`
 
 <!-- /SYNC:complexity-prevention -->
 
-- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
-
-> **External Memory:** Complex/lengthy work → write findings to `plans/reports/`. Prevents context loss, serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence (confidence >80% to act, <80% verify first).
-
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns for base class extraction. Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION inherit common base. Verify stack has linting/analyzer configured.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:complexity-prevention:reminder -->
 
 **MUST ATTENTION** apply complexity prevention — one business change = one code change. Flag change amplification (>3 edit sites for future change), scattered type-switches, anemic models, primitive obsession, leaked technology through abstractions, shallow modules, un-extracted utility logic (paging/datetime/string/retry → helpers), and logic in the wrong higher layer (downshift to callee/entity/VM). Don't rationalize silent duplication with pure YAGNI.
 
 <!-- /SYNC:complexity-prevention:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

@@ -58,6 +58,8 @@ RELEVANT_FILE_OUTPUT_DIR: Use `Report:` from `## Naming` section
 
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -100,8 +102,6 @@ RELEVANT_FILE_OUTPUT_DIR: Use `Report:` from `## Naming` section
 
 <!-- /SYNC:task-tracking-external-report -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
@@ -125,11 +125,6 @@ RELEVANT_FILE_OUTPUT_DIR: Use `Report:` from `## Naming` section
 
 <!-- /SYNC:evidence-based-reasoning -->
 
-<!-- SYNC:evidence-based-reasoning:reminder -->
-
-**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-
-<!-- /SYNC:evidence-based-reasoning:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -145,11 +140,19 @@ RELEVANT_FILE_OUTPUT_DIR: Use `Report:` from `## Naming` section
 **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

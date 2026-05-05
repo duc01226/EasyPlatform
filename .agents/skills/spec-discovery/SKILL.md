@@ -49,27 +49,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[BLOCKING]** Each phase MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
----
-
-## What Is Spec Discovery?
-
-Reverse of product discovery — existing codebase → reimplementation-grade spec bundle. Docs describe **what system does and why** — stripped of tech choices, implementation details, language constructs. Any team reads bundle, rebuilds on different stack.
-
-**Use Cases:** AI replatforming, stack migration, compliance docs, knowledge capture, spec-driven bootstrap.
-
-**Scale Reality:** Thousands of files, dozens of modules. Scout-first → plan-decompose → investigate-deeply prevents context overrun, ensures complete coverage.
-
----
-
 ## Quick Summary
 
 **Goal:** Reverse-engineer tech-agnostic spec bundle from existing codebase. Stable output at `docs/specs/{app-bucket}/{system-name}/` — change history in SPEC-CHANGELOG.md.
@@ -115,25 +94,6 @@ Before reading any code, use a direct user question. **3 required (★) — MUST
 > **Scale routing:** If scope is 1–3 modules → single-session extraction. If scope is 4+ modules → MUST use sub-agent parallel extraction (see Sub-Agent Pattern). If scope is entire large system → MUST use incremental coverage: one module per session.
 
 > **[BLOCKING SCALE GATE]** If `module_count ≥ 4` at the end of Step 2 (Plan): you **MUST** use sub-agent parallel extraction. Attempting single-session inline extraction with 4+ modules is a workflow violation. Do NOT proceed past Step 2 without spawning sub-agents.
-
-<!-- SYNC:cross-service-check -->
-
-> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
->
-> | Boundary            | Grep terms                                                                      |
-> | ------------------- | ------------------------------------------------------------------------------- |
-> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
-> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
-> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
-> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
-> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
-> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
->
-> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
->
-> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
-
-<!-- /SYNC:cross-service-check -->
 
 ---
 
@@ -1200,16 +1160,38 @@ Every spec bundle MUST include `## Related Documentation` in `README.md`:
 
 On update: verify links present and correct.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[BLOCKING]** Each phase MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
-## Prompt-Enhance Closing Anchors
+---
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+## What Is Spec Discovery?
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+Reverse of product discovery — existing codebase → reimplementation-grade spec bundle. Docs describe **what system does and why** — stripped of tech choices, implementation details, language constructs. Any team reads bundle, rebuilds on different stack.
+
+**Use Cases:** AI replatforming, stack migration, compliance docs, knowledge capture, spec-driven bootstrap.
+
+**Scale Reality:** Thousands of files, dozens of modules. Scout-first → plan-decompose → investigate-deeply prevents context overrun, ensures complete coverage.
+
+---
+
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -1227,16 +1209,36 @@ On update: verify links present and correct.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

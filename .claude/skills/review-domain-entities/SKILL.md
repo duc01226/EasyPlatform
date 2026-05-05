@@ -555,16 +555,54 @@ MUST ATTENTION use `AskUserQuestion` after completing to present:
 
 ---
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** `TaskCreate` for ALL phases BEFORE starting. Mark each completed immediately.
 
-## Prompt-Enhance Closing Anchors
+> **CRITICAL RULES** — (1) MUST ATTENTION run Phase 0 project discovery FIRST — discovered conventions override ALL generic rules. (2) When Round 1 finds issues, NEVER declare PASS without fresh sub-agent Round 2 after fixing. Clean Round 1 ENDS the review. (3) NEVER report a finding without `file:line` evidence.
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+---
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+**Prerequisites — MUST ATTENTION discover project-specific rules FIRST:**
+
+> Read `docs/project-reference/` (entity reference, backend patterns, code review rules) and `CLAUDE.md`. Find entity/VO base classes, validation API, domain exception type, persistence annotations. Infer from 3+ existing entity files if no docs exist. NEVER apply generic rules that contradict discovered project conventions.
+
+> **Evidence Gate:** Every finding requires `file:line` proof or grep result. Confidence >80% → report. <60% → state uncertainty explicitly.
+
+---
+
+## Mode Detection
+
+**Determine mode BEFORE any other work:**
+
+| Invocation                              | Mode             | Scope                                           |
+| --------------------------------------- | ---------------- | ----------------------------------------------- |
+| `/review-domain-entities` (default)     | **changes**      | Changed domain entity files from `git diff`     |
+| `/review-domain-entities changes`       | **changes**      | Changed domain entity files                     |
+| `/review-domain-entities scan`          | **scan**         | All entity/VO files in domain layer directories |
+| `/review-domain-entities scan <module>` | **scan-service** | Entities in named module only                   |
+
+**Entity file detection — adapt to discovered stack:**
+
+```bash
+# .NET / C#
+git diff --name-only HEAD | grep -E "(Domain|Entities|ValueObjects|AggregatesModel).*\.cs$"
+find src -path "*/Domain/*.cs" -o -path "*/Entities/*.cs" -o -path "*/ValueObjects/*.cs" | grep -v "obj\|bin\|Tests"
+
+# Java / Spring
+git diff --name-only HEAD | grep -E "domain/.*\.java$|entity/.*\.java$"
+find src -path "*/domain/*.java" -o -path "*/entity/*.java" | grep -v "test\|Test"
+
+# TypeScript / Node
+git diff --name-only HEAD | grep -E "\.(entity|vo|value-object|aggregate)\.ts$"
+find src -name "*.entity.ts" -o -name "*.vo.ts" -o -name "*.aggregate.ts" | grep -v "spec\|test"
+
+# Python (Django / SQLAlchemy)
+git diff --name-only HEAD | grep -E "(models|domain)/.*\.py$"
+find src -path "*/domain/*.py" -o -path "*/models/*.py" | grep -v "test\|migration"
+```
+
+If no domain entity files match in changes mode → announce "No domain entity changes detected" and report clean.
+
+---
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -624,10 +662,6 @@ MUST ATTENTION use `AskUserQuestion` after completing to present:
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** `TaskCreate` for ALL phases BEFORE starting. Mark each completed immediately.
-
-> **CRITICAL RULES** — (1) MUST ATTENTION run Phase 0 project discovery FIRST — discovered conventions override ALL generic rules. (2) When Round 1 finds issues, NEVER declare PASS without fresh sub-agent Round 2 after fixing. Clean Round 1 ENDS the review. (3) NEVER report a finding without `file:line` evidence.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -723,66 +757,24 @@ MUST ATTENTION use `AskUserQuestion` after completing to present:
 
 <!-- /SYNC:fresh-context-review -->
 
----
-
-**Prerequisites — MUST ATTENTION discover project-specific rules FIRST:**
-
-> Read `docs/project-reference/` (entity reference, backend patterns, code review rules) and `CLAUDE.md`. Find entity/VO base classes, validation API, domain exception type, persistence annotations. Infer from 3+ existing entity files if no docs exist. NEVER apply generic rules that contradict discovered project conventions.
-
-> **Evidence Gate:** Every finding requires `file:line` proof or grep result. Confidence >80% → report. <60% → state uncertainty explicitly.
-
----
-
-## Mode Detection
-
-**Determine mode BEFORE any other work:**
-
-| Invocation                              | Mode             | Scope                                           |
-| --------------------------------------- | ---------------- | ----------------------------------------------- |
-| `/review-domain-entities` (default)     | **changes**      | Changed domain entity files from `git diff`     |
-| `/review-domain-entities changes`       | **changes**      | Changed domain entity files                     |
-| `/review-domain-entities scan`          | **scan**         | All entity/VO files in domain layer directories |
-| `/review-domain-entities scan <module>` | **scan-service** | Entities in named module only                   |
-
-**Entity file detection — adapt to discovered stack:**
-
-```bash
-# .NET / C#
-git diff --name-only HEAD | grep -E "(Domain|Entities|ValueObjects|AggregatesModel).*\.cs$"
-find src -path "*/Domain/*.cs" -o -path "*/Entities/*.cs" -o -path "*/ValueObjects/*.cs" | grep -v "obj\|bin\|Tests"
-
-# Java / Spring
-git diff --name-only HEAD | grep -E "domain/.*\.java$|entity/.*\.java$"
-find src -path "*/domain/*.java" -o -path "*/entity/*.java" | grep -v "test\|Test"
-
-# TypeScript / Node
-git diff --name-only HEAD | grep -E "\.(entity|vo|value-object|aggregate)\.ts$"
-find src -name "*.entity.ts" -o -name "*.vo.ts" -o -name "*.aggregate.ts" | grep -v "spec\|test"
-
-# Python (Django / SQLAlchemy)
-git diff --name-only HEAD | grep -E "(models|domain)/.*\.py$"
-find src -path "*/domain/*.py" -o -path "*/models/*.py" | grep -v "test\|migration"
-```
-
-If no domain entity files match in changes mode → announce "No domain entity changes detected" and report clean.
-
----
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:understand-code-first:reminder -->
 
 **MUST ATTENTION** discover project conventions (base classes, validation API, exception types) BEFORE applying checklist. Run graph trace when graph.db exists.
 
 <!-- /SYNC:understand-code-first:reminder -->
+
 <!-- SYNC:graph-assisted-investigation:reminder -->
 
 **MUST ATTENTION** run at least ONE graph command on key entity files when graph.db exists. Pattern: grep → trace → verify.
 
 <!-- /SYNC:graph-assisted-investigation:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -809,6 +801,17 @@ If no domain entity files match in changes mode → announce "No domain entity c
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

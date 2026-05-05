@@ -22,6 +22,22 @@ description: '[Workflow] Trigger Performance Optimization workflow — investiga
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /code -> /test -> /workflow-review-changes -> /sre-review -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `performance` workflow. Run `/workflow-start performance` with the user's prompt as context.
+
+**Steps:** /scout → /investigate → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /code → /test → /workflow-review-changes → /sre-review → /docs-update → /watzup → /workflow-end
+
+> **[PERFORMANCE EXCEPTION — NO INTEGRATION TESTS]** Integration tests verify functional correctness — they cannot measure latency, throughput, or resource consumption. Do NOT run `/tdd-spec`, `/tdd-spec-review`, `/tdd-spec [direction=sync]`, `/integration-test`, or `/integration-test-review` in this workflow. Run `/test` only to confirm no functional regressions were introduced by the optimization.
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /code -> /test -> /workflow-review-changes -> /sre-review -> /docs-update -> /watzup -> /workflow-end
+
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -36,10 +52,6 @@ description: '[Workflow] Trigger Performance Optimization workflow — investiga
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /code -> /test -> /workflow-review-changes -> /sre-review -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -109,18 +121,6 @@ description: '[Workflow] Trigger Performance Optimization workflow — investiga
 > Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
 
 <!-- /SYNC:subagent-return-contract -->
-
-Activate the `performance` workflow. Run `/workflow-start performance` with the user's prompt as context.
-
-**Steps:** /scout → /investigate → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /code → /test → /workflow-review-changes → /sre-review → /docs-update → /watzup → /workflow-end
-
-> **[PERFORMANCE EXCEPTION — NO INTEGRATION TESTS]** Integration tests verify functional correctness — they cannot measure latency, throughput, or resource consumption. Do NOT run `/tdd-spec`, `/tdd-spec-review`, `/tdd-spec [direction=sync]`, `/integration-test`, or `/integration-test-review` in this workflow. Run `/test` only to confirm no functional regressions were introduced by the optimization.
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /code -> /test -> /workflow-review-changes -> /sre-review -> /docs-update -> /watzup -> /workflow-end
 
 <!-- SYNC:nested-task-creation:reminder -->
 

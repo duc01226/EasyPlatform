@@ -33,30 +33,9 @@ context-budget: high
 - Always activate relevant skills from catalog during implementation
 - Break work into small todo tasks; add final review task
 
-<!-- SYNC:sub-agent-selection -->
-
-> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
-> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
-
-<!-- /SYNC:sub-agent-selection -->
-
 ### Frontend/UI Context (if applicable)
 
 > When this task involves frontend or UI changes,
-
-<!-- SYNC:ui-system-context -->
-
-> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
->
-> **MUST ATTENTION READ before implementing:**
->
-> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
-> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
-> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
->
-> Reference `docs/project-config.json` for project-specific paths.
-
-<!-- /SYNC:ui-system-context -->
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
@@ -72,21 +51,6 @@ of perceived simplicity. "Simple" features have hidden complexity.
 
 <HARD-GATE>
 
-<!-- SYNC:plan-granularity -->
-
-> **Plan Granularity** — Every phase must pass 5-point check before implementation:
->
-> 1. Lists exact file paths to modify (not generic "implement X")
-> 2. No planning verbs (research, investigate, analyze, determine, figure out)
-> 3. Steps ≤30min each, phase total ≤3h
-> 4. ≤5 files per phase
-> 5. No open decisions or TBDs in approach
->
-> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
-> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
-
-<!-- /SYNC:plan-granularity -->
-
 If ANY check fails → STOP. Ask user: "Phase needs more detail before implementation. Refine with /plan? [Y/n]"
 DO NOT implement a phase that contains planning verbs, unnamed files, or unresolved decisions.
 </HARD-GATE>
@@ -94,21 +58,6 @@ DO NOT implement a phase that contains planning verbs, unnamed files, or unresol
 ## Per-Phase Quality Cycle (MANDATORY)
 
 <HARD-GATE>
-<!-- SYNC:iterative-phase-quality -->
-
-> **Iterative Phase Quality** — Score complexity BEFORE planning.
->
-> **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
-> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
->
-> - ≤5 files modified
-> - ≤3h effort
-> - Follows cycle: plan → implement → review → fix → verify
-> - Do NOT start Phase N+1 until Phase N passes VERIFY
->
-> **Phase success = all TCs pass + code-reviewer agent approves + no CRITICAL findings.**
-
-<!-- /SYNC:iterative-phase-quality -->
 
 Each plan phase = one quality cycle (plan→implement→review→fix→verify).
 DO NOT start next phase until current phase passes VERIFY.
@@ -206,22 +155,6 @@ mistakes compound through later tasks.
 
 ### Code Review
 
-<!-- SYNC:two-stage-task-review -->
-
-> **Two-Stage Task Review** — Both stages MUST ATTENTION complete before marking task done.
->
-> **Stage 1: Self-review** — Immediately after implementation:
->
-> - Requirements met? No regressions? Code quality acceptable?
->
-> **Stage 2: Cross-review** — Via `code-reviewer` subagent:
->
-> - Catches blind spots, convention drift, missed edge cases
->
-> **NEVER skip Stage 2.** Self-review alone misses 40%+ of issues.
-
-<!-- /SYNC:two-stage-task-review -->
-
 (1) `spec-compliance-reviewer` first, (2) `code-reviewer` after spec passes.
 
 - Critical issues → fix → re-run `tester`. Report summary to user for approval.
@@ -242,41 +175,6 @@ mistakes compound through later tasks.
 | "Commit after everything"           | Commit after each task. Frequent commits prevent loss. |
 | "This refactor will improve things" | Only refactor what's in scope. YAGNI.                  |
 | "Review is obvious, skip it"        | NEVER skip. Reviews catch what authors miss.           |
-
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
 
 > After implementing, run `python .claude/scripts/code_graph connections <file> --json` on modified files to verify no related files need updates.
 
@@ -315,16 +213,134 @@ MUST ATTENTION run BEFORE writing code when graph.db exists:
 >
 > If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — the workflow sequence handles `/review-changes` at the appropriate step.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-## Prompt-Enhance Closing Anchors
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+- `docs/specs/` — Test specifications by module (read existing TCs; generate/update test specs via `/tdd-spec` after implementation)
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:sub-agent-selection -->
+
+> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
+> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+
+<!-- /SYNC:sub-agent-selection -->
+
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST ATTENTION READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
+
+<!-- SYNC:plan-granularity -->
+
+> **Plan Granularity** — Every phase must pass 5-point check before implementation:
+>
+> 1. Lists exact file paths to modify (not generic "implement X")
+> 2. No planning verbs (research, investigate, analyze, determine, figure out)
+> 3. Steps ≤30min each, phase total ≤3h
+> 4. ≤5 files per phase
+> 5. No open decisions or TBDs in approach
+>
+> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
+> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
+
+<!-- /SYNC:plan-granularity -->
+
+<!-- SYNC:iterative-phase-quality -->
+
+> **Iterative Phase Quality** — Score complexity BEFORE planning.
+>
+> **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
+> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
+>
+> - ≤5 files modified
+> - ≤3h effort
+> - Follows cycle: plan → implement → review → fix → verify
+> - Do NOT start Phase N+1 until Phase N passes VERIFY
+>
+> **Phase success = all TCs pass + code-reviewer agent approves + no CRITICAL findings.**
+
+<!-- /SYNC:iterative-phase-quality -->
+
+<!-- SYNC:two-stage-task-review -->
+
+> **Two-Stage Task Review** — Both stages MUST ATTENTION complete before marking task done.
+>
+> **Stage 1: Self-review** — Immediately after implementation:
+>
+> - Requirements met? No regressions? Code quality acceptable?
+>
+> **Stage 2: Cross-review** — Via `code-reviewer` subagent:
+>
+> - Catches blind spots, convention drift, missed edge cases
+>
+> **NEVER skip Stage 2.** Self-review alone misses 40%+ of issues.
+
+<!-- /SYNC:two-stage-task-review -->
+
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
 
 <!-- SYNC:nested-task-creation -->
 
@@ -367,8 +383,6 @@ MUST ATTENTION run BEFORE writing code when graph.db exists:
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -604,9 +618,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:review-protocol-injection -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
-- `docs/specs/` — Test specifications by module (read existing TCs; generate/update test specs via `/tdd-spec` after implementation)
-
 <!-- SYNC:plan-quality -->
 
 > **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
@@ -621,8 +632,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/tdd-spec` fills after.
 
 <!-- /SYNC:plan-quality -->
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 <!-- SYNC:rationalization-prevention -->
 
@@ -640,52 +649,47 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:rationalization-prevention -->
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
-
 <!-- SYNC:plan-granularity:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-      <!-- /SYNC:plan-granularity:reminder -->
-      <!-- SYNC:understand-code-first:reminder -->
+    <!-- /SYNC:plan-granularity:reminder -->
+
+<!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:plan-quality:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:plan-quality:reminder -->
+
 - **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
+    <!-- /SYNC:plan-quality:reminder -->
+
+<!-- SYNC:rationalization-prevention:reminder -->
+
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+    <!-- /SYNC:rationalization-prevention:reminder -->
+
+<!-- SYNC:ui-system-context:reminder -->
+
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
+    <!-- /SYNC:ui-system-context:reminder -->
+
+<!-- SYNC:iterative-phase-quality:reminder -->
+
 - **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-      <!-- /SYNC:iterative-phase-quality:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
+    <!-- /SYNC:iterative-phase-quality:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
 - **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:graph-assisted-investigation:reminder -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -712,6 +716,17 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

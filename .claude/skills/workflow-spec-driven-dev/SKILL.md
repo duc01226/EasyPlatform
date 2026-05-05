@@ -468,16 +468,13 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 
 **IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+**IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
 
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+> **[BLOCKING]** Invoke `Skill` tool for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
+> **[BLOCKING]** Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0.
+> **[BLOCKING]** Spawn sub-agents for 4+ modules in ONE message — NEVER sequential spawning.
+> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) `TaskList` FIRST — resume existing, NEVER create duplicates; (2) read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table — skip already-extracted modules (✅); (3) NEVER re-run `/scout` or `/plan` in a resumed session.
+> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any extraction/update/audit step — it is the shared spec quality baseline for both engineering spec and feature-doc layers.
 
 <!-- SYNC:nested-task-creation -->
 
@@ -493,14 +490,6 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
-
-> **[BLOCKING]** Invoke `Skill` tool for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
-> **[BLOCKING]** Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0.
-> **[BLOCKING]** Spawn sub-agents for 4+ modules in ONE message — NEVER sequential spawning.
-> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) `TaskList` FIRST — resume existing, NEVER create duplicates; (2) read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table — skip already-extracted modules (✅); (3) NEVER re-run `/scout` or `/plan` in a resumed session.
-> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any extraction/update/audit step — it is the shared spec quality baseline for both engineering spec and feature-doc layers.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -577,6 +566,17 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

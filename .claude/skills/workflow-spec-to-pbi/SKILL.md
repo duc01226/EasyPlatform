@@ -151,6 +151,10 @@ Workflow can close only when:
 - The final backlog artifact ranks all PBIs and explains what to do first.
 - `/docs-update` has run as the near-final sync gate, with specs, feature docs, and TDD/spec dashboards either updated or explicitly marked unchanged.
 
+**IMPORTANT MANDATORY Steps:** /scout -> /spec-discovery -> /domain-analysis -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST invoke its Skill tool. Marking a workflow step completed without skill invocation is a workflow violation.
+
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -165,10 +169,6 @@ Workflow can close only when:
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /scout -> /spec-discovery -> /domain-analysis -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST invoke its Skill tool. Marking a workflow step completed without skill invocation is a workflow violation.
 
 <!-- SYNC:critical-thinking-mindset -->
 

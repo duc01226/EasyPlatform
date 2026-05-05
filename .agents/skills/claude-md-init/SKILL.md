@@ -40,29 +40,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
 **Goal:** Automate CLAUDE.md lifecycle — generate from project-config.json + template, incrementally update marked sections, or refactor for token efficiency.
@@ -207,11 +184,29 @@ node .claude/skills/claude-md-init/scripts/test-generate-claude-md.cjs
 
 ---
 
-<!-- SYNC:output-quality-principles:reminder -->
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-**IMPORTANT MUST ATTENTION** maintain >=8 rules per 100 lines. Critical rules in first+last 5 lines. Tables over prose.
+<!-- SYNC:critical-thinking-mindset -->
 
-<!-- /SYNC:output-quality-principles:reminder -->
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -228,11 +223,19 @@ node .claude/skills/claude-md-init/scripts/test-generate-claude-md.cjs
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** maintain >=8 rules per 100 lines. Critical rules in first+last 5 lines. Tables over prose.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

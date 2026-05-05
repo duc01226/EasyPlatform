@@ -21,6 +21,193 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+### Frontend/UI Context (if applicable)
+
+> When this task involves frontend or UI changes,
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
+## Adversarial Review Mindset (NON-NEGOTIABLE)
+
+**Default stance: SKEPTIC challenging story quality, not confirming it.**
+
+> **Self-review trap:** You wrote these stories. You will find them coherent because you made them coherent. This section forces deliberate challenge before rubber-stamping.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Strawman AC Check**
+For each acceptance criterion: "Is this AC so obvious it was only included to pad coverage?" (e.g., "User can see the page" — trivially true and tests nothing meaningful). Flag trivial ACs that would pass even if the feature is completely broken.
+
+**2. Vertical Slice Challenge**
+For each story: "Can a stakeholder demo THIS STORY ALONE to a real user and get useful feedback?" If the story only delivers a backend endpoint, a DB migration, or a UI component in isolation — it is a horizontal layer, not a vertical slice. Flag it.
+
+**3. Dependency Challenge**
+If story B is blocked by story A: "What happens to the sprint if story A is descoped or delayed?" A story set with rigid sequential dependencies is fragile. Are dependencies truly required, or can stories be resequenced?
+
+**4. INVEST Violation Hunt**
+Deliberately look for the WEAKEST INVEST criterion for each story. Ask: "Which of I/N/V/E/S/T does this story fail most obviously?" If a story is not Estimable — why not? If not Independent — can it be split?
+
+**5. Pre-Mortem**
+Assume all stories in this set are implemented exactly as written. The feature ships and fails. Write the most plausible failure scenario. Which story was the gap?
+
+**6. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
+
+### Forbidden Patterns
+
+- **"Stories follow GIVEN/WHEN/THEN"** → Format is NOT quality. Are the scenarios meaningful?
+- **"Coverage looks complete"** → What failure mode is NOT covered by any story?
+- **"Dependencies are identified"** → Are they truly required, or is there a split that removes them?
+- **"Vertical slices"** → Can you actually demo each story independently? Prove it.
+- **Confirming story set without adversarial challenge** → Forbidden.
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+- [ ] Identified at least 1 trivial/strawman AC across the story set
+- [ ] Verified each story delivers a demeable vertical slice
+- [ ] Checked dependency chain — fragile if >2 sequential dependencies
+- [ ] Found the weakest INVEST criterion per story
+- [ ] Ran pre-mortem (plausible failure scenario)
+- [ ] Generated at least 2 sentences arguing the opposite verdict
+
+If any box is unchecked → adversarial review incomplete. Go back.
+
+## Workflow
+
+1. **Locate stories** — Find story artifacts in `team-artifacts/stories/` or plan context
+2. **Load source PBI** — Read the parent PBI to cross-reference acceptance criteria
+3. **Evaluate checklist** — Score each check
+4. **Classify** — PASS/WARN/FAIL
+5. **Output verdict**
+
+## Checklist
+
+### Required (all must pass)
+
+| #   | Check                                                                                                                                                                                                           | Presence                                                          | Quality Depth                                                                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | **AC coverage** — Every acceptance criterion from PBI has at least one corresponding story                                                                                                                      | Does every PBI AC have a story?                                   | Does every PBI AC have a story? Or are some ACs split across multiple stories in ways that create coverage gaps?       |
+| 2   | **GIVEN/WHEN/THEN** — Each story has minimum 3 BDD scenarios (happy, edge, error)                                                                                                                               | Are all 3 BDD parts present per scenario?                         | Are all 3 BDD parts present per scenario? Are scenarios testing REAL user behavior or just "the system does X"?        |
+| 3   | **INVEST criteria** — Stories are Independent, Negotiable, Valuable, Estimable, Small, Testable                                                                                                                 | Are all 6 INVEST criteria named or implied?                       | Are stories genuinely Independent (no hidden chains), Valuable (real user impact), Testable (automatable)?             |
+| 4   | **Story points** — All stories have SP <=8 (>8 must be split)                                                                                                                                                   | Are SP assigned and all <=8?                                      | Do SP reflect actual complexity? Is <=8 justified, or is the story undersized to pass the gate?                        |
+| 5   | **Dependency table** — Story set includes dependency ordering table (must-after, can-parallel, independent)                                                                                                     | Does a dependency ordering table exist?                           | Does the ordering reflect ACTUAL dependencies, not just arbitrary sequencing?                                          |
+| 6   | **No overlapping scope** — Stories don't duplicate functionality                                                                                                                                                | Do any 2 stories reference the same AC?                           | Do any 2 stories claim the same AC? Would implementing both create duplication?                                        |
+| 7   | **Vertical slices** — Each story delivers end-to-end value (not horizontal layers)                                                                                                                              | Does each story touch more than one layer (UI + API or API + DB)? | Can a stakeholder demo EACH story to a real user independently? Or do some deliver only infrastructure?                |
+| 8   | **Authorization scenarios** — Every story includes at least 1 authorization scenario (unauthorized access → rejection) per PBI roles table                                                                      | Is an authorization scenario present per story?                   | Is the unauthorized-access scenario testing a realistic attack vector, not just "wrong role → 403"?                    |
+| 9   | **UI Wireframe section** — If story involves UI: has `## UI Wireframe` section per UI wireframe protocol (wireframe + component tree + interaction flow + states + responsive). If backend-only: explicit "N/A" | Does the section exist (or explicit N/A for backend-only)?        | If UI: does the wireframe show interaction flow + states + responsive breakpoints? If backend-only: is "N/A" explicit? |
+
+### Recommended (>=50% should pass)
+
+| #   | Check                                                                                                                                                                                             | Presence                                                         | Quality Depth                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Edge cases** — Boundary values, empty states, max limits addressed                                                                                                                              | Are edge case scenarios listed?                                  | Are boundary values story-specific (not generic "empty state")? Do they include concurrency or partial-data scenarios? |
+| 2   | **Error scenarios** — Failure paths explicitly covered in stories                                                                                                                                 | Are error path scenarios present?                                | Do error stories specify the exact error message/code returned, or just "shows error"?                                 |
+| 3   | **API contract** — If API changes needed, story specifies contract                                                                                                                                | Is a request/response contract defined?                          | Does the contract specify request/response schema fully? Are breaking vs non-breaking changes distinguished?           |
+| 4   | **UI/UX visualization** — Frontend stories have component decomposition tree with EXISTING/NEW classification, design token mapping, and responsive breakpoint behavior per UI wireframe protocol | Is a component decomposition tree present?                       | Are components EXISTING vs NEW classified? Are design token names (not just colors) specified?                         |
+| 5   | **Seed data stories** — If PBI has seed data requirements, Sprint 0 seed data story exists                                                                                                        | Does a seed data story exist (or N/A if not required)?           | If present, does the seed data story specify the exact data shape needed?                                              |
+| 6   | **Data migration stories** — If PBI has schema changes, data migration story exists                                                                                                               | Does a data migration story exist (or N/A if no schema changes)? | If present, does it specify rollback behavior?                                                                         |
+
+## Output
+
+```markdown
+## Story Review Result
+
+**Status:** PASS | WARN | FAIL
+**Stories reviewed:** {count}
+**Source PBI:** {pbi-path}
+
+### AC Coverage Matrix
+
+| Acceptance Criterion | Covered By Story | Status |
+| -------------------- | ---------------- | ------ |
+
+### Required ({X}/{Y})
+
+- ✅/❌ Check description
+
+### Recommended ({X}/{Y})
+
+- ✅/⚠️ Check description
+
+### Missing Stories
+
+- {Any PBI AC not covered}
+
+### Dependency Issues
+
+- {Circular deps, missing ordering}
+
+### Verdict
+
+{PROCEED | REVISE_FIRST}
+```
+
+## Round 2+ : Fresh Sub-Agent Re-Review (MANDATORY)
+
+> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
+
+After completing Round 1 checklist evaluation, spawn a **fresh `general-purpose` sub-agent** for Round 2 using the canonical Agent template from `SYNC:review-protocol-injection` above. Story artifact reviews are NOT code reviews — use `subagent_type: "general-purpose"`. When constructing the Agent call prompt:
+
+1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
+2. Set `subagent_type: "general-purpose"`
+3. Embed the full verbatim body of these SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:fix-layer-accountability` which are not applicable to story artifacts)
+4. Set the Task as `"Review the user story artifacts for completeness and quality. Focus on: implicit assumptions not validated, missing acceptance criteria coverage, edge cases not addressed in BDD scenarios, cross-references not verified, vague language, authorization gaps, INVEST violations."`
+5. Set Target Files as the explicit story file paths being reviewed
+6. Set report path as `plans/reports/story-review-round{N}-{date}.md`
+
+After sub-agent returns:
+
+1. **Read** the sub-agent's report
+2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
+3. **If FAIL:** fix issues in the stories, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
+4. **Max 3 fresh rounds** — escalate to user via `AskUserQuestion` if still failing after 3 rounds
+5. **Final verdict** must incorporate findings from ALL rounds
+
+## Key Rules
+
+- **FAIL blocks workflow** — If FAIL, do NOT proceed. List specific fixes.
+- **Cross-reference PBI** — Every check against stories MUST ATTENTION trace back to PBI acceptance criteria.
+- **No guessing** — Reference specific story content as evidence.
+- **Flag missing stories** — If a PBI acceptance criterion has no covering story, that's a FAIL.
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"/plan (Recommended)"** — Create implementation plan from validated stories
+- **"/story"** — Re-create stories if FAIL verdict
+- **"/prioritize"** — Prioritize stories in backlog
+- **"Skip, continue manually"** — user decides
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 <!-- SYNC:estimation-framework -->
 
 > **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
@@ -185,10 +372,6 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 
 <!-- /SYNC:estimation-framework -->
 
-### Frontend/UI Context (if applicable)
-
-> When this task involves frontend or UI changes,
-
 <!-- SYNC:ui-system-context -->
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
@@ -202,175 +385,6 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 > Reference `docs/project-config.json` for project-specific paths.
 
 <!-- /SYNC:ui-system-context -->
-
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
-- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
-- Design system tokens: `docs/project-reference/design-system/README.md`
-
-## Adversarial Review Mindset (NON-NEGOTIABLE)
-
-**Default stance: SKEPTIC challenging story quality, not confirming it.**
-
-> **Self-review trap:** You wrote these stories. You will find them coherent because you made them coherent. This section forces deliberate challenge before rubber-stamping.
-
-### Adversarial Techniques (apply ALL before concluding)
-
-**1. Strawman AC Check**
-For each acceptance criterion: "Is this AC so obvious it was only included to pad coverage?" (e.g., "User can see the page" — trivially true and tests nothing meaningful). Flag trivial ACs that would pass even if the feature is completely broken.
-
-**2. Vertical Slice Challenge**
-For each story: "Can a stakeholder demo THIS STORY ALONE to a real user and get useful feedback?" If the story only delivers a backend endpoint, a DB migration, or a UI component in isolation — it is a horizontal layer, not a vertical slice. Flag it.
-
-**3. Dependency Challenge**
-If story B is blocked by story A: "What happens to the sprint if story A is descoped or delayed?" A story set with rigid sequential dependencies is fragile. Are dependencies truly required, or can stories be resequenced?
-
-**4. INVEST Violation Hunt**
-Deliberately look for the WEAKEST INVEST criterion for each story. Ask: "Which of I/N/V/E/S/T does this story fail most obviously?" If a story is not Estimable — why not? If not Independent — can it be split?
-
-**5. Pre-Mortem**
-Assume all stories in this set are implemented exactly as written. The feature ships and fails. Write the most plausible failure scenario. Which story was the gap?
-
-**6. Contrarian Pass**
-Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
-
-### Forbidden Patterns
-
-- **"Stories follow GIVEN/WHEN/THEN"** → Format is NOT quality. Are the scenarios meaningful?
-- **"Coverage looks complete"** → What failure mode is NOT covered by any story?
-- **"Dependencies are identified"** → Are they truly required, or is there a split that removes them?
-- **"Vertical slices"** → Can you actually demo each story independently? Prove it.
-- **Confirming story set without adversarial challenge** → Forbidden.
-
-### Anti-Bias Gate (MANDATORY before finalizing verdict)
-
-- [ ] Identified at least 1 trivial/strawman AC across the story set
-- [ ] Verified each story delivers a demeable vertical slice
-- [ ] Checked dependency chain — fragile if >2 sequential dependencies
-- [ ] Found the weakest INVEST criterion per story
-- [ ] Ran pre-mortem (plausible failure scenario)
-- [ ] Generated at least 2 sentences arguing the opposite verdict
-
-If any box is unchecked → adversarial review incomplete. Go back.
-
-## Workflow
-
-1. **Locate stories** — Find story artifacts in `team-artifacts/stories/` or plan context
-2. **Load source PBI** — Read the parent PBI to cross-reference acceptance criteria
-3. **Evaluate checklist** — Score each check
-4. **Classify** — PASS/WARN/FAIL
-5. **Output verdict**
-
-## Checklist
-
-### Required (all must pass)
-
-| #   | Check                                                                                                                                                                                                           | Presence                                                          | Quality Depth                                                                                                          |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 1   | **AC coverage** — Every acceptance criterion from PBI has at least one corresponding story                                                                                                                      | Does every PBI AC have a story?                                   | Does every PBI AC have a story? Or are some ACs split across multiple stories in ways that create coverage gaps?       |
-| 2   | **GIVEN/WHEN/THEN** — Each story has minimum 3 BDD scenarios (happy, edge, error)                                                                                                                               | Are all 3 BDD parts present per scenario?                         | Are all 3 BDD parts present per scenario? Are scenarios testing REAL user behavior or just "the system does X"?        |
-| 3   | **INVEST criteria** — Stories are Independent, Negotiable, Valuable, Estimable, Small, Testable                                                                                                                 | Are all 6 INVEST criteria named or implied?                       | Are stories genuinely Independent (no hidden chains), Valuable (real user impact), Testable (automatable)?             |
-| 4   | **Story points** — All stories have SP <=8 (>8 must be split)                                                                                                                                                   | Are SP assigned and all <=8?                                      | Do SP reflect actual complexity? Is <=8 justified, or is the story undersized to pass the gate?                        |
-| 5   | **Dependency table** — Story set includes dependency ordering table (must-after, can-parallel, independent)                                                                                                     | Does a dependency ordering table exist?                           | Does the ordering reflect ACTUAL dependencies, not just arbitrary sequencing?                                          |
-| 6   | **No overlapping scope** — Stories don't duplicate functionality                                                                                                                                                | Do any 2 stories reference the same AC?                           | Do any 2 stories claim the same AC? Would implementing both create duplication?                                        |
-| 7   | **Vertical slices** — Each story delivers end-to-end value (not horizontal layers)                                                                                                                              | Does each story touch more than one layer (UI + API or API + DB)? | Can a stakeholder demo EACH story to a real user independently? Or do some deliver only infrastructure?                |
-| 8   | **Authorization scenarios** — Every story includes at least 1 authorization scenario (unauthorized access → rejection) per PBI roles table                                                                      | Is an authorization scenario present per story?                   | Is the unauthorized-access scenario testing a realistic attack vector, not just "wrong role → 403"?                    |
-| 9   | **UI Wireframe section** — If story involves UI: has `## UI Wireframe` section per UI wireframe protocol (wireframe + component tree + interaction flow + states + responsive). If backend-only: explicit "N/A" | Does the section exist (or explicit N/A for backend-only)?        | If UI: does the wireframe show interaction flow + states + responsive breakpoints? If backend-only: is "N/A" explicit? |
-
-### Recommended (>=50% should pass)
-
-| #   | Check                                                                                                                                                                                             | Presence                                                         | Quality Depth                                                                                                          |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Edge cases** — Boundary values, empty states, max limits addressed                                                                                                                              | Are edge case scenarios listed?                                  | Are boundary values story-specific (not generic "empty state")? Do they include concurrency or partial-data scenarios? |
-| 2   | **Error scenarios** — Failure paths explicitly covered in stories                                                                                                                                 | Are error path scenarios present?                                | Do error stories specify the exact error message/code returned, or just "shows error"?                                 |
-| 3   | **API contract** — If API changes needed, story specifies contract                                                                                                                                | Is a request/response contract defined?                          | Does the contract specify request/response schema fully? Are breaking vs non-breaking changes distinguished?           |
-| 4   | **UI/UX visualization** — Frontend stories have component decomposition tree with EXISTING/NEW classification, design token mapping, and responsive breakpoint behavior per UI wireframe protocol | Is a component decomposition tree present?                       | Are components EXISTING vs NEW classified? Are design token names (not just colors) specified?                         |
-| 5   | **Seed data stories** — If PBI has seed data requirements, Sprint 0 seed data story exists                                                                                                        | Does a seed data story exist (or N/A if not required)?           | If present, does the seed data story specify the exact data shape needed?                                              |
-| 6   | **Data migration stories** — If PBI has schema changes, data migration story exists                                                                                                               | Does a data migration story exist (or N/A if no schema changes)? | If present, does it specify rollback behavior?                                                                         |
-
-## Output
-
-```markdown
-## Story Review Result
-
-**Status:** PASS | WARN | FAIL
-**Stories reviewed:** {count}
-**Source PBI:** {pbi-path}
-
-### AC Coverage Matrix
-
-| Acceptance Criterion | Covered By Story | Status |
-| -------------------- | ---------------- | ------ |
-
-### Required ({X}/{Y})
-
-- ✅/❌ Check description
-
-### Recommended ({X}/{Y})
-
-- ✅/⚠️ Check description
-
-### Missing Stories
-
-- {Any PBI AC not covered}
-
-### Dependency Issues
-
-- {Circular deps, missing ordering}
-
-### Verdict
-
-{PROCEED | REVISE_FIRST}
-```
-
-## Round 2+ : Fresh Sub-Agent Re-Review (MANDATORY)
-
-> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
-
-After completing Round 1 checklist evaluation, spawn a **fresh `general-purpose` sub-agent** for Round 2 using the canonical Agent template from `SYNC:review-protocol-injection` above. Story artifact reviews are NOT code reviews — use `subagent_type: "general-purpose"`. When constructing the Agent call prompt:
-
-1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
-2. Set `subagent_type: "general-purpose"`
-3. Embed the full verbatim body of these SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:fix-layer-accountability` which are not applicable to story artifacts)
-4. Set the Task as `"Review the user story artifacts for completeness and quality. Focus on: implicit assumptions not validated, missing acceptance criteria coverage, edge cases not addressed in BDD scenarios, cross-references not verified, vague language, authorization gaps, INVEST violations."`
-5. Set Target Files as the explicit story file paths being reviewed
-6. Set report path as `plans/reports/story-review-round{N}-{date}.md`
-
-After sub-agent returns:
-
-1. **Read** the sub-agent's report
-2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
-3. **If FAIL:** fix issues in the stories, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
-4. **Max 3 fresh rounds** — escalate to user via `AskUserQuestion` if still failing after 3 rounds
-5. **Final verdict** must incorporate findings from ALL rounds
-
-## Key Rules
-
-- **FAIL blocks workflow** — If FAIL, do NOT proceed. List specific fixes.
-- **Cross-reference PBI** — Every check against stories MUST ATTENTION trace back to PBI acceptance criteria.
-- **No guessing** — Reference specific story content as evidence.
-- **Flag missing stories** — If a PBI acceptance criterion has no covering story, that's a FAIL.
-
----
-
-## Next Steps
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"/plan (Recommended)"** — Create implementation plan from validated stories
-- **"/story"** — Re-create stories if FAIL verdict
-- **"/prioritize"** — Prioritize stories in backlog
-- **"Skip, continue manually"** — user decides
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 <!-- SYNC:nested-task-creation -->
 
@@ -413,14 +427,6 @@ After sub-agent returns:
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -673,32 +679,25 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-  <!-- /SYNC:double-round-trip-review:reminder -->
-  <!-- SYNC:graph-impact-analysis:reminder -->
-  **IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-  <!-- /SYNC:graph-impact-analysis:reminder -->
-  <!-- SYNC:ui-system-context:reminder -->
-  **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
-  <!-- SYNC:estimation-framework:reminder -->
+    <!-- /SYNC:double-round-trip-review:reminder -->
+
+<!-- SYNC:graph-impact-analysis:reminder -->
+
+    **IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
+
+<!-- /SYNC:graph-impact-analysis:reminder -->
+
+<!-- SYNC:ui-system-context:reminder -->
+
+    **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+
+<!-- /SYNC:ui-system-context:reminder -->
+
+<!-- SYNC:estimation-framework:reminder -->
+
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
-      <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:estimation-framework:reminder -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -710,6 +709,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -736,6 +736,17 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

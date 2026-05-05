@@ -143,6 +143,63 @@ After ≥5 rows, run pattern detection on the CSV: if `scope_var_pct` is consist
 
 ## Estimation Framework (canonical — applied in Step 4)
 
+## Output Report Template
+
+```markdown
+# Estimation Calibration Report — <plan or branch name>
+
+## Summary
+
+| Metric            | Range / Value              | Source                                   |
+| ----------------- | -------------------------- | ---------------------------------------- |
+| Pre-impl estimate | <min>-<max>d (likely <m>d) | <plan path frontmatter>                  |
+| TRUE estimate     | <min>-<max>d (likely <m>d) | observed scope (post-hoc)                |
+| Actual time       | <n>d                       | git <first commit→merge>, user-confirmed |
+
+**Scope variance** (TRUE vs pre-impl): <±n>% — <under/over/matched>
+**Execution variance** (actual vs TRUE likely): <±n>% — <fast/slow/matched>
+
+## Verdict
+
+| Signal              | Direction                                       | Magnitude | Confidence        |
+| ------------------- | ----------------------------------------------- | --------- | ----------------- |
+| Estimation model    | <too optimistic / too pessimistic / calibrated> | <±n>%     | <low/medium/high> |
+| Developer execution | <fast / slow / on-pace>                         | <±n>%     | <low/medium/high> |
+
+## Per-Layer Breakdown
+
+| Layer        | Predicted tier     | Observed tier      | Delta           |
+| ------------ | ------------------ | ------------------ | --------------- |
+| UI           | …                  | …                  | …               |
+| Backend      | …                  | …                  | …               |
+| Tests        | … cases            | … cases            | …               |
+| Blast radius | … areas, … complex | … areas, … complex | …               |
+| Risk factors | <predicted list>   | <applicable list>  | <added/removed> |
+
+## Calibration Suggestions
+
+- <If single sample> No model adjustment from one data point. Logged to `plans/_estimation-samples.csv` (row N). Re-run /estimate-actual on future plans to build calibration corpus. Suggested adjustment after ≥3-5 samples with consistent direction.
+- <If pattern across samples> e.g. "UI tier 'Compose components into NEW screen' overshoots in 4/5 samples by ~0.5d → suggest splitting into two tiers OR widening band to 1-2.5d"
+
+## Caveats
+
+- Actual time derived from <git/user>; <list any uncertainty: weekends, code-review days, vacations excluded?>
+- Pre-impl estimate format <range/single-point/missing> — comparison <exact/approximate>
+- Confidence in TRUE estimate: <high/medium/low> — observed scope <fully visible / partially obscured>
+```
+
+## Anti-Rationalization Anchors
+
+| Evasion                                                | Rebuttal                                                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Single sample is enough — clearly the dev was slow"   | NO. Without separating scope from execution variance, you confound model error and performance. State signal + caveat.                            |
+| "Use git timestamps as actual time"                    | Wrong. Includes weekends, meetings, code-review wait, sleep. Always confirm with user.                                                            |
+| "Skip TRUE estimate — just compare pre-impl vs actual" | That's the data point that's MISSING and exactly why estimates don't improve over time. Never skip Step 4.                                        |
+| "Apply hindsight to pump up TRUE estimate"             | Use the SAME framework that was used for pre-impl. Hindsight bias inflates TRUE and falsely vindicates the original estimate.                     |
+| "One signal is fine, no need to split"                 | Two signals is the entire point. Performance review needs execution variance; model tuning needs scope variance. Confounded data is unactionable. |
+
+---
+
 <!-- SYNC:estimation-framework -->
 
 > **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
@@ -248,61 +305,6 @@ After ≥5 rows, run pattern detection on the CSV: if `scope_var_pct` is consist
 
 <!-- /SYNC:estimation-framework -->
 
-## Output Report Template
-
-```markdown
-# Estimation Calibration Report — <plan or branch name>
-
-## Summary
-
-| Metric            | Range / Value              | Source                                   |
-| ----------------- | -------------------------- | ---------------------------------------- |
-| Pre-impl estimate | <min>-<max>d (likely <m>d) | <plan path frontmatter>                  |
-| TRUE estimate     | <min>-<max>d (likely <m>d) | observed scope (post-hoc)                |
-| Actual time       | <n>d                       | git <first commit→merge>, user-confirmed |
-
-**Scope variance** (TRUE vs pre-impl): <±n>% — <under/over/matched>
-**Execution variance** (actual vs TRUE likely): <±n>% — <fast/slow/matched>
-
-## Verdict
-
-| Signal              | Direction                                       | Magnitude | Confidence        |
-| ------------------- | ----------------------------------------------- | --------- | ----------------- |
-| Estimation model    | <too optimistic / too pessimistic / calibrated> | <±n>%     | <low/medium/high> |
-| Developer execution | <fast / slow / on-pace>                         | <±n>%     | <low/medium/high> |
-
-## Per-Layer Breakdown
-
-| Layer        | Predicted tier     | Observed tier      | Delta           |
-| ------------ | ------------------ | ------------------ | --------------- |
-| UI           | …                  | …                  | …               |
-| Backend      | …                  | …                  | …               |
-| Tests        | … cases            | … cases            | …               |
-| Blast radius | … areas, … complex | … areas, … complex | …               |
-| Risk factors | <predicted list>   | <applicable list>  | <added/removed> |
-
-## Calibration Suggestions
-
-- <If single sample> No model adjustment from one data point. Logged to `plans/_estimation-samples.csv` (row N). Re-run /estimate-actual on future plans to build calibration corpus. Suggested adjustment after ≥3-5 samples with consistent direction.
-- <If pattern across samples> e.g. "UI tier 'Compose components into NEW screen' overshoots in 4/5 samples by ~0.5d → suggest splitting into two tiers OR widening band to 1-2.5d"
-
-## Caveats
-
-- Actual time derived from <git/user>; <list any uncertainty: weekends, code-review days, vacations excluded?>
-- Pre-impl estimate format <range/single-point/missing> — comparison <exact/approximate>
-- Confidence in TRUE estimate: <high/medium/low> — observed scope <fully visible / partially obscured>
-```
-
-## Anti-Rationalization Anchors
-
-| Evasion                                                | Rebuttal                                                                                                                                          |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "Single sample is enough — clearly the dev was slow"   | NO. Without separating scope from execution variance, you confound model error and performance. State signal + caveat.                            |
-| "Use git timestamps as actual time"                    | Wrong. Includes weekends, meetings, code-review wait, sleep. Always confirm with user.                                                            |
-| "Skip TRUE estimate — just compare pre-impl vs actual" | That's the data point that's MISSING and exactly why estimates don't improve over time. Never skip Step 4.                                        |
-| "Apply hindsight to pump up TRUE estimate"             | Use the SAME framework that was used for pre-impl. Hindsight bias inflates TRUE and falsely vindicates the original estimate.                     |
-| "One signal is fine, no need to split"                 | Two signals is the entire point. Performance review needs execution variance; model tuning needs scope variance. Confounded data is unactionable. |
-
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -319,8 +321,6 @@ After ≥5 rows, run pattern detection on the CSV: if `scope_var_pct` is consist
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
-
----
 
 ## Closing Reminders
 

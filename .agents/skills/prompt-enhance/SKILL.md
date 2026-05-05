@@ -40,15 +40,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Two-phase optimization: (1) Caveman Compression — strip stop words + grammatical scaffolding, preserve semantic meaning; (2) Prompt Enhancement — apply AI attention anchoring so AI reads and follows all instructions.
@@ -68,20 +59,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - Post-optimization rule density (MUST ATTENTION/NEVER/ALWAYS per 100 lines) MUST be ≥ pre-optimization
 - Caveman compression applies to prose only — NEVER compress code blocks, YAML, or structured tables
 - Prompt quality > token count, but verbose prompts degrade quality — optimize clarity-per-token
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
 
 ---
 
@@ -110,47 +87,6 @@ No file? Ask via a direct user question. Text passed (not file path)? Apply cave
 ## When Target is a Skill File
 
 Target `.claude/skills/**/*.md` (any `SKILL.md`)? Apply **Universal Skill-Building Principles** AFTER caveman compression, BEFORE writing enhanced output.
-
-<!-- SYNC:universal-skill-building-principles -->
-
-> **Universal Skill-Building Principles** — 10 principles for building AI skills that work across any project type. Source: extracted from review-changes, plan-review, code-review skill rewrites.
->
-> **Meta-principle: Teach AI to reason, not to recite.** Skill's job: structure WHEN and HOW AI applies its existing knowledge — not enumerate every possible concern.
->
-> 1. **Detect Before Act** — Every skill starts with a classification phase. Detect artifact type (plan type, code category, change nature) before applying any logic. Detection drives: sub-agent selection, which dimensions to emphasize, mandatory vs. optional checks.
->    Anti-pattern: same checklist applied regardless of input type.
-> 2. **Derive, Don't Enumerate** — Teach AI HOW to reason about a domain, not WHAT items to tick. Replace "check X, Y, Z" with "understand role → read conventions → derive concerns from first principles → execute with evidence." Fixed checklist = ceiling. Thinking framework = floor.
->    Test: Can this skill run on a Python/Go project without modification? If not → it's enumerating, not teaching.
-> 3. **Evidence Gates** — Every claim, finding, recommendation requires `file:line` proof or traced call chain. Confidence thresholds: >80% act freely, 60-80% verify first, <60% DO NOT recommend. "Insufficient evidence" is valid output. Speculation is forbidden output.
-> 4. **Fresh Eyes Protocol** — Round 1 in main session. Round 2+ with fresh sub-agent (zero memory of Round 1). Main agent reads report but NEVER filters or overrides findings. Max 3 rounds, then escalate to user. Never declare PASS after Round 1 alone.
->    Why: main agent rationalizes its own mistakes. Zero-memory sub-agent catches what main agent dismissed.
-> 5. **Specialize by Type** — Route to specialized sub-agents based on detected artifact type:
->
->     | Artifact type                | Sub-agent               |
->     | ---------------------------- | ----------------------- |
->     | Source code / diffs          | `code-reviewer`         |
->     | Security-sensitive changes   | `security-auditor`      |
->     | Performance-critical changes | `performance-optimizer` |
->     | Plans / docs / specs         | `general-purpose`       |
->
-> 6. **Embed Protocols Verbatim, Never Reference** — Shared protocols MUST be copied inline into every sub-agent prompt — never referenced by file path or tag name. AI compliance drops significantly behind file-read indirection. Maintain canonical source; embed body at every call site.
-> 7. **Search-Based Discovery** — Never hardcode project-specific paths, formats, or identifiers. Teach skill to discover them:
->     - "Search for `coding-standards`, `style-guide`, `contributing`" not "read `docs/X/code-review-rules.md`"
->     - "Find the project's test format near changed files" not "look for `TC-{FEAT}-{NNN}` in `docs/business-features/`"
->       This is what makes a skill work across any project without modification.
-> 8. **Dimensions > Checklists** — Structure review/analysis as named thinking dimensions, each with a `Think:` prompt that forces first-principles reasoning: (1) state dimension's role, (2) derive what could go wrong if weak, (3) apply to artifact with evidence. Produces targeted, evidence-backed findings — not generic "add more detail" suggestions.
->    **Serial attention:** When applying a dimension-based framework, NEVER scan all dimensions simultaneously. One focused pass per dimension. AI misses violations when attention is split across concurrent concerns. Pattern: identify applicable dimensions → sequential focused passes → aggregate.
->    **Threshold invariant:** 3+ similar patterns in any dimension pass = MANDATORY extraction. 2+ violations of same kind = structural/architectural finding, not individual instance.
-> 9. **Recursive Quality Loop** — Fix → Re-review → Fix → Re-review. Each round uses a NEW fresh sub-agent. Continue until PASS or 3 rounds max, then escalate. Never declare success after Round 1 alone. Never reuse a sub-agent across rounds.
-> 10. **Anti-Rationalization Anchors** — Explicitly name and embed the evasion patterns AI uses to skip steps in the skill's closing reminders:
->
->     | Evasion               | Rebuttal                                                   |
->     | --------------------- | ---------------------------------------------------------- |
->     | "Too simple for this" | Wrong assumptions waste more time. Apply anyway.           |
->     | "Already searched"    | Show `file:line` evidence. No proof = no search.           |
->     | "Just do it"          | Still need task tracking. Skip depth, never skip tracking. |
-
-<!-- /SYNC:universal-skill-building-principles -->
 
 ### Skill Enhancement Checklist
 
@@ -238,98 +174,6 @@ Do NOT compress:
 
 ## Phase 2: Prompt Enhancement
 
-<!-- SYNC:context-engineering-principles -->
-
-> **Context Engineering Principles** — Research-backed principles for prompt quality. Source: Anthropic prompt engineering guide, Stanford "lost-in-the-middle" research, 2025-2026 LLM context optimization studies.
->
-> 1. **Primacy-Recency Effect** — LLM performance drops 15-47% for middle-context information (Stanford). AI attention peaks at first/last 10% of text. **Action:** Place the 3 most critical rules in both the first 5 lines AND the last 5 lines of every prompt. Queries at end improve quality by up to 30% (Anthropic).
-> 2. **High-Signal Density** — Anthropic: _"Identify the smallest collection of high-signal tokens that maximize the probability of the desired outcome."_ **Action:** Every line should change AI behavior. If removing a line doesn't change output → cut it. Target ≥8 rules (MUST ATTENTION/NEVER/ALWAYS) per 100 lines.
-> 3. **Context Rot** — LLM performance degrades as context length grows — even when all content is relevant. Compression (5-20x) maintains or improves accuracy while saving 70-94% tokens. **Action:** Compress aggressively. Shorter, denser prompts outperform longer, diluted ones.
-> 4. **Structured > Prose** — Tables, bullets, XML/markdown parse faster than paragraphs. Constrained formats reduce error rates vs free-text. **Action:** Convert narrative to tables/bullets. Use markdown headers for semantic sections.
-> 5. **RCCF Framework** — Modern LLMs (2025+) already know how to reason. What they need: **R**ole (personality), **C**ontext (grounding), **C**onstraints (guardrails), **F**ormat (structure). Constraints and format matter more than verbose instructions.
-> 6. **Checkbox Avoidance** — `[ ]` syntax triggers mechanical compliance — AI ticks boxes without reasoning. Bullet rules force reading and evaluation. **Action:** Replace `- [ ] Check X` with `- MUST ATTENTION verify X`.
-> 7. **Example Economy** — 3-5 examples optimal for few-shot; diminishing returns after. **Action:** 1 best example per pattern. Use BAD→GOOD pairs (2-3 lines each) for anti-patterns.
-> 8. **Deferred Tool Loading** — Claude Code delays loading tool definitions when they exceed 10% of context window. **Action:** Keep injected docs well under 10% of context budget. Docs exceeding ~3,000 lines are too large for injection — split or compress.
-> 9. **Rule Density Verification** — Post-optimization rule count (MUST ATTENTION/NEVER/ALWAYS) must be ≥ pre-optimization count. Compression should preserve or increase density, never decrease it. **Action:** Count before and after every optimization pass.
-
-<!-- /SYNC:context-engineering-principles -->
-
-<!-- SYNC:prompt-enhancement-transforms-base -->
-
-> **Prompt Enhancement Transforms (Base)** — Transforms 1-3 are identical across `prompt-enhance` / `prompt-expand`. Transform 4 is per-skill (conciseness pass for enhance; structural clarity pass for expand) and stays local to each skill.
->
-> ### Transform 1: Inline Summaries for READ References
->
-> **Problem:** AI sees `MUST ATTENTION READ file.md` and skips it.
-> **Solution:** Add a 2-3 line summary of key rules BEFORE the read instruction.
->
-> **Before:**
->
-> ```
-> MUST ATTENTION READ .claude/protocols/evidence.md
-> ```
->
-> **After:**
->
-> ```
-> > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim requires `file:line` proof.
-> > Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend.
->
-> MUST ATTENTION READ .claude/protocols/evidence.md for full details.
-> ```
->
-> **Scope rules:**
->
-> - `.claude/` protocol files → always add an inline summary (stable, belongs to framework)
-> - `docs/project-reference/` files → NO inline summary (varies per project, auto-injected by hooks). Add: `(Codex has no hook injection — open this file directly before proceeding)`
->
-> ### Transform 2: Top Summary Section
->
-> Required structure (first 20 lines after frontmatter):
->
-> ```markdown
-> > **[IMPORTANT]** task tracking instruction...
->
-> > **Protocol Name** — [inline summary]. MUST ATTENTION READ `path` for details.
->
-> ## Quick Summary
->
-> **Goal:** [One sentence — what this skill achieves]
->
-> **Workflow:**
->
-> 1. **[Step]** — [description]
->
-> **Key Rules:**
->
-> - [Most critical constraint]
-> ```
->
-> ### Transform 3: Bottom Closing Reminders
->
-> Add at the very end of the file:
->
-> ```markdown
-> ---
->
-> ## Closing Reminders
->
-> **IMPORTANT MUST ATTENTION** [echo rule #1 from the top section]
-> **IMPORTANT MUST ATTENTION** [echo rule #2]
-> **IMPORTANT MUST ATTENTION** [echo rule #3]
-> **IMPORTANT MUST ATTENTION** add a final review task to verify work quality
-> ```
->
-> Pick 3-5 rules AI most commonly violates. Bottom section re-anchors attention after the long middle.
-
-<!-- /SYNC:prompt-enhancement-transforms-base -->
-
-<!-- SYNC:shared-protocol-duplication-policy -->
-
-> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
-
-<!-- /SYNC:shared-protocol-duplication-policy -->
-
 ### Transform 4: Token Optimization (Conciseness Pass)
 
 Prompt quality FIRST. Verbose prompts degrade quality — AI attention dilutes across unnecessary tokens. Optimize **clarity-per-token**: maximum signal, minimum noise.
@@ -413,6 +257,155 @@ For each `.claude/` protocol reference:
 
 ---
 
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
+
+<!-- SYNC:universal-skill-building-principles -->
+
+> **Universal Skill-Building Principles** — 10 principles for building AI skills that work across any project type. Source: extracted from review-changes, plan-review, code-review skill rewrites.
+>
+> **Meta-principle: Teach AI to reason, not to recite.** Skill's job: structure WHEN and HOW AI applies its existing knowledge — not enumerate every possible concern.
+>
+> 1. **Detect Before Act** — Every skill starts with a classification phase. Detect artifact type (plan type, code category, change nature) before applying any logic. Detection drives: sub-agent selection, which dimensions to emphasize, mandatory vs. optional checks.
+>    Anti-pattern: same checklist applied regardless of input type.
+> 2. **Derive, Don't Enumerate** — Teach AI HOW to reason about a domain, not WHAT items to tick. Replace "check X, Y, Z" with "understand role → read conventions → derive concerns from first principles → execute with evidence." Fixed checklist = ceiling. Thinking framework = floor.
+>    Test: Can this skill run on a Python/Go project without modification? If not → it's enumerating, not teaching.
+> 3. **Evidence Gates** — Every claim, finding, recommendation requires `file:line` proof or traced call chain. Confidence thresholds: >80% act freely, 60-80% verify first, <60% DO NOT recommend. "Insufficient evidence" is valid output. Speculation is forbidden output.
+> 4. **Fresh Eyes Protocol** — Round 1 in main session. Round 2+ with fresh sub-agent (zero memory of Round 1). Main agent reads report but NEVER filters or overrides findings. Max 3 rounds, then escalate to user. Never declare PASS after Round 1 alone.
+>    Why: main agent rationalizes its own mistakes. Zero-memory sub-agent catches what main agent dismissed.
+> 5. **Specialize by Type** — Route to specialized sub-agents based on detected artifact type:
+>
+>     | Artifact type                | Sub-agent               |
+>     | ---------------------------- | ----------------------- |
+>     | Source code / diffs          | `code-reviewer`         |
+>     | Security-sensitive changes   | `security-auditor`      |
+>     | Performance-critical changes | `performance-optimizer` |
+>     | Plans / docs / specs         | `general-purpose`       |
+>
+> 6. **Embed Protocols Verbatim, Never Reference** — Shared protocols MUST be copied inline into every sub-agent prompt — never referenced by file path or tag name. AI compliance drops significantly behind file-read indirection. Maintain canonical source; embed body at every call site.
+> 7. **Search-Based Discovery** — Never hardcode project-specific paths, formats, or identifiers. Teach skill to discover them:
+>     - "Search for `coding-standards`, `style-guide`, `contributing`" not "read `docs/X/code-review-rules.md`"
+>     - "Find the project's test format near changed files" not "look for `TC-{FEAT}-{NNN}` in `docs/business-features/`"
+>       This is what makes a skill work across any project without modification.
+> 8. **Dimensions > Checklists** — Structure review/analysis as named thinking dimensions, each with a `Think:` prompt that forces first-principles reasoning: (1) state dimension's role, (2) derive what could go wrong if weak, (3) apply to artifact with evidence. Produces targeted, evidence-backed findings — not generic "add more detail" suggestions.
+>    **Serial attention:** When applying a dimension-based framework, NEVER scan all dimensions simultaneously. One focused pass per dimension. AI misses violations when attention is split across concurrent concerns. Pattern: identify applicable dimensions → sequential focused passes → aggregate.
+>    **Threshold invariant:** 3+ similar patterns in any dimension pass = MANDATORY extraction. 2+ violations of same kind = structural/architectural finding, not individual instance.
+> 9. **Recursive Quality Loop** — Fix → Re-review → Fix → Re-review. Each round uses a NEW fresh sub-agent. Continue until PASS or 3 rounds max, then escalate. Never declare success after Round 1 alone. Never reuse a sub-agent across rounds.
+> 10. **Anti-Rationalization Anchors** — Explicitly name and embed the evasion patterns AI uses to skip steps in the skill's closing reminders:
+>
+>     | Evasion               | Rebuttal                                                   |
+>     | --------------------- | ---------------------------------------------------------- |
+>     | "Too simple for this" | Wrong assumptions waste more time. Apply anyway.           |
+>     | "Already searched"    | Show `file:line` evidence. No proof = no search.           |
+>     | "Just do it"          | Still need task tracking. Skip depth, never skip tracking. |
+
+<!-- /SYNC:universal-skill-building-principles -->
+
+<!-- SYNC:context-engineering-principles -->
+
+> **Context Engineering Principles** — Research-backed principles for prompt quality. Source: Anthropic prompt engineering guide, Stanford "lost-in-the-middle" research, 2025-2026 LLM context optimization studies.
+>
+> 1. **Primacy-Recency Effect** — LLM performance drops 15-47% for middle-context information (Stanford). AI attention peaks at first/last 10% of text. **Action:** Place the 3 most critical rules in both the first 5 lines AND the last 5 lines of every prompt. Queries at end improve quality by up to 30% (Anthropic).
+> 2. **High-Signal Density** — Anthropic: _"Identify the smallest collection of high-signal tokens that maximize the probability of the desired outcome."_ **Action:** Every line should change AI behavior. If removing a line doesn't change output → cut it. Target ≥8 rules (MUST ATTENTION/NEVER/ALWAYS) per 100 lines.
+> 3. **Context Rot** — LLM performance degrades as context length grows — even when all content is relevant. Compression (5-20x) maintains or improves accuracy while saving 70-94% tokens. **Action:** Compress aggressively. Shorter, denser prompts outperform longer, diluted ones.
+> 4. **Structured > Prose** — Tables, bullets, XML/markdown parse faster than paragraphs. Constrained formats reduce error rates vs free-text. **Action:** Convert narrative to tables/bullets. Use markdown headers for semantic sections.
+> 5. **RCCF Framework** — Modern LLMs (2025+) already know how to reason. What they need: **R**ole (personality), **C**ontext (grounding), **C**onstraints (guardrails), **F**ormat (structure). Constraints and format matter more than verbose instructions.
+> 6. **Checkbox Avoidance** — `[ ]` syntax triggers mechanical compliance — AI ticks boxes without reasoning. Bullet rules force reading and evaluation. **Action:** Replace `- [ ] Check X` with `- MUST ATTENTION verify X`.
+> 7. **Example Economy** — 3-5 examples optimal for few-shot; diminishing returns after. **Action:** 1 best example per pattern. Use BAD→GOOD pairs (2-3 lines each) for anti-patterns.
+> 8. **Deferred Tool Loading** — Claude Code delays loading tool definitions when they exceed 10% of context window. **Action:** Keep injected docs well under 10% of context budget. Docs exceeding ~3,000 lines are too large for injection — split or compress.
+> 9. **Rule Density Verification** — Post-optimization rule count (MUST ATTENTION/NEVER/ALWAYS) must be ≥ pre-optimization count. Compression should preserve or increase density, never decrease it. **Action:** Count before and after every optimization pass.
+
+<!-- /SYNC:context-engineering-principles -->
+
+<!-- SYNC:prompt-enhancement-transforms-base -->
+
+> **Prompt Enhancement Transforms (Base)** — Transforms 1-3 are identical across `prompt-enhance` / `prompt-expand`. Transform 4 is per-skill (conciseness pass for enhance; structural clarity pass for expand) and stays local to each skill.
+>
+> ### Transform 1: Inline Summaries for READ References
+>
+> **Problem:** AI sees `MUST ATTENTION READ file.md` and skips it.
+> **Solution:** Add a 2-3 line summary of key rules BEFORE the read instruction.
+>
+> **Before:**
+>
+> ```
+> MUST ATTENTION READ .claude/protocols/evidence.md
+> ```
+>
+> **After:**
+>
+> ```
+> > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim requires `file:line` proof.
+> > Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend.
+>
+> MUST ATTENTION READ .claude/protocols/evidence.md for full details.
+> ```
+>
+> **Scope rules:**
+>
+> - `.claude/` protocol files → always add an inline summary (stable, belongs to framework)
+> - `docs/project-reference/` files → NO inline summary (project-specific). Add: `(read directly when relevant; do not rely on hook-injected conversation text)`
+>
+> ### Transform 2: Top Summary Section
+>
+> Required structure (first 20 lines after frontmatter):
+>
+> ```markdown
+> > **[IMPORTANT]** task tracking instruction...
+>
+> > **Protocol Name** — [inline summary]. MUST ATTENTION READ `path` for details.
+>
+> ## Quick Summary
+>
+> **Goal:** [One sentence — what this skill achieves]
+>
+> **Workflow:**
+>
+> 1. **[Step]** — [description]
+>
+> **Key Rules:**
+>
+> - [Most critical constraint]
+> ```
+>
+> ### Transform 3: Bottom Closing Reminders
+>
+> Add at the very end of the file:
+>
+> ```markdown
+> ---
+>
+> ## Closing Reminders
+>
+> **IMPORTANT MUST ATTENTION** [echo rule #1 from the top section]
+> **IMPORTANT MUST ATTENTION** [echo rule #2]
+> **IMPORTANT MUST ATTENTION** [echo rule #3]
+> **IMPORTANT MUST ATTENTION** add a final review task to verify work quality
+> ```
+>
+> Pick 3-5 rules AI most commonly violates. Bottom section re-anchors attention after the long middle.
+
+<!-- /SYNC:prompt-enhancement-transforms-base -->
+
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -428,11 +421,20 @@ For each `.claude/` protocol reference:
 **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

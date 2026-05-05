@@ -130,6 +130,10 @@ The connector tries 5 strategies in order (highest confidence first):
 
 ---
 
+# Connect API
+
+Detect frontend HTTP calls and match them to backend route definitions, creating `API_ENDPOINT` edges in the knowledge graph.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -154,15 +158,12 @@ The connector tries 5 strategies in order (highest confidence first):
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Connect API
-
-Detect frontend HTTP calls and match them to backend route definitions, creating `API_ENDPOINT` edges in the knowledge graph.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

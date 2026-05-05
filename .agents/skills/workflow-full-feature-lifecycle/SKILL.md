@@ -41,48 +41,68 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-<!-- SYNC:nested-task-creation -->
+## Quick Summary
 
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
->
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
->
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+**Goal:** [Workflow] Trigger Full Feature Lifecycle workflow — complete feature from idea to release with formal role handoffs (PO→BA→Designer→Dev→QA→PO acceptance).
 
-<!-- /SYNC:nested-task-creation -->
+**Workflow:**
+
+1. **Detect** — classify request scope and target artifacts.
+2. **Execute** — apply required steps with evidence-backed actions.
+3. **Verify** — confirm constraints, output quality, and completion evidence.
+
+**Key Rules:**
+
+- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
+- MUST ATTENTION keep task tracking updated as each step starts/completes.
+- NEVER skip mandatory workflow or skill gates.
+
+## Closing Rule
+
+Every step = `TaskUpdate in_progress` → skill invocation → complete skill → `TaskUpdate completed`. No shortcuts.
+
+---
+
+**IMPORTANT MANDATORY Steps:** $idea -> $refine -> $why-review -> $refine-review -> $domain-analysis -> $why-review -> $story -> $why-review -> $story-review -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $design-spec -> $why-review -> $interface-design -> $frontend-design -> $plan-hard -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $cook -> $review-domain-entities -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $sre-review -> $quality-gate -> $docs-update -> $watzup -> $acceptance -> $workflow-end
 
 **IMPORTANT MANDATORY Steps:** $idea -> $refine -> $why-review -> $refine-review -> $domain-analysis -> $why-review -> $story -> $why-review -> $story-review -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $design-spec -> $why-review -> $interface-design -> $frontend-design -> $plan-hard -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $cook -> $review-domain-entities -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $sre-review -> $quality-gate -> $docs-update -> $watzup -> $acceptance -> $workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `full-feature-lifecycle` workflow. Run `$workflow-start full-feature-lifecycle` with the user's prompt as context.
+
+**Steps:** $idea → $refine → $why-review → $refine-review → $domain-analysis → $why-review → $story → $why-review → $story-review → $pbi-challenge → $dor-gate → $pbi-mockup → $design-spec → $why-review → $interface-design → $frontend-design → $plan-hard → $why-review → $plan-review → $why-review → $plan-validate → $why-review → $cook → $review-domain-entities → $tdd-spec → $why-review → $tdd-spec-review → $integration-test → $integration-test-review → $integration-test-verify → $tdd-spec [direction=sync] → $workflow-review-changes → $sre-review → $quality-gate → $docs-update → $watzup → $acceptance → $workflow-end
+
+<!-- SYNC:ai-mistake-prevention -->
+
+**AI Mistake Prevention** — Failure modes to avoid on every task:
+**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -136,54 +156,12 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `full-feature-lifecycle` workflow. Run `$workflow-start full-feature-lifecycle` with the user's prompt as context.
-
-**Steps:** $idea → $refine → $why-review → $refine-review → $domain-analysis → $why-review → $story → $why-review → $story-review → $pbi-challenge → $dor-gate → $pbi-mockup → $design-spec → $why-review → $interface-design → $frontend-design → $plan-hard → $why-review → $plan-review → $why-review → $plan-validate → $why-review → $cook → $review-domain-entities → $tdd-spec → $why-review → $tdd-spec-review → $integration-test → $integration-test-review → $integration-test-verify → $tdd-spec [direction=sync] → $workflow-review-changes → $sre-review → $quality-gate → $docs-update → $watzup → $acceptance → $workflow-end
-
-## Quick Summary
-
-**Goal:** [Workflow] Trigger Full Feature Lifecycle workflow — complete feature from idea to release with formal role handoffs (PO→BA→Designer→Dev→QA→PO acceptance).
-
-**Workflow:**
-
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
-
-**Key Rules:**
-
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- NEVER skip mandatory workflow or skill gates.
-
-## Closing Rule
-
-Every step = `TaskUpdate in_progress` → skill invocation → complete skill → `TaskUpdate completed`. No shortcuts.
-
----
-
-**IMPORTANT MANDATORY Steps:** $idea -> $refine -> $why-review -> $refine-review -> $domain-analysis -> $why-review -> $story -> $why-review -> $story-review -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $design-spec -> $why-review -> $interface-design -> $frontend-design -> $plan-hard -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $cook -> $review-domain-entities -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $sre-review -> $quality-gate -> $docs-update -> $watzup -> $acceptance -> $workflow-end
-
-<!-- SYNC:ai-mistake-prevention -->
-
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -192,9 +170,8 @@ Every step = `TaskUpdate in_progress` → skill invocation → complete skill �
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
 

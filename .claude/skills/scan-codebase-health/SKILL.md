@@ -222,11 +222,6 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 
 <!-- /SYNC:output-quality-principles -->
 
-<!-- SYNC:output-quality-principles:reminder -->
-
-**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
-
-<!-- /SYNC:output-quality-principles:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid:
@@ -237,11 +232,19 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 > **Surface ambiguity before coding.** NEVER pick silently.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:output-quality-principles:reminder -->
+
+**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+
+<!-- /SYNC:output-quality-principles:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

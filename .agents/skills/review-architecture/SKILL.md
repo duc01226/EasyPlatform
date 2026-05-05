@@ -49,358 +49,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:nested-task-creation -->
-
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
->
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
->
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
-
-<!-- /SYNC:nested-task-creation -->
-
-<!-- SYNC:project-reference-docs-guide -->
-
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
->
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
->
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
-
-<!-- /SYNC:project-reference-docs-guide -->
-
-<!-- SYNC:task-tracking-external-report -->
-
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
->
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
->
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
-
-<!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting. Simple tasks: ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:sequential-thinking-protocol -->
-
-> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
->
-> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
->
-> **Format (explicit mode — visible thought trail):**
->
-> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
-> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
-> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
-> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
-> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
->
-> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
->
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
->
-> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
->
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
-
-<!-- /SYNC:sequential-thinking-protocol -->
-
-<!-- SYNC:evidence-based-reasoning -->
-
-> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
->
-> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
-> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
-> 3. Cross-service validation required for architectural changes
-> 4. "I don't have enough evidence" is valid and expected output
->
-> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
->
-> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
-> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
-
-<!-- /SYNC:evidence-based-reasoning -->
-
-<!-- SYNC:double-round-trip-review -->
-
-> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
->
-> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
->
-> **Decision after Round 1:**
->
-> - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
->
-> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `spawn_agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
->
-> - Cross-cutting concerns missed in the prior round
-> - Interaction bugs between changed files
-> - Convention drift (new code vs existing patterns)
-> - Missing pieces that should exist but don't
-> - Subtle edge cases the prior round rationalized away
-> - Regressions introduced by the fixes themselves
->
-> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via a direct user question.
->
-> **Rules:**
->
-> - A clean Round 1 ENDS the review — no mandatory Round 2
-> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
-> - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via a direct user question (do NOT silently loop)
-> - Track round count in conversation context (session-scoped)
-> - Final verdict must incorporate ALL rounds executed
->
-> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
-
-<!-- /SYNC:double-round-trip-review -->
-
-<!-- OVERRIDE:fresh-context-review -->
-
-> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
->
-> **Why:** The main agent knows what it (or `$cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
->
-> **When:** Round 2 of ANY review AND every recursive re-review iteration after fixes. NOT needed when Round 1 already PASSes with zero issues.
->
-> **How:**
->
-> 1. Spawn a NEW `spawn_agent` tool call — use `architect` subagent_type for architecture reviews (see Sub-Agent Type Override above)
-> 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
-> 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
-> 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
-> 5. Main agent reads the report, integrates findings into its own report, DOES NOT override or filter
->
-> **Rules:**
->
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW `spawn_agent` call
-> - NEVER skip fresh-subagent review because "last round was clean" — every fix triggers a fresh round
-> - Max 3 fresh-subagent rounds per review — escalate via a direct user question if still failing; do NOT silently loop or fall back to any prior protocol
-> - Track iteration count in conversation context (session-scoped, no persistent files)
-
-<!-- /OVERRIDE:fresh-context-review -->
-
-## Sub-Agent Type Override
-
-> **MANDATORY:** Architecture reviews spawn `architect` sub-agent, NOT `code-reviewer`.
-> The canonical template below uses `agent_type: "architect"` — do NOT revert to `code-reviewer`.
-> **Rationale:** `architect` carries cross-service impact analysis, ADR creation, and comprehensive multi-service security/performance context that `code-reviewer` lacks for architecture-level decisions.
-
-<!-- SYNC:sub-agent-selection -->
-
-> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
-> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
-
-<!-- /SYNC:sub-agent-selection -->
-
-<!-- OVERRIDE:review-protocol-injection -->
-
-> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
->
-> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 10 protocol bodies pre-embedded.
-
-### Subagent Type Selection
-
-- `architect` — ALWAYS for architecture reviews (cross-service, ADR, security/performance at system level)
-- `code-reviewer` — for code quality reviews only (NOT architecture)
-
-### Canonical Agent Call Template (Copy Verbatim)
-
-```
-spawn_agent({
-  description: "Fresh Round {N} review",
-  agent_type: "architect",
-  prompt: `
-## Task
-{review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
-
-## Round
-Round {N}. You have ZERO memory of prior rounds. Re-read all target files from scratch via your own tool calls. Do NOT trust anything from the main agent beyond this prompt.
-
-## Protocols (follow VERBATIM — these are non-negotiable)
-
-### Evidence-Based Reasoning
-Speculation is FORBIDDEN. Every claim needs proof.
-1. Cite file:line, grep results, or framework docs for EVERY claim
-2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
-3. Cross-service validation required for architectural changes
-4. "I don't have enough evidence" is valid and expected output
-BLOCKED until: Evidence file path (file:line) provided; Grep search performed; 3+ similar patterns found; Confidence level stated.
-Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because".
-If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
-
-### Bug Detection
-MUST check categories 1-4 for EVERY review. Never skip.
-1. Null Safety: Can params/returns be null? Are they guarded? Optional chaining gaps? .find() returns checked?
-2. Boundary Conditions: Off-by-one (< vs <=)? Empty collections handled? Zero/negative values? Max limits?
-3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
-4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
-5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
-6. Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
-Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
-
-### Design Patterns Quality
-Priority checks for every code change:
-1. DRY via OOP: Same-suffix classes (*Entity, *Dto, *Service) MUST share base class. 3+ similar patterns → extract to shared abstraction.
-2. Right Responsibility: Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
-3. SOLID: Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
-4. After extraction/move/rename: Grep ENTIRE scope for dangling references. Zero tolerance.
-5. YAGNI gate: NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
-Anti-patterns to flag: God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
-
-### Logic & Intention Review
-Verify WHAT code does matches WHY it was changed.
-1. Change Intention Check: Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
-2. Happy Path Trace: Walk through one complete success scenario through changed code.
-3. Error Path Trace: Walk through one failure/edge case scenario through changed code.
-4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
-NEVER mark review PASS without completing both traces (happy + error path).
-
-### Test Spec Verification
-Map changed code to test specifications.
-1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
-2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
-3. New functions/endpoints/handlers → flag for test spec creation.
-4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
-6. If no specs exist → log gap and recommend $tdd-spec.
-NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
-
-### Fix-Layer Accountability
-NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
-MANDATORY before ANY fix:
-1. Trace full data flow — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where bad state ENTERS, not where it CRASHES.
-2. Identify the invariant owner — Which layer's contract guarantees this value is valid? Fix at the LOWEST layer that owns the invariant, not the highest layer that consumes it.
-3. One fix, maximum protection — If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
-4. Verify no bypass paths — Confirm all data flows through the fix point. Check for direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
-BLOCKED until: Full data flow traced (origin → crash); Invariant owner identified with file:line evidence; All access sites audited (grep count); Fix layer justified (lowest layer that protects most consumers).
-Anti-patterns (REJECT): "Fix it where it crashes" (crash site ≠ cause site, trace upstream); "Add defensive checks at every consumer" (scattered defense = wrong layer); "Both fix is safer" (pick ONE authoritative layer).
-
-### Rationalization Prevention
-AI skips steps via these evasions. Recognize and reject:
-- "Too simple for a plan" → Simple + wrong assumptions = wasted time. Plan anyway.
-- "I'll test after" → RED before GREEN. Write/verify test first.
-- "Already searched" → Show grep evidence with file:line. No proof = no search.
-- "Just do it" → Still need task tracking. Skip depth, never skip tracking.
-- "Just a small fix" → Small fix in wrong location cascades. Verify file:line first.
-- "Code is self-explanatory" → Future readers need evidence trail. Document anyway.
-- "Combine steps to save time" → Combined steps dilute focus. Each step has distinct purpose.
-
-### Graph-Assisted Investigation
-MANDATORY when .code-graph/graph.db exists.
-HARD-GATE: MUST run at least ONE graph command on key files before concluding any investigation.
-Pattern: Grep finds files → trace --direction both reveals full system flow → Grep verifies details.
-- Investigation/Scout: trace --direction both on 2-3 entry files
-- Fix/Debug: callers_of on buggy function + tests_for
-- Feature/Enhancement: connections on files to be modified
-- Code Review: tests_for on changed functions
-- Blast Radius: trace --direction downstream
-CLI: python .claude/scripts/code_graph {command} --json. Use --node-mode file first (10-30x less noise), then --node-mode function for detail.
-
-### Understand Code First
-HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
-1. Search 3+ similar patterns (grep/glob) — cite file:line evidence.
-2. Read existing files in target area — understand structure, base classes, conventions.
-3. Run python .claude/scripts/code_graph trace <file> --direction both --json when .code-graph/graph.db exists.
-4. Map dependencies via connections or callers_of — know what depends on your target.
-5. Write investigation to .ai/workspace/analysis/ for non-trivial tasks (3+ files).
-6. Re-read analysis file before implementing — never work from memory alone.
-7. NEVER invent new patterns when existing ones work — match exactly or document deviation.
-BLOCKED until: Read target files; Grep 3+ patterns; Graph trace (if graph.db exists); Assumptions verified with evidence.
-
-## Reference Docs (READ before reviewing)
-- docs/project-reference/code-review-rules.md
-- {skill-specific reference docs — e.g., integration-test-reference.md for integration-test-review; backend-patterns-reference.md for backend reviews; frontend-patterns-reference.md for frontend reviews}
-
-## Target Files
-{explicit file list OR "run git diff to see uncommitted changes" OR "read all files under {plan-dir}"}
-
-## Output
-Write a structured report to plans/reports/{review-type}-round{N}-{date}.md with sections:
-- Status: PASS | FAIL
-- Issue Count: {number}
-- Critical Issues (with file:line evidence)
-- High Priority Issues (with file:line evidence)
-- Medium / Low Issues
-- Cross-cutting findings
-
-Return the report path and status to the main agent.
-Every finding MUST have file:line evidence. Speculation is forbidden.
-`
-})
-```
-
-### Rules
-
-- DO copy the template wholesale — including all 10 embedded protocol sections
-- DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
-- DO choose `architect` subagent_type for architecture reviews — do NOT revert to `code-reviewer` (see Sub-Agent Type Override above)
-- DO NOT paraphrase, summarize, or skip any protocol section
-- DO NOT pass file contents inline — the sub-agent reads via its own tool calls so it has a fresh context
-- DO NOT reference protocols by file path or tag name — the bodies are already embedded above
-- DO NOT introduce placeholder markers for the protocols — they must stay literally expanded
-
-<!-- /OVERRIDE:review-protocol-injection -->
-
-> **Critical Purpose:** Architecture compliance — no layer violations, no messaging anti-patterns, no service boundary breaches, no pattern drift.
-
-> **External Memory:** Complex/lengthy work → write findings to `plans/reports/`. Prevents context loss, serves as deliverable.
-
-> **Evidence Gate:** MANDATORY MUST ATTENTION — every finding requires `file:line` proof + confidence percentage (>80% act, <80% verify first).
-
 ## Quick Summary
 
 **Goal:** Validate code changes comply with project architecture — repository layout, tooling boundaries, generated artifact ownership, command flows, and project-specific implementation patterns.
@@ -412,7 +60,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > 1. `docs/project-reference/backend-patterns-reference.md` — CQRS, messaging, repos, validation, entity events, layer rules **(READ FIRST — primary rules source)**
 > 2. `docs/project-reference/project-structure-reference.md` — service map, layer structure, DB ownership
 > 3. `docs/project-reference/frontend-patterns-reference.md` — component hierarchy, store, API patterns **(frontend files only)**
-> 4. `docs/project-reference/code-review-rules.md` — anti-patterns, conventions **(may be auto-injected by hook — check [Injected: ...] header first)**
+> 4. `docs/project-reference/code-review-rules.md` — anti-patterns, conventions **(read directly; do not rely on hook-injected conversation text)**
 >
 > Not found → search: "architecture documentation", "service patterns", "messaging patterns". Rules come from docs — NOT general knowledge.
 
@@ -453,7 +101,7 @@ Skeptical. Every claim needs traced proof, confidence >80%.
 - MUST ATTENTION read `docs/project-reference/backend-patterns-reference.md` — extract messaging naming, layer rules, CQRS patterns, repo rules, entity event handler patterns, validation patterns
 - MUST ATTENTION read `docs/project-reference/project-structure-reference.md` — extract service map, layer structure, DB ownership
 - If frontend files in scope: MUST ATTENTION read `docs/project-reference/frontend-patterns-reference.md`
-- `code-review-rules.md` auto-injected by hook — check conversation context before reading
+- MUST ATTENTION read `docs/project-reference/code-review-rules.md` — extract anti-patterns and review rules directly
 
 ## Phase 1: Determine Scope
 
@@ -470,26 +118,6 @@ git diff --cached   # Staged only
 - Filter to architecture-relevant files (skip pure docs, configs, tests unless architecture-relevant)
 
 ## Phase 2: Blast Radius (if graph.db exists)
-
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
 
 - If `.code-graph/graph.db` exists: call `$graph-blast-radius` skill
 - Record: impacted file count, cross-service impact, risk level
@@ -785,27 +413,346 @@ Before reporting ANY work done:
 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints
 5. **New artifact = wired artifact.** Created something? Prove registered, imported, reachable by all consumers
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting. Simple tasks: ask user whether to skip.
 
-## Prompt-Enhance Closing Anchors
+<!-- OVERRIDE:fresh-context-review -->
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
+>
+> **Why:** The main agent knows what it (or `$cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
+>
+> **When:** Round 2 of ANY review AND every recursive re-review iteration after fixes. NOT needed when Round 1 already PASSes with zero issues.
+>
+> **How:**
+>
+> 1. Spawn a NEW `spawn_agent` tool call — use `architect` subagent_type for architecture reviews (see Sub-Agent Type Override above)
+> 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
+> 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
+> 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
+> 5. Main agent reads the report, integrates findings into its own report, DOES NOT override or filter
+>
+> **Rules:**
+>
+> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW `spawn_agent` call
+> - NEVER skip fresh-subagent review because "last round was clean" — every fix triggers a fresh round
+> - Max 3 fresh-subagent rounds per review — escalate via a direct user question if still failing; do NOT silently loop or fall back to any prior protocol
+> - Track iteration count in conversation context (session-scoped, no persistent files)
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+<!-- /OVERRIDE:fresh-context-review -->
 
-<!-- SYNC:evidence-based-reasoning:reminder -->
+## Sub-Agent Type Override
 
-**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+> **MANDATORY:** Architecture reviews spawn `architect` sub-agent, NOT `code-reviewer`.
+> The canonical template below uses `agent_type: "architect"` — do NOT revert to `code-reviewer`.
+> **Rationale:** `architect` carries cross-service impact analysis, ADR creation, and comprehensive multi-service security/performance context that `code-reviewer` lacks for architecture-level decisions.
 
-<!-- /SYNC:evidence-based-reasoning:reminder -->
-<!-- SYNC:graph-assisted-investigation:reminder -->
+<!-- OVERRIDE:review-protocol-injection -->
 
-**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
+>
+> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 10 protocol bodies pre-embedded.
 
-<!-- /SYNC:graph-assisted-investigation:reminder -->
+### Subagent Type Selection
+
+- `architect` — ALWAYS for architecture reviews (cross-service, ADR, security/performance at system level)
+- `code-reviewer` — for code quality reviews only (NOT architecture)
+
+### Canonical Agent Call Template (Copy Verbatim)
+
+```
+spawn_agent({
+  description: "Fresh Round {N} review",
+  agent_type: "architect",
+  prompt: `
+## Task
+{review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
+
+## Round
+Round {N}. You have ZERO memory of prior rounds. Re-read all target files from scratch via your own tool calls. Do NOT trust anything from the main agent beyond this prompt.
+
+## Protocols (follow VERBATIM — these are non-negotiable)
+
+### Evidence-Based Reasoning
+Speculation is FORBIDDEN. Every claim needs proof.
+1. Cite file:line, grep results, or framework docs for EVERY claim
+2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+3. Cross-service validation required for architectural changes
+4. "I don't have enough evidence" is valid and expected output
+BLOCKED until: Evidence file path (file:line) provided; Grep search performed; 3+ similar patterns found; Confidence level stated.
+Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because".
+If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+### Bug Detection
+MUST check categories 1-4 for EVERY review. Never skip.
+1. Null Safety: Can params/returns be null? Are they guarded? Optional chaining gaps? .find() returns checked?
+2. Boundary Conditions: Off-by-one (< vs <=)? Empty collections handled? Zero/negative values? Max limits?
+3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
+4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
+5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
+6. Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
+Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
+
+### Design Patterns Quality
+Priority checks for every code change:
+1. DRY via OOP: Same-suffix classes (*Entity, *Dto, *Service) MUST share base class. 3+ similar patterns → extract to shared abstraction.
+2. Right Responsibility: Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
+3. SOLID: Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
+4. After extraction/move/rename: Grep ENTIRE scope for dangling references. Zero tolerance.
+5. YAGNI gate: NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
+Anti-patterns to flag: God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
+
+### Logic & Intention Review
+Verify WHAT code does matches WHY it was changed.
+1. Change Intention Check: Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
+2. Happy Path Trace: Walk through one complete success scenario through changed code.
+3. Error Path Trace: Walk through one failure/edge case scenario through changed code.
+4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
+NEVER mark review PASS without completing both traces (happy + error path).
+
+### Test Spec Verification
+Map changed code to test specifications.
+1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
+2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
+3. New functions/endpoints/handlers → flag for test spec creation.
+4. Verify TC evidence fields point to actual code (file:line, not stale references).
+5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+6. If no specs exist → log gap and recommend $tdd-spec.
+NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
+
+### Fix-Layer Accountability
+NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
+MANDATORY before ANY fix:
+1. Trace full data flow — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where bad state ENTERS, not where it CRASHES.
+2. Identify the invariant owner — Which layer's contract guarantees this value is valid? Fix at the LOWEST layer that owns the invariant, not the highest layer that consumes it.
+3. One fix, maximum protection — If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
+4. Verify no bypass paths — Confirm all data flows through the fix point. Check for direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
+BLOCKED until: Full data flow traced (origin → crash); Invariant owner identified with file:line evidence; All access sites audited (grep count); Fix layer justified (lowest layer that protects most consumers).
+Anti-patterns (REJECT): "Fix it where it crashes" (crash site ≠ cause site, trace upstream); "Add defensive checks at every consumer" (scattered defense = wrong layer); "Both fix is safer" (pick ONE authoritative layer).
+
+### Rationalization Prevention
+AI skips steps via these evasions. Recognize and reject:
+- "Too simple for a plan" → Simple + wrong assumptions = wasted time. Plan anyway.
+- "I'll test after" → RED before GREEN. Write/verify test first.
+- "Already searched" → Show grep evidence with file:line. No proof = no search.
+- "Just do it" → Still need task tracking. Skip depth, never skip tracking.
+- "Just a small fix" → Small fix in wrong location cascades. Verify file:line first.
+- "Code is self-explanatory" → Future readers need evidence trail. Document anyway.
+- "Combine steps to save time" → Combined steps dilute focus. Each step has distinct purpose.
+
+### Graph-Assisted Investigation
+MANDATORY when .code-graph/graph.db exists.
+HARD-GATE: MUST run at least ONE graph command on key files before concluding any investigation.
+Pattern: Grep finds files → trace --direction both reveals full system flow → Grep verifies details.
+- Investigation/Scout: trace --direction both on 2-3 entry files
+- Fix/Debug: callers_of on buggy function + tests_for
+- Feature/Enhancement: connections on files to be modified
+- Code Review: tests_for on changed functions
+- Blast Radius: trace --direction downstream
+CLI: python .claude/scripts/code_graph {command} --json. Use --node-mode file first (10-30x less noise), then --node-mode function for detail.
+
+### Understand Code First
+HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+1. Search 3+ similar patterns (grep/glob) — cite file:line evidence.
+2. Read existing files in target area — understand structure, base classes, conventions.
+3. Run python .claude/scripts/code_graph trace <file> --direction both --json when .code-graph/graph.db exists.
+4. Map dependencies via connections or callers_of — know what depends on your target.
+5. Write investigation to .ai/workspace/analysis/ for non-trivial tasks (3+ files).
+6. Re-read analysis file before implementing — never work from memory alone.
+7. NEVER invent new patterns when existing ones work — match exactly or document deviation.
+BLOCKED until: Read target files; Grep 3+ patterns; Graph trace (if graph.db exists); Assumptions verified with evidence.
+
+## Reference Docs (READ before reviewing)
+- docs/project-reference/code-review-rules.md
+- {skill-specific reference docs — e.g., integration-test-reference.md for integration-test-review; backend-patterns-reference.md for backend reviews; frontend-patterns-reference.md for frontend reviews}
+
+## Target Files
+{explicit file list OR "run git diff to see uncommitted changes" OR "read all files under {plan-dir}"}
+
+## Output
+Write a structured report to plans/reports/{review-type}-round{N}-{date}.md with sections:
+- Status: PASS | FAIL
+- Issue Count: {number}
+- Critical Issues (with file:line evidence)
+- High Priority Issues (with file:line evidence)
+- Medium / Low Issues
+- Cross-cutting findings
+
+Return the report path and status to the main agent.
+Every finding MUST have file:line evidence. Speculation is forbidden.
+`
+})
+```
+
+### Rules
+
+- DO copy the template wholesale — including all 10 embedded protocol sections
+- DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
+- DO choose `architect` subagent_type for architecture reviews — do NOT revert to `code-reviewer` (see Sub-Agent Type Override above)
+- DO NOT paraphrase, summarize, or skip any protocol section
+- DO NOT pass file contents inline — the sub-agent reads via its own tool calls so it has a fresh context
+- DO NOT reference protocols by file path or tag name — the bodies are already embedded above
+- DO NOT introduce placeholder markers for the protocols — they must stay literally expanded
+
+<!-- /OVERRIDE:review-protocol-injection -->
+
+> **Critical Purpose:** Architecture compliance — no layer violations, no messaging anti-patterns, no service boundary breaches, no pattern drift.
+
+> **External Memory:** Complex/lengthy work → write findings to `plans/reports/`. Prevents context loss, serves as deliverable.
+
+> **Evidence Gate:** MANDATORY MUST ATTENTION — every finding requires `file:line` proof + confidence percentage (>80% act, <80% verify first).
+
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:sequential-thinking-protocol -->
+
+> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
+>
+> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
+>
+> **Format (explicit mode — visible thought trail):**
+>
+> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
+> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
+> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
+> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
+> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
+>
+> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
+>
+> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+>
+> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
+>
+> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+
+<!-- /SYNC:sequential-thinking-protocol -->
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
+
+<!-- SYNC:double-round-trip-review -->
+
+> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
+>
+> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
+>
+> **Decision after Round 1:**
+>
+> - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
+> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
+>
+> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `spawn_agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
+>
+> - Cross-cutting concerns missed in the prior round
+> - Interaction bugs between changed files
+> - Convention drift (new code vs existing patterns)
+> - Missing pieces that should exist but don't
+> - Subtle edge cases the prior round rationalized away
+> - Regressions introduced by the fixes themselves
+>
+> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via a direct user question.
+>
+> **Rules:**
+>
+> - A clean Round 1 ENDS the review — no mandatory Round 2
+> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
+> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
+> - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
+> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via a direct user question (do NOT silently loop)
+> - Track round count in conversation context (session-scoped)
+> - Final verdict must incorporate ALL rounds executed
+>
+> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
+
+<!-- /SYNC:double-round-trip-review -->
+
+<!-- SYNC:sub-agent-selection -->
+
+> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
+> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+
+<!-- /SYNC:sub-agent-selection -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -822,6 +769,19 @@ Before reporting ANY work done:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -833,6 +793,7 @@ Before reporting ANY work done:
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `$sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -841,25 +802,35 @@ Before reporting ANY work done:
 
 <!-- SYNC:task-tracking-external-report:reminder -->
 
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

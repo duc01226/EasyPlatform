@@ -21,6 +21,33 @@ disable-model-invocation: true
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
 - NEVER skip mandatory workflow or skill gates.
 
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+> **[CRITICAL] Understand Domain First Gate:** The `/investigate` step is MANDATORY before `/tdd-spec` and `/integration-test`. You MUST read the handler/entity/event source to understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assertions written without reading the handler source are guaranteed to be wrong or smoke-only.
+
+Activate the `write-integration-test` workflow. Run `/workflow-start write-integration-test` with the user's prompt as context.
+
+**Steps:** /scout → /investigate → /tdd-spec → /why-review → /tdd-spec-review → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /docs-update → /watzup → /workflow-end
+
+> **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
+>
+> **`/scout`** — Find target command/handler files; locate existing integration tests in the same service for pattern matching. Output: list of target files + existing test examples.
+> **`/investigate`** — Read handler/entity/event source. Map: fields written, entities created/updated/deleted, event handlers fired, validation rules. Output: domain logic summary to use as assertion blueprint.
+> **`/tdd-spec`** — Write/update `TC-{FEATURE}-{NNN}` specs in feature doc Section 15. CREATE mode for new tests, UPDATE mode for changed behavior. Output: TC mapping list (TC code → test method name).
+> **`/tdd-spec-review`** — Validate spec quality: GIVEN/WHEN/THEN completeness, happy path + validation failure + auth paths covered, no collisions with existing TC codes.
+> **`/integration-test`** — Generate test files from TC specs using FROM-PROMPT or FROM-CHANGES mode. Non-negotiable: async polling/retry for all DB assertions, unique data generators for all test data, test-spec annotation on every test method (adapt annotation syntax to your framework).
+> **`/integration-test-review`** — 6-gate quality check (assertion value, data state, repeatability, domain logic, traceability, three-way sync). Mandatory fix loop + fresh sub-agent re-check. NEVER proceed with CRITICAL/HIGH issues outstanding.
+> **`/integration-test-verify`** — Run tests via `quickRunCommand` from `docs/project-config.json`. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.
+> **`/tdd-spec [direction=sync]`** — Sync the cross-module spec dashboard (`docs/specs/`). Update `IntegrationTest` fields with `{File}::{MethodName}` traceability links.
+> **`/docs-update`** — Update feature doc evidence fields, version history, and changelog if test coverage changed materially.
+> **`/watzup`** + **`/workflow-end`** — Summary report and close.
+
+---
+
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -80,12 +107,6 @@ disable-model-invocation: true
 
 <!-- /SYNC:task-tracking-external-report -->
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
-
-> **[CRITICAL] Understand Domain First Gate:** The `/investigate` step is MANDATORY before `/tdd-spec` and `/integration-test`. You MUST read the handler/entity/event source to understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assertions written without reading the handler source are guaranteed to be wrong or smoke-only.
-
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
@@ -138,32 +159,12 @@ disable-model-invocation: true
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `write-integration-test` workflow. Run `/workflow-start write-integration-test` with the user's prompt as context.
-
-**Steps:** /scout → /investigate → /tdd-spec → /why-review → /tdd-spec-review → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /docs-update → /watzup → /workflow-end
-
-> **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
->
-> **`/scout`** — Find target command/handler files; locate existing integration tests in the same service for pattern matching. Output: list of target files + existing test examples.
-> **`/investigate`** — Read handler/entity/event source. Map: fields written, entities created/updated/deleted, event handlers fired, validation rules. Output: domain logic summary to use as assertion blueprint.
-> **`/tdd-spec`** — Write/update `TC-{FEATURE}-{NNN}` specs in feature doc Section 15. CREATE mode for new tests, UPDATE mode for changed behavior. Output: TC mapping list (TC code → test method name).
-> **`/tdd-spec-review`** — Validate spec quality: GIVEN/WHEN/THEN completeness, happy path + validation failure + auth paths covered, no collisions with existing TC codes.
-> **`/integration-test`** — Generate test files from TC specs using FROM-PROMPT or FROM-CHANGES mode. Non-negotiable: async polling/retry for all DB assertions, unique data generators for all test data, test-spec annotation on every test method (adapt annotation syntax to your framework).
-> **`/integration-test-review`** — 6-gate quality check (assertion value, data state, repeatability, domain logic, traceability, three-way sync). Mandatory fix loop + fresh sub-agent re-check. NEVER proceed with CRITICAL/HIGH issues outstanding.
-> **`/integration-test-verify`** — Run tests via `quickRunCommand` from `docs/project-config.json`. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.
-> **`/tdd-spec [direction=sync]`** — Sync the cross-module spec dashboard (`docs/specs/`). Update `IntegrationTest` fields with `{File}::{MethodName}` traceability links.
-> **`/docs-update`** — Update feature doc evidence fields, version history, and changelog if test coverage changed materially.
-> **`/watzup`** + **`/workflow-end`** — Summary report and close.
-
----
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

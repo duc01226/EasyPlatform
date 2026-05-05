@@ -149,14 +149,27 @@ Read report. Apply fresh-eyes protocol:
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
 
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
+> **Output note:** This skill's primary output (`feature-docs-reference.md`) MUST include the actual directory tree — it is the source of truth for doc locations. This is intentionally different from spec output documents which suppress directory trees.
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid:
+>
+> **Verify AI-generated content against actual code.** AI hallucinates file paths and section headings. Glob to confirm existence before documenting.
+> **Trace full dependency chain after edits.** Always trace full chain.
+> **Surface ambiguity before coding.** NEVER pick silently.
+> **Check downstream references before deleting.** Map referencing files before removal.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
 > **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
 
 <!-- SYNC:scan-and-update-reference-doc -->
 
@@ -172,27 +185,17 @@ Read report. Apply fresh-eyes protocol:
 
 <!-- /SYNC:scan-and-update-reference-doc -->
 
-> **Output note:** This skill's primary output (`feature-docs-reference.md`) MUST include the actual directory tree — it is the source of truth for doc locations. This is intentionally different from spec output documents which suppress directory trees.
-
 <!-- SYNC:scan-and-update-reference-doc:reminder -->
 
 - **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:ai-mistake-prevention -->
+    <!-- /SYNC:scan-and-update-reference-doc:reminder -->
 
-> **AI Mistake Prevention** — Failure modes to avoid:
->
-> **Verify AI-generated content against actual code.** AI hallucinates file paths and section headings. Glob to confirm existence before documenting.
-> **Trace full dependency chain after edits.** Always trace full chain.
-> **Surface ambiguity before coding.** NEVER pick silently.
-> **Check downstream references before deleting.** Map referencing files before removal.
-
-<!-- /SYNC:ai-mistake-prevention -->
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

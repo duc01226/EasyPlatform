@@ -23,6 +23,22 @@ disable-model-invocation: true
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `investigation` workflow. Run `/workflow-start investigation` with the user's prompt as context.
+
+> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
+
+**Steps:** /scout → /investigate → /workflow-end
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /workflow-end
+
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -37,10 +53,6 @@ disable-model-invocation: true
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -110,18 +122,6 @@ disable-model-invocation: true
 > Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
 
 <!-- /SYNC:subagent-return-contract -->
-
-Activate the `investigation` workflow. Run `/workflow-start investigation` with the user's prompt as context.
-
-> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
-
-**Steps:** /scout → /investigate → /workflow-end
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /workflow-end
 
 <!-- SYNC:nested-task-creation:reminder -->
 

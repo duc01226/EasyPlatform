@@ -321,6 +321,10 @@ Optional feature that builds a knowledge graph of your codebase for graph-blast-
 
 ---
 
+# easy-claude-help
+
+[Utilities] Configuration guide for the easy-claude framework — explain available settings, guide user/AI through configuring `.claude/.ck.json`.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -345,15 +349,12 @@ Optional feature that builds a knowledge graph of your codebase for graph-blast-
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# easy-claude-help
-
-[Utilities] Configuration guide for the easy-claude framework — explain available settings, guide user/AI through configuring `.claude/.ck.json`.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

@@ -26,21 +26,6 @@ version: 2.2.0
 - MUST ATTENTION run at least ONE graph command on key files before concluding
 - MUST ATTENTION Plan ToDo Task to READ `project-structure-reference.md` (if not found, search: project documentation, coding standards, architecture docs)
 
-<!-- SYNC:root-cause-debugging -->
-
-> **Root Cause Debugging** — Systematic approach, never guess-and-check.
->
-> 1. **Reproduce** — Confirm issue exists with evidence (error message, stack trace, screenshot)
-> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
-> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
-> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
-> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
-> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
->
-> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
-
-<!-- /SYNC:root-cause-debugging -->
-
 ## Phase 0: Scope Classification
 
 **Classify before acting** — route to correct depth:
@@ -81,9 +66,7 @@ Deep scope: MUST ATTENTION write to `.ai/workspace/analysis/[feature]-investigat
     ```
     Graph reveals complete dependency network (callers, importers, tests, inheritance) grep alone misses. Also run `/graph-connect-api` for frontend-to-backend API mapping.
 3. **Knowledge Graph** — Read + analyze each file (from grep + graph results). Document purpose, symbols, dependencies, data flow. Batch in groups of 10; update progress after each batch. Per-file template:
-    <!-- SYNC:knowledge-graph-template -->
-    > **Knowledge Graph Template** — For each analyzed file, document: filePath, type (Entity/Command/Query/EventHandler/Controller/Consumer/Component/Store/Service), architecturalPattern, content summary, symbols, dependencies, businessContext, referenceFiles, relevanceScore (1-10), evidenceLevel (verified/inferred), frameworkAbstractions, serviceContext. Investigation fields: entryPoints, outputPoints, dataTransformations, errorScenarios. Consumer/bus fields: messageBusMessage, messageBusProducers, crossServiceIntegration. Frontend fields: componentHierarchy, stateManagementStores, dataBindingPatterns, validationStrategies.
-    <!-- /SYNC:knowledge-graph-template -->
+
 4. **Flow Mapping** — Trace entry points through processing pipeline to exit points. Map data transformations, persistence, side effects, cross-service boundaries.
 5. **Analysis** — Extract business rules, validation, authorization, error handling. Document happy path AND edge cases.
 6. **Synthesis** — Executive summary answering original question. Key files, patterns used, text-based flow diagrams.
@@ -216,6 +199,31 @@ Find working reference → compare implementations → identify differences → 
 
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (when task involves business entities/models). (read directly when relevant; do not rely on hook-injected conversation text)
+
+<!-- SYNC:knowledge-graph-template -->
+
+    > **Knowledge Graph Template** — For each analyzed file, document: filePath, type (Entity/Command/Query/EventHandler/Controller/Consumer/Component/Store/Service), architecturalPattern, content summary, symbols, dependencies, businessContext, referenceFiles, relevanceScore (1-10), evidenceLevel (verified/inferred), frameworkAbstractions, serviceContext. Investigation fields: entryPoints, outputPoints, dataTransformations, errorScenarios. Consumer/bus fields: messageBusMessage, messageBusProducers, crossServiceIntegration. Frontend fields: componentHierarchy, stateManagementStores, dataBindingPatterns, validationStrategies.
+
+<!-- /SYNC:knowledge-graph-template -->
+
+<!-- SYNC:root-cause-debugging -->
+
+> **Root Cause Debugging** — Systematic approach, never guess-and-check.
+>
+> 1. **Reproduce** — Confirm issue exists with evidence (error message, stack trace, screenshot)
+> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
+> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
+> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
+> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
+> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
+>
+> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
+
+<!-- /SYNC:root-cause-debugging -->
+
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -257,8 +265,6 @@ Find working reference → compare implementations → identify differences → 
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -306,6 +312,7 @@ Find working reference → compare implementations → identify differences → 
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
 <!-- /SYNC:understand-code-first -->
+
 <!-- SYNC:graph-assisted-investigation -->
 
 > **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
@@ -368,26 +375,6 @@ Find working reference → compare implementations → identify differences → 
 
 <!-- /SYNC:fix-layer-accountability -->
 
-- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (when task involves business entities/models). (read directly when relevant; do not rely on hook-injected conversation text)
-
-<!-- SYNC:understand-code-first:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
-    <!-- SYNC:evidence-based-reasoning:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
-    <!-- SYNC:knowledge-graph-template:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** document per-file: type, pattern, symbols, dependencies, relevanceScore, evidenceLevel.
-    <!-- /SYNC:knowledge-graph-template:reminder -->
-    <!-- SYNC:fix-layer-accountability:reminder -->
-
-**IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
-
-<!-- /SYNC:fix-layer-accountability:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -404,6 +391,33 @@ Find working reference → compare implementations → identify differences → 
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+
+<!-- SYNC:knowledge-graph-template:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** document per-file: type, pattern, symbols, dependencies, relevanceScore, evidenceLevel.
+    <!-- /SYNC:knowledge-graph-template:reminder -->
+
+<!-- SYNC:fix-layer-accountability:reminder -->
+
+**IMPORTANT MUST ATTENTION** trace full data flow and fix at the owning layer, not the crash site. Audit all access sites before adding `?.`.
+
+<!-- /SYNC:fix-layer-accountability:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -415,6 +429,7 @@ Find working reference → compare implementations → identify differences → 
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

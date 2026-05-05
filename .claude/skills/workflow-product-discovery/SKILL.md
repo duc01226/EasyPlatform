@@ -144,6 +144,20 @@ At `/workflow-end`, AI presents:
 
 **IMPORTANT MANDATORY Steps:** /brainstorm -> /web-research -> /domain-analysis -> /why-review -> /idea -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /review-changes -> /prioritize -> /watzup -> /workflow-end
 
+**IMPORTANT MANDATORY Steps:** /brainstorm -> /web-research -> /domain-analysis -> /why-review -> /idea -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /review-changes -> /prioritize -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `product-discovery` workflow. Run `/workflow-start product-discovery` with the user's prompt as context.
+
+**Steps:**
+/brainstorm → /web-research → /domain-analysis → /why-review
+→ **[TASK DECOMPOSITION GATE]** Create TaskCreate for every opportunity × step BEFORE looping
+→ [**loop per opportunity**] /idea → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup
+→ /review-changes → /prioritize → /watzup → /workflow-end
+
+> **Scale awareness:** This workflow can generate 8 opportunities × 8 steps = 64 artifact units plus a ranked backlog. Use the Task Decomposition Gate and incremental-write patterns to prevent context overrun. For 6+ opportunities, use sub-agent parallel processing (one sub-agent per opportunity, main context assembles at /prioritize).
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -175,10 +189,6 @@ At `/workflow-end`, AI presents:
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /brainstorm -> /web-research -> /domain-analysis -> /why-review -> /idea -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /review-changes -> /prioritize -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -232,21 +242,12 @@ At `/workflow-end`, AI presents:
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `product-discovery` workflow. Run `/workflow-start product-discovery` with the user's prompt as context.
-
-**Steps:**
-/brainstorm → /web-research → /domain-analysis → /why-review
-→ **[TASK DECOMPOSITION GATE]** Create TaskCreate for every opportunity × step BEFORE looping
-→ [**loop per opportunity**] /idea → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup
-→ /review-changes → /prioritize → /watzup → /workflow-end
-
-> **Scale awareness:** This workflow can generate 8 opportunities × 8 steps = 64 artifact units plus a ranked backlog. Use the Task Decomposition Gate and incremental-write patterns to prevent context overrun. For 6+ opportunities, use sub-agent parallel processing (one sub-agent per opportunity, main context assembles at /prioritize).
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

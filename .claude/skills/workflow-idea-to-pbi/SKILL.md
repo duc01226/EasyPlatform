@@ -170,6 +170,23 @@ Purpose:
 
 **IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /handoff -> /refine -> /why-review -> /refine-review -> /why-review -> /story -> /why-review -> /story-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
 
+**IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /handoff -> /refine -> /why-review -> /refine-review -> /why-review -> /story -> /why-review -> /story-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
+
+**Steps:**
+/idea → /review-artifact (conditional) → /handoff (conditional) → /refine → /refine-review → /why-review → /story → /story-review → /tdd-spec → /tdd-spec-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /docs-update → /watzup → /workflow-end
+
+> **Conditional steps:**
+>
+> - `/review-artifact` — skip if no existing artifact/ticket/PRD; proceed straight to `/refine`
+> - `/handoff` — skip if no formal PO→BA handoff needed
+> - `/pbi-mockup` — skip if PBI is backend-only (no UI changes)
+
+---
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -201,10 +218,6 @@ Purpose:
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /handoff -> /refine -> /why-review -> /refine-review -> /why-review -> /story -> /why-review -> /story-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -258,24 +271,12 @@ Purpose:
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
-
-**Steps:**
-/idea → /review-artifact (conditional) → /handoff (conditional) → /refine → /refine-review → /why-review → /story → /story-review → /tdd-spec → /tdd-spec-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /docs-update → /watzup → /workflow-end
-
-> **Conditional steps:**
->
-> - `/review-artifact` — skip if no existing artifact/ticket/PRD; proceed straight to `/refine`
-> - `/handoff` — skip if no formal PO→BA handoff needed
-> - `/pbi-mockup` — skip if PBI is backend-only (no UI changes)
-
----
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

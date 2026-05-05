@@ -50,37 +50,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:evidence-based-reasoning -->
-
-> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
->
-> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
-> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
-> 3. Cross-service validation required for architectural changes
-> 4. "I don't have enough evidence" is valid and expected output
->
-> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
->
-> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
-> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
-
-<!-- /SYNC:evidence-based-reasoning -->
-
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (Codex has no hook injection — open this file directly before proceeding)
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
 ## Quick Summary
 
 **Goal:** Perform security review against OWASP Top 10 and project authorization patterns.
@@ -126,6 +95,53 @@ Activate `arch-security-review` skill and follow its workflow.
 3. Issues found → fix → Round 3 with NEW fresh `security-auditor` sub-agent
 4. Max 3 rounds → escalate to user via a direct user question
 5. **Clean Round 1 ENDS the review.** When issues are found, fix and spawn a fresh sub-agent for Round 2 — main agent rationalizes own work, fresh eyes catch what was dismissed.
+
+> Run `python .claude/scripts/code_graph query callers_of <function> --json` to trace all entry points into sensitive functions.
+
+## Graph Intelligence (RECOMMENDED if graph.db exists)
+
+If `.code-graph/graph.db` exists, enhance analysis with structural queries:
+
+- **Trace data flow to sensitive functions:** `python .claude/scripts/code_graph query callers_of <function> --json`
+- **What does this function call?** `python .claude/scripts/code_graph query callees_of <function> --json`
+- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+
+> See `<!-- SYNC:graph-assisted-investigation -->` block above for graph query patterns.
+
+### Graph-Trace for Data Flow Analysis
+
+When graph DB is available, use `trace` to analyze data flow paths for security review:
+
+- `python .claude/scripts/code_graph trace <entry-point> --direction downstream --json` — trace data flow from input to all consumers (find where untrusted data travels)
+- `python .claude/scripts/code_graph trace <sensitive-file> --direction upstream --json` — find all entry points that reach sensitive code
+- Trace reveals cross-service MESSAGE_BUS flows where data crosses trust boundaries
+
+---
+
+## Workflow Recommendation
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+>
+> 1. **Activate `quality-audit` workflow** (Recommended) — security → sre-review → test
+> 2. **Execute `$security` directly** — run this skill standalone
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"$sre-review (Recommended)"** — Production readiness review
+- **"$performance"** — Analyze performance next
+- **"Skip, continue manually"** — user decides
+
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 <!-- SYNC:sub-agent-selection -->
 
@@ -199,66 +215,29 @@ Activate `arch-security-review` skill and follow its workflow.
 
 <!-- /SYNC:subagent-return-contract -->
 
-> Run `python .claude/scripts/code_graph query callers_of <function> --json` to trace all entry points into sensitive functions.
+<!-- SYNC:critical-thinking-mindset -->
 
-## Graph Intelligence (RECOMMENDED if graph.db exists)
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
-If `.code-graph/graph.db` exists, enhance analysis with structural queries:
+<!-- /SYNC:critical-thinking-mindset -->
 
-- **Trace data flow to sensitive functions:** `python .claude/scripts/code_graph query callers_of <function> --json`
-- **What does this function call?** `python .claude/scripts/code_graph query callees_of <function> --json`
-- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+<!-- SYNC:evidence-based-reasoning -->
 
-> See `<!-- SYNC:graph-assisted-investigation -->` block above for graph query patterns.
-
-### Graph-Trace for Data Flow Analysis
-
-When graph DB is available, use `trace` to analyze data flow paths for security review:
-
-- `python .claude/scripts/code_graph trace <entry-point> --direction downstream --json` — trace data flow from input to all consumers (find where untrusted data travels)
-- `python .claude/scripts/code_graph trace <sensitive-file> --direction upstream --json` — find all entry points that reach sensitive code
-- Trace reveals cross-service MESSAGE_BUS flows where data crosses trust boundaries
-
----
-
-## Workflow Recommendation
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
 >
-> 1. **Activate `quality-audit` workflow** (Recommended) — security → sre-review → test
-> 2. **Execute `$security` directly** — run this skill standalone
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
 
----
+<!-- /SYNC:evidence-based-reasoning -->
 
-## Next Steps
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"$sre-review (Recommended)"** — Production readiness review
-- **"$performance"** — Analyze performance next
-- **"Skip, continue manually"** — user decides
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
-<!-- SYNC:evidence-based-reasoning:reminder -->
-
-**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-
-<!-- /SYNC:evidence-based-reasoning:reminder -->
-<!-- SYNC:graph-assisted-investigation:reminder -->
-
-**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
-
-<!-- /SYNC:graph-assisted-investigation:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -275,16 +254,41 @@ When graph DB is available, use `trace` to analyze data flow paths for security 
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → trace → verify.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

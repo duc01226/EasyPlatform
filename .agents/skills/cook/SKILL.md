@@ -49,81 +49,374 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
+## Quick Summary
+
+**Goal:** Implement a feature step-by-step with research, planning, execution, and verification.
+
+**Workflow:**
+
+1. **Question** — Clarify requirements via ask the user directly; challenge assumptions
+2. **Research** — Use researcher subagents in parallel; scout codebase for patterns
+3. **Plan** — Create implementation plan, get user approval
+4. **Implement** — Execute with skill activation, code-simplifier, review-changes
+
+**Key Rules:**
+
+- Parent skill for all cook-\* variants (cook-auto, cook-fast, cook-hard, cook-parallel)
+- Write research findings to `.ai/workspace/analysis/` for context preservation
+- Always activate relevant skills from catalog during implementation
+- Break work into small todo tasks; add final review task
+
+### Frontend/UI Context (if applicable)
+
+> When this task involves frontend or UI changes,
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
+<HARD-GATE>
+Do NOT start coding until you have a plan (approved or self-created) and have searched
+the codebase for 3+ similar implementations. This applies to EVERY feature regardless
+of perceived simplicity. "Simple" features have hidden complexity.
+</HARD-GATE>
+
+## Pre-Implementation Granularity Gate (MANDATORY)
+
+<HARD-GATE>
+
+If ANY check fails → STOP. Ask user: "Phase needs more detail before implementation. Refine with $plan-hard? [Y/n]"
+DO NOT implement a phase that contains planning verbs, unnamed files, or unresolved decisions.
+</HARD-GATE>
+
+## Per-Phase Quality Cycle (MANDATORY)
+
+<HARD-GATE>
+
+Each plan phase = one quality cycle (plan→implement→review→fix→verify).
+DO NOT start next phase until current phase passes VERIFY.
+After each phase: re-assess remaining phases for scope changes.
+</HARD-GATE>
+
+## TC Satisfaction Verification (Per Phase)
+
+After implementing each phase, before marking it complete:
+
+1. Read the phase's `## Test Specifications` section
+2. For each mapped TC: verify evidence exists (file:line, not TBD), grep-verify the file
+3. If any TC lacks evidence → phase is NOT complete
+4. Update phase file's TC table with actual evidence references
+
+## Greenfield Mode
+
+> **Auto-detected** when no code directories (`src/`, `app/`, `lib/`, `packages/`) or manifests (`package.json`/`*.sln`/`go.mod`) exist.
+
+1. **Approved plan exists** in `plans/` → scaffold from plan
+2. **No plan** → redirect: "Run $plan-hard first to create a greenfield project plan."
+3. Generate folder layout, starter files, build config, CI skeleton, CLAUDE.md
+4. Skip codebase pattern search. After scaffolding, run `$project-config`.
+
+## Variant Decision Guide
+
+| If implementation needs...  | Use                   | Why                                     |
+| --------------------------- | --------------------- | --------------------------------------- |
+| Quick, straightforward      | `$cook-fast`          | Skip deep research, minimal planning    |
+| Complex, multi-layer        | `$cook-hard`          | Maximum verification, subagent research |
+| Backend + frontend parallel | `$cook-parallel`      | Parallel fullstack-developer agents     |
+| Full autonomous execution   | `$cook-auto`          | Minimal user interaction                |
+| Fast autonomous             | `$cook-auto-fast`     | Auto + skip deep research               |
+| Parallel autonomous         | `$cook-auto-parallel` | Auto + parallel agents                  |
+| General/interactive         | `$cook` (this skill)  | Step-by-step with user collaboration    |
+
+Think harder to plan & start working on these tasks:
+<tasks>$ARGUMENTS</tasks>
+
+---
+
+## Your Approach
+
+- MUST ATTENTION use a direct user question to clarify — NEVER assume requirements
+- MUST ATTENTION be brutally honest — flag unrealistic/over-engineered approaches directly
+- MUST ATTENTION present 2-3 alternatives with pros/cons for non-trivial decisions
+- MUST ATTENTION challenge initial approach — the best solution often differs from first instinct
+
+---
+
+## Workflow
+
+**IMPORTANT:** Analyze the skills catalog at `.claude/skills/*` and activate needed skills during the process.
+
+### Research
+
+- Parallel `researcher` subagents. Reports <=150 lines with citations.
+- `$scout-ext` (preferred) or `$scout` (fallback) for codebase search.
+- MUST ATTENTION write findings to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
+
+### Plan
+
+- `planner` subagent with progressive disclosure: `plan.md` (<=80 lines) + `phase-XX-name.md` per phase.
+- Each phase: Context, Overview, Requirements, Architecture, Related Files, Steps, TCs, Success Criteria, Risks, Next Steps.
+
+### Implementation
+
+- `$code` to implement step by step. `$interface-design` for product UIs. `$frontend-design` for marketing/creative UIs.
+- `ui-ux-designer` subagent for frontend per `./docs/design-guidelines.md`.
+- MUST ATTENTION run type checking and compile after each change.
+
+**Subagent Discipline:** Paste full task text (NEVER make subagent read plan file). Require "ask questions before starting". Require self-review before reporting.
+
+### Batch Checkpoint (Large Plans)
+
+For plans with 10+ tasks, execute in batches with human review:
+
+1. **Execute batch** — Complete next 3 tasks (or user-specified batch size)
+2. **Report** — Show what was implemented, verification output, any concerns
+3. **Wait** — Say "Ready for feedback" and STOP. Do NOT continue automatically.
+4. **Apply feedback** — Incorporate changes, then execute next batch
+5. **Repeat** until all tasks complete
+
+<HARD-GATE>
+For plans with 10+ tasks, do NOT execute all tasks continuously without checkpoint.
+Stop after every batch for human review. This prevents runaway execution where early
+mistakes compound through later tasks.
+</HARD-GATE>
+
+### Testing
+
+- Real tests: happy path, edge cases, error cases. NEVER fake data/mocks just to pass build.
+- `tester` subagent → failures → `debugger` subagent → fix → repeat until green.
+- **MANDATORY:** After writing tests, MUST run them and verify they pass. If tests fail, diagnose root cause: (a) test code has wrong setup/assertions → fix test, or (b) service code has actual bug → report as finding. Never mark test task as done until tests actually pass.
+
+### Code Review
+
+(1) `spec-compliance-reviewer` first, (2) `code-reviewer` after spec passes.
+
+- Critical issues → fix → re-run `tester`. Report summary to user for approval.
+
+### PM, Docs & Final Report
+
+- **Approved:** Parallel `project-manager` + `docs-manager` subagents. **Rejected:** Ask issues, fix, repeat.
+- Final: summary of changes + next steps. Ask about commit/push via `git-manager`.
+
+## Red Flags — STOP
+
+| Evasion thought                     | Correct action                                         |
+| ----------------------------------- | ------------------------------------------------------ |
+| "Too simple for a plan"             | Plan anyway. Hidden complexity.                        |
+| "I already know how"                | Check codebase patterns first. NEVER assume.           |
+| "Code first, test later"            | Write test first. Or verify after EACH change.         |
+| "Plan is close enough"              | Follow exactly or raise concerns. Drift compounds.     |
+| "Commit after everything"           | Commit after each task. Frequent commits prevent loss. |
+| "This refactor will improve things" | Only refactor what's in scope. YAGNI.                  |
+| "Review is obvious, skip it"        | NEVER skip. Reviews catch what authors miss.           |
+
+> After implementing, run `python .claude/scripts/code_graph connections <file> --json` on modified files to verify no related files need updates.
+
+### Graph-Trace Before Implementation
+
+MUST ATTENTION run BEFORE writing code when graph.db exists:
+
+- `python .claude/scripts/code_graph trace <file-to-modify> --direction both --json` — callers + triggers
+- `python .claude/scripts/code_graph trace <file-to-modify> --direction downstream --json` — all downstream consumers
+- Prevents breaking implicit dependencies (bus consumers, event handlers) invisible in the file itself.
+
+---
+
+## Workflow Recommendation
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+>
+> 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → sre-review → test → docs
+> 2. **Execute `$cook` directly** — run this skill standalone
+
+---
+
+## Next Steps (Standalone: MUST ATTENTION ask user via a direct user question. Skip if inside workflow.)
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (feature implemented). This ensures review, testing, and docs steps aren't skipped.
+- **"$code-simplifier"** — Simplify and clean up implementation
+- **"$integration-test"** — Generate/update integration tests from test specs
+- **"$workflow-review-changes"** — Review changes before commit
+- **"Skip, continue manually"** — user decides
+
+## Standalone Review Gate (Non-Workflow Only)
+
+> **MANDATORY IMPORTANT MUST ATTENTION:** If this skill is called **outside a workflow** (standalone `$cook`), you MUST ATTENTION create a task tracking todo task for `$review-changes` as the **last task** in your task list. This ensures all changes are reviewed before commit even without a workflow enforcing it.
+>
+> If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — the workflow sequence handles `$review-changes` at the appropriate step.
+
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+- `docs/specs/` — Test specifications by module (read existing TCs; generate/update test specs via `$tdd-spec` after implementation)
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:sub-agent-selection -->
+
+> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
+> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+
+<!-- /SYNC:sub-agent-selection -->
+
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST ATTENTION READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
+
+<!-- SYNC:plan-granularity -->
+
+> **Plan Granularity** — Every phase must pass 5-point check before implementation:
+>
+> 1. Lists exact file paths to modify (not generic "implement X")
+> 2. No planning verbs (research, investigate, analyze, determine, figure out)
+> 3. Steps ≤30min each, phase total ≤3h
+> 4. ≤5 files per phase
+> 5. No open decisions or TBDs in approach
+>
+> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
+> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
+
+<!-- /SYNC:plan-granularity -->
+
+<!-- SYNC:iterative-phase-quality -->
+
+> **Iterative Phase Quality** — Score complexity BEFORE planning.
+>
+> **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
+> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
+>
+> - ≤5 files modified
+> - ≤3h effort
+> - Follows cycle: plan → implement → review → fix → verify
+> - Do NOT start Phase N+1 until Phase N passes VERIFY
+>
+> **Phase success = all TCs pass + code-reviewer agent approves + no CRITICAL findings.**
+
+<!-- /SYNC:iterative-phase-quality -->
+
+<!-- SYNC:two-stage-task-review -->
+
+> **Two-Stage Task Review** — Both stages MUST ATTENTION complete before marking task done.
+>
+> **Stage 1: Self-review** — Immediately after implementation:
+>
+> - Requirements met? No regressions? Code quality acceptable?
+>
+> **Stage 2: Cross-review** — Via `code-reviewer` subagent:
+>
+> - Catches blind spots, convention drift, missed edge cases
+>
+> **NEVER skip Stage 2.** Self-review alone misses 40%+ of issues.
+
+<!-- /SYNC:two-stage-task-review -->
+
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
 <!-- SYNC:nested-task-creation -->
 
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
 >
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
 >
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
 
 <!-- SYNC:project-reference-docs-guide -->
 
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
 >
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
 <!-- SYNC:task-tracking-external-report -->
 
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
 >
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
 >
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -359,9 +652,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:review-protocol-injection -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (Codex has no hook injection — open this file directly before proceeding)
-- `docs/specs/` — Test specifications by module (read existing TCs; generate/update test specs via `$tdd-spec` after implementation)
-
 <!-- SYNC:plan-quality -->
 
 > **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
@@ -376,8 +666,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `$tdd-spec` fills after.
 
 <!-- /SYNC:plan-quality -->
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 <!-- SYNC:rationalization-prevention -->
 
@@ -395,307 +683,73 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:rationalization-prevention -->
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+<!-- SYNC:plan-granularity:reminder -->
 
-## Quick Summary
+- **MANDATORY IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
+    <!-- /SYNC:plan-granularity:reminder -->
 
-**Goal:** Implement a feature step-by-step with research, planning, execution, and verification.
+<!-- SYNC:understand-code-first:reminder -->
 
-**Workflow:**
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
 
-1. **Question** — Clarify requirements via ask the user directly; challenge assumptions
-2. **Research** — Use researcher subagents in parallel; scout codebase for patterns
-3. **Plan** — Create implementation plan, get user approval
-4. **Implement** — Execute with skill activation, code-simplifier, review-changes
+<!-- SYNC:plan-quality:reminder -->
 
-**Key Rules:**
+- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call the current task list before creating new tasks.
+    <!-- /SYNC:plan-quality:reminder -->
 
-- Parent skill for all cook-\* variants (cook-auto, cook-fast, cook-hard, cook-parallel)
-- Write research findings to `.ai/workspace/analysis/` for context preservation
-- Always activate relevant skills from catalog during implementation
-- Break work into small todo tasks; add final review task
+<!-- SYNC:rationalization-prevention:reminder -->
 
-<!-- SYNC:sub-agent-selection -->
+- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+    <!-- /SYNC:rationalization-prevention:reminder -->
 
-> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
-> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+<!-- SYNC:ui-system-context:reminder -->
 
-<!-- /SYNC:sub-agent-selection -->
+- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+    <!-- /SYNC:ui-system-context:reminder -->
 
-### Frontend/UI Context (if applicable)
+<!-- SYNC:iterative-phase-quality:reminder -->
 
-> When this task involves frontend or UI changes,
+- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+    <!-- /SYNC:iterative-phase-quality:reminder -->
 
-<!-- SYNC:ui-system-context -->
+<!-- SYNC:graph-assisted-investigation:reminder -->
 
-> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
->
-> **MUST ATTENTION READ before implementing:**
->
-> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
-> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
-> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
->
-> Reference `docs/project-config.json` for project-specific paths.
+- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->
 
-<!-- /SYNC:ui-system-context -->
+<!-- SYNC:critical-thinking-mindset:reminder -->
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
-- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
-- Design system tokens: `docs/project-reference/design-system/README.md`
+**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
-<HARD-GATE>
-Do NOT start coding until you have a plan (approved or self-created) and have searched
-the codebase for 3+ similar implementations. This applies to EVERY feature regardless
-of perceived simplicity. "Simple" features have hidden complexity.
-</HARD-GATE>
+<!-- /SYNC:critical-thinking-mindset:reminder -->
 
-## Pre-Implementation Granularity Gate (MANDATORY)
+<!-- SYNC:ai-mistake-prevention:reminder -->
 
-<HARD-GATE>
+**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
-<!-- SYNC:plan-granularity -->
+<!-- /SYNC:ai-mistake-prevention:reminder -->
 
-> **Plan Granularity** — Every phase must pass 5-point check before implementation:
->
-> 1. Lists exact file paths to modify (not generic "implement X")
-> 2. No planning verbs (research, investigate, analyze, determine, figure out)
-> 3. Steps ≤30min each, phase total ≤3h
-> 4. ≤5 files per phase
-> 5. No open decisions or TBDs in approach
->
-> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
-> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
+<!-- SYNC:task-tracking-external-report:reminder -->
 
-<!-- /SYNC:plan-granularity -->
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
-If ANY check fails → STOP. Ask user: "Phase needs more detail before implementation. Refine with $plan-hard? [Y/n]"
-DO NOT implement a phase that contains planning verbs, unnamed files, or unresolved decisions.
-</HARD-GATE>
+<!-- /SYNC:task-tracking-external-report:reminder -->
 
-## Per-Phase Quality Cycle (MANDATORY)
+<!-- SYNC:project-reference-docs-guide:reminder -->
 
-<HARD-GATE>
-<!-- SYNC:iterative-phase-quality -->
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
-> **Iterative Phase Quality** — Score complexity BEFORE planning.
->
-> **Complexity signals:** >5 files +2, cross-service +3, new pattern +2, DB migration +2
-> **Score >=6 →** MUST ATTENTION decompose into phases. Each phase:
->
-> - ≤5 files modified
-> - ≤3h effort
-> - Follows cycle: plan → implement → review → fix → verify
-> - Do NOT start Phase N+1 until Phase N passes VERIFY
->
-> **Phase success = all TCs pass + code-reviewer agent approves + no CRITICAL findings.**
+<!-- /SYNC:project-reference-docs-guide:reminder -->
 
-<!-- /SYNC:iterative-phase-quality -->
+<!-- SYNC:nested-task-creation:reminder -->
 
-Each plan phase = one quality cycle (plan→implement→review→fix→verify).
-DO NOT start next phase until current phase passes VERIFY.
-After each phase: re-assess remaining phases for scope changes.
-</HARD-GATE>
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
-## TC Satisfaction Verification (Per Phase)
-
-After implementing each phase, before marking it complete:
-
-1. Read the phase's `## Test Specifications` section
-2. For each mapped TC: verify evidence exists (file:line, not TBD), grep-verify the file
-3. If any TC lacks evidence → phase is NOT complete
-4. Update phase file's TC table with actual evidence references
-
-## Greenfield Mode
-
-> **Auto-detected** when no code directories (`src/`, `app/`, `lib/`, `packages/`) or manifests (`package.json`/`*.sln`/`go.mod`) exist.
-
-1. **Approved plan exists** in `plans/` → scaffold from plan
-2. **No plan** → redirect: "Run $plan-hard first to create a greenfield project plan."
-3. Generate folder layout, starter files, build config, CI skeleton, CLAUDE.md
-4. Skip codebase pattern search. After scaffolding, run `$project-config`.
-
-## Variant Decision Guide
-
-| If implementation needs...  | Use                   | Why                                     |
-| --------------------------- | --------------------- | --------------------------------------- |
-| Quick, straightforward      | `$cook-fast`          | Skip deep research, minimal planning    |
-| Complex, multi-layer        | `$cook-hard`          | Maximum verification, subagent research |
-| Backend + frontend parallel | `$cook-parallel`      | Parallel fullstack-developer agents     |
-| Full autonomous execution   | `$cook-auto`          | Minimal user interaction                |
-| Fast autonomous             | `$cook-auto-fast`     | Auto + skip deep research               |
-| Parallel autonomous         | `$cook-auto-parallel` | Auto + parallel agents                  |
-| General/interactive         | `$cook` (this skill)  | Step-by-step with user collaboration    |
-
-Think harder to plan & start working on these tasks:
-<tasks>$ARGUMENTS</tasks>
-
----
-
-## Your Approach
-
-- MUST ATTENTION use a direct user question to clarify — NEVER assume requirements
-- MUST ATTENTION be brutally honest — flag unrealistic/over-engineered approaches directly
-- MUST ATTENTION present 2-3 alternatives with pros/cons for non-trivial decisions
-- MUST ATTENTION challenge initial approach — the best solution often differs from first instinct
-
----
-
-## Workflow
-
-**IMPORTANT:** Analyze the skills catalog at `.claude/skills/*` and activate needed skills during the process.
-
-### Research
-
-- Parallel `researcher` subagents. Reports <=150 lines with citations.
-- `$scout-ext` (preferred) or `$scout` (fallback) for codebase search.
-- MUST ATTENTION write findings to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
-
-### Plan
-
-- `planner` subagent with progressive disclosure: `plan.md` (<=80 lines) + `phase-XX-name.md` per phase.
-- Each phase: Context, Overview, Requirements, Architecture, Related Files, Steps, TCs, Success Criteria, Risks, Next Steps.
-
-### Implementation
-
-- `$code` to implement step by step. `$interface-design` for product UIs. `$frontend-design` for marketing/creative UIs.
-- `ui-ux-designer` subagent for frontend per `./docs/design-guidelines.md`.
-- MUST ATTENTION run type checking and compile after each change.
-
-**Subagent Discipline:** Paste full task text (NEVER make subagent read plan file). Require "ask questions before starting". Require self-review before reporting.
-
-### Batch Checkpoint (Large Plans)
-
-For plans with 10+ tasks, execute in batches with human review:
-
-1. **Execute batch** — Complete next 3 tasks (or user-specified batch size)
-2. **Report** — Show what was implemented, verification output, any concerns
-3. **Wait** — Say "Ready for feedback" and STOP. Do NOT continue automatically.
-4. **Apply feedback** — Incorporate changes, then execute next batch
-5. **Repeat** until all tasks complete
-
-<HARD-GATE>
-For plans with 10+ tasks, do NOT execute all tasks continuously without checkpoint.
-Stop after every batch for human review. This prevents runaway execution where early
-mistakes compound through later tasks.
-</HARD-GATE>
-
-### Testing
-
-- Real tests: happy path, edge cases, error cases. NEVER fake data/mocks just to pass build.
-- `tester` subagent → failures → `debugger` subagent → fix → repeat until green.
-- **MANDATORY:** After writing tests, MUST run them and verify they pass. If tests fail, diagnose root cause: (a) test code has wrong setup/assertions → fix test, or (b) service code has actual bug → report as finding. Never mark test task as done until tests actually pass.
-
-### Code Review
-
-<!-- SYNC:two-stage-task-review -->
-
-> **Two-Stage Task Review** — Both stages MUST ATTENTION complete before marking task done.
->
-> **Stage 1: Self-review** — Immediately after implementation:
->
-> - Requirements met? No regressions? Code quality acceptable?
->
-> **Stage 2: Cross-review** — Via `code-reviewer` subagent:
->
-> - Catches blind spots, convention drift, missed edge cases
->
-> **NEVER skip Stage 2.** Self-review alone misses 40%+ of issues.
-
-<!-- /SYNC:two-stage-task-review -->
-
-(1) `spec-compliance-reviewer` first, (2) `code-reviewer` after spec passes.
-
-- Critical issues → fix → re-run `tester`. Report summary to user for approval.
-
-### PM, Docs & Final Report
-
-- **Approved:** Parallel `project-manager` + `docs-manager` subagents. **Rejected:** Ask issues, fix, repeat.
-- Final: summary of changes + next steps. Ask about commit/push via `git-manager`.
-
-## Red Flags — STOP
-
-| Evasion thought                     | Correct action                                         |
-| ----------------------------------- | ------------------------------------------------------ |
-| "Too simple for a plan"             | Plan anyway. Hidden complexity.                        |
-| "I already know how"                | Check codebase patterns first. NEVER assume.           |
-| "Code first, test later"            | Write test first. Or verify after EACH change.         |
-| "Plan is close enough"              | Follow exactly or raise concerns. Drift compounds.     |
-| "Commit after everything"           | Commit after each task. Frequent commits prevent loss. |
-| "This refactor will improve things" | Only refactor what's in scope. YAGNI.                  |
-| "Review is obvious, skip it"        | NEVER skip. Reviews catch what authors miss.           |
-
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
-
-> After implementing, run `python .claude/scripts/code_graph connections <file> --json` on modified files to verify no related files need updates.
-
-### Graph-Trace Before Implementation
-
-MUST ATTENTION run BEFORE writing code when graph.db exists:
-
-- `python .claude/scripts/code_graph trace <file-to-modify> --direction both --json` — callers + triggers
-- `python .claude/scripts/code_graph trace <file-to-modify> --direction downstream --json` — all downstream consumers
-- Prevents breaking implicit dependencies (bus consumers, event handlers) invisible in the file itself.
-
----
-
-## Workflow Recommendation
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
->
-> 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → sre-review → test → docs
-> 2. **Execute `$cook` directly** — run this skill standalone
-
----
-
-## Next Steps (Standalone: MUST ATTENTION ask user via a direct user question. Skip if inside workflow.)
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (feature implemented). This ensures review, testing, and docs steps aren't skipped.
-- **"$code-simplifier"** — Simplify and clean up implementation
-- **"$integration-test"** — Generate/update integration tests from test specs
-- **"$workflow-review-changes"** — Review changes before commit
-- **"Skip, continue manually"** — user decides
-
-## Standalone Review Gate (Non-Workflow Only)
-
-> **MANDATORY IMPORTANT MUST ATTENTION:** If this skill is called **outside a workflow** (standalone `$cook`), you MUST ATTENTION create a task tracking todo task for `$review-changes` as the **last task** in your task list. This ensures all changes are reviewed before commit even without a workflow enforcing it.
->
-> If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — the workflow sequence handles `$review-changes` at the appropriate step.
+<!-- /SYNC:nested-task-creation:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
@@ -707,78 +761,6 @@ MUST ATTENTION run BEFORE writing code when graph.db exists:
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
-<!-- SYNC:plan-granularity:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-    <!-- /SYNC:plan-granularity:reminder -->
-    <!-- SYNC:understand-code-first:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:plan-quality:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call the current task list before creating new tasks.
-    <!-- /SYNC:plan-quality:reminder -->
-    <!-- SYNC:rationalization-prevention:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-    <!-- /SYNC:rationalization-prevention:reminder -->
-    <!-- SYNC:ui-system-context:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
-    <!-- SYNC:iterative-phase-quality:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-    <!-- /SYNC:iterative-phase-quality:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
-    <!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:task-tracking-external-report:reminder -->
-
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
-
-<!-- /SYNC:task-tracking-external-report:reminder -->
-
-<!-- SYNC:project-reference-docs-guide:reminder -->
-
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
-
-<!-- /SYNC:project-reference-docs-guide:reminder -->
-
-<!-- SYNC:nested-task-creation:reminder -->
-
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
-
-<!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
 

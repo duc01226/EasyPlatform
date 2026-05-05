@@ -96,6 +96,10 @@ After completion, recommend next step: `/cook` to scaffold the project structure
 
 ---
 
+**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY stage — validate decisions before proceeding.
+**MANDATORY IMPORTANT MUST ATTENTION** NEVER ask tech stack upfront — business analysis and domain modeling first.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -120,15 +124,12 @@ After completion, recommend next step: `/cook` to scaffold the project structure
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY stage — validate decisions before proceeding.
-**MANDATORY IMPORTANT MUST ATTENTION** NEVER ask tech stack upfront — business analysis and domain modeling first.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

@@ -137,32 +137,7 @@ Check the `## Plan Context` section in the injected context:
 
 ## Post-Plan Granularity Self-Check (MANDATORY)
 
-<!-- SYNC:plan-granularity -->
-
-> **Plan Granularity** — Every phase must pass 5-point check before implementation:
->
-> 1. Lists exact file paths to modify (not generic "implement X")
-> 2. No planning verbs (research, investigate, analyze, determine, figure out)
-> 3. Steps ≤30min each, phase total ≤3h
-> 4. ≤5 files per phase
-> 5. No open decisions or TBDs in approach
->
-> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
-> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
-
-<!-- /SYNC:plan-granularity -->
-
 ## Preservation Inventory (MANDATORY for bugfixes)
-
-<!-- SYNC:preservation-inventory -->
-
-> **Preservation Inventory** — MANDATORY for bugfix plans. Trigger keywords in plan title/frontmatter: `fix`, `bug`, `regression`, `broken`, `defect`. Author MUST produce this table BEFORE writing implementation steps.
->
-> **Columns:** `Invariant | file:line | Why (data consequence if broken) | Verification (TC-ID or grep)`
->
-> **BLOCKED until:** ≥3 rows · every File cell has `file:line` · every Verification cell has TC-ID or grep (not "manually verify")
-
-<!-- /SYNC:preservation-inventory -->
 
 After creating all phase files, run the **recursive decomposition loop**:
 
@@ -183,16 +158,38 @@ After creating all phase files, run the **recursive decomposition loop**:
 
 > If already inside a workflow, skip — the workflow handles sequencing.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
-## Prompt-Enhance Closing Anchors
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+- `docs/specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+> Before routing, assess complexity score. Score >=3 → plan MUST ATTENTION produce multiple phases with per-phase quality cycles.
+
+<!-- SYNC:plan-granularity -->
+
+> **Plan Granularity** — Every phase must pass 5-point check before implementation:
+>
+> 1. Lists exact file paths to modify (not generic "implement X")
+> 2. No planning verbs (research, investigate, analyze, determine, figure out)
+> 3. Steps ≤30min each, phase total ≤3h
+> 4. ≤5 files per phase
+> 5. No open decisions or TBDs in approach
+>
+> **Failing phases →** create sub-plan. Repeat until ALL leaf phases pass (max depth: 3).
+> **Self-question:** "Can I start coding RIGHT NOW? If any step needs 'figuring out' → sub-plan it."
+
+<!-- /SYNC:plan-granularity -->
+
+<!-- SYNC:preservation-inventory -->
+
+> **Preservation Inventory** — MANDATORY for bugfix plans. Trigger keywords in plan title/frontmatter: `fix`, `bug`, `regression`, `broken`, `defect`. Author MUST produce this table BEFORE writing implementation steps.
+>
+> **Columns:** `Invariant | file:line | Why (data consequence if broken) | Verification (TC-ID or grep)`
+>
+> **BLOCKED until:** ≥3 rows · every File cell has `file:line` · every Verification cell has TC-ID or grep (not "manually verify")
+
+<!-- /SYNC:preservation-inventory -->
 
 <!-- SYNC:nested-task-creation -->
 
@@ -235,8 +232,6 @@ After creating all phase files, run the **recursive decomposition loop**:
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -304,8 +299,6 @@ After creating all phase files, run the **recursive decomposition loop**:
 
 <!-- /SYNC:cross-service-check -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
-
 <!-- SYNC:rationalization-prevention -->
 
 > **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
@@ -321,6 +314,7 @@ After creating all phase files, run the **recursive decomposition loop**:
 > | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
 
 <!-- /SYNC:rationalization-prevention -->
+
 <!-- SYNC:estimation-framework -->
 
 > **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
@@ -485,8 +479,6 @@ After creating all phase files, run the **recursive decomposition loop**:
 
 <!-- /SYNC:estimation-framework -->
 
-- `docs/specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
-
 <!-- SYNC:plan-quality -->
 
 > **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
@@ -518,32 +510,6 @@ After creating all phase files, run the **recursive decomposition loop**:
 
 <!-- /SYNC:iterative-phase-quality -->
 
-> Before routing, assess complexity score. Score >=3 → plan MUST ATTENTION produce multiple phases with per-phase quality cycles.
-
-<!-- SYNC:plan-granularity:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-      <!-- /SYNC:plan-granularity:reminder -->
-      <!-- SYNC:understand-code-first:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
-- **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-    <!-- /SYNC:estimation-framework:reminder -->
-    <!-- SYNC:plan-quality:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-      <!-- /SYNC:plan-quality:reminder -->
-      <!-- SYNC:iterative-phase-quality:reminder -->
-- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-      <!-- /SYNC:iterative-phase-quality:reminder -->
-      <!-- SYNC:cross-service-check:reminder -->
-
-**IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
-
-<!-- /SYNC:cross-service-check:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -560,6 +526,43 @@ After creating all phase files, run the **recursive decomposition loop**:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:plan-granularity:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
+    <!-- /SYNC:plan-granularity:reminder -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+    <!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:rationalization-prevention:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
+    <!-- /SYNC:rationalization-prevention:reminder -->
+
+<!-- SYNC:estimation-framework:reminder -->
+
+- **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
+    <!-- /SYNC:estimation-framework:reminder -->
+
+<!-- SYNC:plan-quality:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
+    <!-- /SYNC:plan-quality:reminder -->
+
+<!-- SYNC:iterative-phase-quality:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
+    <!-- /SYNC:iterative-phase-quality:reminder -->
+
+<!-- SYNC:cross-service-check:reminder -->
+
+**IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
+
+<!-- /SYNC:cross-service-check:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -571,6 +574,7 @@ After creating all phase files, run the **recursive decomposition loop**:
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -597,6 +601,17 @@ After creating all phase files, run the **recursive decomposition loop**:
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

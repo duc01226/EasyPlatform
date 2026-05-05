@@ -32,6 +32,20 @@ disable-model-invocation: true
 
 **IMPORTANT MANDATORY Steps:** /scout -> /integration-test -> /test -> /integration-test -> /integration-test-review -> /integration-test-verify -> /docs-update -> /watzup -> /workflow-end
 
+**IMPORTANT MANDATORY Steps:** /scout -> /integration-test -> /test -> /integration-test -> /integration-test-review -> /integration-test-verify -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `test-verify` workflow. Run `/workflow-start test-verify` with the user's prompt as context.
+
+**Steps:** /scout → /integration-test → /test → /integration-test → /integration-test-review → /integration-test-verify → /docs-update → /watzup → /workflow-end
+
+> **[NOTE]** The two `/integration-test` occurrences are intentional and serve distinct purposes:
+>
+> **First `/integration-test` (audit mode):** Review test quality — check for flaky patterns, missing `WaitUntilAsync`, smoke-only assertions, and best practice compliance.
+> **Second `/integration-test` (diagnose mode):** Root-cause failing or flaky tests identified in the audit phase. Fix and re-verify.
+> **`/integration-test-review`:** Final quality gate — verify tests have real assertion value after any fixes applied.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -63,10 +77,6 @@ disable-model-invocation: true
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /scout -> /integration-test -> /test -> /integration-test -> /integration-test-review -> /integration-test-verify -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -120,21 +130,12 @@ disable-model-invocation: true
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `test-verify` workflow. Run `/workflow-start test-verify` with the user's prompt as context.
-
-**Steps:** /scout → /integration-test → /test → /integration-test → /integration-test-review → /integration-test-verify → /docs-update → /watzup → /workflow-end
-
-> **[NOTE]** The two `/integration-test` occurrences are intentional and serve distinct purposes:
->
-> **First `/integration-test` (audit mode):** Review test quality — check for flaky patterns, missing `WaitUntilAsync`, smoke-only assertions, and best practice compliance.
-> **Second `/integration-test` (diagnose mode):** Root-cause failing or flaky tests identified in the audit phase. Fix and re-verify.
-> **`/integration-test-review`:** Final quality gate — verify tests have real assertion value after any fixes applied.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

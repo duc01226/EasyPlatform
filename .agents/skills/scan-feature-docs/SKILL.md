@@ -40,33 +40,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-**Prerequisites:** **MUST ATTENTION READ** before executing:
-
-<!-- SYNC:scan-and-update-reference-doc -->
-
-> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
->
-> 1. **Read existing doc** first — understand structure and manual annotations
-> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
-> 3. **Scan codebase** (grep/glob) for current state
-> 4. **Diff** findings vs doc — identify stale sections only
-> 5. **Update ONLY** diverged sections. Preserve manual annotations.
-> 6. **Update metadata** (date, version) in frontmatter/header
-> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
-
-<!-- /SYNC:scan-and-update-reference-doc -->
-
-> **Output note:** This skill's primary output (`feature-docs-reference.md`) MUST include the actual directory tree — it is the source of truth for doc locations. This is intentionally different from spec output documents which suppress directory trees.
-
 ## Quick Summary
 
 **Goal:** Scan existing business feature documentation → populate `docs/project-reference/feature-docs-reference.md` with app-to-service mapping, documentation structure conventions, template usage, and section standards.
@@ -209,11 +182,13 @@ Read report. Apply fresh-eyes protocol:
 
 ---
 
-<!-- SYNC:scan-and-update-reference-doc:reminder -->
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
 
-- **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
-      <!-- SYNC:ai-mistake-prevention -->
+**Prerequisites:** **MUST ATTENTION READ** before executing:
+
+> **Output note:** This skill's primary output (`feature-docs-reference.md`) MUST include the actual directory tree — it is the source of truth for doc locations. This is intentionally different from spec output documents which suppress directory trees.
+
+<!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid:
 >
@@ -223,11 +198,39 @@ Read report. Apply fresh-eyes protocol:
 > **Check downstream references before deleting.** Map referencing files before removal.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:scan-and-update-reference-doc -->
+
+> **Scan & Update Reference Doc** — Surgical updates only, NEVER full rewrite.
+>
+> 1. **Read existing doc** first — understand structure and manual annotations
+> 2. **Detect mode:** Placeholder (headings only) → Init. Has content → Sync.
+> 3. **Scan codebase** (grep/glob) for current state
+> 4. **Diff** findings vs doc — identify stale sections only
+> 5. **Update ONLY** diverged sections. Preserve manual annotations.
+> 6. **Update metadata** (date, version) in frontmatter/header
+> 7. **NEVER** rewrite entire doc. **NEVER** remove sections without evidence obsolete.
+
+<!-- /SYNC:scan-and-update-reference-doc -->
+
+<!-- SYNC:scan-and-update-reference-doc:reminder -->
+
+- **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+    <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

@@ -49,79 +49,169 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:nested-task-creation -->
+## Quick Summary
 
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
->
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
->
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+**Goal:** Auto-review a refined PBI artifact for completeness, quality, and correctness before story creation proceeds.
 
-<!-- /SYNC:nested-task-creation -->
+**Key distinction:** AI self-review (automatic), NOT user interview.
 
-<!-- SYNC:project-reference-docs-guide -->
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
->
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
->
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
+### Frontend/UI Context (if applicable)
 
-<!-- /SYNC:project-reference-docs-guide -->
+> When this task involves frontend or UI changes,
 
-<!-- SYNC:task-tracking-external-report -->
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
 
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
->
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
->
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
+## Adversarial Review Mindset (NON-NEGOTIABLE)
 
-<!-- /SYNC:task-tracking-external-report -->
+**Default stance: SKEPTIC reviewing your own work. You just produced this PBI. Your natural bias is to find it acceptable. Break that bias deliberately.**
+
+> **Self-review trap:** The AI wrote this PBI moments ago. Every reasoning chain you used to WRITE it is still active in this context. You will find it coherent because YOU made it coherent — not because it is correct. This section forces adversarial challenge.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Scope Creep Detector**
+Read each acceptance criterion. Ask: "Is this required for the core user value, or is it a 'nice to have' that grew in during writing?" Flag any AC that is NOT directly traceable to the problem statement. A PBI with 8 ACs for a simple feature is almost certainly over-scoped.
+
+**2. Assumption Stress Test**
+List the 3 biggest assumptions embedded in the acceptance criteria. For each: "What if this assumption is wrong?" Common hidden assumptions: "users will provide valid input," "the data is in the expected format," "the system is in a known state." If any AC fails when an assumption breaks, it needs a corresponding error-path AC.
+
+**3. Missing Stakeholder Check**
+Ask: "Who else uses this feature who was NOT the primary user in the problem statement?" (e.g., admins, support staff, other services). Does any missing stakeholder have a use case the PBI does NOT cover? Flag gaps.
+
+**4. Pre-Mortem**
+Assume this PBI is implemented exactly as written and deployed. In 3 months, a user files a critical support ticket. Write the most plausible complaint — the gap the PBI failed to address. If you can't find one, you wrote too safe a PBI.
+
+**5. Testability Challenge**
+For each acceptance criterion: "Can a QA engineer write an automated test for this AC without asking any clarifying questions?" If not — the AC is ambiguous or unmeasurable. Flag it.
+
+**6. Contrarian Pass**
+Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
+
+### Forbidden Patterns (self-review specific)
+
+- **"ACs look comprehensive"** — You wrote them. Of course they look comprehensive to you. Challenge each one.
+- **"Scope is well-defined"** — Did you REDUCE scope during writing? What did you cut? Was cutting justified?
+- **"Problem statement is clear"** — Could it be framed differently to lead to a different (better) solution?
+- **"Ready for story creation"** — Have you checked with INVEST? Would a developer estimate this in < 1 sprint?
+- **Confirming your own work without adversarial challenge** — Forbidden. Find at least one thing to question.
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+Complete this checklist before writing the final verdict:
+
+- [ ] Checked each AC for scope creep (traceable to problem statement)
+- [ ] Identified 3 hidden assumptions and stress-tested them
+- [ ] Checked for missing stakeholders
+- [ ] Ran pre-mortem (most plausible support complaint in 3 months)
+- [ ] Verified all ACs are unambiguously testable
+- [ ] Generated at least 2 sentences arguing the opposite verdict
+
+If any box is unchecked — you have NOT completed the adversarial review. Go back.
+
+## Workflow
+
+1. **Locate PBI** — Find latest PBI artifact in `team-artifacts/pbis/` or active plan context
+2. **Evaluate checklist** — Score each check as PASS/FAIL
+3. **Classify** — PASS (all Required + >=50% Recommended), WARN (all Required), FAIL (any Required fails)
+4. **Output verdict** — Status, issues, recommendations
+
+## Checklist
+
+### Required (all must pass)
+
+| #   | Check                                                                                                                                                      | Presence                                                                   | Quality Depth                                                                                                                                                                                                                                                                                                                                         |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Problem statement** — Clear problem defined (not just solution description)                                                                              | Is a problem statement section present?                                    | Is the problem scoped correctly? Does it confuse symptoms with root cause? Is it framed to lead to only one solution, or is the solution space left open?                                                                                                                                                                                             |
+| 2   | **Acceptance criteria** — Minimum 3 GIVEN/WHEN/THEN scenarios                                                                                              | Are at least 3 GIVEN/WHEN/THEN ACs present?                                | Are they realistic scenarios, not trivial? Do they cover error paths? Are edge cases specified, or only the happy path?                                                                                                                                                                                                                               |
+| 3   | **Story points + complexity** — Both fields present with valid values                                                                                      | Are story points and complexity both filled in?                            | Do both values match the scope of work? Is complexity above 5 justified with a rationale, or just assigned arbitrarily?                                                                                                                                                                                                                               |
+| 4   | **Dependencies table** — Has dependency table with must-before/can-parallel/blocked-by types                                                               | Is a dependencies table present with typed rows?                           | Are ALL dependencies captured (technical, data, service)? Are "can-parallel" items truly safe to parallelize, or do they share a resource?                                                                                                                                                                                                            |
+| 5   | **Stakeholder validation** — User interview was conducted (validation section present)                                                                     | Is a stakeholder/validation section present?                               | Was the interview substantive? Does the validation section show actual user responses and insights, or just "interviewed on [date]"?                                                                                                                                                                                                                  |
+| 6   | **No vague language** — No "should work", "might need", "TBD" in acceptance criteria                                                                       | Are all ACs free of vague terms?                                           | Are "should work"/"TBD"/"might need" absent from ALL acceptance criteria, including edge cases and error paths?                                                                                                                                                                                                                                       |
+| 7   | **Scope boundary** — Clear "out of scope" or "not included" section                                                                                        | Is an out-of-scope section present?                                        | Are out-of-scope items specific enough to prevent scope creep during implementation? Is anything ambiguously in/out?                                                                                                                                                                                                                                  |
+| 8   | **Authorization defined** — PBI has "Authorization & Access Control" section with roles × CRUD table                                                       | Is an authorization section with a CRUD table present?                     | Does the CRUD table cover ALL PBI-relevant roles? Are there roles (admin, support, service account) that are missing or not addressed?                                                                                                                                                                                                                |
+| 9   | **UI Layout section** — If UI: has `## UI Layout` section per wireframe protocol. If backend-only: explicit "N/A"                                          | Is a UI Layout section or explicit N/A present?                            | If UI: does the wireframe have component tree + states + design tokens? If backend-only: is the N/A explicit and justified, not just omitted?                                                                                                                                                                                                         |
+| 10  | **Reestimate drift check** — Phase 7.5 re-evaluation ran; frontmatter has `reestimate_delta_pct` + `reestimate_reason` populated post-Validation Interview | Are `reestimate_delta_pct` and `reestimate_reason` present in frontmatter? | Was the re-evaluation actually performed against the LOCKED scope (post-Phase 7), or copy-pasted? If `\|delta\| > 20%`, were SP/complexity/man_days fields actually updated to match? If `\|delta\| > 50%`, is there a documented user rescope decision in `## Validation Summary`? Stale Phase 6 numbers with a `delta_pct: 0` and no reason = FAIL. |
+
+### Recommended (>=50% should pass)
+
+| #   | Check                                                                                                          | Presence                                                            | Quality Depth                                                                                                                                                |
+| --- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **RICE/MoSCoW score** — Prioritization applied                                                                 | Is a RICE or MoSCoW prioritization score present?                   | Is the scoring justified with data or reasoning, or assigned arbitrarily without rationale?                                                                  |
+| 2   | **Domain vocabulary** — Uses project-specific terms from domain-entities-reference.md                          | Are domain-specific terms used in the PBI?                          | Is domain language consistent with `domain-entities-reference.md`, or are new terms introduced without definition?                                           |
+| 3   | **Risk assessment** — Risks identified with mitigations                                                        | Is a risk section present with at least one item?                   | Are risks specific to this PBI, or generic "technical risk"? Are mitigations actionable (who does what, when triggered)?                                     |
+| 4   | **Non-functional requirements** — Performance, security, accessibility considered                              | Is an NFR section or NFR notes present?                             | Are perf/security/accessibility numbers specified (e.g., "< 200ms response time", "WCAG AA"), not just "considered" or "addressed"?                          |
+| 5   | **Production readiness concerns** — PBI includes "Production Readiness Concerns" table with Yes/No/Existing    | Is the Production Readiness Concerns table present with all 5 rows? | Are all 5 table rows meaningfully filled — not just "Yes" for all? Are gaps called out with rationale?                                                       |
+| 6   | **Seed data assessed** — PBI addresses seed data needs or explicitly states "N/A"                              | Is seed data addressed or explicitly marked N/A?                    | If "N/A" is used, is it justified? Is it the right N/A (no new reference data needed), or is seed data actually required and skipped?                        |
+| 7   | **Data migration assessed** — PBI addresses schema changes and data migration needs or explicitly states "N/A" | Is data migration addressed or explicitly marked N/A?               | If "N/A" is used, is it justified? Are there hidden schema implications (added columns, changed constraints) that require migration even if "no new tables"? |
+
+## Output
+
+```markdown
+## PBI Review Result
+
+**Status:** PASS | WARN | FAIL
+**Artifact:** {pbi-path}
+
+### Required ({X}/{Y})
+
+- ✅/❌ Check description
+
+### Recommended ({X}/{Y})
+
+- ✅/⚠️ Check description
+
+### Issues Found
+
+- ❌ FAIL: {issue}
+- ⚠️ WARN: {issue}
+
+### Verdict
+
+{PROCEED | REVISE_FIRST}
+```
+
+## Round 2+ : Fresh Sub-Agent Re-Review (MANDATORY)
+
+> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
+
+After completing Round 1 checklist evaluation, spawn a **fresh `general-purpose` sub-agent** for Round 2 using the canonical Agent template from `SYNC:review-protocol-injection` above. PBI artifact reviews are NOT code reviews — use `agent_type: "general-purpose"`. When constructing the Agent call prompt:
+
+1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
+2. Set `agent_type: "general-purpose"`
+3. Embed the full verbatim body of these SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:fix-layer-accountability` which are not applicable to PBI artifacts)
+4. Set the Task as `"Review the PBI artifact for completeness and quality. Focus on: implicit assumptions not validated, missing acceptance criteria coverage, edge cases not addressed, cross-references not verified, vague language, authorization gaps."`
+5. Set Target Files as the explicit PBI artifact file path
+6. Set report path as `plans/reports/refine-review-round{N}-{date}.md`
+
+After sub-agent returns:
+
+1. **Read** the sub-agent's report
+2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
+3. **If FAIL:** fix issues in the PBI, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
+4. **Max 3 fresh rounds** — escalate to user via a direct user question if still failing after 3 rounds
+5. **Final verdict** must incorporate findings from ALL rounds
+
+## Key Rules
+
+- **FAIL blocks workflow** — If FAIL, do NOT proceed to $story. List specific fixes needed.
+- **WARN allows proceeding** — Note gaps but continue.
+- **No guessing** — Every check must reference specific content in the PBI artifact.
+- **Constructive** — Focus on implementation-blocking issues, not pedantic details.
+- **Production Readiness** — When reviewing production readiness concerns in a PBI, verify coverage of: Code Quality Tooling, Error Handling Foundation, Loading State Management, Docker Development Environment, Integration Points (see `SYNC:scaffold-production-readiness` for definitions).
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"$story (Recommended)"** — Create user stories from validated PBI
+- **"$refine"** — Re-refine if FAIL verdict
+- **"Skip, continue manually"** — user decides
 
 > **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
@@ -130,6 +220,243 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:estimation-framework -->
+
+> **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
+>
+> **Method:**
+>
+> 1. **Blast Radius pass** (below) — drives code AND test cost
+> 2. Decompose phases → hours/phase → `bottom_up_hours = Σ phase_hours`
+> 3. `likely_days = ceil(bottom_up_hours / 6) × productivity_factor`
+> 4. Sum **Risk Margin** (base + add-ons) → `max_days = likely_days × (1 + margin)`
+> 5. `min_days = likely_days × 0.9`
+> 6. Output as range when `likely_days ≥3`; single point allowed `<3` (still record margin)
+> 7. `man_days_ai` = same range × AI speedup
+> 8. `story_points` DERIVED from `likely_days` via SP-Days — NEVER driver. Disagreement >50% → trust bottom-up
+>
+> **Productivity factor:** 0.8 strong scaffolding+codegen+AI hooks · 1.0 mature default · 1.2 weak patterns · 1.5 greenfield
+>
+> **Cost Driver Heuristic (apply BEFORE work-type row):**
+>
+> - **UI dominates** in CRUD/business apps — 1.5-3x backend (states, validation, responsive, a11y, polish)
+> - **Backend dominates ONLY:** multi-aggregate invariants, cross-service contracts, schema migrations, heavy query/perf, new event flows
+>
+> **Reuse-vs-Create axis (PRIMARY lever, per layer):**
+>
+> | UI tier                                      | Cost     |
+> | -------------------------------------------- | -------- |
+> | Reuse component on existing screen           | 0.1-0.3d |
+> | Add control/column to existing screen        | 0.3-0.8d |
+> | Compose components into NEW screen           | 1-2d     |
+> | NEW screen, custom layout/states/validation  | 2-4d     |
+> | NEW shared/common component (themed, tested) | 3-6d+    |
+>
+> | Backend tier                                         | Cost      |
+> | ---------------------------------------------------- | --------- |
+> | Reuse query/handler from new place                   | 0.1-0.3d  |
+> | Small update existing handler/entity                 | 0.3-0.8d  |
+> | NEW query on existing repo/model                     | 0.5-1d    |
+> | NEW command/handler on existing aggregate (additive) | 1-2d      |
+> | NEW aggregate/entity (repo, validation, events)      | 2-4d      |
+> | NEW cross-service contract OR schema migration       | 2-4d each |
+> | Multi-aggregate invariant / heavy domain rule        | 3-5d      |
+>
+> **Rule:** Sum tiers across UI+backend+tests, apply productivity factor. Reuse short-circuits tiers — call out.
+>
+> **Test-Scope drivers (compute test_count EXPLICITLY — "+tests" hand-wave is #1 failure):**
+>
+> | Driver                            | Count                                                  |
+> | --------------------------------- | ------------------------------------------------------ |
+> | Happy-path journeys               | 1 per story / AC main flow                             |
+> | State-machine transitions         | reachable transitions × allowed actors                 |
+> | Multi-entity state combos         | state(A) × state(B) — REACHABLE only, not Cartesian    |
+> | Authorization matrix              | (owner, non-owner, elevated, unauth) × each mutation   |
+> | Validation rules                  | 1 per required field / boundary / format / cross-field |
+> | UI states (per new screen/dialog) | happy, loading, empty, error, partial — present only   |
+> | Negative paths / invariants       | 1 per violatable business rule                         |
+>
+> | Test tier (Trad, incl. setup+assert+flake) | Cost     |
+> | ------------------------------------------ | -------- |
+> | 1-5 cases, fixtures reused                 | 0.3-0.5d |
+> | 6-12 cases, 1 new fixture                  | 0.5-1d   |
+> | 13-25 cases, multi-entity setup            | 1-2d     |
+> | 26-50 cases OR new state-machine coverage  | 2-3d     |
+> | >50 cases OR full E2E journey              | 3-5d     |
+>
+> **Test multipliers:** new fixture/seed harness +0.5d · cross-service/bus assertion +0.3d each · UI E2E ×1.5 · each new role +1-2 cases
+>
+> **Blast Radius (mandatory pre-pass — affects code AND test):**
+>
+> 1. Files/components directly modified — count
+> 2. Of those, "complex" (>500 LOC, multi-handler, central, frequently-modified) — count
+> 3. Downstream consumers (callers, event subscribers, cross-service) — list
+> 4. Shared/common code touched (multi-app blast) — yes/no
+> 5. Regression scope — areas needing re-test
+>
+> **Rule:** Complex touch → add `risk_factors`. Each downstream consumer → +1-3 regression cases. Blast >5 areas OR >2 complex → re-evaluate SPLIT before estimating.
+>
+> **Risk Margin (drives max bound):**
+>
+> | likely_days         | Base margin                     |
+> | ------------------- | ------------------------------- |
+> | <1d trivial         | +10%                            |
+> | 1-2d small additive | +20%                            |
+> | 3-4d real feature   | +35%                            |
+> | 5-7d large          | +50%                            |
+> | 8-10d very large    | +75%                            |
+> | >10d                | +100% AND **flag SHOULD SPLIT** |
+>
+> **Risk-factor add-ons (additive — enumerate in `risk_factors`):**
+>
+> | Factor                                                                | +margin |
+> | --------------------------------------------------------------------- | ------- |
+> | `touches-complex-existing-feature` (>500 LOC, multi-handler, central) | +20%    |
+> | `cross-service-contract` change                                       | +25%    |
+> | `schema-migration-on-populated-data`                                  | +25%    |
+> | `new-tech-or-unfamiliar-pattern`                                      | +30%    |
+> | `regression-fan-out` (≥3 downstream areas re-test)                    | +20%    |
+> | `performance-or-latency-critical`                                     | +20%    |
+> | `concurrency-race-event-ordering`                                     | +25%    |
+> | `shared-common-code` (multi-consumer/multi-app)                       | +25%    |
+> | `unclear-requirements-or-design`                                      | +30%    |
+>
+> **Collapse rule:** total margin >100% → STOP, split (padding past 2x is dishonesty). Margin <15% on `likely_days ≥5` → under-estimated, widen.
+>
+> **Work-Type Caps (hard ceilings on `likely_days`):**
+> | Work type | Max SP | Max likely |
+> | --- | --- | --- |
+> | Single field / config flag / style fix | 1 | 0.5d |
+> | Add property to existing model + bind to existing UI | 2 | 1d |
+> | **Additive endpoint + minor UI control** (button/menu/column), reuses fixtures | **3** | **2-3d** |
+> | Additive endpoint + **NEW UI surface** OR additive multi-layer + new domain rule + 2+ test files | 5 | 3-5d |
+> | NEW model/aggregate OR migration OR cross-module contract OR heavy test (>1.5d) OR NEW UI + non-trivial backend | 8 | 5-7d |
+> | NEW UI surface + (NEW aggregate OR migration OR cross-service contract) | 13 | SHOULD split |
+> | Cross-service contract + migration combined | 13 | SHOULD split |
+> | Beyond | 21 | MUST split |
+>
+> **SP→Days (validation only):** 1=0.5d/0.25d · 2=1d/0.35d · 3=2d/0.65d · 5=4d/1.0d · 8=6d/1.5d · 13=10d/2.0d (Trad/AI likely)
+> **AI speedup:** SP 1≈2x · 2-3≈3x · 5-8≈4x · 13+≈5x. AI cost = `(code_gen × 1.3) + (test_gen × 1.3)` (30% review overhead).
+>
+> **MANDATORY frontmatter:**
+>
+> ```yaml
+> story_points: <n>
+> complexity: low | medium | high | critical
+> man_days_traditional: '<min>-<max>d' # range when likely ≥3d; '<N>d' when <3d
+> man_days_ai: '<min>-<max>d'
+> risk_margin_pct: <n> # base + add-ons
+> risk_factors: [touches-complex-existing-feature, regression-fan-out] # closed-list from add-ons; [] if none
+> blast_radius:
+>     touched_areas: <n>
+>     complex_touched: <n>
+>     downstream_consumers: [list or count]
+>     shared_common_code: yes | no
+> estimate_scope_included: [code, integration-tests, frontend, i18n, docs]
+> estimate_scope_excluded: [unit-tests, e2e, perf, deployment, code-review-rounds]
+> estimate_reasoning: |
+>     5-7 lines covering:
+>     (a) UI tier — row applied
+>     (b) Backend tier — row applied
+>     (c) Test scope — case breakdown by driver, file count, fixtures, tier row
+>     (d) Cost driver — dominant tier + why
+>     (e) Blast radius — touched, complex, regression scope
+>     (f) Risk factors — list driving margin; why not larger/smaller
+>     Example: "UI: compose Form/Table/Dialog → NEW screen (~1.5d). Backend: NEW command on existing aggregate,
+>     reuses validation+repo (~1d). Tests: 4 transitions × 2 actors + 3 validation + 2 UI states = 13 cases,
+>     1 new fixture → tier 13-25 ~1.5d. Driver: UI composition + new states. Blast: 4 areas, 1 complex.
+>     Risk: base 35% + touches-complex +20% = 55% → max 3.9d → range 2.5-4d."
+> ```
+>
+> **Sanity self-check:**
+>
+> - `likely_days ≥3d` and single-point? → reject, must be range
+> - Margin <15% on `likely_days ≥5d`? → under-estimated, widen
+> - Margin >100%? → STOP, split instead of buffer
+> - Complex existing feature touched, no regression budget in `(c)`? → reject
+> - Blast `>5` areas OR `>2` complex, no split discussion? → reject
+> - Purely additive on existing model AND existing UI? → cap SP 3 unless tests >1.5d
+> - NEW UI surface (page/complex form/dashboard)? → SP 5+ even if backend one endpoint
+> - Backend cross-service / migration / multi-aggregate? → SP 8+ regardless of UI
+> - `bottom_up_hours / 6` vs SP-Days disagreement >50%? → trust bottom-up, downgrade SP
+> - Without tests, SP drops ≥1 bucket? → tests dominate; state explicitly
+> - Reasoning called out UI vs backend vs blast vs risk factors? → if missing, add
+
+<!-- /SYNC:estimation-framework -->
+
+<!-- SYNC:ui-system-context -->
+
+> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
+>
+> **MUST ATTENTION READ before implementing:**
+>
+> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
+> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
+> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
+> Reference `docs/project-config.json` for project-specific paths.
+
+<!-- /SYNC:ui-system-context -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+>
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -379,388 +706,28 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:graph-impact-analysis -->
 
-## Quick Summary
-
-**Goal:** Auto-review a refined PBI artifact for completeness, quality, and correctness before story creation proceeds.
-
-**Key distinction:** AI self-review (automatic), NOT user interview.
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-<!-- SYNC:estimation-framework -->
-
-> **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
->
-> **Method:**
->
-> 1. **Blast Radius pass** (below) — drives code AND test cost
-> 2. Decompose phases → hours/phase → `bottom_up_hours = Σ phase_hours`
-> 3. `likely_days = ceil(bottom_up_hours / 6) × productivity_factor`
-> 4. Sum **Risk Margin** (base + add-ons) → `max_days = likely_days × (1 + margin)`
-> 5. `min_days = likely_days × 0.9`
-> 6. Output as range when `likely_days ≥3`; single point allowed `<3` (still record margin)
-> 7. `man_days_ai` = same range × AI speedup
-> 8. `story_points` DERIVED from `likely_days` via SP-Days — NEVER driver. Disagreement >50% → trust bottom-up
->
-> **Productivity factor:** 0.8 strong scaffolding+codegen+AI hooks · 1.0 mature default · 1.2 weak patterns · 1.5 greenfield
->
-> **Cost Driver Heuristic (apply BEFORE work-type row):**
->
-> - **UI dominates** in CRUD/business apps — 1.5-3x backend (states, validation, responsive, a11y, polish)
-> - **Backend dominates ONLY:** multi-aggregate invariants, cross-service contracts, schema migrations, heavy query/perf, new event flows
->
-> **Reuse-vs-Create axis (PRIMARY lever, per layer):**
->
-> | UI tier                                      | Cost     |
-> | -------------------------------------------- | -------- |
-> | Reuse component on existing screen           | 0.1-0.3d |
-> | Add control/column to existing screen        | 0.3-0.8d |
-> | Compose components into NEW screen           | 1-2d     |
-> | NEW screen, custom layout/states/validation  | 2-4d     |
-> | NEW shared/common component (themed, tested) | 3-6d+    |
->
-> | Backend tier                                         | Cost      |
-> | ---------------------------------------------------- | --------- |
-> | Reuse query/handler from new place                   | 0.1-0.3d  |
-> | Small update existing handler/entity                 | 0.3-0.8d  |
-> | NEW query on existing repo/model                     | 0.5-1d    |
-> | NEW command/handler on existing aggregate (additive) | 1-2d      |
-> | NEW aggregate/entity (repo, validation, events)      | 2-4d      |
-> | NEW cross-service contract OR schema migration       | 2-4d each |
-> | Multi-aggregate invariant / heavy domain rule        | 3-5d      |
->
-> **Rule:** Sum tiers across UI+backend+tests, apply productivity factor. Reuse short-circuits tiers — call out.
->
-> **Test-Scope drivers (compute test_count EXPLICITLY — "+tests" hand-wave is #1 failure):**
->
-> | Driver                            | Count                                                  |
-> | --------------------------------- | ------------------------------------------------------ |
-> | Happy-path journeys               | 1 per story / AC main flow                             |
-> | State-machine transitions         | reachable transitions × allowed actors                 |
-> | Multi-entity state combos         | state(A) × state(B) — REACHABLE only, not Cartesian    |
-> | Authorization matrix              | (owner, non-owner, elevated, unauth) × each mutation   |
-> | Validation rules                  | 1 per required field / boundary / format / cross-field |
-> | UI states (per new screen/dialog) | happy, loading, empty, error, partial — present only   |
-> | Negative paths / invariants       | 1 per violatable business rule                         |
->
-> | Test tier (Trad, incl. setup+assert+flake) | Cost     |
-> | ------------------------------------------ | -------- |
-> | 1-5 cases, fixtures reused                 | 0.3-0.5d |
-> | 6-12 cases, 1 new fixture                  | 0.5-1d   |
-> | 13-25 cases, multi-entity setup            | 1-2d     |
-> | 26-50 cases OR new state-machine coverage  | 2-3d     |
-> | >50 cases OR full E2E journey              | 3-5d     |
->
-> **Test multipliers:** new fixture/seed harness +0.5d · cross-service/bus assertion +0.3d each · UI E2E ×1.5 · each new role +1-2 cases
->
-> **Blast Radius (mandatory pre-pass — affects code AND test):**
->
-> 1. Files/components directly modified — count
-> 2. Of those, "complex" (>500 LOC, multi-handler, central, frequently-modified) — count
-> 3. Downstream consumers (callers, event subscribers, cross-service) — list
-> 4. Shared/common code touched (multi-app blast) — yes/no
-> 5. Regression scope — areas needing re-test
->
-> **Rule:** Complex touch → add `risk_factors`. Each downstream consumer → +1-3 regression cases. Blast >5 areas OR >2 complex → re-evaluate SPLIT before estimating.
->
-> **Risk Margin (drives max bound):**
->
-> | likely_days         | Base margin                     |
-> | ------------------- | ------------------------------- |
-> | <1d trivial         | +10%                            |
-> | 1-2d small additive | +20%                            |
-> | 3-4d real feature   | +35%                            |
-> | 5-7d large          | +50%                            |
-> | 8-10d very large    | +75%                            |
-> | >10d                | +100% AND **flag SHOULD SPLIT** |
->
-> **Risk-factor add-ons (additive — enumerate in `risk_factors`):**
->
-> | Factor                                                                | +margin |
-> | --------------------------------------------------------------------- | ------- |
-> | `touches-complex-existing-feature` (>500 LOC, multi-handler, central) | +20%    |
-> | `cross-service-contract` change                                       | +25%    |
-> | `schema-migration-on-populated-data`                                  | +25%    |
-> | `new-tech-or-unfamiliar-pattern`                                      | +30%    |
-> | `regression-fan-out` (≥3 downstream areas re-test)                    | +20%    |
-> | `performance-or-latency-critical`                                     | +20%    |
-> | `concurrency-race-event-ordering`                                     | +25%    |
-> | `shared-common-code` (multi-consumer/multi-app)                       | +25%    |
-> | `unclear-requirements-or-design`                                      | +30%    |
->
-> **Collapse rule:** total margin >100% → STOP, split (padding past 2x is dishonesty). Margin <15% on `likely_days ≥5` → under-estimated, widen.
->
-> **Work-Type Caps (hard ceilings on `likely_days`):**
-> | Work type | Max SP | Max likely |
-> | --- | --- | --- |
-> | Single field / config flag / style fix | 1 | 0.5d |
-> | Add property to existing model + bind to existing UI | 2 | 1d |
-> | **Additive endpoint + minor UI control** (button/menu/column), reuses fixtures | **3** | **2-3d** |
-> | Additive endpoint + **NEW UI surface** OR additive multi-layer + new domain rule + 2+ test files | 5 | 3-5d |
-> | NEW model/aggregate OR migration OR cross-module contract OR heavy test (>1.5d) OR NEW UI + non-trivial backend | 8 | 5-7d |
-> | NEW UI surface + (NEW aggregate OR migration OR cross-service contract) | 13 | SHOULD split |
-> | Cross-service contract + migration combined | 13 | SHOULD split |
-> | Beyond | 21 | MUST split |
->
-> **SP→Days (validation only):** 1=0.5d/0.25d · 2=1d/0.35d · 3=2d/0.65d · 5=4d/1.0d · 8=6d/1.5d · 13=10d/2.0d (Trad/AI likely)
-> **AI speedup:** SP 1≈2x · 2-3≈3x · 5-8≈4x · 13+≈5x. AI cost = `(code_gen × 1.3) + (test_gen × 1.3)` (30% review overhead).
->
-> **MANDATORY frontmatter:**
->
-> ```yaml
-> story_points: <n>
-> complexity: low | medium | high | critical
-> man_days_traditional: '<min>-<max>d' # range when likely ≥3d; '<N>d' when <3d
-> man_days_ai: '<min>-<max>d'
-> risk_margin_pct: <n> # base + add-ons
-> risk_factors: [touches-complex-existing-feature, regression-fan-out] # closed-list from add-ons; [] if none
-> blast_radius:
->     touched_areas: <n>
->     complex_touched: <n>
->     downstream_consumers: [list or count]
->     shared_common_code: yes | no
-> estimate_scope_included: [code, integration-tests, frontend, i18n, docs]
-> estimate_scope_excluded: [unit-tests, e2e, perf, deployment, code-review-rounds]
-> estimate_reasoning: |
->     5-7 lines covering:
->     (a) UI tier — row applied
->     (b) Backend tier — row applied
->     (c) Test scope — case breakdown by driver, file count, fixtures, tier row
->     (d) Cost driver — dominant tier + why
->     (e) Blast radius — touched, complex, regression scope
->     (f) Risk factors — list driving margin; why not larger/smaller
->     Example: "UI: compose Form/Table/Dialog → NEW screen (~1.5d). Backend: NEW command on existing aggregate,
->     reuses validation+repo (~1d). Tests: 4 transitions × 2 actors + 3 validation + 2 UI states = 13 cases,
->     1 new fixture → tier 13-25 ~1.5d. Driver: UI composition + new states. Blast: 4 areas, 1 complex.
->     Risk: base 35% + touches-complex +20% = 55% → max 3.9d → range 2.5-4d."
-> ```
->
-> **Sanity self-check:**
->
-> - `likely_days ≥3d` and single-point? → reject, must be range
-> - Margin <15% on `likely_days ≥5d`? → under-estimated, widen
-> - Margin >100%? → STOP, split instead of buffer
-> - Complex existing feature touched, no regression budget in `(c)`? → reject
-> - Blast `>5` areas OR `>2` complex, no split discussion? → reject
-> - Purely additive on existing model AND existing UI? → cap SP 3 unless tests >1.5d
-> - NEW UI surface (page/complex form/dashboard)? → SP 5+ even if backend one endpoint
-> - Backend cross-service / migration / multi-aggregate? → SP 8+ regardless of UI
-> - `bottom_up_hours / 6` vs SP-Days disagreement >50%? → trust bottom-up, downgrade SP
-> - Without tests, SP drops ≥1 bucket? → tests dominate; state explicitly
-> - Reasoning called out UI vs backend vs blast vs risk factors? → if missing, add
-
-<!-- /SYNC:estimation-framework -->
-
-### Frontend/UI Context (if applicable)
-
-> When this task involves frontend or UI changes,
-
-<!-- SYNC:ui-system-context -->
-
-> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
->
-> **MUST ATTENTION READ before implementing:**
->
-> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
-> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
-> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
->
-> Reference `docs/project-config.json` for project-specific paths.
-
-<!-- /SYNC:ui-system-context -->
-
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (Codex has no hook injection — open this file directly before proceeding)
-- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
-- Design system tokens: `docs/project-reference/design-system/README.md`
-
-## Adversarial Review Mindset (NON-NEGOTIABLE)
-
-**Default stance: SKEPTIC reviewing your own work. You just produced this PBI. Your natural bias is to find it acceptable. Break that bias deliberately.**
-
-> **Self-review trap:** The AI wrote this PBI moments ago. Every reasoning chain you used to WRITE it is still active in this context. You will find it coherent because YOU made it coherent — not because it is correct. This section forces adversarial challenge.
-
-### Adversarial Techniques (apply ALL before concluding)
-
-**1. Scope Creep Detector**
-Read each acceptance criterion. Ask: "Is this required for the core user value, or is it a 'nice to have' that grew in during writing?" Flag any AC that is NOT directly traceable to the problem statement. A PBI with 8 ACs for a simple feature is almost certainly over-scoped.
-
-**2. Assumption Stress Test**
-List the 3 biggest assumptions embedded in the acceptance criteria. For each: "What if this assumption is wrong?" Common hidden assumptions: "users will provide valid input," "the data is in the expected format," "the system is in a known state." If any AC fails when an assumption breaks, it needs a corresponding error-path AC.
-
-**3. Missing Stakeholder Check**
-Ask: "Who else uses this feature who was NOT the primary user in the problem statement?" (e.g., admins, support staff, other services). Does any missing stakeholder have a use case the PBI does NOT cover? Flag gaps.
-
-**4. Pre-Mortem**
-Assume this PBI is implemented exactly as written and deployed. In 3 months, a user files a critical support ticket. Write the most plausible complaint — the gap the PBI failed to address. If you can't find one, you wrote too safe a PBI.
-
-**5. Testability Challenge**
-For each acceptance criterion: "Can a QA engineer write an automated test for this AC without asking any clarifying questions?" If not — the AC is ambiguous or unmeasurable. Flag it.
-
-**6. Contrarian Pass**
-Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. Then decide which argument is stronger.
-
-### Forbidden Patterns (self-review specific)
-
-- **"ACs look comprehensive"** — You wrote them. Of course they look comprehensive to you. Challenge each one.
-- **"Scope is well-defined"** — Did you REDUCE scope during writing? What did you cut? Was cutting justified?
-- **"Problem statement is clear"** — Could it be framed differently to lead to a different (better) solution?
-- **"Ready for story creation"** — Have you checked with INVEST? Would a developer estimate this in < 1 sprint?
-- **Confirming your own work without adversarial challenge** — Forbidden. Find at least one thing to question.
-
-### Anti-Bias Gate (MANDATORY before finalizing verdict)
-
-Complete this checklist before writing the final verdict:
-
-- [ ] Checked each AC for scope creep (traceable to problem statement)
-- [ ] Identified 3 hidden assumptions and stress-tested them
-- [ ] Checked for missing stakeholders
-- [ ] Ran pre-mortem (most plausible support complaint in 3 months)
-- [ ] Verified all ACs are unambiguously testable
-- [ ] Generated at least 2 sentences arguing the opposite verdict
-
-If any box is unchecked — you have NOT completed the adversarial review. Go back.
-
-## Workflow
-
-1. **Locate PBI** — Find latest PBI artifact in `team-artifacts/pbis/` or active plan context
-2. **Evaluate checklist** — Score each check as PASS/FAIL
-3. **Classify** — PASS (all Required + >=50% Recommended), WARN (all Required), FAIL (any Required fails)
-4. **Output verdict** — Status, issues, recommendations
-
-## Checklist
-
-### Required (all must pass)
-
-| #   | Check                                                                                                                                                      | Presence                                                                   | Quality Depth                                                                                                                                                                                                                                                                                                                                         |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Problem statement** — Clear problem defined (not just solution description)                                                                              | Is a problem statement section present?                                    | Is the problem scoped correctly? Does it confuse symptoms with root cause? Is it framed to lead to only one solution, or is the solution space left open?                                                                                                                                                                                             |
-| 2   | **Acceptance criteria** — Minimum 3 GIVEN/WHEN/THEN scenarios                                                                                              | Are at least 3 GIVEN/WHEN/THEN ACs present?                                | Are they realistic scenarios, not trivial? Do they cover error paths? Are edge cases specified, or only the happy path?                                                                                                                                                                                                                               |
-| 3   | **Story points + complexity** — Both fields present with valid values                                                                                      | Are story points and complexity both filled in?                            | Do both values match the scope of work? Is complexity above 5 justified with a rationale, or just assigned arbitrarily?                                                                                                                                                                                                                               |
-| 4   | **Dependencies table** — Has dependency table with must-before/can-parallel/blocked-by types                                                               | Is a dependencies table present with typed rows?                           | Are ALL dependencies captured (technical, data, service)? Are "can-parallel" items truly safe to parallelize, or do they share a resource?                                                                                                                                                                                                            |
-| 5   | **Stakeholder validation** — User interview was conducted (validation section present)                                                                     | Is a stakeholder/validation section present?                               | Was the interview substantive? Does the validation section show actual user responses and insights, or just "interviewed on [date]"?                                                                                                                                                                                                                  |
-| 6   | **No vague language** — No "should work", "might need", "TBD" in acceptance criteria                                                                       | Are all ACs free of vague terms?                                           | Are "should work"/"TBD"/"might need" absent from ALL acceptance criteria, including edge cases and error paths?                                                                                                                                                                                                                                       |
-| 7   | **Scope boundary** — Clear "out of scope" or "not included" section                                                                                        | Is an out-of-scope section present?                                        | Are out-of-scope items specific enough to prevent scope creep during implementation? Is anything ambiguously in/out?                                                                                                                                                                                                                                  |
-| 8   | **Authorization defined** — PBI has "Authorization & Access Control" section with roles × CRUD table                                                       | Is an authorization section with a CRUD table present?                     | Does the CRUD table cover ALL PBI-relevant roles? Are there roles (admin, support, service account) that are missing or not addressed?                                                                                                                                                                                                                |
-| 9   | **UI Layout section** — If UI: has `## UI Layout` section per wireframe protocol. If backend-only: explicit "N/A"                                          | Is a UI Layout section or explicit N/A present?                            | If UI: does the wireframe have component tree + states + design tokens? If backend-only: is the N/A explicit and justified, not just omitted?                                                                                                                                                                                                         |
-| 10  | **Reestimate drift check** — Phase 7.5 re-evaluation ran; frontmatter has `reestimate_delta_pct` + `reestimate_reason` populated post-Validation Interview | Are `reestimate_delta_pct` and `reestimate_reason` present in frontmatter? | Was the re-evaluation actually performed against the LOCKED scope (post-Phase 7), or copy-pasted? If `\|delta\| > 20%`, were SP/complexity/man_days fields actually updated to match? If `\|delta\| > 50%`, is there a documented user rescope decision in `## Validation Summary`? Stale Phase 6 numbers with a `delta_pct: 0` and no reason = FAIL. |
-
-### Recommended (>=50% should pass)
-
-| #   | Check                                                                                                          | Presence                                                            | Quality Depth                                                                                                                                                |
-| --- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **RICE/MoSCoW score** — Prioritization applied                                                                 | Is a RICE or MoSCoW prioritization score present?                   | Is the scoring justified with data or reasoning, or assigned arbitrarily without rationale?                                                                  |
-| 2   | **Domain vocabulary** — Uses project-specific terms from domain-entities-reference.md                          | Are domain-specific terms used in the PBI?                          | Is domain language consistent with `domain-entities-reference.md`, or are new terms introduced without definition?                                           |
-| 3   | **Risk assessment** — Risks identified with mitigations                                                        | Is a risk section present with at least one item?                   | Are risks specific to this PBI, or generic "technical risk"? Are mitigations actionable (who does what, when triggered)?                                     |
-| 4   | **Non-functional requirements** — Performance, security, accessibility considered                              | Is an NFR section or NFR notes present?                             | Are perf/security/accessibility numbers specified (e.g., "< 200ms response time", "WCAG AA"), not just "considered" or "addressed"?                          |
-| 5   | **Production readiness concerns** — PBI includes "Production Readiness Concerns" table with Yes/No/Existing    | Is the Production Readiness Concerns table present with all 5 rows? | Are all 5 table rows meaningfully filled — not just "Yes" for all? Are gaps called out with rationale?                                                       |
-| 6   | **Seed data assessed** — PBI addresses seed data needs or explicitly states "N/A"                              | Is seed data addressed or explicitly marked N/A?                    | If "N/A" is used, is it justified? Is it the right N/A (no new reference data needed), or is seed data actually required and skipped?                        |
-| 7   | **Data migration assessed** — PBI addresses schema changes and data migration needs or explicitly states "N/A" | Is data migration addressed or explicitly marked N/A?               | If "N/A" is used, is it justified? Are there hidden schema implications (added columns, changed constraints) that require migration even if "no new tables"? |
-
-## Output
-
-```markdown
-## PBI Review Result
-
-**Status:** PASS | WARN | FAIL
-**Artifact:** {pbi-path}
-
-### Required ({X}/{Y})
-
-- ✅/❌ Check description
-
-### Recommended ({X}/{Y})
-
-- ✅/⚠️ Check description
-
-### Issues Found
-
-- ❌ FAIL: {issue}
-- ⚠️ WARN: {issue}
-
-### Verdict
-
-{PROCEED | REVISE_FIRST}
-```
-
-## Round 2+ : Fresh Sub-Agent Re-Review (MANDATORY)
-
-> **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
-
-After completing Round 1 checklist evaluation, spawn a **fresh `general-purpose` sub-agent** for Round 2 using the canonical Agent template from `SYNC:review-protocol-injection` above. PBI artifact reviews are NOT code reviews — use `agent_type: "general-purpose"`. When constructing the Agent call prompt:
-
-1. Copy the Agent call shape from the `SYNC:review-protocol-injection` template verbatim
-2. Set `agent_type: "general-purpose"`
-3. Embed the full verbatim body of these SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:rationalization-prevention`, `SYNC:understand-code-first` (omit code-specific protocols like `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:fix-layer-accountability` which are not applicable to PBI artifacts)
-4. Set the Task as `"Review the PBI artifact for completeness and quality. Focus on: implicit assumptions not validated, missing acceptance criteria coverage, edge cases not addressed, cross-references not verified, vague language, authorization gaps."`
-5. Set Target Files as the explicit PBI artifact file path
-6. Set report path as `plans/reports/refine-review-round{N}-{date}.md`
-
-After sub-agent returns:
-
-1. **Read** the sub-agent's report
-2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
-3. **If FAIL:** fix issues in the PBI, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
-4. **Max 3 fresh rounds** — escalate to user via a direct user question if still failing after 3 rounds
-5. **Final verdict** must incorporate findings from ALL rounds
-
-## Key Rules
-
-- **FAIL blocks workflow** — If FAIL, do NOT proceed to $story. List specific fixes needed.
-- **WARN allows proceeding** — Note gaps but continue.
-- **No guessing** — Every check must reference specific content in the PBI artifact.
-- **Constructive** — Focus on implementation-blocking issues, not pedantic details.
-- **Production Readiness** — When reviewing production readiness concerns in a PBI, verify coverage of: Code Quality Tooling, Error Handling Foundation, Loading State Management, Docker Development Environment, Integration Points (see `SYNC:scaffold-production-readiness` for definitions).
-
----
-
-## Next Steps
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"$story (Recommended)"** — Create user stories from validated PBI
-- **"$refine"** — Re-refine if FAIL verdict
-- **"Skip, continue manually"** — user decides
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:graph-impact-analysis:reminder -->
+    <!-- /SYNC:double-round-trip-review:reminder -->
+
+<!-- SYNC:graph-impact-analysis:reminder -->
+
     **IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-      <!-- /SYNC:graph-impact-analysis:reminder -->
-      <!-- SYNC:ui-system-context:reminder -->
+
+<!-- /SYNC:graph-impact-analysis:reminder -->
+
+<!-- SYNC:ui-system-context:reminder -->
+
     **IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
-      <!-- SYNC:estimation-framework:reminder -->
+
+<!-- /SYNC:ui-system-context:reminder -->
+
+<!-- SYNC:estimation-framework:reminder -->
+
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
     <!-- /SYNC:estimation-framework:reminder -->
-    <!-- SYNC:ai-mistake-prevention -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -772,6 +739,7 @@ After sub-agent returns:
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `$sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -780,25 +748,35 @@ After sub-agent returns:
 
 <!-- SYNC:task-tracking-external-report:reminder -->
 
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

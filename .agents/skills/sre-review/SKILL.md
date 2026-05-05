@@ -49,81 +49,312 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
+## Quick Summary
+
+**Goal:** Assess production readiness of service-layer and API changes — score observability, reliability, data integrity, and database performance.
+
+**When to use:** After implementing backend service or API changes, before committing. Frontend-only changes exempt.
+
+**Why:** Working code that can't be debugged, monitored, or rolled back is technical debt in disguise.
+
+**Deployment context:** Read `docs/project-config.json` → `infrastructure` section:
+
+- `containerization` → check Dockerfiles, docker-compose
+- `orchestration` → check K8s manifests, Helm charts
+- `cicd.tool` → check pipeline configs
+
+## Your Mission
+
+<task>
+$ARGUMENTS
+</task>
+
+## Review Mindset (NON-NEGOTIABLE)
+
+**Be skeptical. Every claim needs traced proof, confidence >80%.**
+
+- NEVER accept operational readiness at face value — verify by reading actual implementations
+- Every score MUST have `file:line` evidence — unprovable score = 0
+- Question: "Is this really handled?" → trace error/retry/timeout path to confirm
+- Challenge: "Are ALL failure modes covered?" → check what happens when dependencies fail
+- Verify: "Can we debug this in production?" → check logging, correlation, metrics
+
+## Scope Resolution
+
+1. Arguments specify files/directories → review those
+2. Else → review uncommitted changes (`git diff --name-only`)
+3. Focus: `*.cs` in `src/Services/`, API controllers, service classes
+4. Skip: frontend files, test files, documentation, config-only changes
+
+## Production Readiness Scoring
+
+Score each criterion 0-2: **0** = not addressed, **1** = partially, **2** = fully.
+
+### Observability (max 8)
+
+> **Think:** If this service errors at 3am, can on-call engineer diagnose root cause from logs alone — without reproducing?
+
+| #   | Criterion              | What to Check                                                                                                 |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1   | **Structured Logging** | External API calls and critical operations log errors with context (request ID, user, parameters)             |
+| 2   | **Error Context**      | Exceptions include enough context to diagnose without reproducing (entity IDs, operation type, input summary) |
+| 3   | **Metrics Awareness**  | Operations >100ms consider tracking duration. New endpoints consider latency monitoring                       |
+| 4   | **Correlation**        | Cross-service calls include or propagate correlation IDs for distributed tracing                              |
+
+### Reliability (max 8)
+
+> **Think:** If the downstream dependency is down or slow, does this service degrade gracefully or cascade-fail?
+
+| #   | Criterion                 | What to Check                                                                                             |
+| --- | ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 5   | **Retry Strategy**        | Transient failures (HTTP, DB timeouts) have retry logic or documented reason for not retrying             |
+| 6   | **Timeout Configuration** | HTTP clients and external calls have explicit timeout (not relying on defaults)                           |
+| 7   | **Error Handling**        | Errors handled gracefully — no swallowed exceptions, no generic catch-all without logging                 |
+| 8   | **Fallback Behavior**     | Critical paths define behavior when dependencies fail (degraded mode, cached response, user-facing error) |
+
+### Data Integrity (max 4)
+
+> **Think:** If database wiped and reseeded from scratch, does system still reach a valid state?
+
+| #   | Criterion              | What to Check                                                                                                 |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 9   | **Seed vs Migration**  | Seed data (default records, system config) lives in startup data seeders, NOT in one-time migration executors |
+| 10  | **Seeder Idempotency** | Data seeders use check-then-create pattern (query before insert) — safe for repeated runs on any environment  |
+
+**Decision test:** _"If the database is reset, does this data still need to exist?"_ Yes → must be in seeder. No → migration acceptable.
+
+### Database Performance (max 4)
+
+> **Think:** At 10x current data volume, do these queries still complete in <1s?
+
+> **[IMPORTANT] Database Performance Protocol (MANDATORY):**
+>
+> 1. **Paging Required** — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+
+| #   | Criterion            | What to Check                                                                                                          |
+| --- | -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 11  | **Pagination**       | List/collection queries use pagination (Skip/Take, cursor). No unbounded GetAll/ToList loading all records into memory |
+| 12  | **Database Indexes** | Query filter fields, foreign keys, and sort columns have matching database indexes. Migrations include index creation  |
+
+## Scoring
+
+| Score | Verdict        | Recommendation                                                                            |
+| ----- | -------------- | ----------------------------------------------------------------------------------------- |
+| 19-24 | **PASS**       | Production-ready. Proceed to commit.                                                      |
+| 13-18 | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
+| 0-12  | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
+
+> Run `python .claude/scripts/code_graph connections <file> --json` on service boundary files for cross-service impact.
+
+## Structural Impact Analysis (RECOMMENDED if graph.db exists)
+
+- `python .claude/scripts/code_graph graph-blast-radius --json` → blast radius >20 nodes = high-risk deployment
+- `python .claude/scripts/code_graph query tests_for <function_name> --json` → verify test coverage on changed functions
+- `python .claude/scripts/code_graph trace <service-file> --direction downstream --json` → verify all downstream event handlers, bus consumers, cross-service calls have error handling
+
+## Round 2: Fresh Sub-Agent Review (MANDATORY)
+
+When Round 1 finds issues, Round 2 MUST spawn a fresh sub-agent with ZERO Round 1 memory after fixing — NEVER re-review in the same session. A clean Round 1 ENDS the review.
+
+**Spawn via canonical template in `SYNC:review-protocol-injection`:**
+
+1. `subagent_type`: `code-reviewer`
+2. Task: `"SRE production readiness review — score all 12 criteria (0-2) for {files reviewed in Round 1}"`
+3. Round: `"Round 2. Zero memory of prior rounds. Re-read ALL target files from scratch."`
+4. Reference Docs: `docs/project-reference/code-review-rules.md`
+5. Target Files: same files from Scope Resolution
+6. Integrate sub-agent report findings — DO NOT filter or override
+
+**Round 2 focus** (what Round 1 typically misses):
+
+- Operational concerns spanning multiple services
+- Subtle reliability gaps (retry, circuit breakers, timeout handling)
+- Missing observability (structured logging, correlation IDs, metrics)
+- Data integrity edge cases under concurrent load
+
+**Final verdict = Round 1 + Round 2 combined.**
+
+## Output Format
+
+```markdown
+## SRE Review Results
+
+**Scope:** {files reviewed}
+**Date:** {date}
+**Score:** {X}/24
+**Verdict:** PASS / NEEDS WORK / NOT READY
+
+### Observability ({X}/8)
+
+| #   | Criterion          | Score | Evidence                   |
+| --- | ------------------ | ----- | -------------------------- |
+| 1   | Structured Logging | 0/1/2 | {file:line or "not found"} |
+| 2   | Error Context      | 0/1/2 | ...                        |
+| 3   | Metrics Awareness  | 0/1/2 | ...                        |
+| 4   | Correlation        | 0/1/2 | ...                        |
+
+### Reliability ({X}/8)
+
+| #   | Criterion         | Score | Evidence |
+| --- | ----------------- | ----- | -------- |
+| 5   | Retry Strategy    | 0/1/2 | ...      |
+| 6   | Timeout Config    | 0/1/2 | ...      |
+| 7   | Error Handling    | 0/1/2 | ...      |
+| 8   | Fallback Behavior | 0/1/2 | ...      |
+
+### Data Integrity ({X}/4)
+
+| #   | Criterion          | Score | Evidence |
+| --- | ------------------ | ----- | -------- |
+| 9   | Seed vs Migration  | 0/1/2 | ...      |
+| 10  | Seeder Idempotency | 0/1/2 | ...      |
+
+### Database Performance ({X}/4)
+
+| #   | Criterion        | Score | Evidence |
+| --- | ---------------- | ----- | -------- |
+| 11  | Pagination       | 0/1/2 | ...      |
+| 12  | Database Indexes | 0/1/2 | ...      |
+
+### Gaps to Address
+
+- {specific actionable item}
+
+### Recommendation
+
+{Proceed / Address gaps first}
+```
+
+## Important Notes
+
+- Advisory (final VERDICT only) — score/verdict inform team but don't block commits; MANDATORY process steps (graph gate, Round 2, Database Performance Protocol) are NEVER advisory
+- Evidence-based — cite `file:line` for every score; unprovable score = 0
+- Proportional — small bug fixes need less rigor than new endpoints (applies to VERDICT interpretation, NOT to skipping MANDATORY steps)
+- Check framework patterns — background job base handlers, base controller error handling
+
+---
+
+## Workflow Recommendation
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in workflow, MUST ATTENTION use a direct user question to ask user:
+>
+> 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → sre-review → test → docs
+> 2. **Execute `$sre-review` directly** — run standalone
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** — after completing, MUST ATTENTION use a direct user question:
+
+- **"$watzup (Recommended)"** — wrap up + check doc staleness
+- **"$test"** — run tests before wrapping up
+- **"Skip, continue manually"** — user decides
+
+---
+
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify code AND documentation.
+
+> **External Memory:** Complex/lengthy work → write intermediate findings + final results to `plans/reports/` — prevents context loss, serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% verify first).
+
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
 <!-- SYNC:nested-task-creation -->
 
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
 >
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
 >
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
 
 <!-- SYNC:project-reference-docs-guide -->
 
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
 >
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
 <!-- SYNC:task-tracking-external-report -->
 
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
 >
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
 >
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -147,8 +378,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 > **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
 
 <!-- /SYNC:evidence-based-reasoning -->
-
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (Codex has no hook injection — open this file directly before proceeding)
 
 <!-- SYNC:double-round-trip-review -->
 
@@ -361,292 +590,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:review-protocol-injection -->
 
-> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify code AND documentation.
-
-> **External Memory:** Complex/lengthy work → write intermediate findings + final results to `plans/reports/` — prevents context loss, serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% verify first).
-
-## Quick Summary
-
-**Goal:** Assess production readiness of service-layer and API changes — score observability, reliability, data integrity, and database performance.
-
-**When to use:** After implementing backend service or API changes, before committing. Frontend-only changes exempt.
-
-**Why:** Working code that can't be debugged, monitored, or rolled back is technical debt in disguise.
-
-**Deployment context:** Read `docs/project-config.json` → `infrastructure` section:
-
-- `containerization` → check Dockerfiles, docker-compose
-- `orchestration` → check K8s manifests, Helm charts
-- `cicd.tool` → check pipeline configs
-
-## Your Mission
-
-<task>
-$ARGUMENTS
-</task>
-
-## Review Mindset (NON-NEGOTIABLE)
-
-**Be skeptical. Every claim needs traced proof, confidence >80%.**
-
-- NEVER accept operational readiness at face value — verify by reading actual implementations
-- Every score MUST have `file:line` evidence — unprovable score = 0
-- Question: "Is this really handled?" → trace error/retry/timeout path to confirm
-- Challenge: "Are ALL failure modes covered?" → check what happens when dependencies fail
-- Verify: "Can we debug this in production?" → check logging, correlation, metrics
-
-## Scope Resolution
-
-1. Arguments specify files/directories → review those
-2. Else → review uncommitted changes (`git diff --name-only`)
-3. Focus: `*.cs` in `src/Services/`, API controllers, service classes
-4. Skip: frontend files, test files, documentation, config-only changes
-
-## Production Readiness Scoring
-
-Score each criterion 0-2: **0** = not addressed, **1** = partially, **2** = fully.
-
-### Observability (max 8)
-
-> **Think:** If this service errors at 3am, can on-call engineer diagnose root cause from logs alone — without reproducing?
-
-| #   | Criterion              | What to Check                                                                                                 |
-| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 1   | **Structured Logging** | External API calls and critical operations log errors with context (request ID, user, parameters)             |
-| 2   | **Error Context**      | Exceptions include enough context to diagnose without reproducing (entity IDs, operation type, input summary) |
-| 3   | **Metrics Awareness**  | Operations >100ms consider tracking duration. New endpoints consider latency monitoring                       |
-| 4   | **Correlation**        | Cross-service calls include or propagate correlation IDs for distributed tracing                              |
-
-### Reliability (max 8)
-
-> **Think:** If the downstream dependency is down or slow, does this service degrade gracefully or cascade-fail?
-
-| #   | Criterion                 | What to Check                                                                                             |
-| --- | ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 5   | **Retry Strategy**        | Transient failures (HTTP, DB timeouts) have retry logic or documented reason for not retrying             |
-| 6   | **Timeout Configuration** | HTTP clients and external calls have explicit timeout (not relying on defaults)                           |
-| 7   | **Error Handling**        | Errors handled gracefully — no swallowed exceptions, no generic catch-all without logging                 |
-| 8   | **Fallback Behavior**     | Critical paths define behavior when dependencies fail (degraded mode, cached response, user-facing error) |
-
-### Data Integrity (max 4)
-
-> **Think:** If database wiped and reseeded from scratch, does system still reach a valid state?
-
-| #   | Criterion              | What to Check                                                                                                 |
-| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 9   | **Seed vs Migration**  | Seed data (default records, system config) lives in startup data seeders, NOT in one-time migration executors |
-| 10  | **Seeder Idempotency** | Data seeders use check-then-create pattern (query before insert) — safe for repeated runs on any environment  |
-
-**Decision test:** _"If the database is reset, does this data still need to exist?"_ Yes → must be in seeder. No → migration acceptable.
-
-### Database Performance (max 4)
-
-> **Think:** At 10x current data volume, do these queries still complete in <1s?
-
-> **[IMPORTANT] Database Performance Protocol (MANDATORY):**
->
-> 1. **Paging Required** — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
-> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
-
-| #   | Criterion            | What to Check                                                                                                          |
-| --- | -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 11  | **Pagination**       | List/collection queries use pagination (Skip/Take, cursor). No unbounded GetAll/ToList loading all records into memory |
-| 12  | **Database Indexes** | Query filter fields, foreign keys, and sort columns have matching database indexes. Migrations include index creation  |
-
-## Scoring
-
-| Score | Verdict        | Recommendation                                                                            |
-| ----- | -------------- | ----------------------------------------------------------------------------------------- |
-| 19-24 | **PASS**       | Production-ready. Proceed to commit.                                                      |
-| 13-18 | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
-| 0-12  | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
-
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
-
-> Run `python .claude/scripts/code_graph connections <file> --json` on service boundary files for cross-service impact.
-
-## Structural Impact Analysis (RECOMMENDED if graph.db exists)
-
-- `python .claude/scripts/code_graph graph-blast-radius --json` → blast radius >20 nodes = high-risk deployment
-- `python .claude/scripts/code_graph query tests_for <function_name> --json` → verify test coverage on changed functions
-- `python .claude/scripts/code_graph trace <service-file> --direction downstream --json` → verify all downstream event handlers, bus consumers, cross-service calls have error handling
-
-## Round 2: Fresh Sub-Agent Review (MANDATORY)
-
-When Round 1 finds issues, Round 2 MUST spawn a fresh sub-agent with ZERO Round 1 memory after fixing — NEVER re-review in the same session. A clean Round 1 ENDS the review.
-
-**Spawn via canonical template in `SYNC:review-protocol-injection`:**
-
-1. `subagent_type`: `code-reviewer`
-2. Task: `"SRE production readiness review — score all 12 criteria (0-2) for {files reviewed in Round 1}"`
-3. Round: `"Round 2. Zero memory of prior rounds. Re-read ALL target files from scratch."`
-4. Reference Docs: `docs/project-reference/code-review-rules.md`
-5. Target Files: same files from Scope Resolution
-6. Integrate sub-agent report findings — DO NOT filter or override
-
-**Round 2 focus** (what Round 1 typically misses):
-
-- Operational concerns spanning multiple services
-- Subtle reliability gaps (retry, circuit breakers, timeout handling)
-- Missing observability (structured logging, correlation IDs, metrics)
-- Data integrity edge cases under concurrent load
-
-**Final verdict = Round 1 + Round 2 combined.**
-
-## Output Format
-
-```markdown
-## SRE Review Results
-
-**Scope:** {files reviewed}
-**Date:** {date}
-**Score:** {X}/24
-**Verdict:** PASS / NEEDS WORK / NOT READY
-
-### Observability ({X}/8)
-
-| #   | Criterion          | Score | Evidence                   |
-| --- | ------------------ | ----- | -------------------------- |
-| 1   | Structured Logging | 0/1/2 | {file:line or "not found"} |
-| 2   | Error Context      | 0/1/2 | ...                        |
-| 3   | Metrics Awareness  | 0/1/2 | ...                        |
-| 4   | Correlation        | 0/1/2 | ...                        |
-
-### Reliability ({X}/8)
-
-| #   | Criterion         | Score | Evidence |
-| --- | ----------------- | ----- | -------- |
-| 5   | Retry Strategy    | 0/1/2 | ...      |
-| 6   | Timeout Config    | 0/1/2 | ...      |
-| 7   | Error Handling    | 0/1/2 | ...      |
-| 8   | Fallback Behavior | 0/1/2 | ...      |
-
-### Data Integrity ({X}/4)
-
-| #   | Criterion          | Score | Evidence |
-| --- | ------------------ | ----- | -------- |
-| 9   | Seed vs Migration  | 0/1/2 | ...      |
-| 10  | Seeder Idempotency | 0/1/2 | ...      |
-
-### Database Performance ({X}/4)
-
-| #   | Criterion        | Score | Evidence |
-| --- | ---------------- | ----- | -------- |
-| 11  | Pagination       | 0/1/2 | ...      |
-| 12  | Database Indexes | 0/1/2 | ...      |
-
-### Gaps to Address
-
-- {specific actionable item}
-
-### Recommendation
-
-{Proceed / Address gaps first}
-```
-
-## Important Notes
-
-- Advisory (final VERDICT only) — score/verdict inform team but don't block commits; MANDATORY process steps (graph gate, Round 2, Database Performance Protocol) are NEVER advisory
-- Evidence-based — cite `file:line` for every score; unprovable score = 0
-- Proportional — small bug fixes need less rigor than new endpoints (applies to VERDICT interpretation, NOT to skipping MANDATORY steps)
-- Check framework patterns — background job base handlers, base controller error handling
-
----
-
-## Workflow Recommendation
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in workflow, MUST ATTENTION use a direct user question to ask user:
->
-> 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → sre-review → test → docs
-> 2. **Execute `$sre-review` directly** — run standalone
-
----
-
-## Next Steps
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** — after completing, MUST ATTENTION use a direct user question:
-
-- **"$watzup (Recommended)"** — wrap up + check doc staleness
-- **"$test"** — run tests before wrapping up
-- **"Skip, continue manually"** — user decides
-
----
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
-<!-- SYNC:evidence-based-reasoning:reminder -->
-
-**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
-
-<!-- /SYNC:evidence-based-reasoning:reminder -->
-<!-- SYNC:double-round-trip-review:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-    <!-- /SYNC:double-round-trip-review:reminder -->
-    <!-- SYNC:graph-assisted-investigation:reminder -->
-
-**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding (when graph.db exists).
-
-<!-- /SYNC:graph-assisted-investigation:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -663,11 +606,30 @@ When Round 1 finds issues, Round 2 MUST spawn a fresh sub-agent with ZERO Round 
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:double-round-trip-review:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
+    <!-- /SYNC:double-round-trip-review:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**IMPORTANT MUST ATTENTION** run at least ONE graph command on key files before concluding (when graph.db exists).
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -676,25 +638,35 @@ When Round 1 finds issues, Round 2 MUST spawn a fresh sub-agent with ZERO Round 
 
 <!-- SYNC:task-tracking-external-report:reminder -->
 
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

@@ -143,6 +143,8 @@ This skill replaces 3 separate scan entries in the `project-config` scan table:
 
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid:
@@ -153,8 +155,6 @@ This skill replaces 3 separate scan entries in the `project-config` scan table:
 > **Check downstream references before deleting.** Map referencing files before removal.
 
 <!-- /SYNC:ai-mistake-prevention -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -182,6 +182,7 @@ This skill replaces 3 separate scan entries in the `project-config` scan table:
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

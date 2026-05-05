@@ -55,6 +55,65 @@ NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional task
 
 ## Fresh Sub-Agent Re-Review Protocol (CRITICAL)
 
+### Decision Logic
+
+```
+Reviews (steps 1-6) → ALL PASS?
+  YES → skip steps 7-11, proceed to /docs-update → /watzup → /workflow-end → DONE
+  NO  → /plan → /plan-validate → /why-review → /cook → FRESH SUB-AGENT RE-REVIEW GATE (step 11)
+```
+
+### Fresh Sub-Agent Re-Review Gate (Step 11) — After `/cook` Applies Fixes
+
+1. **DO NOT** attempt main-agent re-review (main agent has confirmation bias from its own fixes)
+2. **DO** spawn a NEW `Agent` tool call with `subagent_type: "code-reviewer"` using the canonical template from `SYNC:review-protocol-injection` in `.claude/skills/shared/sync-inline-versions.md`. Inject all 9 required SYNC protocol blocks verbatim (`SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`). Target files = `"run git diff to see all uncommitted changes"`. Report path = `plans/reports/workflow-review-round{N}-{date}.md`.
+3. **DO** increment fresh-subagent round count in conversation context
+4. **DO** read the sub-agent's report and integrate findings — MUST NOT filter, reinterpret, or override
+5. **IF** fresh sub-agent returns PASS (zero Critical/High) → proceed through `/docs-update` → `/watzup` → `/workflow-end` → DONE
+6. **IF** fresh sub-agent returns FAIL and round count < 3 → run `/plan` + `/cook` again, then spawn a NEW Agent call (never reuse the previous sub-agent) for Round N+1
+7. **IF** round count >= 3 → STOP and escalate via `AskUserQuestion` — do NOT silently loop or fall back to any prior protocol
+
+### Iteration Rules
+
+- **Max 3 fresh-subagent rounds** — if fresh-subagent round count >= 3 and issues persist, STOP and use `AskUserQuestion` to escalate (manual review required)
+- **PASS = done** — proceed to commit
+- **Issue count increasing** — if round N finds MORE issues than round N-1, STOP and escalate via `AskUserQuestion`
+
+### Flow Diagram
+
+```
+Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-agent
+                  │                                          │
+                  │ (no issues)                              ↓
+                  ↓                             Fresh sub-agent re-reads ALL
+            /watzup                             files from scratch with
+            /workflow-end                       verbatim protocol injection
+            DONE ✓                                           │
+                                                             ↓
+                                                  Report → PASS? → DONE ✓
+                                                         → FAIL? → Fix → spawn
+                                                                 NEW sub-agent
+                                                                 (max 3 rounds)
+```
+
+---
+
+**IMPORTANT MANDATORY Steps:** /review-architecture -> /code-simplifier -> /code-review -> /performance -> /integration-test-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review -> /docs-update -> /watzup -> /workflow-end
+
+**IMPORTANT MANDATORY Steps:** /review-architecture -> /code-simplifier -> /code-review -> /performance -> /integration-test-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review -> /docs-update -> /watzup -> /workflow-end
+
+> **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review` workflow (14 steps). When invoked as a step inside a parent workflow, it MUST execute via `Agent` tool (`subagent_type: "code-reviewer"`) — NEVER as an inline `Skill` tool call. Inline execution absorbs the entire nested workflow context into the parent session.
+>
+> **Sub-agent prompt must include:** target files or git diff context, task description, instruction to return SYNC:subagent-return-contract summary and write full findings to `plans/reports/`.
+>
+> **Standalone invocation** (not inside a workflow): inline execution is fine — no sub-agent required.
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+> **[FRESH SUB-AGENT RE-REVIEW]** After fixes in `/cook`, spawn a fresh sub-agent per `SYNC:fresh-context-review` for unbiased re-review. Max 3 fresh rounds per conversation.
+> **[ITERATION CAP]** Max 3 fresh-subagent re-review rounds per conversation (tracked in conversation context, not persistent files). PASS = zero Critical/High without fixes.
+
+Activate the `review` workflow. Run `/workflow-start review` with the user's prompt as context.
+
 <!-- SYNC:fresh-context-review -->
 
 > **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
@@ -126,62 +185,6 @@ NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional task
 
 <!-- /SYNC:subagent-return-contract -->
 
-### Decision Logic
-
-```
-Reviews (steps 1-6) → ALL PASS?
-  YES → skip steps 7-11, proceed to /docs-update → /watzup → /workflow-end → DONE
-  NO  → /plan → /plan-validate → /why-review → /cook → FRESH SUB-AGENT RE-REVIEW GATE (step 11)
-```
-
-### Fresh Sub-Agent Re-Review Gate (Step 11) — After `/cook` Applies Fixes
-
-1. **DO NOT** attempt main-agent re-review (main agent has confirmation bias from its own fixes)
-2. **DO** spawn a NEW `Agent` tool call with `subagent_type: "code-reviewer"` using the canonical template from `SYNC:review-protocol-injection` in `.claude/skills/shared/sync-inline-versions.md`. Inject all 9 required SYNC protocol blocks verbatim (`SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`). Target files = `"run git diff to see all uncommitted changes"`. Report path = `plans/reports/workflow-review-round{N}-{date}.md`.
-3. **DO** increment fresh-subagent round count in conversation context
-4. **DO** read the sub-agent's report and integrate findings — MUST NOT filter, reinterpret, or override
-5. **IF** fresh sub-agent returns PASS (zero Critical/High) → proceed through `/docs-update` → `/watzup` → `/workflow-end` → DONE
-6. **IF** fresh sub-agent returns FAIL and round count < 3 → run `/plan` + `/cook` again, then spawn a NEW Agent call (never reuse the previous sub-agent) for Round N+1
-7. **IF** round count >= 3 → STOP and escalate via `AskUserQuestion` — do NOT silently loop or fall back to any prior protocol
-
-### Iteration Rules
-
-- **Max 3 fresh-subagent rounds** — if fresh-subagent round count >= 3 and issues persist, STOP and use `AskUserQuestion` to escalate (manual review required)
-- **PASS = done** — proceed to commit
-- **Issue count increasing** — if round N finds MORE issues than round N-1, STOP and escalate via `AskUserQuestion`
-
-### Flow Diagram
-
-```
-Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-agent
-                  │                                          │
-                  │ (no issues)                              ↓
-                  ↓                             Fresh sub-agent re-reads ALL
-            /watzup                             files from scratch with
-            /workflow-end                       verbatim protocol injection
-            DONE ✓                                           │
-                                                             ↓
-                                                  Report → PASS? → DONE ✓
-                                                         → FAIL? → Fix → spawn
-                                                                 NEW sub-agent
-                                                                 (max 3 rounds)
-```
-
----
-
-**IMPORTANT MANDATORY Steps:** /review-architecture -> /code-simplifier -> /code-review -> /performance -> /integration-test-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review -> /docs-update -> /watzup -> /workflow-end
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -241,18 +244,6 @@ Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-ag
 
 <!-- /SYNC:task-tracking-external-report -->
 
-**IMPORTANT MANDATORY Steps:** /review-architecture -> /code-simplifier -> /code-review -> /performance -> /integration-test-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review -> /docs-update -> /watzup -> /workflow-end
-
-> **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review` workflow (14 steps). When invoked as a step inside a parent workflow, it MUST execute via `Agent` tool (`subagent_type: "code-reviewer"`) — NEVER as an inline `Skill` tool call. Inline execution absorbs the entire nested workflow context into the parent session.
->
-> **Sub-agent prompt must include:** target files or git diff context, task description, instruction to return SYNC:subagent-return-contract summary and write full findings to `plans/reports/`.
->
-> **Standalone invocation** (not inside a workflow): inline execution is fine — no sub-agent required.
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
-> **[FRESH SUB-AGENT RE-REVIEW]** After fixes in `/cook`, spawn a fresh sub-agent per `SYNC:fresh-context-review` for unbiased re-review. Max 3 fresh rounds per conversation.
-> **[ITERATION CAP]** Max 3 fresh-subagent re-review rounds per conversation (tracked in conversation context, not persistent files). PASS = zero Critical/High without fixes.
-
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
@@ -260,13 +251,12 @@ Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-ag
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-Activate the `review` workflow. Run `/workflow-start review` with the user's prompt as context.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -293,6 +283,17 @@ Activate the `review` workflow. Run `/workflow-start review` with the user's pro
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

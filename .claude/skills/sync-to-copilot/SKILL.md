@@ -205,6 +205,12 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 
 ---
 
+# Skill: sync-to-copilot
+
+Sync Claude Code knowledge to GitHub Copilot instructions. Two-tier output: project-specific + common protocol.
+
+---
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -229,17 +235,12 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Skill: sync-to-copilot
-
-Sync Claude Code knowledge to GitHub Copilot instructions. Two-tier output: project-specific + common protocol.
-
----
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

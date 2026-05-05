@@ -49,81 +49,464 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
+## Quick Summary
+
+**Goal:** Ensure technical correctness: receiving feedback with verification (not performative agreement), requesting systematic reviews via code-reviewer subagent, enforcing verification gates before completion claims.
+
+> **MANDATORY MUST ATTENTION** Before reviewing, search for project-specific reference docs:
+>
+> **Coding standards** — search: `code-review-rules`, `coding-standards`, `style-guide`, `contributing`
+> **Architecture** — search: `patterns-reference`, `architecture`, `adr`
+> **Test conventions** — search: `integration-test-reference`, `test-guide`, `test-conventions`
+> **Design system** — search: `design-system`, `design-tokens`, `component-library`
+>
+> Read found docs before reviewing. None found → rely on tech stack knowledge from file extensions/directory structure.
+
+**Workflow:**
+
+1. **Create Review Report** — Init `plans/reports/code-review-{date}-{slug}.md`
+2. **Phase 0: Detect** — Classify files by language + directory semantics + change nature → route sub-agents
+3. **Phase 1: File-by-File** — Review each file, update report (naming, typing, magic numbers, responsibility)
+4. **Phase 2: Holistic** — Re-read accumulated report, assess overall approach, architecture, duplication
+5. **Phase 3: Final Result** — Update report with overall assessment, critical issues, recommendations
+6. **Round 2: Fresh Sub-Agent** — Mandatory fresh code-reviewer for cross-cutting concerns, convention drift, edge cases
+
+**Key Rules:**
+
+- **Report-Driven**: Build report incrementally; re-read for big picture
+- **Detect First**: Classify changeset type before any review — route auth/perf files to specialized sub-agents
+- **No Performative Agreement**: Technical evaluation only ("You're right!" banned)
+- **Verification Gates**: Evidence required before completion claims
+- **A clean Round 1 ENDS the review.** Spawn a fresh sub-agent for Round 2 ONLY after a fix cycle.
+
+# Code Review
+
+Three practices: receiving feedback with technical rigor, requesting systematic reviews via code-reviewer subagent, enforcing verification gates before completion claims.
+
+> Run `python .claude/scripts/code_graph query tests_for <function> --json` on changed functions to flag coverage gaps.
+
+## Review Mindset (NON-NEGOTIABLE)
+
+**Skeptical. Every claim needs traced proof `file:line`. Confidence >80% to act.**
+
+- NEVER accept code correctness at face value — trace call paths
+- NEVER include finding without `file:line` evidence (grep results, read confirmations)
+- ALWAYS question: "Does this actually work?" → trace it. "Is this all?" → grep cross-service
+- ALWAYS verify side effects: check consumers + dependents before approving
+
+## Core Principles (ENFORCE ALL)
+
+| Principle          | Rule                                                                                                        |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| **YAGNI**          | Flag code solving hypothetical problems (unused params, speculative interfaces)                             |
+| **KISS**           | Flag unnecessary complexity. "Is there a simpler way?"                                                      |
+| **DRY**            | Grep for similar/duplicate code. 3+ similar patterns → flag for extraction                                  |
+| **Clean Code**     | Readable > clever. Names reveal intent. Functions do ONE thing. Nesting <=3. Methods <30 lines              |
+| **Convention**     | MUST ATTENTION grep 3+ existing examples before flagging violations. Codebase convention wins over textbook |
+| **No Bugs**        | Trace logic paths. Verify edge cases (null, empty, boundary). Check error handling                          |
+| **Proof Required** | Every claim backed by `file:line` evidence. Speculation is forbidden                                        |
+| **Doc Staleness**  | Cross-ref changed files against related docs. Flag stale/missing updates                                    |
+
+**Technical correctness over social comfort.** Verify before implementing. Evidence before claims.
+
+## Graph-Enhanced Review (RECOMMENDED if graph.db exists)
+
+1. `python .claude/scripts/code_graph graph-blast-radius --json` — prioritize files by impact (most dependents first)
+2. `python .claude/scripts/code_graph query tests_for <function_name> --json` — flag untested changed functions
+3. `python .claude/scripts/code_graph trace <file> --direction downstream --json` — downstream impact (events, bus, cross-service)
+4. `python .claude/scripts/code_graph trace <file> --direction both --json` — full flow context for controllers/commands/handlers
+5. Wide blast radius (>20 impacted nodes) = high-risk. Flag in report.
+
+## Review Approach (Report-Driven Two-Phase — CRITICAL)
+
+**MANDATORY FIRST: Create Todo Tasks**
+
+| Task                                                    | Status      |
+| ------------------------------------------------------- | ----------- |
+| `[Review] Create report file`                           | in_progress |
+| `[Review Phase 0] Detect categories + route sub-agents` | pending     |
+| `[Review Phase 1] File-by-file review + update report`  | pending     |
+| `[Review Phase 2] Holistic assessment`                  | pending     |
+| `[Review Phase 3] Final findings`                       | pending     |
+| `[Review Round 2] Fresh sub-agent re-review`            | pending     |
+| `[Review Final] Consolidate all rounds`                 | pending     |
+
+**Step 0: Create Report File**
+
+Create `plans/reports/code-review-{date}-{slug}.md` with Scope, Files to Review sections.
+
+**Phase 0: Detect Change Type**
+
+Before any review — classify the changeset and route sub-agents:
+
+| Signal in changed files                  | Route to                                                |
+| ---------------------------------------- | ------------------------------------------------------- |
+| Auth/permission/token/encryption files   | `security-auditor`                                      |
+| Query files, caching, batch processing   | `performance-optimizer`                                 |
+| Source code (logic, handlers, services)  | `code-reviewer`                                         |
+| Docs, plans, specs, markdown             | `general-purpose`                                       |
+| Mixed changeset with security/perf files | Spawn specialized sub-agent first, then `code-reviewer` |
+
+**Phase 0.7: Derive Review Categories**
+
+Group changed files by: file language (extension), directory semantics (path), change nature (new entity, schema, config, UI, test).
+
+For each category: name it, create sub-task, derive concerns using `SYNC:category-review-thinking` (first principles — NOT a fixed checklist).
+
+> Category list = Phase 1 work breakdown. Each category → own section in report.
+
+**Phase 1: File-by-File Review (Build Report)**
+
+For EACH file, immediately update report:
+
+- File path, Change Summary, Purpose, Issues Found
+- **Convention check:** Grep 3+ similar patterns — does new code follow existing convention?
+- **Correctness check:** Trace logic — null, empty, boundary, error cases handled?
+- **DRY check:** Grep for similar/duplicate code — does this logic exist elsewhere?
+
+**Phase 2: Holistic Review (Re-read Report)**
+
+After all files reviewed, re-read accumulated report:
+
+- **Technical Solution**: Overall approach coherent as unified plan?
+- **Responsibility**: Logic in LOWEST layer? Business logic not in controllers?
+- **Data ownership**: Constants/config in model/entity, not controller/component?
+- **Duplication**: Grep to verify — duplicated logic across changes?
+- **Architecture**: Clean Architecture? Service boundaries respected?
+- **Plan Compliance**: If active plan → check `## Plan Context`: impl matches requirements, TCs have code evidence (not "TBD"), no requirement unaddressed
+- **Design Patterns**: Pattern opportunities (switch→Strategy)? Anti-patterns (God Object, Copy-Paste, Circular Dep)? DRY via base classes?
+
+**MUST ATTENTION CHECK — Clean Code:** YAGNI (unused params, speculative interfaces)? KISS (simpler exists)? Methods >30 lines or nesting >3?
+
+**MUST ATTENTION CHECK — Correctness:** Null/empty/boundary handled? Error paths caught? Async race conditions? Trace happy + error paths.
+
+**Documentation Staleness Check:**
+
+For each changed file — grep file name/module across `docs/` and AI tooling dirs. Changed behavior → flag stale doc (specific section + what changed). **Do NOT auto-fix — flag only.**
+
+Common staleness patterns: count/limit changed → docs embedding that number | API/contract changed → API usage docs | hook/skill added/removed → catalogs/README | schema changed → entity reference docs.
+
+**Phase 3: Final Review Result**
+
+Update report: Overall Assessment, Critical Issues, High Priority, Architecture Recommendations, Documentation Staleness, Positive Observations.
+
+## Round 2+: Fresh Sub-Agent Re-Review (MANDATORY)
+
+After Phase 3 (Round 1), spawn fresh `code-reviewer` sub-agent for Round 2 using canonical template from `SYNC:review-protocol-injection`:
+
+1. Copy Agent call shape from `SYNC:review-protocol-injection` verbatim
+2. Embed full verbatim body of all 10 SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:complexity-prevention`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`
+3. Task: `"Review ALL uncommitted changes. Focus: cross-cutting concerns, interaction bugs, convention drift, missing pieces, subtle edge cases, logic errors, test spec gaps."`
+4. Target Files: `"run git diff to see all uncommitted changes"`
+5. Report: `plans/reports/code-review-round{N}-{date}.md`
+
+After sub-agent returns:
+
+1. **Read** report from `plans/reports/code-review-round{N}-{date}.md`
+2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` — DO NOT filter or override
+3. **If FAIL:** fix issues → spawn NEW Round N+1 fresh sub-agent (never reuse)
+4. **Max 3 fresh rounds** — escalate via a direct user question if still failing after 3 rounds
+
+## Clean Code Rules (MUST ATTENTION CHECK)
+
+| #   | Rule                      | Details                                                                                                                                 |
+| --- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **No Magic Values**       | All literals → named constants                                                                                                          |
+| 2   | **Type Annotations**      | Explicit parameter and return types on all functions                                                                                    |
+| 3   | **Single Responsibility** | One concern per method/class. Event handlers/consumers: one handler = one concern. NEVER bundle — platform swallows exceptions silently |
+| 4   | **DRY**                   | No duplication; extract shared logic                                                                                                    |
+| 5   | **Naming**                | Specific (`employeeRecords` not `data`), Verb+Noun methods, is/has/can/should booleans, no abbreviations                                |
+| 6   | **Performance**           | No O(n²) (use dictionary). Project in query (not load-all). ALWAYS paginate. Batch-by-IDs (not N+1)                                     |
+| 7   | **Entity Indexes**        | Collections: index management methods. EF Core: composite indexes. Expression fields match index order. Text search → text indexes      |
+
+## Data Lifecycle Rules (MUST ATTENTION CHECK)
+
+**Decision test:** _"Delete the DB and start fresh — does this data still need to exist?"_ Yes → **Seeder/fixture**. No → **Migration**.
+
+| Type                 | Contains                                                                                | NEVER contains                                   |
+| -------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **Seeder / Fixture** | Default records, system config, reference data (idempotent — safe to run every startup) | Schema changes                                   |
+| **Migration**        | Schema changes, column adds/removes, data transforms, index changes                     | Default records, permission seeds, system config |
+
+Apply project's language/framework conventions. Principle universal — implementation project-specific.
+
+## Legacy Pattern Compliance
+
+When reviewing files with legacy and modern patterns:
+
+1. **Detect legacy signals** — search `project-config.json`, `package.json`, or equivalent for `"legacy"`, version flags, feature annotations
+2. **Read what "legacy" means** — grep 3+ legacy files to understand pattern constraints vs. modern files
+3. **Derive compliance rules** — what lifecycle/memory management differences exist between legacy/modern for this tech stack?
+4. **Apply tech stack knowledge** to flag anti-patterns
+
+NEVER assume any specific framework's lifecycle. Derive from codebase evidence.
+
+## When to Use This Skill
+
+| Practice               | Triggers                                                                                   | MUST ATTENTION READ                            |
+| ---------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| **Receiving Feedback** | Review comments received, feedback unclear/questionable, conflicts with existing decisions | `references/code-review-reception.md`          |
+| **Requesting Review**  | After each subagent task, major feature done, before merge, after complex bug fix          | `references/requesting-code-review.md`         |
+| **Verification Gates** | Before any completion claim, commit, push, or PR. ANY success/satisfaction statement       | `references/verification-before-completion.md` |
+
+## Quick Decision Tree
+
+```
+SITUATION?
+│
+├─ Received feedback
+│  ├─ Unclear items? → STOP, ask for clarification first
+│  ├─ From human partner? → Understand, then implement
+│  └─ From external reviewer? → Verify technically before implementing
+│
+├─ Completed work
+│  ├─ Major feature/task? → Request code-reviewer subagent review
+│  └─ Before merge? → Request code-reviewer subagent review
+│
+└─ About to claim status
+   ├─ Have fresh verification? → State claim WITH evidence
+   └─ No fresh verification? → RUN verification command first
+```
+
+## Receiving Feedback Protocol
+
+**Pattern:** READ → UNDERSTAND → VERIFY → EVALUATE → RESPOND → IMPLEMENT
+
+- NEVER use performative agreement ("You're right!", "Great point!", "Thanks for...")
+- NEVER implement before verification
+- MUST ATTENTION restate requirement, ask questions, or push back with technical reasoning
+- MUST ATTENTION ask for clarification on ALL unclear items BEFORE starting
+- MUST ATTENTION grep for usage before implementing suggested "proper" features (YAGNI check)
+
+**Source handling:** Human partner → implement after understanding. External reviewer → verify technically, push back if wrong.
+
+**Full protocol:** `references/code-review-reception.md`
+
+## Requesting Review Protocol
+
+1. Get git SHAs: `BASE_SHA=$(git rev-parse HEAD~1)` and `HEAD_SHA=$(git rev-parse HEAD)`
+2. Dispatch code-reviewer subagent with: WHAT_WAS_IMPLEMENTED, PLAN_OR_REQUIREMENTS, BASE_SHA, HEAD_SHA, DESCRIPTION
+3. Act on feedback: Critical → fix immediately. Important → fix before proceeding. Minor → note for later.
+
+**Full protocol:** `references/requesting-code-review.md`
+
+## Verification Gates Protocol
+
+**Iron Law: NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE**
+
+**Gate:** IDENTIFY command → RUN it → READ output → VERIFY it confirms claim → THEN claim. Skip any step = lying.
+
+| Claim            | Required Evidence               |
+| ---------------- | ------------------------------- |
+| Tests pass       | Test output shows 0 failures    |
+| Build succeeds   | Build command exit 0            |
+| Bug fixed        | Original symptom test passes    |
+| Requirements met | Line-by-line checklist verified |
+
+**Red Flags — STOP:** "should"/"probably"/"seems to", satisfaction before verification, committing without verification, trusting agent reports.
+
+**Full protocol:** `references/verification-before-completion.md`
+
+## Related
+
+- `code-simplifier`
+- `debug-investigate`
+- `refactoring`
+
+---
+
+## Systematic Review Protocol (10+ changed files)
+
+For large changesets: categorize files by concern → fire parallel `code-reviewer` sub-agents per category → synchronize findings → holistic assessment. See `review-changes/SKILL.md` § "Systematic Review Protocol" for full 4-step protocol.
+
+---
+
+## Workflow Recommendation
+
+> **MANDATORY MUST ATTENTION — NO EXCEPTIONS:** If NOT already in a workflow, use a direct user question to ask user:
+>
+> 1. **Activate `quality-audit` workflow** (Recommended) — code-review → plan → code → review-changes → test
+> 2. **Execute `$code-review` directly** — run standalone
+
+---
+
+## Architecture Boundary Check
+
+For each changed file, verify no forbidden layer imports:
+
+1. **Read rules** from `docs/project-config.json` → `architectureRules.layerBoundaries`
+2. **Determine layer** — match file path against each rule's `paths` glob patterns
+3. **Scan imports** — grep for `using` (C#) or `import` (TS) statements
+4. **Check violations** — import path contains forbidden layer name → violation
+5. **Exclude framework** — skip files matching `architectureRules.excludePatterns`
+6. **BLOCK on violation** — `"BLOCKED: {layer} layer file {filePath} imports from {forbiddenLayer} ({importStatement})"`
+
+If `architectureRules` absent in project-config.json → skip silently.
+
+---
+
+## Next Steps
+
+**MANDATORY MUST ATTENTION — NO EXCEPTIONS** after completing, use a direct user question:
+
+- **"$fix (Recommended)"** — review found issues needing fixes
+- **"$watzup"** — review clean, wrap up session
+- **"Skip, continue manually"** — user decides
+
+## AI Agent Integrity Gate (NON-NEGOTIABLE)
+
+**Completion ≠ Correctness.** Before reporting ANY work done:
+
+1. **Grep every removed name.** Extraction/rename/delete → grep confirms 0 dangling refs across ALL file types.
+2. **Ask WHY before changing.** Existing values intentional until proven otherwise.
+3. **Verify ALL outputs.** One build passing ≠ all builds passing.
+4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — scope, lifetime, base class, constraints.
+5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, reachable by all consumers.
+
+---
+
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+> **Critical Purpose:** Ensure quality — no flaws, bugs, missing updates, stale content. Verify code AND documentation.
+
+> **External Memory:** Complex work → write findings incrementally to `plans/reports/` — prevents context loss, serves as deliverable.
+
+> **Evidence Gate:** MANDATORY MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof + confidence % (>80% act, <80% verify first).
+
+> **OOP & DRY:** MANDATORY MUST ATTENTION — flag patterns extractable to base class/generic/helper. Same-suffix/lifecycle/responsibility classes MUST ATTENTION share common base. Apply idiomatic abstraction (base class, mixin, trait, protocol) for project's language. Verify linting/analyzer configured.
+
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
+<!-- SYNC:category-review-thinking -->
+
+> **Category Review Thinking** — For each category of changed files, think from first principles. Do NOT use a fixed checklist — derive concerns based on the category's domain.
+>
+> **Step 1: Understand the category's role**
+> What is this category responsible for? What are its invariants? Who are its consumers (callers, dependents, downstream systems)?
+>
+> **Step 2: Read project conventions for this category**
+> Grep 3+ existing similar files in this category. What patterns do they follow? What base classes/interfaces/abstractions do they use?
+>
+> **Step 3: Derive concerns from first principles**
+> Given the category's role and invariants, what could go wrong? Start from universal concerns, then expand with category-specific knowledge:
+>
+> - Correctness: Does the change do what it claims? Are contracts maintained?
+> - Contracts: Does the change preserve consumer-facing behavior?
+> - Security: What trust assumptions does this category make? Are they still valid?
+> - Performance: Does the change introduce O(n²), unbounded queries, or unnecessary I/O?
+> - Maintainability: Does the change follow existing patterns? Does it introduce hidden coupling?
+> - Tests: Is the changed behavior observable and testable?
+> - Documentation: Does the change invalidate any existing docs or specs?
+>
+> These are starting points — your domain knowledge of the tech stack should expand this list. Do NOT limit yourself to what's listed above.
+>
+> **Step 4: Create sub-tasks and execute with file:line evidence**
+> Convert derived concerns into concrete review tasks. Each task must produce `file:line` evidence. No findings without proof.
+>
+> **Examples of categories** (illustrative — NOT exhaustive):
+>
+> - Logic/domain files (business rules, handlers, services)
+> - Data/schema files (migrations, models, ORM definitions)
+> - API/contract files (controllers, routes, serializers, proto definitions)
+> - Configuration/environment files (env vars, feature flags, secrets)
+> - Infrastructure files (Dockerfiles, CI pipelines, manifests)
+> - UI/style files (components, templates, stylesheets)
+> - Test files (unit, integration, e2e)
+> - Documentation files (markdown, specs, ADRs)
+> - Security artifacts (auth middleware, permission definitions, crypto)
+> - Tooling/build files (build configs, linting rules, dependency manifests)
+
+<!-- /SYNC:category-review-thinking -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
 <!-- SYNC:nested-task-creation -->
 
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
 >
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
 >
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
 
 <!-- SYNC:project-reference-docs-guide -->
 
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
 >
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
 <!-- SYNC:task-tracking-external-report -->
 
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
 >
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
 >
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -473,12 +856,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:review-protocol-injection -->
 
-> **Critical Purpose:** Ensure quality — no flaws, bugs, missing updates, stale content. Verify code AND documentation.
-
-> **External Memory:** Complex work → write findings incrementally to `plans/reports/` — prevents context loss, serves as deliverable.
-
-> **Evidence Gate:** MANDATORY MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof + confidence % (>80% act, <80% verify first).
-
 <!-- SYNC:rationalization-prevention -->
 
 > **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
@@ -494,6 +871,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
 
 <!-- /SYNC:rationalization-prevention -->
+
 <!-- SYNC:logic-and-intention-review -->
 
 > **Logic & Intention Review** — Verify WHAT code does matches WHY it was changed.
@@ -506,6 +884,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **NEVER mark review PASS without completing both traces (happy + error path).**
 
 <!-- /SYNC:logic-and-intention-review -->
+
 <!-- SYNC:bug-detection -->
 
 > **Bug Detection** — MUST ATTENTION check categories 1-4 for EVERY review. Never skip.
@@ -520,6 +899,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Classify:** CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO
 
 <!-- /SYNC:bug-detection -->
+
 <!-- SYNC:test-spec-verification -->
 
 > **Test Coverage Verification** — Map changed code to test coverage.
@@ -558,462 +938,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:fix-layer-accountability -->
 
-> **OOP & DRY:** MANDATORY MUST ATTENTION — flag patterns extractable to base class/generic/helper. Same-suffix/lifecycle/responsibility classes MUST ATTENTION share common base. Apply idiomatic abstraction (base class, mixin, trait, protocol) for project's language. Verify linting/analyzer configured.
-
-## Quick Summary
-
-**Goal:** Ensure technical correctness: receiving feedback with verification (not performative agreement), requesting systematic reviews via code-reviewer subagent, enforcing verification gates before completion claims.
-
-> **MANDATORY MUST ATTENTION** Before reviewing, search for project-specific reference docs:
->
-> **Coding standards** — search: `code-review-rules`, `coding-standards`, `style-guide`, `contributing`
-> **Architecture** — search: `patterns-reference`, `architecture`, `adr`
-> **Test conventions** — search: `integration-test-reference`, `test-guide`, `test-conventions`
-> **Design system** — search: `design-system`, `design-tokens`, `component-library`
->
-> Read found docs before reviewing. None found → rely on tech stack knowledge from file extensions/directory structure.
-
-**Workflow:**
-
-1. **Create Review Report** — Init `plans/reports/code-review-{date}-{slug}.md`
-2. **Phase 0: Detect** — Classify files by language + directory semantics + change nature → route sub-agents
-3. **Phase 1: File-by-File** — Review each file, update report (naming, typing, magic numbers, responsibility)
-4. **Phase 2: Holistic** — Re-read accumulated report, assess overall approach, architecture, duplication
-5. **Phase 3: Final Result** — Update report with overall assessment, critical issues, recommendations
-6. **Round 2: Fresh Sub-Agent** — Mandatory fresh code-reviewer for cross-cutting concerns, convention drift, edge cases
-
-**Key Rules:**
-
-- **Report-Driven**: Build report incrementally; re-read for big picture
-- **Detect First**: Classify changeset type before any review — route auth/perf files to specialized sub-agents
-- **No Performative Agreement**: Technical evaluation only ("You're right!" banned)
-- **Verification Gates**: Evidence required before completion claims
-- **A clean Round 1 ENDS the review.** Spawn a fresh sub-agent for Round 2 ONLY after a fix cycle.
-
-# Code Review
-
-Three practices: receiving feedback with technical rigor, requesting systematic reviews via code-reviewer subagent, enforcing verification gates before completion claims.
-
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
-<!-- SYNC:category-review-thinking -->
-
-> **Category Review Thinking** — For each category of changed files, think from first principles. Do NOT use a fixed checklist — derive concerns based on the category's domain.
->
-> **Step 1: Understand the category's role**
-> What is this category responsible for? What are its invariants? Who are its consumers (callers, dependents, downstream systems)?
->
-> **Step 2: Read project conventions for this category**
-> Grep 3+ existing similar files in this category. What patterns do they follow? What base classes/interfaces/abstractions do they use?
->
-> **Step 3: Derive concerns from first principles**
-> Given the category's role and invariants, what could go wrong? Start from universal concerns, then expand with category-specific knowledge:
->
-> - Correctness: Does the change do what it claims? Are contracts maintained?
-> - Contracts: Does the change preserve consumer-facing behavior?
-> - Security: What trust assumptions does this category make? Are they still valid?
-> - Performance: Does the change introduce O(n²), unbounded queries, or unnecessary I/O?
-> - Maintainability: Does the change follow existing patterns? Does it introduce hidden coupling?
-> - Tests: Is the changed behavior observable and testable?
-> - Documentation: Does the change invalidate any existing docs or specs?
->
-> These are starting points — your domain knowledge of the tech stack should expand this list. Do NOT limit yourself to what's listed above.
->
-> **Step 4: Create sub-tasks and execute with file:line evidence**
-> Convert derived concerns into concrete review tasks. Each task must produce `file:line` evidence. No findings without proof.
->
-> **Examples of categories** (illustrative — NOT exhaustive):
->
-> - Logic/domain files (business rules, handlers, services)
-> - Data/schema files (migrations, models, ORM definitions)
-> - API/contract files (controllers, routes, serializers, proto definitions)
-> - Configuration/environment files (env vars, feature flags, secrets)
-> - Infrastructure files (Dockerfiles, CI pipelines, manifests)
-> - UI/style files (components, templates, stylesheets)
-> - Test files (unit, integration, e2e)
-> - Documentation files (markdown, specs, ADRs)
-> - Security artifacts (auth middleware, permission definitions, crypto)
-> - Tooling/build files (build configs, linting rules, dependency manifests)
-
-<!-- /SYNC:category-review-thinking -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
-
-> Run `python .claude/scripts/code_graph query tests_for <function> --json` on changed functions to flag coverage gaps.
-
-## Review Mindset (NON-NEGOTIABLE)
-
-**Skeptical. Every claim needs traced proof `file:line`. Confidence >80% to act.**
-
-- NEVER accept code correctness at face value — trace call paths
-- NEVER include finding without `file:line` evidence (grep results, read confirmations)
-- ALWAYS question: "Does this actually work?" → trace it. "Is this all?" → grep cross-service
-- ALWAYS verify side effects: check consumers + dependents before approving
-
-## Core Principles (ENFORCE ALL)
-
-| Principle          | Rule                                                                                                        |
-| ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| **YAGNI**          | Flag code solving hypothetical problems (unused params, speculative interfaces)                             |
-| **KISS**           | Flag unnecessary complexity. "Is there a simpler way?"                                                      |
-| **DRY**            | Grep for similar/duplicate code. 3+ similar patterns → flag for extraction                                  |
-| **Clean Code**     | Readable > clever. Names reveal intent. Functions do ONE thing. Nesting <=3. Methods <30 lines              |
-| **Convention**     | MUST ATTENTION grep 3+ existing examples before flagging violations. Codebase convention wins over textbook |
-| **No Bugs**        | Trace logic paths. Verify edge cases (null, empty, boundary). Check error handling                          |
-| **Proof Required** | Every claim backed by `file:line` evidence. Speculation is forbidden                                        |
-| **Doc Staleness**  | Cross-ref changed files against related docs. Flag stale/missing updates                                    |
-
-**Technical correctness over social comfort.** Verify before implementing. Evidence before claims.
-
-## Graph-Enhanced Review (RECOMMENDED if graph.db exists)
-
-1. `python .claude/scripts/code_graph graph-blast-radius --json` — prioritize files by impact (most dependents first)
-2. `python .claude/scripts/code_graph query tests_for <function_name> --json` — flag untested changed functions
-3. `python .claude/scripts/code_graph trace <file> --direction downstream --json` — downstream impact (events, bus, cross-service)
-4. `python .claude/scripts/code_graph trace <file> --direction both --json` — full flow context for controllers/commands/handlers
-5. Wide blast radius (>20 impacted nodes) = high-risk. Flag in report.
-
-## Review Approach (Report-Driven Two-Phase — CRITICAL)
-
-**MANDATORY FIRST: Create Todo Tasks**
-
-| Task                                                    | Status      |
-| ------------------------------------------------------- | ----------- |
-| `[Review] Create report file`                           | in_progress |
-| `[Review Phase 0] Detect categories + route sub-agents` | pending     |
-| `[Review Phase 1] File-by-file review + update report`  | pending     |
-| `[Review Phase 2] Holistic assessment`                  | pending     |
-| `[Review Phase 3] Final findings`                       | pending     |
-| `[Review Round 2] Fresh sub-agent re-review`            | pending     |
-| `[Review Final] Consolidate all rounds`                 | pending     |
-
-**Step 0: Create Report File**
-
-Create `plans/reports/code-review-{date}-{slug}.md` with Scope, Files to Review sections.
-
-**Phase 0: Detect Change Type**
-
-Before any review — classify the changeset and route sub-agents:
-
-| Signal in changed files                  | Route to                                                |
-| ---------------------------------------- | ------------------------------------------------------- |
-| Auth/permission/token/encryption files   | `security-auditor`                                      |
-| Query files, caching, batch processing   | `performance-optimizer`                                 |
-| Source code (logic, handlers, services)  | `code-reviewer`                                         |
-| Docs, plans, specs, markdown             | `general-purpose`                                       |
-| Mixed changeset with security/perf files | Spawn specialized sub-agent first, then `code-reviewer` |
-
-**Phase 0.7: Derive Review Categories**
-
-Group changed files by: file language (extension), directory semantics (path), change nature (new entity, schema, config, UI, test).
-
-For each category: name it, create sub-task, derive concerns using `SYNC:category-review-thinking` (first principles — NOT a fixed checklist).
-
-> Category list = Phase 1 work breakdown. Each category → own section in report.
-
-**Phase 1: File-by-File Review (Build Report)**
-
-For EACH file, immediately update report:
-
-- File path, Change Summary, Purpose, Issues Found
-- **Convention check:** Grep 3+ similar patterns — does new code follow existing convention?
-- **Correctness check:** Trace logic — null, empty, boundary, error cases handled?
-- **DRY check:** Grep for similar/duplicate code — does this logic exist elsewhere?
-
-**Phase 2: Holistic Review (Re-read Report)**
-
-After all files reviewed, re-read accumulated report:
-
-- **Technical Solution**: Overall approach coherent as unified plan?
-- **Responsibility**: Logic in LOWEST layer? Business logic not in controllers?
-- **Data ownership**: Constants/config in model/entity, not controller/component?
-- **Duplication**: Grep to verify — duplicated logic across changes?
-- **Architecture**: Clean Architecture? Service boundaries respected?
-- **Plan Compliance**: If active plan → check `## Plan Context`: impl matches requirements, TCs have code evidence (not "TBD"), no requirement unaddressed
-- **Design Patterns**: Pattern opportunities (switch→Strategy)? Anti-patterns (God Object, Copy-Paste, Circular Dep)? DRY via base classes?
-
-**MUST ATTENTION CHECK — Clean Code:** YAGNI (unused params, speculative interfaces)? KISS (simpler exists)? Methods >30 lines or nesting >3?
-
-**MUST ATTENTION CHECK — Correctness:** Null/empty/boundary handled? Error paths caught? Async race conditions? Trace happy + error paths.
-
-**Documentation Staleness Check:**
-
-For each changed file — grep file name/module across `docs/` and AI tooling dirs. Changed behavior → flag stale doc (specific section + what changed). **Do NOT auto-fix — flag only.**
-
-Common staleness patterns: count/limit changed → docs embedding that number | API/contract changed → API usage docs | hook/skill added/removed → catalogs/README | schema changed → entity reference docs.
-
-**Phase 3: Final Review Result**
-
-Update report: Overall Assessment, Critical Issues, High Priority, Architecture Recommendations, Documentation Staleness, Positive Observations.
-
-## Round 2+: Fresh Sub-Agent Re-Review (MANDATORY)
-
-After Phase 3 (Round 1), spawn fresh `code-reviewer` sub-agent for Round 2 using canonical template from `SYNC:review-protocol-injection`:
-
-1. Copy Agent call shape from `SYNC:review-protocol-injection` verbatim
-2. Embed full verbatim body of all 10 SYNC blocks: `SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:complexity-prevention`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`
-3. Task: `"Review ALL uncommitted changes. Focus: cross-cutting concerns, interaction bugs, convention drift, missing pieces, subtle edge cases, logic errors, test spec gaps."`
-4. Target Files: `"run git diff to see all uncommitted changes"`
-5. Report: `plans/reports/code-review-round{N}-{date}.md`
-
-After sub-agent returns:
-
-1. **Read** report from `plans/reports/code-review-round{N}-{date}.md`
-2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` — DO NOT filter or override
-3. **If FAIL:** fix issues → spawn NEW Round N+1 fresh sub-agent (never reuse)
-4. **Max 3 fresh rounds** — escalate via a direct user question if still failing after 3 rounds
-
-## Clean Code Rules (MUST ATTENTION CHECK)
-
-| #   | Rule                      | Details                                                                                                                                 |
-| --- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **No Magic Values**       | All literals → named constants                                                                                                          |
-| 2   | **Type Annotations**      | Explicit parameter and return types on all functions                                                                                    |
-| 3   | **Single Responsibility** | One concern per method/class. Event handlers/consumers: one handler = one concern. NEVER bundle — platform swallows exceptions silently |
-| 4   | **DRY**                   | No duplication; extract shared logic                                                                                                    |
-| 5   | **Naming**                | Specific (`employeeRecords` not `data`), Verb+Noun methods, is/has/can/should booleans, no abbreviations                                |
-| 6   | **Performance**           | No O(n²) (use dictionary). Project in query (not load-all). ALWAYS paginate. Batch-by-IDs (not N+1)                                     |
-| 7   | **Entity Indexes**        | Collections: index management methods. EF Core: composite indexes. Expression fields match index order. Text search → text indexes      |
-
-## Data Lifecycle Rules (MUST ATTENTION CHECK)
-
-**Decision test:** _"Delete the DB and start fresh — does this data still need to exist?"_ Yes → **Seeder/fixture**. No → **Migration**.
-
-| Type                 | Contains                                                                                | NEVER contains                                   |
-| -------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| **Seeder / Fixture** | Default records, system config, reference data (idempotent — safe to run every startup) | Schema changes                                   |
-| **Migration**        | Schema changes, column adds/removes, data transforms, index changes                     | Default records, permission seeds, system config |
-
-Apply project's language/framework conventions. Principle universal — implementation project-specific.
-
-## Legacy Pattern Compliance
-
-When reviewing files with legacy and modern patterns:
-
-1. **Detect legacy signals** — search `project-config.json`, `package.json`, or equivalent for `"legacy"`, version flags, feature annotations
-2. **Read what "legacy" means** — grep 3+ legacy files to understand pattern constraints vs. modern files
-3. **Derive compliance rules** — what lifecycle/memory management differences exist between legacy/modern for this tech stack?
-4. **Apply tech stack knowledge** to flag anti-patterns
-
-NEVER assume any specific framework's lifecycle. Derive from codebase evidence.
-
-## When to Use This Skill
-
-| Practice               | Triggers                                                                                   | MUST ATTENTION READ                            |
-| ---------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| **Receiving Feedback** | Review comments received, feedback unclear/questionable, conflicts with existing decisions | `references/code-review-reception.md`          |
-| **Requesting Review**  | After each subagent task, major feature done, before merge, after complex bug fix          | `references/requesting-code-review.md`         |
-| **Verification Gates** | Before any completion claim, commit, push, or PR. ANY success/satisfaction statement       | `references/verification-before-completion.md` |
-
-## Quick Decision Tree
-
-```
-SITUATION?
-│
-├─ Received feedback
-│  ├─ Unclear items? → STOP, ask for clarification first
-│  ├─ From human partner? → Understand, then implement
-│  └─ From external reviewer? → Verify technically before implementing
-│
-├─ Completed work
-│  ├─ Major feature/task? → Request code-reviewer subagent review
-│  └─ Before merge? → Request code-reviewer subagent review
-│
-└─ About to claim status
-   ├─ Have fresh verification? → State claim WITH evidence
-   └─ No fresh verification? → RUN verification command first
-```
-
-## Receiving Feedback Protocol
-
-**Pattern:** READ → UNDERSTAND → VERIFY → EVALUATE → RESPOND → IMPLEMENT
-
-- NEVER use performative agreement ("You're right!", "Great point!", "Thanks for...")
-- NEVER implement before verification
-- MUST ATTENTION restate requirement, ask questions, or push back with technical reasoning
-- MUST ATTENTION ask for clarification on ALL unclear items BEFORE starting
-- MUST ATTENTION grep for usage before implementing suggested "proper" features (YAGNI check)
-
-**Source handling:** Human partner → implement after understanding. External reviewer → verify technically, push back if wrong.
-
-**Full protocol:** `references/code-review-reception.md`
-
-## Requesting Review Protocol
-
-1. Get git SHAs: `BASE_SHA=$(git rev-parse HEAD~1)` and `HEAD_SHA=$(git rev-parse HEAD)`
-2. Dispatch code-reviewer subagent with: WHAT_WAS_IMPLEMENTED, PLAN_OR_REQUIREMENTS, BASE_SHA, HEAD_SHA, DESCRIPTION
-3. Act on feedback: Critical → fix immediately. Important → fix before proceeding. Minor → note for later.
-
-**Full protocol:** `references/requesting-code-review.md`
-
-## Verification Gates Protocol
-
-**Iron Law: NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE**
-
-**Gate:** IDENTIFY command → RUN it → READ output → VERIFY it confirms claim → THEN claim. Skip any step = lying.
-
-| Claim            | Required Evidence               |
-| ---------------- | ------------------------------- |
-| Tests pass       | Test output shows 0 failures    |
-| Build succeeds   | Build command exit 0            |
-| Bug fixed        | Original symptom test passes    |
-| Requirements met | Line-by-line checklist verified |
-
-**Red Flags — STOP:** "should"/"probably"/"seems to", satisfaction before verification, committing without verification, trusting agent reports.
-
-**Full protocol:** `references/verification-before-completion.md`
-
-## Related
-
-- `code-simplifier`
-- `debug-investigate`
-- `refactoring`
-
----
-
-## Systematic Review Protocol (10+ changed files)
-
-For large changesets: categorize files by concern → fire parallel `code-reviewer` sub-agents per category → synchronize findings → holistic assessment. See `review-changes/SKILL.md` § "Systematic Review Protocol" for full 4-step protocol.
-
----
-
-## Workflow Recommendation
-
-> **MANDATORY MUST ATTENTION — NO EXCEPTIONS:** If NOT already in a workflow, use a direct user question to ask user:
->
-> 1. **Activate `quality-audit` workflow** (Recommended) — code-review → plan → code → review-changes → test
-> 2. **Execute `$code-review` directly** — run standalone
-
----
-
-## Architecture Boundary Check
-
-For each changed file, verify no forbidden layer imports:
-
-1. **Read rules** from `docs/project-config.json` → `architectureRules.layerBoundaries`
-2. **Determine layer** — match file path against each rule's `paths` glob patterns
-3. **Scan imports** — grep for `using` (C#) or `import` (TS) statements
-4. **Check violations** — import path contains forbidden layer name → violation
-5. **Exclude framework** — skip files matching `architectureRules.excludePatterns`
-6. **BLOCK on violation** — `"BLOCKED: {layer} layer file {filePath} imports from {forbiddenLayer} ({importStatement})"`
-
-If `architectureRules` absent in project-config.json → skip silently.
-
----
-
-## Next Steps
-
-**MANDATORY MUST ATTENTION — NO EXCEPTIONS** after completing, use a direct user question:
-
-- **"$fix (Recommended)"** — review found issues needing fixes
-- **"$watzup"** — review clean, wrap up session
-- **"Skip, continue manually"** — user decides
-
-## AI Agent Integrity Gate (NON-NEGOTIABLE)
-
-**Completion ≠ Correctness.** Before reporting ANY work done:
-
-1. **Grep every removed name.** Extraction/rename/delete → grep confirms 0 dangling refs across ALL file types.
-2. **Ask WHY before changing.** Existing values intentional until proven otherwise.
-3. **Verify ALL outputs.** One build passing ≠ all builds passing.
-4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — scope, lifetime, base class, constraints.
-5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, reachable by all consumers.
-
----
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
-<!-- SYNC:evidence-based-reasoning:reminder -->
-
-- **MANDATORY MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
-      <!-- SYNC:design-patterns-quality:reminder -->
-- **MANDATORY MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
-      <!-- /SYNC:design-patterns-quality:reminder -->
-      <!-- SYNC:complexity-prevention:reminder -->
-- **MANDATORY MUST ATTENTION** apply complexity prevention — one business change = one code change. Flag change amplification (>3 edit sites for future change), scattered type-switches, anemic models, primitive obsession, leaked technology through abstractions, shallow modules, un-extracted utility logic (paging/datetime/string/retry → helpers), and logic in the wrong higher layer (downshift to callee/entity/VM). Don't rationalize silent duplication with pure YAGNI.
-      <!-- /SYNC:complexity-prevention:reminder -->
-      <!-- SYNC:double-round-trip-review:reminder -->
-- **MANDATORY MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-      <!-- /SYNC:double-round-trip-review:reminder -->
-      <!-- SYNC:rationalization-prevention:reminder -->
-- **MANDATORY MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is evasion, not reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
-      <!-- SYNC:graph-assisted-investigation:reminder -->
-- **MANDATORY MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-      <!-- /SYNC:graph-assisted-investigation:reminder -->
-      <!-- SYNC:logic-and-intention-review:reminder -->
-- **MANDATORY MUST ATTENTION** verify every changed file serves stated purpose. Trace happy + error paths. Flag scope creep.
-      <!-- /SYNC:logic-and-intention-review:reminder -->
-      <!-- SYNC:bug-detection:reminder -->
-- **MANDATORY MUST ATTENTION** check null safety, boundary conditions, error handling, resource management for every review.
-      <!-- /SYNC:bug-detection:reminder -->
-      <!-- SYNC:test-spec-verification:reminder -->
-- **MANDATORY MUST ATTENTION** map every changed function/endpoint to a test. Search for project's test spec format near changed files. Flag coverage gaps, recommend test creation.
-      <!-- /SYNC:test-spec-verification:reminder -->
-      <!-- SYNC:translation-sync-check:reminder -->
-- **MANDATORY MUST ATTENTION** for multilingual frontend/UI text changes, verify translation updates are present (or explicitly accepted by user as risk) before PASS.
-      <!-- /SYNC:translation-sync-check:reminder -->
-      <!-- SYNC:fix-layer-accountability:reminder -->
-
-**IMPORTANT MUST ATTENTION** trace full data flow and fix at owning layer, not crash site. Audit all access sites before adding `?.`.
-
-<!-- /SYNC:fix-layer-accountability:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -1031,6 +955,63 @@ If `architectureRules` absent in project-config.json → skip silently.
 > **Business terminology in Application/Domain layers.** Comments and naming in Application/Domain must stay business-oriented and technical-agnostic; avoid implementation terms (say `background job`, not `Hangfire background job`).
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+- **MANDATORY MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
+
+<!-- SYNC:design-patterns-quality:reminder -->
+
+- **MANDATORY MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
+    <!-- /SYNC:design-patterns-quality:reminder -->
+
+<!-- SYNC:complexity-prevention:reminder -->
+
+- **MANDATORY MUST ATTENTION** apply complexity prevention — one business change = one code change. Flag change amplification (>3 edit sites for future change), scattered type-switches, anemic models, primitive obsession, leaked technology through abstractions, shallow modules, un-extracted utility logic (paging/datetime/string/retry → helpers), and logic in the wrong higher layer (downshift to callee/entity/VM). Don't rationalize silent duplication with pure YAGNI.
+    <!-- /SYNC:complexity-prevention:reminder -->
+
+<!-- SYNC:double-round-trip-review:reminder -->
+
+- **MANDATORY MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
+    <!-- /SYNC:double-round-trip-review:reminder -->
+
+<!-- SYNC:rationalization-prevention:reminder -->
+
+- **MANDATORY MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is evasion, not reason.
+    <!-- /SYNC:rationalization-prevention:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+- **MANDATORY MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+    <!-- /SYNC:graph-assisted-investigation:reminder -->
+
+<!-- SYNC:logic-and-intention-review:reminder -->
+
+- **MANDATORY MUST ATTENTION** verify every changed file serves stated purpose. Trace happy + error paths. Flag scope creep.
+    <!-- /SYNC:logic-and-intention-review:reminder -->
+
+<!-- SYNC:bug-detection:reminder -->
+
+- **MANDATORY MUST ATTENTION** check null safety, boundary conditions, error handling, resource management for every review.
+    <!-- /SYNC:bug-detection:reminder -->
+
+<!-- SYNC:test-spec-verification:reminder -->
+
+- **MANDATORY MUST ATTENTION** map every changed function/endpoint to a test. Search for project's test spec format near changed files. Flag coverage gaps, recommend test creation.
+    <!-- /SYNC:test-spec-verification:reminder -->
+
+<!-- SYNC:translation-sync-check:reminder -->
+
+- **MANDATORY MUST ATTENTION** for multilingual frontend/UI text changes, verify translation updates are present (or explicitly accepted by user as risk) before PASS.
+    <!-- /SYNC:translation-sync-check:reminder -->
+
+<!-- SYNC:fix-layer-accountability:reminder -->
+
+**IMPORTANT MUST ATTENTION** trace full data flow and fix at owning layer, not crash site. Audit all access sites before adding `?.`.
+
+<!-- /SYNC:fix-layer-accountability:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -1042,11 +1023,13 @@ If `architectureRules` absent in project-config.json → skip silently.
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `$sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
 <!-- SYNC:category-review-thinking:reminder -->
 
 **MUST ATTENTION** Phase 0.7: derive review categories from file language + directory semantics + change nature. Create sub-tasks per category. Derive concerns from first principles — do not use a fixed checklist.
@@ -1055,25 +1038,35 @@ If `architectureRules` absent in project-config.json → skip silently.
 
 <!-- SYNC:task-tracking-external-report:reminder -->
 
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

@@ -107,6 +107,10 @@ Run `python .claude/scripts/code_graph describe --json` to get MCP-style structu
 
 ---
 
+# Build Graph
+
+Build or incrementally update the persistent code knowledge graph for this repository.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -131,15 +135,12 @@ Run `python .claude/scripts/code_graph describe --json` to get MCP-style structu
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Build Graph
-
-Build or incrementally update the persistent code knowledge graph for this repository.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

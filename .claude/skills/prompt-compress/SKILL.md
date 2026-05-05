@@ -23,20 +23,6 @@ description: '[Skill Management] Compress + enhance any prompt/doc/skill file �
 - Caveman compression applies to prose only — never compress code blocks, YAML, or structured tables
 - Prompt quality > token count, but verbose prompts degrade quality — optimize clarity-per-token
 
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
-
 ---
 
 ## Target File
@@ -116,6 +102,93 @@ Do NOT compress:
 ## Phase 2: Prompt Enhancement
 
 Applies after compression. Source: Anthropic prompt engineering guide, Stanford "lost-in-the-middle" research, 2025-2026 LLM context optimization studies.
+
+#### Transform 4: Token Optimization (Conciseness Pass)
+
+After caveman compression, apply structural cleanup:
+
+**Cut:**
+
+- Filler phrases — "It is important to note that", "Please make sure to" → state the rule directly
+- Redundant explanations — if heading says it, body need not re-explain
+- Duplicate content — merge sections saying same thing (except intentional top/bottom anchoring)
+- Overly verbose examples — trim to minimum lines demonstrating pattern
+
+**Keep:**
+
+- Code examples with actual file paths/patterns
+- Decision tables and lookup references
+- Anti-pattern before/after pairs
+- All `file:line` evidence and concrete paths
+- Top/bottom anchoring (intentional duplication)
+
+---
+
+## Process
+
+### Step 1: Read and Analyze
+
+1. Read target file completely
+2. Record: current line count, rule density (MUST ATTENTION/NEVER/ALWAYS count)
+3. List all READ references → classify as `.claude/` (needs inline summary) or `docs/` (skip)
+4. Identify: missing Quick Summary, missing Closing Reminders, prose-heavy sections
+
+### Step 2: Caveman Compression Pass
+
+1. Identify all prose paragraphs and bullet descriptions
+2. Apply compression rules — remove stop words, keep semantic content
+3. Skip code blocks, YAML, tables, SYNC tags, file paths
+4. Verify meaning preserved after each paragraph
+
+### Step 3: Create Inline Summaries
+
+For each `.claude/` protocol reference:
+
+1. Read the referenced file
+2. Extract 2-3 key rules
+3. Write blockquote inline summary
+4. Keep MUST ATTENTION READ instruction on next line
+
+### Step 4: Add/Fix Top Section
+
+- If Quick Summary missing → create from file content
+- If present but weak → strengthen with Goal, Workflow, Key Rules
+- Protocol summaries appear before Quick Summary
+
+### Step 5: Add/Fix Bottom Section
+
+- If Closing Reminders missing → add standard section
+- Pick rules AI most commonly skips
+- Remove old "IMPORTANT Task Planning Notes" if superseded
+
+### Step 6: Verify
+
+| Check               | Pass Condition                                 |
+| ------------------- | ---------------------------------------------- |
+| No YAML corruption  | Frontmatter intact                             |
+| No content loss     | All rules, code, paths present                 |
+| Rule density        | Post ≥ pre (count MUST ATTENTION/NEVER/ALWAYS) |
+| Line count          | Reduced (compression worked)                   |
+| Formatting          | Blank lines between sections, headers correct  |
+| READ classification | `.claude/` → inline summary, `docs/` → skipped |
+
+---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
 
 <!-- SYNC:context-engineering-principles -->
 
@@ -209,77 +282,6 @@ Applies after compression. Source: Anthropic prompt engineering guide, Stanford 
 
 <!-- /SYNC:shared-protocol-duplication-policy -->
 
-#### Transform 4: Token Optimization (Conciseness Pass)
-
-After caveman compression, apply structural cleanup:
-
-**Cut:**
-
-- Filler phrases — "It is important to note that", "Please make sure to" → state the rule directly
-- Redundant explanations — if heading says it, body need not re-explain
-- Duplicate content — merge sections saying same thing (except intentional top/bottom anchoring)
-- Overly verbose examples — trim to minimum lines demonstrating pattern
-
-**Keep:**
-
-- Code examples with actual file paths/patterns
-- Decision tables and lookup references
-- Anti-pattern before/after pairs
-- All `file:line` evidence and concrete paths
-- Top/bottom anchoring (intentional duplication)
-
----
-
-## Process
-
-### Step 1: Read and Analyze
-
-1. Read target file completely
-2. Record: current line count, rule density (MUST ATTENTION/NEVER/ALWAYS count)
-3. List all READ references → classify as `.claude/` (needs inline summary) or `docs/` (skip)
-4. Identify: missing Quick Summary, missing Closing Reminders, prose-heavy sections
-
-### Step 2: Caveman Compression Pass
-
-1. Identify all prose paragraphs and bullet descriptions
-2. Apply compression rules — remove stop words, keep semantic content
-3. Skip code blocks, YAML, tables, SYNC tags, file paths
-4. Verify meaning preserved after each paragraph
-
-### Step 3: Create Inline Summaries
-
-For each `.claude/` protocol reference:
-
-1. Read the referenced file
-2. Extract 2-3 key rules
-3. Write blockquote inline summary
-4. Keep MUST ATTENTION READ instruction on next line
-
-### Step 4: Add/Fix Top Section
-
-- If Quick Summary missing → create from file content
-- If present but weak → strengthen with Goal, Workflow, Key Rules
-- Protocol summaries appear before Quick Summary
-
-### Step 5: Add/Fix Bottom Section
-
-- If Closing Reminders missing → add standard section
-- Pick rules AI most commonly skips
-- Remove old "IMPORTANT Task Planning Notes" if superseded
-
-### Step 6: Verify
-
-| Check               | Pass Condition                                 |
-| ------------------- | ---------------------------------------------- |
-| No YAML corruption  | Frontmatter intact                             |
-| No content loss     | All rules, code, paths present                 |
-| Rule density        | Post ≥ pre (count MUST ATTENTION/NEVER/ALWAYS) |
-| Line count          | Reduced (compression worked)                   |
-| Formatting          | Blank lines between sections, headers correct  |
-| READ classification | `.claude/` → inline summary, `docs/` → skipped |
-
----
-
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -297,8 +299,6 @@ For each `.claude/` protocol reference:
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
@@ -311,6 +311,7 @@ For each `.claude/` protocol reference:
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

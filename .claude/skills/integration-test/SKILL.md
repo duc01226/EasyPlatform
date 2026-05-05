@@ -34,44 +34,15 @@ context-budget: high
 
 ---
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 **Prerequisites — MUST ATTENTION READ before executing:**
 
 > **`references/integration-test-patterns.md`** — canonical test templates: collection attributes, base class usage, TC annotation format, async polling helpers, unique name generators, DB assertion patterns. Read before writing ANY test.
 >
 > **`docs/specs/`** — existing TCs by module: read to verify test-to-spec traceability and get TC IDs before generating. (read directly when relevant; do not rely on hook-injected conversation text)
 
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
-> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
-
 - `references/integration-test-patterns.md` — canonical test templates (MUST READ before writing any test)
 - `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (read directly when relevant; do not rely on hook-injected conversation text)
 - `docs/specs/` — existing TCs by module (read before generating tests; verify test-to-spec traceability)
-
-<!-- SYNC:graph-impact-analysis -->
-
-> **Graph Impact Analysis** — When `.code-graph/graph.db` exists, run `blast-radius --json` to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use `trace --direction downstream` for deep chains on high-impact files.
-
-<!-- /SYNC:graph-impact-analysis -->
 
 > **CRITICAL: Search existing patterns FIRST.** Before generating ANY test, grep existing integration test files in same service. Read ≥1 existing test file to match conventions (namespace, usings, collection name, base class, helper usage). NEVER generate tests contradicting established codebase patterns.
 
@@ -79,101 +50,11 @@ context-budget: high
 
 > **CRITICAL: Async Polling for ALL Data Assertions.** ALWAYS wrap data state assertions in async polling/retry helper. DEFAULT for ALL data verification — not just async handlers. Data persistence may be delayed by event handlers, message bus consumers, background jobs, DB write latency. **Rule: If asserting data in DB → use async polling. No exceptions.**
 
-<!-- SYNC:repeatable-test-principle -->
-
-> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run 100 times, each run adds data.
->
-> 1. **Unique data per run:** Use project's unique ID generator for ALL entity IDs. NEVER hardcode IDs.
-> 2. **Additive only:** Tests create data, never delete/reset. Prior runs MUST NOT interfere.
-> 3. **No schema rollback dependency:** Tests work with current schema only. Never rely on rollback.
-> 4. **Idempotent seeders:** Fixture-level seeders use create-if-missing (check existence before insert). Test-level data uses unique IDs per execution.
-> 5. **No cleanup required:** No teardown, no DB reset between runs. Isolation by unique seed data, not cleanup.
-> 6. **Unique names/codes:** Entities requiring unique names/codes — append unique suffix via project's ID generator.
-
-<!-- /SYNC:repeatable-test-principle -->
-
 > **For test specifications and test case generation from PBIs, use `/tdd-spec` skill instead.**
 
 > **External Memory:** Complex/lengthy work → write findings to `plans/reports/` — prevents context loss.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim requires `file:line` proof or traced evidence with confidence percentage (>80% act, <80% verify first).
-
-<!-- SYNC:red-flag-stop-conditions -->
-
-> **Red Flag Stop Conditions** — STOP and escalate via AskUserQuestion when:
->
-> 1. Confidence drops below 60% on any critical decision
-> 2. Changes affect >20 files
-> 3. Cross-service boundary crossed
-> 4. Security-sensitive code (auth, crypto, PII)
-> 5. Breaking change detected (interface, API contract, DB schema)
-> 6. Test coverage would decrease
-> 7. Approach requires technology/pattern not in project
->
-> **NEVER proceed past a red flag without explicit user approval.**
-
-<!-- /SYNC:red-flag-stop-conditions -->
-
-<!-- SYNC:rationalization-prevention -->
-
-> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
->
-> | Evasion                      | Rebuttal                                                      |
-> | ---------------------------- | ------------------------------------------------------------- |
-> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
-> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
-> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
-> | "Just do it"                 | Still need TaskCreate. Skip depth, never skip tracking.       |
-> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
-> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
-> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
-
-<!-- /SYNC:rationalization-prevention -->
-
-<!-- SYNC:incremental-persistence -->
-
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
-
-<!-- /SYNC:incremental-persistence -->
-
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` ONLY when: (a) resolving specific blocker, or (b) building fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
-
-<!-- /SYNC:subagent-return-contract -->
 
 ## Project Pattern Discovery
 
@@ -466,13 +347,6 @@ Mode = REVIEW: audit existing integration tests for quality, flaky patterns, bes
 > **Rationale:** `integration-tester` specializes in test spec generation, TC traceability, CQRS test patterns, `WaitUntilAsync` correctness, and microservices integration context — areas `code-reviewer` does not cover at depth.
 
 **Fresh Eyes Protocol:** Run Round 1 inline. If findings are LOW confidence or contradictory → spawn fresh `integration-tester` sub-agent (zero memory of Round 1) for Round 2. Main agent reads report, NEVER filters findings. Max 2 rounds, then escalate.
-
-<!-- SYNC:sub-agent-selection -->
-
-> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
-> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
-
-<!-- /SYNC:sub-agent-selection -->
 
 ## Review Workflow
 
@@ -805,16 +679,150 @@ integration-test (you are here)
 | verify-traceability | N/A (read-only) | if orphaned TCs: /tdd-spec UPDATE → /integration-test [from-prompt] |
 ```
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** `TaskCreate` — break ALL work into small tasks BEFORE starting. NEVER skip task creation.
 
-## Prompt-Enhance Closing Anchors
+<!-- SYNC:ai-mistake-prevention -->
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+<!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:graph-impact-analysis -->
+
+> **Graph Impact Analysis** — When `.code-graph/graph.db` exists, run `blast-radius --json` to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use `trace --direction downstream` for deep chains on high-impact files.
+
+<!-- /SYNC:graph-impact-analysis -->
+
+<!-- SYNC:repeatable-test-principle -->
+
+> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run 100 times, each run adds data.
+>
+> 1. **Unique data per run:** Use project's unique ID generator for ALL entity IDs. NEVER hardcode IDs.
+> 2. **Additive only:** Tests create data, never delete/reset. Prior runs MUST NOT interfere.
+> 3. **No schema rollback dependency:** Tests work with current schema only. Never rely on rollback.
+> 4. **Idempotent seeders:** Fixture-level seeders use create-if-missing (check existence before insert). Test-level data uses unique IDs per execution.
+> 5. **No cleanup required:** No teardown, no DB reset between runs. Isolation by unique seed data, not cleanup.
+> 6. **Unique names/codes:** Entities requiring unique names/codes — append unique suffix via project's ID generator.
+
+<!-- /SYNC:repeatable-test-principle -->
+
+<!-- SYNC:red-flag-stop-conditions -->
+
+> **Red Flag Stop Conditions** — STOP and escalate via AskUserQuestion when:
+>
+> 1. Confidence drops below 60% on any critical decision
+> 2. Changes affect >20 files
+> 3. Cross-service boundary crossed
+> 4. Security-sensitive code (auth, crypto, PII)
+> 5. Breaking change detected (interface, API contract, DB schema)
+> 6. Test coverage would decrease
+> 7. Approach requires technology/pattern not in project
+>
+> **NEVER proceed past a red flag without explicit user approval.**
+
+<!-- /SYNC:red-flag-stop-conditions -->
+
+<!-- SYNC:rationalization-prevention -->
+
+> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
+>
+> | Evasion                      | Rebuttal                                                      |
+> | ---------------------------- | ------------------------------------------------------------- |
+> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
+> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
+> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
+> | "Just do it"                 | Still need TaskCreate. Skip depth, never skip tracking.       |
+> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
+> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
+> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
+
+<!-- /SYNC:rationalization-prevention -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` ONLY when: (a) resolving specific blocker, or (b) building fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+
+<!-- /SYNC:subagent-return-contract -->
+
+<!-- SYNC:sub-agent-selection -->
+
+> **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
+> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+
+<!-- /SYNC:sub-agent-selection -->
 
 <!-- SYNC:nested-task-creation -->
 
@@ -858,42 +866,32 @@ integration-test (you are here)
 
 <!-- /SYNC:task-tracking-external-report -->
 
-> **[IMPORTANT]** `TaskCreate` — break ALL work into small tasks BEFORE starting. NEVER skip task creation.
-
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** run graph trace when graph.db exists. Grep 3+ patterns, cite `file:line`.
     <!-- /SYNC:understand-code-first:reminder -->
-    <!-- SYNC:graph-impact-analysis:reminder -->
+
+<!-- SYNC:graph-impact-analysis:reminder -->
+
 - **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
     <!-- /SYNC:graph-impact-analysis:reminder -->
-    <!-- SYNC:red-flag-stop-conditions:reminder -->
+
+<!-- SYNC:red-flag-stop-conditions:reminder -->
+
 - **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
     <!-- /SYNC:red-flag-stop-conditions:reminder -->
-    <!-- SYNC:rationalization-prevention:reminder -->
+
+<!-- SYNC:rationalization-prevention:reminder -->
+
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
     <!-- /SYNC:rationalization-prevention:reminder -->
-    <!-- SYNC:ai-mistake-prevention -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -920,6 +918,17 @@ integration-test (you are here)
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

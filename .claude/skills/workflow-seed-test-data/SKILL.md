@@ -21,6 +21,30 @@ disable-model-invocation: true
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
 - NEVER skip mandatory workflow or skill gates.
 
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+> **[CRITICAL] Read Project Config Gate:** The `/seed-test-data` step MUST read `docs/project-config.json` → 'Data Seeders' context group and `docs/project-reference/seed-test-data-reference.md` BEFORE writing any seeder code. Seeder written without reading the project base class and DI scope pattern is guaranteed to be wrong.
+
+Activate the `workflow-seed-test-data` workflow. Run `/workflow-start workflow-seed-test-data` with the user's prompt as context.
+
+**Steps:** /scout → /investigate → /seed-test-data → /review-changes → /code-simplifier → /docs-update → /watzup → /workflow-end
+
+> **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
+>
+> **`/scout`** — Find feature area command files; locate existing seeders in the same service for pattern matching. Output: target seeder file path (or "none — create new") + existing seeder examples.
+> **`/investigate`** — Read the commands the seeder will call. Map: required inputs, validation rules, side effects, cross-service dependencies. Output: command signature list + dependency chain (what data must pre-exist).
+> **`/seed-test-data`** — Implement or enhance the seeder. Environment gate FIRST → read count from config → idempotency check → loop from existing to target → dispatch application commands with realistic, diverse inputs.
+> **`/review-changes`** — Full compliance review: environment gate present, count read from config key, idempotency correct (loop from `existing` not from `0`), no direct DB writes for domain entities, project's scoped DI mechanism used per iteration.
+> **`/code-simplifier`** — DRY and simplify the seeder without changing behavior. Merge duplication, extract reusable builders, remove unnecessary scaffolding.
+> **`/docs-update`** — Triage doc impact from changed seeder files. Update feature docs if dev-data coverage changed materially.
+> **`/watzup`** + **`/workflow-end`** — Summary report and close workflow.
+
+---
+
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /watzup -> /workflow-end
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -52,12 +76,6 @@ disable-model-invocation: true
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
-
-> **[CRITICAL] Read Project Config Gate:** The `/seed-test-data` step MUST read `docs/project-config.json` → 'Data Seeders' context group and `docs/project-reference/seed-test-data-reference.md` BEFORE writing any seeder code. Seeder written without reading the project base class and DI scope pattern is guaranteed to be wrong.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -111,29 +129,12 @@ disable-model-invocation: true
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `workflow-seed-test-data` workflow. Run `/workflow-start workflow-seed-test-data` with the user's prompt as context.
-
-**Steps:** /scout → /investigate → /seed-test-data → /review-changes → /code-simplifier → /docs-update → /watzup → /workflow-end
-
-> **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
->
-> **`/scout`** — Find feature area command files; locate existing seeders in the same service for pattern matching. Output: target seeder file path (or "none — create new") + existing seeder examples.
-> **`/investigate`** — Read the commands the seeder will call. Map: required inputs, validation rules, side effects, cross-service dependencies. Output: command signature list + dependency chain (what data must pre-exist).
-> **`/seed-test-data`** — Implement or enhance the seeder. Environment gate FIRST → read count from config → idempotency check → loop from existing to target → dispatch application commands with realistic, diverse inputs.
-> **`/review-changes`** — Full compliance review: environment gate present, count read from config key, idempotency correct (loop from `existing` not from `0`), no direct DB writes for domain entities, project's scoped DI mechanism used per iteration.
-> **`/code-simplifier`** — DRY and simplify the seeder without changing behavior. Merge duplication, extract reusable builders, remove unnecessary scaffolding.
-> **`/docs-update`** — Triage doc impact from changed seeder files. Update feature docs if dev-data coverage changed materially.
-> **`/watzup`** + **`/workflow-end`** — Summary report and close workflow.
-
----
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /watzup -> /workflow-end
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

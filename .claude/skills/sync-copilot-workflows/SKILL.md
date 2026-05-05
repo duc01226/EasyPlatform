@@ -65,6 +65,14 @@ This skill bridges that gap with a one-command sync.
 
 ---
 
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+# Sync Copilot Workflows
+
+Generate and update the workflow catalog in `.github/copilot-instructions.md` from the source of truth `.claude/workflows.json`.
+
+---
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -89,19 +97,12 @@ This skill bridges that gap with a one-command sync.
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-# Sync Copilot Workflows
-
-Generate and update the workflow catalog in `.github/copilot-instructions.md` from the source of truth `.claude/workflows.json`.
-
----
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

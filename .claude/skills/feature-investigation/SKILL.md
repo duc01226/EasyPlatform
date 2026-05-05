@@ -525,6 +525,76 @@ Present findings in clear format with: Answer, How It Works (with code refs), Ke
 
 **Prerequisites:**
 
+---
+
+## Investigation Guidelines
+
+- **Evidence-based**: Every claim must have code evidence
+- **Service boundary awareness**: Understand which service owns what
+- **Framework pattern recognition**: Identify project framework patterns used
+- **Cross-service tracing**: Follow message bus flows across services
+- **Read-only exploration**: Never suggest changes unless asked
+- **Question-focused**: Always tie findings back to the original question
+- **Layered explanation**: Start simple, offer deeper detail if requested
+
+---
+
+### Graph Intelligence
+
+> **RECOMMENDED** if `.code-graph/graph.db` exists.
+
+### Graph-Trace for Feature Flow
+
+When graph DB is available, use `trace` to understand the complete feature flow:
+
+- `python .claude/scripts/code_graph trace <entry-file> --direction both --json` — full upstream (who triggers) + downstream (what it affects) flow
+- Use `--direction downstream` when investigating "what happens after X"
+- Use `--direction upstream` when investigating "what triggers X"
+- Trace reveals implicit connections (MESSAGE_BUS, events) that grep misses
+
+## See Also
+
+- `feature-implementation` - For implementing new features (code changes)
+- `debug-investigate` - For debugging and fixing issues
+- `planning` - For creating implementation plans
+- `graph-query` - Natural language graph queries for code relationships
+
+## References
+
+**Note:** All content from `references/investigation-protocols.md` has been merged into this skill file above. The reference file is kept for historical purposes.
+
+| File                                    | Contents                                         |
+| --------------------------------------- | ------------------------------------------------ |
+| `references/investigation-protocols.md` | (Archived - content merged into this skill file) |
+
+---
+
+## Workflow Recommendation
+
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+>
+> 1. **Activate `investigation` workflow** (Recommended) — scout → investigate
+> 2. **Execute `/investigate` directly** — run this skill standalone
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"/plan (Recommended)"** — Create implementation plan from investigation findings
+- **"/domain-analysis"** — If investigation reveals entity-heavy feature (new aggregates, complex invariants), model domain before planning
+- **"/fix"** — If investigating a bug to fix
+- **"Skip, continue manually"** — user decides
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
 <!-- SYNC:understand-code-first -->
 
 > **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
@@ -602,79 +672,6 @@ Present findings in clear format with: Answer, How It Works (with code refs), Ke
 
 <!-- /SYNC:subagent-return-contract -->
 
----
-
-## Investigation Guidelines
-
-- **Evidence-based**: Every claim must have code evidence
-- **Service boundary awareness**: Understand which service owns what
-- **Framework pattern recognition**: Identify project framework patterns used
-- **Cross-service tracing**: Follow message bus flows across services
-- **Read-only exploration**: Never suggest changes unless asked
-- **Question-focused**: Always tie findings back to the original question
-- **Layered explanation**: Start simple, offer deeper detail if requested
-
----
-
-### Graph Intelligence
-
-> **RECOMMENDED** if `.code-graph/graph.db` exists.
-
-### Graph-Trace for Feature Flow
-
-When graph DB is available, use `trace` to understand the complete feature flow:
-
-- `python .claude/scripts/code_graph trace <entry-file> --direction both --json` — full upstream (who triggers) + downstream (what it affects) flow
-- Use `--direction downstream` when investigating "what happens after X"
-- Use `--direction upstream` when investigating "what triggers X"
-- Trace reveals implicit connections (MESSAGE_BUS, events) that grep misses
-
-## See Also
-
-- `feature-implementation` - For implementing new features (code changes)
-- `debug-investigate` - For debugging and fixing issues
-- `planning` - For creating implementation plans
-- `graph-query` - Natural language graph queries for code relationships
-
-## References
-
-**Note:** All content from `references/investigation-protocols.md` has been merged into this skill file above. The reference file is kept for historical purposes.
-
-| File                                    | Contents                                         |
-| --------------------------------------- | ------------------------------------------------ |
-| `references/investigation-protocols.md` | (Archived - content merged into this skill file) |
-
----
-
-## Workflow Recommendation
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
->
-> 1. **Activate `investigation` workflow** (Recommended) — scout → investigate
-> 2. **Execute `/investigate` directly** — run this skill standalone
-
----
-
-## Next Steps
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"/plan (Recommended)"** — Create implementation plan from investigation findings
-- **"/domain-analysis"** — If investigation reveals entity-heavy feature (new aggregates, complex invariants), model domain before planning
-- **"/fix"** — If investigating a bug to fix
-- **"Skip, continue manually"** — user decides
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -716,8 +713,6 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 > **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -769,17 +764,6 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 
 <!-- /SYNC:cross-service-check -->
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
-
-<!-- SYNC:understand-code-first:reminder -->
-
-**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-
-<!-- /SYNC:understand-code-first:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -796,6 +780,13 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:understand-code-first:reminder -->
+
+**IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+
+<!-- /SYNC:understand-code-first:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
@@ -807,6 +798,7 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -833,6 +825,17 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

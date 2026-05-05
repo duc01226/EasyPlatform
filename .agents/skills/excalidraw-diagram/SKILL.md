@@ -49,23 +49,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-# Excalidraw Diagram Creator
-
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
-
-Generate `.excalidraw` JSON files that **argue visually**, not just display information.
-
-**Output directory:** Save generated `.excalidraw` files to `docs/diagrams/`. Create the directory if it doesn't exist. Use kebab-case filenames that describe the diagram's subject (e.g., `docs/diagrams/cqrs-command-flow.excalidraw`, `docs/diagrams/cross-service-messaging.excalidraw`). If the user specifies a different path, use that instead.
-
-**Setup:** If the user asks you to set up this skill (renderer, dependencies, etc.), see `README.md` for instructions.
-
 ## Quick Summary
 
 **Goal:** [Utilities] Use when the user wants to visualize workflows, architectures, or concepts as Excalidraw diagram JSON files.
@@ -716,16 +699,15 @@ uv run playwright install chromium
 
 ---
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+# Excalidraw Diagram Creator
 
-## Prompt-Enhance Closing Anchors
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+Generate `.excalidraw` JSON files that **argue visually**, not just display information.
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+**Output directory:** Save generated `.excalidraw` files to `docs/diagrams/`. Create the directory if it doesn't exist. Use kebab-case filenames that describe the diagram's subject (e.g., `docs/diagrams/cqrs-command-flow.excalidraw`, `docs/diagrams/cross-service-messaging.excalidraw`). If the user specifies a different path, use that instead.
+
+**Setup:** If the user asks you to set up this skill (renderer, dependencies, etc.), see `README.md` for instructions.
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -742,16 +724,36 @@ uv run playwright install chromium
 **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

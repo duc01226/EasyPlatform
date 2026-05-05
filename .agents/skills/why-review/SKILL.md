@@ -53,83 +53,292 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
+## Quick Summary
+
+**Goal:** Validate that a plan contains sufficient design rationale (WHY, not just WHAT) before implementation begins.
+
+**Applies to:** Features and refactors only — bugfixes and trivial changes exempt.
+
+**Why this exists:** AI code generation optimizes mechanics but misses conceptual quality. This skill ensures the human thinking happened before the mechanical coding starts.
+
+## Your Mission
+
+<task>
+$ARGUMENTS
+</task>
+
+## Adversarial Review Mindset (NON-NEGOTIABLE)
+
+**Default stance: SKEPTIC, not validator. Your job is to find what's wrong, not confirm what's right.**
+
+> **Confirmation bias trap:** After reading a coherent plan, AI naturally finds reasons to agree. The current context (post-plan, post-fix) amplifies this — you've already seen the reasoning and rationalized it. This section exists to break that loop.
+
+### Adversarial Techniques (apply ALL before concluding)
+
+**1. Steel-Man Protocol**
+Before dismissing any rejected alternative, argue FOR it as strongly as possible. Ask: "Would a senior engineer with 10 years of experience in this domain actually choose this alternative?" If yes — the plan's dismissal needs stronger justification.
+
+**2. Why NOT? Inversion**
+For every stated reason ("We chose X because Y"), ask: "Why NOT X? What does X sacrifice?" The plan must acknowledge what the chosen approach gives up, not just what it gains.
+
+**3. What If? Assumption Stress Test**
+List the top 3 assumptions in the plan. For each: "What if this assumption is wrong?" A good plan survives at least 2 of its 3 assumptions being false.
+
+**4. Pre-Mortem**
+Assume the plan ships and fails in production within 3 months. Write one concrete failure scenario that is plausible given the current plan. If you can't find one, you haven't looked hard enough.
+
+**5. Unseen Alternatives**
+Identify 1-2 approaches NOT mentioned in the plan at all. Did the author genuinely not consider them, or did they consider and consciously exclude them? Missing alternatives without exclusion reasoning = weak coverage.
+
+**6. Pros/Cons Symmetry Check**
+Count the pros listed for the chosen approach. Count the cons. If pros > cons by more than 2:1, the analysis is likely biased. Real trade-offs have roughly equal weight on both sides.
+
+**7. Contrarian Pass**
+Before writing any finding, generate at least 2 sentences arguing the OPPOSITE conclusion. If you're about to write PASS — argue for NEEDS WORK. If about to write NEEDS WORK — argue for PASS. Then decide which argument is stronger.
+
+### Forbidden Patterns
+
+- **Leading with confirmation:** "This looks good because..." → STOP. Lead with challenges first.
+- **Presence = quality:** "Alternatives section exists ✅" → presence is NOT quality. Were they real alternatives?
+- **Vague rationale:** "We chose X because it's better" → What metric? Better at what cost?
+- **Asymmetric trade-offs:** Listing 3 pros and 1 con → the analysis is likely incomplete.
+- **"Looks fine"** without evidence of adversarial challenge
+
+### Anti-Bias Gate (MANDATORY before finalizing verdict)
+
+Complete ALL checks before writing the final verdict:
+
+- MUST ATTENTION steel-man at least one rejected alternative (argue FOR it)
+- MUST ATTENTION identify at least 1 alternative NOT in the plan
+- MUST ATTENTION list 2-3 arguments AGAINST the chosen approach
+- MUST ATTENTION surface 2-3 hidden assumptions with stress tests
+- MUST ATTENTION run the pre-mortem (one concrete failure scenario)
+- MUST ATTENTION check pros/cons symmetry
+
+If any check is incomplete → you have NOT completed the adversarial review. Go back.
+
+## Behavioral Delta Matrix (MANDATORY for bugfixes)
+
+## Plan Resolution
+
+1. If arguments contain a path → use that plan directory
+2. Else check `## Plan Context` in injected context → use active plan path
+3. If no plan found → tell user: "No active plan found. Run `$plan-hard` or `$plan-hard` first."
+
+## Validation Checklist
+
+Read the plan's `plan.md` and all `phase-*.md` files. Check each item below. **Two dimensions per check: presence AND quality depth.**
+
+> **Rule:** Presence alone is NOT a pass. A section that exists but contains weak, asymmetric, or unverified reasoning FAILS quality depth.
+
+### Required Sections (in plan.md or phase files)
+
+| #   | Section                     | Presence Check                                    | Quality Depth Check (adversarial)                                                                                                                                                  |
+| --- | --------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Problem Statement**       | 2-3 sentences describing the problem              | Is the problem scoped correctly? Could it be framed differently to lead to a different solution? Are symptoms confused with root cause?                                            |
+| 2   | **Alternatives Considered** | Minimum 2 alternatives listed with pros/cons      | Are alternatives real (not strawmen)? Would a domain expert seriously consider each? Are the cons of the CHOSEN approach listed, not just cons of the others?                      |
+| 3   | **Design Rationale**        | Explicit reasoning linking decision to trade-offs | Is reasoning causal (X leads to Y) or just descriptive (X is better)? Are hidden assumptions surfaced? Does it address failure modes, not just success modes?                      |
+| 4   | **Risk Assessment**         | At least 1 risk per phase                         | Are risks ranked by severity? Are mitigations concrete actions or vague intentions ("monitor closely")? Is there at least one risk about the approach itself (not just execution)? |
+| 5   | **Ownership**               | Clear who maintains code post-merge               | Implicit OK (author owns), explicit better                                                                                                                                         |
+
+### Optional (Flag if Missing, Don't Fail)
+
+| #   | Section                  | When Required                           | Quality Depth Check                                                |
+| --- | ------------------------ | --------------------------------------- | ------------------------------------------------------------------ |
+| 6   | **Operational Impact**   | Service-layer or API changes            | Are rollback steps defined? What breaks if this is reverted?       |
+| 7   | **Cross-Service Impact** | Changes touching multiple microservices | Are all downstream consumers identified? Who needs to be notified? |
+| 8   | **Migration Strategy**   | Database schema or data changes         | Is there a rollback plan? Is it tested on a data sample?           |
+
+## Output Format
+
+```markdown
+## Why-Review Results
+
+**Plan:** {plan path}
+**Date:** {date}
+**Verdict:** PASS / NEEDS WORK
+
+### Checklist
+
+| #   | Check                   | Presence | Quality Depth | Notes                            |
+| --- | ----------------------- | -------- | ------------- | -------------------------------- |
+| 1   | Problem Statement       | ✅/❌    | ✅/⚠️/❌      | {what's strong / what's weak}    |
+| 2   | Alternatives Considered | ✅/❌    | ✅/⚠️/❌      | {are they real or strawmen?}     |
+| 3   | Design Rationale        | ✅/❌    | ✅/⚠️/❌      | {causal or just descriptive?}    |
+| 4   | Risk Assessment         | ✅/❌    | ✅/⚠️/❌      | {concrete mitigations or vague?} |
+| 5   | Ownership               | ✅/❌    | ✅/⚠️/❌      | {details}                        |
+
+> ✅ Strong ⚠️ Weak/Partial ❌ Missing
+
+### Adversarial Analysis
+
+**Strongest arguments AGAINST the chosen approach:**
+
+1. {argument 1 — cite specific plan text that weakens under this pressure}
+2. {argument 2}
+3. {argument 3 if applicable}
+
+**Unexamined alternatives** (not mentioned in the plan):
+
+- {alternative A} — why it might be worth considering
+- {alternative B if applicable}
+
+**Weakest assumptions** (if wrong, the plan breaks):
+
+1. {assumption} — impact if false: {consequence}
+2. {assumption} — impact if false: {consequence}
+
+**Pre-mortem** (assume it ships and fails in 3 months):
+
+> {One concrete, plausible failure scenario based on the plan's approach}
+
+**Pros/Cons symmetry:** Pros listed: {N} | Cons listed: {N} | Bias: {balanced / leans toward pros / leans toward cons}
+
+### Missing Items (if any)
+
+- {specific item to add before implementation}
+
+### Recommendation
+
+{Proceed to $cook | Add missing sections first | Add adversarial analysis to plan before proceeding}
+```
+
+## Round 2: Adversarial Re-Review (MANDATORY)
+
+> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
+
+After completing Round 1 checklist evaluation, execute a **second full review round using adversarial mode**:
+
+1. **Assume Round 1 was wrong** — start with: "Round 1 missed something. Find it."
+2. **Challenge every PASS item** from Round 1 — generate at least 2 sentences arguing the opposite for each
+3. **Complete the Anti-Bias Gate** (all 6 boxes from Adversarial Review Mindset section)
+4. **Populate the Adversarial Analysis section** in the output — this is MANDATORY:
+    - At least 2 arguments against the chosen approach
+    - At least 1 unexamined alternative
+    - At least 2 hidden assumptions with failure consequences
+    - Pre-mortem scenario
+    - Pros/Cons symmetry count
+5. **Focus on** what Round 1 typically misses:
+    - Alternatives that are strawmen (too easy to dismiss)
+    - Risks stated vaguely without concrete mitigations
+    - Assumptions embedded in the problem statement itself
+    - Scope creep disguised as "related improvements"
+6. **Update verdict** if Round 2 found new issues
+7. **Final verdict** must incorporate findings from BOTH rounds AND the Adversarial Analysis
+
+## Scope
+
+- **Applies to:** Features, refactors, architectural changes
+- **Exempt:** Bugfixes, config changes, single-file tweaks, documentation-only
+- **Enforcement:** Advisory (soft warning) — does not block implementation
+
+## Important Notes
+
+- Review only — do NOT modify plan files or implement changes
+- Keep output concise — actionable in <2 minutes
+- Simple plans still require the Anti-Bias Gate — findings may be brief ("No real alternatives found — approach is the only viable path given X constraint"), but the gate cannot be skipped
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"$cook (Recommended)"** — Begin implementation after design rationale is validated
+- **"$code"** — If implementing a simpler change
+- **"Skip, continue manually"** — user decides
+
+### Additionally — conditional $llm-council escalation
+
+After the existing `## Next Steps` ask the user directly call completes, **evaluate the gate**:
+
+**Read** the active plan's `plan.md` frontmatter (or PBI artifact frontmatter when invoked outside a plan). **Gate fires** when ANY of these 8 conditions evaluates true (per Phase 01 design contract §2 Gate Evaluation Procedure):
+
+1. `cross_service_impact` ≠ `NONE` (value is `PARTIAL` or `FULL`; case-insensitive)
+2. `breaking_changes` === `true` (lenient boolean coercion: `true`, `'true'`, `True` fire; `false`/missing do NOT)
+3. `complexity` ∈ {`high`, `critical`} (case-insensitive) **OR** `story_points` >= 13 (numeric, after string→int coercion)
+4. `new_framework` === `true`
+5. `irreversible` === `true`
+6. `security_critical` === `true`
+7. `performance_critical` === `true`
+8. `cost_high` === `true`
+
+**Absent fields default to no-fire** — the gate is opt-in via frontmatter, never opt-out.
+
+**If gate fires**, immediately follow with a **SECOND** a direct user question invocation (separate from the existing `## Next Steps` call — do NOT merge bullet lists):
+
+- **"Escalate to $llm-council (Recommended)"** — Gate fired (high-stakes signal detected). Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when `$why-review` alone is insufficient. Cheaper alternatives already exhausted at this point: `$plan-validate` is the prior rung.
+- **"Skip — proceed without council"** — Acknowledge the gate; proceed with current decision anyway.
+
+**If gate does NOT fire**, do NOT mention `$llm-council` (avoids cost normalization). The skill ends after the existing `## Next Steps` prompt.
+
+> **[BLOCKING]** This is a validation gate. MUST ATTENTION use a direct user question to present review findings and get user confirmation. Completing without asking at least one question is a violation.
+
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+
+<!-- SYNC:behavioral-delta-matrix -->
+
+> **Behavioral Delta Matrix** — MANDATORY for bugfix reviews. Produce this table BEFORE PASS/FAIL verdict. Narrative descriptions don't substitute.
+>
+> | Input state | Pre-fix behavior   | Post-fix behavior | Delta                                |
+> | ----------- | ------------------ | ----------------- | ------------------------------------ |
+> | {condition} | {current behavior} | {fixed behavior}  | Preserved ✓ / Fixed ✓ / REGRESSION ✗ |
+>
+> **Rules:** ≥3 rows · ≥1 row the bug report did NOT mention · REGRESSION delta → FAIL until a preservation test covers it (`tdd-spec-template.md#preservation-tests-mandatory-for-bugfix-specs`)
+>
+> **BLOCKED until:** ≥3 rows · ≥1 row outside bug report · no unmitigated REGRESSION
+
+<!-- /SYNC:behavioral-delta-matrix -->
+
 <!-- SYNC:nested-task-creation -->
 
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
 >
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
 >
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
 
 <!-- SYNC:project-reference-docs-guide -->
 
-> **Project Reference Docs — HARD-GATE (Pre-Fetch Before First Task)** — `docs/project-reference/` carries project-specific conventions, patterns, rules, and lessons that override generic framework defaults. Skipping this gate = output that compiles but violates the project's actual architecture.
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
-> ### MANDATORY MUST-DO (BEFORE first file read / grep / edit / task tracking decomposition)
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
+> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
 >
-> 1. **SCOPE EVALUATION:** Identify task scope — touched file types, domain area (backend handler, frontend component, styles, tests, specs, feature docs), and operation (read/write/review/refactor/migrate).
-> 2. **MAP TO REQUIRED DOCS:** Use the canonical doc trigger table in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:project-reference-docs-guide` to enumerate ALL docs whose "When to Read" trigger matches the scope. Enumerate every match — do NOT cherry-pick.
-> 3. **CHECK INJECTED:** For each required doc, scan conversation for an `[Injected: <path>]` header from session hooks. If present → already in context, do NOT re-read.
-> 4. **READ NON-INJECTED REQUIRED DOCS:** For every required doc NOT carrying `[Injected:]` → call `Read` now. No exceptions, no "I'll read it if I need to".
-> 5. **ALWAYS READ `lessons.md`:** Hard-won project lessons apply to every task. If not `[Injected:]`, read it before first action.
-> 6. **CITE EVIDENCE:** Before first execution step, state inline: `Reference docs read: <doc1>, <doc2>, ... | Already injected: <doc3>, ...`. Proves the gate ran; creates audit trail.
->
-> **BLOCKED until:** `- [ ]` Scope evaluated `- [ ]` Required docs enumerated from table `- [ ]` `[Injected:]` headers checked `- [ ]` Non-injected required docs read `- [ ]` `lessons.md` confirmed in context `- [ ]` Citation line emitted
->
-> **Note:** The doc list is the canonical fixed set initialized by session hooks. If a doc is absent from `docs/project-reference/`, it does not apply to the current project — skip it. Compaction wipes prior reads — re-fetch on resume if `[Injected:]` headers are absent.
+> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
 <!-- SYNC:task-tracking-external-report -->
 
-> **Task Tracking & External Report Persistence** — HARD-GATE for plan/review skills. Apply BEFORE any file read, grep, edit, or analysis step.
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
 >
-> 1. **BREAK BEFORE DO:** Decompose work into small tasks via task tracking BEFORE any execution. Every step (read file, grep, analyze, write) is a tracked task. On context loss → call the current task list FIRST, never duplicate.
-> 2. **TRANSITION DISCIPLINE:** Mark `in_progress` BEFORE step starts; mark `completed` IMMEDIATELY after — never batch. One `in_progress` at a time.
-> 3. **EXTERNAL REPORT (mandatory):** Create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` BEFORE first finding. Append result after EACH file/section/decision — NEVER hold synthesis in memory. Each disk write survives compaction.
-> 4. **SYNTHESIZE FROM DISK:** At end of skill run, RE-READ the report file to compose final summary/conclusion. Never synthesize from in-memory recall — context may have been compacted, findings lost.
-> 5. **HAND-OFF:** Final response cites `Full report: plans/reports/{filename}` so downstream skills/agents can resume.
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
 >
-> **Why:** Plan/review skills run long, span many files, and are prone to mid-execution compaction. Memory-only state = silent loss. Task tracker keeps execution recoverable; report file keeps findings recoverable.
->
-> **BLOCKED until:** `- [ ]` task tracking called with full step breakdown `- [ ]` Report file path declared `- [ ]` First finding written to disk before second step begins
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
 
 <!-- /SYNC:task-tracking-external-report -->
-
-> **[BLOCKING]** This is a validation gate. MUST ATTENTION use a direct user question to present review findings and get user confirmation. Completing without asking at least one question is a violation.
-
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -412,268 +621,37 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:graph-impact-analysis -->
 
-> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
-
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
-
-## Quick Summary
-
-**Goal:** Validate that a plan contains sufficient design rationale (WHY, not just WHAT) before implementation begins.
-
-**Applies to:** Features and refactors only — bugfixes and trivial changes exempt.
-
-**Why this exists:** AI code generation optimizes mechanics but misses conceptual quality. This skill ensures the human thinking happened before the mechanical coding starts.
-
-## Your Mission
-
-<task>
-$ARGUMENTS
-</task>
-
-## Adversarial Review Mindset (NON-NEGOTIABLE)
-
-**Default stance: SKEPTIC, not validator. Your job is to find what's wrong, not confirm what's right.**
-
-> **Confirmation bias trap:** After reading a coherent plan, AI naturally finds reasons to agree. The current context (post-plan, post-fix) amplifies this — you've already seen the reasoning and rationalized it. This section exists to break that loop.
-
-### Adversarial Techniques (apply ALL before concluding)
-
-**1. Steel-Man Protocol**
-Before dismissing any rejected alternative, argue FOR it as strongly as possible. Ask: "Would a senior engineer with 10 years of experience in this domain actually choose this alternative?" If yes — the plan's dismissal needs stronger justification.
-
-**2. Why NOT? Inversion**
-For every stated reason ("We chose X because Y"), ask: "Why NOT X? What does X sacrifice?" The plan must acknowledge what the chosen approach gives up, not just what it gains.
-
-**3. What If? Assumption Stress Test**
-List the top 3 assumptions in the plan. For each: "What if this assumption is wrong?" A good plan survives at least 2 of its 3 assumptions being false.
-
-**4. Pre-Mortem**
-Assume the plan ships and fails in production within 3 months. Write one concrete failure scenario that is plausible given the current plan. If you can't find one, you haven't looked hard enough.
-
-**5. Unseen Alternatives**
-Identify 1-2 approaches NOT mentioned in the plan at all. Did the author genuinely not consider them, or did they consider and consciously exclude them? Missing alternatives without exclusion reasoning = weak coverage.
-
-**6. Pros/Cons Symmetry Check**
-Count the pros listed for the chosen approach. Count the cons. If pros > cons by more than 2:1, the analysis is likely biased. Real trade-offs have roughly equal weight on both sides.
-
-**7. Contrarian Pass**
-Before writing any finding, generate at least 2 sentences arguing the OPPOSITE conclusion. If you're about to write PASS — argue for NEEDS WORK. If about to write NEEDS WORK — argue for PASS. Then decide which argument is stronger.
-
-### Forbidden Patterns
-
-- **Leading with confirmation:** "This looks good because..." → STOP. Lead with challenges first.
-- **Presence = quality:** "Alternatives section exists ✅" → presence is NOT quality. Were they real alternatives?
-- **Vague rationale:** "We chose X because it's better" → What metric? Better at what cost?
-- **Asymmetric trade-offs:** Listing 3 pros and 1 con → the analysis is likely incomplete.
-- **"Looks fine"** without evidence of adversarial challenge
-
-### Anti-Bias Gate (MANDATORY before finalizing verdict)
-
-Complete ALL checks before writing the final verdict:
-
-- MUST ATTENTION steel-man at least one rejected alternative (argue FOR it)
-- MUST ATTENTION identify at least 1 alternative NOT in the plan
-- MUST ATTENTION list 2-3 arguments AGAINST the chosen approach
-- MUST ATTENTION surface 2-3 hidden assumptions with stress tests
-- MUST ATTENTION run the pre-mortem (one concrete failure scenario)
-- MUST ATTENTION check pros/cons symmetry
-
-If any check is incomplete → you have NOT completed the adversarial review. Go back.
-
-## Behavioral Delta Matrix (MANDATORY for bugfixes)
-
-<!-- SYNC:behavioral-delta-matrix -->
-
-> **Behavioral Delta Matrix** — MANDATORY for bugfix reviews. Produce this table BEFORE PASS/FAIL verdict. Narrative descriptions don't substitute.
->
-> | Input state | Pre-fix behavior   | Post-fix behavior | Delta                                |
-> | ----------- | ------------------ | ----------------- | ------------------------------------ |
-> | {condition} | {current behavior} | {fixed behavior}  | Preserved ✓ / Fixed ✓ / REGRESSION ✗ |
->
-> **Rules:** ≥3 rows · ≥1 row the bug report did NOT mention · REGRESSION delta → FAIL until a preservation test covers it (`tdd-spec-template.md#preservation-tests-mandatory-for-bugfix-specs`)
->
-> **BLOCKED until:** ≥3 rows · ≥1 row outside bug report · no unmitigated REGRESSION
-
-<!-- /SYNC:behavioral-delta-matrix -->
-
-## Plan Resolution
-
-1. If arguments contain a path → use that plan directory
-2. Else check `## Plan Context` in injected context → use active plan path
-3. If no plan found → tell user: "No active plan found. Run `$plan-hard` or `$plan-hard` first."
-
-## Validation Checklist
-
-Read the plan's `plan.md` and all `phase-*.md` files. Check each item below. **Two dimensions per check: presence AND quality depth.**
-
-> **Rule:** Presence alone is NOT a pass. A section that exists but contains weak, asymmetric, or unverified reasoning FAILS quality depth.
-
-### Required Sections (in plan.md or phase files)
-
-| #   | Section                     | Presence Check                                    | Quality Depth Check (adversarial)                                                                                                                                                  |
-| --- | --------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Problem Statement**       | 2-3 sentences describing the problem              | Is the problem scoped correctly? Could it be framed differently to lead to a different solution? Are symptoms confused with root cause?                                            |
-| 2   | **Alternatives Considered** | Minimum 2 alternatives listed with pros/cons      | Are alternatives real (not strawmen)? Would a domain expert seriously consider each? Are the cons of the CHOSEN approach listed, not just cons of the others?                      |
-| 3   | **Design Rationale**        | Explicit reasoning linking decision to trade-offs | Is reasoning causal (X leads to Y) or just descriptive (X is better)? Are hidden assumptions surfaced? Does it address failure modes, not just success modes?                      |
-| 4   | **Risk Assessment**         | At least 1 risk per phase                         | Are risks ranked by severity? Are mitigations concrete actions or vague intentions ("monitor closely")? Is there at least one risk about the approach itself (not just execution)? |
-| 5   | **Ownership**               | Clear who maintains code post-merge               | Implicit OK (author owns), explicit better                                                                                                                                         |
-
-### Optional (Flag if Missing, Don't Fail)
-
-| #   | Section                  | When Required                           | Quality Depth Check                                                |
-| --- | ------------------------ | --------------------------------------- | ------------------------------------------------------------------ |
-| 6   | **Operational Impact**   | Service-layer or API changes            | Are rollback steps defined? What breaks if this is reverted?       |
-| 7   | **Cross-Service Impact** | Changes touching multiple microservices | Are all downstream consumers identified? Who needs to be notified? |
-| 8   | **Migration Strategy**   | Database schema or data changes         | Is there a rollback plan? Is it tested on a data sample?           |
-
-## Output Format
-
-```markdown
-## Why-Review Results
-
-**Plan:** {plan path}
-**Date:** {date}
-**Verdict:** PASS / NEEDS WORK
-
-### Checklist
-
-| #   | Check                   | Presence | Quality Depth | Notes                            |
-| --- | ----------------------- | -------- | ------------- | -------------------------------- |
-| 1   | Problem Statement       | ✅/❌    | ✅/⚠️/❌      | {what's strong / what's weak}    |
-| 2   | Alternatives Considered | ✅/❌    | ✅/⚠️/❌      | {are they real or strawmen?}     |
-| 3   | Design Rationale        | ✅/❌    | ✅/⚠️/❌      | {causal or just descriptive?}    |
-| 4   | Risk Assessment         | ✅/❌    | ✅/⚠️/❌      | {concrete mitigations or vague?} |
-| 5   | Ownership               | ✅/❌    | ✅/⚠️/❌      | {details}                        |
-
-> ✅ Strong ⚠️ Weak/Partial ❌ Missing
-
-### Adversarial Analysis
-
-**Strongest arguments AGAINST the chosen approach:**
-
-1. {argument 1 — cite specific plan text that weakens under this pressure}
-2. {argument 2}
-3. {argument 3 if applicable}
-
-**Unexamined alternatives** (not mentioned in the plan):
-
-- {alternative A} — why it might be worth considering
-- {alternative B if applicable}
-
-**Weakest assumptions** (if wrong, the plan breaks):
-
-1. {assumption} — impact if false: {consequence}
-2. {assumption} — impact if false: {consequence}
-
-**Pre-mortem** (assume it ships and fails in 3 months):
-
-> {One concrete, plausible failure scenario based on the plan's approach}
-
-**Pros/Cons symmetry:** Pros listed: {N} | Cons listed: {N} | Bias: {balanced / leans toward pros / leans toward cons}
-
-### Missing Items (if any)
-
-- {specific item to add before implementation}
-
-### Recommendation
-
-{Proceed to $cook | Add missing sections first | Add adversarial analysis to plan before proceeding}
-```
-
-## Round 2: Adversarial Re-Review (MANDATORY)
-
-> **Protocol:** Deep Multi-Round Review (inlined via SYNC:double-round-trip-review above)
-
-After completing Round 1 checklist evaluation, execute a **second full review round using adversarial mode**:
-
-1. **Assume Round 1 was wrong** — start with: "Round 1 missed something. Find it."
-2. **Challenge every PASS item** from Round 1 — generate at least 2 sentences arguing the opposite for each
-3. **Complete the Anti-Bias Gate** (all 6 boxes from Adversarial Review Mindset section)
-4. **Populate the Adversarial Analysis section** in the output — this is MANDATORY:
-    - At least 2 arguments against the chosen approach
-    - At least 1 unexamined alternative
-    - At least 2 hidden assumptions with failure consequences
-    - Pre-mortem scenario
-    - Pros/Cons symmetry count
-5. **Focus on** what Round 1 typically misses:
-    - Alternatives that are strawmen (too easy to dismiss)
-    - Risks stated vaguely without concrete mitigations
-    - Assumptions embedded in the problem statement itself
-    - Scope creep disguised as "related improvements"
-6. **Update verdict** if Round 2 found new issues
-7. **Final verdict** must incorporate findings from BOTH rounds AND the Adversarial Analysis
-
-## Scope
-
-- **Applies to:** Features, refactors, architectural changes
-- **Exempt:** Bugfixes, config changes, single-file tweaks, documentation-only
-- **Enforcement:** Advisory (soft warning) — does not block implementation
-
-## Important Notes
-
-- Review only — do NOT modify plan files or implement changes
-- Keep output concise — actionable in <2 minutes
-- Simple plans still require the Anti-Bias Gate — findings may be brief ("No real alternatives found — approach is the only viable path given X constraint"), but the gate cannot be skipped
-
----
-
-## Next Steps
-
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-
-- **"$cook (Recommended)"** — Begin implementation after design rationale is validated
-- **"$code"** — If implementing a simpler change
-- **"Skip, continue manually"** — user decides
-
-### Additionally — conditional $llm-council escalation
-
-After the existing `## Next Steps` ask the user directly call completes, **evaluate the gate**:
-
-**Read** the active plan's `plan.md` frontmatter (or PBI artifact frontmatter when invoked outside a plan). **Gate fires** when ANY of these 8 conditions evaluates true (per Phase 01 design contract §2 Gate Evaluation Procedure):
-
-1. `cross_service_impact` ≠ `NONE` (value is `PARTIAL` or `FULL`; case-insensitive)
-2. `breaking_changes` === `true` (lenient boolean coercion: `true`, `'true'`, `True` fire; `false`/missing do NOT)
-3. `complexity` ∈ {`high`, `critical`} (case-insensitive) **OR** `story_points` >= 13 (numeric, after string→int coercion)
-4. `new_framework` === `true`
-5. `irreversible` === `true`
-6. `security_critical` === `true`
-7. `performance_critical` === `true`
-8. `cost_high` === `true`
-
-**Absent fields default to no-fire** — the gate is opt-in via frontmatter, never opt-out.
-
-**If gate fires**, immediately follow with a **SECOND** a direct user question invocation (separate from the existing `## Next Steps` call — do NOT merge bullet lists):
-
-- **"Escalate to $llm-council (Recommended)"** — Gate fired (high-stakes signal detected). Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when `$why-review` alone is insufficient. Cheaper alternatives already exhausted at this point: `$plan-validate` is the prior rung.
-- **"Skip — proceed without council"** — Acknowledge the gate; proceed with current decision anyway.
-
-**If gate does NOT fire**, do NOT mention `$llm-council` (avoids cost normalization). The skill ends after the existing `## Next Steps` prompt.
-
 <!-- SYNC:task-tracking-external-report:reminder -->
 
-- **MANDATORY MUST ATTENTION** break work into tasks via task tracking BEFORE doing — `in_progress`/`completed` per step, never batch.
-- **MANDATORY MUST ATTENTION** write findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally; re-read at end to synthesize — never synthesize from memory.
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY MUST ATTENTION** before first task: enumerate required docs from `SYNC:project-reference-docs-guide` table → check `[Injected:]` headers → `Read` every non-injected required doc → always include `lessons.md` → emit `Reference docs read: ...` citation line.
-- **MANDATORY MUST ATTENTION** project-specific conventions in these docs override generic framework defaults — acting without them in context produces architecture violations regardless of how clean the code looks.
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 
@@ -695,23 +673,12 @@ After the existing `## Next Steps` ask the user directly call completes, **evalu
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
 
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
 
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
     <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-- **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-- **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-- **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-- **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 > **[FINAL PURPOSE REMINDER — MUST ATTENTION CRITICAL]**
 >

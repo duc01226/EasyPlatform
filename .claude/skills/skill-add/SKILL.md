@@ -62,11 +62,6 @@ Add new reference files or scripts to `.claude/skills/$1` directory.
 
 <!-- /SYNC:shared-protocol-duplication-policy -->
 
-<!-- SYNC:shared-protocol-duplication-policy:reminder -->
-
-**IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
-
-<!-- /SYNC:shared-protocol-duplication-policy:reminder -->
 <!-- SYNC:ai-mistake-prevention -->
 
 **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -82,11 +77,19 @@ Add new reference files or scripts to `.claude/skills/$1` directory.
 **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:shared-protocol-duplication-policy:reminder -->
+
+**IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
+
+<!-- /SYNC:shared-protocol-duplication-policy:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

@@ -40,6 +40,26 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
+## Quick Summary
+
+**Goal:** [One sentence — what this skill achieves].
+
+**Workflow:**
+
+1. **[Step 1]** — [description]
+2. **[Step 2]** — [description]
+
+**Key Rules:**
+
+- [Most critical constraint]
+- [Second constraint]
+
+# [Skill Title]
+
+[Insert instructions below]
+
+---
+
 > **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -61,6 +81,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
 <!-- /SYNC:understand-code-first -->
+
 <!-- SYNC:evidence-based-reasoning -->
 
 > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
@@ -77,31 +98,12 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- /SYNC:evidence-based-reasoning -->
 
-## Quick Summary
-
-**Goal:** [One sentence — what this skill achieves].
-
-**Workflow:**
-
-1. **[Step 1]** — [description]
-2. **[Step 2]** — [description]
-
-**Key Rules:**
-
-- [Most critical constraint]
-- [Second constraint]
-
-# [Skill Title]
-
-[Insert instructions below]
-
----
-
 <!-- SYNC:understand-code-first:reminder -->
 
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
 
 <!-- /SYNC:understand-code-first:reminder -->
+
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.

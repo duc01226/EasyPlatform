@@ -41,50 +41,71 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-<!-- SYNC:nested-task-creation -->
+## Quick Summary
 
-> **Nested Task Expansion Contract — HARD-GATE** — Skill runs as workflow step? Parent `[Workflow] /{skill}` row = **container, NOT tracking**. MUST expand internal phases as child tasks. Workflow-step invocation = **MORE strict, not less**.
->
-> **Why:** task tracking flat (no `parent_id`). Without expansion: hierarchy invisible, transitions batched, mid-skill compaction loses phase state, next agent cannot resume. `[N.M]` prefix + `addBlockedBy` restore visual hierarchy + structural ordering.
->
-> ### Child skill contract (this skill, when nested)
->
-> 1. **DETECT** — the current task list FIRST. Active `[Workflow] /{this-skill}` `in_progress`? Record `id` → `parentTaskId`, set `nested=true`. Else `nested=false` (standalone).
-> 2. **EXPAND** — task tracking one task per declared phase. Never collapse, never lazy-create.
-> 3. **PREFIX** (when nested) — `[N.M] $skill-name — phase` (N=workflow step #, M=phase #). Example parent step 1 = `$review-changes` → children `[1.1] $review-changes — Load references`, `[1.2] $review-changes — Run graph trace`, …. Standalone: omit prefix.
-> 4. **LINK** (when nested) — immediately after creating children: `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`. Tool then blocks parent `completed` until children resolve.
-> 5. **EXECUTE** — child `in_progress` BEFORE work, `completed` IMMEDIATELY after evidence. One `in_progress` at a time. Parent stays `in_progress` throughout.
-> 6. **GATE** — parent → `completed` ONLY after ALL children `completed` (or `cancelled` with written reason). Skipping = workflow violation.
->
-> ### Orchestrator contract (`workflow-*` skills)
->
-> 1. **PRE-EXPAND** — before skill invocation/`spawn_agent` call, read child's phase list, task tracking rows with `[N.M] $skill-name — phase` prefix.
-> 2. **LINK PARENT** — `TaskUpdate(workflowStepTaskId, addBlockedBy: [childIds])`.
-> 3. **POST-VERIFY** — after child returns, the current task list. Any `[N.M] …` row still `pending`/`in_progress`? Child exited early → a direct user question BEFORE marking workflow row done.
-> 4. **NEVER** let `[Workflow] /child-skill` row stand alone as "tracking complete".
->
-> ### Standalone invocation
->
-> Same phase expansion + one-`in_progress` discipline. Omit `[N.M] $skill-name —` prefix; omit `addBlockedBy` linkage (no parent).
->
-> ### Anti-rationalization
->
-> | Excuse                                        | Rebuttal                                                                                                           |
-> | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-> | "Parent workflow task tracks this"            | Tracks workflow STEP, not phases                                                                                   |
-> | "Children clutter the list"                   | Visible hierarchy IS the point — compaction wipes opaque rows                                                      |
-> | "Skip task tracking for quick phases"         | Every phase = recovery anchor                                                                                      |
-> | "I know what I'm doing, expansion = ceremony" | Expansion is for the NEXT agent post-compaction. Cognitive completion bias = the exact failure mode prevented here |
->
-> **BLOCKED until:** `- [ ]` the current task list called, `nested` set `- [ ]` All phases expanded via task tracking `- [ ]` Children prefixed `[N.M] $skill-name — phase` when nested `- [ ]` `TaskUpdate(parentTaskId, addBlockedBy: [...])` when nested `- [ ]` First child `in_progress` BEFORE any other tool call
+**Goal:** [Workflow] Trigger Bug Fix workflow — systematic debugging with root cause investigation, fix, and verification.
 
-<!-- /SYNC:nested-task-creation -->
+**Workflow:**
+
+1. **Detect** — classify request scope and target artifacts.
+2. **Execute** — apply required steps with evidence-backed actions.
+3. **Verify** — confirm constraints, output quality, and completion evidence.
+
+**Key Rules:**
+
+- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
+- MUST ATTENTION keep task tracking updated as each step starts/completes.
+- NEVER skip mandatory workflow or skill gates.
+
+## Repeated Steps Disambiguation (CRITICAL for task creation)
+
+| Step                | Occurrence | Task Description                                          |
+| ------------------- | ---------- | --------------------------------------------------------- |
+| `$integration-test` | 1st        | INT-TEST₁ — RED phase: write regression test, expect FAIL |
+| `$integration-test` | 2nd        | INT-TEST₂ — GREEN phase: re-run after fix, expect PASS    |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
+
+> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $debug-investigate -> $plan-hard -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $fix -> $prove-fix -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $changelog -> $test -> $docs-update -> $watzup -> $workflow-end
+
+---
 
 **IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $debug-investigate -> $plan-hard -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $fix -> $prove-fix -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $changelog -> $test -> $docs-update -> $watzup -> $workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 > **[CRITICAL] Plan Before Fix Gate:** The `$plan-hard → $plan-review → $plan-validate` steps are MANDATORY before `$fix`. You MUST ATTENTION create todo tasks for these plan steps AND complete them before proceeding to fix. Never skip planning — fixes without validated plans lead to incomplete root cause analysis and regressions.
+
+Activate the `bugfix` workflow. Run `$workflow-start bugfix` with the user's prompt as context.
+
+> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
+
+**Steps:** $scout → $investigate → $debug-investigate → $plan-hard → $why-review → $plan-review → $why-review → $plan-validate → $why-review → $tdd-spec → $why-review → $tdd-spec-review → $integration-test → $fix → $prove-fix → $integration-test → $integration-test-review → $integration-test-verify → $tdd-spec [direction=sync] → $workflow-review-changes → $changelog → $test → $docs-update → $watzup → $workflow-end
+
+> **[PERFORMANCE EXCEPTION]** If this bug fix is performance-related (latency, throughput, memory, query speed), skip `$tdd-spec`, `$tdd-spec-review`, `$integration-test` (both occurrences), `$integration-test-review`, and `$integration-test-verify`. Integration tests verify functional correctness — they cannot measure performance. Use `$test` only to confirm no functional regressions. Activate `$workflow-performance` instead when the primary goal is performance optimization.
+
+> **[TDD-FIRST BUG FIX]** The two `$integration-test` occurrences are intentional and serve distinct purposes:
+>
+> **First `$integration-test` (RED phase):** Write a regression test that REPRODUCES the bug. Run it — it MUST FAIL. If it passes, the test does not catch the bug. Never proceed to fix until the test fails.
+> **Second `$integration-test` (GREEN phase):** Re-run integration tests after the fix — expect all to PASS. Confirms the fix works AND the regression guard is in place.
+> **`$integration-test-review`:** Verify tests have real assertion value (not smoke/existence-only checks).
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -155,56 +176,10 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- /SYNC:subagent-return-contract -->
 
-Activate the `bugfix` workflow. Run `$workflow-start bugfix` with the user's prompt as context.
-
-> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
-
-**Steps:** $scout → $investigate → $debug-investigate → $plan-hard → $why-review → $plan-review → $why-review → $plan-validate → $why-review → $tdd-spec → $why-review → $tdd-spec-review → $integration-test → $fix → $prove-fix → $integration-test → $integration-test-review → $integration-test-verify → $tdd-spec [direction=sync] → $workflow-review-changes → $changelog → $test → $docs-update → $watzup → $workflow-end
-
-> **[PERFORMANCE EXCEPTION]** If this bug fix is performance-related (latency, throughput, memory, query speed), skip `$tdd-spec`, `$tdd-spec-review`, `$integration-test` (both occurrences), `$integration-test-review`, and `$integration-test-verify`. Integration tests verify functional correctness — they cannot measure performance. Use `$test` only to confirm no functional regressions. Activate `$workflow-performance` instead when the primary goal is performance optimization.
-
-> **[TDD-FIRST BUG FIX]** The two `$integration-test` occurrences are intentional and serve distinct purposes:
->
-> **First `$integration-test` (RED phase):** Write a regression test that REPRODUCES the bug. Run it — it MUST FAIL. If it passes, the test does not catch the bug. Never proceed to fix until the test fails.
-> **Second `$integration-test` (GREEN phase):** Re-run integration tests after the fix — expect all to PASS. Confirms the fix works AND the regression guard is in place.
-> **`$integration-test-review`:** Verify tests have real assertion value (not smoke/existence-only checks).
-
-## Quick Summary
-
-**Goal:** [Workflow] Trigger Bug Fix workflow — systematic debugging with root cause investigation, fix, and verification.
-
-**Workflow:**
-
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
-
-**Key Rules:**
-
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- NEVER skip mandatory workflow or skill gates.
-
-## Repeated Steps Disambiguation (CRITICAL for task creation)
-
-| Step                | Occurrence | Task Description                                          |
-| ------------------- | ---------- | --------------------------------------------------------- |
-| `$integration-test` | 1st        | INT-TEST₁ — RED phase: write regression test, expect FAIL |
-| `$integration-test` | 2nd        | INT-TEST₂ — GREEN phase: re-run after fix, expect PASS    |
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $debug-investigate -> $plan-hard -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $fix -> $prove-fix -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $changelog -> $test -> $docs-update -> $watzup -> $workflow-end
-
----
-
 <!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY MUST ATTENTION** a parent workflow task does NOT satisfy this skill's own task tracking — always expand internal phases via task tracking, even when nested.
-- **MANDATORY MUST ATTENTION** when nested, prefix children `[N.M] $skill-name — phase` AND link the parent via `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` so the parent cannot complete until all children resolve.
-- **MANDATORY MUST ATTENTION** orchestrator (workflow-\*) skills MUST pre-expand the child skill's manifest into the tracker BEFORE invoking the child — the workflow row is only the parent container, never a substitute for phase tracking.
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
 

@@ -41,23 +41,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
->
-> **Mandatory end tasks are ALWAYS (in order):**
->
-> 1. "Run **Learn Review** (lesson value + generality + recurrence gate)."
-> 2. "Run `$why-review` to challenge whether the lesson is worth persistent memory."
-> 3. "Run `$prompt-enhance <modified-file>` to optimize lesson content for AI attention anchoring."
->
-> Do NOT mark the skill complete until all 3 tasks run.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
 ## Quick Summary
 
 **Goal:** Teach Claude lessons that persist across sessions by saving to the most relevant reference doc.
@@ -378,6 +361,16 @@ $prompt-enhance docs/project-reference/<modified-file>.md
 
 ---
 
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+>
+> **Mandatory end tasks are ALWAYS (in order):**
+>
+> 1. "Run **Learn Review** (lesson value + generality + recurrence gate)."
+> 2. "Run `$why-review` to challenge whether the lesson is worth persistent memory."
+> 3. "Run `$prompt-enhance <modified-file>` to optimize lesson content for AI attention anchoring."
+>
+> Do NOT mark the skill complete until all 3 tasks run.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -394,11 +387,20 @@ $prompt-enhance docs/project-reference/<modified-file>.md
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

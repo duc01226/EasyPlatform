@@ -40,29 +40,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — stale instantly
-> 2. No directory trees — use 1-line path conventions
-> 3. No TOCs — AI reads linearly
-> 4. One example per pattern — only if non-obvious
-> 5. Lead with answer, not reasoning
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end
-
-<!-- /SYNC:output-quality-principles -->
-
 ## Quick Summary
 
 **Goal:** Run all 3 UI scan skills in parallel → produce a consolidated summary of what was found and what's still missing. Single command for full UI system documentation refresh.
@@ -201,6 +178,8 @@ This skill replaces 3 separate scan entries in the `project-config` scan table:
 
 ---
 
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid:
@@ -211,11 +190,34 @@ This skill replaces 3 separate scan entries in the `project-config` scan table:
 > **Check downstream references before deleting.** Map referencing files before removal.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — stale instantly
+> 2. No directory trees — use 1-line path conventions
+> 3. No TOCs — AI reads linearly
+> 4. One example per pattern — only if non-obvious
+> 5. Lead with answer, not reasoning
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end
+
+<!-- /SYNC:output-quality-principles -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

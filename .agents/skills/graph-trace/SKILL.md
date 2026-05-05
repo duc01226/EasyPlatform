@@ -40,17 +40,6 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 <!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-# Graph Trace — Full System Flow
-
-Trace connections from a target node through multiple edge types using BFS. Shows the complete chain: API endpoints → commands → entity events → bus messages → cross-service consumers.
-
 ## Quick Summary
 
 **Goal:** [Code Intelligence] Trace full system flow from a target file or function through all edge types (CALLS, events, bus messages, API endpoints). Supports downstream, upstream, or bidirectional tracing. Use when investigating what happens when code executes, understanding blast radius, or tracing frontend-to-backend flows.
@@ -200,6 +189,10 @@ python .claude/scripts/code_graph trace src/Services/Growth/Controllers/GoalCont
 
 ---
 
+# Graph Trace — Full System Flow
+
+Trace connections from a target node through multiple edge types using BFS. Shows the complete chain: API endpoints → commands → entity events → bus messages → cross-service consumers.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -216,11 +209,20 @@ python .claude/scripts/code_graph trace src/Services/Growth/Controllers/GoalCont
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

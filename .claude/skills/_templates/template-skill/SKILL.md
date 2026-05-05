@@ -45,6 +45,7 @@ description: '[Category] Replace with description and trigger keywords.'
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
 <!-- /SYNC:understand-code-first -->
+
 <!-- SYNC:evidence-based-reasoning -->
 
 > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
@@ -66,6 +67,7 @@ description: '[Category] Replace with description and trigger keywords.'
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
 
 <!-- /SYNC:understand-code-first:reminder -->
+
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.

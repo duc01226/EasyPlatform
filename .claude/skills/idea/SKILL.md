@@ -193,12 +193,6 @@ Module detected: "Module context from {module} will be used during refinement."
 
 ### UI Sketch Section
 
-<!-- SYNC:ui-wireframe -->
-
-> **UI Wireframe** — Process visual design input (Figma URLs, screenshots, wireframes) via appropriate tool BEFORE creating wireframes. Use box-drawing ASCII characters for spatial layout. Classify every component into exactly ONE tier: Common (cross-app reusable) / Domain-Shared (cross-domain) / Page (single-page). Duplicate UI code = wrong tier. Search existing component libraries before creating new (>=80% match = reuse). Detail level varies by skill (idea=rough, story=full decomposition).
-
-<!-- /SYNC:ui-wireframe -->
-
 ```markdown
 ## UI Sketch
 
@@ -245,16 +239,17 @@ Module detected: "Module context from {module} will be used during refinement."
 
 ---
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+> **[IMPORTANT]** `TaskCreate` break ALL work into small tasks BEFORE starting — including tasks each file read. Simple tasks: AI MUST ATTENTION ask user whether to skip.
 
-## Prompt-Enhance Closing Anchors
+> **External Memory:** Complex/lengthy work (research, analysis, scan, review) → write intermediate findings to `plans/reports/` — prevents context loss, serves as deliverable.
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence, confidence percentage (>80% act, <80% verify first).
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+<!-- SYNC:ui-wireframe -->
+
+> **UI Wireframe** — Process visual design input (Figma URLs, screenshots, wireframes) via appropriate tool BEFORE creating wireframes. Use box-drawing ASCII characters for spatial layout. Classify every component into exactly ONE tier: Common (cross-app reusable) / Domain-Shared (cross-domain) / Page (single-page). Duplicate UI code = wrong tier. Search existing component libraries before creating new (>=80% match = reuse). Detail level varies by skill (idea=rough, story=full decomposition).
+
+<!-- /SYNC:ui-wireframe -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -272,12 +267,6 @@ Module detected: "Module context from {module} will be used during refinement."
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
 
 <!-- /SYNC:ai-mistake-prevention -->
-
-> **[IMPORTANT]** `TaskCreate` break ALL work into small tasks BEFORE starting — including tasks each file read. Simple tasks: AI MUST ATTENTION ask user whether to skip.
-
-> **External Memory:** Complex/lengthy work (research, analysis, scan, review) → write intermediate findings to `plans/reports/` — prevents context loss, serves as deliverable.
-
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof or traced evidence, confidence percentage (>80% act, <80% verify first).
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -321,11 +310,23 @@ Module detected: "Module context from {module} will be used during refinement."
 **MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
 

@@ -153,6 +153,10 @@ python .claude/scripts/code_graph trace src/Services/Growth/Controllers/GoalCont
 
 ---
 
+# Graph Trace — Full System Flow
+
+Trace connections from a target node through multiple edge types using BFS. Shows the complete chain: API endpoints → commands → entity events → bus messages → cross-service consumers.
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -177,15 +181,12 @@ python .claude/scripts/code_graph trace src/Services/Growth/Controllers/GoalCont
 
 <!-- /SYNC:critical-thinking-mindset -->
 
-# Graph Trace — Full System Flow
-
-Trace connections from a target node through multiple edge types using BFS. Shows the complete chain: API endpoints → commands → entity events → bus messages → cross-service consumers.
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.

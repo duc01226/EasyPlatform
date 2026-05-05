@@ -60,6 +60,18 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 
 ---
 
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /domain-analysis -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+
+> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+
+Activate the `feature` workflow. Run `/workflow-start feature` with the user's prompt as context.
+
+> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
+
+**Steps:** /scout → /investigate → /domain-analysis → /why-review → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /tdd-spec → /why-review → /tdd-spec-review → /plan → /why-review → /plan-review → /why-review → /cook → /review-domain-entities → /tdd-spec → /why-review → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+
+> **[PERFORMANCE EXCEPTION]** If this feature is a performance enhancement (query optimization, caching, throughput improvement, latency reduction), skip `/tdd-spec` (both occurrences), `/tdd-spec-review` (both occurrences), PLAN₂ + its `/plan-review`, `/tdd-spec [direction=sync]`, `/integration-test`, `/integration-test-review`, and `/integration-test-verify`. Do NOT skip `/cook` — implementation still runs. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead.
+
 <!-- SYNC:nested-task-creation -->
 
 > **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
@@ -74,10 +86,6 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 > **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
 
 <!-- /SYNC:nested-task-creation -->
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /domain-analysis -> /why-review -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
-
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -147,14 +155,6 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 > Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
 
 <!-- /SYNC:subagent-return-contract -->
-
-Activate the `feature` workflow. Run `/workflow-start feature` with the user's prompt as context.
-
-> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
-
-**Steps:** /scout → /investigate → /domain-analysis → /why-review → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /tdd-spec → /why-review → /tdd-spec-review → /plan → /why-review → /plan-review → /why-review → /cook → /review-domain-entities → /tdd-spec → /why-review → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
-
-> **[PERFORMANCE EXCEPTION]** If this feature is a performance enhancement (query optimization, caching, throughput improvement, latency reduction), skip `/tdd-spec` (both occurrences), `/tdd-spec-review` (both occurrences), PLAN₂ + its `/plan-review`, `/tdd-spec [direction=sync]`, `/integration-test`, `/integration-test-review`, and `/integration-test-verify`. Do NOT skip `/cook` — implementation still runs. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead.
 
 <!-- SYNC:nested-task-creation:reminder -->
 
