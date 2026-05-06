@@ -1,7 +1,7 @@
 ---
 name: migration
 version: 1.0.0
-description: '[Architecture] Create data or schema migrations following platform patterns'
+description: '[Architecture] Use when you need to create data or schema migrations following platform patterns.'
 disable-model-invocation: false
 ---
 
@@ -113,7 +113,7 @@ disable-model-invocation: false
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

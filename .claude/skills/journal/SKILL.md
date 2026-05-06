@@ -1,7 +1,7 @@
 ---
 name: journal
 version: 1.0.0
-description: '[Utilities] Write some journal entries.'
+description: '[Utilities] Use when you need to write some journal entries.'
 disable-model-invocation: false
 ---
 

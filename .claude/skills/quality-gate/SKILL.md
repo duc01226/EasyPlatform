@@ -1,7 +1,7 @@
 ---
 name: quality-gate
 version: 1.0.0
-description: '[Code Quality] Run quality gate checklist. Use for pre-release, pre-dev, or pre-QA quality verification.'
+description: '[Code Quality] Use when you need to run quality gate checklist.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

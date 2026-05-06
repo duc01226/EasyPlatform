@@ -1,7 +1,7 @@
 ---
 name: product-owner
 version: 1.0.0
-description: '[Project Management] Capture ideas, manage product backlogs, apply prioritization frameworks (RICE, MoSCoW), and facilitate stakeholder communication. Triggers: product owner, backlog management, user story prioritization, product roadmap, product backlog.'
+description: '[Project Management] Use when you need to capture ideas, manage product backlogs, apply prioritization frameworks (RICE, MoSCoW), and facilitate stakeholder communication.'
 ---
 
 ## Quick Summary

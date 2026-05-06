@@ -1,7 +1,7 @@
 ---
 name: course-builder
 version: 1.0.0
-description: '[Content] Build structured learning/teaching course material with Bloom taxonomy objectives, modules, lessons, exercises, and assessments.'
+description: '[Content] Use when you need to build structured learning/teaching course material with Bloom taxonomy objectives, modules, lessons, exercises, and assessments.'
 ---
 
 ## Quick Summary

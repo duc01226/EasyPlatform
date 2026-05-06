@@ -1,7 +1,7 @@
 ---
 name: workflow-migration
 version: 1.0.0
-description: '[Workflow] Trigger Database Migration workflow — schema changes, data migrations, EF migrations with review and testing.'
+description: '[Workflow] Use when activating the Database Migration workflow for schema changes, data migrations, EF migrations with review and testing.'
 disable-model-invocation: true
 ---
 

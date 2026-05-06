@@ -1,6 +1,6 @@
 ---
 name: graph-update
-description: '[Code Intelligence] Update the knowledge graph with uncommitted working tree changes. Detects staged/unstaged file changes and re-parses them into the graph. Use mid-session after editing files, or when graph-sync reports no committed changes but working tree has modifications.'
+description: '[Code Intelligence] Use when you need to update the knowledge graph with uncommitted working tree changes.'
 version: 1.0.0
 ---
 

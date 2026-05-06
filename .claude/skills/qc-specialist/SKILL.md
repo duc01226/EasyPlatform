@@ -1,7 +1,7 @@
 ---
 name: qc-specialist
 version: 1.1.0
-description: '[Project Management] Enforce quality gates, verify compliance with standards, track quality metrics, and generate audit trails. Triggers: quality gate, compliance, audit trail, quality metrics, qc specialist, standards verification.'
+description: '[Project Management] Use when you need to enforce quality gates, verify compliance with standards, track quality metrics, and generate audit trails.'
 ---
 
 ## Quick Summary

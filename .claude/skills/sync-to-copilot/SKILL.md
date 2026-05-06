@@ -1,7 +1,7 @@
 ---
 name: sync-to-copilot
 version: 2.0.0
-description: '[AI & Tools] Sync Claude Code knowledge to GitHub Copilot instructions. Creates/updates .github/copilot-instructions.md (project-specific) + .github/instructions/common-protocol.instructions.md (generic protocols) + per-group instruction files. Two-tier architecture: script generates structure, AI enriches with file-extracted summaries.'
+description: '[AI & Tools] Use when you need to sync Claude Code knowledge to GitHub Copilot instructions.'
 tags:
     - ai-tools
     - sync

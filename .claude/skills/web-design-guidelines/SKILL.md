@@ -1,7 +1,7 @@
 ---
 name: web-design-guidelines
 version: 2.0.0
-description: '[Code Quality] Review UI code for web design best practices including WCAG 2.2 accessibility, responsive design, Core Web Vitals performance, and modern UX patterns. Review-only skill. Triggers on design guidelines review, accessibility audit, visual review, UI compliance check, WCAG check.'
+description: '[Code Quality] Use when reviewing UI code for accessibility, responsiveness, performance, and UX best practices.'
 argument-hint: <file-or-pattern>
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: status
 version: 1.0.0
-description: '[Project Management] Generate status reports for sprints or projects. Use when creating status reports, checking progress, or summarizing sprint metrics. Triggers on keywords like "status report", "sprint status", "progress", "how are we doing", "what''s done", "project status".'
+description: '[Project Management] Use when creating status reports, checking progress, or summarizing sprint metrics.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

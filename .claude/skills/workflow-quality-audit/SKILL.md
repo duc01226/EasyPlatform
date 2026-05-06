@@ -1,7 +1,7 @@
 ---
 name: workflow-quality-audit
 version: 1.0.0
-description: '[Workflow] Trigger Quality Audit workflow — audit code quality, review for best practices, find flaws and suggest enhancements.'
+description: '[Workflow] Use when activating the Quality Audit workflow for audit code quality, review for best practices, find flaws and suggest enhancements.'
 disable-model-invocation: true
 ---
 

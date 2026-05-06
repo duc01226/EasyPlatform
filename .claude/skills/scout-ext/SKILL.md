@@ -1,7 +1,7 @@
 ---
 name: scout-ext
 version: 1.0.0
-description: '[Investigation] Use external agentic tools to scout given directories'
+description: '[Investigation] Use when scouting directories with external agentic tools.'
 ---
 
 ## Quick Summary

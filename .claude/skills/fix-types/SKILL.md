@@ -1,6 +1,6 @@
 ---
 name: fix-types
-description: '[Implementation] Fix type errors'
+description: '[Implementation] Use when you need to fix type errors.'
 ---
 
 ## Quick Summary

@@ -1,7 +1,7 @@
 ---
 name: code-simplifier
 version: 2.2.0
-description: '[Code Quality] Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.'
+description: '[Code Quality] Use when you need to simplify and refines code for clarity, consistency, and maintainability while preserving all functionality.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

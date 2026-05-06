@@ -1,7 +1,7 @@
 ---
 name: scan-backend-patterns
 version: 2.0.0
-description: '[Documentation] Scan project and populate/sync docs/project-reference/backend-patterns-reference.md with repository patterns, CQRS, validation, entities, events, migrations.'
+description: '[Documentation] Use when scanning backend code to refresh repository, CQRS, validation, entity, event, and migration guidance.'
 ---
 
 ## Quick Summary

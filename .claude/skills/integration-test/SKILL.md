@@ -1,7 +1,7 @@
 ---
 name: integration-test
 version: 2.0.0
-description: '[Testing] Generate or review integration tests. Modes: generate (from git changes or prompt), review (quality audit of existing tests), diagnose (analyze test failures). Subcutaneous tests with real DI, no mocks.'
+description: '[Testing] Use when you need to generate or review integration tests.'
 execution-mode: subagent
 context-budget: high
 ---
@@ -869,22 +869,22 @@ integration-test (you are here)
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** run graph trace when graph.db exists. Grep 3+ patterns, cite `file:line`.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:graph-impact-analysis:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-    <!-- /SYNC:graph-impact-analysis:reminder -->
+      <!-- /SYNC:graph-impact-analysis:reminder -->
 
 <!-- SYNC:red-flag-stop-conditions:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-    <!-- /SYNC:red-flag-stop-conditions:reminder -->
+      <!-- /SYNC:red-flag-stop-conditions:reminder -->
 
 <!-- SYNC:rationalization-prevention:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-    <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- /SYNC:rationalization-prevention:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

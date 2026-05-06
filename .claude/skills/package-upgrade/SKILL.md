@@ -1,7 +1,7 @@
 ---
 name: package-upgrade
 version: 1.0.1
-description: '[Code Quality] Use when the user asks to analyze package upgrades, check for outdated dependencies, plan npm/NuGet updates, or assess breaking changes in package updates. Triggers on keywords like "upgrade packages", "outdated", "npm update", "breaking changes", "dependency upgrade", "package update", "version upgrade".'
+description: '[Code Quality] Use when the user asks to analyze package upgrades, check for outdated dependencies, plan npm/NuGet updates, or assess breaking changes in package updates.'
 ---
 
 ## Quick Summary
@@ -240,7 +240,7 @@ Before marking complete, provide:
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

@@ -1,7 +1,7 @@
 ---
 name: checkpoint
 version: 1.0.0
-description: '[Utilities] Save analysis context to checkpoint file for recovery'
+description: '[Utilities] Use when you need to save analysis context to checkpoint file for recovery.'
 disable-model-invocation: false
 ---
 

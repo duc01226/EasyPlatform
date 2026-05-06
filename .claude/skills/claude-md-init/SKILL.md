@@ -1,7 +1,7 @@
 ---
 name: claude-md-init
 version: 1.0.0
-description: '[Documentation] Initialize, update, or refactor CLAUDE.md from project-config.json and codebase scan results. Triggers on: claude.md init, claude.md update, claude.md sync, claude.md refactor, init claude, setup claude, generate claude.md, refresh claude.md.'
+description: '[Documentation] Use when you need initialize, update, or refactor CLAUDE markdown from project-config JSON and codebase scan results.'
 ---
 
 ## Quick Summary

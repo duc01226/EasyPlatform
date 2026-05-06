@@ -1,7 +1,7 @@
 ---
 name: workflow-testing
 version: 1.0.0
-description: '[Workflow] Trigger Testing workflow — test creation and execution workflow.'
+description: '[Workflow] Use when activating the Testing workflow for test creation and execution workflow.'
 disable-model-invocation: true
 ---
 

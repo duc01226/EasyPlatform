@@ -1,7 +1,7 @@
 ---
 name: project-manager
 version: 1.1.0
-description: '[Project Management] Generate project status reports, track dependencies, manage risk registers, and facilitate team sync meetings. Triggers: project status, sprint tracking, risk assessment, project timeline, blocker report, meeting agenda.'
+description: '[Project Management] Use when you need to generate project status reports, track dependencies, manage risk registers, and facilitate team sync meetings.'
 ---
 
 ## Quick Summary

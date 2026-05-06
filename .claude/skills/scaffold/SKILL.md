@@ -1,7 +1,7 @@
 ---
 name: scaffold
 version: 1.0.0
-description: '[Architecture] Scaffold project architecture with OOP/SOLID base classes, infrastructure abstractions, and reusable foundation code before feature implementation.'
+description: '[Architecture] Use when scaffolding reusable OOP/SOLID project foundations before feature implementation.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

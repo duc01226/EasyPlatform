@@ -1,7 +1,7 @@
 ---
 name: plan-archive
 version: 1.0.0
-description: '[Planning] Write journal entries and archive specific plans or all plans'
+description: '[Planning] Use when you need to write journal entries and archive specific plans or all plans.'
 disable-model-invocation: false
 ---
 

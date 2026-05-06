@@ -1,7 +1,7 @@
 ---
 name: design-good
 version: 1.0.0
-description: '[Design] Create an immersive design'
+description: '[Design] Use when you need to create an immersive design.'
 disable-model-invocation: false
 ---
 

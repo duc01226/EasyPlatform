@@ -1,7 +1,7 @@
 ---
 name: plans-kanban
 version: 1.0.0
-description: '[Planning] Plans dashboard server with progress tracking and timeline visualization.'
+description: '[Planning] Use when you need plans dashboard server with progress tracking and timeline visualization.'
 disable-model-invocation: true
 ---
 

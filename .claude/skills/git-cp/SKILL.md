@@ -1,7 +1,7 @@
 ---
 name: git-cp
 version: 1.0.0
-description: '[Git] Stage, commit and push all code in the current branch'
+description: '[Git] Use when you need stage, commit and push all code in the current branch.'
 disable-model-invocation: false
 ---
 

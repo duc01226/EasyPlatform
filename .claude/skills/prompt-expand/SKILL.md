@@ -1,7 +1,7 @@
 ---
 name: prompt-expand
 version: 1.0.0
-description: '[Skill Management] Expand caveman-compressed text back into fluent English, then apply AI attention anchoring (top/bottom summaries, inline READ summaries, progressive disclosure). Use when reconstructing compressed prompts/docs/skills into readable, well-structured form.'
+description: '[Skill Management] Use when reconstructing compressed prompts/docs/skills into readable, well-structured form.'
 ---
 
 ## Quick Summary

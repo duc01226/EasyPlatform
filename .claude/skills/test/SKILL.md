@@ -1,7 +1,7 @@
 ---
 name: test
 version: 1.0.0
-description: '[Testing] Run tests locally and analyze the summary report.'
+description: '[Testing] Use when you need to run tests locally and analyze the summary report.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

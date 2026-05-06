@@ -1,7 +1,7 @@
 ---
 name: code-parallel
 version: 1.0.0
-description: '[Implementation] Execute parallel or sequential phases based on plan structure'
+description: '[Implementation] Use when you need to execute parallel or sequential phases based on plan structure.'
 disable-model-invocation: false
 ---
 
@@ -175,7 +175,7 @@ Follow `./.claude/workflows/primary-workflow.md`:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

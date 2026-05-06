@@ -1,7 +1,7 @@
 ---
 name: api-design
 version: 2.1.0
-description: '[Architecture] Use when designing or modifying REST API endpoints, controller structure, route patterns, request/response DTOs. Triggers on keywords like "API endpoint", "REST", "controller", "route", "HTTP", "request body", "response".'
+description: '[Architecture] Use when designing or modifying REST API endpoints, controller structure, route patterns, request/response DTOs.'
 ---
 
 ## Quick Summary
@@ -167,7 +167,7 @@ public sealed class UploadCommand : CqrsCommand<UploadCommandResult> // project 
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

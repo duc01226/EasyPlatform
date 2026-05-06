@@ -1,6 +1,6 @@
 ---
 name: review-changes
-description: '[Code Quality] Review all uncommitted changes before commit'
+description: '[Code Quality] Use when reviewing current changes, staged or unstaged diffs, or branch-to-branch diffs.'
 ---
 
 > Codex compatibility note:
@@ -11,6 +11,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
 > - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
 > - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
 > - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
 > - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
@@ -55,7 +56,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Comprehensive review of all uncommitted changes following project standards. No flaws, no bugs, no missing updates, no stale content. Applies to any project type — code, docs, config, infrastructure, or non-coding artifacts.
+**Goal:** Comprehensive review of current diffs following project standards. No flaws, no bugs, no missing updates, no stale content. Applies to uncommitted work, staged changes, branch-to-branch diffs, and any project type — code, docs, config, infrastructure, or non-coding artifacts.
 
 **Workflow:**
 
@@ -95,13 +96,19 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
-# Code Review: Uncommitted Changes
+# Code Review: Current Or Branch Diff
 
-Comprehensive review of all uncommitted changes following project standards.
+Comprehensive review of current changes or explicit branch/commit diffs following project standards.
 
 ## Review Scope
 
-Target: All uncommitted changes (staged and unstaged) in current working directory.
+Target: Current working-tree changes by default, or an explicit branch/tag/commit diff when the user asks to review a branch comparison.
+
+Use these sources:
+
+- Current changes: `git status`, `git diff`, and `git diff --cached`
+- Branch diff: `git diff <base>...<head>` plus `git diff --name-only <base>...<head>`
+- Commit range: `git diff <base>..<head>` plus `git diff --name-only <base>..<head>`
 
 ## Review Mindset (NON-NEGOTIABLE)
 
@@ -186,6 +193,8 @@ Update todo status as each phase completes.
 ```bash
 git diff --name-only HEAD       # unstaged
 git diff --cached --name-only   # staged
+# For branch or commit-range review, use the user-provided diff source:
+git diff --name-only <base>...<head>
 ```
 
 Evaluate each change type for this diff:
@@ -247,6 +256,8 @@ For each created change-type task:
 ```bash
 git diff --name-only HEAD        # unstaged
 git diff --cached --name-only    # staged
+# For branch or commit-range review, use the user-provided diff source:
+git diff --name-only <base>...<head>
 ```
 
 For each changed file, infer its category by examining:
@@ -334,8 +345,9 @@ Check `## Plan Context` in injected context:
 
 **Phase 1: Get Changes and Create Report File**
 
-- MUST ATTENTION Run `git status` to see all changed files
-- MUST ATTENTION Run `git diff` to see actual changes (staged and unstaged)
+- MUST ATTENTION Identify diff source: current working tree, staged changes, branch comparison, or commit range
+- MUST ATTENTION Run `git status` for current changes, or `git diff --name-only <base>...<head>` for branch comparisons
+- MUST ATTENTION Run `git diff` or `git diff <base>...<head>` to see actual changes
 - MUST ATTENTION Create `plans/reports/code-review-{date}-{slug}.md`
 - MUST ATTENTION Initialize with Scope, Files to Review, Blast Radius Summary sections
 
@@ -388,7 +400,7 @@ When constructing Agent call prompt:
     6. Documentation: Docs reflect changes in BOTH domains together?
     ```
 
-4. Set Target Files as `"run git diff to see all uncommitted changes"`
+4. Set Target Files as `"use the selected diff source from Phase 1"`
 5. Set report path as `plans/reports/synthesis-review-{date}.md`
 
 After sub-agent returns:
@@ -408,8 +420,8 @@ When constructing Agent call prompt:
 
 1. Copy Agent call shape from `SYNC:review-protocol-injection` template verbatim
 2. Select `subagent_type` based on domain's dominant concern (see Sub-Agent Type Selection)
-3. Set Task as: `"Review ALL uncommitted changes holistically. Focus on big picture — overall technical approach coherence, architecture layers, logic placement (lowest layer), DRY violations, YAGNI/KISS, function complexity. Domain: {category from Phase 0.7} — apply domain knowledge for this category accordingly."`
-4. Set Target Files as `"run git diff to see all uncommitted changes"`
+3. Set Task as: `"Review the selected diff holistically. Focus on big picture — overall technical approach coherence, architecture layers, logic placement (lowest layer), DRY violations, YAGNI/KISS, function complexity. Domain: {category from Phase 0.7} — apply domain knowledge for this category accordingly."`
+4. Set Target Files as `"use the selected diff source from Phase 1"`
 5. Set report path as `plans/reports/code-review-changes-round{N}-{date}.md`
 
 After sub-agent returns:
@@ -1535,7 +1547,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`/simplify`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

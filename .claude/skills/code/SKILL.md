@@ -1,7 +1,7 @@
 ---
 name: code
 version: 1.0.0
-description: '[Implementation] Start coding & testing an existing plan'
+description: '[Implementation] Use when you need to start coding & testing an existing plan.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

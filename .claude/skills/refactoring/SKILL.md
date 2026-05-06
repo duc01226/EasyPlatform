@@ -1,7 +1,7 @@
 ---
 name: refactoring
 version: 2.2.0
-description: '[Code Quality] Restructure code without changing behavior using extract method, extract class, rename, move, and inline patterns. Triggers: refactor, extract method, extract class, rename symbol, restructure code, clean up code, decompose function.'
+description: '[Code Quality] Use when you need restructure code without changing behavior using extract method, extract class, rename, move, and inline patterns.'
 ---
 
 ## Quick Summary

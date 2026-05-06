@@ -1,7 +1,7 @@
 ---
 name: workflow-test-to-integration
 version: 1.0.0
-description: '[Workflow] Trigger Test Specs to Integration Tests workflow — generate integration tests from existing test specifications in feature docs or specs/.'
+description: '[Workflow] Use when activating the Test Specs to Integration Tests workflow for generate integration tests from existing test specifications in feature docs or specs/.'
 disable-model-invocation: true
 ---
 

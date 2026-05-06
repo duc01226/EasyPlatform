@@ -3,7 +3,7 @@ name: tdd-spec
 version: 3.2.0
 last_reviewed: 2026-04-21
 category: Testing
-description: '[Testing] Generate or update test specifications in feature docs (Section 15) with unified TC-{FEATURE}-{NNN} format. Also syncs TCs to/from docs/specs/ dashboard (replaces test-specs-docs). Supports TDD-first, implement-first, update, sync, from-integration-tests, and dashboard-sync modes.'
+description: '[Testing] Use when you need to generate or update test specifications in feature docs (Section 15) with unified TC-{FEATURE}-{NNN} format.'
 triggers: 'tdd spec, tdd test, test driven, write test specs, create test cases, update test specs, test specifications for feature, test spec for feature, sync test specs, generate test specs from code, update test specs after changes, test specs from PR, test specs from pull request, code to test specs, sync dashboard, update dashboard, sync test specs to docs/specs'
 ---
 
@@ -1043,7 +1043,7 @@ TC-REG-001: GIVEN payment processed WHEN amount > limit THEN reject with Payment
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-    <!-- /SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:rationalization-prevention:reminder -->
 

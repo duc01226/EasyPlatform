@@ -1,7 +1,7 @@
 ---
 name: workflow-test-spec-update
 version: 1.0.0
-description: '[Workflow] Trigger Test Spec Update (Post-Change) workflow — update test specs and feature docs after code changes, bug fixes, or pr reviews.'
+description: '[Workflow] Use when activating the Test Spec Update (Post-Change) workflow for update test specs and feature docs after code changes, bug fixes, or pr reviews.'
 disable-model-invocation: true
 ---
 

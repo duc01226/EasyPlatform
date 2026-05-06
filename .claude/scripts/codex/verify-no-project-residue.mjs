@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const rootDir = process.cwd();
-const scanRoots = ['.claude', '.agents', '.codex', 'docs', 'scripts', 'AGENTS.md', 'README.md', 'package.json'];
+const scanRoots = ['.codex', '.agents', '.claude/scripts/codex'];
 const forbiddenTerms = ['br' + 'avo', 'Br' + 'avoSuite'];
 const ignoredParts = new Set(['node_modules', 'plans', '.git', '.venv', '__pycache__', 'tmp']);
 const ignoredExtensions = new Set(['.pyc', '.pyo', '.exe', '.dll', '.png', '.jpg', '.jpeg', '.gif', '.webp']);

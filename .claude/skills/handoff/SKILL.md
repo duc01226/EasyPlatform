@@ -1,7 +1,7 @@
 ---
 name: handoff
 version: 1.0.0
-description: '[Process] Create structured handoff record between roles. Use when transitioning work between PO/BA/Dev/QA.'
+description: '[Process] Use when transitioning work between PO/BA/Dev/QA.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -135,7 +135,7 @@ description: '[Process] Create structured handoff record between roles. Use when
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

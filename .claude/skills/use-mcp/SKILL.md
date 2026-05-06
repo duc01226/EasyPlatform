@@ -1,7 +1,7 @@
 ---
 name: use-mcp
 version: 1.0.0
-description: '[AI & Tools] Utilize tools of Model Context Protocol (MCP) servers'
+description: '[AI & Tools] Use when working with Model Context Protocol (MCP) server tools.'
 disable-model-invocation: false
 ---
 

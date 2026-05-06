@@ -2,7 +2,7 @@
 name: docs-update
 version: 3.3.0
 last_reviewed: 2026-04-23
-description: '[Documentation] Holistic documentation orchestrator — detects impacted docs from git changes, then delegates to /feature-docs (business docs), /tdd-spec (test specifications), and /tdd-spec [direction=sync] (dashboard sync). Single entry point for all post-change documentation updates.'
+description: '[Documentation] Use when updating impacted documentation after code, spec, or test changes.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

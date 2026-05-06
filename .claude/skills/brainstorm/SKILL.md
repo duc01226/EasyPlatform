@@ -1,7 +1,7 @@
 ---
 name: brainstorm
 version: 2.0.0
-description: '[Content] Brainstorm as a PO/BA — structured ideation for problem-solving, new product creation, or feature enhancement. Uses Double Diamond, JTBD, HMW, SCAMPER, Impact Mapping, RICE, and hypothesis validation.'
+description: '[Content] Use when you need to brainstorm as a PO/BA — structured ideation for problem-solving, new product creation, or feature enhancement.'
 disable-model-invocation: false
 ---
 

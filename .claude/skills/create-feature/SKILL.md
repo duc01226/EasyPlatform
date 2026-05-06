@@ -1,7 +1,7 @@
 ---
 name: create-feature
 version: 1.0.0
-description: '[Implementation] Scaffold a new feature with backend and frontend components'
+description: '[Implementation] Use when you need to scaffold a new feature with backend and frontend components.'
 disable-model-invocation: false
 ---
 
@@ -147,7 +147,7 @@ Create a new feature: $ARGUMENTS
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

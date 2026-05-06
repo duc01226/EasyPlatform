@@ -1,7 +1,7 @@
 ---
 name: cook-hard
 version: 1.0.0
-description: '[Implementation] Thorough implementation with maximum verification'
+description: '[Implementation] Use when you need thorough implementation with maximum verification.'
 ---
 
 ## Quick Summary
@@ -296,22 +296,22 @@ mistakes compound through later tasks.
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:plan-quality:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-    <!-- /SYNC:plan-quality:reminder -->
+      <!-- /SYNC:plan-quality:reminder -->
 
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->
 
 <!-- SYNC:graph-assisted-investigation:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:graph-assisted-investigation:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

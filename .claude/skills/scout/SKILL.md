@@ -1,7 +1,7 @@
 ---
 name: scout
 version: 1.1.0
-description: '[Investigation] Fast codebase file discovery for task-related files. Use when quickly locating relevant files across a large codebase, beginning work on features spanning multiple directories, or before making changes that might affect multiple parts. Triggers on "find files", "locate", "scout", "search codebase", "what files".'
+description: '[Investigation] Use when quickly locating relevant files and affected areas across a large codebase.'
 execution-mode: subagent
 context-budget: medium
 ---

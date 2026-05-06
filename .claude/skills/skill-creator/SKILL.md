@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 version: 2.0.0
-description: "[Skill Management] Guide for creating effective skills, adding skill references, skill scripts or optimizing existing skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, frameworks, libraries or plugins usage, or API and tool integrations. Formerly also known as 'skill-share'."
+description: '[Skill Management] Use when you need guide for creating effective skills, adding skill references, skill scripts or optimizing existing skills.'
 
 license: Complete terms in LICENSE.txt
 disable-model-invocation: true

@@ -1,7 +1,7 @@
 ---
 name: design-describe
 version: 1.0.0
-description: '[Design] Describe a design based on screenshot/video'
+description: '[Design] Use when you need describe a design based on screenshot/video.'
 disable-model-invocation: false
 ---
 

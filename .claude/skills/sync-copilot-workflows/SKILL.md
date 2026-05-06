@@ -1,7 +1,7 @@
 ---
 name: sync-copilot-workflows
 version: 1.0.0
-description: '[AI & Tools] Sync workflow catalog from workflows.json to GitHub Copilot instructions. Run after adding/removing/modifying workflows to keep copilot-instructions.md up to date. Copilot has no hooks, so this manual sync replaces the auto-injection that Claude Code gets from workflow-router.cjs.'
+description: '[AI & Tools] Use when you need to sync workflow catalog from workflows JSON to GitHub Copilot instructions.'
 ---
 
 ## Quick Summary

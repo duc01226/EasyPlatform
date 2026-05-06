@@ -3,8 +3,17 @@
 model = "gpt-5.5"
 model_reasoning_effort = "high"
 
+# Shared completion notifications. Codex passes a JSON payload to this command.
+notify = ["node", ".codex/scripts/codex/codex-notify.mjs"]
+
 # Let Codex consume existing Claude project instructions while we migrate.
 project_doc_fallback_filenames = ["CLAUDE.md"]
+
+[tui]
+# Notify when Codex finishes work, even if the terminal still has focus.
+notifications = true
+notification_condition = "always"
+notification_method = "auto"
 
 [agents]
 # Keep delegation predictable and aligned with current team workflow.

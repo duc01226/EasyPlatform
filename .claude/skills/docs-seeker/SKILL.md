@@ -1,7 +1,7 @@
 ---
 name: docs-seeker
 version: 3.1.0
-description: '[Documentation] Search technical documentation using executable scripts to detect query type, fetch from llms.txt sources (context7.com), and analyze results. Use when user needs topic-specific documentation, library/framework documentation, GitHub repository analysis, or documentation discovery with automated agent distribution strategy.'
+description: '[Documentation] Use when finding technical documentation for libraries, frameworks, repositories, or implementation topics.'
 ---
 
 ## Quick Summary

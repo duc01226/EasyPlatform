@@ -1,7 +1,7 @@
 ---
 name: workflow-dev-qa-handoff
 version: 1.0.0
-description: '[Workflow] Trigger Dev to QA Handoff workflow — development complete, handoff to qa for testing.'
+description: '[Workflow] Use when activating the Dev to QA Handoff workflow for development complete, handoff to qa for testing.'
 disable-model-invocation: true
 ---
 

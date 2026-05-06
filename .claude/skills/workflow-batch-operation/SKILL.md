@@ -1,7 +1,7 @@
 ---
 name: workflow-batch-operation
 version: 1.0.0
-description: '[Workflow] Trigger Batch Operation workflow — bulk modifications across multiple files with planning and review.'
+description: '[Workflow] Use when activating the Batch Operation workflow for bulk modifications across multiple files with planning and review.'
 disable-model-invocation: true
 ---
 

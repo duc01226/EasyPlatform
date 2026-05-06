@@ -1,7 +1,7 @@
 ---
 name: workflow-feature
 version: 1.0.0
-description: '[Workflow] Trigger Feature Implementation workflow — implement a well-defined feature with investigation, planning, implementation, and review.'
+description: '[Workflow] Use when activating the Feature Implementation workflow for implement a well-defined feature with investigation, planning, implementation, and review.'
 disable-model-invocation: true
 ---
 

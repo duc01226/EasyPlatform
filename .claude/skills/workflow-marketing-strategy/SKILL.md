@@ -1,7 +1,7 @@
 ---
 name: workflow-marketing-strategy
 version: 1.0.0
-description: '[Workflow] Trigger Marketing Strategy workflow — research market landscape and build a comprehensive marketing strategy with positioning, channels, campaigns, and kpis.'
+description: '[Workflow] Use when activating the Marketing Strategy workflow for market research, positioning, channels, campaigns, and KPIs.'
 disable-model-invocation: true
 ---
 

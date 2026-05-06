@@ -1,6 +1,6 @@
 ---
 name: cook
-description: '[Implementation] Implement a feature [step by step]'
+description: '[Implementation] Use when you need to implement a feature [step by step].'
 ---
 
 > Codex compatibility note:
@@ -11,6 +11,7 @@ description: '[Implementation] Implement a feature [step by step]'
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
 > - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
 > - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
 > - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
 > - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
@@ -686,37 +687,37 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:plan-granularity:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** verify all phases pass 5-point granularity check. Failing phases → sub-plan. "Can I start coding RIGHT NOW?"
-    <!-- /SYNC:plan-granularity:reminder -->
+      <!-- /SYNC:plan-granularity:reminder -->
 
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:plan-quality:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call the current task list before creating new tasks.
-    <!-- /SYNC:plan-quality:reminder -->
+      <!-- /SYNC:plan-quality:reminder -->
 
 <!-- SYNC:rationalization-prevention:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-    <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- /SYNC:rationalization-prevention:reminder -->
 
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->
 
 <!-- SYNC:iterative-phase-quality:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** score complexity first. Score >=6 → decompose. Each phase: plan → implement → review → fix → verify. No skipping.
-    <!-- /SYNC:iterative-phase-quality:reminder -->
+      <!-- /SYNC:iterative-phase-quality:reminder -->
 
 <!-- SYNC:graph-assisted-investigation:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+      <!-- /SYNC:graph-assisted-investigation:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
@@ -861,7 +862,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`/simplify`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

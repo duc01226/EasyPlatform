@@ -1,7 +1,7 @@
 ---
 name: workflow-pre-development
 version: 1.0.0
-description: '[Workflow] Trigger Pre-Development Check workflow — quality gate verification before development begins.'
+description: '[Workflow] Use when activating the Pre-Development Check workflow for quality gate verification before development begins.'
 disable-model-invocation: true
 ---
 

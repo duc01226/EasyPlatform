@@ -1,7 +1,7 @@
 ---
 name: cook-auto
 version: 1.0.0
-description: '[Implementation] Implement a feature automatically (trust me bro)'
+description: '[Implementation] Use when you need to implement a feature automatically.'
 disable-model-invocation: false
 ---
 
@@ -189,22 +189,22 @@ disable-model-invocation: false
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:plan-quality:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** include `## Test Specifications` with TC IDs per phase. Call `TaskList` before creating new tasks.
-    <!-- /SYNC:plan-quality:reminder -->
+      <!-- /SYNC:plan-quality:reminder -->
 
 <!-- SYNC:rationalization-prevention:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-    <!-- /SYNC:rationalization-prevention:reminder -->
+      <!-- /SYNC:rationalization-prevention:reminder -->
 
 <!-- SYNC:red-flag-stop-conditions:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-    <!-- /SYNC:red-flag-stop-conditions:reminder -->
+      <!-- /SYNC:red-flag-stop-conditions:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

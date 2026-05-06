@@ -1,7 +1,7 @@
 ---
 name: debug-investigate
 version: 2.0.0
-description: '[Fix & Debug] Systematic debugging with root cause investigation. Use when bugfix workflow reaches debug step.'
+description: '[Fix & Debug] Use when bugfix workflow reaches debug step.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

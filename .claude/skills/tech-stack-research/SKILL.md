@@ -1,7 +1,7 @@
 ---
 name: tech-stack-research
 version: 1.0.0
-description: '[Architecture] Research, analyze, and compare tech stack options as a solution architect. Evaluate top 3 choices per stack layer with detailed pros/cons, team-fit scoring, and market analysis. Generate comparison report.'
+description: '[Architecture] Use when you need research, analyze, and compare tech stack options as a solution architect.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -242,10 +242,10 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
-      <!-- SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 

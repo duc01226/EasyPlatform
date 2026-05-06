@@ -1,7 +1,7 @@
 ---
 name: knowledge-review
 version: 1.1.0
-description: '[Research] Review knowledge artifacts for completeness, citation quality, confidence accuracy, and template compliance.'
+description: '[Research] Use when you need to review knowledge artifacts for completeness, citation quality, confidence accuracy, and template compliance.'
 ---
 
 ## Quick Summary
@@ -474,7 +474,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-    <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:web-research:reminder -->
 

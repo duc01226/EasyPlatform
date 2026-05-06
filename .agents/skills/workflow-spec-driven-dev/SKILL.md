@@ -1,6 +1,6 @@
 ---
 name: workflow-spec-driven-dev
-description: '[Workflow] Unified spec-driven development workflow — maintains both engineering spec bundle (docs/specs/{app-bucket}/{system-name}/ — directories may also be flat system folders depending on host project) and business feature docs (docs/business-features/) in sync. Modes: init-full (zero → both layers), update (code change → incremental sync both layers), audit (staleness check both layers). Replaces and merges workflow-spec-discovery + standalone feature-docs init. Use for: initial spec generation, ongoing spec maintenance, quarterly spec audits, tech migration specs, onboarding, compliance documentation, clone/fork briefs.'
+description: '[Workflow] Use when activating spec-driven development to keep engineering specs and business docs synchronized.'
 disable-model-invocation: true
 ---
 
@@ -12,6 +12,7 @@ disable-model-invocation: true
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
 > - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
 > - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
 > - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
 > - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
@@ -720,7 +721,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`/simplify`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

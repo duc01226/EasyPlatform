@@ -1,7 +1,7 @@
 ---
 name: sre-review
 version: 1.4.0
-description: '[Code Quality] Production readiness review for service-layer and API changes'
+description: '[Code Quality] Use when reviewing service-layer and API changes for production readiness.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -574,7 +574,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-    <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:graph-assisted-investigation:reminder -->
 

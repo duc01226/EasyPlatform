@@ -1,7 +1,7 @@
 ---
 name: frontend-design
 version: 1.0.0
-description: '[Frontend] Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, or applications, OR when they provide screenshots/images/designs to replicate or draw inspiration from. For screenshot inputs, extracts design guidelines first using ai-multimodal analysis, then implements code following those guidelines. Generates creative, polished code that avoids generic AI aesthetics.'
+description: '[Frontend] Use when you need to create distinctive, production-grade frontend interfaces with high design quality.'
 license: Complete terms in LICENSE.txt
 ---
 
@@ -189,7 +189,7 @@ Remember: Claude is capable of extraordinary creative work. Don't hold back, sho
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

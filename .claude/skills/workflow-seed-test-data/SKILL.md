@@ -1,7 +1,7 @@
 ---
 name: workflow-seed-test-data
 version: 1.0.0
-description: '[Workflow] Trigger Seed Test Data workflow — scout existing seeder patterns, implement idempotent QC happy-path seeders via application commands, review compliance, simplify.'
+description: '[Workflow] Use when activating the Seed Test Data workflow for idempotent QC happy-path seeders.'
 disable-model-invocation: true
 ---
 

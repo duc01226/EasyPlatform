@@ -1,7 +1,7 @@
 ---
 name: review-architecture
 version: 1.2.0
-description: '[Code Quality] Architecture compliance review — clean architecture layers, messaging, service boundaries, CQRS, service pattern eras (legacy vs modern split), repos, entity event handlers. Default: changed files only.'
+description: '[Code Quality] Use when reviewing architecture compliance for layers, messaging, service boundaries, CQRS, repos, and entity events.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

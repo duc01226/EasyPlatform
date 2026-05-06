@@ -1,7 +1,7 @@
 ---
 name: ai-dev-tools-sync
 version: 1.0.0
-description: '[AI & Tools] Synchronize and update Claude Code and GitHub Copilot development tool configurations to work similarly. Use when asked to update Claude Code setup, update Copilot setup, sync AI dev tools, add new skills/prompts/agents across both platforms, or ensure Claude and Copilot configurations are aligned. Covers skills, prompts, agents, instructions, workflows, and chat modes.'
+description: '[AI & Tools] Use when syncing Claude Code and GitHub Copilot configuration, skills, prompts, agents, instructions, or workflows.'
 ---
 
 ## Quick Summary

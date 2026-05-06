@@ -1,7 +1,7 @@
 ---
 name: workflow-e2e-update-ui
 version: 1.0.0
-description: '[Workflow] Trigger E2E Update UI workflow — update e2e screenshot baselines after ui changes.'
+description: '[Workflow] Use when activating the E2E Update UI workflow for update e2e screenshot baselines after ui changes.'
 disable-model-invocation: true
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: harness-setup
 version: 1.0.0
-description: '[Quality] Set up the outer agent harness for a new project — feedforward guides + feedback sensors to raise first-attempt quality and enable self-correction before human review.'
+description: '[Quality] Use when setting up an agent quality harness with feedforward guides and feedback sensors.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

@@ -1,7 +1,7 @@
 ---
 name: deep-research
 version: 1.0.0
-description: '[Research] Deep-dive into top sources from web-research. Extract key findings, cross-validate claims, build evidence base.'
+description: '[Research] Use when deeply researching top sources from web-research.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

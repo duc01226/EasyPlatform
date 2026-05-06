@@ -1,7 +1,7 @@
 ---
 name: workflow-investigation
 version: 1.0.0
-description: '[Workflow] Trigger Code Investigation workflow — codebase exploration and understanding workflow.'
+description: '[Workflow] Use when activating the Code Investigation workflow for codebase exploration and understanding workflow.'
 disable-model-invocation: true
 ---
 

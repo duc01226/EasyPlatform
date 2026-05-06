@@ -1,7 +1,7 @@
 ---
 name: workflow-write-integration-test
 version: 1.0.0
-description: '[Workflow] Trigger Write Integration Tests workflow — spec-first test authoring: investigate domain logic → write/update specs → generate test code → 6-gate review → run and verify.'
+description: '[Workflow] Use when activating the Write Integration Tests workflow for spec-first integration test authoring.'
 disable-model-invocation: true
 ---
 

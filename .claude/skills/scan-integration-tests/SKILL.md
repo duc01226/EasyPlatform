@@ -2,7 +2,7 @@
 name: scan-integration-tests
 version: 2.0.0
 last_reviewed: 2026-04-22
-description: '[Documentation] Scan project and populate/sync docs/project-reference/integration-test-reference.md with test base classes, fixtures, helpers, configuration, and service-specific setup.'
+description: '[Documentation] Use when scanning integration test base classes, fixtures, helpers, configuration, and service setup.'
 ---
 
 ## Quick Summary

@@ -13,10 +13,16 @@ const claudeAgentsDir = path.join(rootDir, '.claude', 'agents');
 const claudeSkillsDir = path.join(rootDir, '.claude', 'skills');
 const codexAgentsDir = path.join(rootDir, '.codex', 'agents');
 const agentsSkillsDir = path.join(rootDir, '.agents', 'skills');
+const codexConfigPath = path.join(rootDir, '.codex', 'config.toml');
+const codexScriptsDir = path.join(rootDir, '.codex', 'scripts', 'codex');
+const codexNotificationScriptPath = path.join(codexScriptsDir, 'codex-notify.mjs');
+const bundledNotificationScriptPath = path.join(rootDir, '.claude', 'scripts', 'codex', 'codex-notify.mjs');
+const agentsSkillsMirrorSentinelPath = path.join(agentsSkillsDir, '.codex-mirror.json');
 
 const useSkills = !args.has('--no-skills');
 const copySkills = args.has('--copy-skills');
 const normalizeSourceSkills = args.has('--normalize-source-skills');
+const MIRROR_EXCLUDED_DIRS = new Set(['.git', '.hg', '.svn', '.venv', 'node_modules', '__pycache__']);
 const CODEX_PROTOCOLS_START = '<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->';
 const CODEX_PROTOCOLS_END = '<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->';
 const CODEX_PROJECT_REFERENCE_START = '<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->';
@@ -52,6 +58,77 @@ function escapeTomlMultiline(value) {
 
 function escapeYamlSingleQuoted(value) {
     return value.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim().replaceAll("'", "''");
+}
+
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isTomlTableHeader(line) {
+    return /^\s*\[(?:[^\[\]]+|\[[^\[\]]+\])\]\s*$/.test(line);
+}
+
+function findTomlTableRange(lines, tableName) {
+    const header = `[${tableName}]`;
+    const start = lines.findIndex(line => line.trim() === header);
+    if (start === -1) return null;
+
+    const nextTableOffset = lines.slice(start + 1).findIndex(isTomlTableHeader);
+    return {
+        start,
+        end: nextTableOffset === -1 ? lines.length : start + 1 + nextTableOffset
+    };
+}
+
+function upsertTomlKey(lines, key, value, start, end) {
+    const keyPattern = new RegExp(`^\\s*${escapeRegExp(key)}\\s*=`);
+    const existingIndex = lines.findIndex((line, index) => index >= start && index < end && keyPattern.test(line));
+    const nextLine = `${key} = ${value}`;
+
+    if (existingIndex !== -1) {
+        lines[existingIndex] = nextLine;
+        return { inserted: false };
+    }
+
+    lines.splice(end, 0, nextLine);
+    return { inserted: true };
+}
+
+function upsertCodexNotificationConfig(configText) {
+    const lines = configText.replace(/\r\n/g, '\n').split('\n');
+    if (lines.length === 1 && lines[0] === '') {
+        lines.pop();
+    }
+
+    let firstTableIndex = lines.findIndex(isTomlTableHeader);
+    if (firstTableIndex === -1) firstTableIndex = lines.length;
+
+    const notifyResult = upsertTomlKey(lines, 'notify', '["node", ".codex/scripts/codex/codex-notify.mjs"]', 0, firstTableIndex);
+    if (notifyResult.inserted && firstTableIndex < lines.length) {
+        lines.splice(firstTableIndex + 1, 0, '');
+    }
+
+    let tuiRange = findTomlTableRange(lines, 'tui');
+    if (!tuiRange) {
+        if (lines.length > 0 && lines.at(-1)?.trim()) {
+            lines.push('');
+        }
+        lines.push('[tui]');
+        tuiRange = { start: lines.length - 1, end: lines.length };
+    }
+
+    for (const [key, value] of [
+        ['notifications', 'true'],
+        ['notification_condition', '"always"'],
+        ['notification_method', '"auto"']
+    ]) {
+        const result = upsertTomlKey(lines, key, value, tuiRange.start + 1, tuiRange.end);
+        if (result.inserted) {
+            tuiRange.end += 1;
+        }
+    }
+
+    return `${lines.join('\n').trimEnd()}\n`;
 }
 
 function parseFrontmatterBoolean(value) {
@@ -157,6 +234,10 @@ function appendManagedProtocolBlock(text, protocolBlock) {
     return `${stripped}\n\n${protocolBlock.trim()}\n`;
 }
 
+function stripTrailingWhitespace(text) {
+    return text.replace(/[ \t]+$/gm, '');
+}
+
 function buildCodexSkillManifest(markdown, fallbackName, skillReferenceMap, protocolBlock, options = {}) {
     const { frontmatter, body } = parseFrontmatter(markdown);
     const name = stripQuotes(options.overrideName || frontmatter.name || fallbackName || 'unnamed-skill') || 'unnamed-skill';
@@ -258,7 +339,7 @@ async function collectSkillFiles(dirPath) {
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
     for (const entry of entries) {
-        if (entry.name === 'node_modules') continue;
+        if (MIRROR_EXCLUDED_DIRS.has(entry.name)) continue;
 
         const fullPath = path.join(dirPath, entry.name);
         if (entry.isDirectory()) {
@@ -349,7 +430,7 @@ async function canonicalizeSkillManifestNames(dirPath) {
     }
 
     for (const entry of entries) {
-        if (!entry.isDirectory() || entry.name === 'node_modules') continue;
+        if (!entry.isDirectory() || MIRROR_EXCLUDED_DIRS.has(entry.name)) continue;
         await canonicalizeSkillManifestNames(path.join(dirPath, entry.name));
     }
 }
@@ -359,7 +440,7 @@ async function collectMarkdownFiles(dirPath) {
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
     for (const entry of entries) {
-        if (entry.name === 'node_modules') continue;
+        if (MIRROR_EXCLUDED_DIRS.has(entry.name)) continue;
 
         const fullPath = path.join(dirPath, entry.name);
         if (entry.isDirectory()) {
@@ -407,7 +488,9 @@ async function sanitizeSkillMirror(skillsRootDir, skillReferenceMap, protocolBlo
         if (normalizedName === 'SKILL.MD') continue;
 
         const markdownText = await fs.readFile(markdownPath, 'utf8');
-        const rewrittenText = rewriteClaudeToolTermsForCodex(rewriteSkillMentionsForCodex(markdownText, skillReferenceMap));
+        const rewrittenText = stripTrailingWhitespace(
+            rewriteClaudeToolTermsForCodex(rewriteSkillMentionsForCodex(markdownText, skillReferenceMap))
+        );
         if (rewrittenText !== markdownText) {
             await fs.writeFile(markdownPath, rewrittenText, 'utf8');
         }
@@ -427,6 +510,18 @@ async function pathExists(filePath) {
     } catch {
         return false;
     }
+}
+
+async function isManagedAgentsSkillsMirror(dirPath) {
+    return pathExists(path.join(dirPath, '.codex-mirror.json'));
+}
+
+async function writeAgentsSkillsMirrorSentinel() {
+    await fs.writeFile(
+        agentsSkillsMirrorSentinelPath,
+        `${JSON.stringify({ managedBy: 'codex-sync', source: '.claude/skills' }, null, 2)}\n`,
+        'utf8'
+    );
 }
 
 async function migrateAgents() {
@@ -496,30 +591,62 @@ async function setupSkills() {
     await ensureDir(path.dirname(agentsSkillsDir));
     const targetExists = await pathExists(agentsSkillsDir);
     if (targetExists) {
-        // Sentinel guard: only wipe .agents/skills/ when cwd is a Claude Code project
-        // with both .claude/skills and .claude/agents present. Prevents destructive rm
-        // when the script is invoked from an unrelated directory.
-        if (!(await pathExists(claudeAgentsDir))) {
+        // Sentinel guard: only wipe .agents/skills/ for a full Claude Code project
+        // or for a generated mirror from a previous portable skills-only sync.
+        const canReplaceExistingMirror = (await pathExists(claudeAgentsDir)) || (await isManagedAgentsSkillsMirror(agentsSkillsDir));
+        if (!canReplaceExistingMirror) {
             throw new Error(
                 `Refusing to remove ${agentsSkillsDir}: ${claudeAgentsDir} not found in cwd ${rootDir}. ` +
-                    `Run codex-migrate from the root of a Claude Code project containing both .claude/skills/ and .claude/agents/.`
+                    `Run codex-migrate from a Claude Code project containing both .claude/skills/ and .claude/agents/, ` +
+                    `or remove the unmanaged .agents/skills directory explicitly before running portable skills sync.`
             );
         }
         await fs.rm(agentsSkillsDir, { recursive: true, force: true });
     }
 
-    await fs.cp(claudeSkillsDir, agentsSkillsDir, { recursive: true, force: true });
+    await fs.cp(claudeSkillsDir, agentsSkillsDir, {
+        recursive: true,
+        force: true,
+        filter: sourcePath => !sourcePath.split(path.sep).some(segment => MIRROR_EXCLUDED_DIRS.has(segment))
+    });
     await canonicalizeSkillManifestNames(agentsSkillsDir);
     const alwaysInjectedProtocolBlock = await buildAlwaysInjectedPromptProtocolBlock();
     const sanitizedCount = await sanitizeSkillMirror(agentsSkillsDir, skillReferenceMap, alwaysInjectedProtocolBlock);
+    await writeAgentsSkillsMirrorSentinel();
     const modeLabel = copySkills ? 'copied' : 'mirrored';
     return `${modeLabel} + sanitized + rewritten ${sanitizedCount} skill manifest(s)`;
+}
+
+async function setupCodexNotifications() {
+    if (!(await pathExists(bundledNotificationScriptPath))) {
+        return 'skipped (.claude/scripts/codex/codex-notify.mjs not found)';
+    }
+
+    await ensureDir(path.dirname(codexConfigPath));
+    await ensureDir(codexScriptsDir);
+    await fs.copyFile(bundledNotificationScriptPath, codexNotificationScriptPath);
+
+    let existingConfig = '';
+    try {
+        existingConfig = await fs.readFile(codexConfigPath, 'utf8');
+    } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+        existingConfig = ['# Team-wide Codex defaults for this repository.', '# Applied when the project is trusted by Codex.', ''].join('\n');
+    }
+
+    const updatedConfig = upsertCodexNotificationConfig(existingConfig);
+    if (updatedConfig !== existingConfig) {
+        await fs.writeFile(codexConfigPath, updatedConfig, 'utf8');
+    }
+
+    return `configured ${path.relative(rootDir, codexConfigPath)} + ${path.relative(rootDir, codexNotificationScriptPath)}`;
 }
 
 async function main() {
     const normalizedClaudeSkills = normalizeSourceSkills ? await sanitizeClaudeSkillSourceManifests() : 0;
     const migratedAgentsCount = await migrateAgents();
     const skillsResult = await setupSkills();
+    const notificationsResult = await setupCodexNotifications();
 
     if (normalizeSourceSkills) {
         console.log(`[codex-migrate] normalized ${normalizedClaudeSkills} Claude skill frontmatter file(s)`);
@@ -528,6 +655,7 @@ async function main() {
     }
     console.log(`[codex-migrate] migrated ${migratedAgentsCount} Claude sub-agent(s) into .codex/agents`);
     console.log(`[codex-migrate] skills setup: ${skillsResult}`);
+    console.log(`[codex-migrate] notifications setup: ${notificationsResult}`);
 }
 
 await main();

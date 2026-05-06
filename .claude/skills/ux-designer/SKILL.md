@@ -1,7 +1,7 @@
 ---
 name: ux-designer
 version: 1.0.0
-description: '[Project Management] Assist UX Designers with design specifications, component documentation, accessibility audits, and design-to-development handoffs. Use when creating design specs, documenting components, auditing accessibility, or preparing handoffs. Triggers on keywords like "design spec", "component spec", "accessibility audit", "design handoff", "design system", "design tokens", "UI specification", "wireframe".'
+description: '[Project Management] Use when creating design specs, documenting components, auditing accessibility, or preparing handoffs.'
 ---
 
 ## Quick Summary

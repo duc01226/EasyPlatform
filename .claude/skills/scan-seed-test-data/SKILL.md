@@ -1,7 +1,7 @@
 ---
 name: scan-seed-test-data
 version: 1.0.0
-description: '[Documentation] Scan seeder patterns and populate/sync docs/project-reference/seed-test-data-reference.md from real code evidence.'
+description: '[Documentation] Use when you need to scan seeder patterns and populate/sync docs/project-reference/seed-test-data-reference markdown from real code evidence.'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break work into small tasks before scanning.

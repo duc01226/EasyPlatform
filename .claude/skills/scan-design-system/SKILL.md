@@ -1,7 +1,7 @@
 ---
 name: scan-design-system
 version: 2.0.0
-description: '[Documentation] Scan project and populate/sync docs/project-reference/design-system/README.md with design system overview, app-to-doc mapping, design tokens, and component inventory.'
+description: '[Documentation] Use when scanning design tokens, component inventory, and app-to-doc design system mappings.'
 ---
 
 ## Quick Summary

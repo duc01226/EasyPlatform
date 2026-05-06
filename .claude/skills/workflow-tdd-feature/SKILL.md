@@ -1,7 +1,7 @@
 ---
 name: workflow-tdd-feature
 version: 1.0.0
-description: '[Workflow] Trigger TDD Feature workflow — test-driven development with spec-first approach, write test specs before implementing.'
+description: '[Workflow] Use when activating the TDD Feature workflow for test-driven development with spec-first approach, write test specs before implementing.'
 disable-model-invocation: true
 ---
 

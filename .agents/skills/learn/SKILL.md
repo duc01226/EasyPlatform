@@ -1,6 +1,6 @@
 ---
 name: learn
-description: "[Utilities] Teach Claude lessons that persist across sessions. Triggers on 'remember this', 'always do', 'never do', 'learn this', 'from now on'. Smart routing to all 12 project-reference docs with /prompt-enhance finalization."
+description: '[Utilities] Use when you need to teach Claude lessons that persist across sessions.'
 disable-model-invocation: false
 ---
 
@@ -12,6 +12,7 @@ disable-model-invocation: false
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
 > - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
 > - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
 > - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
 > - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
@@ -120,10 +121,10 @@ Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cj
 
 ### Lesson Triage Gate (MANDATORY — run FIRST, before routing or saving)
 
-| Gate           | Question                                                                               | Pass           | Fail → Action                                        |
-| -------------- | -------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------- |
-| **Recurrence** | "Would this mistake recur in a future session WITHOUT this reminder?"                  | Yes → continue | No → skip `$learn`; mistake is situational           |
-| **Auto-fix**   | "Could `$code-review`, `/simplify`, `$security`, or `$lint` catch this automatically?" | No → continue  | Yes → skip `$learn`; update the review skill instead |
+| Gate           | Question                                                                                      | Pass           | Fail → Action                                        |
+| -------------- | --------------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------- |
+| **Recurrence** | "Would this mistake recur in a future session WITHOUT this reminder?"                         | Yes → continue | No → skip `$learn`; mistake is situational           |
+| **Auto-fix**   | "Could `$code-review`, `$code-simplifier`, `$security`, or `$lint` catch this automatically?" | No → continue  | Yes → skip `$learn`; update the review skill instead |
 
 **Both gates must pass.** A lesson review skills already catch adds noise without value. A one-off situational mistake won't be prevented by a persisted rule.
 
@@ -252,7 +253,7 @@ Run these 2 tasks at the end of every `$learn` operation:
 - Verify:
     - Why this lesson prevents repeated mistakes,
     - Why this should be a lesson instead of a one-time note,
-    - Why auto-checks (`$code-review`, `/simplify`, `$security`, `$lint`, hook/test) are insufficient.
+    - Why auto-checks (`$code-review`, `$code-simplifier`, `$security`, `$lint`, hook/test) are insufficient.
 - If rationale is weak, rewrite at higher abstraction or skip `$learn`.
 
 ### Routing Decision Process
@@ -504,7 +505,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`/simplify`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

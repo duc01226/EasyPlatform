@@ -1,7 +1,7 @@
 ---
 name: review-artifact
 version: 1.2.0
-description: '[Code Quality] Review artifact quality before handoff. Use to verify PBIs, designs, stories meet quality standards.'
+description: '[Code Quality] Use when you need to review artifact quality before handoff.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

@@ -1,7 +1,7 @@
 ---
 name: ai-multimodal
 version: 2.0.0
-description: '[AI & Tools] Process and generate multimedia content using Google Gemini API -- vision analysis, audio transcription, video processing, document extraction, image/video generation. Triggers on multimodal, vision API, image recognition, audio transcription, video analysis, gemini, imagen, document extraction.'
+description: '[AI & Tools] Use when processing multimedia content with Gemini vision, audio, video, document, image, or video-generation APIs.'
 ---
 
 ## Quick Summary

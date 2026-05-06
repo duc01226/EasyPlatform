@@ -1,7 +1,7 @@
 ---
 name: release-notes
 version: 1.0.0
-description: '[Git] Generate professional release notes from git commits between two refs with automated categorization. Use when creating release notes from git history.'
+description: '[Git] Use when creating release notes from git history.'
 ---
 
 ## Quick Summary

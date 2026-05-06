@@ -9,9 +9,10 @@ import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(thisDir, "..", "..", "..");
+const repoRoot = path.resolve(thisDir, "..", "..", "..", "..");
 const verifyScript = path.join(
   repoRoot,
+  ".claude",
   "scripts",
   "codex",
   "verify-workflow-cycle-compliance.mjs"

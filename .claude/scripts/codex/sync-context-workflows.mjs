@@ -65,6 +65,7 @@ async function upsertContextIntoAgents(contextMd) {
     // Create AGENTS.md if it doesn't exist; keep minimum stable preface.
     agentsMd = "# Codex Project Instructions\n";
   }
+  agentsMd = agentsMd.replace(/\r\n?/g, "\n");
 
   const managedBlockPattern = buildManagedBlockPattern(
     AGENTS_CONTEXT_MIRROR_START,
@@ -79,6 +80,15 @@ async function upsertContextIntoAgents(contextMd) {
   }
 
   await fs.writeFile(agentsPath, agentsMd, "utf8");
+}
+
+async function readExistingContext() {
+  try {
+    return (await fs.readFile(contextPath, "utf8")).replace(/\r\n?/g, "\n");
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    return "# Codex Context\n";
+  }
 }
 
 function safeLine(value) {
@@ -220,7 +230,8 @@ async function main() {
     )
   );
 
-  let contextMd = await fs.readFile(contextPath, "utf8");
+  await fs.mkdir(path.dirname(contextPath), { recursive: true });
+  let contextMd = await readExistingContext();
   const promptProtocolTopBlock = `${PROMPT_PROTOCOLS_START}\n${topPromptProtocolSection}\n${PROMPT_PROTOCOLS_END}`;
   const replacementBlock = `${START_MARKER}\n${generatedSection}\n${END_MARKER}`;
 

@@ -1,7 +1,7 @@
 ---
 name: seed-test-data
 version: 2.0.0
-description: '[Dev Data] Implement or enhance test data seeders that simulate QC happy-path scenarios via application-layer commands. Triggers: "seed data", "test data", "seeder", "generate dev data", "dummy data seeder", "add test data", "seed test".'
+description: '[Dev Data] Use when you need to implement or enhance test data seeders that simulate QC happy-path scenarios via application-layer commands.'
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TaskCreate, Agent
 ---
 

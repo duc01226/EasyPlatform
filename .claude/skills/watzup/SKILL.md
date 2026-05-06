@@ -1,7 +1,7 @@
 ---
 name: watzup
 version: 1.1.0
-description: '[Utilities] Review recent changes and wrap up the work'
+description: '[Utilities] Use when you need to review recent changes and wrap up the work.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

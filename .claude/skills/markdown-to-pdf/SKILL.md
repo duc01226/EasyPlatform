@@ -1,7 +1,7 @@
 ---
 name: markdown-to-pdf
 version: 1.0.0
-description: '[Document Processing] Convert markdown files to PDF with syntax highlighting and custom CSS support. Cross-platform (Windows, macOS, Linux).'
+description: '[Document Processing] Use when you need to convert markdown files to PDF with syntax highlighting and custom CSS support.'
 disable-model-invocation: true
 ---
 

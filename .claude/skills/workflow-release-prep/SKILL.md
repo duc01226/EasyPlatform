@@ -1,7 +1,7 @@
 ---
 name: workflow-release-prep
 version: 1.0.0
-description: '[Workflow] Trigger Release Preparation workflow — pre-release quality gate with sre review and status verification.'
+description: '[Workflow] Use when activating the Release Preparation workflow for pre-release quality gate with sre review and status verification.'
 disable-model-invocation: true
 ---
 

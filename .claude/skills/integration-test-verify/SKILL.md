@@ -1,6 +1,6 @@
 ---
 name: integration-test-verify
-description: '[Testing] Verify integration tests pass after writing and reviewing them. Reads project-specific run guidance from docs/project-config.json (integrationTestVerify section). Generic: supports any test runner via config.'
+description: '[Testing] Use when you need to verify integration tests pass after writing and reviewing them.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

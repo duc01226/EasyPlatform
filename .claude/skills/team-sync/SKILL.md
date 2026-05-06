@@ -1,7 +1,7 @@
 ---
 name: team-sync
 version: 1.0.0
-description: '[Project Management] Generate meeting agendas and facilitate team coordination. Use when preparing standups, sprint reviews, retros, weekly syncs, or team meetings. Triggers on keywords like "standup", "team sync", "meeting agenda", "daily", "sprint review", "retro", "weekly sync".'
+description: '[Project Management] Use when preparing standups, sprint reviews, retros, weekly syncs, or team meetings.'
 ---
 
 ## Quick Summary

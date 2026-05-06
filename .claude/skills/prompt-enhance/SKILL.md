@@ -1,7 +1,7 @@
 ---
 name: prompt-enhance
 version: 3.2.0
-description: '[Skill Management] Compress + enhance any prompt/doc/skill file — two-phase optimization: (1) caveman compression (stop-word removal), (2) AI attention anchoring (top/bottom summaries, inline READ summaries, progressive disclosure). Use for prompt engineering, skill refactoring, doc optimization, or reducing token bloat in prompts, skills, or injected docs.'
+description: '[Skill Management] Use when enhancing prompts, docs, or skills with compression and attention anchoring.'
 ---
 
 ## Quick Summary

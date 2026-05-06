@@ -1,7 +1,7 @@
 ---
 name: workflow-verification
 version: 1.0.0
-description: '[Workflow] Trigger Verification & Validation workflow — verify, validate, and confirm correctness with investigation and testing.'
+description: '[Workflow] Use when activating the Verification & Validation workflow for verify, validate, and confirm correctness with investigation and testing.'
 disable-model-invocation: true
 ---
 

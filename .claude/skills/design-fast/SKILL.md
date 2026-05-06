@@ -1,7 +1,7 @@
 ---
 name: design-fast
 version: 1.0.0
-description: '[Design] Create a quick design'
+description: '[Design] Use when you need to create a quick design.'
 disable-model-invocation: false
 ---
 

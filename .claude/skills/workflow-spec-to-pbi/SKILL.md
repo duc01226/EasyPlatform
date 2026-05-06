@@ -1,7 +1,7 @@
 ---
 name: workflow-spec-to-pbi
 version: 1.0.0
-description: '[Workflow] Trigger Spec to PBI Backlog workflow - convert an existing engineering spec bundle into complete, prioritized, dependency-aware PBIs and stories.'
+description: '[Workflow] Use when activating the Spec to PBI Backlog workflow for convert an existing engineering spec bundle into complete, prioritized, dependency-aware PBIs and stories.'
 disable-model-invocation: true
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: compact
 version: 1.0.0
-description: '[Utilities] Compress context to optimize token usage'
+description: '[Utilities] Use when you need to compress context to optimize token usage.'
 disable-model-invocation: false
 ---
 

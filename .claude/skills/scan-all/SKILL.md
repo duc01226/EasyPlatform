@@ -1,7 +1,7 @@
 ---
 name: scan-all
 version: 1.0.0
-description: '[Documentation] Orchestrate all reference doc scans in parallel. Refreshes all 12 scanned docs/project-reference/ files and clears the staleness gate. Use for project onboarding, periodic refresh, or when the staleness gate blocks prompts.'
+description: '[Documentation] Use when you need orchestrate all reference doc scans in parallel.'
 ---
 
 ## Quick Summary

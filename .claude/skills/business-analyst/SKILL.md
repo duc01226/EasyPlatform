@@ -1,7 +1,7 @@
 ---
 name: business-analyst
 version: 1.0.0
-description: '[Project Management] Assist Business Analysts with requirements refinement, user story writing, acceptance criteria in BDD format, and gap analysis. Use when creating user stories, writing acceptance criteria, analyzing requirements, or mapping business processes. Triggers on keywords like "requirements", "user story", "acceptance criteria", "BDD", "GIVEN WHEN THEN", "gap analysis", "process flow", "business rules".'
+description: '[Project Management] Use when creating user stories, writing acceptance criteria, analyzing requirements, or mapping business processes.'
 ---
 
 ## Quick Summary

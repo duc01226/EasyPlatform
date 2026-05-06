@@ -2,7 +2,7 @@
 name: scan-feature-docs
 version: 2.0.0
 last_reviewed: 2026-04-22
-description: '[Documentation] Scan project and populate/sync docs/project-reference/feature-docs-reference.md with app-to-service mapping, doc structure, templates, and documentation conventions.'
+description: '[Documentation] Use when scanning feature documentation structure, app-to-service mapping, templates, and conventions.'
 ---
 
 ## Quick Summary
@@ -188,7 +188,7 @@ Read report. Apply fresh-eyes protocol:
 <!-- SYNC:scan-and-update-reference-doc:reminder -->
 
 - **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-    <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

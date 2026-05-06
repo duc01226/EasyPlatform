@@ -1,6 +1,6 @@
 ---
 name: codex-sync
-description: '[Codex] Run full Codex mirror sync (migrate → hooks → context → verify) standalone, no npm/package.json needed. Triggers on: codex sync, sync codex, run codex:sync, regenerate AGENTS.md, regenerate CODEX_CONTEXT.md.'
+description: '[Codex] Use when you need to run full Codex mirror sync (migrate → hooks → context → verify) standalone, no npm/package JSON needed.'
 disable-model-invocation: true
 ---
 
@@ -12,6 +12,7 @@ disable-model-invocation: true
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
 > - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
 > - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
 > - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
 > - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
@@ -45,6 +46,8 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** Run full Codex mirror sync standalone — equivalent to `npm run codex:sync` without `package.json` or `npm`.
 
+Also bootstraps team-wide Codex completion notifications by copying the portable `.claude/scripts/codex/codex-notify.mjs` helper into `.codex/scripts/codex/` and upserting notification keys into `.codex/config.toml`.
+
 **Workflow:**
 
 1. **Run** — `node .claude/skills/codex-sync/scripts/run-codex-sync.mjs`
@@ -61,17 +64,17 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Stages
 
-7 stages, sequential, matching `npm run codex:sync` chain (`package.json:25`):
+7 stages, sequential, matching `npm run codex:sync`:
 
-| #   | Stage    | Script                                               | Effect                                                 |
-| --- | -------- | ---------------------------------------------------- | ------------------------------------------------------ |
-| 1   | migrate  | `scripts/codex/migrate-claude-to-codex.mjs`          | Migrate Claude agents → `.codex/agents/`; setup skills |
-| 2   | hooks    | `scripts/codex/sync-hooks.mjs`                       | Generate `.codex/hooks.json` + sync report             |
-| 3   | context  | `scripts/codex/sync-context-workflows.mjs`           | Regenerate `.codex/CODEX_CONTEXT.md` + `AGENTS.md`     |
-| 4   | tests    | `node --test scripts/codex/tests/*.test.mjs`         | Run codex tooling unit tests                           |
-| 5   | wf-cycle | `scripts/codex/verify-workflow-cycle-compliance.mjs` | Verify workflow sequence cycle compliance              |
-| 6   | sk-proto | `scripts/codex/verify-skill-protocol-compliance.mjs` | Verify skill strict-execution-contract                 |
-| 7   | residue  | `scripts/codex/verify-no-project-residue.mjs`        | Verify no project residue in generated artifacts       |
+| #   | Stage    | Script                                                       | Effect                                                                            |
+| --- | -------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| 1   | migrate  | `.claude/scripts/codex/migrate-claude-to-codex.mjs`          | Migrate Claude agents → `.codex/agents/`; setup skills; setup Codex notifications |
+| 2   | hooks    | `.claude/scripts/codex/sync-hooks.mjs`                       | Generate `.codex/hooks.json` + sync report                                        |
+| 3   | context  | `.claude/scripts/codex/sync-context-workflows.mjs`           | Regenerate `.codex/CODEX_CONTEXT.md` + `AGENTS.md`                                |
+| 4   | tests    | `node --test .claude/scripts/codex/tests/*.test.mjs`         | Run codex tooling unit tests                                                      |
+| 5   | wf-cycle | `.claude/scripts/codex/verify-workflow-cycle-compliance.mjs` | Verify workflow sequence cycle compliance                                         |
+| 6   | sk-proto | `.claude/scripts/codex/verify-skill-protocol-compliance.mjs` | Verify skill strict-execution-contract                                            |
+| 7   | residue  | `.claude/scripts/codex/verify-no-project-residue.mjs`        | Verify no project residue in generated artifacts                                  |
 
 ## Usage
 
@@ -81,6 +84,9 @@ node .claude/skills/codex-sync/scripts/run-codex-sync.mjs
 
 # Stream live child output:
 node .claude/skills/codex-sync/scripts/run-codex-sync.mjs --verbose
+
+# Full sync while forcing skill copy mode:
+node .claude/skills/codex-sync/scripts/run-codex-sync.mjs --copy-skills
 
 # Read-only verifiers (no mutation):
 node .claude/skills/codex-sync/scripts/run-codex-sync.mjs --only=tests,wf-cycle,sk-proto,residue
@@ -95,6 +101,7 @@ node .claude/skills/codex-sync/scripts/run-codex-sync.mjs --skip=migrate,hooks
 
 **MUST ATTENTION** invoke ONLY when user explicitly requests codex sync — never auto-invoke
 **MUST ATTENTION** edit source `.claude/skills/codex-sync/**`, NEVER the `.agents/skills/codex-sync/**` mirror
+**MUST ATTENTION** keep `.codex/scripts/codex/codex-notify.mjs` generated from `.claude/scripts/codex/codex-notify.mjs`; edit the `.claude` source first
 **MUST ATTENTION** orchestrator fails fast — re-run single failing stage with `--only=<id> --verbose` to debug
 **MUST ATTENTION** working directory auto-resolves to repo root from script path — do not pass `--cwd`
 **MUST ATTENTION** stages 1-3 mutate; stages 4-7 verify only — use `--only=` for non-destructive validation
@@ -212,7 +219,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`/simplify`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

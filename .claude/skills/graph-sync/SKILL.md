@@ -1,6 +1,6 @@
 ---
 name: graph-sync
-description: '[Code Intelligence] Sync the code review knowledge graph with current git state. Detects files changed since last sync via git diff and re-parses them. Runs automatically on session start; use manually after pulling code or switching branches.'
+description: '[Code Intelligence] Use when you need to sync the code review knowledge graph with current git state.'
 version: 1.0.0
 ---
 

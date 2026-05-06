@@ -1,7 +1,7 @@
 ---
 name: web-research
 version: 1.0.0
-description: '[Research] Broad web search on a topic. Collect sources, validate credibility, build source map. Use when starting any research task.'
+description: '[Research] Use when starting any research task.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

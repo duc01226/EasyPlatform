@@ -1,7 +1,7 @@
 ---
 name: workflow-product-discovery
 version: 1.0.0
-description: '[Workflow] Trigger Product Discovery workflow — raw vision or problem → structured brainstorm → prioritized opportunity map → N PBIs with stories, challenge review, DoR gate, and wireframes → cross-PBI ranked backlog ready for sprint planning.'
+description: '[Workflow] Use when activating the Product Discovery workflow for turning raw opportunities into ranked PBIs.'
 disable-model-invocation: true
 ---
 

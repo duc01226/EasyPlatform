@@ -1,7 +1,7 @@
 ---
 name: scan-e2e-tests
 version: 2.0.0
-description: '[Documentation] Scan project and populate/sync docs/project-reference/e2e-test-reference.md with E2E test architecture, page objects, step definitions, configuration, and framework patterns.'
+description: '[Documentation] Use when scanning E2E test architecture, page objects, step definitions, configuration, and framework patterns.'
 ---
 
 ## Quick Summary

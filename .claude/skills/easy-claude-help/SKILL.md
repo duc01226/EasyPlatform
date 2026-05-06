@@ -1,7 +1,7 @@
 ---
 name: easy-claude-help
 version: 1.0.0
-description: '[Utilities] Configuration guide for the easy-claude framework — explain settings, guide users through configuring .ck.json.'
+description: '[Utilities] Use when configuring or explaining the easy-claude framework.'
 disable-model-invocation: true
 ---
 

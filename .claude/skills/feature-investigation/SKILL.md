@@ -1,7 +1,7 @@
 ---
 name: feature-investigation
 version: 1.1.1
-description: '[Investigation] Use when the user asks to investigate, explore, understand, explain, or analyze how an existing feature or logic works. Triggers on keywords like "how does", "explain", "what is the logic", "investigate", "understand", "where is", "trace", "walk through", "show me how".'
+description: '[Investigation] Use when the user asks to investigate, explore, understand, explain, or analyze how an existing feature or logic works.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

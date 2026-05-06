@@ -1,7 +1,7 @@
 ---
 name: workflow-sprint-planning
 version: 1.0.0
-description: '[Workflow] Trigger Sprint Planning workflow — sprint planning ceremony with backlog prioritization and dependency check.'
+description: '[Workflow] Use when activating the Sprint Planning workflow for sprint planning ceremony with backlog prioritization and dependency check.'
 disable-model-invocation: true
 ---
 

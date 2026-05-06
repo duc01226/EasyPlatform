@@ -2,7 +2,7 @@
 name: scan-project-structure
 version: 2.0.0
 last_reviewed: 2026-04-22
-description: '[Documentation] Scan project and populate/sync docs/project-reference/project-structure-reference.md with service architecture, ports, directory tree, tech stack, and module registry.'
+description: '[Documentation] Use when scanning service architecture, ports, directory layout, tech stack, and module registry.'
 ---
 
 ## Quick Summary

@@ -4,7 +4,7 @@ version: 3.0.0
 status: deprecated
 deprecated_by: tdd-spec
 last_reviewed: 2026-04-21
-description: '[DEPRECATED] This skill has been merged into tdd-spec. Use /tdd-spec [direction=sync] for forward sync, /tdd-spec [direction=reverse] for reverse sync, /tdd-spec [direction=full] for bidirectional reconciliation.'
+description: '[DEPRECATED] Use when you need this skill has been merged into tdd-spec.'
 ---
 
 > **[IMPORTANT]** MUST ATTENTION keep task tracking synchronized, preserve evidence gates, and NEVER skip mandatory steps.

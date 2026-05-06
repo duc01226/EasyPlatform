@@ -1,7 +1,7 @@
 ---
 name: workflow-design-dev-handoff
 version: 1.0.0
-description: '[Workflow] Trigger Designer to Dev Handoff workflow — designer hands off design spec to developer for implementation.'
+description: '[Workflow] Use when activating the Designer to Dev Handoff workflow for designer hands off design spec to developer for implementation.'
 disable-model-invocation: true
 ---
 

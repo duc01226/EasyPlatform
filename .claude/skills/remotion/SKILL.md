@@ -1,7 +1,7 @@
 ---
 name: remotion
 version: 3.1.0
-description: '[User-Invoked] Create, update, or preview Remotion videos. Invoke explicitly via /remotion. Default mode: create/update a composition based on user prompt. Play mode: start Remotion Studio dev server. Default project path: remotion/'
+description: '[User-Invoked] Use when you need create, update, or preview Remotion videos.'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. For simple tasks, ask user whether to skip.

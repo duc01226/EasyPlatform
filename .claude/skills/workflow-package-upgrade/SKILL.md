@@ -1,7 +1,7 @@
 ---
 name: workflow-package-upgrade
 version: 1.0.0
-description: '[Workflow] Trigger Package Upgrade workflow — upgrade dependencies, npm update, NuGet upgrade with testing.'
+description: '[Workflow] Use when activating the Package Upgrade workflow for upgrade dependencies, npm update, NuGet upgrade with testing.'
 disable-model-invocation: true
 ---
 

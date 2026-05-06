@@ -1,7 +1,7 @@
 ---
 name: worktree
 version: 1.0.0
-description: '[Git] Create isolated git worktree for parallel development'
+description: '[Git] Use when you need to create isolated git worktree for parallel development.'
 disable-model-invocation: false
 ---
 

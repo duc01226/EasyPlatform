@@ -1,7 +1,7 @@
 ---
 name: skill-add
 version: 2.0.0
-description: '[Skill Management] Add new reference files or scripts to a skill. Triggers on: add reference, add script, skill reference, skill script.'
+description: '[Skill Management] Use when you need add new reference files or scripts to a skill.'
 disable-model-invocation: true
 ---
 

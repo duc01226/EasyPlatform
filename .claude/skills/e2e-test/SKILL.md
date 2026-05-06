@@ -1,6 +1,6 @@
 ---
 name: e2e-test
-description: '[Testing] Use when generating, updating, or maintaining E2E tests from recordings, specs, or code changes. Supports Playwright, Selenium, Cypress, and other frameworks.'
+description: '[Testing] Use when generating, updating, or maintaining E2E tests from recordings, specs, or code changes.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

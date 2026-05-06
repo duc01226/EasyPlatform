@@ -1,7 +1,7 @@
 ---
 name: workflow-end
 version: 1.0.0
-description: '[Process] End the active workflow and clear state. Auto-added as last step of every workflow. Clears workflow tracking so next prompt gets fresh workflow detection.'
+description: '[Process] Use when you need end the active workflow and clear state.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

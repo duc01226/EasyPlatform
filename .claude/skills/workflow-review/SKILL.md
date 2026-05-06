@@ -1,7 +1,7 @@
 ---
 name: workflow-review
 version: 4.0.0
-description: '[Workflow] Trigger Code Review workflow — review, fix, and re-review recursively until all issues resolved.'
+description: '[Workflow] Use when activating the Code Review workflow for review, fix, and re-review recursively until all issues resolved.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

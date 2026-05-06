@@ -1,7 +1,7 @@
 ---
 name: workflow-design
 version: 1.0.0
-description: '[Workflow] Trigger Design Workflow workflow — designer workflow: create design specification and implement UI (product, marketing, creative) from requirements or screenshots.'
+description: '[Workflow] Use when activating the Design Workflow for product, marketing, or creative UI design work.'
 disable-model-invocation: true
 ---
 

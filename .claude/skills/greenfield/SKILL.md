@@ -1,7 +1,7 @@
 ---
 name: greenfield
 version: 1.1.0
-description: '[Planning] Start a new project from scratch with full waterfall inception — idea, research, domain modeling, tech stack, and implementation plan'
+description: '[Planning] Use when you need to start a new project from scratch with full waterfall inception — idea, research, domain modeling, tech stack, and implementation plan.'
 ---
 
 ## Quick Summary

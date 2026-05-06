@@ -1,7 +1,7 @@
 ---
 name: learn
 version: 4.0.0
-description: "[Utilities] Teach Claude lessons that persist across sessions. Triggers on 'remember this', 'always do', 'never do', 'learn this', 'from now on'. Smart routing to all 12 project-reference docs with /prompt-enhance finalization."
+description: '[Utilities] Use when you need to teach Claude lessons that persist across sessions.'
 disable-model-invocation: false
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: scan-codebase-health
 version: 2.0.0
-description: '[Documentation] Detect codebase health issues: unused exports, doc count-drift, orphan files, stale config references. Generic — reads project structure from project-config.json dynamically.'
+description: '[Documentation] Use when you need to detect codebase health issues: unused exports, doc count-drift, orphan files, stale config references.'
 ---
 
 ## Quick Summary

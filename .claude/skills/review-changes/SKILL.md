@@ -1,7 +1,7 @@
 ---
 name: review-changes
 version: 2.1.0
-description: '[Code Quality] Review all uncommitted changes before commit'
+description: '[Code Quality] Use when reviewing current changes, staged or unstaged diffs, or branch-to-branch diffs.'
 ---
 
 > **[FINAL PURPOSE REMINDER — MUST ATTENTION CRITICAL]**
@@ -19,7 +19,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 ## Quick Summary
 
-**Goal:** Comprehensive review of all uncommitted changes following project standards. No flaws, no bugs, no missing updates, no stale content. Applies to any project type — code, docs, config, infrastructure, or non-coding artifacts.
+**Goal:** Comprehensive review of current diffs following project standards. No flaws, no bugs, no missing updates, no stale content. Applies to uncommitted work, staged changes, branch-to-branch diffs, and any project type — code, docs, config, infrastructure, or non-coding artifacts.
 
 **Workflow:**
 
@@ -59,13 +59,19 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
-# Code Review: Uncommitted Changes
+# Code Review: Current Or Branch Diff
 
-Comprehensive review of all uncommitted changes following project standards.
+Comprehensive review of current changes or explicit branch/commit diffs following project standards.
 
 ## Review Scope
 
-Target: All uncommitted changes (staged and unstaged) in current working directory.
+Target: Current working-tree changes by default, or an explicit branch/tag/commit diff when the user asks to review a branch comparison.
+
+Use these sources:
+
+- Current changes: `git status`, `git diff`, and `git diff --cached`
+- Branch diff: `git diff <base>...<head>` plus `git diff --name-only <base>...<head>`
+- Commit range: `git diff <base>..<head>` plus `git diff --name-only <base>..<head>`
 
 ## Review Mindset (NON-NEGOTIABLE)
 
@@ -150,6 +156,8 @@ Update todo status as each phase completes.
 ```bash
 git diff --name-only HEAD       # unstaged
 git diff --cached --name-only   # staged
+# For branch or commit-range review, use the user-provided diff source:
+git diff --name-only <base>...<head>
 ```
 
 Evaluate each change type for this diff:
@@ -211,6 +219,8 @@ For each created change-type task:
 ```bash
 git diff --name-only HEAD        # unstaged
 git diff --cached --name-only    # staged
+# For branch or commit-range review, use the user-provided diff source:
+git diff --name-only <base>...<head>
 ```
 
 For each changed file, infer its category by examining:
@@ -298,8 +308,9 @@ Check `## Plan Context` in injected context:
 
 **Phase 1: Get Changes and Create Report File**
 
-- MUST ATTENTION Run `git status` to see all changed files
-- MUST ATTENTION Run `git diff` to see actual changes (staged and unstaged)
+- MUST ATTENTION Identify diff source: current working tree, staged changes, branch comparison, or commit range
+- MUST ATTENTION Run `git status` for current changes, or `git diff --name-only <base>...<head>` for branch comparisons
+- MUST ATTENTION Run `git diff` or `git diff <base>...<head>` to see actual changes
 - MUST ATTENTION Create `plans/reports/code-review-{date}-{slug}.md`
 - MUST ATTENTION Initialize with Scope, Files to Review, Blast Radius Summary sections
 
@@ -352,7 +363,7 @@ When constructing Agent call prompt:
     6. Documentation: Docs reflect changes in BOTH domains together?
     ```
 
-4. Set Target Files as `"run git diff to see all uncommitted changes"`
+4. Set Target Files as `"use the selected diff source from Phase 1"`
 5. Set report path as `plans/reports/synthesis-review-{date}.md`
 
 After sub-agent returns:
@@ -372,8 +383,8 @@ When constructing Agent call prompt:
 
 1. Copy Agent call shape from `SYNC:review-protocol-injection` template verbatim
 2. Select `subagent_type` based on domain's dominant concern (see Sub-Agent Type Selection)
-3. Set Task as: `"Review ALL uncommitted changes holistically. Focus on big picture — overall technical approach coherence, architecture layers, logic placement (lowest layer), DRY violations, YAGNI/KISS, function complexity. Domain: {category from Phase 0.7} — apply domain knowledge for this category accordingly."`
-4. Set Target Files as `"run git diff to see all uncommitted changes"`
+3. Set Task as: `"Review the selected diff holistically. Focus on big picture — overall technical approach coherence, architecture layers, logic placement (lowest layer), DRY violations, YAGNI/KISS, function complexity. Domain: {category from Phase 0.7} — apply domain knowledge for this category accordingly."`
+4. Set Target Files as `"use the selected diff source from Phase 1"`
 5. Set report path as `plans/reports/code-review-changes-round{N}-{date}.md`
 
 After sub-agent returns:

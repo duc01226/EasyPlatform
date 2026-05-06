@@ -1,7 +1,7 @@
 ---
 name: dependency
 version: 2.0.0
-description: '[Project Management] Map and visualize feature dependencies between modules, services, and work items. Triggers on dependency map, dependency graph, what blocks, blockers, critical path, feature sequencing.'
+description: '[Project Management] Use when you need to map and visualize feature dependencies between modules, services, and work items.'
 ---
 
 ## Quick Summary
@@ -226,7 +226,7 @@ graph TD
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

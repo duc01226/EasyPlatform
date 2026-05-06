@@ -1,7 +1,7 @@
 ---
 name: prompt-compress
 version: 1.0.0
-description: '[Skill Management] Compress + enhance any prompt/doc/skill file — applies caveman compression (stop-word removal) first, then AI attention anchoring (top/bottom summaries, inline READ summaries, progressive disclosure). Use when reducing token bloat in prompts, skills, or injected docs.'
+description: '[Skill Management] Use when reducing token bloat in prompts, skills, or injected docs.'
 ---
 
 ## Quick Summary

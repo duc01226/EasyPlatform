@@ -1,7 +1,7 @@
 ---
 name: memory-management
 version: 1.0.0
-description: '[Utilities] Use when saving or retrieving important patterns, decisions, and learnings across sessions. Also use for external memory checkpoints during long-running tasks to prevent context loss. Triggers on keywords like "remember", "save pattern", "recall", "memory", "persist", "knowledge base", "learnings", "checkpoint", "save context", "preserve progress".'
+description: '[Utilities] Use when saving or retrieving important patterns, decisions, and learnings across sessions.'
 disable-model-invocation: true
 ---
 

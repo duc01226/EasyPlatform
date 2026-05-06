@@ -1,7 +1,7 @@
 ---
 name: workflow-qa-po-acceptance
 version: 1.0.0
-description: '[Workflow] Trigger QA to PO Acceptance workflow — testing complete, qa hands off to po for acceptance and sign-off.'
+description: '[Workflow] Use when activating the QA to PO Acceptance workflow for testing complete, qa hands off to po for acceptance and sign-off.'
 disable-model-invocation: true
 ---
 

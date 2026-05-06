@@ -2,7 +2,7 @@
 name: tdd-spec-review
 version: 2.0.0
 last_reviewed: 2026-04-21
-description: '[Code Quality] Review test specifications for coverage, completeness, and correctness before implementation. AI self-review gate after /tdd-spec.'
+description: '[Code Quality] Use when you need to review test specifications for coverage, completeness, and correctness before implementation.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -523,7 +523,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-    <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:graph-impact-analysis:reminder -->
 

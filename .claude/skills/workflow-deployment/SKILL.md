@@ -1,7 +1,7 @@
 ---
 name: workflow-deployment
 version: 1.0.0
-description: '[Workflow] Trigger Deployment & Infrastructure workflow — CI/CD pipelines, Docker, Kubernetes setup and deployment.'
+description: '[Workflow] Use when activating the Deployment & Infrastructure workflow for cI/CD pipelines, Docker, Kubernetes setup and deployment.'
 disable-model-invocation: true
 ---
 

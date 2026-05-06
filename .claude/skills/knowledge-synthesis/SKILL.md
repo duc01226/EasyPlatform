@@ -1,7 +1,7 @@
 ---
 name: knowledge-synthesis
 version: 1.0.0
-description: '[Research] Synthesize research findings into structured report using template. Final step of research workflow.'
+description: '[Research] Use when you need synthesize research findings into structured report using template.'
 ---
 
 ## Quick Summary

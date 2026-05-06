@@ -1,7 +1,7 @@
 ---
 name: plan-validate
 version: 2.0.0
-description: '[Planning] Validate plan with critical questions interview'
+description: '[Planning] Use when you need validate plan with critical questions interview.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

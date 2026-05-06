@@ -1,7 +1,7 @@
 ---
 name: design-screenshot
 version: 1.0.0
-description: '[Design] Create a design based on screenshot'
+description: '[Design] Use when you need to create a design based on screenshot.'
 disable-model-invocation: false
 ---
 

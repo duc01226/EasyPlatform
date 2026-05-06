@@ -1,7 +1,7 @@
 ---
 name: devops
 version: 1.0.0
-description: '[DevOps] Use when deploying to Cloudflare (Workers, R2, D1, KV, Pages), Docker, or GCP (Compute Engine, GKE, Cloud Run). Covers serverless deployment, container management, CI/CD pipelines, cloud infrastructure costs, caching strategies, and cloud-native applications.'
+description: '[DevOps] Use when deploying to Cloudflare (Workers, R2, D1, KV, Pages), Docker, or GCP (Compute Engine, GKE, Cloud Run).'
 license: MIT
 disable-model-invocation: true
 ---

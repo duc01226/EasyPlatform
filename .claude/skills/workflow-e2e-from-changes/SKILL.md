@@ -1,7 +1,7 @@
 ---
 name: workflow-e2e-from-changes
 version: 1.0.0
-description: '[Workflow] Trigger E2E from Changes workflow — update e2e tests based on code or spec changes.'
+description: '[Workflow] Use when activating the E2E from Changes workflow for update e2e tests based on code or spec changes.'
 disable-model-invocation: true
 ---
 

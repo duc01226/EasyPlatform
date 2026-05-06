@@ -1,7 +1,7 @@
 ---
 name: workflow-test-verify
 version: 1.0.0
-description: '[Workflow] Trigger Test Verification & Quality workflow — comprehensive test verification: review quality, diagnose failures, verify traceability, fix flaky tests.'
+description: '[Workflow] Use when activating the Test Verification workflow for quality, failure, traceability, and flake checks.'
 disable-model-invocation: true
 ---
 

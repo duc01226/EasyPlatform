@@ -1,7 +1,7 @@
 ---
 name: security
 version: 1.0.0
-description: '[Code Quality] Perform security review on specified scope'
+description: '[Code Quality] Use when you need perform security review on specified scope.'
 disable-model-invocation: false
 execution-mode: subagent
 context-budget: high

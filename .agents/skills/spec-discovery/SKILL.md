@@ -1,6 +1,6 @@
 ---
 name: spec-discovery
-description: 'Reverse-engineer a complete, tech-agnostic specification bundle from an existing codebase. Modes: init (full extraction → stable docs/specs/{app-bucket}/{system-name}/), update (git diff → re-extract impacted modules/phases only), audit (staleness detection → SPEC-AUDIT-{date}.md). Produces domain model, business rules, API contracts, integration events, user journeys, Mermaid ERDs, and per-module 17-section README summaries. Output path stable (no date prefix) — change history in SPEC-CHANGELOG.md.'
+description: '[General] Use when you need reverse-engineer a complete, tech-agnostic specification bundle from an existing codebase.'
 ---
 
 > Codex compatibility note:
@@ -11,6 +11,7 @@ description: 'Reverse-engineer a complete, tech-agnostic specification bundle fr
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
 > - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
 > - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
 > - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
 > - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
@@ -1359,7 +1360,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`/simplify`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

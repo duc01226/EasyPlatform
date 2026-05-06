@@ -1,7 +1,7 @@
 ---
 name: integration-test-review
 version: 1.1.0
-description: '[Code Quality] Review integration tests for assertion quality, bug protection, repeatability, and test-spec traceability. Use in review workflows or standalone.'
+description: '[Code Quality] Use when you need to review integration tests for assertion quality, bug protection, repeatability, and test-spec traceability.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

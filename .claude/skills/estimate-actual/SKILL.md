@@ -1,6 +1,6 @@
 ---
 name: estimate-actual
-description: '[Planning] Post-implementation estimation calibration — compute TRUE estimate from actual code/diff/PR scope, compare to pre-impl estimate and developer actual time, output two independent signals (developer execution variance + estimation model calibration variance) for performance review and model tuning. Manual invocation only. Triggers on: estimate actual, estimate review, estimation calibration, post-mortem estimate, evaluate developer estimate, evaluate estimation model.'
+description: '[Planning] Use when calibrating estimates from actual code, diff, PR scope, and developer time.'
 disable-model-invocation: true
 argument-hint: '<plan-file> | --changes | --pr <number>'
 ---

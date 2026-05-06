@@ -1,7 +1,7 @@
 ---
 name: pdf-to-markdown
 version: 1.0.0
-description: '[Document Processing] Convert PDF files to Markdown with support for native text PDFs and scanned documents (OCR). Cross-platform.'
+description: '[Document Processing] Use when you need to convert PDF files to Markdown with support for native text PDFs and scanned documents (OCR).'
 disable-model-invocation: true
 ---
 

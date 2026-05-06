@@ -1,7 +1,7 @@
 ---
 name: workflow-greenfield
 version: 1.0.0
-description: '[Workflow] Trigger Greenfield Project Init workflow — start a new project from scratch with full inception, implementation, and integration testing.'
+description: '[Workflow] Use when activating the Greenfield Project Init workflow for start a new project from scratch with full inception, implementation, and integration testing.'
 disable-model-invocation: true
 ---
 

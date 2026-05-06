@@ -1,7 +1,7 @@
 ---
 name: workflow-idea-to-pbi
 version: 2.0.0
-description: '[Workflow] Trigger Idea to PBI workflow — capture or review idea/artifact, optional handoff, refine to PBI, validate design rationale, create stories, generate TDD test specs, challenge review, DoR gate, mockup, prioritize.'
+description: '[Workflow] Use when activating the Idea to PBI workflow for turning ideas into prioritized PBIs and stories.'
 disable-model-invocation: true
 ---
 

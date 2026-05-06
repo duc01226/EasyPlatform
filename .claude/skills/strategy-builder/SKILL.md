@@ -1,7 +1,7 @@
 ---
 name: strategy-builder
 version: 1.0.0
-description: '[Content] Build marketing strategy: positioning, channels, messaging, campaigns, budget, KPIs. Follows market-analysis.'
+description: '[Content] Use when you need to build marketing strategy: positioning, channels, messaging, campaigns, budget, KPIs.'
 ---
 
 ## Quick Summary

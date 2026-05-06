@@ -1,11 +1,6 @@
 ---
 name: graph-query
-description: >-
-    [Code Intelligence] Query code relationships and connections using the structural knowledge graph.
-    Show related files, callers, callees, imports, tests, inheritance, and file structure.
-    Requires graph to be built first via /graph-build.
-    Triggers on "who calls", "what imports", "related files", "connections of",
-    "depends on", "tests for", "inherits from", "file structure", "graph query".
+description: '[Code Intelligence] Use when you need to query code relationships and connections using the structural knowledge graph.'
 version: 1.0.0
 ---
 

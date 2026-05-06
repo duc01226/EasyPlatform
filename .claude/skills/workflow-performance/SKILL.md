@@ -1,7 +1,7 @@
 ---
 name: workflow-performance
 version: 1.0.0
-description: '[Workflow] Trigger Performance Optimization workflow — investigate bottlenecks, optimize queries, reduce latency.'
+description: '[Workflow] Use when activating the Performance Optimization workflow for investigate bottlenecks, optimize queries, reduce latency.'
 ---
 
 ## Quick Summary

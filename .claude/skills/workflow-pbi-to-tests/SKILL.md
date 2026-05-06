@@ -1,7 +1,7 @@
 ---
 name: workflow-pbi-to-tests
 version: 1.0.0
-description: '[Workflow] Trigger PBI to Tests workflow — qa workflow: generate tdd test specs from pbi, write to feature docs section 15, run quality gate.'
+description: '[Workflow] Use when activating the PBI to Tests workflow for qa workflow: generate tdd test specs from pbi, write to feature docs section 15, run quality gate.'
 disable-model-invocation: true
 ---
 

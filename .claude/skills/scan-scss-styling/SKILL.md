@@ -2,7 +2,7 @@
 name: scan-scss-styling
 version: 2.0.0
 last_reviewed: 2026-04-22
-description: '[Documentation] Scan project and populate/sync docs/project-reference/scss-styling-guide.md with BEM methodology, SCSS architecture, mixins, variables, theming, and responsive patterns.'
+description: '[Documentation] Use when scanning SCSS architecture, BEM conventions, mixins, variables, theming, and responsive patterns.'
 ---
 
 ## Quick Summary

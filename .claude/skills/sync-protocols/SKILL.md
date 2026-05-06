@@ -1,7 +1,7 @@
 ---
 name: sync-protocols
 version: 1.0.0
-description: '[Skill Management] Sync SYNC-tagged protocol content from canonical source to all skills. Use when shared protocol checklists change and need propagation across skills.'
+description: '[Skill Management] Use when shared protocol checklists change and need propagation across skills.'
 ---
 
 ## Quick Summary

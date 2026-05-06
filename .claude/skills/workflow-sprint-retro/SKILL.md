@@ -1,7 +1,7 @@
 ---
 name: workflow-sprint-retro
 version: 1.0.0
-description: '[Workflow] Trigger Sprint Retrospective workflow — end of sprint retrospective with feedback and action items.'
+description: '[Workflow] Use when activating the Sprint Retrospective workflow for end of sprint retrospective with feedback and action items.'
 disable-model-invocation: true
 ---
 

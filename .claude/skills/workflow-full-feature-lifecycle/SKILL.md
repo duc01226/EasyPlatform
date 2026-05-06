@@ -1,7 +1,7 @@
 ---
 name: workflow-full-feature-lifecycle
 version: 1.0.0
-description: '[Workflow] Trigger Full Feature Lifecycle workflow — complete feature from idea to release with formal role handoffs (PO→BA→Designer→Dev→QA→PO acceptance).'
+description: '[Workflow] Use when activating the Full Feature Lifecycle workflow for complete feature from idea to release with formal role handoffs (PO→BA→Designer→Dev→QA→PO acceptance).'
 disable-model-invocation: true
 ---
 

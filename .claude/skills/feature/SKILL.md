@@ -1,7 +1,7 @@
 ---
 name: feature
 version: 2.0.1
-description: '[Implementation] Use when the user asks to implement a new feature, enhancement, add functionality, build something new, or create new capabilities. Triggers on keywords like "implement", "add feature", "build", "create new", "develop", "enhancement".'
+description: '[Implementation] Use when the user asks to implement a new feature, enhancement, add functionality, build something new, or create new capabilities.'
 ---
 
 ## Quick Summary
@@ -405,7 +405,7 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

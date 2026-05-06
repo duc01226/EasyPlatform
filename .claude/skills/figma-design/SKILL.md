@@ -1,7 +1,7 @@
 ---
 name: figma-design
 version: 1.0.0
-description: '[Frontend] Extract design context from Figma URLs via MCP, REST API, or screenshot fallback. Produces structured design tokens, component inventory, and layout specs for design-spec consumption. Triggers on figma url, figma design, extract figma, figma to code.'
+description: '[Frontend] Use when you need to extract design context from Figma URLs via MCP, REST API, or screenshot fallback.'
 ---
 
 ## Quick Summary

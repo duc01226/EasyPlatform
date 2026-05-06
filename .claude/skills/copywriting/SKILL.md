@@ -1,7 +1,7 @@
 ---
 name: copywriting
 version: 1.0.0
-description: '[Content] Create high-converting copy for marketing materials, social media, landing pages, email campaigns, and product descriptions. Triggers on: copywriting, marketing copy, social media post, landing page copy, email campaign, product description.'
+description: '[Content] Use when you need to create high-converting copy for marketing materials, social media, landing pages, email campaigns, and product descriptions.'
 ---
 
 ## Quick Summary

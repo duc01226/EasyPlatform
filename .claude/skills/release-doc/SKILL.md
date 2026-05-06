@@ -1,7 +1,7 @@
 ---
 name: release-doc
 version: 1.0.0
-description: '[Documentation] Generate a detailed, AI-analyzed release document from git history over a time range or custom prompt. Dumps git artifacts to external files first to prevent context loss, then analyzes themes across hooks, skills, agents, workflows, and principles.'
+description: '[Documentation] Use when you need to generate a detailed, AI-analyzed release document from git history over a time range or custom prompt.'
 triggers:
     - release doc
     - release document

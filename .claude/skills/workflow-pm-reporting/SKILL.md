@@ -1,7 +1,7 @@
 ---
 name: workflow-pm-reporting
 version: 1.0.0
-description: '[Workflow] Trigger PM Reporting workflow — pm workflow: generate status report and dependency analysis.'
+description: '[Workflow] Use when activating the PM Reporting workflow for pm workflow: generate status report and dependency analysis.'
 disable-model-invocation: true
 ---
 

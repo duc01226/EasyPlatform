@@ -1,7 +1,7 @@
 ---
 name: skill-optimize
 version: 2.0.0
-description: '[Skill Management] Optimize an existing agent skill for token efficiency, attention anchoring, and SYNC protocol compliance. Triggers on: optimize skill, improve skill, refactor skill, skill too long.'
+description: '[Skill Management] Use when you need optimize an existing agent skill for token efficiency, attention anchoring, and SYNC protocol compliance.'
 disable-model-invocation: true
 ---
 

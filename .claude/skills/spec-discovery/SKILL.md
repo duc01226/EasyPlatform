@@ -2,7 +2,7 @@
 name: spec-discovery
 version: 3.3.0
 last_reviewed: 2026-04-21
-description: 'Reverse-engineer a complete, tech-agnostic specification bundle from an existing codebase. Modes: init (full extraction → stable docs/specs/{app-bucket}/{system-name}/), update (git diff → re-extract impacted modules/phases only), audit (staleness detection → SPEC-AUDIT-{date}.md). Produces domain model, business rules, API contracts, integration events, user journeys, Mermaid ERDs, and per-module 17-section README summaries. Output path stable (no date prefix) — change history in SPEC-CHANGELOG.md.'
+description: '[General] Use when you need reverse-engineer a complete, tech-agnostic specification bundle from an existing codebase.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

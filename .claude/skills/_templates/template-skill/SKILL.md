@@ -1,7 +1,7 @@
 ---
 name: template-skill
 version: 1.0.0
-description: '[Category] Replace with description and trigger keywords.'
+description: '[Category] Use when defining the standard skill description pattern.'
 ---
 
 ## Quick Summary

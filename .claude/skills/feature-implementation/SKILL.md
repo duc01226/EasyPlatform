@@ -1,7 +1,7 @@
 ---
 name: feature-implementation
 version: 2.0.1
-description: '[Implementation] Use when the user asks to implement a new feature, enhancement, add functionality, build something new, or create new capabilities. Triggers on keywords like "implement", "add feature", "build", "create new", "develop", "enhancement".'
+description: '[Implementation] Use when the user asks to implement a new feature, enhancement, add functionality, build something new, or create new capabilities.'
 ---
 
 ## Quick Summary

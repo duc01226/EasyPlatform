@@ -1,7 +1,7 @@
 ---
 name: changelog
 version: 1.1.0
-description: '[Documentation] Generate or update changelog entries. Use for release changelogs, version history, and change tracking across any project.'
+description: '[Documentation] Use when you need to generate or update changelog entries.'
 triggers:
     - changelog
     - update changelog

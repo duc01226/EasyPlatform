@@ -1,7 +1,7 @@
 ---
 name: workflow-security-audit
 version: 1.0.0
-description: '[Workflow] Trigger Security Audit workflow — security review and vulnerability assessment.'
+description: '[Workflow] Use when activating the Security Audit workflow for security review and vulnerability assessment.'
 disable-model-invocation: true
 ---
 

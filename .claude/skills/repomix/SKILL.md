@@ -1,7 +1,7 @@
 ---
 name: repomix
 version: 1.0.0
-description: '[AI & Tools] Package code repositories into single AI-friendly files using Repomix with customizable patterns and multiple output formats. Triggers: repomix, package repo, repository context, codebase snapshot, repo pack.'
+description: '[AI & Tools] Use when you need to package code repositories into single AI-friendly files using Repomix with customizable patterns and multiple output formats.'
 disable-model-invocation: true
 ---
 

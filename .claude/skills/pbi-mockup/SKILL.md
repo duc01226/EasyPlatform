@@ -1,7 +1,7 @@
 ---
 name: pbi-mockup
 version: 1.0.0
-description: "[Project Management] Generate an HTML mockup report from PBI and story artifacts. Creates a self-contained HTML file visualizing the UI described in the PBI, styled to match the project's design system. Use after PBI/story finalization, before implementation. Triggers on 'mockup', 'html mockup', 'pbi mockup', 'visual mockup', 'generate mockup'."
+description: '[Project Management] Use when you need to generate an HTML mockup report from PBI and story artifacts.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

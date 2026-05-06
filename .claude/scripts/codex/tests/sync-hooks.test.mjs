@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(thisDir, "..", "..", "..");
-const syncHooksScript = path.join(repoRoot, "scripts", "codex", "sync-hooks.mjs");
+const repoRoot = path.resolve(thisDir, "..", "..", "..", "..");
+const syncHooksScript = path.join(repoRoot, ".claude", "scripts", "codex", "sync-hooks.mjs");
 
 test("sync-hooks preserves non-bash and prompt-event matchers", async () => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "codex-sync-hooks-"));

@@ -1,7 +1,7 @@
 ---
 name: recover
 version: 1.0.0
-description: '[Utilities] Restore workflow context from checkpoint after session loss'
+description: '[Utilities] Use when you need to restore workflow context from checkpoint after session loss.'
 disable-model-invocation: false
 ---
 

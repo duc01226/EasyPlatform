@@ -1,7 +1,7 @@
 ---
 name: workflow-ba-dev-handoff
 version: 1.0.0
-description: '[Workflow] Trigger BA to Dev Handoff workflow — ba hands off refined stories to development team with quality gate.'
+description: '[Workflow] Use when activating the BA to Dev Handoff workflow for ba hands off refined stories to development team with quality gate.'
 disable-model-invocation: true
 ---
 

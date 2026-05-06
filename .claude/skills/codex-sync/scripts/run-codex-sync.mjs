@@ -1,21 +1,23 @@
 #!/usr/bin/env node
 
-// Standalone orchestrator equivalent to `npm run codex:sync` (package.json:25).
+// Standalone orchestrator equivalent to `npm run codex:sync`.
 // Runs all 7 stages sequentially, fails fast on first non-zero exit.
 // No npm dependency — pure node + spawned subprocesses.
 
 import { spawn } from "node:child_process";
-import { readdir, stat } from "node:fs/promises";
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 import url from "node:url";
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 const rootDir = path.resolve(here, "..", "..", "..", "..");
+const sourceScriptsDir = path.join(rootDir, ".claude", "scripts", "codex");
 
 const args = process.argv.slice(2);
 const verbose = args.includes("--verbose") || args.includes("-v");
 const skipSet = parseListFlag("--skip");
 const onlySet = parseListFlag("--only");
+const migrateFlags = args.filter(arg => arg === "--copy-skills");
 
 function parseListFlag(name) {
     const arg = args.find(a => a.startsWith(`${name}=`));
@@ -24,25 +26,25 @@ function parseListFlag(name) {
 }
 
 async function listTestFiles() {
-    const dir = path.join(rootDir, "scripts", "codex", "tests");
+    const dir = path.join(sourceScriptsDir, "tests");
     try {
         const entries = await readdir(dir);
         return entries
             .filter(e => e.endsWith(".test.mjs"))
-            .map(e => path.join("scripts", "codex", "tests", e));
+            .map(e => path.join(dir, e));
     } catch {
         return [];
     }
 }
 
 const stages = [
-    { id: "migrate",  label: "migrate",          cmd: "node", args: ["scripts/codex/migrate-claude-to-codex.mjs"] },
-    { id: "hooks",    label: "sync-hooks",       cmd: "node", args: ["scripts/codex/sync-hooks.mjs"] },
-    { id: "context",  label: "sync-context",     cmd: "node", args: ["scripts/codex/sync-context-workflows.mjs"] },
+    { id: "migrate",  label: "migrate",          cmd: "node", args: [path.join(sourceScriptsDir, "migrate-claude-to-codex.mjs"), ...migrateFlags] },
+    { id: "hooks",    label: "sync-hooks",       cmd: "node", args: [path.join(sourceScriptsDir, "sync-hooks.mjs")] },
+    { id: "context",  label: "sync-context",     cmd: "node", args: [path.join(sourceScriptsDir, "sync-context-workflows.mjs")] },
     { id: "tests",    label: "test-tooling",     cmd: "node", argsAsync: async () => ["--test", ...await listTestFiles()] },
-    { id: "wf-cycle", label: "verify-wf-cycle",  cmd: "node", args: ["scripts/codex/verify-workflow-cycle-compliance.mjs"] },
-    { id: "sk-proto", label: "verify-sk-proto",  cmd: "node", args: ["scripts/codex/verify-skill-protocol-compliance.mjs"] },
-    { id: "residue",  label: "verify-residue",   cmd: "node", args: ["scripts/codex/verify-no-project-residue.mjs"] },
+    { id: "wf-cycle", label: "verify-wf-cycle",  cmd: "node", args: [path.join(sourceScriptsDir, "verify-workflow-cycle-compliance.mjs")] },
+    { id: "sk-proto", label: "verify-sk-proto",  cmd: "node", args: [path.join(sourceScriptsDir, "verify-skill-protocol-compliance.mjs")] },
+    { id: "residue",  label: "verify-residue",   cmd: "node", args: [path.join(sourceScriptsDir, "verify-no-project-residue.mjs")] },
 ];
 
 function shouldRun(id) {

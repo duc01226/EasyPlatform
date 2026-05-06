@@ -1,7 +1,7 @@
 ---
 name: mcp-management
 version: 1.0.0
-description: '[AI & Tools] Manage Model Context Protocol (MCP) servers - discover, analyze, and execute tools/prompts/resources from configured MCP servers. Use when working with MCP integrations, need to discover available MCP capabilities, filter MCP tools for specific tasks, execute MCP tools programmatically, access MCP prompts/resources, or implement MCP client functionality. Supports intelligent tool selection, multi-server management, and context-efficient capability discovery.'
+description: '[AI & Tools] Use when discovering, filtering, executing, or integrating MCP tools, prompts, and resources.'
 disable-model-invocation: true
 ---
 

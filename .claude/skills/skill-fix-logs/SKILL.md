@@ -1,7 +1,7 @@
 ---
 name: skill-fix-logs
 version: 2.0.0
-description: '[Skill Management] Fix the agent skill based on `logs.txt` file. Triggers on: fix skill logs, skill error, skill broken, skill not working.'
+description: '[Skill Management] Use when fixing a skill from captured logs.'
 disable-model-invocation: true
 ---
 

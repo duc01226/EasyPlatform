@@ -1,7 +1,7 @@
 ---
 name: review-post-task
 version: 1.2.0
-description: '[Code Quality] Two-pass code review for task completion'
+description: '[Code Quality] Use when you need two-pass code review for task completion.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

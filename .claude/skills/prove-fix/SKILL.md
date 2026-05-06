@@ -1,7 +1,7 @@
 ---
 name: prove-fix
 version: 1.0.0
-description: '[Code Quality] Prove fix correctness with code proof traces, confidence scoring, and stack-trace-style evidence chains. Use after /fix in bugfix workflows.'
+description: '[Code Quality] Use when you need prove fix correctness with code proof traces, confidence scoring, and stack-trace-style evidence chains.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

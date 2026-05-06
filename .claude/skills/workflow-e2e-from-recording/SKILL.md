@@ -1,7 +1,7 @@
 ---
 name: workflow-e2e-from-recording
 version: 1.0.0
-description: '[Workflow] Trigger E2E from Recording workflow — generate playwright e2e tests from chrome devtools recordings.'
+description: '[Workflow] Use when activating the E2E from Recording workflow for generate playwright e2e tests from chrome devtools recordings.'
 disable-model-invocation: true
 ---
 

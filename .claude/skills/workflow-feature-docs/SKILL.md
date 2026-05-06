@@ -1,7 +1,7 @@
 ---
 name: workflow-feature-docs
 version: 1.0.0
-description: '[Workflow] Trigger Business Feature Documentation workflow — business feature documentation with 17-section template enforcement, plan validation, and mandatory test coverage.'
+description: '[Workflow] Use when activating the Business Feature Documentation workflow for 17-section feature docs.'
 disable-model-invocation: true
 ---
 

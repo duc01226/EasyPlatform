@@ -1,7 +1,7 @@
 ---
 name: code-auto
 version: 1.0.0
-description: '[Implementation] [AUTO] Start coding & testing an existing plan (trust me bro)'
+description: '[Implementation] Use when you need [AUTO] Start coding & testing an existing plan.'
 disable-model-invocation: false
 ---
 

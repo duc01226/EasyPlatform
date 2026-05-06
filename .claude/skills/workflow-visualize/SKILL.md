@@ -1,7 +1,7 @@
 ---
 name: workflow-visualize
 version: 1.0.0
-description: '[Workflow] Trigger Visual Diagram workflow — create visual excalidraw diagrams from codebase investigation or web research.'
+description: '[Workflow] Use when activating the Visual Diagram workflow for create visual excalidraw diagrams from codebase investigation or web research.'
 disable-model-invocation: true
 ---
 

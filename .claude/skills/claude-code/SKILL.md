@@ -1,7 +1,7 @@
 ---
 name: claude-code
 version: 2.0.0
-description: '[Utilities] Claude Code CLI setup, configuration, troubleshooting, and feature guidance. Triggers on claude code setup, hook not firing, MCP connection, context limit, skill creation, slash command setup.'
+description: '[Utilities] Use when you need claude Code CLI setup, configuration, troubleshooting, and feature guidance.'
 ---
 
 ## Quick Summary

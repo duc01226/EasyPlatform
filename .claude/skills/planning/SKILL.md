@@ -1,7 +1,7 @@
 ---
 name: planning
 version: 2.0.0
-description: '[Planning] Use when you need to research, analyze, investigate, plan, design, or architect technical solutions. Includes comprehensive research phase with Gemini CLI, WebSearch, and 5-research limit. Triggers on keywords like "research", "analyze", "investigate options", "explore solutions", "compare approaches", "evaluate alternatives", "plan", "design", "architect".'
+description: '[Planning] Use when you need to research, analyze, investigate, plan, design, or architect technical solutions.'
 license: MIT
 ---
 
@@ -1460,7 +1460,7 @@ After creating all phase files, run the **recursive decomposition loop**:
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-    <!-- /SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:plan-quality:reminder -->
 

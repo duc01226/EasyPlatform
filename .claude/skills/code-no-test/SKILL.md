@@ -1,7 +1,7 @@
 ---
 name: code-no-test
 version: 1.0.0
-description: '[Implementation] Start coding an existing plan (no testing)'
+description: '[Implementation] Use when you need to start coding an existing plan (no testing).'
 disable-model-invocation: false
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: design-video
 version: 1.0.0
-description: '[Design] Create a design based on video'
+description: '[Design] Use when you need to create a design based on video.'
 disable-model-invocation: false
 ---
 

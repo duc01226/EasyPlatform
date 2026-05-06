@@ -1,7 +1,7 @@
 ---
 name: retro
 version: 1.0.0
-description: '[Process] Sprint retrospective facilitation. Use at end of sprint to gather feedback and action items.'
+description: '[Process] Use when you need sprint retrospective facilitation.'
 ---
 
 ## Quick Summary

@@ -1,7 +1,7 @@
 ---
 name: workflow-business-evaluation
 version: 1.0.0
-description: '[Workflow] Trigger Business Idea Evaluation workflow — research market, evaluate business idea viability with bmc, financials, risk matrix, and execution plan.'
+description: '[Workflow] Use when activating the Business Idea Evaluation workflow for research market, evaluate business idea viability with bmc, financials, risk matrix, and execution plan.'
 disable-model-invocation: true
 ---
 

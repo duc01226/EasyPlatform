@@ -1,7 +1,7 @@
 ---
 name: ask
 version: 1.0.0
-description: '[Utilities] Answer technical and architectural questions.'
+description: '[Utilities] Use when you need to answer technical and architectural questions.'
 ---
 
 ## Quick Summary

@@ -2,7 +2,7 @@
 name: feature-docs
 version: 4.3.0
 last_reviewed: 2026-04-21
-description: '[Documentation] Create or update business feature documentation. Modes: init (zero-docs → full extraction from source code), update (code change → section-impact sync), audit (staleness detection). Generates 17-section docs with Mermaid ERD, source citations, verified test case evidence. Triggers on: feature docs, business feature documentation, module documentation, document feature, update feature docs.'
+description: '[Documentation] Use when you need to create or update business feature documentation.'
 ---
 
 ## Quick Summary

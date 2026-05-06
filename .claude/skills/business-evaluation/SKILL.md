@@ -1,7 +1,7 @@
 ---
 name: business-evaluation
 version: 1.0.0
-description: '[Content] Evaluate business idea viability: Business Model Canvas, financial projections, risk matrix, go-to-market, execution plan.'
+description: '[Content] Use when you need to evaluate business idea viability: Business Model Canvas, financial projections, risk matrix, go-to-market, execution plan.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

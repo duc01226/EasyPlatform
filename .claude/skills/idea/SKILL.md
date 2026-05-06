@@ -1,7 +1,7 @@
 ---
 name: idea
 version: 1.1.0
-description: '[Project Management] Capture and structure product ideas as backlog artifacts. Use when capturing new ideas, feature requests, or concepts for future refinement. Triggers on keywords like "capture idea", "new idea", "feature idea", "add to backlog", "quick idea".'
+description: '[Project Management] Use when capturing new ideas, feature requests, or concepts for future refinement.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

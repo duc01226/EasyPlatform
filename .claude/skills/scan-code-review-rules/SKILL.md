@@ -1,7 +1,7 @@
 ---
 name: scan-code-review-rules
 version: 2.0.0
-description: '[Documentation] Scan project and populate/sync docs/project-reference/code-review-rules.md with code conventions, anti-patterns, architecture rules, and review checklists.'
+description: '[Documentation] Use when scanning code conventions, anti-patterns, architecture rules, and review checklists.'
 ---
 
 ## Quick Summary

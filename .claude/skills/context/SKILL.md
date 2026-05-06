@@ -1,7 +1,7 @@
 ---
 name: context
 version: 1.0.0
-description: '[Utilities] Load project context for current session'
+description: '[Utilities] Use when you need to load project context for current session.'
 disable-model-invocation: false
 ---
 

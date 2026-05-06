@@ -1,7 +1,7 @@
 ---
 name: performance
 version: 2.0.0
-description: '[Debugging] Analyze and optimize performance bottlenecks'
+description: '[Debugging] Use when you need to analyze and optimize performance bottlenecks.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

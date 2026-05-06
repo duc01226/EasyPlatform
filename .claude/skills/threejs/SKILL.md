@@ -1,6 +1,6 @@
 ---
 name: threejs
-description: 'Build 3D web apps with Three.js (WebGL/WebGPU). 556 searchable examples, 60 API classes, 20 use cases. Actions: create 3D scene, load model, add animation, implement physics, build VR/XR. Topics: GLTF loader, PBR materials, particle effects, shadows, post-processing, compute shaders, TSL. Integrations: WebGPU, physics engines, spatial audio.'
+description: '[General] Use when building 3D web apps with ThreeJS and related WebGL or WebGPU examples.'
 license: MIT
 version: 3.0.0
 argument-hint: '[3D scene or feature]'

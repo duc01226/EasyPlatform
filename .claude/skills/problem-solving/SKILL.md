@@ -1,7 +1,7 @@
 ---
 name: problem-solving
 version: 2.0.0
-description: '[Utilities] Apply systematic problem-solving techniques for complexity spirals (simplification cascades), innovation blocks (collision-zone thinking), recurring patterns (meta-pattern recognition), assumption constraints (inversion exercise), and scale uncertainty (scale game). Triggers: problem-solving, structured thinking, decision framework, simplification cascade, collision-zone thinking, meta-pattern, inversion exercise, scale game.'
+description: '[Utilities] Use when applying structured problem-solving frameworks to complex, blocked, recurring, or uncertain decisions.'
 ---
 
 ## Quick Summary

@@ -2,7 +2,7 @@
 name: scan-ui-system
 version: 2.0.0
 last_reviewed: 2026-04-22
-description: '[Documentation] Orchestrate all UI system scans in parallel: design system + SCSS styling + frontend patterns. Single command to populate all UI-related project reference docs. Use for project onboarding, post-scaffold setup, or periodic refresh.'
+description: '[Documentation] Use when you need orchestrate all UI system scans in parallel: design system + SCSS styling + frontend patterns.'
 ---
 
 ## Quick Summary

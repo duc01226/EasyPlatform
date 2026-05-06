@@ -1,7 +1,7 @@
 ---
 name: skill-create
 version: 3.0.0
-description: '[Skill Management] Create new Claude Code skills or scan/fix invalid skill headers. Triggers on: create skill, new skill, skill schema, scan skills, fix skills, invalid skill, validate skills, skill header.'
+description: '[Skill Management] Use when you need to create new Claude Code skills or scan/fix invalid skill headers.'
 disable-model-invocation: true
 ---
 

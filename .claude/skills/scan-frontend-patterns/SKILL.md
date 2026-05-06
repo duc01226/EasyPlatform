@@ -2,7 +2,7 @@
 name: scan-frontend-patterns
 version: 2.0.0
 last_reviewed: 2026-04-22
-description: '[Documentation] Scan project and populate/sync docs/project-reference/frontend-patterns-reference.md with component base classes, state management, forms, API services, routing, and styling conventions.'
+description: '[Documentation] Use when scanning frontend component, state, form, API, routing, and styling patterns.'
 ---
 
 ## Quick Summary

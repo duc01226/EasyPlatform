@@ -1,6 +1,6 @@
 ---
 name: custom-agent
-description: '[AI & Tools] Create, verify, or enhance Claude Code custom agents (.claude/agents/*.md). Triggers on: create agent, new agent, agent schema, audit agent, verify agent, review agent, enhance agent, refactor agent, agent quality, custom agent.'
+description: '[AI & Tools] Use when you need create, verify, or enhance Claude Code custom agents (Claude Code custom agent files).'
 ---
 
 ## Quick Summary

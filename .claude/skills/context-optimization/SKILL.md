@@ -1,7 +1,7 @@
 ---
 name: context-optimization
 version: 1.0.0
-description: '[Utilities] Use when managing context window usage, compressing long sessions, or optimizing token usage. Triggers on keywords like "context", "memory", "tokens", "compress", "summarize session", "context limit", "optimize context".'
+description: '[Utilities] Use when managing context window usage, compressing long sessions, or optimizing token usage.'
 disable-model-invocation: true
 ---
 

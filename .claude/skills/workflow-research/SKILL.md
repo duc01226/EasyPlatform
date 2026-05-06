@@ -1,7 +1,7 @@
 ---
 name: workflow-research
 version: 1.0.0
-description: '[Workflow] Trigger Research & Synthesis workflow — research a topic, gather web sources, synthesize into structured report.'
+description: '[Workflow] Use when activating the Research & Synthesis workflow for research a topic, gather web sources, synthesize into structured report.'
 disable-model-invocation: true
 ---
 

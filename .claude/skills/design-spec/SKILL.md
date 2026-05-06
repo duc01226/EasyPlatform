@@ -1,7 +1,7 @@
 ---
 name: design-spec
 version: 2.0.0
-description: '[Project Management] Create UI/UX design specifications from requirements, PBIs, or user stories. Produces structured design spec documents with layout, typography, colors, interactions, and responsive breakpoints. Triggers on design spec, design specification, UI specification, component spec, layout spec, wireframe, mockup.'
+description: '[Project Management] Use when you need to create UI/UX design specifications from requirements, PBIs, or user stories.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -244,7 +244,7 @@ For ANY visual input: extract design context FIRST, then proceed to spec generat
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-    <!-- /SYNC:ui-system-context:reminder -->
+      <!-- /SYNC:ui-system-context:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

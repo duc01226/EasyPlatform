@@ -1,7 +1,7 @@
 ---
 name: git-conflict-resolve
 version: 1.0.0
-description: '[Git] Resolve git merge/cherry-pick/rebase conflicts with backup, analysis, and reporting'
+description: '[Git] Use when you need to resolve git merge/cherry-pick/rebase conflicts with backup, analysis, and reporting.'
 disable-model-invocation: false
 ---
 
@@ -269,7 +269,7 @@ Create a comprehensive report at `{REPORT_PATH}` with:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+      <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

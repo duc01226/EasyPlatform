@@ -1,7 +1,7 @@
 ---
 name: review-domain-entities
 version: 1.0.0
-description: '[DDD Quality] Review domain entities and value objects for DDD design quality. Works with any framework/language. Dual mode: scan all entities OR review changed entity files.'
+description: '[DDD Quality] Use when you need to review domain entities and value objects for DDD design quality.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->

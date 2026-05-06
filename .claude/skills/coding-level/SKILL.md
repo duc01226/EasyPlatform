@@ -1,7 +1,7 @@
 ---
 name: coding-level
 version: 1.0.0
-description: '[Utilities] Set coding experience level for tailored explanations'
+description: '[Utilities] Use when you need to set coding experience level for tailored explanations.'
 disable-model-invocation: false
 ---
 

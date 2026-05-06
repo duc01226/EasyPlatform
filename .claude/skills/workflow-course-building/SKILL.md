@@ -1,7 +1,7 @@
 ---
 name: workflow-course-building
 version: 1.0.0
-description: '[Workflow] Trigger Course Material Builder workflow — research a topic and build structured learning/teaching course material with bloom taxonomy objectives.'
+description: '[Workflow] Use when activating the Course Material Builder workflow for research a topic and build structured learning/teaching course material with bloom taxonomy objectives.'
 disable-model-invocation: true
 ---
 

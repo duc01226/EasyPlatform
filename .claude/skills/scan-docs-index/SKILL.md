@@ -1,7 +1,7 @@
 ---
 name: scan-docs-index
 version: 2.0.0
-description: '[Documentation] Scan project and populate/sync docs/project-reference/docs-index-reference.md with documentation tree, file counts, category breakdown, doc relationships, and lookup table.'
+description: '[Documentation] Use when scanning documentation structure, counts, relationships, categories, and lookup tables.'
 ---
 
 ## Quick Summary

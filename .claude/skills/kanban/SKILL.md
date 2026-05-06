@@ -1,7 +1,7 @@
 ---
 name: kanban
 version: 1.0.0
-description: '[Project Management] AI agent orchestration board (Coming Soon)'
+description: '[Project Management] Use when you need aI agent orchestration board (Coming Soon).'
 disable-model-invocation: false
 ---
 

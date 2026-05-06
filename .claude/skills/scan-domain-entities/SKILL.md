@@ -1,7 +1,7 @@
 ---
 name: scan-domain-entities
 version: 2.0.0
-description: '[Documentation] Scan project and populate/sync docs/project-reference/domain-entities-reference.md with domain entities, data models, DTOs, aggregate boundaries, cross-service entity sync, and ER diagrams.'
+description: '[Documentation] Use when scanning domain entities, data models, DTOs, aggregate boundaries, sync patterns, and ER diagrams.'
 ---
 
 ## Quick Summary

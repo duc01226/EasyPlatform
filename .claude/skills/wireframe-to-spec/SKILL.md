@@ -1,7 +1,7 @@
 ---
 name: wireframe-to-spec
 version: 1.0.0
-description: '[Frontend] Convert hand-drawn wireframes, digital wireframes, or UI sketches into structured design specifications. Accepts image inputs and produces ui-wireframe-protocol-formatted specs. Triggers on wireframe, sketch, hand-drawn, mockup image, wireframe to spec, sketch to code.'
+description: '[Frontend] Use when you need to convert hand-drawn wireframes, digital wireframes, or UI sketches into structured design specifications.'
 ---
 
 ## Quick Summary

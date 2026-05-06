@@ -1,6 +1,6 @@
 ---
 name: llm-council
-description: "[Decision Support] Run an irreversible, high-stakes decision through a council of 5 adversarial AI advisors who independently analyze, peer-review anonymously, and synthesize a final verdict. Expensive: 11 sub-agent calls; reserve for costly wrong decisions. Triggers: 'council this', 'run the council', 'war room this', 'pressure-test this', 'stress-test this', 'debate this'. Also use for real multi-option hard-to-reverse choices like 'should I X or Y', 'which option', 'is this the right move', or 'I'm torn between'. Do not trigger on simple facts, yes/no questions, single-option validation, plan/PBI reviews, reversible choices, or issues decidable with one grep. Decision ladder: /why-review → /plan-validate → /llm-council."
+description: '[Decision Support] Use when pressure-testing irreversible, high-stakes decisions with adversarial AI advisors.'
 ---
 
 > **[IMPORTANT]** MUST ATTENTION use council only for multi-option, hard-to-reverse, high-stakes decisions. NEVER council trivial, factual, reversible, or single-option questions.

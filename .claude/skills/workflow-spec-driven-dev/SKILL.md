@@ -2,7 +2,7 @@
 name: workflow-spec-driven-dev
 version: 2.1.0
 last_reviewed: 2026-04-21
-description: '[Workflow] Unified spec-driven development workflow — maintains both engineering spec bundle (docs/specs/{app-bucket}/{system-name}/ — directories may also be flat system folders depending on host project) and business feature docs (docs/business-features/) in sync. Modes: init-full (zero → both layers), update (code change → incremental sync both layers), audit (staleness check both layers). Replaces and merges workflow-spec-discovery + standalone feature-docs init. Use for: initial spec generation, ongoing spec maintenance, quarterly spec audits, tech migration specs, onboarding, compliance documentation, clone/fork briefs.'
+description: '[Workflow] Use when activating spec-driven development to keep engineering specs and business docs synchronized.'
 disable-model-invocation: true
 ---
 

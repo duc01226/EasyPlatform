@@ -1,7 +1,7 @@
 ---
 name: workflow-documentation
 version: 1.0.0
-description: '[Workflow] Trigger Documentation Update workflow — documentation creation and update workflow with plan validation.'
+description: '[Workflow] Use when activating the Documentation Update workflow for documentation creation and update workflow with plan validation.'
 disable-model-invocation: true
 ---
 

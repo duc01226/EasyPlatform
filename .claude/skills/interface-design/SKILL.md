@@ -1,7 +1,7 @@
 ---
 name: interface-design
 version: 1.0.0
-description: '[Frontend] Interface design for product UIs — dashboards, admin panels, SaaS apps, tools. Craft-first methodology that fights AI defaults. NOT for marketing (landing pages, campaigns — use frontend-design).'
+description: '[Frontend] Use when you need interface design for product UIs — dashboards, admin panels, SaaS apps, tools.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
