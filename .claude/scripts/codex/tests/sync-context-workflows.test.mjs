@@ -58,8 +58,27 @@ test("sync-context-workflows mirrors subagent authorization into AGENTS.md", asy
       "utf8"
     );
 
+    await fs.writeFile(
+      path.join(tempRoot, "CLAUDE.md"),
+      ["# Claude Source Instructions", "", "Use /test from the Claude source instructions.", ""].join("\n"),
+      "utf8"
+    );
+
     await fs.writeFile(path.join(tempRoot, ".codex", "CODEX_CONTEXT.md"), "# Existing Context\n", "utf8");
-    await fs.writeFile(path.join(tempRoot, "AGENTS.md"), "# Codex Project Instructions\n", "utf8");
+    await fs.writeFile(
+      path.join(tempRoot, "AGENTS.md"),
+      [
+        "# Codex Project Instructions",
+        "",
+        "<!-- CLAUDE-MERGE:START -->",
+        "## CLAUDE.md (Prompt-Enhanced Snapshot)",
+        "",
+        "Legacy generated instructions.",
+        "<!-- CLAUDE-MERGE:END -->",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
 
     await execFileAsync(process.execPath, [syncContextScript], { cwd: tempRoot });
 
@@ -67,9 +86,18 @@ test("sync-context-workflows mirrors subagent authorization into AGENTS.md", asy
     const agentsText = await fs.readFile(path.join(tempRoot, "AGENTS.md"), "utf8");
 
     assert.match(contextText, new RegExp(subagentAuthorizationSnippet.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(contextText, /Which workflow do you want to activate\?/);
+    assert.doesNotMatch(contextText, /Confirm First:/);
+    assert.doesNotMatch(contextText, /if workflow requires confirmation or ambiguity exists/);
     assert.match(agentsText, new RegExp(subagentAuthorizationSnippet.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(agentsText, /<!-- CLAUDE-MIRROR:START -->/);
+    assert.match(agentsText, /# Claude Source Instructions/);
+    assert.match(agentsText, /Use \$test from the Claude source instructions\./);
     assert.match(agentsText, /<!-- CODEX-CONTEXT-MIRROR:START -->/);
     assert.match(agentsText, /Use \$test for local test execution\./);
+    assert.ok(agentsText.indexOf("<!-- CLAUDE-MIRROR:START -->") < agentsText.indexOf("<!-- CODEX-CONTEXT-MIRROR:START -->"));
+    assert.doesNotMatch(agentsText, /<!-- CLAUDE-MERGE:START -->/);
+    assert.doesNotMatch(agentsText, /Legacy generated instructions\./);
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
   }
@@ -126,9 +154,15 @@ test("sync-context-workflows creates Codex context and AGENTS when both are miss
     assert.match(contextText, /^<!-- PROMPT-PROTOCOLS:START -->/);
     assert.match(contextText, /# Codex Context/);
     assert.match(agentsText, /# Codex Project Instructions/);
+    assert.doesNotMatch(agentsText, /<!-- CLAUDE-MIRROR:START -->/);
     assert.match(agentsText, /<!-- CODEX-CONTEXT-MIRROR:START -->/);
     assert.match(agentsText, /Use \$test for local test execution\./);
+    assert.doesNotMatch(agentsText, /Confirm First:/);
     assert.equal(await fs.access(path.join(tempRoot, "scripts")).then(() => true, () => false), false);
+
+    await execFileAsync(process.execPath, [syncContextScript], { cwd: tempRoot });
+    const agentsTextAfterSecondRun = await fs.readFile(path.join(tempRoot, "AGENTS.md"), "utf8");
+    assert.equal(agentsTextAfterSecondRun, agentsText);
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
   }

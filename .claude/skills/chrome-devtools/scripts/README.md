@@ -32,16 +32,19 @@ cd $SKILL_DIR/.claude/skills/chrome-devtools/scripts
 ### Manual Installation
 
 **Linux/WSL** - Install system dependencies first:
+
 ```bash
 ./install-deps.sh  # Auto-detects OS (Ubuntu, Debian, Fedora, etc.)
 ```
 
 Or manually:
+
 ```bash
 sudo apt-get install -y libnss3 libnspr4 libasound2t64 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1
 ```
 
 **All platforms** - Install Node dependencies:
+
 ```bash
 npm install
 ```
@@ -51,9 +54,11 @@ npm install
 **CRITICAL**: Always check `pwd` before running scripts.
 
 ### inject-auth.js
+
 Inject authentication (cookies, tokens, storage) for testing protected routes.
 
 **Workflow for testing protected routes:**
+
 1. User manually logs into the site in their browser
 2. User extracts cookies/tokens from browser DevTools (Application tab)
 3. Run inject-auth.js to inject auth into puppeteer session
@@ -83,6 +88,7 @@ node inject-auth.js --url https://example.com --cookies '[]' --clear true
 ```
 
 Options:
+
 - `--cookies '<json>'` - JSON array of cookie objects (name, value, domain required)
 - `--token '<token>'` - Bearer token to inject
 - `--token-key '<key>'` - localStorage key for token (default: access_token)
@@ -95,6 +101,7 @@ Options:
 **Session persistence:** Auth is saved to `.auth-session.json` (valid 24h) and automatically applied by subsequent script runs until `--clear true` is used or browser closes.
 
 ### navigate.js
+
 Navigate to a URL.
 
 ```bash
@@ -102,6 +109,7 @@ node navigate.js --url https://example.com [--wait-until networkidle2] [--timeou
 ```
 
 ### screenshot.js
+
 Take a screenshot with automatic compression.
 
 **Important**: Always save screenshots to `./docs/screenshots` directory.
@@ -110,17 +118,17 @@ Take a screenshot with automatic compression.
 node screenshot.js --output screenshot.png [--url https://example.com] [--full-page true] [--selector .element] [--max-size 5] [--no-compress]
 ```
 
-**Automatic Compression**: Screenshots >5MB are automatically compressed using ImageMagick to ensure compatibility with Gemini API and Claude Code. Install ImageMagick for this feature:
-- macOS: `brew install imagemagick`
-- Linux: `sudo apt-get install imagemagick`
+**Automatic Compression**: Screenshots >5MB are automatically compressed using Sharp to ensure compatibility with Gemini API and Claude Code. Run `npm install` in this scripts directory to install Sharp from `package.json`.
 
 Options:
+
 - `--max-size N` - Custom size threshold in MB (default: 5)
 - `--no-compress` - Disable automatic compression
 - `--format png|jpeg` - Output format (default: png)
 - `--quality N` - JPEG quality 0-100 (default: auto)
 
 ### click.js
+
 Click an element.
 
 ```bash
@@ -128,6 +136,7 @@ node click.js --selector ".button" [--url https://example.com] [--wait-for ".res
 ```
 
 ### fill.js
+
 Fill form fields.
 
 ```bash
@@ -135,6 +144,7 @@ node fill.js --selector "#input" --value "text" [--url https://example.com] [--c
 ```
 
 ### evaluate.js
+
 Execute JavaScript in page context.
 
 ```bash
@@ -142,6 +152,7 @@ node evaluate.js --script "document.title" [--url https://example.com]
 ```
 
 ### snapshot.js
+
 Get DOM snapshot with interactive elements.
 
 ```bash
@@ -149,6 +160,7 @@ node snapshot.js [--url https://example.com] [--output snapshot.json]
 ```
 
 ### console.js
+
 Monitor console messages.
 
 ```bash
@@ -156,6 +168,7 @@ node console.js --url https://example.com [--types error,warn] [--duration 5000]
 ```
 
 ### network.js
+
 Monitor network requests.
 
 ```bash
@@ -163,6 +176,7 @@ node network.js --url https://example.com [--types xhr,fetch] [--output requests
 ```
 
 ### performance.js
+
 Measure performance metrics and record trace.
 
 ```bash
@@ -241,6 +255,7 @@ node snapshot.js --url https://example.com | jq '.elements[] | select(.tagName==
 ### Security
 
 XPath selectors are validated to prevent injection attacks. The following patterns are blocked:
+
 - `javascript:`
 - `<script`
 - `onerror=`, `onload=`, `onclick=`
@@ -265,8 +280,8 @@ Errors are output to stderr:
 
 ```json
 {
-  "success": false,
-  "error": "Error message",
-  "stack": "..."
+    "success": false,
+    "error": "Error message",
+    "stack": "..."
 }
 ```

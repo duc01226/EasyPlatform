@@ -5,7 +5,7 @@ import { easeOut, staggeredEaseOut } from '../utils/animations';
 const SCRIPT_LINES = [
     'The architecture has 6 layers and dependencies flow inward only — just like Clean Architecture. At the base is Configuration: a single project-config.json that makes the entire framework project-agnostic.',
     'The Enforcement Layer is the backbone: ~37 hooks fire on every session start, file edit, and tool call — injecting context, blocking unsafe actions, and enforcing task planning before any code is touched.',
-    "Here's what makes this powerful: swap project-config.json to point at any codebase and all 258 skills, 48 workflows, and 28 agents instantly adapt — zero reconfiguration of the intelligence layers above."
+    "Here's what makes this powerful: swap project-config.json to point at any codebase and all 272 skills, 48 workflows, and 28 agents instantly adapt — zero reconfiguration of the intelligence layers above."
 ];
 
 const LAYERS = [

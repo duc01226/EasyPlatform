@@ -25,6 +25,7 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Always read:**
 
+- `docs/project-config.json` (project-specific paths, commands, modules, and workflow/test settings)
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
@@ -101,7 +102,11 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 | Init | Target doc doesn't exist or placeholder | Full scan, create all sections                         |
 | Sync | Target doc has real content             | Diff scan — check for new base classes, helper changes |
 
-5. Load test project paths from `docs/project-config.json` `integrationTesting` section if available.
+5. Load test project paths and run prerequisites from `docs/project-config.json` → `integrationTestVerify` if available:
+    - `referenceDocs[]` — read these project-specific setup docs before documenting how verification should run
+    - `runScript` / `startupScript` — inspect to capture Docker/system startup behavior and supported arguments
+    - `systemCheckCommand` — document what readiness check must pass before direct test commands
+    - `quickRunCommand`, `testProjectPattern`, `testProjects[]` — use as the source of truth for runner commands and project discovery
 
 **Evidence gate:** Confidence <60% on framework detection → report uncertainty, ask user before proceeding.
 

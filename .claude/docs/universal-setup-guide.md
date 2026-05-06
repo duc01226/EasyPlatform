@@ -17,7 +17,7 @@ cp -r .claude/ /path/to/your-project/.claude/
 
 Copy the entire `.claude/` directory to your target project. This includes:
 
-- `skills/` — 258 skills for planning, implementation, review, testing, etc.
+- `skills/` — 272 skills for planning, implementation, review, testing, etc.
 - `agents/` — 28 specialized agents (code-reviewer, debugger, architect, etc.)
 - `hooks/` — 53 hook files with context injection, workflow routing, enforcement
 - `workflows/` — 32 workflow definitions (feature, bugfix, refactor, etc.)

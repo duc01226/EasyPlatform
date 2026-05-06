@@ -81,12 +81,15 @@ async function injectAuth() {
             injected: []
         };
 
+        let normalizedCookies = null;
+        let tokenStorageData = null;
+
         // Inject cookies
         if (args.cookies) {
             const cookies = parseCookies(args.cookies);
 
             // Validate and normalize cookies
-            const normalizedCookies = cookies.map(cookie => {
+            normalizedCookies = cookies.map(cookie => {
                 if (!cookie.name || !cookie.value) {
                     throw new Error(`Cookie must have 'name' and 'value' properties`);
                 }
@@ -121,6 +124,7 @@ async function injectAuth() {
         if (args.token) {
             const tokenKey = args['token-key'] || 'access_token';
             const token = args.token.startsWith('Bearer ') ? args.token.slice(7) : args.token;
+            tokenStorageData = { [tokenKey]: token };
 
             await page.evaluate(
                 (key, value) => {
@@ -189,11 +193,17 @@ async function injectAuth() {
         // Save auth session to file for persistence across script executions
         const authSessionData = {};
 
-        if (args.cookies) {
-            authSessionData.cookies = parseCookies(args.cookies);
+        if (normalizedCookies) {
+            authSessionData.cookies = normalizedCookies;
+        }
+        if (tokenStorageData) {
+            authSessionData.localStorage = tokenStorageData;
         }
         if (args['local-storage']) {
-            authSessionData.localStorage = parseStorage(args['local-storage']);
+            authSessionData.localStorage = {
+                ...(authSessionData.localStorage || {}),
+                ...parseStorage(args['local-storage'])
+            };
         }
         if (args['session-storage']) {
             authSessionData.sessionStorage = parseStorage(args['session-storage']);

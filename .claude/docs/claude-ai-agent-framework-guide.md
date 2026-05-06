@@ -41,7 +41,7 @@
 
 ## 1. Executive Summary
 
-This framework wraps Claude Code in a **3-layer framework** — **~40 hooks** (56 files), **258 skills**, **48 workflows**, and **28 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
+This framework wraps Claude Code in a **3-layer framework** — **~40 hooks** (56 files), **272 skills**, **48 workflows**, and **28 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
 
 **Core insight:** LLMs forget, hallucinate, and drift. Instead of hoping the AI "just gets it right," this framework uses **programmatic guardrails** (hooks) and **prompt-engineered protocols** (skills/workflows) to enforce correctness at every stage.
 
@@ -461,7 +461,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate
 2. Declare confidence level...
 ```
 
-### 5.2 Skill Categories (258 skills)
+### 5.2 Skill Categories (272 skills)
 
 ```mermaid
 mindmap
@@ -3417,7 +3417,7 @@ flowchart TB
 | **Context injection at decision points**       | 10 context injector hooks, auto-triggered by file path        | Hooks     |
 | **Reminder rules prevent forgetting**          | 3 UserPromptSubmit hooks re-inject on every prompt            | Hooks     |
 | **Generic & configurable via config**          | project-config.json drives all context injection              | Config    |
-| **Prompt engineering quality**                 | 258 skills with YAML frontmatter + behavior protocols         | Skills    |
+| **Prompt engineering quality**                 | 272 skills with YAML frontmatter + behavior protocols         | Skills    |
 | **Confirm workflow before acting**             | workflow-router.cjs → AskUserQuestion → confirm               | Workflows |
 | **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation       | Skills    |
 | **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill         | Skills    |
@@ -3475,7 +3475,7 @@ flowchart TB
 │   │   ├── todo-state.cjs
 │   │   └── ...
 │   └── tests/ ────────── Test suites
-├── skills/ ────────────── 255 skill directories
+├── skills/ ────────────── 277 skill directories
 │   ├── {skill-name}/SKILL.md
 │   ├── shared/ ───────── 25 shared protocols + sync-inline-versions.md (canonical)
 │   └── _templates/ ───── Skill scaffolding
@@ -3708,7 +3708,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 
 ### The Result
 
-**~40 hooks** (56 files), **258 skills**, **48 workflows**, and **28 specialized agents** working in concert to deliver:
+**~40 hooks** (56 files), **272 skills**, **48 workflows**, and **28 specialized agents** working in concert to deliver:
 
 - **Fewer hallucinations** — Evidence gates and proof traces catch AI fabrications before they reach files
 - **Better code quality** — Pattern injection ensures AI follows project conventions, not generic training data
@@ -3716,7 +3716,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 - **Consistent adherence** — Programmatic enforcement means quality doesn't degrade in long sessions or complex tasks
 - **Recovery from amnesia** — External state persistence means context compaction doesn't lose progress
 - **Persistent learning** — Mistakes captured once prevent recurrence across all future sessions
-- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 258 skills (Section 8.15)
+- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 272 skills (Section 8.15)
 - **Context engineering precision** — JIT injection, dedup, external memory, budget management, and recovery keep the AI informed without overwhelming its context window (Section 8.16)
 
 The framework is **generic and reusable**. Replace `project-config.json` with your project's specifics, and the entire system adapts — different tech stack, different patterns, different conventions, same quality enforcement.

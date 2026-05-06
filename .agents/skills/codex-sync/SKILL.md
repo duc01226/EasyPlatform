@@ -26,6 +26,7 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Always read:**
 
+- `docs/project-config.json` (project-specific paths, commands, modules, and workflow/test settings)
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
@@ -46,7 +47,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** Run full Codex mirror sync standalone — equivalent to `npm run codex:sync` without `package.json` or `npm`.
 
-Also bootstraps team-wide Codex completion notifications by copying the portable `.claude/scripts/codex/codex-notify.mjs` helper into `.codex/scripts/codex/` and upserting notification keys into `.codex/config.toml`.
+Also bootstraps team-wide Codex completion notifications by copying the portable `.claude/scripts/codex/codex-notify.mjs` helper into `.codex/scripts/codex/` and upserting notification plus TUI status-line keys into `.codex/config.toml`.
 
 **Workflow:**
 
@@ -58,7 +59,9 @@ Also bootstraps team-wide Codex completion notifications by copying the portable
 
 - MUST run all 7 stages in order — orchestrator fails fast on first non-zero exit
 - NEVER edit `.agents/skills/codex-sync/**` (auto-mirror) — edit `.claude/skills/codex-sync/**` source instead
-- Stages 1-3 mutate `.codex/`, `AGENTS.md`; stages 4-7 are read-only verifiers
+- Stages 1-3 mutate `.agents/skills/`, `.codex/`, `AGENTS.md`; stages 4-7 are read-only verifiers
+- Stage 1 upserts `[tui].status_line` to show model+reasoning, current directory, project root, context used, five-hour limit, and weekly limit by default
+- Stage 3 mirrors full `CLAUDE.md` into `AGENTS.md`, then appends the generated Codex hook/context mirror so Codex has both source instructions and hookless parity context
 - No npm dependency — pure `node` + spawned subprocesses
 - Idempotent — safe to re-run; second run produces only timestamp diffs
 
@@ -66,15 +69,15 @@ Also bootstraps team-wide Codex completion notifications by copying the portable
 
 7 stages, sequential, matching `npm run codex:sync`:
 
-| #   | Stage    | Script                                                       | Effect                                                                            |
-| --- | -------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| 1   | migrate  | `.claude/scripts/codex/migrate-claude-to-codex.mjs`          | Migrate Claude agents → `.codex/agents/`; setup skills; setup Codex notifications |
-| 2   | hooks    | `.claude/scripts/codex/sync-hooks.mjs`                       | Generate `.codex/hooks.json` + sync report                                        |
-| 3   | context  | `.claude/scripts/codex/sync-context-workflows.mjs`           | Regenerate `.codex/CODEX_CONTEXT.md` + `AGENTS.md`                                |
-| 4   | tests    | `node --test .claude/scripts/codex/tests/*.test.mjs`         | Run codex tooling unit tests                                                      |
-| 5   | wf-cycle | `.claude/scripts/codex/verify-workflow-cycle-compliance.mjs` | Verify workflow sequence cycle compliance                                         |
-| 6   | sk-proto | `.claude/scripts/codex/verify-skill-protocol-compliance.mjs` | Verify skill strict-execution-contract                                            |
-| 7   | residue  | `.claude/scripts/codex/verify-no-project-residue.mjs`        | Verify no project residue in generated artifacts                                  |
+| #   | Stage    | Script                                                       | Effect                                                                                                 |
+| --- | -------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| 1   | migrate  | `.claude/scripts/codex/migrate-claude-to-codex.mjs`          | Migrate Claude agents → `.codex/agents/`; mirror skills → `.agents/skills/`; setup Codex notifications |
+| 2   | hooks    | `.claude/scripts/codex/sync-hooks.mjs`                       | Generate `.codex/hooks.json` + sync report                                                             |
+| 3   | context  | `.claude/scripts/codex/sync-context-workflows.mjs`           | Regenerate `.codex/CODEX_CONTEXT.md` + `AGENTS.md`                                                     |
+| 4   | tests    | `node --test .claude/scripts/codex/tests/*.test.mjs`         | Run codex tooling unit tests                                                                           |
+| 5   | wf-cycle | `.claude/scripts/codex/verify-workflow-cycle-compliance.mjs` | Verify workflow sequence cycle compliance                                                              |
+| 6   | sk-proto | `.claude/scripts/codex/verify-skill-protocol-compliance.mjs` | Verify skill strict-execution-contract                                                                 |
+| 7   | residue  | `.claude/scripts/codex/verify-no-project-residue.mjs`        | Verify no project residue in generated artifacts                                                       |
 
 ## Usage
 
@@ -102,6 +105,8 @@ node .claude/skills/codex-sync/scripts/run-codex-sync.mjs --skip=migrate,hooks
 **MUST ATTENTION** invoke ONLY when user explicitly requests codex sync — never auto-invoke
 **MUST ATTENTION** edit source `.claude/skills/codex-sync/**`, NEVER the `.agents/skills/codex-sync/**` mirror
 **MUST ATTENTION** keep `.codex/scripts/codex/codex-notify.mjs` generated from `.claude/scripts/codex/codex-notify.mjs`; edit the `.claude` source first
+**MUST ATTENTION** keep Codex config upserts surgical; preserve unrelated `.codex/config.toml` keys and tables while updating the managed notification/status-line keys
+**MUST ATTENTION** keep `AGENTS.md` sync comprehensive; mirror full `CLAUDE.md` plus generated hook/context blocks, and preserve unmanaged `AGENTS.md` preface text
 **MUST ATTENTION** orchestrator fails fast — re-run single failing stage with `--only=<id> --verbose` to debug
 **MUST ATTENTION** working directory auto-resolves to repo root from script path — do not pass `--cwd`
 **MUST ATTENTION** stages 1-3 mutate; stages 4-7 verify only — use `--only=` for non-destructive validation

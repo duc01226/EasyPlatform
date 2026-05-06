@@ -3,7 +3,7 @@ import { C, ProgressBar, ChapterBadge, CodeBlock, ScriptBar } from '../component
 import { easeOut, staggeredEaseOut } from '../utils/animations';
 
 const SCRIPT_LINES = [
-    'A skill is a Markdown file with YAML frontmatter that declares its name, version, and allowed tools — restricting what Claude can do while that skill runs. 258 skills across 12 categories cover every development stage, from planning and research to architecture review and release documentation.',
+    'A skill is a Markdown file with YAML frontmatter that declares its name, version, and allowed tools — restricting what Claude can do while that skill runs. 272 skills across 12 categories cover every development stage, from planning and research to architecture review and release documentation.',
     'The confidence gate is what prevents hallucination at the skill level. Every skill enforces: 95%+ = recommend freely, 80-94% = recommend with caveats, 60-79% = proceed cautiously, under 60% = STOP and gather more evidence before acting. This threshold is a protocol, not a suggestion.',
     'The 25 shared protocols are physically inlined into each skill file via SYNC:tag blocks. This is a deliberate architectural choice: protocols behind file references get skipped when context is tight, but inlined protocols are always present. AI compliance increases ~40% compared to file references.'
 ];

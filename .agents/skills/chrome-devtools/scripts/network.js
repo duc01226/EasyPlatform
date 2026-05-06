@@ -3,7 +3,7 @@
  * Monitor network requests
  * Usage: node network.js --url https://example.com [--types xhr,fetch] [--output requests.json]
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 import fs from 'fs/promises';
 
 async function monitorNetwork() {
@@ -63,7 +63,7 @@ async function monitorNetwork() {
         });
 
         // Navigate
-        await page.goto(args.url, {
+        await navigateWithAuth(page, args.url, {
             waitUntil: args['wait-until'] || 'networkidle2'
         });
 

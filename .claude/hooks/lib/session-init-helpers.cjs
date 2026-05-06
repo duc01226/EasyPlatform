@@ -80,6 +80,7 @@ const SKELETON = {
     },
     integrationTestVerify: {
         guidance: '',
+        referenceDocs: [],
         quickRunCommand: '',
         testProjectPattern: '',
         testProjects: [],

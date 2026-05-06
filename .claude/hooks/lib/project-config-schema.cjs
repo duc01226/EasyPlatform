@@ -370,6 +370,7 @@ const SCHEMA = {
         required: false,
         properties: {
             guidance: { type: 'string', required: false },
+            referenceDocs: { type: 'array', required: false, itemType: 'string' },
             runScript: { type: 'string', required: false },
             startupScript: { type: 'string', required: false },
             quickRunCommand: { type: 'string', required: false },
@@ -472,6 +473,13 @@ function validateField(value, fieldSchema, path, errors, warnings) {
             if (!Array.isArray(value)) {
                 errors.push(`${path}: expected array, got ${typeof value}`);
                 return;
+            }
+            if (fieldSchema.itemType) {
+                value.forEach((item, i) => {
+                    if (typeof item !== fieldSchema.itemType) {
+                        errors.push(`${path}[${i}]: expected ${fieldSchema.itemType}, got ${typeof item}`);
+                    }
+                });
             }
             if (fieldSchema.itemsAreRegex) {
                 value.forEach((item, i) => {
@@ -660,7 +668,7 @@ function describeField(name, schema, depth, lines) {
         const extra = schema.isRegex ? ', regex' : '';
         lines.push(`${indent}${name} (${schema.type}, ${req}${extra})${depr}`);
     } else if (schema.type === 'array') {
-        const extra = schema.itemsAreRegex ? ' of regexes' : '';
+        const extra = schema.itemsAreRegex ? ' of regexes' : schema.itemType ? ` of ${schema.itemType}s` : '';
         lines.push(`${indent}${name} (array${extra}, ${req})${depr}`);
     } else if (schema.type === 'map') {
         const extra = schema.valuesAreRegex ? ', values are regexes' : '';

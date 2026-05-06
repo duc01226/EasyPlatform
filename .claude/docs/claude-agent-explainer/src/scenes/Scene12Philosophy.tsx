@@ -4,7 +4,7 @@ import { easeOut, staggeredEaseOut } from '../utils/animations';
 
 const SCRIPT_LINES = [
     "These 6 principles are the design philosophy behind every architectural decision. 'Understanding > Output' means analyze the WHY before writing the WHAT. 'Programmatic guardrails beat prompt engineering' means hooks are always more reliable than a long system prompt — because hooks run unconditionally.",
-    "The closing principle is the most important: build systems, not prompts. A clever prompt solves one problem once. A system solves all similar problems forever. The ~37 hooks, 258 skills, 48 workflows, and 28 agents you've seen here are a system — battle-tested across 12+ microservices and fully project-agnostic."
+    "The closing principle is the most important: build systems, not prompts. A clever prompt solves one problem once. A system solves all similar problems forever. The ~37 hooks, 272 skills, 48 workflows, and 28 agents you've seen here are a system — battle-tested across 12+ microservices and fully project-agnostic."
 ];
 
 const PRINCIPLES = [

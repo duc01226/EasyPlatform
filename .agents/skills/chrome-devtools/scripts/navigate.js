@@ -7,7 +7,7 @@
  *   --close false  : Keep browser running, disconnect from it (default for chaining)
  *   --close true   : Close browser completely and clear session
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 
 async function navigate() {
     const args = parseArgs(process.argv.slice(2));
@@ -29,7 +29,7 @@ async function navigate() {
             timeout: parseInt(args.timeout || '30000')
         };
 
-        await page.goto(args.url, options);
+        await navigateWithAuth(page, args.url, options);
 
         const result = {
             success: true,

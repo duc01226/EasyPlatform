@@ -29,8 +29,16 @@ function setupShutdownHandlers() {
 
     process.on('unhandledRejection', reason => {
         console.error('Unhandled rejection:', reason);
-        process.exit(1);
+        void cleanupAndExit(1);
     });
+}
+
+async function cleanupAndExit(code: number): Promise<never> {
+    if (globalManager) {
+        await globalManager.cleanup();
+        globalManager = null;
+    }
+    process.exit(code);
 }
 
 async function main() {
@@ -49,7 +57,7 @@ async function main() {
     // Global timeout
     const timeoutHandle = setTimeout(() => {
         console.error('Global timeout exceeded, forcing exit');
-        process.exit(1);
+        void cleanupAndExit(1);
     }, GLOBAL_TIMEOUT_MS);
     timeoutHandle.unref();
 
@@ -86,11 +94,12 @@ async function main() {
                 printUsage();
         }
 
-        await manager.cleanup();
-        process.exit(0);
+        clearTimeout(timeoutHandle);
+        await cleanupAndExit(0);
     } catch (error) {
+        clearTimeout(timeoutHandle);
         console.error('Error:', error);
-        process.exit(1);
+        await cleanupAndExit(1);
     }
 }
 
@@ -153,8 +162,7 @@ async function listResources(manager: MCPClientManager) {
 
 async function callTool(manager: MCPClientManager, serverName: string, toolName: string, argsJson: string) {
     if (!serverName || !toolName || !argsJson) {
-        console.error('Usage: cli.ts call-tool <server> <tool> <json-args>');
-        process.exit(1);
+        throw new Error('Usage: cli.ts call-tool <server> <tool> <json-args>');
     }
 
     const args = JSON.parse(argsJson);

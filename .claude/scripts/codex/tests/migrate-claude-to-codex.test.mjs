@@ -114,10 +114,14 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
                 '[[profiles]]',
                 'name = "dev"',
                 '',
-                '[tui]',
+                '[tui] # existing UI settings',
                 'theme = "dark"',
+                'status_line = [',
+                '  "model-name",',
+                '  "git-branch",',
+                ']',
                 '',
-                '[[servers]]',
+                '[[servers]] # existing server',
                 'name = "s1"',
                 '',
                 '[agents]',
@@ -167,16 +171,22 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
         assert.match(codexConfig, /notifications = true/);
         assert.match(codexConfig, /notification_condition = "always"/);
         assert.match(codexConfig, /notification_method = "auto"/);
+        assert.match(codexConfig, /status_line = \["model-with-reasoning", "current-dir", "project-root", "context-used", "five-hour-limit", "weekly-limit"\]/);
         assert.match(codexConfig, /# Existing project-specific Codex config\./);
         assert.match(codexConfig, /model = "gpt-5\.4"/);
         assert.match(codexConfig, /model_reasoning_effort = "medium"/);
         assert.match(codexConfig, /theme = "dark"/);
         assert.match(codexConfig, /max_threads = 3/);
         assert.equal([...codexConfig.matchAll(/^notify\s*=/gm)].length, 1);
-        assert.equal([...codexConfig.matchAll(/^\[tui\]$/gm)].length, 1);
+        assert.equal([...codexConfig.matchAll(/^\[tui\]/gm)].length, 1);
+        assert.equal([...codexConfig.matchAll(/^\[\[servers\]\]/gm)].length, 1);
+        assert.equal([...codexConfig.matchAll(/^status_line\s*=/gm)].length, 1);
+        assert.doesNotMatch(codexConfig, /"model-name"/);
         assert.ok(codexConfig.indexOf('notify = ["node", ".codex/scripts/codex/codex-notify.mjs"]') < codexConfig.indexOf('[[profiles]]'));
-        assert.ok(codexConfig.indexOf('notifications = true') > codexConfig.indexOf('[tui]'));
-        assert.ok(codexConfig.indexOf('notifications = true') < codexConfig.indexOf('[[servers]]'));
+        assert.ok(codexConfig.indexOf('status_line = ["model-with-reasoning", "current-dir", "project-root", "context-used", "five-hour-limit", "weekly-limit"]') > codexConfig.indexOf('[tui] # existing UI settings'));
+        assert.ok(codexConfig.indexOf('status_line = ["model-with-reasoning", "current-dir", "project-root", "context-used", "five-hour-limit", "weekly-limit"]') < codexConfig.indexOf('[[servers]] # existing server'));
+        assert.ok(codexConfig.indexOf('notifications = true') > codexConfig.indexOf('[tui] # existing UI settings'));
+        assert.ok(codexConfig.indexOf('notifications = true') < codexConfig.indexOf('[[servers]] # existing server'));
         assert.equal(codexNotifyScript, "#!/usr/bin/env node\nconsole.log('notify helper');\n");
         assert.equal(await pathExists(path.join(tempRoot, 'scripts', 'codex')), false);
 
@@ -245,6 +255,7 @@ test('codex-sync runner works from copied .claude without a root scripts folder'
 
         const codexConfig = await fs.readFile(path.join(tempRoot, '.codex', 'config.toml'), 'utf8');
         assert.match(codexConfig, /notify = \["node", "\.codex\/scripts\/codex\/codex-notify\.mjs"\]/);
+        assert.match(codexConfig, /status_line = \["model-with-reasoning", "current-dir", "project-root", "context-used", "five-hour-limit", "weekly-limit"\]/);
         assert.equal(await pathExists(path.join(tempRoot, '.codex', 'scripts', 'codex', 'codex-notify.mjs')), true);
         assert.equal(await pathExists(path.join(tempRoot, 'scripts')), false);
         assert.equal(await pathExists(path.join(tempRoot, 'AGENTS.md')), true);

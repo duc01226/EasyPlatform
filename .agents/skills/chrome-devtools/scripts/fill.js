@@ -6,7 +6,7 @@
  *   - CSS: node fill.js --selector "#email" --value "user@example.com"
  *   - XPath: node fill.js --selector "//input[@type='email']" --value "user@example.com"
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 import { parseSelector, waitForElement, typeIntoElement, enhanceError } from './lib/selector.js';
 
 async function fill() {
@@ -31,7 +31,7 @@ async function fill() {
 
         // Navigate if URL provided
         if (args.url) {
-            await page.goto(args.url, {
+            await navigateWithAuth(page, args.url, {
                 waitUntil: args['wait-until'] || 'networkidle2'
             });
         }

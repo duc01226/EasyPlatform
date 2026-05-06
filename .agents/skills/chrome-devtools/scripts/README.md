@@ -118,10 +118,7 @@ Take a screenshot with automatic compression.
 node screenshot.js --output screenshot.png [--url https://example.com] [--full-page true] [--selector .element] [--max-size 5] [--no-compress]
 ```
 
-**Automatic Compression**: Screenshots >5MB are automatically compressed using ImageMagick to ensure compatibility with Gemini API and Claude Code. Install ImageMagick for this feature:
-
-- macOS: `brew install imagemagick`
-- Linux: `sudo apt-get install imagemagick`
+**Automatic Compression**: Screenshots >5MB are automatically compressed using Sharp to ensure compatibility with Gemini API and Claude Code. Run `npm install` in this scripts directory to install Sharp from `package.json`.
 
 Options:
 

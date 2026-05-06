@@ -27,8 +27,10 @@ description: '[Testing] Use when you need to verify integration tests pass after
 **Key Rules:**
 
 - MUST read project config `integrationTestVerify` section before doing anything else
+- MUST read project-specific reference docs named by `integrationTestVerify.referenceDocs` or the project's integration-test doc path before running tests
 - Use `quickRunCommand` from config — NEVER hardcode `dotnet test` or any language-specific command
 - If system check fails → instruct user how to start system (reference `startupScript` from config)
+- If config says local infrastructure, databases, services, or full system startup is required, treat that as a blocking prerequisite
 - On test failure → diagnose root cause: test bug or service bug. NEVER weaken assertions.
 - Always report exact failure counts and names — "all passed" requires evidence
 
@@ -45,6 +47,7 @@ Expected config shape:
 {
   "integrationTestVerify": {
     "guidance":             string   — instructions for this project's test run approach
+    "referenceDocs":        string[] — project docs that explain integration-test setup/run prerequisites
     "quickRunCommand":      string   — test runner command (e.g., "dotnet test --no-build", "npm test", "pytest")
     "testProjectPattern":   string   — glob pattern to discover test projects (e.g., "src/Services/**/*.IntegrationTests.csproj")
     "testProjects":         string[] — explicit list of test project paths (fallback if no pattern)
@@ -60,6 +63,13 @@ Expected config shape:
 **If `integrationTestVerify` section is missing:** proceed to [Fallback Mode](#fallback-mode-no-project-config).
 
 **If section exists:** display the `guidance` value to the user verbatim — it contains project-specific instructions the implementer wrote intentionally.
+
+Then read the project-specific setup guidance before any system check or test command:
+
+1. Read every file listed in `integrationTestVerify.referenceDocs`, if present.
+2. If no `referenceDocs` list exists, read the integration-test reference doc indicated elsewhere in `docs/project-config.json` (for example a framework/testing integration test doc path), if present.
+3. If config names `runScript` or `startupScript`, read those scripts when needed to understand startup, health checks, arguments, or labels. Use them as project-specific evidence, not generic assumptions.
+4. If no project-specific reference exists, proceed only with the explicit config values and call out that the project should add reference docs to `integrationTestVerify`.
 
 ---
 
@@ -79,7 +89,10 @@ Evaluate output:
 - **Partially healthy / no containers** → display startup instructions to user: > "System not fully ready. To start: run `{startupScript}` (or follow the guidance above). Wait for all services to be healthy, then re-run `/integration-test-verify`."
     > **STOP** — do not run tests against an unhealthy system. Results would be unreliable.
 
-**If no `systemCheckCommand`:** skip this step and proceed to Step 3.
+**If no `systemCheckCommand`:**
+
+- If `guidance`, reference docs, `runScript`, or `startupScript` indicate required local infrastructure/services, STOP and tell the user the project config needs a concrete readiness check before AI verification can run.
+- Otherwise, proceed to Step 3 and explicitly report that no system check was configured.
 
 ---
 
@@ -117,6 +130,8 @@ If auto-detect finds nothing (no uncommitted test changes), ask user: "No change
 ---
 
 ## Step 4: Run Tests
+
+Do not run this step unless Step 2 passed or the config/reference docs explicitly state no external system is required.
 
 Execute using `quickRunCommand` from config. Example for a.NET project:
 
@@ -355,6 +370,7 @@ If a test fails because the system is unavailable → report as "system not read
 ## Closing Reminders
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read `docs/project-config.json` → `integrationTestVerify` FIRST — project-specific guidance overrides defaults
+- **MANDATORY IMPORTANT MUST ATTENTION** read project-specific integration-test reference docs/scripts from config before any test command — Codex has no hook injection
 - **MANDATORY IMPORTANT MUST ATTENTION** use `quickRunCommand` from config, not hardcoded `dotnet test` — this skill is language-agnostic
 - **MANDATORY IMPORTANT MUST ATTENTION** run system check before tests — unreliable system = unreliable results
 - **MANDATORY IMPORTANT MUST ATTENTION** never weaken assertions to fix failures — diagnose and fix root cause

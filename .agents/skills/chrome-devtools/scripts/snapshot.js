@@ -3,7 +3,7 @@
  * Get DOM snapshot with selectors
  * Usage: node snapshot.js [--url https://example.com] [--output snapshot.json]
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 import fs from 'fs/promises';
 
 async function snapshot() {
@@ -18,7 +18,7 @@ async function snapshot() {
 
         // Navigate if URL provided
         if (args.url) {
-            await page.goto(args.url, {
+            await navigateWithAuth(page, args.url, {
                 waitUntil: args['wait-until'] || 'networkidle2'
             });
         }

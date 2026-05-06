@@ -3,7 +3,7 @@
  * Execute JavaScript in page context
  * Usage: node evaluate.js --script "document.title" [--url https://example.com]
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 
 async function evaluate() {
     const args = parseArgs(process.argv.slice(2));
@@ -22,7 +22,7 @@ async function evaluate() {
 
         // Navigate if URL provided
         if (args.url) {
-            await page.goto(args.url, {
+            await navigateWithAuth(page, args.url, {
                 waitUntil: args['wait-until'] || 'networkidle2'
             });
         }

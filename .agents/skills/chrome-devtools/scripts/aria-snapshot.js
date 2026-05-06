@@ -13,7 +13,7 @@
  *   By default, browser stays running for session persistence
  *   Use --close true to fully close browser
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -309,7 +309,7 @@ async function ariaSnapshot() {
 
         // Navigate if URL provided
         if (args.url) {
-            await page.goto(args.url, {
+            await navigateWithAuth(page, args.url, {
                 waitUntil: args['wait-until'] || 'networkidle2'
             });
         }

@@ -111,7 +111,7 @@ docs/project-config.json
 ├── graphConnectors — apiEndpoints{ enabled, frontend{ framework, paths[] }, backend{ framework, paths[], routePrefix } }
 │   └── implicitConnections[] — { name, edgeKind, paths[], source{ filePattern, contentPattern, keyGroup }, target{...}, matchBy }
 ├── referenceDocs[] — { filename, purpose, sections[] }
-├── integrationTestVerify — { guidance, quickRunCommand, testProjectPattern, testProjects[], systemCheckCommand, runScript, startupScript }
+├── integrationTestVerify — { guidance, referenceDocs[], quickRunCommand, testProjectPattern, testProjects[], systemCheckCommand, runScript, startupScript }
 ├── workflowPatterns — { architectureStyle, codeHierarchy, cssMethodology, stateManagement, crossModuleValidation, featureDocPath, featureDocTemplate, reviewRulesDoc }
 └── DEPRECATED: backendServices, frontendApps, scss, componentFinder, sharedNamespace
 ```
@@ -207,6 +207,8 @@ Rules MUST ATTENTION be specific: "Use IPlatformRootRepository<TEntity>" not "fo
 
 - `testing { frameworks[], filePatterns{}, commands{}, coverageTool, guideDoc }`
 - `e2eTesting { framework, language, configFile, testsPath, pageObjectsPath, fixturesPath, runCommands{}, tcCodeFormat, entryPoints[] }`
+- `integrationTestVerify { guidance, referenceDocs[], runScript, startupScript, quickRunCommand, systemCheckCommand, testProjectPattern, testProjects[] }`
+- `integrationTestVerify.referenceDocs[]` MUST contain project-specific docs that explain setup prerequisites before a verifier runs `systemCheckCommand` or test commands.
 
 ### 2k–2n. Databases, Messaging, API, Infrastructure
 

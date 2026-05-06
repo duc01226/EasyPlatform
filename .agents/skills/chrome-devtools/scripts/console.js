@@ -3,7 +3,7 @@
  * Monitor console messages
  * Usage: node console.js --url https://example.com [--types error,warn] [--duration 5000]
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 
 async function monitorConsole() {
     const args = parseArgs(process.argv.slice(2));
@@ -48,7 +48,7 @@ async function monitorConsole() {
         });
 
         // Navigate
-        await page.goto(args.url, {
+        await navigateWithAuth(page, args.url, {
             waitUntil: args['wait-until'] || 'networkidle2'
         });
 

@@ -167,6 +167,29 @@ export async function applyAuthSession(page, url) {
 }
 
 /**
+ * Navigate to a URL and apply any saved authentication session.
+ * Storage-based auth requires a page origin, so auth is applied after the first
+ * navigation and the page is reloaded when anything was restored.
+ * @param {Object} page - Puppeteer page instance
+ * @param {string} url - Target URL
+ * @param {Object} options - page.goto/page.reload options
+ * @returns {Promise<boolean>} true when an auth session was applied
+ */
+export async function navigateWithAuth(page, url, options = {}) {
+    await page.goto(url, options);
+
+    const applied = await applyAuthSession(page, url);
+    if (applied) {
+        await page.reload({
+            waitUntil: options.waitUntil || 'networkidle2',
+            timeout: options.timeout
+        });
+    }
+
+    return applied;
+}
+
+/**
  * Launch or connect to browser
  * If a session file exists with valid wsEndpoint, connects to existing browser
  * Otherwise launches new browser and saves wsEndpoint for future connections

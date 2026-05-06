@@ -3,7 +3,7 @@
  * Measure performance metrics and record trace
  * Usage: node performance.js --url https://example.com [--trace trace.json] [--metrics]
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 import fs from 'fs/promises';
 
 async function measurePerformance() {
@@ -30,7 +30,7 @@ async function measurePerformance() {
         }
 
         // Navigate
-        await page.goto(args.url, {
+        await navigateWithAuth(page, args.url, {
             waitUntil: 'networkidle2'
         });
 

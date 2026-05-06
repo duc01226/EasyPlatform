@@ -109,10 +109,10 @@ async function removeBackground() {
         };
 
         if (showProgress) {
-            options.onProgress = (progress, download, process) => {
+            options.onProgress = (progress, download, processing) => {
                 const percent = Math.round(progress * 100);
                 const downloadPercent = Math.round(download * 100);
-                const processPercent = Math.round(process * 100);
+                const processPercent = Math.round(processing * 100);
 
                 process.stdout.write(`\rProgress: ${percent}% | Download: ${downloadPercent}% | Process: ${processPercent}%`);
             };

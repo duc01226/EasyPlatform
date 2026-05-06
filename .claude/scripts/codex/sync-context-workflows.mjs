@@ -13,6 +13,7 @@ import {
 const rootDir = process.cwd();
 const require = createRequire(import.meta.url);
 const workflowsPath = path.join(rootDir, ".claude", "workflows.json");
+const claudeInstructionsPath = path.join(rootDir, "CLAUDE.md");
 const contextPath = path.join(rootDir, ".codex", "CODEX_CONTEXT.md");
 const agentsPath = path.join(rootDir, "AGENTS.md");
 
@@ -22,8 +23,12 @@ const PROMPT_PROTOCOLS_START = "<!-- PROMPT-PROTOCOLS:START -->";
 const PROMPT_PROTOCOLS_END = "<!-- PROMPT-PROTOCOLS:END -->";
 const PROMPT_PROTOCOLS_BOTTOM_START = "<!-- PROMPT-PROTOCOLS-BOTTOM:START -->";
 const PROMPT_PROTOCOLS_BOTTOM_END = "<!-- PROMPT-PROTOCOLS-BOTTOM:END -->";
+const AGENTS_CLAUDE_MIRROR_START = "<!-- CLAUDE-MIRROR:START -->";
+const AGENTS_CLAUDE_MIRROR_END = "<!-- CLAUDE-MIRROR:END -->";
 const AGENTS_CONTEXT_MIRROR_START = "<!-- CODEX-CONTEXT-MIRROR:START -->";
 const AGENTS_CONTEXT_MIRROR_END = "<!-- CODEX-CONTEXT-MIRROR:END -->";
+const LEGACY_AGENTS_CLAUDE_MERGE_START = "<!-- CLAUDE-MERGE:START -->";
+const LEGACY_AGENTS_CLAUDE_MERGE_END = "<!-- CLAUDE-MERGE:END -->";
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -31,16 +36,16 @@ function escapeRegExp(value) {
 
 function buildManagedBlockPattern(startMarker, endMarker, flags = "m") {
   return new RegExp(
-    `^\\s*${escapeRegExp(startMarker)}\\s*$[\\s\\S]*?^\\s*${escapeRegExp(
+    `^[^\\S\\r\\n]*${escapeRegExp(startMarker)}[^\\S\\r\\n]*$[\\s\\S]*?^[^\\S\\r\\n]*${escapeRegExp(
       endMarker
-    )}\\s*$\\n?`,
+    )}[^\\S\\r\\n]*$\\n?`,
     flags
   );
 }
 
 function stripManagedBlock(text, startMarker, endMarker) {
   const pattern = buildManagedBlockPattern(startMarker, endMarker, "gm");
-  return text.replace(pattern, "").trim();
+  return text.replace(pattern, "").trimEnd();
 }
 
 function buildAgentsContextMirrorBlock(contextMd) {
@@ -56,7 +61,22 @@ function buildAgentsContextMirrorBlock(contextMd) {
   ].join("\n");
 }
 
-async function upsertContextIntoAgents(contextMd) {
+function buildAgentsClaudeMirrorBlock(claudeMd) {
+  return [
+    AGENTS_CLAUDE_MIRROR_START,
+    "## Claude Instructions Mirror (Auto-Synced)",
+    "",
+    "This block is auto-generated from `CLAUDE.md` by `npm run codex:sync:context`.",
+    "Do not edit manually; update `CLAUDE.md` and re-sync.",
+    "",
+    claudeMd.trim(),
+    AGENTS_CLAUDE_MIRROR_END,
+  ].join("\n");
+}
+
+async function upsertContextIntoAgents(contextMd, claudeMd) {
+  const hasClaudeMirror = typeof claudeMd === "string" && claudeMd.trim().length > 0;
+  const claudeBlock = hasClaudeMirror ? buildAgentsClaudeMirrorBlock(claudeMd) : null;
   const mirrorBlock = buildAgentsContextMirrorBlock(contextMd);
   let agentsMd = "";
   try {
@@ -66,12 +86,32 @@ async function upsertContextIntoAgents(contextMd) {
     agentsMd = "# Codex Project Instructions\n";
   }
   agentsMd = agentsMd.replace(/\r\n?/g, "\n");
+  agentsMd = stripManagedBlock(
+    agentsMd,
+    LEGACY_AGENTS_CLAUDE_MERGE_START,
+    LEGACY_AGENTS_CLAUDE_MERGE_END
+  );
 
+  const claudeManagedBlockPattern = buildManagedBlockPattern(
+    AGENTS_CLAUDE_MIRROR_START,
+    AGENTS_CLAUDE_MIRROR_END,
+    "m"
+  );
   const managedBlockPattern = buildManagedBlockPattern(
     AGENTS_CONTEXT_MIRROR_START,
     AGENTS_CONTEXT_MIRROR_END,
     "m"
   );
+
+  if (hasClaudeMirror && claudeManagedBlockPattern.test(agentsMd)) {
+    agentsMd = agentsMd.replace(claudeManagedBlockPattern, `${claudeBlock}\n`);
+  } else if (hasClaudeMirror && managedBlockPattern.test(agentsMd)) {
+    agentsMd = agentsMd.replace(managedBlockPattern, `${claudeBlock}\n\n${mirrorBlock}\n`);
+  } else if (hasClaudeMirror) {
+    agentsMd = `${agentsMd.trimEnd()}\n\n${claudeBlock}\n`;
+  } else {
+    agentsMd = agentsMd.replace(claudeManagedBlockPattern, "");
+  }
 
   if (managedBlockPattern.test(agentsMd)) {
     agentsMd = agentsMd.replace(managedBlockPattern, `${mirrorBlock}\n`);
@@ -88,6 +128,15 @@ async function readExistingContext() {
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     return "# Codex Context\n";
+  }
+}
+
+async function readClaudeInstructions() {
+  try {
+    return (await fs.readFile(claudeInstructionsPath, "utf8")).replace(/\r\n?/g, "\n");
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    return null;
   }
 }
 
@@ -116,7 +165,7 @@ function buildWorkflowSection(workflowEntries) {
   lines.push("Use this protocol for workflow execution in Codex (no hook dependency):");
   lines.push("1. Detect: match request against workflow catalog.");
   lines.push("2. Analyze: choose best-fit workflow and evaluate custom combination if needed.");
-  lines.push("3. Confirm: if workflow requires confirmation or ambiguity exists, ask user before activation.");
+  lines.push('3. Ask: when a workflow match is detected, ask "Which workflow do you want to activate?" with the recommended standard workflow and a custom option before activation.');
   lines.push("4. Activate: execute selected workflow sequence.");
   lines.push("5. Tasking: create tasks for each workflow step.");
   lines.push("6. Execute: run steps in order, validate outputs, and report completion.");
@@ -131,13 +180,11 @@ function buildWorkflowSection(workflowEntries) {
     const description = safeLine(workflow?.description);
     const whenToUse = safeLine(workflow?.whenToUse);
     const whenNotToUse = safeLine(workflow?.whenNotToUse);
-    const confirmFirst = Boolean(workflow?.confirmFirst);
     const sequence = Array.isArray(workflow?.sequence) ? workflow.sequence : [];
     const protocol = workflow?.preActions?.injectContext;
 
     lines.push(`### ${workflowId} — ${name}`);
     if (description) lines.push(`- Description: ${description}`);
-    lines.push(`- Confirm First: ${confirmFirst ? "yes" : "no"}`);
     if (whenToUse) lines.push(`- When To Use: ${whenToUse}`);
     if (whenNotToUse) lines.push(`- When Not To Use: ${whenNotToUse}`);
     lines.push(`- Sequence: ${sequence.length > 0 ? `\`${sequence.join(" -> ")}\`` : "_none_"}`);
@@ -209,6 +256,7 @@ async function buildPromptProtocolMirrorSection(headingSuffix = "Auto-Synced") {
 }
 
 async function main() {
+  const claudeInstructionsRaw = await readClaudeInstructions();
   const workflowsRaw = await fs.readFile(workflowsPath, "utf8");
   const workflowsDoc = JSON.parse(workflowsRaw);
   const workflowEntries = toWorkflowEntries(workflowsDoc.workflows);
@@ -256,10 +304,16 @@ async function main() {
   );
   contextMd = `${contextMd.trimEnd()}\n`;
 
+  const claudeInstructionsMd = claudeInstructionsRaw
+    ? rewriteClaudeToolTermsForCodex(
+        rewriteSkillMentionsForCodex(claudeInstructionsRaw, skillReferenceMap)
+      )
+    : null;
+
   await fs.writeFile(contextPath, contextMd, "utf8");
-  await upsertContextIntoAgents(contextMd);
+  await upsertContextIntoAgents(contextMd, claudeInstructionsMd);
   console.log(
-    `[codex-context-sync] synced ${workflowEntries.length} workflow(s) into ${path.relative(rootDir, contextPath)} and mirrored context into ${path.relative(rootDir, agentsPath)}`
+    `[codex-context-sync] synced ${workflowEntries.length} workflow(s) into ${path.relative(rootDir, contextPath)} and mirrored CLAUDE.md + context into ${path.relative(rootDir, agentsPath)}`
   );
 }
 

@@ -10,7 +10,7 @@
  *   By default, browser stays running for session persistence
  *   Use --close true to fully close browser
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 import { parseSelector, getElement, enhanceError } from './lib/selector.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -27,7 +27,7 @@ try {
 
 /**
  * Compress image using Sharp if it exceeds max size
- * Sharp is 4-5x faster than ImageMagick with lower memory usage
+ * Sharp keeps compression in-process with lower memory usage than shelling out.
  * Falls back to no compression if Sharp is not installed
  * @param {string} filePath - Path to the image file
  * @param {number} maxSizeMB - Maximum file size in MB (default: 5)
@@ -106,7 +106,7 @@ async function screenshot() {
 
         // Navigate if URL provided
         if (args.url) {
-            await page.goto(args.url, {
+            await navigateWithAuth(page, args.url, {
                 waitUntil: args['wait-until'] || 'networkidle2'
             });
         }

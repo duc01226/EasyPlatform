@@ -64,13 +64,51 @@ function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function stripTomlComment(line) {
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+    let isEscaped = false;
+
+    for (let index = 0; index < line.length; index += 1) {
+        const char = line[index];
+
+        if (inDoubleQuote) {
+            if (isEscaped) {
+                isEscaped = false;
+            } else if (char === '\\') {
+                isEscaped = true;
+            } else if (char === '"') {
+                inDoubleQuote = false;
+            }
+            continue;
+        }
+
+        if (inSingleQuote) {
+            if (char === "'") {
+                inSingleQuote = false;
+            }
+            continue;
+        }
+
+        if (char === '"') {
+            inDoubleQuote = true;
+        } else if (char === "'") {
+            inSingleQuote = true;
+        } else if (char === '#') {
+            return line.slice(0, index);
+        }
+    }
+
+    return line;
+}
+
 function isTomlTableHeader(line) {
-    return /^\s*\[(?:[^\[\]]+|\[[^\[\]]+\])\]\s*$/.test(line);
+    return /^\s*\[(?:[^\[\]]+|\[[^\[\]]+\])\]\s*$/.test(stripTomlComment(line));
 }
 
 function findTomlTableRange(lines, tableName) {
     const header = `[${tableName}]`;
-    const start = lines.findIndex(line => line.trim() === header);
+    const start = lines.findIndex(line => stripTomlComment(line).trim() === header);
     if (start === -1) return null;
 
     const nextTableOffset = lines.slice(start + 1).findIndex(isTomlTableHeader);
@@ -80,18 +118,58 @@ function findTomlTableRange(lines, tableName) {
     };
 }
 
+function stripTomlStringContent(line) {
+    return stripTomlComment(line)
+        .replace(/"(?:\\.|[^"\\])*"/g, '""')
+        .replace(/'(?:''|[^'])*'/g, "''");
+}
+
+function findTomlAssignmentEnd(lines, assignmentStart, scopeEnd) {
+    let bracketDepth = 0;
+    let sawBracket = false;
+
+    for (let index = assignmentStart; index < scopeEnd; index += 1) {
+        const rawLine = index === assignmentStart
+            ? lines[index].slice(lines[index].indexOf('=') + 1)
+            : lines[index];
+        const line = stripTomlStringContent(rawLine);
+
+        for (const char of line) {
+            if (char === '[') {
+                sawBracket = true;
+                bracketDepth += 1;
+            } else if (char === ']') {
+                bracketDepth -= 1;
+            }
+        }
+
+        if (!sawBracket || bracketDepth <= 0) {
+            return index + 1;
+        }
+    }
+
+    return assignmentStart + 1;
+}
+
 function upsertTomlKey(lines, key, value, start, end) {
     const keyPattern = new RegExp(`^\\s*${escapeRegExp(key)}\\s*=`);
     const existingIndex = lines.findIndex((line, index) => index >= start && index < end && keyPattern.test(line));
     const nextLine = `${key} = ${value}`;
 
     if (existingIndex !== -1) {
-        lines[existingIndex] = nextLine;
-        return { inserted: false };
+        const assignmentEnd = findTomlAssignmentEnd(lines, existingIndex, end);
+        const removedLineCount = assignmentEnd - existingIndex;
+        lines.splice(existingIndex, removedLineCount, nextLine);
+        return { inserted: false, lineDelta: 1 - removedLineCount };
     }
 
-    lines.splice(end, 0, nextLine);
-    return { inserted: true };
+    let insertionIndex = end;
+    while (insertionIndex > start && lines[insertionIndex - 1]?.trim() === '') {
+        insertionIndex -= 1;
+    }
+
+    lines.splice(insertionIndex, 0, nextLine);
+    return { inserted: true, lineDelta: 1 };
 }
 
 function upsertCodexNotificationConfig(configText) {
@@ -118,14 +196,22 @@ function upsertCodexNotificationConfig(configText) {
     }
 
     for (const [key, value] of [
+        ['status_line', '["model-with-reasoning", "current-dir", "project-root", "context-used", "five-hour-limit", "weekly-limit"]'],
         ['notifications', 'true'],
         ['notification_condition', '"always"'],
         ['notification_method', '"auto"']
     ]) {
         const result = upsertTomlKey(lines, key, value, tuiRange.start + 1, tuiRange.end);
         if (result.inserted) {
-            tuiRange.end += 1;
+            tuiRange.end += result.lineDelta;
+        } else if (result.lineDelta) {
+            tuiRange.end += result.lineDelta;
         }
+    }
+
+    tuiRange = findTomlTableRange(lines, 'tui');
+    if (tuiRange && tuiRange.end < lines.length && lines[tuiRange.end - 1]?.trim()) {
+        lines.splice(tuiRange.end, 0, '');
     }
 
     return `${lines.join('\n').trimEnd()}\n`;
@@ -192,6 +278,7 @@ function buildCodexProjectReferenceBlock() {
         'When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.',
         '',
         '**Always read:**',
+        '- `docs/project-config.json` (project-specific paths, commands, modules, and workflow/test settings)',
         '- `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)',
         '- `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)',
         '',

@@ -13,7 +13,7 @@
  *   By default, browser stays running for session persistence
  *   Use --close true to fully close browser
  */
-import { getBrowser, getPage, closeBrowser, disconnectBrowser, parseArgs, outputJSON, outputError } from './lib/browser.js';
+import { getBrowser, getPage, closeBrowser, disconnectBrowser, navigateWithAuth, parseArgs, outputJSON, outputError } from './lib/browser.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,7 +25,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * Builds YAML-formatted accessibility tree with element references
  */
 function getAriaSnapshotScript() {
-  return `
+    return `
 (function() {
   // Store refs on window for later retrieval via selectRef
   window.__chromeDevToolsRefs = window.__chromeDevToolsRefs || new Map();
@@ -298,65 +298,65 @@ function getAriaSnapshotScript() {
 }
 
 async function ariaSnapshot() {
-  const args = parseArgs(process.argv.slice(2));
+    const args = parseArgs(process.argv.slice(2));
 
-  try {
-    const browser = await getBrowser({
-      headless: args.headless !== 'false'
-    });
+    try {
+        const browser = await getBrowser({
+            headless: args.headless !== 'false'
+        });
 
-    const page = await getPage(browser);
+        const page = await getPage(browser);
 
-    // Navigate if URL provided
-    if (args.url) {
-      await page.goto(args.url, {
-        waitUntil: args['wait-until'] || 'networkidle2'
-      });
+        // Navigate if URL provided
+        if (args.url) {
+            await navigateWithAuth(page, args.url, {
+                waitUntil: args['wait-until'] || 'networkidle2'
+            });
+        }
+
+        // Get ARIA snapshot
+        const snapshot = await page.evaluate(getAriaSnapshotScript());
+
+        // Build result
+        const result = {
+            success: true,
+            url: page.url(),
+            title: await page.title(),
+            format: 'yaml',
+            snapshot: snapshot
+        };
+
+        // Output to file or stdout
+        if (args.output) {
+            const outputPath = args.output;
+
+            // Ensure snapshots directory exists
+            const outputDir = path.dirname(outputPath);
+            await fs.mkdir(outputDir, { recursive: true });
+
+            // Write YAML snapshot
+            await fs.writeFile(outputPath, snapshot, 'utf8');
+
+            outputJSON({
+                success: true,
+                output: path.resolve(outputPath),
+                url: page.url()
+            });
+        } else {
+            // Output to stdout
+            outputJSON(result);
+        }
+
+        // Default: disconnect to keep browser running for session persistence
+        // Use --close true to fully close browser
+        if (args.close === 'true') {
+            await closeBrowser();
+        } else {
+            await disconnectBrowser();
+        }
+    } catch (error) {
+        outputError(error);
     }
-
-    // Get ARIA snapshot
-    const snapshot = await page.evaluate(getAriaSnapshotScript());
-
-    // Build result
-    const result = {
-      success: true,
-      url: page.url(),
-      title: await page.title(),
-      format: 'yaml',
-      snapshot: snapshot
-    };
-
-    // Output to file or stdout
-    if (args.output) {
-      const outputPath = args.output;
-
-      // Ensure snapshots directory exists
-      const outputDir = path.dirname(outputPath);
-      await fs.mkdir(outputDir, { recursive: true });
-
-      // Write YAML snapshot
-      await fs.writeFile(outputPath, snapshot, 'utf8');
-
-      outputJSON({
-        success: true,
-        output: path.resolve(outputPath),
-        url: page.url()
-      });
-    } else {
-      // Output to stdout
-      outputJSON(result);
-    }
-
-    // Default: disconnect to keep browser running for session persistence
-    // Use --close true to fully close browser
-    if (args.close === 'true') {
-      await closeBrowser();
-    } else {
-      await disconnectBrowser();
-    }
-  } catch (error) {
-    outputError(error);
-  }
 }
 
 ariaSnapshot();
