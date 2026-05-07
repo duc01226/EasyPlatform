@@ -19,6 +19,8 @@ disable-model-invocation: true
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION arrange integration-test data through real use cases or valid seeded fixtures; never create impossible state through repository hacks.
+- MUST ATTENTION verify integration suites with 3 consecutive passing runs without DB reset before declaring done.
 - NEVER skip mandatory workflow or skill gates.
 
 **IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
@@ -37,9 +39,9 @@ Activate the `write-integration-test` workflow. Run `/workflow-start write-integ
 > **`/investigate`** — Read handler/entity/event source. Map: fields written, entities created/updated/deleted, event handlers fired, validation rules. Output: domain logic summary to use as assertion blueprint.
 > **`/tdd-spec`** — Write/update `TC-{FEATURE}-{NNN}` specs in feature doc Section 15. CREATE mode for new tests, UPDATE mode for changed behavior. Output: TC mapping list (TC code → test method name).
 > **`/tdd-spec-review`** — Validate spec quality: GIVEN/WHEN/THEN completeness, happy path + validation failure + auth paths covered, no collisions with existing TC codes.
-> **`/integration-test`** — Generate test files from TC specs using FROM-PROMPT or FROM-CHANGES mode. Non-negotiable: async polling/retry for all DB assertions, unique data generators for all test data, test-spec annotation on every test method (adapt annotation syntax to your framework).
+> **`/integration-test`** — Generate test files from TC specs using FROM-PROMPT or FROM-CHANGES mode. Non-negotiable: real use-case/valid-seeder data setup, async polling/retry for all DB assertions, unique data generators for all test data, test-spec annotation on every test method (adapt annotation syntax to your framework).
 > **`/integration-test-review`** — 6-gate quality check (assertion value, data state, repeatability, domain logic, traceability, three-way sync). Mandatory fix loop + fresh sub-agent re-check. NEVER proceed with CRITICAL/HIGH issues outstanding.
-> **`/integration-test-verify`** — Run tests via `quickRunCommand` from `docs/project-config.json`. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.
+> **`/integration-test-verify`** — Run tests via `quickRunCommand` from `docs/project-config.json` for 3 consecutive runs without DB reset. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.
 > **`/tdd-spec [direction=sync]`** — Sync the cross-module spec dashboard (`docs/specs/`). Update `IntegrationTest` fields with `{File}::{MethodName}` traceability links.
 > **`/docs-update`** — Update feature doc evidence fields, version history, and changelog if test coverage changed materially.
 > **`/watzup`** + **`/workflow-end`** — Summary report and close.

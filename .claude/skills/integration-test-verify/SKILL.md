@@ -14,14 +14,14 @@ description: '[Testing] Use when you need to verify integration tests pass after
 
 ## Quick Summary
 
-**Goal:** Run integration tests after `/integration-test` writes them and `/integration-test-review` reviews them. Confirm all pass.
+**Goal:** Run integration tests after `/integration-test` writes them and `/integration-test-review` reviews them. Confirm all pass and remain repeatable.
 
 **Workflow:**
 
 1. **Read Config** — Load `docs/project-config.json` → `integrationTestVerify` section for project-specific run guidance
 2. **System Check** — Verify required system is healthy before running
 3. **Determine Test Projects** — Discover via `testProjectPattern` glob, `testProjects` list, or git auto-detect
-4. **Run Tests** — Execute `quickRunCommand` on determined test projects
+4. **Run Tests** — Execute `quickRunCommand` on determined test projects for 3 consecutive runs
 5. **Report** — Pass/fail counts, failed test names, next steps on failure
 
 **Key Rules:**
@@ -32,6 +32,7 @@ description: '[Testing] Use when you need to verify integration tests pass after
 - If system check fails → instruct user how to start system (reference `startupScript` from config)
 - If config says local infrastructure, databases, services, or full system startup is required, treat that as a blocking prerequisite
 - On test failure → diagnose root cause: test bug or service bug. NEVER weaken assertions.
+- Verification only passes after 3 consecutive successful runs of each relevant suite/project without DB reset
 - Always report exact failure counts and names — "all passed" requires evidence
 
 **Be skeptical. Apply critical thinking. Every pass/fail claim needs actual test runner output.**
@@ -133,7 +134,11 @@ If auto-detect finds nothing (no uncommitted test changes), ask user: "No change
 
 Do not run this step unless Step 2 passed or the config/reference docs explicitly state no external system is required.
 
-Execute using `quickRunCommand` from config. Example for a.NET project:
+Execute using `quickRunCommand` from config. Run each relevant suite/project 3 consecutive times without resetting data.
+
+**Three-run idempotency gate:** If any run fails, verification fails. Fix the root cause, then restart the 3-run sequence from run 1.
+
+Example for a.NET project:
 
 ```bash
 # Run each test project individually for clear per-project results
@@ -148,7 +153,7 @@ Or run all at once using the solution filter if supported:
 {quickRunCommand} --filter "Category=integration"
 ```
 
-**Capture output**: count Passed, Failed, Skipped. Note: skipped tests (tests marked with a framework-specific skip annotation, e.g., `[Fact(Skip=...)]` in xUnit, `@Disabled` in JUnit) are expected and not a failure.
+**Capture output for every run**: count Passed, Failed, Skipped. Note: skipped tests (tests marked with a framework-specific skip annotation, e.g., `[Fact(Skip=...)]` in xUnit, `@Disabled` in JUnit) are expected and not a failure.
 
 ---
 
@@ -161,11 +166,13 @@ After all tests complete, report:
 
 **Run command:** {quickRunCommand}
 **Projects tested:** {N}
+**Repeatability gate:** 3 consecutive runs without DB reset
 
-| Project | Passed | Failed | Skipped |
-|---------|--------|--------|---------|
-| {Project1} | X | 0 | Y |
-| {Project2} | X | 0 | Y |
+| Project | Run | Passed | Failed | Skipped |
+|---------|-----|--------|--------|---------|
+| {Project1} | 1 | X | 0 | Y |
+| {Project1} | 2 | X | 0 | Y |
+| {Project1} | 3 | X | 0 | Y |
 
 **Total:** {total_passed} passed, {total_failed} failed, {total_skipped} skipped (expected skip annotations)
 
@@ -178,7 +185,7 @@ Status: ✅ ALL PASS | ❌ {N} FAILURES
 2. Diagnose: test bug (wrong assertion setup) or service bug (handler actually broken)?
 3. If test bug → fix in the test file (do NOT weaken assertions — fix setup/data)
 4. If service bug → report as finding, do NOT silently fix without telling user
-5. After fixing → re-run verify
+5. After fixing → re-run the full 3-run verify sequence
 
 ---
 
@@ -220,6 +227,7 @@ This script typically: creates networks → removes stale containers → builds 
 
 - ❌ Remove or weaken assertions
 - ❌ Add skip annotations (e.g., `[Fact(Skip=...)]` in xUnit, `@Disabled` in JUnit) to hide failures
+- ❌ Create or mutate domain data through repositories to bypass real use-case paths
 - ❌ Mark passing by ignoring error output
 - ❌ Report "all passed" without showing actual runner output
 
@@ -228,7 +236,7 @@ This script typically: creates networks → removes stale containers → builds 
 1. Read the failing test method
 2. Read the handler/service the test targets
 3. Identify: is the assertion wrong, or is the code wrong?
-4. Fix at the root cause layer
+4. Fix at the root cause layer; use real use cases or valid seeded fixtures for data setup
 5. Re-run to confirm green
 
 If a test fails because the system is unavailable → report as "system not ready" and reference `startupScript` / `runScript`. Never change the test.
@@ -254,7 +262,7 @@ If a test fails because the system is unavailable → report as "system not read
 - **"Skip, continue manually"** — user decides
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-> **A verify step that does not actually run tests is not verification. It is theater.**
+> **A verify step that does not actually run tests 3 consecutive times is not repeatability verification. It is theater.**
 > Read project config FIRST to understand how to run tests for this specific project.
 
 <!-- SYNC:ai-mistake-prevention -->

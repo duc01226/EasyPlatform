@@ -19,6 +19,7 @@ disable-model-invocation: true
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION verify generated integration suites with 3 consecutive passing runs without DB reset before declaring done.
 - NEVER skip mandatory workflow or skill gates.
 
 **IMPORTANT MANDATORY Steps:** /scout -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /watzup -> /workflow-end

@@ -70,6 +70,7 @@ description: '[Documentation] Use when scanning integration test base classes, f
     - `runScript` / `startupScript` — inspect to capture Docker/system startup behavior and supported arguments
     - `systemCheckCommand` — document what readiness check must pass before direct test commands
     - `quickRunCommand`, `testProjectPattern`, `testProjects[]` — use as the source of truth for runner commands and project discovery
+    - `integrationRules[]` — document repeatability/data-integrity gates, including 3 consecutive verification runs without DB reset
 
 **Evidence gate:** Confidence <60% on framework detection → report uncertainty, ask user before proceeding.
 
@@ -108,6 +109,8 @@ Security flag: If test credentials are found hardcoded in source files (not env 
 **Think (Assertion dimension):** What assertion patterns are used? Is there a waiting/polling mechanism for async operations? Are assertions on specific field values or just "does not throw"?
 
 **Think (Data dimension):** How is test data created — builders, factories, seed methods? How is uniqueness ensured across runs? Is there a cleanup strategy?
+Flag direct repository create/update setup as a risk unless it is a valid, idempotent fixture seeder for service-owned reference data.
+Flag verification guidance as incomplete if it does not require 3 consecutive successful runs without DB reset.
 
 **Think (Coverage dimension):** Which services have tests? Which are missing? What's the test-to-feature ratio?
 
@@ -245,6 +248,7 @@ Read full report. Apply fresh-eyes protocol:
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | "Framework obvious, skip Phase 0 detection"   | Phase 0 is BLOCKING — infrastructure approach determines which patterns to scan                                                      |
 | "Smoke-only test assertions are fine"         | NEVER document smoke-only as acceptable unless infrastructure is truly unobservable                                                  |
+| "Direct repository setup is just test data"   | Flag it unless it creates valid owned fixture data; tests should exercise real use cases, not impossible states.                     |
 | "Base class looks right from memory"          | Grep-verify every base class name — AI hallucinates class hierarchies                                                                |
 | "Coverage stats obvious from directory scan"  | NEVER hardcode counts — use grep expressions that stay accurate as tests are added                                                   |
 | "Skip Round 2 even when Round 1 found issues" | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — main agent rationalizes own fabricated examples. |

@@ -23,15 +23,8 @@ function setupShutdownHandlers() {
     process.on('SIGHUP', () => shutdown('SIGHUP'));
     process.on('unhandledRejection', reason => {
         console.error('Unhandled rejection:', reason);
-        void cleanupAndExit(1);
+        process.exit(1);
     });
-}
-async function cleanupAndExit(code) {
-    if (globalManager) {
-        await globalManager.cleanup();
-        globalManager = null;
-    }
-    process.exit(code);
 }
 async function main() {
     const args = process.argv.slice(2);
@@ -46,7 +39,7 @@ async function main() {
     // Global timeout
     const timeoutHandle = setTimeout(() => {
         console.error('Global timeout exceeded, forcing exit');
-        void cleanupAndExit(1);
+        process.exit(1);
     }, GLOBAL_TIMEOUT_MS);
     timeoutHandle.unref();
     const manager = new MCPClientManager();
@@ -74,12 +67,11 @@ async function main() {
             default:
                 printUsage();
         }
-        clearTimeout(timeoutHandle);
-        await cleanupAndExit(0);
+        await manager.cleanup();
+        process.exit(0);
     } catch (error) {
-        clearTimeout(timeoutHandle);
         console.error('Error:', error);
-        await cleanupAndExit(1);
+        process.exit(1);
     }
 }
 async function listTools(manager) {
@@ -133,7 +125,8 @@ async function listResources(manager) {
 }
 async function callTool(manager, serverName, toolName, argsJson) {
     if (!serverName || !toolName || !argsJson) {
-        throw new Error('Usage: cli.ts call-tool <server> <tool> <json-args>');
+        console.error('Usage: cli.ts call-tool <server> <tool> <json-args>');
+        process.exit(1);
     }
     const args = JSON.parse(argsJson);
     console.log(`Calling ${serverName}/${toolName}...`);

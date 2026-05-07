@@ -57,6 +57,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION verify integration suites with 3 consecutive passing runs without DB reset before declaring done.
 - NEVER skip mandatory workflow or skill gates.
 
 ## Repeated Steps Disambiguation (CRITICAL for task creation)

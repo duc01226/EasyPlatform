@@ -61,12 +61,13 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 - NEVER write smoke-only tests — read handler/entity/event source first, assert specific field values
 - ALWAYS wrap ALL DB assertions in async polling — no exceptions, not just async handlers
+- NEVER create invalid test state by direct repository writes; use real use-case paths (commands, queries, production consumers/messages) or valid seeded fixtures
 - MUST ATTENTION search existing patterns FIRST before generating any test
 - MUST ATTENTION READ `references/integration-test-patterns.md` before writing
 - Organize by domain feature NEVER by CQRS type — NEVER create `Queries/` or `Commands/` folders
 - Every test method MUST have TC annotation — auto-create in Section 15 if missing
 - Minimum 3 tests per command
-- NEVER mark done until tests pass via `$integration-test-verify`
+- NEVER mark done until the relevant suite passes 3 consecutive `$integration-test-verify` runs without DB reset
 
 ---
 
@@ -116,8 +117,10 @@ Before implementation, search codebase for patterns:
 - **Organize by domain feature, NEVER by type** — command + query tests for same domain → same folder (e.g., `Orders/OrderCommandIntegrationTests.*`). NEVER create `Queries/` or `Commands/` folder.
 - Use project's unique name generator for ALL string test data
 - Use project's entity assertion helpers for DB verification with async polling
+- **CRITICAL MUST ATTENTION:** Test setup MUST mirror real workflows. Do not create or edit domain data through repositories when a command/query/seeder path exists; invalid shortcut data is a test bug.
 - **CRITICAL MUST ATTENTION:** ALWAYS wrap ALL DB assertions in async polling/retry — DEFAULT for ALL assertions, not just async handlers. **If asserting data in DB → use async polling. No exceptions.**
 - **CRITICAL MUST ATTENTION:** Before writing assertions, READ handler/entity/event source. Understand WHAT fields change, WHAT entities created/updated/deleted, WHAT event handlers fire. **Smoke-only FORBIDDEN** unless side effect truly unobservable.
+- **CRITICAL MUST ATTENTION:** Verification requires 3 consecutive successful runs of the relevant integration suite/project without resetting data. One green run proves only the current run, not repeatability.
 - Minimum 3 test methods: happy path, validation failure, DB state check
 - **Authorization tests:** Multiple user contexts — authorized succeeds AND unauthorized rejected
 - Every test method MUST have `// TC-{FEATURE}-{NNN}: Description` comment + test-spec annotation — before method, outside body
@@ -765,7 +768,7 @@ integration-test (you are here)
 
 <!-- SYNC:repeatable-test-principle -->
 
-> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run 100 times, each run adds data.
+> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run 100 times, each run adds data. Verification is only PASS after the relevant suite/project passes 3 consecutive runs without DB reset.
 >
 > 1. **Unique data per run:** Use project's unique ID generator for ALL entity IDs. NEVER hardcode IDs.
 > 2. **Additive only:** Tests create data, never delete/reset. Prior runs MUST NOT interfere.
@@ -905,22 +908,22 @@ integration-test (you are here)
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** run graph trace when graph.db exists. Grep 3+ patterns, cite `file:line`.
-      <!-- /SYNC:understand-code-first:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:graph-impact-analysis:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** run `blast-radius` when graph.db exists. Flag impacted files NOT in changeset as potentially stale.
-      <!-- /SYNC:graph-impact-analysis:reminder -->
+  <!-- /SYNC:graph-impact-analysis:reminder -->
 
 <!-- SYNC:red-flag-stop-conditions:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** STOP after 3 failed fix attempts. Report all attempts, ask user before continuing.
-      <!-- /SYNC:red-flag-stop-conditions:reminder -->
+  <!-- /SYNC:red-flag-stop-conditions:reminder -->
 
 <!-- SYNC:rationalization-prevention:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is an evasion, not a reason.
-      <!-- /SYNC:rationalization-prevention:reminder -->
+  <!-- /SYNC:rationalization-prevention:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
@@ -980,14 +983,16 @@ integration-test (you are here)
 
 **Anti-Rationalization:**
 
-| Evasion                            | Rebuttal                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------- |
-| "Test is simple, skip TC lookup"   | TC traceability = test value. Skip = untraceable test.                    |
-| "Async polling not needed here"    | ALL DB assertions need polling. Handler type irrelevant.                  |
-| "Already searched patterns"        | Show `file:line` evidence. No proof = no search.                          |
-| "Smoke test is fine for now"       | Smoke-only FORBIDDEN. Assert specific field values.                       |
-| "REVIEW: one pass is enough"       | Low confidence → spawn fresh sub-agent. Never declare PASS after Round 1. |
-| "Skip task creation, it's obvious" | task tracking is non-negotiable. Tracking prevents context loss.          |
+| Evasion                            | Rebuttal                                                                                             |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| "Test is simple, skip TC lookup"   | TC traceability = test value. Skip = untraceable test.                                               |
+| "Async polling not needed here"    | ALL DB assertions need polling. Handler type irrelevant.                                             |
+| "Already searched patterns"        | Show `file:line` evidence. No proof = no search.                                                     |
+| "Smoke test is fine for now"       | Smoke-only FORBIDDEN. Assert specific field values.                                                  |
+| "Repo setup is faster"             | Direct repository data hacks create invalid state. Use real use-case paths or valid seeded fixtures. |
+| "One green run is enough"          | Verification requires 3 consecutive passing runs without DB reset.                                   |
+| "REVIEW: one pass is enough"       | Low confidence → spawn fresh sub-agent. Never declare PASS after Round 1.                            |
+| "Skip task creation, it's obvious" | task tracking is non-negotiable. Tracking prevents context loss.                                     |
 
 ---
 

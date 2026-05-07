@@ -382,6 +382,10 @@ public class CrossService{Service}Fixture : {Service}IntegrationTestFixture
 
 Two-level seeding pattern: Layer 1 (production) runs during `module.InitializeAsync()`, Layer 2 (test-specific) runs in `SeedDataAsync()`.
 
+**Data integrity rule:** Prefer real use-case paths for scenario setup: commands, queries, production consumers/messages, or cross-service test harness calls. Repository writes are only acceptable in idempotent fixture seeders for valid, service-owned reference data when no use-case path exists. Never create impossible cross-service or partially-linked entities just to make a test pass.
+
+**Verification rule:** A relevant integration suite/project is only verified after 3 consecutive passing runs without DB reset. Restart the 3-run sequence after any fix or failure.
+
 ### Service-Specific Test Data Seeder (Layer 2)
 
 ```csharp
@@ -432,6 +436,8 @@ public class {Service}IntegrationTestDataSeeder : {IntegrationTestDataSeederBase
 - **Layer 1 — `{ApplicationDataSeeder}`**: Production-like data (admin user, orgs, departments). Runs during `module.InitializeAsync()` → registered in service module. Test project inherits this automatically.
 - **Layer 2 — `{IntegrationTestDataSeederBase}`**: Test-specific reference data (templates, request types, settings). Runs in `SeedDataAsync()` after module init.
 - **Idempotent pattern**: `FirstOrDefault(match) → if null, Create`. No teardown — data accumulates across runs.
+- **No invalid shortcuts**: Test methods should not bypass application use cases with direct repository create/update; use commands or existing seeded valid data.
+- **Three-run proof**: Confirm repeatability with 3 consecutive passing suite/project runs without DB reset.
 - Expose constants (`TestFormTemplateCode`) so tests reference seeded data deterministically.
 - Use `SeedData.RootOrganization.Id` for CompanyId — shared constant from `{Project}.Shared.Application`. Search your codebase for the actual seed data class name.
 

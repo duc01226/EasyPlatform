@@ -28,6 +28,8 @@ description: '[Code Quality] Use when you need to review integration tests for a
 - MUST flag DI-resolution-only tests (resolve + not-null) as FAIL — NOT integration tests
 - MUST verify tests use unique IDs per run (infinitely repeatable)
 - MUST use async polling/retry for ALL DB assertions — async delays are norm
+- MUST flag repository-created or repository-mutated test data that bypasses real use cases and can leave invalid state
+- MUST require 3 consecutive successful suite/project runs before declaring integration tests verified/idempotent
 - NEVER accept assertions that always pass regardless of handler correctness
 - **NO smoke/fake/useless tests** — every test MUST execute actual operations and verify data state
 
@@ -90,7 +92,9 @@ Classify BEFORE any gate review. Route wrong → waste all effort.
 
 > **Think:** If this test runs N times in a shared database, does it get noisier each run? Would run #2 fail?
 
-**FAIL:** Hardcoded IDs, hardcoded business keys without unique suffix, teardown/cleanup, ordering dependency, seeders without existence check.
+**FAIL:** Hardcoded IDs, hardcoded business keys without unique suffix, teardown/cleanup, ordering dependency, seeders without existence check, or direct repository setup that creates state users could not create through real use cases.
+
+**Verify:** Repeatability is only proven when the relevant suite/project passes 3 consecutive runs without resetting data. One green run is not enough.
 
 ### Gate 4: Domain Logic — "Does test match handler?"
 
@@ -207,7 +211,7 @@ After Phase 5 fixes, spawn fresh `code-reviewer` sub-agents (parallel by module 
 1. Copy Agent call shape from `SYNC:review-protocol-injection` template verbatim
 2. Set `subagent_type: "code-reviewer"`
 3. Embed full verbatim body of 9 SYNC blocks (all present inline in this skill file): `SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`
-4. Task field: `"Review integration tests in {file-list} against 6 quality gates: assertion value, data state, infinite repeatability, domain logic, test-spec traceability, three-way sync. Read handler source AND feature docs before judging assertions. Flag smoke-only, existence-only, dead assertions as FAIL. Source-of-truth hierarchy: feature docs > test-spec docs > implementation code > test code. Classify every disagreement as: wrong test, code bug, stale docs, or escalate (three-way conflict)."`
+4. Task field: `"Review integration tests in {file-list} against 6 quality gates: assertion value, data state, infinite repeatability, domain logic, test-spec traceability, three-way sync. Read handler source AND feature docs before judging assertions. Flag smoke-only, existence-only, dead assertions, and repository-created invalid test data as FAIL. Source-of-truth hierarchy: feature docs > test-spec docs > implementation code > test code. Classify every disagreement as: wrong test, code bug, stale docs, or escalate (three-way conflict)."`
 5. Target Files: explicit file list (never pass inline contents)
 6. Reference Docs: include `docs/project-reference/integration-test-reference.md`
 7. Report path: `plans/reports/integration-test-review-round{N}-{date}.md`
@@ -242,21 +246,22 @@ After sub-agents return:
 
 ## Common Anti-Patterns
 
-| Anti-Pattern                                     | Why It's Bad                                     |
-| ------------------------------------------------ | ------------------------------------------------ |
-| **Smoke-only** (no-exception alone)              | Proves no crash, not correctness                 |
-| **Existence-only** (not-null)                    | Proves data exists, not handler set it correctly |
-| **Dead assertion** (`count >= 0`, always true)   | Tests nothing                                    |
-| **Framework testing** (assert auto-set fields)   | Tests framework, not handler                     |
-| **Copy-paste assertions** (wrong entity fields)  | Assertions don't match handler                   |
-| **Hardcoded ID** (`Id = "test-001"`)             | Fails on second run                              |
-| **Cleanup dependency** (`finally { Delete(); }`) | Fragile, hides pollution                         |
-| **Order dependency** (test B needs A first)      | Parallel execution breaks                        |
-| **Missing await** (unchecked async exception)    | Exception swallowed silently                     |
-| **Event not triggered** (query, never fire)      | Tests seeder, not handler                        |
-| **Test fixed to match broken code**              | Hides the bug — docs still say it's wrong        |
-| **Self-resolved three-way conflict**             | AI picked winner without evidence — silent lie   |
-| **Stale docs assumed without two-source proof**  | Docs may be right; code may be the bug           |
+| Anti-Pattern                                                         | Why It's Bad                                         |
+| -------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Smoke-only** (no-exception alone)                                  | Proves no crash, not correctness                     |
+| **Existence-only** (not-null)                                        | Proves data exists, not handler set it correctly     |
+| **Dead assertion** (`count >= 0`, always true)                       | Tests nothing                                        |
+| **Framework testing** (assert auto-set fields)                       | Tests framework, not handler                         |
+| **Copy-paste assertions** (wrong entity fields)                      | Assertions don't match handler                       |
+| **Hardcoded ID** (`Id = "test-001"`)                                 | Fails on second run                                  |
+| **Cleanup dependency** (`finally { Delete(); }`)                     | Fragile, hides pollution                             |
+| **Order dependency** (test B needs A first)                          | Parallel execution breaks                            |
+| **Repository data hacks** (direct create/update bypassing use cases) | Leaves impossible state and hides real workflow bugs |
+| **Missing await** (unchecked async exception)                        | Exception swallowed silently                         |
+| **Event not triggered** (query, never fire)                          | Tests seeder, not handler                            |
+| **Test fixed to match broken code**                                  | Hides the bug — docs still say it's wrong            |
+| **Self-resolved three-way conflict**                                 | AI picked winner without evidence — silent lie       |
+| **Stale docs assumed without two-source proof**                      | Docs may be right; code may be the bug               |
 
 ---
 
@@ -569,7 +574,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:repeatable-test-principle -->
 
-> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data.
+> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data. Verification is only PASS after the relevant suite/project passes 3 consecutive runs without DB reset.
 >
 > 1. **Unique data per run:** Use the project's unique ID generator for ALL entity IDs created in tests. NEVER hardcode IDs.
 > 2. **Additive only:** Tests create data, never delete/reset. Prior test runs MUST NOT interfere with current run.
@@ -689,6 +694,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY IMPORTANT MUST ATTENTION** test that cannot fail is decoration — if it can't catch the bug, delete or fix it
 - **MANDATORY IMPORTANT MUST ATTENTION** read handler source BEFORE judging assertions — cannot review without understanding
 - **MANDATORY IMPORTANT MUST ATTENTION** tests MUST be infinitely repeatable — unique data per run, no cleanup, no rollback
+- **MANDATORY IMPORTANT MUST ATTENTION** integration-test verification requires 3 consecutive passing runs without DB reset
 - **MANDATORY IMPORTANT MUST ATTENTION** ALWAYS use async polling/retry for DB assertions
 - **MANDATORY IMPORTANT MUST ATTENTION** flag smoke-only as FAIL unless justified with explicit design comment
 - **MANDATORY IMPORTANT MUST ATTENTION** write findings to report file — never just return text
