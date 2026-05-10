@@ -63,14 +63,14 @@ public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSe
         ApplicationSettingContext = serviceProvider.GetRequiredService<IPlatformApplicationSettingContext>();
     }
 
-    public static int DefaultSeedingMinimumDummyItemsCount => PlatformEnvironment.IsDevelopment ? 10 : 1000;
+    public static int DefaultSeedingMinTestItemsCount => PlatformEnvironment.IsDevelopment ? 3 : 10;
 
     /// <summary>
-    /// Default value is SeedingMinimumDummyItemsCount; <br />
-    /// Used to read SeedingMinimumDummyItemsCount in appsettings by Configuration. <br />
+    /// Default value is SeedingMinTestItemsCount; <br />
+    /// Used to read SeedingMinTestItemsCount in appsettings by Configuration. <br />
     /// Could update it to change the configuration key.
     /// </summary>
-    public static string SeedingMinimumDummyItemsCountConfigurationKey { get; set; } = "SeedingMinimumDummyItemsCount";
+    public static string SeedingMinTestItemsCountConfigurationKey { get; set; } = "SeedingMinTestItemsCount";
 
     protected IPlatformApplicationSettingContext ApplicationSettingContext { get; }
 
@@ -109,10 +109,10 @@ public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSe
 
     public virtual int DelaySeedingInBackgroundBySeconds => 0;
 
-    public static int SeedingMinimumDummyItemsCount(IConfiguration configuration)
+    public static int SeedingMinTestItemsCount(IConfiguration configuration)
     {
-        return configuration.GetValue<int?>(SeedingMinimumDummyItemsCountConfigurationKey) ??
-               DefaultSeedingMinimumDummyItemsCount;
+        return configuration.GetValue<int?>(SeedingMinTestItemsCountConfigurationKey) ??
+               DefaultSeedingMinTestItemsCount;
     }
 
     protected abstract Task InternalSeedData(bool isReplaceNewSeed = false);

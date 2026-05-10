@@ -3,6 +3,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentAssertions;
 using PlatformExampleApp.TextSnippet.Application.Dtos.EntityDtos;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
@@ -41,6 +42,7 @@ public class TextSnippetWebAppFactoryIntegrationTests
     {
         PropertyNamingPolicy = null,
         PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() },
     };
 
     public TextSnippetWebAppFactoryIntegrationTests(TextSnippetWebAppFactoryFixture fixture)

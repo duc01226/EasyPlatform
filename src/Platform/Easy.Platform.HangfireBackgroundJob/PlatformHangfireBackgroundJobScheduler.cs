@@ -18,30 +18,32 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
 {
     public const string AutoRecurringJobIdByTypeSuffix = "_Auto_";
     public const int DefaultMaxLengthJobId = 200;
-    private readonly IPlatformBackgroundJobSchedulerCarryRequestContextService? carryRequestContextService;
 
+    private readonly IPlatformBackgroundJobSchedulerCarryRequestContextService? carryRequestContextService;
+    private readonly IPlatformHangfireBackgroundJobContext hangfireContext;
     private readonly IServiceProvider serviceProvider;
 
     public PlatformHangfireBackgroundJobScheduler(IServiceProvider serviceProvider)
     {
         this.serviceProvider = serviceProvider;
+        hangfireContext = serviceProvider.GetRequiredService<IPlatformHangfireBackgroundJobContext>();
         carryRequestContextService = serviceProvider.GetService<IPlatformBackgroundJobSchedulerCarryRequestContextService>();
     }
 
     public async Task<string> Schedule(Expression<Action> methodCall, TimeSpan? delay = null)
     {
-        return await Task.Run(() => BackgroundJob.Schedule(methodCall, delay ?? TimeSpan.Zero));
+        return await Task.Run(() => hangfireContext.CreateBackgroundJobClient().Schedule(methodCall, delay ?? TimeSpan.Zero));
     }
 
     public async Task<string> Schedule(Expression<Func<Task>> methodCall, TimeSpan? delay = null)
     {
-        return await Task.Run(() => BackgroundJob.Schedule(methodCall, delay ?? TimeSpan.Zero));
+        return await Task.Run(() => hangfireContext.CreateBackgroundJobClient().Schedule(methodCall, delay ?? TimeSpan.Zero));
     }
 
     public async Task<string> Schedule<TJobExecutor>(DateTimeOffset enqueueAt)
         where TJobExecutor : IPlatformBackgroundJobExecutor
     {
-        return await Task.Run(() => BackgroundJob.Schedule(
+        return await Task.Run(() => hangfireContext.CreateBackgroundJobClient().Schedule(
             () => ExecuteBackgroundJobByType(typeof(TJobExecutor), null, CurrentRequestContextValuesAsJsonStr()),
             enqueueAt));
     }
@@ -51,7 +53,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         where TJobExecutorParam : class
     {
         return await Task.Run(() =>
-            BackgroundJob.Schedule(
+            hangfireContext.CreateBackgroundJobClient().Schedule(
                 () => ExecuteBackgroundJobByType(
                     typeof(TJobExecutor),
                     jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null,
@@ -63,13 +65,13 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
 
     public async Task<string> Schedule(Expression<Action> methodCall, DateTimeOffset enqueueAt)
     {
-        return await Task.Run(() => BackgroundJob.Schedule(methodCall, enqueueAt));
+        return await Task.Run(() => hangfireContext.CreateBackgroundJobClient().Schedule(methodCall, enqueueAt));
     }
 
     public async Task<string> Schedule<TJobExecutor>(TimeSpan? delay = null)
         where TJobExecutor : IPlatformBackgroundJobExecutor
     {
-        return await Task.Run(() => BackgroundJob.Schedule(
+        return await Task.Run(() => hangfireContext.CreateBackgroundJobClient().Schedule(
             () => ExecuteBackgroundJobByType(typeof(TJobExecutor), null, CurrentRequestContextValuesAsJsonStr()),
             delay ?? TimeSpan.Zero)
         );
@@ -80,7 +82,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         where TJobExecutorParam : class
     {
         return await Task.Run(() =>
-            BackgroundJob.Schedule(
+            hangfireContext.CreateBackgroundJobClient().Schedule(
                 () => ExecuteBackgroundJobByType(
                     typeof(TJobExecutor),
                     jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null,
@@ -92,7 +94,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
 
     public async Task RemoveJobIfExist(string jobId)
     {
-        await Task.Run(() => BackgroundJob.Delete(jobId));
+        await Task.Run(() => hangfireContext.CreateBackgroundJobClient().Delete(jobId));
     }
 
     public async Task UpsertRecurringJob<TJobExecutor>(Func<string>? cronExpression = null, TimeZoneInfo? timeZone = null)
@@ -102,7 +104,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         {
             var cronExpressionValue = EnsureValidToUpsertRecurringJob(typeof(TJobExecutor), cronExpression);
 
-            RecurringJob.AddOrUpdate(
+            hangfireContext.CreateRecurringJobManager().AddOrUpdate(
                 BuildAutoRecurringJobIdByType<TJobExecutor>(),
                 () => ExecuteBackgroundJobByType(typeof(TJobExecutor), null, CurrentRequestContextValuesAsJsonStr()),
                 cronExpressionValue,
@@ -123,7 +125,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
             var cronExpressionValue = EnsureValidToUpsertRecurringJob(typeof(TJobExecutor), cronExpression);
             var jobExecutorParamJson = jobExecutorParam?.ToJson(true);
 
-            RecurringJob.AddOrUpdate(
+            hangfireContext.CreateRecurringJobManager().AddOrUpdate(
                 BuildAutoRecurringJobIdByType<TJobExecutor>(),
                 () => ExecuteBackgroundJobByType(typeof(TJobExecutor), jobExecutorParamJson, CurrentRequestContextValuesAsJsonStr()),
                 cronExpressionValue,
@@ -137,10 +139,11 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         await Task.Run(() =>
         {
             var cronExpressionValue = EnsureValidToUpsertRecurringJob(jobExecutorType, cronExpression);
+            var jobExecutorTypeName = jobExecutorType.AssemblyQualifiedName!;
 
-            RecurringJob.AddOrUpdate(
+            hangfireContext.CreateRecurringJobManager().AddOrUpdate(
                 BuildAutoRecurringJobIdByType(jobExecutorType),
-                () => ExecuteBackgroundJobByType(jobExecutorType, null, CurrentRequestContextValuesAsJsonStr()),
+                () => ExecuteBackgroundJobByTypeName(jobExecutorTypeName, null, CurrentRequestContextValuesAsJsonStr()),
                 cronExpressionValue,
                 new RecurringJobOptions { TimeZone = timeZone ?? TimeZoneInfo.Local }
             );
@@ -153,10 +156,11 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         {
             var cronExpressionValue = EnsureValidToUpsertRecurringJob(jobExecutorType, cronExpression);
             var jobExecutorParamJson = jobExecutorParam?.ToJson(true);
+            var jobExecutorTypeName = jobExecutorType.AssemblyQualifiedName!;
 
-            RecurringJob.AddOrUpdate(
+            hangfireContext.CreateRecurringJobManager().AddOrUpdate(
                 BuildAutoRecurringJobIdByType(jobExecutorType),
-                () => ExecuteBackgroundJobByType(jobExecutorType, jobExecutorParamJson, CurrentRequestContextValuesAsJsonStr()),
+                () => ExecuteBackgroundJobByTypeName(jobExecutorTypeName, jobExecutorParamJson, CurrentRequestContextValuesAsJsonStr()),
                 cronExpressionValue,
                 new RecurringJobOptions { TimeZone = timeZone ?? TimeZoneInfo.Local }
             );
@@ -168,10 +172,11 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         await Task.Run(() =>
         {
             var cronExpressionValue = EnsureValidToUpsertRecurringJob(jobExecutorType, cronExpression);
+            var jobExecutorTypeName = jobExecutorType.AssemblyQualifiedName!;
 
-            RecurringJob.AddOrUpdate(
+            hangfireContext.CreateRecurringJobManager().AddOrUpdate(
                 recurringJobId.TakeTop(DefaultMaxLengthJobId),
-                () => ExecuteBackgroundJobByType(jobExecutorType, null, CurrentRequestContextValuesAsJsonStr()),
+                () => ExecuteBackgroundJobByTypeName(jobExecutorTypeName, null, CurrentRequestContextValuesAsJsonStr()),
                 cronExpressionValue,
                 new RecurringJobOptions { TimeZone = timeZone ?? TimeZoneInfo.Local }
             );
@@ -189,10 +194,11 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         {
             var cronExpressionValue = EnsureValidToUpsertRecurringJob(jobExecutorType, cronExpression);
             var jobExecutorParamJson = jobExecutorParam?.ToJson(true);
+            var jobExecutorTypeName = jobExecutorType.AssemblyQualifiedName!;
 
-            RecurringJob.AddOrUpdate(
+            hangfireContext.CreateRecurringJobManager().AddOrUpdate(
                 recurringJobId.TakeTop(DefaultMaxLengthJobId),
-                () => ExecuteBackgroundJobByType(jobExecutorType, jobExecutorParamJson, CurrentRequestContextValuesAsJsonStr()),
+                () => ExecuteBackgroundJobByTypeName(jobExecutorTypeName, jobExecutorParamJson, CurrentRequestContextValuesAsJsonStr()),
                 cronExpressionValue,
                 new RecurringJobOptions { TimeZone = timeZone ?? TimeZoneInfo.Local }
             );
@@ -203,7 +209,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     {
         await Task.Run(() =>
         {
-            RecurringJob.RemoveIfExists(recurringJobId.TakeTop(DefaultMaxLengthJobId));
+            hangfireContext.CreateRecurringJobManager().RemoveIfExists(recurringJobId.TakeTop(DefaultMaxLengthJobId));
         });
     }
 
@@ -212,7 +218,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     {
         await Task.Run(() =>
         {
-            RecurringJob.TriggerJob(BuildAutoRecurringJobIdByType<TJobExecutor>());
+            hangfireContext.CreateRecurringJobManager().TriggerJob(BuildAutoRecurringJobIdByType<TJobExecutor>());
         });
     }
 
@@ -226,7 +232,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
             {
                 await Task.Run(() =>
                 {
-                    RecurringJob.RemoveIfExists(recurringJobId);
+                    hangfireContext.CreateRecurringJobManager().RemoveIfExists(recurringJobId);
                 });
             });
         });
@@ -236,7 +242,8 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     {
         return await Task.Run(() =>
         {
-            using (var connection = JobStorage.Current.GetConnection()) return connection.GetRecurringJobs().Select(p => p.Id).ToHashSet();
+            using var connection = hangfireContext.Storage.GetConnection();
+            return connection.GetRecurringJobs().Select(p => p.Id).ToHashSet();
         });
     }
 
@@ -324,10 +331,13 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     {
         return await Task.Run(() =>
         {
-            return BackgroundJob.Schedule(
-                () => ExecuteBackgroundJobByType(
-                    jobExecutorType,
-                    jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null,
+            var jobExecutorTypeName = jobExecutorType.AssemblyQualifiedName!;
+            var jobExecutorParamJson = jobExecutorParam?.ToJson(true);
+
+            return hangfireContext.CreateBackgroundJobClient().Schedule(
+                () => ExecuteBackgroundJobByTypeName(
+                    jobExecutorTypeName,
+                    jobExecutorParamJson,
                     CurrentRequestContextValuesAsJsonStr()),
                 enqueueAt
             );
@@ -354,6 +364,21 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     }
 
     /// <summary>
+    /// Hangfire-callable entry point that takes the job executor's <see cref="Type.AssemblyQualifiedName"/> instead of a
+    /// runtime <see cref="Type"/> instance. Required because Hangfire's user-settings JsonSerializer cannot roundtrip
+    /// <see cref="Type"/> values stored in <c>InvocationData.Arguments</c> — runtime-Type overloads of <c>Schedule</c>/
+    /// <c>UpsertRecurringJob</c> route through this method so the captured argument is a plain string. The legacy
+    /// <see cref="ExecuteBackgroundJobByType"/> remains callable for in-flight pre-fix recurring entries whose
+    /// <c>Job.Method.Name</c> still references it.
+    /// </summary>
+    public async Task ExecuteBackgroundJobByTypeName(string jobExecutorTypeName, string? jobExecutorParamJson, string? requestContextJson)
+    {
+        var jobExecutorType = Type.GetType(jobExecutorTypeName, throwOnError: true)!;
+
+        await ExecuteBackgroundJobByType(jobExecutorType, jobExecutorParamJson, requestContextJson);
+    }
+
+    /// <summary>
     /// Detects recurring jobs that cannot be properly deserialized due to serialization format mismatch.
     /// This happens when job implementation changes (e.g., base class refactoring) but job ID remains the same.
     /// Common scenarios:
@@ -370,7 +395,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
 
             try
             {
-                using (var connection = JobStorage.Current.GetConnection())
+                using (var connection = hangfireContext.Storage.GetConnection())
                 {
                     var recurringJobs = connection.GetRecurringJobs();
 
@@ -434,7 +459,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
 
         try
         {
-            var monitoringApi = JobStorage.Current.GetMonitoringApi();
+            var monitoringApi = hangfireContext.Storage.GetMonitoringApi();
 
             // Job == null when type resolution fails or invocation data is corrupted — both are unable to execute and safe to delete.
             await Task.WhenAll(
@@ -483,7 +508,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
                     {
                         try
                         {
-                            return await Task.Run(() => BackgroundJob.Delete(jobId));
+                            return await Task.Run(() => hangfireContext.CreateBackgroundJobClient().Delete(jobId));
                         }
                         catch (Exception ex)
                         {

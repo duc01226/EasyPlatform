@@ -60,7 +60,7 @@ public class SnippetEntityEventHandlerIntegrationTests : TextSnippetIntegrationT
             Data = new TextSnippetEntityDto
             {
                 SnippetText = IntegrationTestHelper.UniqueName("CategoryEventTest"),
-                FullText = "",
+                FullText = "content for category event test",
                 CategoryId = categoryId,
             },
         });

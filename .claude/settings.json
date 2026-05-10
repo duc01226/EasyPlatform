@@ -8,6 +8,7 @@
     "cleanupPeriodDays": 30,
     "disabledMcpjsonServers": ["chrome-devtools", "figma", "memory", "sequential-thinking"],
     "effortLevel": "high",
+    "skillListingBudgetFraction": 0.05,
     "enableAllProjectMcpServers": false,
     "enabledMcpjsonServers": ["context7", "github", "mongodb", "postgres"],
     "enabledPlugins": {

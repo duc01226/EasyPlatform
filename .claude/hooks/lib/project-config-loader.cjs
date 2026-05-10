@@ -394,6 +394,15 @@ function generateProjectSummary(config) {
     if (test?.frameworks?.length) {
         lines.push(`**Testing:** ${test.frameworks.join(', ')}${test.guideDoc ? ` → ${test.guideDoc}` : ''}`);
     }
+    if (test?.integrationRules?.length) {
+        lines.push('  **Integration Test Rules:**');
+        for (const r of test.integrationRules.slice(0, 3)) {
+            lines.push(`    - ${r}`);
+        }
+        if (test.integrationRules.length > 3) {
+            lines.push(`    - ... +${test.integrationRules.length - 3} more rules`);
+        }
+    }
 
     // --- Infrastructure ---
     const infra = config.infrastructure;

@@ -12,13 +12,18 @@ public class PlatformHangfireBackgroundJobProcessingService : IPlatformBackgroun
 {
     public static readonly long WaitForShutdownTimeoutInSeconds = 5 * 60;
 
+    private readonly IPlatformHangfireBackgroundJobContext context;
     private readonly BackgroundJobServerOptions options;
 
     private BackgroundJobServer currentBackgroundJobServer;
     private bool disposed;
 
-    public PlatformHangfireBackgroundJobProcessingService(BackgroundJobServerOptions options, ILoggerFactory loggerFactory)
+    public PlatformHangfireBackgroundJobProcessingService(
+        IPlatformHangfireBackgroundJobContext context,
+        BackgroundJobServerOptions options,
+        ILoggerFactory loggerFactory)
     {
+        this.context = context;
         this.options = options;
         Logger = loggerFactory.CreateLogger(GetType());
     }
@@ -43,7 +48,7 @@ public class PlatformHangfireBackgroundJobProcessingService : IPlatformBackgroun
             {
                 Logger.LogInformation("{TargetName} STARTED", GetType().Name);
 
-                currentBackgroundJobServer ??= new BackgroundJobServer(options);
+                currentBackgroundJobServer ??= context.CreateBackgroundJobServer(options);
 
                 Logger.LogInformation("{TargetName} FINISHED", GetType().Name);
             },

@@ -5,6 +5,8 @@ namespace Easy.Platform.MongoDB.Helpers;
 
 internal static class BsonClassMapHelper
 {
+    private static readonly Lock RegisterClassMapLock = new();
+
     public static void DefaultClassMapInitializer<TClassMap>(BsonClassMap<TClassMap> cm)
     {
         cm.AutoMap();
@@ -16,7 +18,10 @@ internal static class BsonClassMapHelper
 
     public static void TryRegisterClassMapWithDefaultInitializer<TClassMap>()
     {
-        if (!BsonClassMap.IsClassMapRegistered(typeof(TClassMap)))
-            BsonClassMap.RegisterClassMap<TClassMap>(DefaultClassMapInitializer);
+        lock (RegisterClassMapLock)
+        {
+            if (!BsonClassMap.IsClassMapRegistered(typeof(TClassMap)))
+                BsonClassMap.RegisterClassMap<TClassMap>(DefaultClassMapInitializer);
+        }
     }
 }

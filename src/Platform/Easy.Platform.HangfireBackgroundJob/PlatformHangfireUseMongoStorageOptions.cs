@@ -8,7 +8,11 @@ public class PlatformHangfireUseMongoStorageOptions
 {
     public const string DefaultDatabaseName = "HangfireBackgroundJob";
 
-    public static readonly MongoStorageOptions DefaultStorageOptions = new()
+    public string ConnectionString { get; set; }
+
+    public string DatabaseName { get; set; } = DefaultDatabaseName;
+
+    public MongoStorageOptions StorageOptions { get; set; } = new()
     {
         MigrationOptions = new MongoMigrationOptions
         {
@@ -21,10 +25,4 @@ public class PlatformHangfireUseMongoStorageOptions
         CountersAggregateInterval = PlatformHangfireCommonOptions.DefaultCountersAggregateInterval,
         QueuePollInterval = PlatformHangfireCommonOptions.DefaultQueuePollInterval
     };
-
-    public string ConnectionString { get; set; }
-
-    public string DatabaseName { get; set; } = DefaultDatabaseName;
-
-    public MongoStorageOptions StorageOptions { get; set; } = DefaultStorageOptions;
 }

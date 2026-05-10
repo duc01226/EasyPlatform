@@ -1046,7 +1046,7 @@ MANDATORY REVIEW GATES:
 - Description: Review uncommitted changes, plan and fix issues, then re-review recursively until clean
 - When To Use: User wants to review current uncommitted, staged, or unstaged changes before committing
 - When Not To Use: PR reviews, codebase reviews, branch comparisons
-- Sequence: `review-changes -> review-architecture -> review-domain-entities -> performance -> integration-test-review -> security -> code-simplifier -> code-review -> integration-test-verify -> plan -> why-review -> plan-validate -> why-review -> cook -> workflow-review-changes -> docs-update -> watzup -> workflow-end`
+- Sequence: `review-changes -> review-architecture -> review-domain-entities -> performance -> integration-test-review -> security -> code-simplifier -> code-review -> integration-test-verify -> why-review -> plan -> why-review -> plan-validate -> why-review -> cook -> workflow-review-changes -> docs-update -> watzup -> workflow-end`
 
 Protocol:
 

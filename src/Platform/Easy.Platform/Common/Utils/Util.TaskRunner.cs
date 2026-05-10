@@ -23,6 +23,44 @@ public static partial class Util
         public const int DefaultResilientDelaySeconds = 1;
         public static readonly Func<int, TimeSpan> DefaultBackgroundRetryDelayProvider = retryAttempt => retryAttempt.Seconds();
 
+        /// <summary>
+        /// Computes the retry-attempt number above which retries should be logged as errors.
+        /// Formula: <c>max(1, floor(retryCount * 0.75))</c> — log only after 75% of the retry budget is consumed.
+        /// </summary>
+        /// <remarks>
+        /// <para>Guarantees:</para>
+        /// <list type="bullet">
+        ///   <item>Returns <c>1</c> for <c><paramref name="retryCount"/> &lt;= 0</c> (defensive — first attempt logs at error level).</item>
+        ///   <item>Always returns <c>&gt;= 1</c> (so a 2-retry budget still logs its final attempt).</item>
+        ///   <item>NOT bounded — for very large <c>retryCount</c> the threshold scales linearly. See operational warnings below.</item>
+        /// </list>
+        /// <para>Behavior (sample): <c>retryCount=20 → 15</c> · <c>retryCount=10 → 7</c> · <c>retryCount=2 → 1</c> ·
+        /// <c>retryCount=43200 → 32400</c> · <c>retryCount=int.MaxValue → ~1.61e9</c>. Intent: defer error-level
+        /// logging until late in the retry budget so transient failures (network blips, lock contention, broker
+        /// reconnects) do not generate noise during the first 75% of attempts.</para>
+        /// <para><b>OPERATIONAL WARNINGS:</b></para>
+        /// <list type="bullet">
+        ///   <item><b>Inbox/Outbox callers</b> (<c>retryCount=43200</c>): first error log fires at retry attempt 32,400.
+        ///     With the default delay-back-off this is on the order of tens of hours before the first error-level log line.
+        ///     Lower severities (warn/info) are not affected.</item>
+        ///   <item><b>Background-event handlers using <c>int.MaxValue</c></b>: produce a threshold of ~1.6 billion —
+        ///     an effectively-eternal logging blackout for unbounded retry handlers. Concrete handlers needing
+        ///     retry telemetry MUST override <c>RetryOnFailedTimes</c> to a bounded value.</item>
+        /// </list>
+        /// <para>Caller pattern: <c>if (retryAttempt &gt; LogErrorRetryThreshold(retryCount)) Logger.LogError(...);</c></para>
+        /// <para>Consumed by: <see cref="Easy.Platform.Common.Cqrs.Events.PlatformCqrsEventHandler"/>,
+        /// <see cref="Easy.Platform.Application.Cqrs.Events.PlatformCqrsEventApplicationHandler"/>,
+        /// <see cref="Easy.Platform.Infrastructures.MessageBus.PlatformMessageBusConsumer"/>,
+        /// <see cref="Easy.Platform.Application.MessageBus.Consumers.PlatformApplicationBusMessageConsumer"/>,
+        /// <see cref="Easy.Platform.Application.MessageBus.InboxPattern.PlatformInboxMessageBusConsumerHelper"/>,
+        /// and <see cref="Easy.Platform.Application.MessageBus.OutboxPattern.PlatformOutboxMessageBusProducerHelper"/>.</para>
+        /// </remarks>
+        public static int LogErrorRetryThreshold(int retryCount)
+        {
+            if (retryCount <= 0) return 1;
+            return Math.Max(1, (int)Math.Floor(retryCount * 0.75));
+        }
+
         public static readonly Lazy<SemaphoreSlim> BackgroundActionQueueLimitLock =
             new(() => new SemaphoreSlim(GetDefaultParallelIoTaskMaxConcurrent(), GetDefaultParallelIoTaskMaxConcurrent()));
 

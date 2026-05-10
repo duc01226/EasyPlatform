@@ -104,7 +104,7 @@ docs/project-config.json
 ├── designSystem — { docsPath, modernUiNote, appMappings[] }
 ├── componentSystem — { type, selectorPrefixes[], filePattern, layerClassification{} }
 ├── framework — { name, backendPatternsDoc, frontendPatternsDoc, codeReviewDoc, integrationTestDoc, searchPatternKeywords[] }
-├── testing — { frameworks[], filePatterns{}, commands{}, coverageTool, guideDoc }
+├── testing — { frameworks[], filePatterns{}, commands{}, coverageTool, guideDoc, integrationRules[] }
 ├── e2eTesting — { framework, language, configFile, testsPath, pageObjectsPath, fixturesPath, ... }
 ├── databases{}, messaging{ broker, patterns[], consumerConvention }, api{ style, docsFormat, docsPath, authPattern }
 ├── infrastructure — { containerization, orchestration, cicd{ tool, configPath } }
@@ -205,7 +205,7 @@ Rules MUST ATTENTION be specific: "Use IPlatformRootRepository<TEntity>" not "fo
 
 ### 2i–2j. Testing & E2E
 
-- `testing { frameworks[], filePatterns{}, commands{}, coverageTool, guideDoc }`
+- `testing { frameworks[], filePatterns{}, commands{}, coverageTool, guideDoc, integrationRules[] }`
 - `e2eTesting { framework, language, configFile, testsPath, pageObjectsPath, fixturesPath, runCommands{}, tcCodeFormat, entryPoints[] }`
 - `integrationTestVerify { guidance, referenceDocs[], runScript, startupScript, quickRunCommand, systemCheckCommand, testProjectPattern, testProjects[] }`
 - `integrationTestVerify.referenceDocs[]` MUST contain project-specific docs that explain setup prerequisites before a verifier runs `systemCheckCommand` or test commands.

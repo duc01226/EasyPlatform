@@ -5,8 +5,13 @@ using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.HangfireBackgroundJob.BackgroundJobs;
 using Easy.Platform.Infrastructures.BackgroundJob;
 using Hangfire;
+using Hangfire.Client;
+using Hangfire.Common;
+using Hangfire.Server;
+using Hangfire.States;
 using Hangfire.Mongo;
 using Hangfire.PostgreSql;
+using Hangfire.SqlServer;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Data.SqlClient;
@@ -15,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Hangfire.Storage;
 
 #endregion
 
@@ -39,12 +45,18 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
 
         serviceCollection.AddHangfire(GlobalConfigurationConfigure);
 
+        serviceCollection.Register<IPlatformHangfireBackgroundJobContext>(
+            sp => CreateHangfireBackgroundJobContext(sp),
+            ServiceLifeTime.Singleton,
+            replaceStrategy: DependencyInjectionExtension.CheckRegisteredStrategy.ByService);
+
         serviceCollection.RegisterAllForImplementation<PlatformHangfireBackgroundJobScheduler>(
             replaceStrategy: DependencyInjectionExtension.CheckRegisteredStrategy.ByService,
             lifeTime: ServiceLifeTime.Scoped);
 
         serviceCollection.Register<IPlatformBackgroundJobProcessingService>(
             provider => new PlatformHangfireBackgroundJobProcessingService(
+                provider.GetRequiredService<IPlatformHangfireBackgroundJobContext>(),
                 options: BackgroundJobServerOptionsConfigure(
                     provider,
                     new BackgroundJobServerOptions { WorkerCount = DefaultBackgroundJobServerOptionsWorkerCount }),
@@ -55,21 +67,6 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
         // Register MongoDB maintenance job only for MongoDB storage to avoid unnecessary job scheduling
         if (UseBackgroundJobStorage() == PlatformHangfireBackgroundJobStorageType.Mongo)
             serviceCollection.RegisterAllForImplementation<PlatformTrimHangfireStateHistoryBackgroundJob>();
-
-        GlobalJobFilters.Filters.Add(
-            AutomaticRetryOnFailedOptionsBuilder()
-                .Pipe(options => new AutomaticRetryAttribute
-                {
-                    Attempts = options.Attempts,
-                    DelayInSecondsByAttemptFunc = options.DelayInSecondsByAttemptFunc
-                }));
-
-        // Preserve culture information for background jobs
-        // Captures CurrentCulture and CurrentUICulture at job scheduling time
-        // and restores them when the job executes on a worker process
-        // This ensures consistent culture-dependent behavior (date/number formatting, localization)
-        // across different environments (local, systemtest, production)
-        GlobalJobFilters.Filters.Add(new CaptureCultureAttribute());
     }
 
     protected override async Task InternalInit(IServiceScope serviceScope)
@@ -83,7 +80,9 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
 
         // Trim StateHistory on startup for MongoDB storage to prevent 16MB document limit
         // This provides immediate relief for existing oversized documents
-        if (UseBackgroundJobStorage() == PlatformHangfireBackgroundJobStorageType.Mongo) await TrimHangfireStateHistoryOnStartupAsync();
+        if (UseBackgroundJobStorage() == PlatformHangfireBackgroundJobStorageType.Mongo)
+            await TrimHangfireStateHistoryOnStartupAsync(
+                serviceScope.ServiceProvider.GetRequiredService<IPlatformHangfireBackgroundJobContext>().MongoStorageOptions!);
 
         // Delete failed/scheduled jobs that reference types no longer present in the assembly.
         // Gap: ReplaceAllRecurringBackgroundJobs() removes stale recurring *definitions* but not
@@ -114,13 +113,10 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
     /// <para>On startup, trim StateHistory to last MaxStateHistoryEntries (default: 20).
     /// Combined with daily PlatformTrimHangfireStateHistoryBackgroundJob, this prevents accumulation.</para>
     /// </summary>
-    protected virtual async Task TrimHangfireStateHistoryOnStartupAsync()
+    protected virtual async Task TrimHangfireStateHistoryOnStartupAsync(PlatformHangfireUseMongoStorageOptions options)
     {
         try
         {
-            var options = PlatformHangfireMongoOptionsHolder.CurrentOptions;
-            if (options == null) return;
-
             var result = await PlatformTrimHangfireStateHistoryBackgroundJob.TrimStateHistoryAsync(options);
 
             Logger.LogInformation(
@@ -143,15 +139,107 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
         return options;
     }
 
+    protected virtual IPlatformHangfireBackgroundJobContext CreateHangfireBackgroundJobContext(IServiceProvider? sp = null)
+    {
+        var activatorSp = sp ?? ServiceProvider;
+        var storageType = UseBackgroundJobStorage();
+        PlatformHangfireUseMongoStorageOptions? mongoOptions = null;
+
+        JobStorage storage;
+        if (storageType == PlatformHangfireBackgroundJobStorageType.Sql)
+        {
+            storage = CreateSqlHangfireStorage();
+        }
+        else if (storageType == PlatformHangfireBackgroundJobStorageType.Mongo)
+        {
+            mongoOptions = UseMongoStorageOptions();
+            storage = CreateMongoHangfireStorage(mongoOptions);
+        }
+        else if (storageType == PlatformHangfireBackgroundJobStorageType.PostgreSql)
+        {
+            storage = CreatePostgreSqlHangfireStorage();
+        }
+        else if (storageType == PlatformHangfireBackgroundJobStorageType.InMemory)
+        {
+            throw new NotSupportedException(
+                "In-memory Hangfire storage is not supported by the module-local storage context.");
+        }
+        else
+        {
+            throw new Exception("Invalid PlatformHangfireBackgroundJobStorageType");
+        }
+
+        var filterProviders = new JobFilterProviderCollection
+        {
+            new JobFilterAttributeFilterProvider(),
+            new PlatformHangfireFixedJobFilterProvider(
+                CreateHangfireGlobalFilters()
+            )
+        };
+
+        return new PlatformHangfireBackgroundJobContext(
+            storage,
+            filterProviders,
+            new PlatformHangfireActivator(activatorSp),
+            mongoOptions);
+    }
+
+    protected virtual JobStorage CreateSqlHangfireStorage()
+    {
+        var sqlOptions = UseSqlServerStorageOptions();
+        return new SqlServerStorage(sqlOptions.ConnectionString, sqlOptions.StorageOptions);
+    }
+
+    protected virtual JobStorage CreateMongoHangfireStorage(PlatformHangfireUseMongoStorageOptions mongoOptions)
+    {
+        var storageOptions = mongoOptions.StorageOptions.WithIf(
+            PlatformEnvironment.IsDevelopment,
+            p => p.CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection);
+
+        return new MongoStorage(
+            MongoClientSettings.FromConnectionString(mongoOptions.ConnectionString),
+            mongoOptions.DatabaseName,
+            storageOptions);
+    }
+
+    protected virtual JobStorage CreatePostgreSqlHangfireStorage()
+    {
+        var postgresOptions = UsePostgreSqlStorageOptions();
+        return new PostgreSqlStorage(postgresOptions.ConnectionString, postgresOptions.StorageOptions);
+    }
+
+    protected virtual JobFilter[] CreateHangfireGlobalFilters()
+    {
+        var retryOptions = AutomaticRetryOnFailedOptionsBuilder();
+        var autoDeleteOptions = CommonOptions();
+
+        return
+        [
+            new JobFilter(
+                new PlatformHangfireAutoDeleteJobAfterSuccessAttribute(autoDeleteOptions.JobSucceededExpirationTimeoutSeconds),
+                JobFilterScope.Global,
+                0),
+            new JobFilter(
+                new AutomaticRetryAttribute
+                {
+                    Attempts = retryOptions.Attempts,
+                    DelayInSecondsByAttemptFunc = retryOptions.DelayInSecondsByAttemptFunc
+                },
+                JobFilterScope.Global,
+                0),
+            new JobFilter(
+                new CaptureCultureAttribute(),
+                JobFilterScope.Global,
+                0)
+        ];
+    }
+
     protected virtual void GlobalConfigurationConfigure(IGlobalConfiguration configuration)
     {
-        var commonOptions = CommonOptions();
-
         configuration
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
             .UseSimpleAssemblyNameTypeSerializer()
-            .UseRecommendedSerializerSettings()
-            .UseFilter(new PlatformHangfireAutoDeleteJobAfterSuccessAttribute(commonOptions.JobSucceededExpirationTimeoutSeconds));
+            .UseRecommendedSerializerSettings();
 
         switch (UseBackgroundJobStorage())
         {
@@ -234,7 +322,8 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
     {
         return new PlatformHangfireUseMongoStorageOptions
         {
-            ConnectionString = StorageOptionsConnectionString()
+            ConnectionString = StorageOptionsConnectionString(),
+            DatabaseName = Configuration.GetSection("MongoDB:Database").Get<string>()
         };
     }
 

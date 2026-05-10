@@ -27,6 +27,12 @@ public interface IPlatformDbContext : IDisposable
 {
     public static readonly int SaveMigrationHistoryRetryCount = 100;
 
+    /// <summary>
+    /// Log retry errors only after the late stage (~last third) of <see cref="SaveMigrationHistoryRetryCount"/> attempts
+    /// to avoid noisy logs for transient failures during normal retry recovery.
+    /// </summary>
+    public static readonly int SaveMigrationHistoryLogErrorRetryAttemptThreshold = Math.Max(3, SaveMigrationHistoryRetryCount * 2 / 3);
+
     public static readonly ActivitySource ActivitySource = new($"{nameof(IPlatformDbContext)}");
     public static int MigrationRetryCount => PlatformEnvironment.IsDevelopment ? 5 : 10;
     public static int MigrationRetryDelaySeconds => PlatformEnvironment.IsDevelopment ? 15 : 30;
@@ -159,7 +165,7 @@ public interface IPlatformDbContext : IDisposable
                             SaveMigrationHistoryRetryCount,
                             onRetry: (ex, delayRetryTime, retryAttempt, context) =>
                             {
-                                if (retryAttempt > Util.TaskRunner.DefaultResilientRetryCount)
+                                if (retryAttempt > SaveMigrationHistoryLogErrorRetryAttemptThreshold)
                                     Logger.LogError(ex.BeautifyStackTrace(), "Upsert DataMigrationHistory Status=Processed failed");
                             },
                             cancellationToken: CancellationToken.None);
@@ -192,7 +198,7 @@ public interface IPlatformDbContext : IDisposable
                             SaveMigrationHistoryRetryCount,
                             (ex, delayRetryTime, retryAttempt, context) =>
                             {
-                                if (retryAttempt > Util.TaskRunner.DefaultResilientRetryCount)
+                                if (retryAttempt > SaveMigrationHistoryLogErrorRetryAttemptThreshold)
                                     Logger.LogError(ex.BeautifyStackTrace(), "Upsert DataMigrationHistory Status=Failed failed");
                             },
                             CancellationToken.None);
@@ -260,7 +266,7 @@ public interface IPlatformDbContext : IDisposable
                         retryCount: SaveMigrationHistoryRetryCount,
                         onRetry: (ex, delayRetryTime, retryAttempt, context) =>
                         {
-                            if (retryAttempt > Util.TaskRunner.DefaultResilientRetryCount)
+                            if (retryAttempt > SaveMigrationHistoryLogErrorRetryAttemptThreshold)
                                 Logger.LogError(ex.BeautifyStackTrace(), "Upsert DataMigrationHistory LastProcessingPingTime failed");
                         });
                 }

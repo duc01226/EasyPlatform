@@ -286,6 +286,40 @@ const winFlagAllowTests = [
         name: 'robocopy /MIR - should allow',
         input: { tool_input: { command: 'robocopy /MIR src dst' } },
         expectBlock: false
+    },
+    {
+        name: 'cd /d D:\\path - should allow (cross-drive change flag)',
+        input: { tool_input: { command: 'cd /d D:\\GitSources\\BravoSuite' } },
+        expectBlock: false
+    },
+    {
+        name: 'dir /b /s - should allow (recursive bare format flags)',
+        input: { tool_input: { command: 'dir /b /s src' } },
+        expectBlock: false
+    },
+    {
+        name: 'cd /d + dir /b /s chained - should allow (regression: real user report)',
+        input: {
+            tool_input: {
+                command: 'cd /d D:\\GitSources\\BravoSuite && dir /b /s src\\Services\\Dockerfile & dir /b Bravo-DevStarts\\StartDocker'
+            }
+        },
+        expectBlock: false
+    },
+    {
+        name: 'del /q /f - should allow',
+        input: { tool_input: { command: 'del /q /f temp.txt' } },
+        expectBlock: false
+    },
+    {
+        name: 'copy /y src dst - should allow',
+        input: { tool_input: { command: 'copy /y src.txt dst.txt' } },
+        expectBlock: false
+    },
+    {
+        name: 'powershell -Command - should allow',
+        input: { tool_input: { command: 'powershell /c "Get-ChildItem"' } },
+        expectBlock: false
     }
 ];
 
@@ -449,6 +483,93 @@ const grepTests = [
     {
         name: 'grep unquoted real path as target - should block',
         input: { tool_input: { command: 'grep something /etc/passwd' } },
+        expectBlock: true
+    }
+];
+
+// =====================================================================
+// Redirection-anchor + PowerShell here-string regression tests
+// Source: real user report — `Add-Content -Value @'...regex with =>\s*\w+...'@`
+// triggered "BLOCKED: \s*\w+\.(Profiles\ outside project boundary".
+// Root cause #1: `/>\s*.../g` had no left-anchor → matched `>` inside `=>`.
+// Root cause #2: PowerShell here-strings (@'...'@, @"..."@) were not stripped.
+// =====================================================================
+const redirAnchorTests = [
+    {
+        name: 'arrow operator => in arg - should allow (not a redirection)',
+        input: { tool_input: { command: "echo 'arr.map(x => x.name)'" } },
+        expectBlock: false
+    },
+    {
+        name: 'arrow -> in arg - should allow (not a redirection)',
+        input: { tool_input: { command: "echo 'a -> b -> c'" } },
+        expectBlock: false
+    },
+    {
+        name: 'pipe-forward |> in arg - should allow (not a redirection)',
+        input: { tool_input: { command: "echo 'x |> f |> g'" } },
+        expectBlock: false
+    },
+    {
+        name: 'comparison <> in arg - should allow (not a redirection)',
+        input: { tool_input: { command: "echo 'a <> b'" } },
+        expectBlock: false
+    },
+    {
+        name: 'real redirect > to outside path - should still block',
+        input: { tool_input: { command: 'echo data > /etc/test' } },
+        expectBlock: true
+    },
+    {
+        name: 'real append >> to outside path - should still block',
+        input: { tool_input: { command: 'echo data >> /etc/test' } },
+        expectBlock: true
+    },
+    {
+        name: 'real redirect > to project path - should allow',
+        input: { tool_input: { command: 'echo data > ./out.log' } },
+        expectBlock: false
+    }
+];
+
+const psHereStringTests = [
+    {
+        name: "PS @'...'@ here-string with regex containing => - should allow (real user report)",
+        input: {
+            tool_input: {
+                command:
+                    "powershell -NoProfile -Command \"Add-Content -Path 'plans/reports/r.md' -Value @'\ngrep `FindFieldUpdatedEvent\\(.*=>\\s*\\w+\\.(Profiles\\|Sharings)`\n'@\""
+            }
+        },
+        expectBlock: false
+    },
+    {
+        name: 'PS @"..."@ here-string with arrow ops - should allow',
+        input: {
+            tool_input: {
+                command: 'powershell -Command "Set-Content out.md @"\nx => y -> z |> w\n"@"'
+            }
+        },
+        expectBlock: false
+    },
+    {
+        name: 'PS here-string body containing real outside path - should still allow (body is data, not exec)',
+        input: {
+            tool_input: {
+                command: "powershell -Command \"Set-Content -Path './doc.md' -Value @'\nfile at /etc/passwd documented here\n'@\""
+            }
+        },
+        // Here-string body is verbatim data being written, not an executed reference.
+        // Stripping is the right call — same precedent as stripInlineCode for python -c "...".
+        expectBlock: false
+    },
+    {
+        name: 'PS here-string then real outside cat after && - should block',
+        input: {
+            tool_input: {
+                command: "powershell -Command \"Set-Content -Path 'a.md' -Value @'\ndata\n'@\" && cat /etc/passwd"
+            }
+        },
         expectBlock: true
     }
 ];
@@ -626,6 +747,8 @@ async function main() {
         ['Inline Code Tests', inlineCodeTests],
         ['Sed/Awk Pattern Tests', sedAwkTests],
         ['Grep Pattern Tests', grepTests],
+        ['Redirection Anchor Tests (=>, ->, |>, <> not redirections)', redirAnchorTests],
+        ['PowerShell Here-String Tests', psHereStringTests],
         ['MCP Filesystem Tests', mcpTests],
         ['NotebookEdit Tests', notebookTests],
         ['Config Toggle Tests', configTests],

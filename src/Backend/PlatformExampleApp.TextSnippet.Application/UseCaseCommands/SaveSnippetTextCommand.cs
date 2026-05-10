@@ -319,7 +319,7 @@ internal sealed class SaveSnippetTextCommandHandler : PlatformCqrsCommandApplica
         var validToSaveEntity1 = toSaveEntity
             .Validate(
                 must: toSaveEntity =>
-                    toSaveEntity.CreatedByUserId == null || RequestContext.UserId<Guid?>() == null || toSaveEntity.CreatedByUserId == RequestContext.UserId<string>(),
+                    toSaveEntity.CreatedByUserId == null || string.IsNullOrEmpty(RequestContext.UserId<string>()) || toSaveEntity.CreatedByUserId == RequestContext.UserId<string>(),
                 "User must be the creator to update text snippet entity")
             .WithPermissionException() // Equivalent to ValidateSavePermission
             .And(

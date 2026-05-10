@@ -333,7 +333,7 @@ public class TextSnippetEntity : RootAuditedEntity<TextSnippetEntity, string, st
 
     public PlatformValidationResult<TextSnippetEntity> ValidateSomeSpecificIsXxxLogic()
     {
-        return SomeSpecificIsXxxLogicValidator().Validate(this).WithDomainException();
+        return SomeSpecificIsXxxLogicValidator().Validate(this).WithDomainValidationException();
     }
 
     public PlatformValidationResult<TextSnippetEntity> ValidateSavePermission(string userId)

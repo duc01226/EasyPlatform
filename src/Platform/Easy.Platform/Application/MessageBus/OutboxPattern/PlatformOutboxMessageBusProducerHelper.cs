@@ -259,7 +259,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                             Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                         onRetry: (ex, delayTime, retryCount, context) =>
                         {
-                            if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                            if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                             {
                                 logger.LogError(
                                     ex.BeautifyStackTrace(),
@@ -329,7 +329,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                 onRetry: (ex, delayTime, retryCount, context) =>
                 {
-                    if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                    if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                     {
                         CreateLogger()
                             .LogError(
@@ -413,7 +413,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                             Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                         onRetry: (ex, delayTime, retryCount, context) =>
                         {
-                            if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                            if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                             {
                                 foreach (var outboxMessage in existingOutboxMessages)
                                 {
@@ -465,7 +465,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
             sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
             onRetry: (ex, delayTime, retryCount, context) =>
             {
-                if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                 {
                     CreateLogger()
                         .LogError(
@@ -576,7 +576,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
             sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
             onRetry: (ex, delayTime, retryCount, context) =>
             {
-                if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                 {
                     CreateLogger()
                         .LogError(
@@ -640,7 +640,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                 onRetry: (ex, delayTime, retryCount, context) =>
                 {
-                    if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                    if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                     {
                         CreateLogger()
                             .LogError(
@@ -876,7 +876,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
             sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
             onRetry: (ex, delayTime, retryCount, context) =>
             {
-                if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                 {
                     CreateLogger()
                         .LogError(

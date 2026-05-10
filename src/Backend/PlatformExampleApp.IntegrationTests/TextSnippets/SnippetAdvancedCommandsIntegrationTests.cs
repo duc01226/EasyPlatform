@@ -130,8 +130,8 @@ public class SnippetAdvancedCommandsIntegrationTests : TextSnippetIntegrationTes
         var snippetId1 = result1.SavedData.Id;
         var snippetId2 = result2.SavedData.Id;
 
-        // Act & Assert — command must throw because one ID is missing and SkipInvalidItems=false
-        await Assert.ThrowsAnyAsync<Exception>(
+        // Act & Assert — command must throw a validation failure because one ID is missing and SkipInvalidItems=false
+        await AssertValidationFailsAsync(
             () => ExecuteCommandAsync(new BulkUpdateSnippetStatusCommand
             {
                 SnippetIds = [snippetId1, snippetId2, nonExistentId],

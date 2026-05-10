@@ -420,7 +420,8 @@ public static class PlatformInboxMessageBusConsumerHelper
                 Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
             onRetry: (ex, delayTime, retryCount, context) =>
             {
-                if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
+                if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                 {
                     loggerFactory()
                         .LogError(
@@ -703,7 +704,8 @@ public static class PlatformInboxMessageBusConsumerHelper
                             Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                         onRetry: (ex, delayRetryTime, retryAttempt, context) =>
                         {
-                            if (retryAttempt > Util.TaskRunner.DefaultResilientRetryCount)
+                            // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
+                            if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                                 loggerFactory().LogError(ex.BeautifyStackTrace(), "Update PlatformInboxBusMessage LastProcessingPingTime failed");
                         });
                 }
@@ -744,7 +746,8 @@ public static class PlatformInboxMessageBusConsumerHelper
                 Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
             onRetry: (ex, delayTime, retryCount, context) =>
             {
-                if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
+                if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                 {
                     loggerFactory()
                         .LogError(
@@ -913,7 +916,8 @@ public static class PlatformInboxMessageBusConsumerHelper
                 Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
             onRetry: (ex, delayTime, retryCount, context) =>
             {
-                if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
+                if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                 {
                     loggerFactory()
                         .LogError(
@@ -956,7 +960,8 @@ public static class PlatformInboxMessageBusConsumerHelper
                     Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                 onRetry: (ex, delayTime, retryCount, context) =>
                 {
-                    if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                    // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
+                    if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                     {
                         loggerFactory()
                             .LogError(
@@ -1058,7 +1063,8 @@ public static class PlatformInboxMessageBusConsumerHelper
                     Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                 onRetry: (ex, delayTime, retryCount, context) =>
                 {
-                    if (retryCount > Util.TaskRunner.DefaultResilientRetryCount)
+                    // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
+                    if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                     {
                         loggerFactory()
                             .LogError(

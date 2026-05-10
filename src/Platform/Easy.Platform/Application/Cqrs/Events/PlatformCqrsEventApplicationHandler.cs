@@ -1104,7 +1104,11 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                             sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + RetryOnFailedDelaySeconds, MaxRetryOnFailedDelaySeconds).Seconds(),
                             onRetry: (e, delayTime, retryAttempt, context) =>
                             {
-                                if (retryAttempt > Util.TaskRunner.DefaultResilientRetryCount)
+                                // Log only after 75% of retry budget consumed. See Util.TaskRunner.LogErrorRetryThreshold.
+                                // NOTE: Background-event RetryOnFailedTimes defaults to int.MaxValue (see :590-ish getter), which makes
+                                // the threshold ~1.6 billion — an effectively-eternal logging blackout for unbounded retry handlers.
+                                // Concrete handlers needing retry telemetry MUST override RetryOnFailedTimes to a bounded value.
+                                if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(RetryOnFailedTimes))
                                     LogError(@event, e.BeautifyStackTrace(), LoggerFactory, "Retry");
                             },
                             cancellationToken: cancellationToken,

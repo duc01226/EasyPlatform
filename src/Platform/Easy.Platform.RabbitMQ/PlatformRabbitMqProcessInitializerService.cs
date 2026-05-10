@@ -333,18 +333,21 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
         {
             await connectConsumersToQueuesLock.WaitAsync(currentStartProcessCancellationToken);
 
-            if (usedChannels.Any() && usedChannels.All(p => p.IsOpen))
+            IChannel[] usedChannelsSnapshot;
+            lock (usedChannels) usedChannelsSnapshot = usedChannels.ToArray();
+
+            if (usedChannelsSnapshot.Length > 0 && usedChannelsSnapshot.All(p => p.IsOpen))
                 return;
 
-            if (usedChannels.Any())
+            if (usedChannelsSnapshot.Length > 0)
             {
-                await usedChannels.ParallelAsync(async p =>
+                await usedChannelsSnapshot.ParallelAsync(async p =>
                 {
                     if (p.IsOpen)
                         await p.CloseAsync(cancellationToken: currentStartProcessCancellationToken);
                     p.Dispose();
                 });
-                usedChannels.Clear();
+                lock (usedChannels) usedChannels.Clear();
             }
 
             Logger.LogInformation("Start connect all consumers to rabbitmq queue STARTED");
@@ -352,11 +355,12 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
             var allQueueNames = messageBusScanner.ScanAllDefinedConsumerBindingRoutingKeys().Select(GetConsumerQueueName).ToList();
             var allParallelConsumerChannels = Enumerable.Range(0, channelPool.PoolSize).Select(p => channelPool.Get()).ToList();
 
-            // Connect queue to channel
-            var currentAssignChanelIndex = 0;
+            // Connect queue to channel. Round-robin assignment via Interlocked to avoid races under ParallelAsync.
+            var nextChannelCounter = -1;
             await allQueueNames.ParallelAsync(async queueName =>
             {
-                var useChannel = allParallelConsumerChannels[currentAssignChanelIndex];
+                var assignedIndex = Interlocked.Increment(ref nextChannelCounter) % allParallelConsumerChannels.Count;
+                var useChannel = allParallelConsumerChannels[assignedIndex];
 
                 var applicationRabbitConsumer = new AsyncEventingBasicConsumer(useChannel).With(consumer => consumer.ReceivedAsync += OnMessageReceived);
 
@@ -365,18 +369,15 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
 
                 Logger.LogDebug("Consumers connected to queue {QueueName}", queueName);
 
-                if (currentAssignChanelIndex == allParallelConsumerChannels.Count - 1)
-                    currentAssignChanelIndex = 0;
-                else
-                    currentAssignChanelIndex += 1;
-
-                usedChannels.Add(useChannel);
+                lock (usedChannels) usedChannels.Add(useChannel);
             });
 
             // Return free channel back to pool
+            HashSet<IChannel> usedChannelsAfter;
+            lock (usedChannels) usedChannelsAfter = [.. usedChannels];
             allParallelConsumerChannels.ForEach(p =>
             {
-                if (!usedChannels.Contains(p))
+                if (!usedChannelsAfter.Contains(p))
                     channelPool.Return(p);
             });
 

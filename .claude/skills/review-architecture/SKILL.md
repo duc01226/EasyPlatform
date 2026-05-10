@@ -359,6 +359,29 @@ If `architectureRules` absent from project-config.json: skip silently.
 
 ---
 
+## Phase 5: Why-Review Self-Validation Gate (MANDATORY when findings exist)
+
+> **Purpose:** Adversarial validation of own findings BEFORE handoff. Catches over-flagged Highs, false positives, and severity inflation at the source rather than letting them propagate downstream.
+
+**Trigger:** Any finding produced (Critical, High, Medium, OR Low). Skip ONLY when the report's verdict is unconditional PASS with literally zero findings.
+
+**Protocol:**
+
+1. Read own finalized report from `plans/reports/{skill}-{date}-{slug}.md`
+2. Invoke `/why-review` skill with arg: `validate findings in plans/reports/{skill}-{date}-{slug}.md — verify each finding has file:line proof, steel-man each rejected interpretation, and stress-test severity classifications`
+3. Read why-review output from `plans/reports/why-review-{date}.md`
+4. **If why-review demotes/removes any finding:** UPDATE own finalized report with revised severities, remove false positives, and add a `## Why-Review Validation Notes` section citing what changed and why
+5. **If why-review confirms all findings:** Append `## Why-Review Validation` line to own report stating "All N findings re-validated against actual code; no severity changes."
+
+**Skip conditions (record explicit reason if skipping):**
+
+- Verdict is unconditional PASS with zero findings → log "Skipped — no findings to validate"
+- Why-review skill itself is the active context (avoid recursion)
+
+**Why this exists:** AI sub-agent reports inherit confirmation bias — the orchestrator absorbs severity claims as ground truth. The 2026-05-09 review incident produced 5 Highs; adversarial validation demoted 3 of them. Codify this as standard practice.
+
+---
+
 ## Next Steps
 
 **MANDATORY MUST ATTENTION — NO EXCEPTIONS:** After completing, use `AskUserQuestion` to present:

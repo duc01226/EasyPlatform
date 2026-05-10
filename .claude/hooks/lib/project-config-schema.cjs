@@ -201,7 +201,8 @@ const SCHEMA = {
             filePatterns: { type: 'map', required: false },
             commands: { type: 'map', required: false },
             coverageTool: { type: 'string', required: false },
-            guideDoc: { type: 'string', required: false }
+            guideDoc: { type: 'string', required: false },
+            integrationRules: { type: 'array', required: false, itemType: 'string' }
         }
     },
     e2eTesting: {

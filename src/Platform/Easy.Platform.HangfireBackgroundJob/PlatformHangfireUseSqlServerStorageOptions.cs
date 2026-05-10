@@ -4,7 +4,9 @@ namespace Easy.Platform.HangfireBackgroundJob;
 
 public class PlatformHangfireUseSqlServerStorageOptions
 {
-    public static readonly SqlServerStorageOptions DefaultStorageOptions = new()
+    public string ConnectionString { get; set; }
+
+    public SqlServerStorageOptions StorageOptions { get; set; } = new()
     {
         CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
         QueuePollInterval = PlatformHangfireCommonOptions.DefaultQueuePollInterval,
@@ -13,8 +15,4 @@ public class PlatformHangfireUseSqlServerStorageOptions
         JobExpirationCheckInterval = PlatformHangfireCommonOptions.DefaultJobExpirationCheckInterval,
         CountersAggregateInterval = PlatformHangfireCommonOptions.DefaultCountersAggregateInterval
     };
-
-    public string ConnectionString { get; set; }
-
-    public SqlServerStorageOptions StorageOptions { get; set; } = DefaultStorageOptions;
 }

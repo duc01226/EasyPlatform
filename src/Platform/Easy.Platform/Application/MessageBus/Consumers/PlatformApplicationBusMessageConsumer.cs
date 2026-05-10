@@ -314,7 +314,8 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
             sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + RetryOnFailedDelaySeconds, MaxRetryOnFailedDelaySeconds).Seconds(),
             onRetry: (e, delayTime, retryAttempt, context) =>
             {
-                if (retryAttempt > Util.TaskRunner.DefaultResilientRetryCount)
+                // Log only after 75% of retry budget consumed. See Util.TaskRunner.LogErrorRetryThreshold.
+                if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(retryCount ?? RetryOnFailedTimes))
                     IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace(), "Retry");
             },
             ignoreExceptionTypes: [typeof(IPlatformValidationException)]

@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -40,6 +42,12 @@ internal sealed class TextSnippetWebApplicationFactory : WebApplicationFactory<P
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+
+        builder.ConfigureAppConfiguration((_, configBuilder) =>
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["UseDbType"] = "Postgres",
+            }));
 
         // Prevent port binding — TestServer handles requests in-memory.
         // Avoids conflicts with a locally running TextSnippet API on port 5001.

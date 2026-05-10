@@ -221,6 +221,24 @@ function stripSedAwkPatterns(cmd) {
 }
 
 /**
+ * Strip PowerShell here-strings from command before path extraction.
+ * Here-strings (@'...'@ and @"..."@) carry verbatim multi-line content
+ * — markdown, regex, code samples — that frequently contains characters
+ * (=>, ->, |>, regex `\s*`, backslashes) which trip path-extraction regexes.
+ *
+ * Replaces here-string body with empty placeholder, preserving the @'@/@"@
+ * markers so the surrounding command structure is unchanged.
+ *
+ * @param {string} cmd - Shell command string
+ * @returns {string} Command with PowerShell here-string bodies emptied
+ */
+function stripPowerShellHereStrings(cmd) {
+    let result = cmd.replace(/@'[\s\S]*?'@/g, "@''@");
+    result = result.replace(/@"[\s\S]*?"@/g, '@""@');
+    return result;
+}
+
+/**
  * Strip grep/ripgrep pattern arguments from command before path extraction.
  * Grep patterns often contain slashes (e.g., "<!-- /SYNC:", "/api/v2/")
  * that trigger false-positive path detection.
@@ -271,6 +289,7 @@ function extractPaths(toolInput, toolName) {
     if (toolInput.command) {
         // Strip inline code and pattern-argument tools to prevent false positives
         let cmd = stripInlineCode(toolInput.command);
+        cmd = stripPowerShellHereStrings(cmd);
         cmd = stripSedAwkPatterns(cmd);
         cmd = stripGrepPatterns(cmd);
 
@@ -285,15 +304,20 @@ function extractPaths(toolInput, toolName) {
             addPath(p, 'command')
         );
 
-        // Redirection targets (> file, >> file) — skip /dev, /proc, /sys
-        extractMatches(/>\s*["']?([^\s"'|><&;]+)/g, cmd, m => !/^\/(?:dev|proc|sys)(\/|$)/.test(m)).forEach(p => addPath(p, 'command'));
+        // Redirection targets (> file, >> file) — skip /dev, /proc, /sys.
+        // Anchor `>` to whitespace/start/`>` to avoid matching `>` inside `=>`,
+        // `->`, `|>`, etc. (regex/code fragments quoted in args). `>>` still
+        // matches because the second `>` is preceded by the first.
+        extractMatches(/(?:^|[\s>])>\s*["']?([^\s"'|><&;]+)/g, cmd, m => !/^\/(?:dev|proc|sys)(\/|$)/.test(m)).forEach(p =>
+            addPath(p, 'command')
+        );
 
         // Absolute paths (skip /dev, /proc, /sys; on Windows also skip cmd flags like /I, /nologo, /v:m
         // when preceded by a Windows-only tool token). Outer platform gate guarantees Linux/macOS
         // can never bypass the boundary on /etc, /var, /home, etc.
         // Test override: CLAUDE_TEST_PLATFORM lets the test suite exercise both branches on either host.
         const isWin = (process.env.CLAUDE_TEST_PLATFORM || process.platform) === 'win32';
-        const winToolRe = /\b(?:findstr|cmd|xcopy|robocopy|reg|sc|net|tasklist|taskkill|where|attrib)\b/i;
+        const winToolRe = /\b(?:findstr|cmd|xcopy|robocopy|reg|sc|net|tasklist|taskkill|where|attrib|cd|dir|md|mkdir|rd|rmdir|del|erase|copy|move|ren|rename|type|mklink|chkdsk|chcp|pushd|popd|setx|start|call|forfiles|fc|comp|tree|cls|ver|vol|systeminfo|wmic|powershell|pwsh)\b/i;
         const cmdHasWinTool = isWin && winToolRe.test(cmd);
         extractMatches(/(?:^|\s)["']?([A-Za-z]:[/\\][^\s"'|><&;]+|\/[^\s"'|><&;]+)/g, cmd, m => {
             if (/^\/(?:dev|proc|sys)\//.test(m)) return false;
@@ -395,6 +419,7 @@ module.exports = {
     extractPaths,
     extractMatches,
     stripInlineCode,
+    stripPowerShellHereStrings,
     stripSedAwkPatterns,
     stripGrepPatterns
 };
