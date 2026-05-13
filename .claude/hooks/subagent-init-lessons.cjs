@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Lessons Learned (fires 15th of 18)
+ * SubagentStart Hook — Lessons Learned (fires 5th of 8)
  *
  * Outputs: lessons learned from docs/project-reference/lessons.md (~1,500 chars).
- * AI mistake prevention is split into subagent-init-ai-mistakes.cjs (fires 11th)
+ * AI mistake prevention is split into subagent-init-ai-mistakes.cjs (fires 6th)
  * to keep each hook under Claude Code's 9,000-char hook output limit.
  *
- * Execution order: identity → patterns-p1..p5 → dev-rules-p1..p3
- *   → lessons (this, 10th) → ai-mistakes → context-guard → todos (last)
+ * Execution order: identity → patterns → dev-rules → code-review-rules
+ *   → lessons (this, 5th) → ai-mistakes → context-guard → todos (last)
  * Placement: near-last ensures AI attends to lessons — AI models attend strongly
  * to the last ~100 lines of their context window.
  *
@@ -16,7 +16,7 @@
  * (not via hook).
  *
  * See: .claude/hooks/lib/subagent-context-builders.cjs — shared builders.
- * Previous: subagent-init-dev-rules-p3.cjs (dev rules page 3)
+ * Previous: subagent-init-dev-rules.cjs (dev rules)
  * Next: subagent-init-ai-mistakes.cjs (AI mistake prevention)
  *
  * Exit Codes:

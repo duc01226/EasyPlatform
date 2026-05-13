@@ -124,8 +124,13 @@ const tests = [
         async fn() {
             const tmpDir = createTempDir();
             try {
-                // Create a tmpclaude-* temp file in the project root that bash-cleanup should remove
-                const tmpFile = path.join(tmpDir, 'tmpclaude-deadbeef-cwd');
+                // bash-cleanup is intentionally scoped to .claude/ only — NOT project root.
+                // Project-root tmpclaude-*-cwd files are state for CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR;
+                // deleting them mid-session corrupts the next bash wrapper (see bash-cleanup.cjs:11-14).
+                // session-end.cjs handles project-root cleanup at session boundary.
+                const claudeDir = path.join(tmpDir, '.claude');
+                fs.mkdirSync(claudeDir, { recursive: true });
+                const tmpFile = path.join(claudeDir, 'tmpclaude-deadbeef-cwd');
                 fs.writeFileSync(tmpFile, '/some/working/dir');
 
                 // Create a progress file in tmp/ subdir — bash-cleanup must NOT touch it
@@ -134,9 +139,14 @@ const tests = [
                 const progressFile = path.join(progressDir, 'ck-agent-20260414120000-aabbcc.progress.md');
                 fs.writeFileSync(progressFile, 'Session: sess-059\n## Task\n[done] finished\n');
 
-                // bash-cleanup is triggered as PostToolUse for Bash — pass a realistic payload
+                // bash-cleanup is triggered as PostToolUse for Bash — pass a realistic payload.
+                // Override CLAUDE_PROJECT_DIR so the hook scans tmpDir/.claude/ not the real project root
+                // (bash-cleanup.cjs reads process.env.CLAUDE_PROJECT_DIR before falling back to cwd).
                 const input = createPostToolUseInput('Bash', { command: 'echo test' }, { output: 'test' });
-                const result = await runHook(BASH_CLEANUP, input, { cwd: tmpDir });
+                const result = await runHook(BASH_CLEANUP, input, {
+                    cwd: tmpDir,
+                    env: { CLAUDE_PROJECT_DIR: tmpDir }
+                });
 
                 assertEqual(result.code, 0, 'bash-cleanup should exit 0');
 

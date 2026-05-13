@@ -8,7 +8,6 @@ using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Exceptions;
 using Easy.Platform.Common.Validations.Extensions;
-using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.DependencyInjection;
@@ -221,8 +220,6 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
 
     public override bool LogErrorOnException => HandleExistingInboxMessage == null && !IsHandlingLogicForInboxMessage;
 
-    public override int RetryOnFailedTimes { get; set; } = Util.TaskRunner.DefaultOptimisticConcurrencyRetryResilientRetryCount;
-
     protected IPlatformInboxBusMessageRepository InboxBusMessageRepo { get; }
     protected PlatformInboxConfig InboxConfig { get; }
     protected IPlatformRootServiceProvider RootServiceProvider { get; }
@@ -289,7 +286,7 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(HandleMessageDirectly));
 
-        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync<PlatformDomainRowVersionConflictException>(
+        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
             async () =>
             {
                 try
@@ -396,7 +393,10 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
 
     protected virtual string GetPipelineRoutingKey(string routingKey, TMessage message)
     {
-        return $"{ApplicationSettingContext.ApplicationName}---{message.GetType().GetNameOrGenericTypeName()}::{GetType().GetNameOrGenericTypeName()}";
+        return PlatformApplicationCommonRequestContextKeys.BuildConsumerOrEventHandlerPipeLineItem(
+            ApplicationSettingContext.ApplicationName,
+            message.GetType(),
+            GetType());
     }
 
     private async Task HandleExecutingInboxConsumerAsync(TMessage message, string routingKey)

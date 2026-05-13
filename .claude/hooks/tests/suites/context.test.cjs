@@ -408,7 +408,7 @@ const frontendTypescriptContextTests = [
                 });
                 const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir, env: { CLAUDE_PROJECT_DIR: tmpDir } });
                 assertAllowed(result.code);
-                assertContains(result.stdout, 'I18N Sync Check', 'Should include i18n sync section for multilingual projects');
+                assertContains(result.stdout, '**I18N:**', 'Should include i18n notice for multilingual projects');
                 assertContains(result.stdout, 'translation resources', 'Should include translation sync guidance');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -433,7 +433,7 @@ const frontendTypescriptContextTests = [
                 });
                 const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir, env: { CLAUDE_PROJECT_DIR: tmpDir } });
                 assertAllowed(result.code);
-                assertTrue(!result.stdout.includes('I18N Sync Check'), 'Should not include i18n sync section for single-locale projects');
+                assertTrue(!result.stdout.includes('**I18N:**'), 'Should not include i18n notice for single-locale projects');
             } finally {
                 cleanupTempDir(tmpDir);
             }

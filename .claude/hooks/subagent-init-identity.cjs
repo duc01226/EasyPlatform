@@ -1,23 +1,22 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Identity + Config + Rules (fires 1st of 18)
+ * SubagentStart Hook — Identity + Config + Rules (fires 1st of 8)
  *
  * Outputs: subagent identity, plan context, language, rules, naming,
  *          trust verification, agent instructions.
- *          (Parent task state moved to subagent-init-todos.cjs, hook 18.)
+ *          (Parent task state moved to subagent-init-todos.cjs, hook 8.)
  *
- * Execution order: identity → patterns-p1..p5 → dev-rules-p1..p3
+ * Execution order: identity → patterns → dev-rules → code-review-rules
  *   → lessons → ai-mistakes → context-guard → todos (last)
  *
- * Split into 18 named hooks to avoid the Claude Code per-hook output size limit
- * (9,000 chars enforced). Exceeding this causes silent tail truncation — large
- * sections like CLAUDE.md (~13KB), dev-rules (~18KB), and patterns (~36KB for
- * code-reviewer) get cut. Each hook is registered sequentially in settings.json;
- * the harness concatenates all additionalContext blocks ("inject paging").
+ * Refactored from 18-hook content-injection chain to 8-hook guidance-pointer chain:
+ * full doc content (CLAUDE.md, dev-rules, patterns, code-review-rules) is no longer
+ * injected; instead, agents are directed to read referenced files themselves.
+ * Each hook still emits an additionalContext block via settings.json wiring.
  *
  * See: .claude/hooks/lib/subagent-context-builders.cjs — shared builders.
- * Next: subagent-init-patterns-p1.cjs (coding patterns + agent docs, fires 2nd)
+ * Next: subagent-init-patterns.cjs (coding patterns + agent docs, fires 2nd)
  *
  * Exit Codes:
  *   0 - Success (non-blocking, allows continuation)

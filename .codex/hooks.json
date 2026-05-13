@@ -389,10 +389,6 @@
                 },
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/prompt-context-assembler-docs-p2.cjs"
-                },
-                {
-                    "type": "command",
                     "command": "node ./.claude/hooks/prompt-context-assembler-claude.cjs"
                 },
                 {

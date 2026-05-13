@@ -93,6 +93,14 @@ function main() {
         // Phase 2: Reference docs init (from init-reference-docs.cjs)
         // =====================================================================
 
+        // Safety guard: refuse to create placeholders when PROJECT_DIR has
+        // resolved to a path inside `.claude/` (indicates misconfigured cwd
+        // or env from a test harness — never valid in real use).
+        const normalizedProjectDir = PROJECT_DIR.replace(/\\/g, '/');
+        if (/\/\.claude(\/|$)/.test(normalizedProjectDir)) {
+            process.exit(0);
+        }
+
         const referenceDocs = getReferenceDocs();
         const created = [];
 

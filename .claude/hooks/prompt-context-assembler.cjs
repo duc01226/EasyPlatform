@@ -393,7 +393,7 @@ async function main() {
 
         // NOTE: project-structure-reference.md, CLAUDE.md TL;DR re-injection, and
         // project-config-summary are injected by separate hooks later in the same UPS array:
-        //   prompt-context-assembler-docs.cjs / prompt-context-assembler-docs-p2.cjs
+        //   prompt-context-assembler-docs.cjs
         //   prompt-context-assembler-claude.cjs / prompt-context-assembler-project-config.cjs
 
         // AI Mistake Prevention: REMOVED from UserPromptSubmit (Phase 1 — attention optimization).

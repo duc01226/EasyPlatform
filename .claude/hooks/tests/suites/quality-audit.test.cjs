@@ -45,15 +45,19 @@ const configTests = [
         }
     },
     {
-        name: '[quality-audit] has correct sequence of 14 steps',
+        name: '[quality-audit] has correct sequence of 18 steps with why-review gates',
         fn: async () => {
             const expected = [
                 'workflow-review-changes',
                 'plan',
+                'why-review',
                 'plan-review',
+                'why-review',
                 'plan-validate',
+                'why-review',
                 'code',
                 'tdd-spec',
+                'why-review',
                 'tdd-spec-review',
                 'integration-test',
                 'integration-test-review',

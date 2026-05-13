@@ -265,7 +265,7 @@ const e2eTests = [
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, E2E_MARKER, 'Should contain E2E marker');
-            assertContains(result.stdout, 'E2E Testing Configuration:', 'Should contain E2E testing configuration');
+            assertContains(result.stdout, 'e2e-test-reference.md', 'Should reference E2E test guide');
             assertNotContains(result.stdout, MARKER, 'Should NOT contain code patterns marker');
         }
     },

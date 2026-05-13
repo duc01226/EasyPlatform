@@ -11,7 +11,6 @@ using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Exceptions;
 using Easy.Platform.Common.Validations.Extensions;
 using Easy.Platform.Domain.Events;
-using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,7 +82,6 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     protected readonly IPlatformUnitOfWorkManager UnitOfWorkManager;
 
     private double retryOnFailedDelaySeconds = Util.TaskRunner.DefaultResilientDelaySeconds;
-    private int? retryOnFailedTimes;
     private bool? throwExceptionOnHandleFailed;
 
     /// <summary>
@@ -543,60 +541,6 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     public int RetryEventInboxBusMessageConsumerMaxCount { get; set; } = int.MaxValue;
 
     /// <summary>
-    /// Gets or sets the number of times to retry handling an event upon failure.
-    /// The retry count automatically adapts based on handler capabilities, with unlimited retries
-    /// for handlers without inbox support to ensure eventual consistency in distributed scenarios.
-    /// </summary>
-    /// <value>
-    /// The number of retry attempts. Handlers without inbox support and immediate execution requirements
-    /// default to <see cref="int.MaxValue"/> for unlimited retries. Handlers with inbox support
-    /// use <see cref="Util.TaskRunner.DefaultResilientRetryCount"/> for bounded retries.
-    /// </value>
-    /// <remarks>
-    /// <para>
-    /// <strong>Adaptive Retry Count Strategy:</strong>
-    /// The retry count automatically adapts to ensure system reliability:
-    /// - Unlimited retries for handlers without inbox support (eventual consistency guarantee)
-    /// - Standard retry count for handlers with inbox support (systematic retry via persistence)
-    /// - Standard retry count for immediate execution handlers (bounded retry for responsiveness)
-    /// </para>
-    ///
-    /// <para>
-    /// <strong>Eventual Consistency Guarantee:</strong>
-    /// Unlimited retries for non-inbox handlers ensure:
-    /// - Critical events are eventually processed despite transient failures
-    /// - System maintains consistency across distributed microservices
-    /// - No event loss due to temporary infrastructure issues
-    /// - Graceful handling of extended outages and recovery scenarios
-    /// </para>
-    ///
-    /// <para>
-    /// <strong>Inbox Pattern Benefits:</strong>
-    /// Handlers with inbox support use bounded retries because:
-    /// - Failed events are persisted and can be systematically reprocessed
-    /// - Dead letter queues handle permanently failed messages
-    /// - Monitoring and alerting can track persistent failures
-    /// - Manual intervention options are available for complex failures
-    /// </para>
-    ///
-    /// <para>
-    /// <strong>Performance and Resource Considerations:</strong>
-    /// While unlimited retries ensure consistency, they consume resources:
-    /// - Extended retry delays prevent resource exhaustion
-    /// - Background execution isolates retry overhead from user operations
-    /// - Monitoring should track retry patterns for capacity planning
-    /// </para>
-    /// </remarks>
-    public override int RetryOnFailedTimes
-    {
-        get => retryOnFailedTimes ??
-               (!HasInboxMessageSupport() && !MustWaitHandlerExecutionFinishedImmediately
-                   ? int.MaxValue
-                   : Util.TaskRunner.DefaultOptimisticConcurrencyRetryResilientRetryCount);
-        set => retryOnFailedTimes = value;
-    }
-
-    /// <summary>
     /// Gets or sets a value indicating whether the current instance of the event handler is called
     /// from the Inbox Bus Message Consumer, which affects error handling behavior and processing strategies.
     /// </summary>
@@ -1049,7 +993,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
                         EnsureNoCircularPipeLine(@event);
 
-                        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync<PlatformDomainRowVersionConflictException>(
+                        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                             () =>
                             {
                                 if (AutoOpenUow)
@@ -1105,9 +1049,6 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                             onRetry: (e, delayTime, retryAttempt, context) =>
                             {
                                 // Log only after 75% of retry budget consumed. See Util.TaskRunner.LogErrorRetryThreshold.
-                                // NOTE: Background-event RetryOnFailedTimes defaults to int.MaxValue (see :590-ish getter), which makes
-                                // the threshold ~1.6 billion — an effectively-eternal logging blackout for unbounded retry handlers.
-                                // Concrete handlers needing retry telemetry MUST override RetryOnFailedTimes to a bounded value.
                                 if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(RetryOnFailedTimes))
                                     LogError(@event, e.BeautifyStackTrace(), LoggerFactory, "Retry");
                             },
@@ -1739,7 +1680,10 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     /// </remarks>
     protected virtual string GetPipelineRoutingKey(TEvent @event)
     {
-        return $"{ApplicationSettingContext.ApplicationName}---{@event.GetType().GetNameOrGenericTypeName()}::{GetType().GetNameOrGenericTypeName()}";
+        return PlatformApplicationCommonRequestContextKeys.BuildConsumerOrEventHandlerPipeLineItem(
+            ApplicationSettingContext.ApplicationName,
+            @event.GetType(),
+            GetType());
     }
 
     /// <summary>

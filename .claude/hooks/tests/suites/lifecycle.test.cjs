@@ -5,7 +5,7 @@
  * - session-init.cjs: Session initialization and project detection
  * - session-resume.cjs: Checkpoint restoration
  * - session-end.cjs: Session cleanup
- * - subagent-init-identity.cjs: Subagent context injection (Part 1 of 18 — replaces removed subagent-init.cjs)
+ * - subagent-init-identity.cjs: Subagent context injection (1 of 8 — replaces removed subagent-init.cjs)
  */
 
 const path = require('path');
@@ -39,10 +39,8 @@ const SESSION_END = getHookPath('session-end.cjs');
 const SUBAGENT_INIT = getHookPath('subagent-init-identity.cjs');
 
 // Subagent-init hook paths (for TC-SUBCTX-044+)
-const SUBAGENT_PATTERNS_P1 = getHookPath('subagent-init-patterns-p1.cjs');
-const SUBAGENT_PATTERNS_P2 = getHookPath('subagent-init-patterns-p2.cjs');
-const SUBAGENT_DEV_RULES_P1 = getHookPath('subagent-init-dev-rules-p1.cjs');
-// Note: SUBAGENT_CLAUDE_MD_P1/P2 removed — hooks deleted in Phase 2A (redundant with native claudeMd)
+const SUBAGENT_PATTERNS = getHookPath('subagent-init-patterns.cjs');
+const SUBAGENT_DEV_RULES = getHookPath('subagent-init-dev-rules.cjs');
 
 // ============================================================================
 // session-init.cjs Tests
@@ -297,7 +295,7 @@ const sessionEndTests = [
 ];
 
 // ============================================================================
-// subagent-init-identity.cjs Tests (Part 1 of 18 — replaces removed subagent-init.cjs)
+// subagent-init-identity.cjs Tests (Part 1 of 8 — replaces removed subagent-init.cjs)
 // ============================================================================
 
 const subagentInitTests = [
@@ -1050,14 +1048,14 @@ const { getTodoState, setTodoState } = require('../../lib/todo-state.cjs');
 
 const newConcurrencyTests = [
     {
-        // Non-pattern-aware agent → patterns-p1 exits 0 silently (no JSON output)
-        name: 'TC-SUBCTX-044: patterns-p1 exits silently for non-PATTERN_AWARE agent (researcher)',
+        // Non-pattern-aware agent → patterns exits 0 silently (no JSON output)
+        name: 'TC-SUBCTX-044: patterns exits silently for non-PATTERN_AWARE agent (researcher)',
         async fn() {
             const tmpDir = createTempDir();
             try {
                 assertTrue(!PATTERN_AWARE_AGENT_TYPES.has('researcher'), 'researcher must NOT be in PATTERN_AWARE_AGENT_TYPES');
                 const input = createSubagentStartInput('researcher', '', 'sess-044', 'r-044');
-                const result = await runHook(SUBAGENT_PATTERNS_P1, input, {
+                const result = await runHook(SUBAGENT_PATTERNS, input, {
                     cwd: tmpDir,
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 });
@@ -1069,39 +1067,36 @@ const newConcurrencyTests = [
         }
     },
     {
-        // Pattern-aware agent with minimal content → patterns-p2 exits 0 silently (page 2 empty)
-        name: 'TC-SUBCTX-045: patterns-p2 exits silently when p1 covers all content (minimal docs)',
+        // Pattern-aware agent → consolidated patterns hook emits guidance output (replaced p2-p5)
+        name: 'TC-SUBCTX-045: patterns emits guidance context for PATTERN_AWARE agent',
         async fn() {
             const tmpDir = createTempDir();
             try {
-                // Use a pattern-aware agent type
                 const agentType = [...PATTERN_AWARE_AGENT_TYPES][0]; // e.g. 'fullstack-developer'
                 const input = createSubagentStartInput(agentType, '', 'sess-045', 'r-045');
-                const result = await runHook(SUBAGENT_PATTERNS_P2, input, {
+                const result = await runHook(SUBAGENT_PATTERNS, input, {
                     cwd: tmpDir,
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 });
                 assertEqual(result.code, 0, 'Should exit 0');
-                // p2 exits silently when p1 consumed all content (no docs in tmpDir)
-                if (result.stdout.trim() !== '') {
-                    const parsed = JSON.parse(result.stdout.trim());
-                    const ctx = parsed.hookSpecificOutput?.additionalContext || '';
-                    assertTrue(ctx === '' || ctx.length > 0, 'If output present it must be valid JSON');
-                }
+                assertTrue(result.stdout.trim() !== '', 'patterns hook must emit output for PATTERN_AWARE agent');
+                const parsed = JSON.parse(result.stdout.trim());
+                const ctx = parsed.hookSpecificOutput?.additionalContext || '';
+                assertContains(ctx, '## Coding Patterns & Reference Docs', 'Must include patterns guidance header');
             } finally {
                 cleanupTempDir(tmpDir);
             }
         }
     },
     {
-        // Non-DEV_RULES agent → dev-rules-p1 exits 0 silently
-        name: 'TC-SUBCTX-046: dev-rules-p1 exits silently for non-DEV_RULES agent (researcher)',
+        // Non-DEV_RULES agent → dev-rules exits 0 silently
+        name: 'TC-SUBCTX-046: dev-rules exits silently for non-DEV_RULES agent (researcher)',
         async fn() {
             const tmpDir = createTempDir();
             try {
                 assertTrue(!DEV_RULES_AGENT_TYPES.has('researcher'), 'researcher must NOT be in DEV_RULES_AGENT_TYPES');
                 const input = createSubagentStartInput('researcher', '', 'sess-046', 'r-046');
-                const result = await runHook(SUBAGENT_DEV_RULES_P1, input, {
+                const result = await runHook(SUBAGENT_DEV_RULES, input, {
                     cwd: tmpDir,
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 });
@@ -1207,24 +1202,20 @@ const newConcurrencyTests = [
     },
     {
         // All subagent-init hooks fire in sequence → each exits 0, no duplicate section headers
-        name: 'TC-SUBCTX-054: all 11 subagent-init hooks exit 0 with no duplicate section headers',
+        name: 'TC-SUBCTX-054: all 8 subagent-init hooks exit 0 with no duplicate section headers',
         async fn() {
             const tmpDir = createTempDir();
             try {
-                // Small CLAUDE.md so multi-page hooks have predictable output
+                // Small CLAUDE.md so hooks have predictable output
                 fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), '# Project\nTest instructions.\n');
 
                 const hookNames = [
                     'subagent-init-identity.cjs',
-                    'subagent-init-patterns-p1.cjs',
-                    'subagent-init-patterns-p2.cjs',
-                    'subagent-init-patterns-p3.cjs',
-                    'subagent-init-patterns-p4.cjs',
-                    'subagent-init-patterns-p5.cjs',
-                    'subagent-init-dev-rules-p1.cjs',
-                    'subagent-init-dev-rules-p2.cjs',
-                    // claude-md-p1/p2/p3 removed — redundant with native claudeMd injection
+                    'subagent-init-patterns.cjs',
+                    'subagent-init-dev-rules.cjs',
+                    'subagent-init-code-review-rules.cjs',
                     'subagent-init-lessons.cjs',
+                    'subagent-init-ai-mistakes.cjs',
                     'subagent-init-context-guard.cjs',
                     'subagent-init-todos.cjs'
                 ];
@@ -1253,10 +1244,9 @@ const newConcurrencyTests = [
                     })
                     .join('\n');
 
-                // Count occurrences of major section headers — each must appear ≤ expected times
-                // (patterns p1-p5 each emit "## Coding Patterns" so up to 5 is OK; identity emits once)
+                // Count occurrences of major section headers — each must appear ≤ expected times.
+                // After the guidance-pointer refactor, identity emits "## Project Instructions" at most once.
                 const projectInstructionsCount = (combined.match(/## Project Instructions/g) || []).length;
-                // Each page of CLAUDE.md is a new section so ≤3 (p1/p2/p3) is expected
                 assertTrue(projectInstructionsCount <= 3, `## Project Instructions must appear ≤3 times (got ${projectInstructionsCount})`);
 
             } finally {
@@ -1458,15 +1448,15 @@ const newConcurrencyTests = [
         }
     },
     {
-        // settings.json must have exactly 18 SubagentStart hooks:
-        // identity + patterns-p1..p5 + dev-rules-p1..p3 + code-review-rules-p1..p5 + lessons + ai-mistakes + context-guard + todos
-        name: 'TC-DEDUP-005: settings.json SubagentStart has exactly 18 hook commands',
+        // settings.json must have exactly 8 SubagentStart hooks:
+        // identity + patterns + dev-rules + code-review-rules + lessons + ai-mistakes + context-guard + todos
+        name: 'TC-DEDUP-005: settings.json SubagentStart has exactly 8 hook commands',
         fn() {
             const settingsPath = path.resolve(__dirname, '../../../..', '.claude', 'settings.json');
             const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
             const hookCount = settings.hooks.SubagentStart[0].hooks.length;
-            assertEqual(hookCount, 18,
-                `SubagentStart must have 18 hooks (identity + patterns-p1..p5 + dev-rules-p1..p3 + code-review-rules-p1..p5 + lessons + ai-mistakes + context-guard + todos) (got ${hookCount})`);
+            assertEqual(hookCount, 8,
+                `SubagentStart must have 8 hooks (identity + patterns + dev-rules + code-review-rules + lessons + ai-mistakes + context-guard + todos) (got ${hookCount})`);
         }
     },
     {
@@ -1482,6 +1472,31 @@ const newConcurrencyTests = [
                 const hookPath = getHookPath(hookName);
                 assertTrue(!fs.existsSync(hookPath),
                     `${hookName} must be deleted after Phase 2A (still exists at ${hookPath})`);
+            }
+        }
+    },
+    {
+        // patterns-p2..p5 + dev-rules-p2/p3 + code-review-rules-p2..p5 + docs-p2
+        // must not exist after the guidance-pointer refactor (18→8 hook chain).
+        name: 'TC-DEDUP-007: paged subagent hooks do not exist after guidance-pointer refactor',
+        fn() {
+            const deleted = [
+                'subagent-init-patterns-p2.cjs',
+                'subagent-init-patterns-p3.cjs',
+                'subagent-init-patterns-p4.cjs',
+                'subagent-init-patterns-p5.cjs',
+                'subagent-init-dev-rules-p2.cjs',
+                'subagent-init-dev-rules-p3.cjs',
+                'subagent-init-code-review-rules-p2.cjs',
+                'subagent-init-code-review-rules-p3.cjs',
+                'subagent-init-code-review-rules-p4.cjs',
+                'subagent-init-code-review-rules-p5.cjs',
+                'prompt-context-assembler-docs-p2.cjs'
+            ];
+            for (const hookName of deleted) {
+                const hookPath = getHookPath(hookName);
+                assertTrue(!fs.existsSync(hookPath),
+                    `${hookName} must be deleted after guidance-pointer refactor (still exists at ${hookPath})`);
             }
         }
     }

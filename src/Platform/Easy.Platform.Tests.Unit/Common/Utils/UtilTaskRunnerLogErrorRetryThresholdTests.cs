@@ -12,8 +12,7 @@ namespace Easy.Platform.Tests.Unit.Common.Utils;
 /// 75% of the retry budget has been consumed so transient failures do not generate noise during
 /// early retries. Tests cover the design contract — including the documented operational warnings
 /// for very large retry budgets (Inbox/Outbox 43200 → 32400; <see cref="int.MaxValue"/> →
-/// ~1.6 billion). Concrete handlers with unbounded retry counts MUST override <c>RetryOnFailedTimes</c>
-/// to receive retry telemetry.</para>
+/// ~1.6 billion).</para>
 /// </summary>
 public class UtilTaskRunnerLogErrorRetryThresholdTests : PlatformUnitTestBase
 {
@@ -49,7 +48,7 @@ public class UtilTaskRunnerLogErrorRetryThresholdTests : PlatformUnitTestBase
     [Fact]
     public void LogErrorRetryThreshold_WhenTen_ShouldReturnSeven()
     {
-        // floor(10 * 0.75) = floor(7.5) = 7. ApplicationBusMessage default budget = 10.
+        // floor(10 * 0.75) = floor(7.5) = 7. Explicit retry budget example.
         Util.TaskRunner.LogErrorRetryThreshold(10).Should().Be(7);
     }
 
@@ -76,9 +75,8 @@ public class UtilTaskRunnerLogErrorRetryThresholdTests : PlatformUnitTestBase
     }
 
     /// <summary>
-    /// Documents the operational warning for unbounded background-event handlers.
+    /// Documents the operational warning for callers that explicitly pass int.MaxValue.
     /// floor(int.MaxValue * 0.75) = floor((2^31 - 1) * 0.75) = 1,610,612,735.
-    /// Concrete handlers needing retry telemetry MUST override RetryOnFailedTimes.
     /// </summary>
     [Fact]
     public void LogErrorRetryThreshold_WhenIntMaxValue_ShouldReturnLinear75Percent()

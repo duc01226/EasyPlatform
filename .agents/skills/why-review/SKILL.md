@@ -254,6 +254,24 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 
 After the existing `## Next Steps` ask the user directly call completes, **evaluate the gate**:
 
+**Step A — Workflow blacklist suppression (run FIRST, short-circuits):**
+
+The host `llm-council` skill blacklists routine workflows where 11 sub-agent calls are not worth the decision impact. If `$why-review` is invoked inside ANY of the following workflows, **suppress the council gate entirely** and skip Step B:
+
+- `refactor` (behavior-preserving by definition — reversibility is high)
+- `migration` (schema/data migration is procedural, not a multi-option strategic choice)
+- `package-upgrade` (version bumps — irreversibility caught upstream by `$tech-stack-research` when major)
+- `performance` (optimization with measurable rollback)
+- `verification` (validation-only, not a new commit)
+- `bugfix` (exempt from `$why-review` anyway — listed for clarity)
+- Any workflow whose ID starts with `test-*` (test-only)
+
+**Detect workflow context** by reading `plans/.workflow-state.json` (or equivalent active-workflow marker) for the `workflowId` field. If the file is missing or the workflowId is not in the blacklist above, proceed to Step B.
+
+**Rationale:** Council cost is 11 LLM calls. The 8-OR frontmatter gate can fire on these workflows (e.g., `irreversible: true` on a non-trivial refactor) but the decision impact does not justify the cost — `$why-review` itself is already the right rung. This suppression matches the canonical blacklist in `.claude/skills/llm-council/SKILL.md` "Workflow Integration" section.
+
+**Step B — Frontmatter gate evaluation:**
+
 **Read** the active plan's `plan.md` frontmatter (or PBI artifact frontmatter when invoked outside a plan). **Gate fires** when ANY of these 8 conditions evaluates true (per Phase 01 design contract §2 Gate Evaluation Procedure):
 
 1. `cross_service_impact` ≠ `NONE` (value is `PARTIAL` or `FULL`; case-insensitive)
@@ -267,12 +285,14 @@ After the existing `## Next Steps` ask the user directly call completes, **evalu
 
 **Absent fields default to no-fire** — the gate is opt-in via frontmatter, never opt-out.
 
-**If gate fires**, immediately follow with a **SECOND** a direct user question invocation (separate from the existing `## Next Steps` call — do NOT merge bullet lists):
+**Plan-level override:** Frontmatter may include `council_suppress: true` to opt-out even when Step A doesn't suppress (e.g., a refactor PBI that was migrated into the `feature` workflow but the team has already councilled the decision). When set, skip the council prompt and log the suppression reason in `## Next Steps` output.
+
+**If Step A suppressed OR Step B gate does NOT fire** → do NOT mention `$llm-council` (avoids cost normalization). The skill ends after the existing `## Next Steps` prompt.
+
+**If Step A did NOT suppress AND Step B gate fires**, immediately follow with a **SECOND** a direct user question invocation (separate from the existing `## Next Steps` call — do NOT merge bullet lists):
 
 - **"Escalate to $llm-council (Recommended)"** — Gate fired (high-stakes signal detected). Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when `$why-review` alone is insufficient. Cheaper alternatives already exhausted at this point: `$plan-validate` is the prior rung.
 - **"Skip — proceed without council"** — Acknowledge the gate; proceed with current decision anyway.
-
-**If gate does NOT fire**, do NOT mention `$llm-council` (avoids cost normalization). The skill ends after the existing `## Next Steps` prompt.
 
 > **[BLOCKING]** This is a validation gate. MUST ATTENTION use a direct user question to present review findings and get user confirmation. Completing without asking at least one question is a violation.
 
@@ -320,7 +340,7 @@ After the existing `## Next Steps` ask the user directly call completes, **evalu
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
 > 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
 > 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
 >
@@ -665,9 +685,9 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
 - **MANDATORY IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:sequential-thinking-protocol:reminder -->
 
@@ -678,7 +698,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
 
@@ -730,25 +750,26 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## Debugging & Root Cause Reasoning
 
-- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. Cheapest check first.
-- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug in caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
+- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. ALWAYS cheapest check first.
+- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
 - [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
-- [2026-04-01] **Code is caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
+- [2026-04-01] **Code caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
 
 ## Architecture Invariants
 
-- [2026-03-31] **ParallelAsync + repo/UoW MUST use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
-- [2026-03-31] **Bus message naming MUST include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) are leaders. Feature services (Growth, Talents) sending to core MUST use `{CoreServiceName}...RequestBusMessage` — never define own event for core to consume.
+- [2026-05-09] **User name materialization MUST ATTENTION go through `User.UpdateName(firstName, middleName, lastName)`.** Domain method (`src/Services/bravoTALENTS/Employee.Domain/AggregatesModel/User.cs:202-209`) recomputes `FullName` as single source of truth. Three sites still manually patch `user.FullName = user.GetFullName()` after assigning name fields — `src/Services/bravoTALENTS/Employee.Application/Factories/UserFactory.cs:50`, `src/Services/bravoSURVEYS/LearningPlatform.Application/ApplyPlatform/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:102`, `src/Services/bravoINSIGHTS/Analyze/Analyze.Application/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:66`. Next time touching any: replace manual patch with `user.UpdateName(...)` to maintain invariant.
+- [2026-03-31] **ParallelAsync + repo/UoW MUST ATTENTION use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
+- [2026-03-31] **Bus message naming MUST ATTENTION include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) leaders. Feature services (Growth, Talents) sending to core MUST ATTENTION use `{CoreServiceName}...RequestBusMessage` — NEVER define own event for core to consume.
 
 ## Naming & Abstraction
 
-- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what it guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
+- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
 
 ## Environment & Tooling
 
-- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be in bash PATH under those names. Check: `where python` / `where py`. Prefer `py` (Windows Python Launcher) for one-liners, `node` if JS alternative exists.
+- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be bash PATH under those names. Check: `where python` / `where py`. ALWAYS prefer `py` (Windows Python Launcher) one-liners, `node` if JS alternative exists.
 
-> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons in `.claude/hooks/lib/prompt-injections.cjs`.
+> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons `.claude/hooks/lib/prompt-injections.cjs`.
 
 ---
 
@@ -761,6 +782,7 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 - **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
 - **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
 - **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
+- **IMPORTANT MUST ATTENTION** every claim needs `file:line` evidence — confidence >80% to act, NEVER speculate
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

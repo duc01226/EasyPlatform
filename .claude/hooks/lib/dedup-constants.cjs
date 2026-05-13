@@ -9,25 +9,28 @@
  * Run tests after any change: node .claude/hooks/tests/test-all-hooks.cjs
  *
  * Consumers:
- *   CODE_PATTERNS       → backend-context, frontend-context, code-patterns-injector, subagent-init
- *   BACKEND_CONTEXT     → backend-context
- *   FRONTEND_CONTEXT    → frontend-context
- *   STYLING_CONTEXT     → scss-styling-context
+ *   CODE_PATTERNS       → code-patterns-injector (guidance only)
+ *   BACKEND_CONTEXT     → backend-context (guidance only)
+ *   FRONTEND_CONTEXT    → frontend-context (guidance only)
+ *   STYLING_CONTEXT     → scss-styling-context (guidance only)
  *   LESSON_LEARNED      → prompt-context-assembler-closers (via lib/prompt-injections)
  *   CODE_REVIEW_RULES   → code-review-rules-injector
  *   DEV_RULES           → dev-rules-injector (PreToolUse: Edit|Write|MultiEdit|Skill)
- *   KNOWLEDGE_CONTEXT   → knowledge-context
- *   E2E_CONTEXT         → code-patterns-injector
+ *   KNOWLEDGE_CONTEXT   → knowledge-context (guidance only)
+ *   E2E_CONTEXT         → code-patterns-injector (guidance only)
  *   LESSONS             → prompt-context-assembler (via lib/prompt-injections), lessons-injector (PreToolUse)
  *   CRITICAL_THINKING   → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   AI_MISTAKE_PREVENTION → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   WORKFLOW_CATALOG    → workflow-router (p1), workflow-router-p2 (p2), workflow-router-p3 (p3)
- *   INTEGRATION_TEST_CONTEXT → code-patterns-injector
- *   FEATURE_DOCS_CONTEXT     → code-patterns-injector
- *   PROJECT_STRUCTURE    → prompt-context-assembler-docs (p1), prompt-context-assembler-docs-p2 (p2)
+ *     NOTE: catalog stays inline (not collapsed to a guidance pointer like other refs) because
+ *     it drives workflow SELECTION on every prompt — collapsing would force a tool call before
+ *     every user message, costing more than the inline payload. Paging is intentional.
+ *   INTEGRATION_TEST_CONTEXT → code-patterns-injector (guidance only)
+ *   FEATURE_DOCS_CONTEXT     → code-patterns-injector (guidance only)
+ *   PROJECT_STRUCTURE    → prompt-context-assembler-docs (guidance only — merged from p1+p2)
  *   CLAUDE_MD            → prompt-context-assembler-claude
  *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler-project-config
- *   DESIGN_SYSTEM        → design-system-context
+ *   DESIGN_SYSTEM        → design-system-context (guidance only)
  *   DESIGN_SYSTEM_CANONICAL_GUIDE → design-system-canonical-guide (UserPromptSubmit + PreToolUse Read/Edit html/css/scss)
  *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
  *   PYTHON_GUIDE         → python-call-guide (PreToolUse: Bash)
@@ -117,46 +120,15 @@ function countProjectConfigSummaryLines() {
  *   - PROJECT_STRUCTURE uses 3× (increased to reduce re-injection frequency by ~50%).
  */
 const CONTENT_SOURCES = {
-    CODE_PATTERNS: {
-        type: 'file',
-        files: ['docs/project-reference/backend-patterns-reference.md', 'docs/project-reference/frontend-patterns-reference.md'],
-        multiplier: 3,
-        fallback: 1800
-    },
-    CODE_REVIEW_RULES: {
-        type: 'file',
-        files: ['docs/project-reference/code-review-rules.md'],
-        multiplier: 3,
-        extraLines: 10, // header/footer added by hook
-        fallback: 1000
-    },
-    E2E_CONTEXT: {
-        type: 'file',
-        files: ['docs/project-reference/e2e-test-reference.md'],
-        multiplier: 3,
-        extraLines: 20, // config summary lines added by hook
-        fallback: 200
-    },
-    INTEGRATION_TEST_CONTEXT: {
-        type: 'file',
-        files: ['docs/project-reference/integration-test-reference.md'],
-        multiplier: 3,
-        extraLines: 15,
-        fallback: 200
-    },
-    FEATURE_DOCS_CONTEXT: {
-        type: 'file',
-        files: ['docs/project-reference/feature-docs-reference.md', 'docs/project-reference/docs-index-reference.md'],
-        multiplier: 3,
-        extraLines: 10,
-        fallback: 200
-    },
-    PROJECT_STRUCTURE: {
-        type: 'file',
-        files: ['docs/project-reference/project-structure-reference.md'],
-        multiplier: 3,
-        fallback: 400
-    },
+    // Guidance-only injections (no full content) — fixed 100-line dedup window
+    CODE_PATTERNS: { type: 'fixed', value: 100 },
+    // Note: CODE_REVIEW_RULES is also injected as full content by code-review-rules-injector.cjs;
+    // fixed:100 applies to the guidance-pointer hooks (subagent-init-code-review-rules.cjs).
+    CODE_REVIEW_RULES: { type: 'fixed', value: 100 },
+    E2E_CONTEXT: { type: 'fixed', value: 100 },
+    INTEGRATION_TEST_CONTEXT: { type: 'fixed', value: 100 },
+    FEATURE_DOCS_CONTEXT: { type: 'fixed', value: 100 },
+    PROJECT_STRUCTURE: { type: 'fixed', value: 100 },
     CLAUDE_MD: {
         type: 'file',
         files: ['CLAUDE.md'],
@@ -190,40 +162,17 @@ const CONTENT_SOURCES = {
         multiplier: 2,
         fallback: 200
     },
-    // Context injections that include file content via readAndInjectDoc()
-    // BACKEND/FRONTEND inject domain-entities (full content) + service guidance
-    BACKEND_CONTEXT: {
-        type: 'file',
-        files: ['docs/project-reference/domain-entities-reference.md'],
-        multiplier: 3,
-        extraLines: 30, // service guidance, context header, rules
-        fallback: 200
-    },
-    FRONTEND_CONTEXT: {
-        type: 'file',
-        files: ['docs/project-reference/domain-entities-reference.md'],
-        multiplier: 3,
-        extraLines: 30,
-        fallback: 200
-    },
-    STYLING_CONTEXT: {
-        type: 'file',
-        files: ['docs/project-reference/scss-styling-guide.md'],
-        multiplier: 3,
-        extraLines: 10,
-        fallback: 200
-    },
+    // Guidance-only injections — fixed 100-line dedup window
+    BACKEND_CONTEXT: { type: 'fixed', value: 100 },
+    FRONTEND_CONTEXT: { type: 'fixed', value: 100 },
+    STYLING_CONTEXT: { type: 'fixed', value: 100 },
     KNOWLEDGE_CONTEXT: { type: 'fixed', value: 100 },
-    DESIGN_SYSTEM: {
-        type: 'file',
-        files: ['docs/project-reference/design-system/README.md'],
-        multiplier: 3,
-        extraLines: 10,
-        fallback: 200
-    },
+    DESIGN_SYSTEM: { type: 'fixed', value: 100 },
     DESIGN_SYSTEM_CANONICAL_GUIDE: { type: 'fixed', value: 50 },
     LESSON_LEARNED: { type: 'fixed', value: 100 },
-    WORKFLOW_PROTOCOL: { type: 'fixed', value: 100 },
+    // Widened 100 → 400: full 6-step protocol body is large (~250 tokens) and the compact
+    // [WORKFLOW-GATE] anchor already covers actionable rules; 4× window cuts re-fire frequency.
+    WORKFLOW_PROTOCOL: { type: 'fixed', value: 400 },
     CRITICAL_THINKING: { type: 'fixed', value: 100 },
     AI_MISTAKE_PREVENTION: { type: 'fixed', value: 100 },
     // Project config summary — dynamically generated, dedup scales with actual output
@@ -386,6 +335,9 @@ module.exports = {
 
     /** Marker for python-call-guide PreToolUse injection */
     PYTHON_GUIDE: '[python-guide]',
+
+    /** Marker for design system context guidance injection */
+    DESIGN_SYSTEM: '## Design System Context Detected',
 
     /** Marker for design-system canonical guide (UserPromptSubmit + PreToolUse html/css/scss) */
     DESIGN_SYSTEM_CANONICAL_GUIDE: '[design-system-canonical-guide]'

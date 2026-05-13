@@ -216,6 +216,24 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 
 After the existing `## Next Steps` AskUserQuestion call completes, **evaluate the gate**:
 
+**Step A — Workflow blacklist suppression (run FIRST, short-circuits):**
+
+The host `llm-council` skill blacklists routine workflows where 11 sub-agent calls are not worth the decision impact. If `/why-review` is invoked inside ANY of the following workflows, **suppress the council gate entirely** and skip Step B:
+
+- `refactor` (behavior-preserving by definition — reversibility is high)
+- `migration` (schema/data migration is procedural, not a multi-option strategic choice)
+- `package-upgrade` (version bumps — irreversibility caught upstream by `/tech-stack-research` when major)
+- `performance` (optimization with measurable rollback)
+- `verification` (validation-only, not a new commit)
+- `bugfix` (exempt from `/why-review` anyway — listed for clarity)
+- Any workflow whose ID starts with `test-*` (test-only)
+
+**Detect workflow context** by reading `plans/.workflow-state.json` (or equivalent active-workflow marker) for the `workflowId` field. If the file is missing or the workflowId is not in the blacklist above, proceed to Step B.
+
+**Rationale:** Council cost is 11 LLM calls. The 8-OR frontmatter gate can fire on these workflows (e.g., `irreversible: true` on a non-trivial refactor) but the decision impact does not justify the cost — `/why-review` itself is already the right rung. This suppression matches the canonical blacklist in `.claude/skills/llm-council/SKILL.md` "Workflow Integration" section.
+
+**Step B — Frontmatter gate evaluation:**
+
 **Read** the active plan's `plan.md` frontmatter (or PBI artifact frontmatter when invoked outside a plan). **Gate fires** when ANY of these 8 conditions evaluates true (per Phase 01 design contract §2 Gate Evaluation Procedure):
 
 1. `cross_service_impact` ≠ `NONE` (value is `PARTIAL` or `FULL`; case-insensitive)
@@ -229,12 +247,14 @@ After the existing `## Next Steps` AskUserQuestion call completes, **evaluate th
 
 **Absent fields default to no-fire** — the gate is opt-in via frontmatter, never opt-out.
 
-**If gate fires**, immediately follow with a **SECOND** `AskUserQuestion` invocation (separate from the existing `## Next Steps` call — do NOT merge bullet lists):
+**Plan-level override:** Frontmatter may include `council_suppress: true` to opt-out even when Step A doesn't suppress (e.g., a refactor PBI that was migrated into the `feature` workflow but the team has already councilled the decision). When set, skip the council prompt and log the suppression reason in `## Next Steps` output.
+
+**If Step A suppressed OR Step B gate does NOT fire** → do NOT mention `/llm-council` (avoids cost normalization). The skill ends after the existing `## Next Steps` prompt.
+
+**If Step A did NOT suppress AND Step B gate fires**, immediately follow with a **SECOND** `AskUserQuestion` invocation (separate from the existing `## Next Steps` call — do NOT merge bullet lists):
 
 - **"Escalate to /llm-council (Recommended)"** — Gate fired (high-stakes signal detected). Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when `/why-review` alone is insufficient. Cheaper alternatives already exhausted at this point: `/plan-validate` is the prior rung.
 - **"Skip — proceed without council"** — Acknowledge the gate; proceed with current decision anyway.
-
-**If gate does NOT fire**, do NOT mention `/llm-council` (avoids cost normalization). The skill ends after the existing `## Next Steps` prompt.
 
 > **[BLOCKING]** This is a validation gate. MUST ATTENTION use `AskUserQuestion` to present review findings and get user confirmation. Completing without asking at least one question is a violation.
 
@@ -282,7 +302,7 @@ After the existing `## Next Steps` AskUserQuestion call completes, **evaluate th
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/README.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
 > 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
 > 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
 >
@@ -627,9 +647,9 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% do NOT recommend.
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
 - **MANDATORY IMPORTANT MUST ATTENTION** run graph blast-radius on changed files to find potentially stale consumers/handlers (when graph.db exists).
-      <!-- SYNC:critical-thinking-mindset:reminder -->
+    <!-- SYNC:critical-thinking-mindset:reminder -->
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-      <!-- /SYNC:critical-thinking-mindset:reminder -->
+    <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:sequential-thinking-protocol:reminder -->
 
@@ -640,7 +660,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
 

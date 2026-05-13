@@ -343,8 +343,7 @@ Large hooks are split into chained **part-files** (`-p2.cjs`, `-p3.cjs`) to stay
 prompt-context-assembler.cjs      ← Main: dev rules + workflow catalog
 prompt-context-assembler-closers.cjs   ← Closers: project config summary + CLAUDE.md re-injection
 prompt-context-assembler-claude.cjs   ← Claude-specific: model/session context
-prompt-context-assembler-docs.cjs ← Docs variant: reference doc injection
-prompt-context-assembler-docs-p2.cjs ← Docs part 2: staleness gate + graph gate
+prompt-context-assembler-docs.cjs ← Docs: read-guidance pointer for project-structure-reference.md
 
 workflow-router.cjs               ← Main: detect workflow intent
 workflow-router-p2.cjs            ← Part 2: inject workflow catalog

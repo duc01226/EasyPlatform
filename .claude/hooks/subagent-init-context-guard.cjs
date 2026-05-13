@@ -1,20 +1,19 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — Context-Overflow Guard (fires 17th of 18)
+ * SubagentStart Hook — Context-Overflow Guard (fires 7th of 8)
  *
  * Outputs: context window exhaustion warning + accumulative-write pattern
  *          + resume guidance + Output Contract (write-before-summary rule)
  *          + Report Path Declaration (first-line `Report: <path>` contract).
  *          Universal — all agent types receive this injection.
  *
- * Execution order: identity → patterns-p1..p5 → dev-rules-p1..p3
- *   → lessons → ai-mistakes → context-guard (this, 12th) → todos (last)
+ * Execution order: identity → patterns → dev-rules → code-review-rules
+ *   → lessons → ai-mistakes → context-guard (this, 7th) → todos (last)
  *
- * Split into 18 named hooks to avoid the Claude Code per-hook output size limit
- * (9,000 chars enforced). This hook fires last to ensure the guard reminder is
- * at the tail of the injected context — AI models attend strongly to the last
- * ~100 lines of their context window.
+ * Placed near-last so the guard reminder sits at the tail of the injected
+ * context — AI models attend strongly to the last ~100 lines of their context
+ * window.
  *
  * See: .claude/hooks/lib/subagent-context-builders.cjs — shared builders.
  * Previous: subagent-init-lessons.cjs (lessons + AI mistake prevention)

@@ -634,81 +634,25 @@ async function testSubagentInitIdentity() {
 // testSubagentCleanupReminder removed — hook deleted in P1 optimization
 
 async function testSubagentInitPatterns() {
-    logSection('SubagentStart: subagent-init-patterns-p1..p5.cjs (paged coding patterns + agent docs)');
+    logSection('SubagentStart: subagent-init-patterns.cjs (read-guidance pointer — coding patterns + agent docs)');
 
-    // TC-PA-001: p1 fires for code-reviewer with Part 1/5 meta, ≤9000 chars
+    // TC-PA-001: p1 fires for code-reviewer with guidance heading, ≤9000 chars
     {
-        const result = await runHook('subagent-init-patterns-p1.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        const result = await runHook('subagent-init-patterns.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
         logResult('[TC-PA-001][p1] code-reviewer exits 0', result.code === 0);
         if (result.stdout) {
             const parsed = parseSubagentOutput(result.stdout);
             if (parsed.valid) {
                 const ctx = parsed.additionalContext || '';
-                logResult('[TC-PA-001][p1] Contains Part 1/5 meta', ctx.includes('Part 1/5'));
-                logResult('[TC-PA-001][p1] Contains Code Patterns heading', ctx.includes('## Code Patterns'));
+                logResult('[TC-PA-001][p1] Contains Coding Patterns heading', ctx.includes('## Coding Patterns & Reference Docs'));
                 logResult('[TC-PA-001][p1] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-PA-002: p2 fires for code-reviewer with Part 2/5 meta, ≤9000 chars
-    {
-        const result = await runHook('subagent-init-patterns-p2.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-PA-002][p2] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-PA-002][p2] Contains Part 2/5 meta', ctx.includes('Part 2/5'));
-                logResult('[TC-PA-002][p2] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-PA-003: p3 fires for code-reviewer with Part 3/5 meta, ≤9000 chars
-    {
-        const result = await runHook('subagent-init-patterns-p3.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-PA-003][p3] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-PA-003][p3] Contains Part 3/5 meta', ctx.includes('Part 3/5'));
-                logResult('[TC-PA-003][p3] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-PA-004: p4 fires for code-reviewer with Part 4/5 meta, ≤9000 chars
-    {
-        const result = await runHook('subagent-init-patterns-p4.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-PA-004][p4] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-PA-004][p4] Contains Part 4/5 meta', ctx.includes('Part 4/5'));
-                logResult('[TC-PA-004][p4] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-PA-005: p5 fires for code-reviewer — silent OR ≤9000 chars (safety buffer)
-    {
-        const result = await runHook('subagent-init-patterns-p5.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-PA-005][p5] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-PA-005][p5] Output under 9000 chars', ctx.length <= 9000);
             }
         }
     }
 
     // TC-PA-006: p1 fires for planner (backend patterns present)
     {
-        const result = await runHook('subagent-init-patterns-p1.cjs', { agent_type: 'planner', prompt: 'test' });
+        const result = await runHook('subagent-init-patterns.cjs', { agent_type: 'planner', prompt: 'test' });
         logResult('[TC-PA-006][p1] planner exits 0', result.code === 0);
         if (result.stdout) {
             const parsed = parseSubagentOutput(result.stdout);
@@ -719,84 +663,55 @@ async function testSubagentInitPatterns() {
         }
     }
 
-    logSubsection('TC-PA-007..010: Edge Cases');
+    logSubsection('TC-PA-007..009: Edge Cases');
 
-    // TC-PA-007: all 5 hooks silent for general-purpose (not in PATTERN_AWARE or AGENT_DOC_MAP)
-    for (const p of ['p1', 'p2', 'p3', 'p4', 'p5']) {
-        const result = await runHook(`subagent-init-patterns-${p}.cjs`, { agent_type: 'general-purpose', prompt: 'test' });
-        logResult(`[TC-PA-007][${p}] general-purpose exits 0 (silent)`, result.code === 0);
-        logResult(`[TC-PA-007][${p}] general-purpose no stdout`, !result.stdout);
+    // TC-PA-007: p1 silent for general-purpose (not in PATTERN_AWARE or AGENT_DOC_MAP)
+    {
+        const result = await runHook('subagent-init-patterns.cjs', { agent_type: 'general-purpose', prompt: 'test' });
+        logResult('[TC-PA-007][p1] general-purpose exits 0 (silent)', result.code === 0);
+        logResult('[TC-PA-007][p1] general-purpose no stdout', !result.stdout);
     }
 
-    // TC-PA-008: malformed JSON → exit 0 for all 5 hooks
-    for (const p of ['p1', 'p2', 'p3', 'p4', 'p5']) {
-        const result = await runHook(`subagent-init-patterns-${p}.cjs`, 'not-json');
-        logResult(`[TC-PA-008][${p}] malformed JSON exits 0`, result.code === 0);
+    // TC-PA-008: malformed JSON → exit 0
+    {
+        const result = await runHook('subagent-init-patterns.cjs', 'not-json');
+        logResult('[TC-PA-008][p1] malformed JSON exits 0', result.code === 0);
     }
 
-    // TC-PA-009: null stdin → exit 0 for all 5 hooks
-    for (const p of ['p1', 'p2', 'p3', 'p4', 'p5']) {
-        const result = await runHook(`subagent-init-patterns-${p}.cjs`, null);
-        logResult(`[TC-PA-009][${p}] null stdin exits 0`, result.code === 0);
+    // TC-PA-009: null stdin → exit 0
+    {
+        const result = await runHook('subagent-init-patterns.cjs', null);
+        logResult('[TC-PA-009][p1] null stdin exits 0', result.code === 0);
     }
 }
 
 async function testSubagentInitDevRules() {
-    logSection('SubagentStart: subagent-init-dev-rules-p1/p2/p3.cjs (paged development rules)');
+    logSection('SubagentStart: subagent-init-dev-rules.cjs (read-guidance pointer — development rules)');
 
-    // TC-DR-001: p1 fires for code-reviewer with Part 1/3 meta, ≤9000 chars
+    // TC-DR-001: p1 fires for code-reviewer with Development Rules heading, ≤9000 chars
     {
-        const result = await runHook('subagent-init-dev-rules-p1.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
+        const result = await runHook('subagent-init-dev-rules.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
         logResult('[TC-DR-001][p1] code-reviewer exits 0', result.code === 0);
         if (result.stdout) {
             const parsed = parseSubagentOutput(result.stdout);
             if (parsed.valid) {
                 const ctx = parsed.additionalContext || '';
                 logResult('[TC-DR-001][p1] Contains Development Rules heading', ctx.includes('## Development Rules'));
-                logResult('[TC-DR-001][p1] Contains Part 1/3 meta', ctx.includes('Part 1/3'));
                 logResult('[TC-DR-001][p1] Output under 9000 chars', ctx.length <= 9000);
             }
         }
     }
 
-    // TC-DR-002: p2 fires for code-reviewer with Part 2/3 meta, ≤9000 chars (no overflow warning)
+    // TC-DR-003..004: p1 silent for general-purpose
     {
-        const result = await runHook('subagent-init-dev-rules-p2.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-DR-002][p2] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-DR-002][p2] Contains Part 2/3 meta', ctx.includes('Part 2/3'));
-                logResult('[TC-DR-002][p2] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-DR-001b: p3 fires for code-reviewer with Part 3/3 meta, ≤9000 chars
-    {
-        const result = await runHook('subagent-init-dev-rules-p3.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-DR-001b][p3] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-DR-001b][p3] Contains Part 3/3 meta', ctx.includes('Part 3/3'));
-                logResult('[TC-DR-001b][p3] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-DR-003..004: p1 + p2 + p3 all silent for general-purpose
-    for (const p of ['p1', 'p2', 'p3']) {
-        const result = await runHook(`subagent-init-dev-rules-${p}.cjs`, { agent_type: 'general-purpose', prompt: 'test' });
-        logResult(`[TC-DR-003/004][${p}] general-purpose exits 0 (silent)`, result.code === 0);
-        logResult(`[TC-DR-003/004][${p}] general-purpose no stdout`, !result.stdout);
+        const result = await runHook('subagent-init-dev-rules.cjs', { agent_type: 'general-purpose', prompt: 'test' });
+        logResult('[TC-DR-003/004][p1] general-purpose exits 0 (silent)', result.code === 0);
+        logResult('[TC-DR-003/004][p1] general-purpose no stdout', !result.stdout);
     }
 
     // TC-DR-005: p1 fires for planner (in DEV_RULES_AGENT_TYPES)
     {
-        const result = await runHook('subagent-init-dev-rules-p1.cjs', { agent_type: 'planner', prompt: 'test' });
+        const result = await runHook('subagent-init-dev-rules.cjs', { agent_type: 'planner', prompt: 'test' });
         logResult('[TC-DR-005][p1] planner exits 0', result.code === 0);
         if (result.stdout) {
             const parsed = parseSubagentOutput(result.stdout);
@@ -807,16 +722,60 @@ async function testSubagentInitDevRules() {
         }
     }
 
-    // TC-DR-006: malformed JSON → exit 0 for all three hooks
-    for (const p of ['p1', 'p2', 'p3']) {
-        const result = await runHook(`subagent-init-dev-rules-${p}.cjs`, 'not-json');
-        logResult(`[TC-DR-006][${p}] malformed JSON exits 0`, result.code === 0);
+    // TC-DR-006: malformed JSON → exit 0
+    {
+        const result = await runHook('subagent-init-dev-rules.cjs', 'not-json');
+        logResult('[TC-DR-006][p1] malformed JSON exits 0', result.code === 0);
     }
 
-    // TC-DR-007: null stdin → exit 0 for all three hooks
-    for (const p of ['p1', 'p2', 'p3']) {
-        const result = await runHook(`subagent-init-dev-rules-${p}.cjs`, null);
-        logResult(`[TC-DR-007][${p}] null stdin exits 0`, result.code === 0);
+    // TC-DR-007: null stdin → exit 0
+    {
+        const result = await runHook('subagent-init-dev-rules.cjs', null);
+        logResult('[TC-DR-007][p1] null stdin exits 0', result.code === 0);
+    }
+}
+
+async function testSubagentInitCodeReviewRules() {
+    logSection('SubagentStart: subagent-init-code-review-rules.cjs (read-guidance pointer — code review rules)');
+
+    // TC-CRR-001/002/002b: fires for all CODE_REVIEW_RULES_AGENT_TYPES.
+    // Loop over the set so adding a new member auto-extends coverage.
+    const codeReviewAgents = [
+        { type: 'code-reviewer', tc: 'TC-CRR-001' },
+        { type: 'code-simplifier', tc: 'TC-CRR-002' },
+        { type: 'spec-compliance-reviewer', tc: 'TC-CRR-002b' }
+    ];
+    for (const { type, tc } of codeReviewAgents) {
+        const result = await runHook('subagent-init-code-review-rules.cjs', { agent_type: type, prompt: 'test' });
+        logResult(`[${tc}] ${type} exits 0`, result.code === 0);
+        if (result.stdout) {
+            const parsed = parseSubagentOutput(result.stdout);
+            if (parsed.valid) {
+                const ctx = parsed.additionalContext || '';
+                logResult(`[${tc}] ${type} contains Code Review Rules heading`, ctx.includes('## Code Review Rules'));
+                logResult(`[${tc}] ${type} references code-review-rules.md`, ctx.includes('code-review-rules.md'));
+                logResult(`[${tc}] ${type} output under 9000 chars`, ctx.length <= 9000);
+            }
+        }
+    }
+
+    // TC-CRR-003: silent for general-purpose (not in CODE_REVIEW_RULES_AGENT_TYPES)
+    {
+        const result = await runHook('subagent-init-code-review-rules.cjs', { agent_type: 'general-purpose', prompt: 'test' });
+        logResult('[TC-CRR-003] general-purpose exits 0 (silent)', result.code === 0);
+        logResult('[TC-CRR-003] general-purpose no stdout', !result.stdout);
+    }
+
+    // TC-CRR-004: malformed JSON → exit 0
+    {
+        const result = await runHook('subagent-init-code-review-rules.cjs', 'not-json');
+        logResult('[TC-CRR-004] malformed JSON exits 0', result.code === 0);
+    }
+
+    // TC-CRR-005: null stdin → exit 0
+    {
+        const result = await runHook('subagent-init-code-review-rules.cjs', null);
+        logResult('[TC-CRR-005] null stdin exits 0', result.code === 0);
     }
 }
 
@@ -2129,10 +2088,10 @@ async function testContextInjectors() {
             tool_input: { file_path: filePath }
         });
         logResult(`Frontend context: ${filePath.split('/').pop()}`, result.code === 0);
-        if (result.stdout && result.stdout.includes('I18N Sync Check')) {
+        if (result.stdout && result.stdout.includes('**I18N:**')) {
             logOutputValidation(
                 'Frontend context i18n sync section is well-formed',
-                result.stdout.includes('translation resources') || result.stdout.includes('translation file patterns')
+                result.stdout.includes('translation resources') || result.stdout.includes('Multilingual project')
             );
         }
     }
@@ -2697,6 +2656,7 @@ async function runAllTests() {
         await testSubagentInitIdentity();
         await testSubagentInitPatterns();
         await testSubagentInitDevRules();
+        await testSubagentInitCodeReviewRules();
         // testSubagentInitClaudeMd removed — hooks deleted (redundant with native claudeMd injection)
         await testSubagentInitLessons();
         await testSubagentInitAiMistakes();

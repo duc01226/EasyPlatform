@@ -1,185 +1,84 @@
 #!/usr/bin/env node
 /**
- * Design System Context Injector - PreToolUse Hook
+ * Design System Context - PreToolUse Hook
  *
- * Automatically injects design system documentation guidance when editing
- * frontend files. Uses file path patterns to select the appropriate guide.
+ * Guides AI to read design system docs when editing frontend files.
+ * Replaces full-content injection with a lightweight read-guidance pointer.
  *
- * Pattern Matching:
- *   Reads designSystem.appMappings from docs/project-config.json for app detection.
- *
- * Exit Codes:
- *   0 - Success (non-blocking)
+ * Exit Codes: 0 - Success (non-blocking)
  */
 
-const path = require("path");
-const {
-  loadProjectConfig,
-  buildPatternList,
-} = require("./lib/project-config-loader.cjs");
-const { DEDUP_LINES } = require("./lib/dedup-constants.cjs");
-const {
-  parsePreToolUseInput,
-  wasRecentlyInjected,
-  readAndInjectDoc,
-} = require("./lib/context-injector-base.cjs");
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CONFIGURATION (loaded from docs/project-config.json)
-// ═══════════════════════════════════════════════════════════════════════════
+const path = require('path');
+const { loadProjectConfig, buildPatternList } = require('./lib/project-config-loader.cjs');
+const { parsePreToolUseInput, wasRecentlyInjected } = require('./lib/context-injector-base.cjs');
+const { DESIGN_SYSTEM: DEDUP_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
 
 const config = loadProjectConfig();
-const DESIGN_SYSTEM_DOCS_PATH =
-  config.designSystem?.docsPath || "docs/project-reference/design-system";
+const DESIGN_SYSTEM_DOCS_PATH = config.designSystem?.docsPath || 'docs/project-reference/design-system';
 const APP_PATTERNS = buildPatternList(config.designSystem?.appMappings);
 const CANONICAL_DOC = config.designSystem?.canonicalDoc;
-const TOKEN_FILES = config.designSystem?.tokenFiles || [];
 
-// File extensions that indicate frontend files
-const FRONTEND_EXTENSIONS = [
-  ".html",
-  ".htm",
-  ".scss",
-  ".css",
-  ".less",
-  ".sass",
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".vue",
-  ".svelte",
-];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════════
+const FRONTEND_EXTENSIONS = new Set(['.html', '.htm', '.scss', '.css', '.less', '.sass', '.ts', '.tsx', '.js', '.jsx']);
 
 function isFrontendFile(filePath) {
-  if (!filePath) return false;
-  const ext = path.extname(filePath).toLowerCase();
-  return FRONTEND_EXTENSIONS.includes(ext);
+    return !!filePath && FRONTEND_EXTENSIONS.has(path.extname(filePath).toLowerCase());
 }
 
-function detectAppFromPath(filePath) {
-  if (!filePath) return null;
-
-  // Normalize path separators
-  const normalizedPath = filePath.replace(/\\/g, "/");
-
-  for (const app of APP_PATTERNS) {
-    for (const pattern of app.patterns) {
-      if (pattern.test(normalizedPath)) {
-        return app;
-      }
+function detectApp(filePath) {
+    if (!filePath) return null;
+    const norm = filePath.replace(/\\/g, '/');
+    for (const app of APP_PATTERNS) {
+        for (const pattern of app.patterns) {
+            if (pattern.test(norm)) return app;
+        }
     }
-  }
-
-  return null;
+    return null;
 }
 
-function shouldInject(filePath, transcriptPath) {
-  // Skip non-frontend files
-  if (!isFrontendFile(filePath)) return false;
+function buildGuidance(app, filePath) {
+    const lines = [
+        '',
+        '## Design System Context',
+        `**Detected App:** ${app.name} | **File:** ${path.basename(filePath)}`,
+        DEDUP_MARKER,
+        '',
+        'Before implementing UI, read:',
+        `- \`${DESIGN_SYSTEM_DOCS_PATH}/${app.docFile}\` — ${app.name} component inventory and tokens`,
+    ];
 
-  // Skip if no app detected
-  const app = detectAppFromPath(filePath);
-  if (!app) return false;
+    if (CANONICAL_DOC) {
+        lines.push(`- \`${DESIGN_SYSTEM_DOCS_PATH}/${CANONICAL_DOC}\` — canonical design tokens, BEM conventions`);
+    }
 
-  // Skip if already injected for this app recently
-  if (
-    wasRecentlyInjected(
-      transcriptPath,
-      `**Detected App:** ${app.name}`,
-      DEDUP_LINES.DESIGN_SYSTEM,
-    )
-  )
-    return false;
+    const quickTips = app.quickTips || [];
+    if (quickTips.length > 0) {
+        lines.push('', '**Quick Tips:**');
+        quickTips.forEach(tip => lines.push(`- ${tip}`));
+    }
 
-  return true;
+    const modernNote = config.designSystem?.modernUiNote;
+    if (modernNote) lines.push('', modernNote);
+
+    lines.push('');
+    return lines.filter((l, i, a) => !(l === '' && a[i - 1] === '')).join('\n');
 }
-
-function buildInjection(app, filePath) {
-  const docPath = `${DESIGN_SYSTEM_DOCS_PATH}/${app.docFile}`;
-  const indexPath = `${DESIGN_SYSTEM_DOCS_PATH}/README.md`;
-
-  const lines = [
-    "",
-    "## Design System Context",
-    "",
-    `**Detected App:** ${app.name}`,
-    `**File:** ${path.basename(filePath)}`,
-    "",
-  ];
-
-  // Inject primary design system doc directly (per-app inventory)
-  const primaryContent = readAndInjectDoc(docPath);
-  if (primaryContent) {
-    lines.push(primaryContent);
-  }
-  // Inject index doc directly
-  const indexContent = readAndInjectDoc(indexPath);
-  if (indexContent) {
-    lines.push(indexContent);
-  }
-  // Inject canonical/target doc — single source of truth for new code
-  let canonicalContent = null;
-  if (CANONICAL_DOC) {
-    canonicalContent = readAndInjectDoc(
-      `${DESIGN_SYSTEM_DOCS_PATH}/${CANONICAL_DOC}`,
-    );
-    if (canonicalContent) lines.push(canonicalContent);
-  }
-  // Inject drop-in token files (SCSS/CSS) so AI uses real var names, not guesses
-  for (const tf of TOKEN_FILES) {
-    const tokenContent = readAndInjectDoc(`${DESIGN_SYSTEM_DOCS_PATH}/${tf}`);
-    if (tokenContent) lines.push(tokenContent);
-  }
-  // Fallback if no design-system content was found
-  if (!primaryContent && !indexContent && !canonicalContent) {
-    lines.push(
-      `### ⚠️ Design system docs not found at \`${DESIGN_SYSTEM_DOCS_PATH}\` (checked per-app, README, canonical)`,
-      "",
-    );
-  }
-
-  lines.push("### Quick Reference", "");
-
-  // Add app-specific quick tips from config (quickTips array in designSystem.appMappings)
-  const quickTips = app.quickTips || [];
-  for (const tip of quickTips) {
-    lines.push(`- ${tip}`);
-  }
-
-  // Add modern UI note from config if present
-  const modernNote = config.designSystem?.modernUiNote;
-  if (modernNote) {
-    lines.push("", "### Modern UI Note", "", modernNote, "");
-  }
-
-  return lines.join("\n");
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN EXECUTION
-// ═══════════════════════════════════════════════════════════════════════════
 
 async function main() {
-  try {
-    const input = parsePreToolUseInput();
-    if (!input) process.exit(0);
-    const { filePath, transcriptPath } = input;
+    try {
+        const input = parsePreToolUseInput();
+        if (!input) process.exit(0);
+        const { filePath, transcriptPath } = input;
 
-    if (!shouldInject(filePath, transcriptPath)) process.exit(0);
+        if (!isFrontendFile(filePath)) process.exit(0);
+        const app = detectApp(filePath);
+        if (!app) process.exit(0);
+        if (wasRecentlyInjected(transcriptPath, DEDUP_MARKER, DEDUP_LINES.DESIGN_SYSTEM)) process.exit(0);
 
-    const app = detectAppFromPath(filePath);
-    if (!app) process.exit(0);
-
-    console.log(buildInjection(app, filePath));
-    process.exit(0);
-  } catch (error) {
-    process.exit(0);
-  }
+        console.log(buildGuidance(app, filePath));
+        process.exit(0);
+    } catch {
+        process.exit(0);
+    }
 }
 
 main();

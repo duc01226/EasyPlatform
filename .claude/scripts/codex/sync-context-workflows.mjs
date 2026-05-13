@@ -29,6 +29,15 @@ const AGENTS_CONTEXT_MIRROR_START = "<!-- CODEX-CONTEXT-MIRROR:START -->";
 const AGENTS_CONTEXT_MIRROR_END = "<!-- CODEX-CONTEXT-MIRROR:END -->";
 const LEGACY_AGENTS_CLAUDE_MERGE_START = "<!-- CLAUDE-MERGE:START -->";
 const LEGACY_AGENTS_CLAUDE_MERGE_END = "<!-- CLAUDE-MERGE:END -->";
+const PROJECT_REFERENCE_GATE_HEADING = "## Codex Hookless Project Reference Gate";
+const PROJECT_REFERENCE_GATE_BODY_LINES = [
+  "Codex does not receive Claude hook-injected project docs or project config summaries. Before coding, planning, debugging, testing, or reviewing:",
+  "",
+  "- Read `docs/project-config.json` for project-specific commands, module paths, workflow settings, and doc paths.",
+  "- Read `docs/project-reference/docs-index-reference.md` to route to the right project-reference files.",
+  "- Read `docs/project-reference/lessons.md` for always-on project guardrails.",
+  "- For situation-specific work, open the referenced project doc directly; do not rely on prior conversation text as proof that the doc is loaded.",
+];
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -72,6 +81,59 @@ function buildAgentsClaudeMirrorBlock(claudeMd) {
     claudeMd.trim(),
     AGENTS_CLAUDE_MIRROR_END,
   ].join("\n");
+}
+
+function buildProjectReferenceGateSection() {
+  return [
+    PROJECT_REFERENCE_GATE_HEADING,
+    "",
+    ...PROJECT_REFERENCE_GATE_BODY_LINES,
+  ].join("\n");
+}
+
+function stripProjectReferenceGateSection(contextMd) {
+  let nextText = contextMd.replace(/\r\n?/g, "\n");
+  const pattern = new RegExp(
+    `(?:^|\\n)${escapeRegExp(PROJECT_REFERENCE_GATE_HEADING)}\\n[\\s\\S]*?(?=\\n(?:## |<!-- [A-Z-]+:START -->)|$)`,
+    "g"
+  );
+
+  while (nextText.includes(PROJECT_REFERENCE_GATE_HEADING)) {
+    const strippedText = nextText.replace(pattern, "");
+    if (strippedText === nextText) break;
+    nextText = strippedText;
+  }
+
+  const orphanBodyPattern = new RegExp(
+    `(?:^|\\n)${escapeRegExp(PROJECT_REFERENCE_GATE_BODY_LINES.join("\n"))}(?=\\n(?:## |<!-- [A-Z-]+:START -->)|\\n\\n(?:## |<!-- [A-Z-]+:START -->)|$)`,
+    "g"
+  );
+  nextText = nextText.replace(orphanBodyPattern, "");
+
+  return nextText.replace(/\n{3,}/g, "\n\n").trimEnd();
+}
+
+function upsertProjectReferenceGateSection(contextMd) {
+  const contextWithoutGate = stripProjectReferenceGateSection(contextMd);
+  const gateSection = buildProjectReferenceGateSection();
+  const criticalThinkingHeading = "\n## Critical Thinking Mindset";
+
+  if (contextWithoutGate.includes(criticalThinkingHeading)) {
+    return contextWithoutGate.replace(
+      criticalThinkingHeading,
+      `\n\n${gateSection}\n${criticalThinkingHeading}`
+    );
+  }
+
+  const firstTitleMatch = contextWithoutGate.match(/^# [^\n]*(?:\n|$)/m);
+  if (firstTitleMatch?.index !== undefined) {
+    const insertIndex = firstTitleMatch.index + firstTitleMatch[0].length;
+    return `${contextWithoutGate.slice(0, insertIndex).trimEnd()}\n\n${gateSection}\n\n${contextWithoutGate
+      .slice(insertIndex)
+      .trimStart()}`.trimEnd();
+  }
+
+  return `${gateSection}\n\n${contextWithoutGate.trimStart()}`.trimEnd();
 }
 
 async function upsertContextIntoAgents(contextMd, claudeMd) {
@@ -287,6 +349,7 @@ async function main() {
   contextMd = stripManagedBlock(contextMd, PROMPT_PROTOCOLS_START, PROMPT_PROTOCOLS_END);
   contextMd = stripManagedBlock(contextMd, PROMPT_PROTOCOLS_BOTTOM_START, PROMPT_PROTOCOLS_BOTTOM_END);
   contextMd = `${promptProtocolTopBlock}\n\n${contextMd.trimStart()}`;
+  contextMd = upsertProjectReferenceGateSection(contextMd);
 
   if (contextMd.includes(START_MARKER) && contextMd.includes(END_MARKER)) {
     const pattern = new RegExp(

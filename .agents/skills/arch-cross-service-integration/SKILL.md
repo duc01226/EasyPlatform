@@ -357,7 +357,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
@@ -370,6 +370,21 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"$plan-hard (Recommended)"** — Create implementation plan from the cross-service integration design
+- **"$architecture-design"** — If broader architecture concerns still need decisions
+- **"Skip, continue manually"** — user decides
+
+### Council escalation (always-offer, second prompt)
+
+After the existing `## Next Steps` prompt above resolves, present a **second**, independent a direct user question call (do NOT merge into the first):
+
+- **"Skip council — proceed with integration design (Recommended)"** — Continue with the message contracts / consumer topology as designed. Recommended default.
+- **"Escalate to $llm-council"** — Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Best applied when the integration introduces a new message contract consumed by >=3 services, picks between sync API vs. async event for a hot path, or commits to a saga/outbox/orchestration pattern. Cross-service contracts are hard to reverse once consumers deploy. Cheaper alternatives: `$why-review`, `$plan-validate` (run these first if you haven't).
 
 ## Closing Reminders
 
@@ -425,25 +440,26 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## Debugging & Root Cause Reasoning
 
-- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. Cheapest check first.
-- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug in caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
+- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. ALWAYS cheapest check first.
+- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
 - [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
-- [2026-04-01] **Code is caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
+- [2026-04-01] **Code caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
 
 ## Architecture Invariants
 
-- [2026-03-31] **ParallelAsync + repo/UoW MUST use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
-- [2026-03-31] **Bus message naming MUST include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) are leaders. Feature services (Growth, Talents) sending to core MUST use `{CoreServiceName}...RequestBusMessage` — never define own event for core to consume.
+- [2026-05-09] **User name materialization MUST ATTENTION go through `User.UpdateName(firstName, middleName, lastName)`.** Domain method (`src/Services/bravoTALENTS/Employee.Domain/AggregatesModel/User.cs:202-209`) recomputes `FullName` as single source of truth. Three sites still manually patch `user.FullName = user.GetFullName()` after assigning name fields — `src/Services/bravoTALENTS/Employee.Application/Factories/UserFactory.cs:50`, `src/Services/bravoSURVEYS/LearningPlatform.Application/ApplyPlatform/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:102`, `src/Services/bravoINSIGHTS/Analyze/Analyze.Application/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:66`. Next time touching any: replace manual patch with `user.UpdateName(...)` to maintain invariant.
+- [2026-03-31] **ParallelAsync + repo/UoW MUST ATTENTION use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
+- [2026-03-31] **Bus message naming MUST ATTENTION include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) leaders. Feature services (Growth, Talents) sending to core MUST ATTENTION use `{CoreServiceName}...RequestBusMessage` — NEVER define own event for core to consume.
 
 ## Naming & Abstraction
 
-- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what it guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
+- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
 
 ## Environment & Tooling
 
-- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be in bash PATH under those names. Check: `where python` / `where py`. Prefer `py` (Windows Python Launcher) for one-liners, `node` if JS alternative exists.
+- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be bash PATH under those names. Check: `where python` / `where py`. ALWAYS prefer `py` (Windows Python Launcher) one-liners, `node` if JS alternative exists.
 
-> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons in `.claude/hooks/lib/prompt-injections.cjs`.
+> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons `.claude/hooks/lib/prompt-injections.cjs`.
 
 ---
 
@@ -456,6 +472,7 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 - **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
 - **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
 - **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
+- **IMPORTANT MUST ATTENTION** every claim needs `file:line` evidence — confidence >80% to act, NEVER speculate
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

@@ -1,6 +1,7 @@
 #region
 
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Infrastructures.MessageBus;
 
 #endregion
 
@@ -8,6 +9,9 @@ namespace Easy.Platform.Application.RequestContext;
 
 public static class PlatformApplicationCommonRequestContextKeys
 {
+    private const string ConsumerOrEventHandlerPipeLineApplicationSeparator = "---";
+    private const string ConsumerOrEventHandlerPipeLineHandlerSeparator = "::";
+
     public const string RequestIdContextKey = "RequestId";
     public const string UserIdContextKey = "UserId";
     public const string UserNameContextKey = "UserName";
@@ -33,6 +37,87 @@ public static class PlatformApplicationCommonRequestContextKeys
     public static void AddConsumerOrEventHandlerPipeLine(this IDictionary<string, object?> context, string value)
     {
         context.SetRequestContextValue(ConsumerOrEventHandlerPipeLine(context).ConcatSingle(value).ToList(), ConsumerOrEventHandlerPipeLineKey);
+    }
+
+    public static string BuildConsumerOrEventHandlerPipeLineItem(string applicationName, Type messageOrEventType, Type consumerOrEventHandlerType)
+    {
+        return BuildConsumerOrEventHandlerPipeLineItem(
+            applicationName,
+            messageOrEventType.GetNameOrGenericTypeName(),
+            consumerOrEventHandlerType.GetNameOrGenericTypeName());
+    }
+
+    public static string BuildConsumerOrEventHandlerPipeLineItem(string applicationName, string messageOrEventName, string consumerOrEventHandlerName)
+    {
+        return $"{applicationName}{ConsumerOrEventHandlerPipeLineApplicationSeparator}{messageOrEventName}{ConsumerOrEventHandlerPipeLineHandlerSeparator}{consumerOrEventHandlerName}";
+    }
+
+    public static bool HasConsumerOrEventHandlerPipeLine<TMessageOrEvent, TConsumerOrEventHandler>(
+        this IPlatformTrackableBusMessage message,
+        string? applicationName = null)
+    {
+        return message.RequestContext.HasConsumerOrEventHandlerPipeLine<TMessageOrEvent, TConsumerOrEventHandler>(applicationName);
+    }
+
+    public static bool HasConsumerOrEventHandlerPipeLine<TMessageOrEvent, TConsumerOrEventHandler>(
+        this IDictionary<string, object?> context,
+        string? applicationName = null)
+    {
+        return context.HasConsumerOrEventHandlerPipeLine(
+            applicationName,
+            typeof(TMessageOrEvent).GetNameOrGenericTypeName(),
+            typeof(TConsumerOrEventHandler).GetNameOrGenericTypeName());
+    }
+
+    public static bool HasConsumerOrEventHandlerPipeLine(
+        this IDictionary<string, object?> context,
+        string? applicationName = null,
+        string? messageOrEventName = null,
+        string? consumerOrEventHandlerName = null)
+    {
+        return context
+            .ConsumerOrEventHandlerPipeLine()
+            .Any(pipelineItem => IsConsumerOrEventHandlerPipeLineItem(pipelineItem, applicationName, messageOrEventName, consumerOrEventHandlerName));
+    }
+
+    public static bool IsConsumerOrEventHandlerPipeLineItem(
+        string pipelineItem,
+        string? applicationName = null,
+        string? messageOrEventName = null,
+        string? consumerOrEventHandlerName = null)
+    {
+        var parsedPipelineItem = ParseConsumerOrEventHandlerPipeLineItem(pipelineItem);
+
+        return parsedPipelineItem != null
+               && IsMatchedPipeLinePart(applicationName, parsedPipelineItem.Value.ApplicationName)
+               && IsMatchedPipeLinePart(messageOrEventName, parsedPipelineItem.Value.MessageOrEventName)
+               && IsMatchedPipeLinePart(consumerOrEventHandlerName, parsedPipelineItem.Value.ConsumerOrEventHandlerName);
+    }
+
+    private static (string ApplicationName, string MessageOrEventName, string ConsumerOrEventHandlerName)? ParseConsumerOrEventHandlerPipeLineItem(string pipelineItem)
+    {
+        if (pipelineItem.IsNullOrEmpty()) return null;
+
+        var applicationSeparatorIndex = pipelineItem.IndexOf(ConsumerOrEventHandlerPipeLineApplicationSeparator, StringComparison.Ordinal);
+        if (applicationSeparatorIndex < 0) return null;
+
+        var messageOrEventNameStartIndex = applicationSeparatorIndex + ConsumerOrEventHandlerPipeLineApplicationSeparator.Length;
+        var handlerSeparatorIndex = pipelineItem.IndexOf(
+            ConsumerOrEventHandlerPipeLineHandlerSeparator,
+            messageOrEventNameStartIndex,
+            StringComparison.Ordinal);
+        if (handlerSeparatorIndex < 0) return null;
+
+        return (
+            ApplicationName: pipelineItem[..applicationSeparatorIndex],
+            MessageOrEventName: pipelineItem[messageOrEventNameStartIndex..handlerSeparatorIndex],
+            ConsumerOrEventHandlerName: pipelineItem[(handlerSeparatorIndex + ConsumerOrEventHandlerPipeLineHandlerSeparator.Length)..]
+        );
+    }
+
+    private static bool IsMatchedPipeLinePart(string? expectedValue, string actualValue)
+    {
+        return expectedValue == null || string.Equals(actualValue, expectedValue, StringComparison.Ordinal);
     }
 
     public static string RequestId(this IDictionary<string, object?> context)

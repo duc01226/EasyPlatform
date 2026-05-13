@@ -3,7 +3,7 @@
  * Shared transcript utility helpers used by all prompt-context-assembler-* hooks.
  *
  * Extracted from the 4 assembler hooks where these were byte-for-byte duplicates.
- * Consumers: prompt-context-assembler.cjs, -claude, -closers, -docs, -docs-p2, -project-config
+ * Consumers: prompt-context-assembler.cjs, -claude, -closers, -docs, -project-config
  */
 const fs = require('fs');
 const { TOP_DEDUP_LINES } = require('./dedup-constants.cjs');

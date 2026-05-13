@@ -18,7 +18,7 @@ public static partial class Util
     {
         public const int DefaultWaitUntilMaxSeconds = 30;
         public const int DefaultWaitIntervalSeconds = 2;
-        public const int DefaultResilientRetryCount = 2;
+        public const int DefaultResilientRetryCount = 1;
         public const int DefaultOptimisticConcurrencyRetryResilientRetryCount = 10;
         public const int DefaultResilientDelaySeconds = 1;
         public static readonly Func<int, TimeSpan> DefaultBackgroundRetryDelayProvider = retryAttempt => retryAttempt.Seconds();
@@ -43,9 +43,8 @@ public static partial class Util
         ///   <item><b>Inbox/Outbox callers</b> (<c>retryCount=43200</c>): first error log fires at retry attempt 32,400.
         ///     With the default delay-back-off this is on the order of tens of hours before the first error-level log line.
         ///     Lower severities (warn/info) are not affected.</item>
-        ///   <item><b>Background-event handlers using <c>int.MaxValue</c></b>: produce a threshold of ~1.6 billion —
-        ///     an effectively-eternal logging blackout for unbounded retry handlers. Concrete handlers needing
-        ///     retry telemetry MUST override <c>RetryOnFailedTimes</c> to a bounded value.</item>
+        ///   <item><b>Callers explicitly passing <c>int.MaxValue</c></b>: produce a threshold of ~1.6 billion —
+        ///     an effectively-eternal logging blackout.</item>
         /// </list>
         /// <para>Caller pattern: <c>if (retryAttempt &gt; LogErrorRetryThreshold(retryCount)) Logger.LogError(...);</c></para>
         /// <para>Consumed by: <see cref="Easy.Platform.Common.Cqrs.Events.PlatformCqrsEventHandler"/>,

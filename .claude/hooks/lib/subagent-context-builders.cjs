@@ -1,42 +1,27 @@
 'use strict';
 /**
- * Subagent Context Builders — shared lib for subagent-init part hooks.
+ * Subagent Context Builders — shared lib for subagent-init hooks.
  *
- * Motivation: subagent-init is split into 18 named hooks to avoid the Claude Code
- * per-hook output size limit (9,000 chars enforced). When a single hook exceeds this
- * limit, the tail is silently truncated — large sections like dev-rules (~18KB) and
- * patterns (~36KB for code-reviewer) get cut. Splitting across 18 hooks ("inject paging")
- * keeps each hook's output small enough that no content is lost.
- * CLAUDE.md is injected natively by Claude Code's claudeMd mechanism — no hook needed.
- *    1. subagent-init-identity.cjs                — identity, config, rules, plan context, critical thinking
- *    2. subagent-init-patterns-p1.cjs             — coding patterns + agent-specific docs page 1/5
- *    3. subagent-init-patterns-p2.cjs             — patterns page 2/5 (silent if empty)
- *    4. subagent-init-patterns-p3.cjs             — patterns page 3/5 (silent if empty)
- *    5. subagent-init-patterns-p4.cjs             — patterns page 4/5 (silent if empty)
- *    6. subagent-init-patterns-p5.cjs             — patterns page 5/5 (silent if empty; overflow hint)
- *    7. subagent-init-dev-rules-p1.cjs            — development-rules.md page 1/3 (code/review agents only)
- *    8. subagent-init-dev-rules-p2.cjs            — dev-rules page 2/3 (silent if fits in p1)
- *    9. subagent-init-dev-rules-p3.cjs            — dev-rules page 3/3 (silent if fits in p1+p2)
- *   10. subagent-init-code-review-rules-p1.cjs    — code-review-rules.md page 1/5 (code-review agents only)
- *   11. subagent-init-code-review-rules-p2.cjs    — code-review-rules page 2/5 (silent if fits earlier)
- *   12. subagent-init-code-review-rules-p3.cjs    — code-review-rules page 3/5 (silent if fits earlier)
- *   13. subagent-init-code-review-rules-p4.cjs    — code-review-rules page 4/5 (silent if fits earlier)
- *   14. subagent-init-code-review-rules-p5.cjs    — code-review-rules page 5/5 (silent if fits earlier; overflow hint)
- *   15. subagent-init-lessons.cjs                 — lessons learned (~1,560 chars)
- *   16. subagent-init-ai-mistakes.cjs             — AI mistake prevention bullets (~8,200 chars; split from lessons to stay under 9,000-char limit)
- *   17. subagent-init-context-guard.cjs           — context-overflow guard reminder
- *   18. subagent-init-todos.cjs                   — active task state (fires last)
- * This lib centralizes all builder functions so each hook stays thin and DRY.
+ * Hooks fire on SubagentStart to give agents the context they need.
+ * All content-injection (readAndInjectDoc) replaced with read-guidance pointers —
+ * agents read files themselves as needed rather than receiving pre-loaded content.
+ *
+ * Hook execution order (8 hooks):
+ *    1. subagent-init-identity.cjs         — identity, config, rules, plan context, critical thinking
+ *    2. subagent-init-patterns.cjs      — read-guidance: patterns + agent-specific docs
+ *    3. subagent-init-dev-rules.cjs     — read-guidance: development-rules.md (dev agents only)
+ *    4. subagent-init-code-review-rules.cjs — read-guidance: code-review-rules.md (review agents only)
+ *    5. subagent-init-lessons.cjs          — lessons learned
+ *    6. subagent-init-ai-mistakes.cjs      — AI mistake prevention bullets
+ *    7. subagent-init-context-guard.cjs    — context-overflow guard reminder
+ *    8. subagent-init-todos.cjs            — active task state (fires last)
  */
 
 const fs = require('fs');
 const path = require('path');
-// Only imports used inside builder functions — NOT config utils (those stay in each part's main())
 const { getTodoStateForSubagent } = require('./todo-state.cjs');
 const { loadProjectConfig } = require('./project-config-loader.cjs');
-const { CODE_PATTERNS: CODE_PATTERNS_MARKER } = require('./dedup-constants.cjs');
 const { injectCriticalContext, injectLessons, injectAiMistakePrevention } = require('./prompt-injections.cjs');
-const { readAndInjectDoc } = require('./context-injector-base.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
@@ -58,7 +43,7 @@ const PATTERN_AWARE_AGENT_TYPES = new Set([
 /**
  * Agent-type → additional reference docs mapping.
  * Each agent type receives docs relevant to its specialized role.
- * Docs are injected via readAndInjectDoc() — full content, not just paths.
+ * Docs are referenced as guidance pointers — agents are directed to read them.
  */
 const AGENT_DOC_MAP = {
     // Architecture agents need project structure + domain model
@@ -67,9 +52,8 @@ const AGENT_DOC_MAP = {
     'solution-architect': ['docs/project-reference/project-structure-reference.md', 'docs/project-reference/domain-entities-reference.md'],
     scout: ['docs/project-reference/project-structure-reference.md'],
 
-    // Review agents: code-review-rules.md injected via dedicated subagent-init-code-review-rules-p*.cjs hooks
-    // (removed from AGENT_DOC_MAP: backend+frontend patterns exhaust the 5-page patterns budget,
-    //  leaving code-review-rules.md silently uninjected via the patterns overflow path)
+    // Review agents: code-review-rules.md guidance pointer emitted via subagent-init-code-review-rules.cjs
+    // (kept out of AGENT_DOC_MAP — the dedicated hook is the single source of truth)
 
     // Test agents need test references
     'integration-tester': ['docs/project-reference/integration-test-reference.md'],
@@ -85,7 +69,7 @@ const AGENT_DOC_MAP = {
  * Agent types that receive code-review-rules.md injection via dedicated hooks.
  * Separated from AGENT_DOC_MAP/patterns pipeline because backend+frontend patterns
  * exhaust all 5 × 8,500-char pattern pages, silently dropping code-review-rules.md.
- * Injected by subagent-init-code-review-rules-p1.cjs … p5.cjs (after dev-rules hooks).
+ * Injected by subagent-init-code-review-rules.cjs (after dev-rules hook).
  */
 const CODE_REVIEW_RULES_AGENT_TYPES = new Set([
     'code-reviewer',
@@ -96,7 +80,7 @@ const CODE_REVIEW_RULES_AGENT_TYPES = new Set([
 /**
  * Agent types that receive development-rules.md injection.
  * These agents produce or review code and need full dev rules for quality enforcement.
- * Injected by subagent-init-dev-rules-p1.cjs + p2.cjs + p3.cjs (7th–9th of 18).
+ * Injected by subagent-init-dev-rules.cjs (3rd of 8 SubagentStart hooks).
  */
 const DEV_RULES_AGENT_TYPES = new Set([
     'code-reviewer',
@@ -267,150 +251,84 @@ function buildAiMistakePreventionContext() {
 }
 
 /**
- * Build one page of development-rules.md for subagent context injection.
- * Dynamic paging: reads file at runtime, splits at line boundaries.
- * Returns [] if agentType not in DEV_RULES_AGENT_TYPES, or page is empty (silent exit).
+ * Build read-guidance for development rules — tells the agent to read development-rules.md.
+ * Returns [] if agentType not in DEV_RULES_AGENT_TYPES.
  *
- * @param {number} partIndex   - 0-based page index (0=p1, 1=p2, 2=p3)
- * @param {number} totalParts  - Total pages (default 3, handles up to ~25.5KB)
- * @param {string} agentType   - From SubagentStart payload
- * @returns {string[]} Lines array, empty if agent type excluded or page is empty
+ * @param {string} agentType - From SubagentStart payload
+ * @returns {string[]} Lines array, empty if agent type excluded
  */
-function buildDevRulesContextPart(partIndex, totalParts = 3, agentType) {
+function buildDevRulesGuidance(agentType) {
     if (!DEV_RULES_AGENT_TYPES.has(agentType)) return [];
-    try {
-        const rulesPath = path.resolve(PROJECT_DIR, '.claude', 'docs', 'development-rules.md');
-        if (!fs.existsSync(rulesPath)) return [];
-        const content = fs.readFileSync(rulesPath, 'utf-8').trim();
-        if (!content) return [];
-
-        const { content: partContent, meta, overflow } = splitContentIntoPart(content, partIndex, totalParts, 8500);
-        if (!partContent) return [];
-
-        const lines = ['', `## Development Rules (.claude/docs/development-rules.md) — ${meta}`, '', partContent];
-
-        if (overflow) {
-            lines.push(
-                '',
-                `> **[DEV-RULES OVERFLOW]** ${overflow.remainingLines} lines (~${overflow.remainingChars} chars) not injected.`,
-                `> Read \`.claude/docs/development-rules.md\` from line ${overflow.fromLine} for remaining content.`
-            );
-        }
-        return lines;
-    } catch {
-        return []; /* fail-open */
-    }
+    const rulesPath = path.resolve(PROJECT_DIR, '.claude', 'docs', 'development-rules.md');
+    if (!fs.existsSync(rulesPath)) return [];
+    return [
+        '',
+        '## Development Rules',
+        '',
+        'Read: `.claude/docs/development-rules.md` — coding standards, architecture rules, quality gates, anti-patterns.',
+        ''
+    ];
 }
 
 /**
- * Build one page of code-review-rules.md for subagent context injection.
- * Dynamic paging: reads file at runtime, splits at line boundaries.
- * Returns [] if agentType not in CODE_REVIEW_RULES_AGENT_TYPES, or page is empty (silent exit).
- * 5 pages × 8,500 chars = 42,500-char budget — sufficient for the 38 KB rules file.
+ * Build read-guidance for code review rules — tells the agent to read code-review-rules.md.
+ * Returns [] if agentType not in CODE_REVIEW_RULES_AGENT_TYPES.
  *
- * @param {number} partIndex   - 0-based page index (0=p1 … 4=p5)
- * @param {number} totalParts  - Total pages (default 5, handles up to ~42.5KB)
- * @param {string} agentType   - From SubagentStart payload
- * @returns {string[]} Lines array, empty if agent type excluded or page is empty
+ * @param {string} agentType - From SubagentStart payload
+ * @returns {string[]} Lines array, empty if agent type excluded
  */
-function buildCodeReviewRulesContextPart(partIndex, totalParts = 5, agentType) {
+function buildCodeReviewRulesGuidance(agentType) {
     if (!CODE_REVIEW_RULES_AGENT_TYPES.has(agentType)) return [];
-    try {
-        const rulesPath = path.resolve(PROJECT_DIR, 'docs', 'project-reference', 'code-review-rules.md');
-        if (!fs.existsSync(rulesPath)) return [];
-        const content = fs.readFileSync(rulesPath, 'utf-8').trim();
-        if (!content) return [];
-
-        const { content: partContent, meta, overflow } = splitContentIntoPart(content, partIndex, totalParts, 8500);
-        if (!partContent) return [];
-
-        const lines = ['', `## Code Review Rules (docs/project-reference/code-review-rules.md) — ${meta}`, '', partContent];
-
-        if (overflow) {
-            lines.push(
-                '',
-                `> **[CODE-REVIEW-RULES OVERFLOW]** ${overflow.remainingLines} lines (~${overflow.remainingChars} chars) not injected.`,
-                `> Read \`docs/project-reference/code-review-rules.md\` from line ${overflow.fromLine} for remaining content.`
-            );
-        }
-        return lines;
-    } catch {
-        return []; /* fail-open */
-    }
+    const rulesPath = path.resolve(PROJECT_DIR, 'docs', 'project-reference', 'code-review-rules.md');
+    if (!fs.existsSync(rulesPath)) return [];
+    return [
+        '',
+        '## Code Review Rules',
+        '',
+        'Read: `docs/project-reference/code-review-rules.md` — review checklist, anti-patterns, quality standards, layer violations.',
+        ''
+    ];
 }
 
 /**
- * Build the full concatenated patterns content for an agent type.
- * Combines: CODE_PATTERNS_MARKER + backend + frontend + styling + design + agent-specific docs.
- * Returns '' if agent type is not in PATTERN_AWARE_AGENT_TYPES AND not in AGENT_DOC_MAP.
- * @internal — called by buildPatternsContextPart()
- * @param {string} agentType
- * @returns {string} Full concatenated content (empty string if agent type excluded)
- */
-function buildAllPatternsContent(agentType) {
-    const isPatternAware = PATTERN_AWARE_AGENT_TYPES.has(agentType);
-    const hasAgentDocs = !!AGENT_DOC_MAP[agentType];
-    if (!isPatternAware && !hasAgentDocs) return '';
-
-    const projConfig = loadProjectConfig();
-    const lines = [];
-
-    if (isPatternAware) {
-        lines.push('', CODE_PATTERNS_MARKER); // dedup-constants.cjs — prevents duplicate pattern injection in same session
-        const backendDoc = projConfig.framework?.backendPatternsDoc || 'docs/project-reference/backend-patterns-reference.md';
-        const frontendDoc = projConfig.framework?.frontendPatternsDoc || 'docs/project-reference/frontend-patterns-reference.md';
-        const backendContent = readAndInjectDoc(backendDoc);
-        if (backendContent) lines.push('', backendContent);
-        const frontendContent = readAndInjectDoc(frontendDoc);
-        if (frontendContent) lines.push('', frontendContent);
-
-        const stylingDoc = projConfig.contextGroups?.find(g => g.stylingDoc)?.stylingDoc || null;
-        const designSystemDoc = projConfig.contextGroups?.find(g => g.designSystemDoc)?.designSystemDoc || null;
-        if (stylingDoc) { const c = readAndInjectDoc(stylingDoc); if (c) lines.push('', c); }
-        if (designSystemDoc) { const c = readAndInjectDoc(designSystemDoc); if (c) lines.push('', c); }
-    }
-
-    if (hasAgentDocs) {
-        lines.push('', '## Agent-Specific Reference Docs');
-        for (const docPath of AGENT_DOC_MAP[agentType]) {
-            const c = readAndInjectDoc(docPath);
-            if (c) lines.push('', c);
-        }
-    }
-
-    return lines.join('\n');
-}
-
-/**
- * Build one page of combined patterns content for subagent context injection.
- * Dynamic paging: builds full content for agent type at runtime, splits at line boundaries.
- * Returns [] if agent type excluded or page is empty (silent exit).
+ * Build read-guidance for coding patterns — tells the agent which docs to read.
+ * Returns [] if agent type is not in PATTERN_AWARE_AGENT_TYPES AND not in AGENT_DOC_MAP.
  *
- * @param {number} partIndex   - 0-based page index (0=p1 … 4=p5)
- * @param {number} totalParts  - Total pages (default 5, handles worst-case ~36KB for code-reviewer + future growth)
- * @param {string} agentType   - From SubagentStart payload
- * @returns {string[]} Lines array, empty if agent type excluded or page is empty
+ * @param {string} agentType - From SubagentStart payload
+ * @returns {string[]} Lines array, empty if agent type excluded
  */
-function buildPatternsContextPart(partIndex, totalParts = 5, agentType) {
+function buildPatternsGuidance(agentType) {
+    const isPatternAware = PATTERN_AWARE_AGENT_TYPES.has(agentType);
+    const agentDocs = AGENT_DOC_MAP[agentType];
+    if (!isPatternAware && !agentDocs) return [];
+
     try {
-        const fullContent = buildAllPatternsContent(agentType);
-        if (!fullContent) return [];
+        const projConfig = loadProjectConfig();
+        const lines = ['', `## Coding Patterns & Reference Docs`, ''];
 
-        const { content: partContent, meta, overflow } = splitContentIntoPart(fullContent, partIndex, totalParts, 8500);
-        if (!partContent) return [];
-
-        const lines = ['', `## Coding Patterns & Reference Docs — ${meta}`, '', partContent];
-
-        if (overflow) {
+        if (isPatternAware) {
+            const bp = projConfig.framework?.backendPatternsDoc || 'docs/project-reference/backend-patterns-reference.md';
+            const fp = projConfig.framework?.frontendPatternsDoc || 'docs/project-reference/frontend-patterns-reference.md';
             lines.push(
-                '',
-                `> **[PATTERNS OVERFLOW]** ${overflow.remainingLines} lines (~${overflow.remainingChars} chars) not injected (content exceeds ${totalParts} × 8,500-char pages).`,
-                `> Remaining content: read the relevant reference doc files directly from \`docs/project-reference/\`.`
+                'Read before implementing:',
+                `- \`${bp}\` — CQRS commands/queries, validation, repositories, entity events, v1/v2 patterns`,
+                `- \`${fp}\` — base classes, PlatformVmStore, effectSimple(), BEM, API service pattern`,
             );
+            const stylingDoc = projConfig.contextGroups?.find(g => g.stylingDoc)?.stylingDoc;
+            const designSystemDoc = projConfig.contextGroups?.find(g => g.designSystemDoc)?.designSystemDoc;
+            if (stylingDoc) lines.push(`- \`${stylingDoc}\` — SCSS conventions, BEM patterns`);
+            if (designSystemDoc) lines.push(`- \`${designSystemDoc}\` — design tokens and component patterns`);
         }
+
+        if (agentDocs?.length) {
+            if (!isPatternAware) lines.push('Read before starting:');
+            agentDocs.forEach(docPath => lines.push(`- \`${docPath}\``));
+        }
+
+        lines.push('');
         return lines;
     } catch {
-        return []; /* fail-open */
+        return [];
     }
 }
 
@@ -431,7 +349,7 @@ function buildParentTodoSection() {
 
 /**
  * Build context-overflow guard reminder — concise, high-signal.
- * Used in hook 12 (context-guard hook). Hook 1 (identity) does NOT call this — see lifecycle.test.cjs:1390
+ * Used in hook 7 (context-guard hook). Hook 1 (identity) does NOT call this — see lifecycle.test.cjs:1390
  * @param {string|null} sessionId - Current session ID for Session: header (optional)
  */
 function buildContextGuardContext(sessionId = null) {
@@ -455,7 +373,7 @@ function buildContextGuardContext(sessionId = null) {
 
 /**
  * Emit SubagentStart context to stdout and exit 0.
- * Shared by all 18 subagent-init-*.cjs hooks — avoids repeating the output
+ * Shared by all 8 subagent-init-*.cjs hooks — avoids repeating the output
  * wrapping structure in each hook file.
  * @param {string[]} lines - Content lines to emit (exits silently if empty)
  */
@@ -479,8 +397,9 @@ module.exports = {
     AGENT_DOC_MAP,
     getAgentContext,
     buildTrustVerification,
-    buildAllPatternsContent,
-    buildPatternsContextPart,
+    buildPatternsGuidance,
+    buildDevRulesGuidance,
+    buildCodeReviewRulesGuidance,
     buildPlanContext,
     buildLanguageSection,
     splitContentIntoPart,
@@ -488,8 +407,6 @@ module.exports = {
     buildSharedLessonsContext,
     buildAiMistakePreventionContext,
     buildContextGuardContext,
-    buildDevRulesContextPart,
-    buildCodeReviewRulesContextPart,
     buildParentTodoSection,
     emitSubagentContext,
     MAX_HOOK_OUTPUT_BYTES: 8500  // 500-char headroom below 9000-char harness limit

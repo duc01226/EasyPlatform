@@ -1,17 +1,12 @@
 #!/usr/bin/env node
 /**
- * Prompt Context Assembler - Project Structure Part 1 (UserPromptSubmit)
+ * Prompt Context Assembler - Project Structure Guidance (UserPromptSubmit)
  *
- * Injects the FIRST HALF of docs/project-reference/project-structure-reference.md
- * for context recovery after long sessions. Split into two hooks so each stays
- * under the harness per-hook 10,000 character limit — file content is dynamic
- * (grows as project evolves) so splitting adds a permanent safety margin.
- *
- * Companion: prompt-context-assembler-docs-p2.cjs injects the second half.
+ * Reminds AI to read docs/project-reference/project-structure-reference.md
+ * when needed. Replaces the old full-content injection (split across p1+p2)
+ * with a lightweight read-guidance pointer.
  *
  * Dedup marker: '## [Injected: Project Structure Reference]'
- *   Both parts check for this marker — if part 1 was injected this session,
- *   part 2 uses its own marker '## [Injected: Project Structure Reference (part 2)]'.
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -28,6 +23,7 @@ const {
 const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-utils.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+const STRUCT_DOC = 'docs/project-reference/project-structure-reference.md';
 
 async function main() {
     try {
@@ -41,30 +37,17 @@ async function main() {
         if (!userPrompt.trim()) process.exit(0);
 
         const transcriptLines = loadTranscriptLines(payload.transcript_path);
+        if (isMarkerInContext(transcriptLines, PROJECT_STRUCTURE_MARKER, DEDUP_LINES.PROJECT_STRUCTURE)) process.exit(0);
 
-        if (!isMarkerInContext(transcriptLines, PROJECT_STRUCTURE_MARKER, DEDUP_LINES.PROJECT_STRUCTURE)) {
-            const filePath = path.join(PROJECT_DIR, 'docs', 'project-reference', 'project-structure-reference.md');
-            try {
-                if (fs.existsSync(filePath)) {
-                    const content = fs.readFileSync(filePath, 'utf-8');
-                    if (content.trim()) {
-                        const lines = content.split('\n');
-                        const halfLine = Math.ceil(lines.length / 2);
-                        const firstHalf = lines.slice(0, halfLine).join('\n');
-                        console.log([
-                            '',
-                            PROJECT_STRUCTURE_MARKER,
-                            '> Auto-injected for context recovery (part 1 of 2). See part 2 below for remainder.',
-                            '',
-                            firstHalf,
-                            '',
-                            '## [End: Project Structure Reference (part 1)]',
-                            ''
-                        ].join('\n'));
-                    }
-                }
-            } catch { /* non-blocking */ }
-        }
+        const filePath = path.join(PROJECT_DIR, STRUCT_DOC);
+        if (!fs.existsSync(filePath)) process.exit(0);
+
+        console.log([
+            '',
+            PROJECT_STRUCTURE_MARKER,
+            `To understand service architecture, ports, messaging patterns, tech stack, CQRS layers, and cross-service design: read \`${STRUCT_DOC}\`.`,
+            ''
+        ].join('\n'));
 
         process.exit(0);
     } catch (error) {

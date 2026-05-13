@@ -319,7 +319,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+      <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
@@ -332,6 +332,21 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+- **"/plan (Recommended)"** — Create implementation plan from the cross-service integration design
+- **"/architecture-design"** — If broader architecture concerns still need decisions
+- **"Skip, continue manually"** — user decides
+
+### Council escalation (always-offer, second prompt)
+
+After the existing `## Next Steps` prompt above resolves, present a **second**, independent `AskUserQuestion` call (do NOT merge into the first):
+
+- **"Skip council — proceed with integration design (Recommended)"** — Continue with the message contracts / consumer topology as designed. Recommended default.
+- **"Escalate to /llm-council"** — Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Best applied when the integration introduces a new message contract consumed by >=3 services, picks between sync API vs. async event for a hot path, or commits to a saga/outbox/orchestration pattern. Cross-service contracts are hard to reverse once consumers deploy. Cheaper alternatives: `/why-review`, `/plan-validate` (run these first if you haven't).
 
 ## Closing Reminders
 

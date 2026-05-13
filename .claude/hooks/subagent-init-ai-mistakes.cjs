@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * SubagentStart Hook — AI Mistake Prevention (fires 16th of 18)
+ * SubagentStart Hook — AI Mistake Prevention (fires 6th of 8)
  *
  * Outputs: AI mistake prevention bullets (system lessons — hardcoded in
  * prompt-injections.cjs:injectAiMistakePrevention()).
  *
- * Split from subagent-init-lessons.cjs to keep each hook under Claude Code's
- * 9,000-char hook output limit. Combined, lessons + AI mistakes = ~9,743 chars
- * which exceeded the limit and caused silent truncation of the final ~743 chars.
+ * Kept separate from subagent-init-lessons.cjs so each hook stays under Claude
+ * Code's 9,000-char hook output limit. Combined, lessons + AI mistakes are
+ * ~9,743 chars which exceeded the limit and caused silent tail truncation.
  *
  * WARNING: injectAiMistakePrevention() is currently ~8,200 chars.
  * If content grows past ~8,500 chars, apply splitContentIntoPart() paging
- * (same pattern as subagent-init-patterns-p1..p5) to avoid hitting the limit again.
+ * to avoid hitting the limit again.
  *
- * Execution order: identity → patterns-p1..p5 → dev-rules-p1..p3
- *   → lessons → ai-mistakes (this, 11th) → context-guard → todos (last)
- * Placement: near-last ensures AI attends to lessons — recency effect.
+ * Execution order: identity → patterns → dev-rules → code-review-rules
+ *   → lessons → ai-mistakes (this, 6th) → context-guard → todos (last)
+ * Placement: near-last ensures AI attends to mistake prevention — recency effect.
  *
  * See: .claude/hooks/lib/subagent-context-builders.cjs — buildAiMistakePreventionContext()
  *      .claude/hooks/lib/prompt-injections.cjs — injectAiMistakePrevention() (content source)

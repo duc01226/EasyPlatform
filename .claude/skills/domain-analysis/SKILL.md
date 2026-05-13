@@ -814,6 +814,13 @@ Report must be **≤250 lines**. Use tables over prose.
 - **"/plan"** — If tech stack already decided and entity quality already reviewed
 - **"Skip, continue manually"** — user decides
 
+### Council escalation (always-offer, second prompt)
+
+After the existing `## Next Steps` prompt above resolves, present a **second**, independent `AskUserQuestion` call (do NOT merge into the first):
+
+- **"Skip council — proceed with model (Recommended)"** — Continue with the bounded contexts / aggregate boundaries as drawn. Recommended default.
+- **"Escalate to /llm-council"** — Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Best applied when bounded-context splits or aggregate boundaries are contested (multiple defensible cuts), the model touches >=3 services, or invariants span aggregates. DDD boundary decisions are hard to reverse once consumers depend on them. Cheaper alternatives: `/why-review`, `/plan-validate` (run these first if you haven't).
+
 ---
 
 **MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
