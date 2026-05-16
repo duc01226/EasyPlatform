@@ -5,7 +5,11 @@ using Serilog.Exceptions.Destructurers;
 namespace Easy.Platform.EfCore.Logging.Exceptions;
 
 /// <summary>
-/// A destructurer for <see cref="SqlException" />.
+/// Destructurer for the legacy <see cref="SqlException" /> from <c>System.Data.SqlClient</c>.
+/// Kept as a defensive net: first-party code now uses <c>Microsoft.Data.SqlClient</c>, but
+/// some transitive dependencies (e.g. older driver versions, third-party libs) may still
+/// throw the <c>System.Data.SqlClient</c> exception. Without this destructurer Serilog
+/// falls back to reflection-based destructuring which can leak the entire DbContext.
 /// </summary>
 /// <seealso cref="ExceptionDestructurer" />
 public class PlatformSystemSqlExceptionDestructurer : ExceptionDestructurer

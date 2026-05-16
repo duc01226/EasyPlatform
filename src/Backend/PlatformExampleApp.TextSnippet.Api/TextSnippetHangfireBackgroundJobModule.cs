@@ -1,6 +1,7 @@
 #region
 
-using System.Data.SqlClient;
+using Easy.Platform.EfCore.Extensions;
+using Microsoft.Data.SqlClient;
 using Easy.Platform.HangfireBackgroundJob;
 using Easy.Platform.Infrastructures.BackgroundJob;
 using Easy.Platform.Persistence;
@@ -54,6 +55,7 @@ public class TextSnippetHangfireBackgroundJobModule : PlatformHangfireBackground
                     .With(conn => conn.Timeout = 30)
                     .With(conn => conn.ConnectionIdleLifetime = PlatformPersistenceModule.RecommendedConnectionIdleLifetimeSeconds)
                     .With(conn => conn.ConnectionPruningInterval = PlatformPersistenceModule.RecommendedConnectionIdleLifetimeSeconds)
+                    .WithPlatformDiagnosticsDefaults()
                     .ToString())
             .Else(_ => new SqlConnectionStringBuilder(Configuration.GetConnectionString("DefaultConnection"))
                 .With(conn => conn.Enlist = false)

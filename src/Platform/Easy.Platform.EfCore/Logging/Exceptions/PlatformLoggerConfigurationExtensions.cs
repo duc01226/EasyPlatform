@@ -25,7 +25,10 @@ public static class PlatformLoggerConfigurationExtensions
     }
 
     /// <summary>
-    /// To avoid the reflection based destructurer for SqlException when using System.Data.SqlClient. <br />
+    /// Registers structured destructuring for SQL Server <c>SqlException</c> from both
+    /// <c>Microsoft.Data.SqlClient</c> (first-party usage) and <c>System.Data.SqlClient</c>
+    /// (defensive — transitive deps may still throw the legacy type). Avoids reflection-based
+    /// destructuring that can leak the entire DbContext into logs. <br />
     /// https://github.com/RehanSaeed/Serilog.Exceptions#Serilog.Exceptions.EntityFrameworkCore
     /// </summary>
     public static DestructuringOptionsBuilder WithSqlServerExceptionDestructurer(this DestructuringOptionsBuilder destructuringOptionsBuilder)

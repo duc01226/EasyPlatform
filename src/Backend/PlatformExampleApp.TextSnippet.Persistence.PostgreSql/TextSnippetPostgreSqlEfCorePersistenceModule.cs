@@ -1,4 +1,5 @@
 using Easy.Platform.EfCore;
+using Easy.Platform.EfCore.Extensions;
 using Easy.Platform.EfCore.Services;
 using Easy.Platform.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,7 @@ public class TextSnippetPostgreSqlEfCorePersistenceModule : PlatformEfCorePersis
                             .With(conn => conn.Timeout = 30)
                             .With(conn => conn.ConnectionIdleLifetime = RecommendedConnectionIdleLifetimeSeconds)
                             .With(conn => conn.ConnectionPruningInterval = RecommendedConnectionIdleLifetimeSeconds)
+                            .WithPlatformDiagnosticsDefaults()
                             .ToString())
                     .EnableDynamicJson()
                     .Build(),
