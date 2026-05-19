@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Easy.Platform.Common;
+using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Timing;
@@ -22,6 +23,11 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern;
 /// </summary>
 public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
 {
+    // Logical background-lock pool for outbox send work. Keeping outbox dispatch in its own
+    // bulkhead prevents a message-send burst from consuming capacity reserved for inbox, cache,
+    // or generic background tasks.
+    private const string BgPoolName = "OutboxDispatch";
+
     /// <summary>
     /// The default number of retry attempts for resilient operations, equivalent to approximately one day with a 1-second delay between retries.
     /// </summary>
@@ -38,6 +44,8 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     private readonly PlatformOutboxConfig outboxConfig;
     private readonly IPlatformRootServiceProvider rootServiceProvider;
     private readonly IServiceProvider serviceProvider;
+    // Cached because helpers are hot-path objects and the registry already owns pool lifetime.
+    private readonly IPlatformBackgroundActionPermitPool bgPool;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlatformOutboxMessageBusProducerHelper" /> class.
@@ -46,16 +54,19 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="messageBusProducer">The message bus producer used for sending messages.</param>
     /// <param name="serviceProvider">The service provider for the current scope.</param>
     /// <param name="rootServiceProvider">The root service provider.</param>
+    /// <param name="bgRegistry">Background action permit pool registry — pool resolved once and cached.</param>
     public PlatformOutboxMessageBusProducerHelper(
         PlatformOutboxConfig outboxConfig,
         IPlatformMessageBusProducer messageBusProducer,
         IServiceProvider serviceProvider,
-        IPlatformRootServiceProvider rootServiceProvider)
+        IPlatformRootServiceProvider rootServiceProvider,
+        IPlatformBackgroundActionPermitPoolRegistry bgRegistry)
     {
         this.outboxConfig = outboxConfig;
         this.messageBusProducer = messageBusProducer;
         this.serviceProvider = serviceProvider;
         this.rootServiceProvider = rootServiceProvider;
+        bgPool = bgRegistry.Get(BgPoolName);
     }
 
     /// <summary>
@@ -363,6 +374,8 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         Func<ILogger> loggerFactory,
         CancellationToken cancellationToken)
     {
+        // Interval loops intentionally do not take a permit pool: a permit would be held for the
+        // lifetime of the loop instead of around one bounded unit of work.
         Util.TaskRunner.QueueActionInBackground(
             async () =>
             {
@@ -433,9 +446,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
             },
             loggerFactory: loggerFactory,
             delayTimeSeconds: PlatformOutboxBusMessage.CheckProcessingPingIntervalSeconds,
-            cancellationToken: CancellationToken.None,
-            logFullStackTraceBeforeBackgroundTask: false,
-            queueLimitLock: false);
+            cancellationToken: CancellationToken.None);
     }
 
     /// <summary>
@@ -766,6 +777,8 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     // If there's an active unit of work, save changes to ensure the outbox message is persisted.
                     await outboxBusMessageRepository.UowManager().TryCurrentActiveUowSaveChangesAsync();
 
+                    // Direct background send still uses OutboxDispatch so immediate sends and
+                    // post-commit sends share the same outbox-specific fan-out limit.
                     Util.TaskRunner.QueueActionInBackground(
                         () => rootServiceProvider.ExecuteInjectScopedAsync(
                             SendExistingOutboxMessageAsync<TMessage>,
@@ -777,6 +790,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                             autoDeleteProcessedMessage,
                             cancellationToken,
                             logger),
+                        bgPool,
                         loggerFactory: CreateLogger,
                         cancellationToken: cancellationToken,
                         logFullStackTraceBeforeBackgroundTask: false);
@@ -787,7 +801,8 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     sourceOutboxUowActiveUow!.OnSaveChangesCompletedActions.Add(async () =>
                     {
                         // Try to process sending the outbox message immediately after the unit of work completes.
-                        // Execute task in background separated thread task
+                        // Execute the send on a separate background task after commit, using the
+                        // same OutboxDispatch pool as direct sends.
                         Util.TaskRunner.QueueActionInBackground(
                             () => SendExistingOutboxMessageInNewScopeAsync(
                                 toProcessOutboxMessage,
@@ -798,6 +813,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                                 autoDeleteProcessedMessage,
                                 cancellationToken,
                                 logger),
+                            bgPool,
                             cancellationToken: cancellationToken);
                     });
                 }

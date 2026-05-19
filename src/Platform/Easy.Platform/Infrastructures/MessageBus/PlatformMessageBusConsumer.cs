@@ -18,7 +18,22 @@ public interface IPlatformMessageBusConsumer
     public bool NoNeedCheckHandleWhen { get; set; }
 
     /// <summary>
-    /// Main Entry Handle Method
+    /// Main Entry Handle Method.
+    /// <para>
+    /// <b>IDEMPOTENCY CONTRACT (MANDATORY):</b> Implementations MUST be idempotent. Replays and concurrent
+    /// duplicate invocations of the same message can occur and are an accepted operational mode of the platform:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>Inbox stale-recovery and wall-clock hard-timeout (see <c>PlatformInboxConfig.MaxProcessingDurationSeconds</c>)
+    /// can re-pop a row whose original consumer task is still alive on the thread pool. The platform does not pass
+    /// a <c>CancellationToken</c> into <c>HandleAsync</c>, so the orphan task is not stopped — two consumer
+    /// instances may run in parallel for the same message until the orphan finishes.</description></item>
+    /// <item><description>Bus redelivery on broker reconnect / nack can re-invoke the handler for an already-processed message.</description></item>
+    /// </list>
+    /// <para>
+    /// Safe handler patterns: dedupe on a natural key, use upserts instead of inserts, guard side-effects
+    /// (outbound calls, emitted events, balance mutations) with an idempotency key or a "already-done" check.
+    /// </para>
     /// </summary>
     Task HandleAsync(object message, string routingKey);
 

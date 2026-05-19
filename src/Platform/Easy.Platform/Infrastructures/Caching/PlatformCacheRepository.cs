@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Easy.Platform.Application;
+using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
@@ -179,6 +180,10 @@ public interface IPlatformCacheRepository : IDisposable
 
 public abstract class PlatformCacheRepository : IPlatformCacheRepository
 {
+    // Logical background-lock pool for cache mutation/write-behind work. Cache fan-out can be
+    // bursty and should not starve inbox/outbox/event-handler background work.
+    private const string BgPoolName = "CacheWrite";
+
     protected readonly PlatformCacheSettings CacheSettings;
 
     protected readonly IServiceProvider ServiceProvider;
@@ -188,6 +193,9 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
     protected readonly SemaphoreSlim SetGlobalCachedKeysAsyncLock = new(1, 1);
 
     private readonly Lazy<ILogger> loggerLazy;
+    // Lazy resolution avoids constructing the pool in read-only cache paths while still reusing
+    // the same named pool for every queued cache write once mutation work appears.
+    private readonly Lazy<IPlatformBackgroundActionPermitPool> bgPoolLazy;
     private bool disposed;
 
     public PlatformCacheRepository(
@@ -198,6 +206,9 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
     {
         ServiceProvider = serviceProvider;
         loggerLazy = new Lazy<ILogger>(() => loggerFactory.CreateLogger(typeof(PlatformCacheRepository).GetNameOrGenericTypeName() + $"-{GetType().Name}"));
+        bgPoolLazy = new Lazy<IPlatformBackgroundActionPermitPool>(
+            () => serviceProvider.GetRequiredService<IPlatformBackgroundActionPermitPoolRegistry>().Get(BgPoolName),
+            LazyThreadSafetyMode.ExecutionAndPublication);
         CacheSettings = cacheSettings;
         ApplicationSettingContext = applicationSettingContext;
     }
@@ -446,6 +457,9 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         {
             var requestedData = await request();
 
+            // Cache population returns the requested data immediately and writes the cache in the
+            // background. The CacheWrite pool limits write-behind fan-out while preserving the
+            // caller-facing cache miss latency.
             Util.TaskRunner.QueueActionInBackground(
                 () => TrySetAsync(
                     cacheKey,
@@ -453,6 +467,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
                     cacheOptions,
                     tags,
                     token),
+                bgPoolLazy.Value,
                 loggerFactory: () => Logger,
                 cancellationToken: token,
                 logFullStackTraceBeforeBackgroundTask: false);

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Easy.Platform.Application.Cqrs.Events.InboxSupport;
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Common;
+using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Logging;
@@ -25,6 +26,8 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern;
 /// </summary>
 public static class PlatformInboxMessageBusConsumerHelper
 {
+    private const string BgPoolName = "InboxConsume";
+
     /// <summary>
     /// The default number of retry attempts for resilient operations, equivalent to approximately one day with a 1-second delay between retries.
     /// </summary>
@@ -269,9 +272,13 @@ public static class PlatformInboxMessageBusConsumerHelper
                 // If a unit of work is provided and it's not a pseudo transaction, execute the consumer within the unit of work.
                 if (handleInUow != null && !handleInUow.IsPseudoTransactionUow())
                 {
-                    handleInUow.OnSaveChangesCompletedActions.Add(async () =>
+                    handleInUow.OnSaveChangesCompletedActions.Add(() =>
                     {
-                        // Execute task in background separated thread task
+                        // Execute the persisted inbox message on a separate background task after
+                        // the source UoW commits. The InboxConsume pool limits fan-out so a burst
+                        // of newly committed messages cannot occupy every background slot.
+                        var bgPool = rootServiceProvider.GetRequiredService<IPlatformBackgroundActionPermitPoolRegistry>().Get(BgPoolName);
+
                         Util.TaskRunner.QueueActionInBackground(
                             () => ExecuteConsumerForNewInboxMessage(
                                 rootServiceProvider,
@@ -286,7 +293,10 @@ public static class PlatformInboxMessageBusConsumerHelper
                                 retryProcessFailedMessageInSecondsUnit,
                                 loggerFactory,
                                 cancellationToken),
+                            bgPool,
                             cancellationToken: cancellationToken);
+
+                        return Task.CompletedTask;
                     });
                 }
                 else
@@ -296,6 +306,11 @@ public static class PlatformInboxMessageBusConsumerHelper
 
                     if (allowHandleNewInboxMessageInBackground)
                     {
+                        // This path processes an inbox message that is already persisted. The
+                        // same InboxConsume pool is used so immediate and post-commit background
+                        // execution share one domain-specific pressure limit.
+                        var bgPool = rootServiceProvider.GetRequiredService<IPlatformBackgroundActionPermitPoolRegistry>().Get(BgPoolName);
+
                         Util.TaskRunner.QueueActionInBackground(
                             () => ExecuteConsumerForNewInboxMessage(
                                 rootServiceProvider,
@@ -310,6 +325,7 @@ public static class PlatformInboxMessageBusConsumerHelper
                                 retryProcessFailedMessageInSecondsUnit,
                                 loggerFactory,
                                 cancellationToken),
+                            bgPool,
                             loggerFactory: loggerFactory,
                             cancellationToken: CancellationToken.None);
                     }
@@ -654,6 +670,8 @@ public static class PlatformInboxMessageBusConsumerHelper
         // Use root provider to prevent disposed service provider error when run in background
         var rootServiceProvider = serviceProvider.GetRequiredService<IPlatformRootServiceProvider>();
 
+        // Interval loops intentionally do not take a permit pool: a permit would be held for the
+        // lifetime of the loop instead of around one bounded unit of work.
         Util.TaskRunner.QueueActionInBackground(
             async () =>
             {
@@ -712,9 +730,7 @@ public static class PlatformInboxMessageBusConsumerHelper
             },
             loggerFactory: loggerFactory,
             delayTimeSeconds: PlatformInboxBusMessage.CheckProcessingPingIntervalSeconds,
-            cancellationToken: cancellationToken,
-            logFullStackTraceBeforeBackgroundTask: false,
-            queueLimitLock: false);
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>

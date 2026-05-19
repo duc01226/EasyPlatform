@@ -560,8 +560,6 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex.BeautifyStackTrace(), "PlatformMongoDbContext {Type} Initialize failed.", GetType().Name);
-
             throw new Exception($"{GetType().Name} Initialize failed.", ex);
         }
 

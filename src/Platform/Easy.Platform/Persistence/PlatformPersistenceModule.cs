@@ -311,33 +311,33 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// Gets the default number of retry attempts for database initialization and migration operations.
     /// </summary>
     /// <value>
-    /// 5 attempts in development environment, 10 attempts in production environment.
+    /// 12 retries in development environment, 30 retries in production environment.
     /// </value>
     /// <remarks>
     /// Different retry counts are used based on environment:
-    /// - Development: 5 attempts (faster feedback, local database usually more stable)
-    /// - Production: 10 attempts (more resilience for containerized/cloud environments)
+    /// - Development: 12 retries with a 5-second delay, giving local infra up to one minute to become ready
+    /// - Production: 30 retries with a 10-second delay, preserving a five-minute retry budget
     ///
     /// Used by <see cref="InitializeDatabaseAsync"/> and <see cref="MigrateDataAsync"/> for handling
     /// transient failures during application startup.
     /// </remarks>
-    public static int DefaultDbInitAndMigrationRetryCount => PlatformEnvironment.IsDevelopment ? 5 : 10;
+    public static int DefaultDbInitAndMigrationRetryCount => PlatformEnvironment.IsDevelopment ? 12 : 30;
 
     /// <summary>
     /// Gets the default delay in seconds between database initialization and migration retry attempts.
     /// </summary>
     /// <value>
-    /// 15 seconds in development environment, 30 seconds in production environment.
+    /// 5 seconds in development environment, 10 seconds in production environment.
     /// </value>
     /// <remarks>
     /// Different retry delays are used based on environment:
-    /// - Development: 15 seconds (faster iteration, local containers start quickly)
-    /// - Production: 30 seconds (more conservative for cloud environments with slower startup)
+    /// - Development: 5 seconds (local startup gets a one-minute retry window)
+    /// - Production: 10 seconds (balanced with more retry attempts for the same total budget)
     ///
     /// Provides sufficient time for database containers to become available while
     /// not unnecessarily delaying application startup.
     /// </remarks>
-    public static int DefaultDbInitAndMigrationRetryDelaySeconds => PlatformEnvironment.IsDevelopment ? 15 : 30;
+    public static int DefaultDbInitAndMigrationRetryDelaySeconds => PlatformEnvironment.IsDevelopment ? 5 : 10;
 
     /// <summary>
     /// Gets the activity source names for distributed tracing of persistence operations.
@@ -945,8 +945,8 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformPersistenc
     /// - Connection pool setup and validation
     ///
     /// **Retry Logic for Containerized Environments:**
-    /// - 10-second delay between retry attempts (hard-coded for initialization)
-    /// - Default retry count: 5 (development) / 10 (production)
+    /// - 5-second delay between retry attempts in development, 10 seconds otherwise
+    /// - Default retry count: 12 (development) / 30 (production)
     /// - Handles Docker Compose scenarios where database containers are starting up
     /// - Common in CI/CD pipelines and local development environments
     ///

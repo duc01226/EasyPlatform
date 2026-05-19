@@ -118,7 +118,11 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
         Util.TaskRunner.QueueActionInBackground(
             async () =>
             {
-                if (processMessageParallelLimitLock.CurrentCount == 0 || maxIntervalProcessTriggeredLock.CurrentCount == 0)
+                // Only gate on the interval-collision lock. Do NOT gate on processMessageParallelLimitLock here:
+                // stale-Processing recovery (via the ping-stale branch in CanHandleMessagesQueryBuilder) must still
+                // be able to re-pop stuck rows even when all consumer permits are temporarily held. The per-message
+                // handler (HandleInboxMessageAsync) already waits on the permit, so throttling is preserved.
+                if (maxIntervalProcessTriggeredLock.CurrentCount == 0)
                     return;
 
                 try
@@ -159,8 +163,7 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
                     maxIntervalProcessTriggeredLock.TryRelease();
                 }
             },
-            cancellationToken: cancellationToken,
-            queueLimitLock: false);
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -178,8 +181,11 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
             await Util.Pager.ExecuteScrollingPagingAsync(
                 async () =>
                 {
-                    if (processMessageParallelLimitLock.CurrentCount == 0)
-                        return [];
+                    // NOTE: previously gated here with `if (processMessageParallelLimitLock.CurrentCount == 0) return [];`
+                    // which caused head-of-line blocking — when all permits were held by hung consumers, the recovery
+                    // candidate query never ran, even though stale-Processing rows existed. Throttling is preserved
+                    // by the per-message permit wait in HandleInboxMessageAsync, which now uses a soft timeout
+                    // (PermitAcquisitionTimeoutSeconds) to allow temporary overshoot under hang scenarios.
 
                     // Retrieve a page of message IDs that are eligible for processing.
                     var pagedCanHandleMessageGroupedByConsumerIdPrefixes = await inboxBusMessageRepository.GetAllAsync(
@@ -264,14 +270,42 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
 
     protected async Task HandleInboxMessageAsync(PlatformInboxBusMessage toHandleInboxMessage, CancellationToken cancellationToken = default)
     {
+        // Permit lifecycle invariants:
+        // - permitAcquired starts false; flips to true ONLY when WaitAsync returns true (acquired).
+        // - WaitAsync(timeout, ct) contract:
+        //     returns true   => permit acquired
+        //     returns false  => timeout, NO permit
+        //     throws OCE     => cancellation, NO permit (per SemaphoreSlim contract, no permit leaks on cancel)
+        // - finally guards release with `if (permitAcquired)` — never over-releases on timeout/cancel paths.
+        //
+        // Soft-cap throttling rationale: if all permits held by hung consumers, proceed WITHOUT a permit
+        // (overshoot) to prevent head-of-line blocking. Fix B's CancelAfter inside InvokeConsumerAsync still
+        // caps individual consumer runtime; outer ParallelAsync calls still bound batch concurrency.
+        var permitAcquired = false;
         try
         {
-            await processMessageParallelLimitLock.WaitAsync(cancellationToken);
+            permitAcquired = await processMessageParallelLimitLock.WaitAsync(
+                InboxConfig.PermitAcquisitionTimeoutSeconds.Seconds(),
+                cancellationToken);
+
+            if (!permitAcquired)
+            {
+                Logger.LogWarning(
+                    "[InboxConsume] Permit acquisition timed out after {TimeoutSeconds}s — proceeding without permit (overshoot). " +
+                    "InboxId={InboxId}, ConsumerBy={ConsumerBy}, ForApplicationName={ForApplicationName}. " +
+                    "Sustained warnings under normal load indicate MaxParallelProcessingMessagesCount is undersized.",
+                    InboxConfig.PermitAcquisitionTimeoutSeconds,
+                    toHandleInboxMessage.Id,
+                    toHandleInboxMessage.ConsumerBy,
+                    toHandleInboxMessage.ForApplicationName);
+            }
 
             using (var scope = ServiceProvider.CreateTrackedScope()) await InvokeConsumerAsync(scope, toHandleInboxMessage, cancellationToken);
         }
         catch (Exception)
         {
+            // Revert covers BOTH cancellation-during-wait AND consumer failure. Uses CancellationToken.None
+            // so revert still runs even when caller's token is already cancelled (host shutdown).
             await ServiceProvider.ExecuteInjectScopedAsync(async (IPlatformInboxBusMessageRepository inboxBusMessageRepository) =>
             {
                 await PlatformInboxMessageBusConsumerHelper.RevertExistingInboxToNewMessageAsync(
@@ -283,7 +317,9 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
         }
         finally
         {
-            processMessageParallelLimitLock.TryRelease();
+            // Release ONLY if acquired. Guard prevents over-release on timeout/cancel paths where the
+            // semaphore never granted us a slot.
+            if (permitAcquired) processMessageParallelLimitLock.TryRelease();
         }
     }
 
@@ -356,14 +392,48 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
                 {
                     // Check if the consumer should handle the message based on its HandleWhen logic.
                     if (await consumer.HandleWhen(busMessage, toHandleInboxMessage.RoutingKey))
-                        // Invoke the consumer's HandleAsync method.
+                        // Invoke the consumer's HandleAsync method with a hard wall-clock ceiling (default 7 days,
+                        // configurable via InboxConfig.MaxProcessingDurationSeconds).
+                        //
+                        // INTENT: This is a FALLBACK for the deadlock-with-alive-ping pathological case ONLY.
+                        // A consumer that is genuinely still progressing — even if it runs for hours or days —
+                        // will keep refreshing LastProcessingPingDate via the background ping task and will NOT
+                        // be killed by this ceiling for the full 7 days. Long-running ≠ stuck.
+                        //
+                        // If you have a consumer that legitimately runs >7 days, RAISE MaxProcessingDurationSeconds
+                        // per-service rather than lowering this default. Falsely killing a still-progressing consumer
+                        // causes duplicate-execution risk (see DUPLICATION RISK below).
+                        //
+                        // On timeout, OperationCanceledException is converted to TimeoutException → message marked Failed
+                        // → normal Failed-retry pathway picks it up with backoff (instead of staying stuck in Processing).
+                        //
+                        // DUPLICATION RISK (accepted): .WaitAsync(token) cancels the await wrapper only — the underlying
+                        // consumer.HandleAsync task keeps running on the thread pool until it completes naturally. The
+                        // Failed-retry path (or the ping-stale branch in CanHandleMessagesQueryBuilder once the orphan's
+                        // background ping task stops) can therefore re-pop the same row and invoke a SECOND consumer
+                        // instance in parallel with the orphan.
+                        // This is accepted because permanent stuck-Processing is worse than rare parallel re-execution.
+                        // Consumers MUST be idempotent — see IPlatformMessageBusConsumer.HandleAsync XML docs.
                     {
-                        await PlatformMessageBusConsumer.InvokeConsumerAsync(
-                            consumer,
-                            busMessage,
-                            toHandleInboxMessage.RoutingKey,
-                            MessageBusConfig,
-                            Logger);
+                        using (var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+                        {
+                            timeoutCts.CancelAfter(InboxConfig.MaxProcessingDurationSeconds.Seconds());
+                            try
+                            {
+                                await PlatformMessageBusConsumer.InvokeConsumerAsync(
+                                        consumer,
+                                        busMessage,
+                                        toHandleInboxMessage.RoutingKey,
+                                        MessageBusConfig,
+                                        Logger)
+                                    .WaitAsync(timeoutCts.Token);
+                            }
+                            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+                            {
+                                throw new TimeoutException(
+                                    $"Inbox consumer {consumer.GetType().FullName} exceeded MaxProcessingDurationSeconds={InboxConfig.MaxProcessingDurationSeconds}s for InboxId={toHandleInboxMessage.Id}.");
+                            }
+                        }
                     }
                     else
                         // If the consumer doesn't handle the message, delete the inbox message.

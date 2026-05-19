@@ -949,8 +949,6 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex.BeautifyStackTrace(), "PlatformEfCoreDbContext {Type} Initialize failed.", GetType().Name);
-
             throw new Exception($"{GetType().Name} Initialize failed.", ex);
         }
 

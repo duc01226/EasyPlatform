@@ -2,6 +2,8 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Easy.Platform.Common.BackgroundLock;
+using Easy.Platform.Common.Diagnostics;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Extensions.WhenCases;
 using Easy.Platform.Common.Logging;
@@ -128,35 +130,53 @@ public static partial class Util
         }
 
         /// <summary>
-        /// Queues a specified action to be executed in the background.
+        /// Queues a specified action to be executed in the background, optionally throttled via a
+        /// per-domain <see cref="BackgroundLock.IPlatformBackgroundActionPermitPool"/>.
         /// </summary>
-        /// <param name="action">The action to be executed in the background. This is a task-returning asynchronous method.</param>
-        /// <param name="loggerFactory">A factory method that creates an ILogger instance.</param>
-        /// <param name="delayTimeSeconds">The delay time in seconds before the action is executed. Default is 0, which means the action is executed immediately.</param>
-        /// <param name="cancellationToken">A cancellation token that can be used to cancel the background task. Default is an empty CancellationToken.</param>
-        /// <param name="queueLimitLock">
-        /// If false (default), disables the queue limit lock, allowing the background action to run without waiting for available slots in the semaphore.
-        /// If true, the action will wait for an available slot in the semaphore before executing, limiting the number of concurrent background actions.
+        /// <param name="action">The action to be executed in the background.</param>
+        /// <param name="pool">
+        /// Optional permit pool. When <c>null</c> the action runs without admission throttling.
+        /// When non-null, a permit is acquired before the action runs; on admission rejection
+        /// (wait-timeout or queue-full) the action still runs (fail-open) and pool-level metrics
+        /// record the reason. Admission policy is baked into the pool at construction — no per-call
+        /// config lookup.
         /// </param>
+        /// <param name="retryCount">Number of retry attempts on failure.</param>
+        /// <param name="retryDelayProvider">Backoff between retries.</param>
+        /// <param name="loggerFactory">Factory creating an <see cref="ILogger"/> for error/warn output.</param>
+        /// <param name="delayTimeSeconds">Initial delay before first attempt.</param>
+        /// <param name="cancellationToken">Cancels the background task wrap (NOT the running action).</param>
+        /// <param name="logFullStackTraceBeforeBackgroundTask">Capture caller stack trace before the <c>Task.Run</c> hop.</param>
         /// <remarks>
-        /// This method uses Task.Run to execute the action in the background.
-        /// It also captures the current stack trace before the Task.Run call,
-        /// because the stack trace gets lost after the action starts executing.
-        /// If the action throws an exception, it is caught and logged using the ILogger instance created by the loggerFactory.
+        /// <para>
+        /// <b>Fail-open rationale:</b> Side-effects in this codebase are integrity-critical (outbox dispatch,
+        /// cache invalidation, event handlers). Dropping work under pressure trades a latency spike for data
+        /// correctness loss — wrong trade. We accept the latency spike and emit pool-level metrics
+        /// so operators see the pressure.
+        /// </para>
+        /// <para>
+        /// <b>IMPORTANT:</b> long-lived loops MUST NOT pass a pool — the permit would be held for the
+        /// loop's lifetime. Use <see cref="QueueIntervalAsyncActionInBackground"/> or omit
+        /// <paramref name="pool"/> for interval work.
+        /// </para>
+        /// <para>
+        /// <b>Action timeout is NOT enforced here</b> — deferred to a follow-up. The pool-side
+        /// <c>MaxHoldTime</c> auto-release covers the burst-mitigation goal without changing the action signature.
+        /// </para>
         /// </remarks>
         public static void QueueActionInBackground(
             Func<Task> action,
+            IPlatformBackgroundActionPermitPool? pool = null,
             int? retryCount = null,
             Func<int, TimeSpan> retryDelayProvider = null,
             Func<ILogger>? loggerFactory = null,
             int delayTimeSeconds = 0,
             CancellationToken cancellationToken = default,
-            bool logFullStackTraceBeforeBackgroundTask = false,
-            bool queueLimitLock = false)
+            bool logFullStackTraceBeforeBackgroundTask = false)
         {
             retryDelayProvider ??= DefaultBackgroundRetryDelayProvider;
 
-            // Must use stack trace BEFORE Task.Run to run some new action in background. BECAUSE after call get data function, the stack trace get lost, only back to task.run.
+            // Must use stack trace BEFORE Task.Run — after the hop the caller frame is gone.
             var fullStackTrace = logFullStackTraceBeforeBackgroundTask ? PlatformEnvironment.StackTrace() : null;
 
             Task.Run(
@@ -164,27 +184,39 @@ public static partial class Util
                 {
                     PlatformLogger.BackgroundThreadFullStackTraceContextAccessor.Current = fullStackTrace;
 
-                    async Task LimitLockAction()
+                    async Task PoolLockAction()
                     {
-                        try
+                        if (pool == null)
                         {
-                            if (queueLimitLock)
-                                await BackgroundActionQueueLimitLock.Value.WaitAsync(cancellationToken);
-
                             await action();
+                            return;
                         }
-                        finally
+
+                        // AcquireAsync returns a disposable lease when this work enters the pool.
+                        // A null lease means admission was rejected; background side effects are
+                        // integrity-critical, so the action still runs and pressure is logged.
+                        var permit = await pool.AcquireAsync(cancellationToken);
+                        if (permit == null)
                         {
-                            if (queueLimitLock)
-                                BackgroundActionQueueLimitLock.Value.TryRelease();
+                            loggerFactory?.Invoke()
+                                .LogWarning(
+                                    "BackgroundLock: admission rejected on pool {Pool}; action runs without permit (fail-open).",
+                                    pool.Name);
+                            await action();
+                            return;
                         }
+
+                        // The permit is released on normal completion. If the action runs past the
+                        // pool's MaxHoldTime, the permit may already have auto-released; Dispose is
+                        // still safe because the permit release path is exact-once.
+                        using (permit) await action();
                     }
 
                     try
                     {
                         await QueueDelayAsyncAction(
                             _ => WaitRetryThrowFinalExceptionAsync(
-                                LimitLockAction,
+                                PoolLockAction,
                                 retryDelayProvider,
                                 retryCount ?? DefaultResilientRetryCount,
                                 onRetry: (ex, span, retryAttempt, context) =>
@@ -206,33 +238,23 @@ public static partial class Util
         }
 
         /// <summary>
-        /// Queues a task that returns a result to run in the background.
+        /// Queues a task that returns a result to run in the background, optionally throttled via a
+        /// per-domain <see cref="BackgroundLock.IPlatformBackgroundActionPermitPool"/>.
+        /// Fire-and-forget — <typeparamref name="TResult"/> is discarded.
         /// </summary>
-        /// <param name="action">The task that returns a result to be executed.</param>
-        /// <param name="loggerFactory">The factory method to create an ILogger instance.</param>
-        /// <param name="delayTimeSeconds">The delay time in seconds before the task is executed. Default is 0.</param>
-        /// <param name="cancellationToken">The cancellation token that can be used to cancel the task. Default is CancellationToken.None.</param>
-        /// <param name="queueLimitLock">
-        /// If false (default), disables the queue limit lock, allowing the background action to run without waiting for available slots in the semaphore.
-        /// If true, the action will wait for an available slot in the semaphore before executing, limiting the number of concurrent background actions.
-        /// </param>
-        /// <remarks>
-        /// This method captures the stack trace before the task is run. If an exception occurs during the execution of the task, it logs an error message with the stack trace.
-        /// </remarks>
-        /// <typeparam name="TResult">The type of the result returned by the task.</typeparam>
+        /// <typeparam name="TResult">The type of the result returned by the task (discarded on fire-and-forget).</typeparam>
         public static void QueueActionInBackground<TResult>(
             Func<Task<TResult>> action,
+            IPlatformBackgroundActionPermitPool? pool = null,
             int? retryCount = null,
             Func<int, TimeSpan> retryDelayProvider = null,
             Func<ILogger>? loggerFactory = null,
             int delayTimeSeconds = 0,
             CancellationToken cancellationToken = default,
-            bool logFullStackTraceBeforeBackgroundTask = false,
-            bool queueLimitLock = false)
+            bool logFullStackTraceBeforeBackgroundTask = false)
         {
             retryDelayProvider ??= DefaultBackgroundRetryDelayProvider;
 
-            // Must use stack trace BEFORE Task.Run to run some new action in background. BECAUSE after call get data function, the stack trace get lost, only back to task.run.
             var fullStackTrace = logFullStackTraceBeforeBackgroundTask ? PlatformEnvironment.StackTrace() : null;
 
             Task.Run(
@@ -240,29 +262,32 @@ public static partial class Util
                 {
                     PlatformLogger.BackgroundThreadFullStackTraceContextAccessor.Current = fullStackTrace;
 
-                    async Task<TResult> LimitLockAction()
+                    async Task<TResult> PoolLockAction()
                     {
-                        try
-                        {
-                            if (queueLimitLock)
-                                await BackgroundActionQueueLimitLock.Value.WaitAsync(cancellationToken);
+                        if (pool == null) return await action();
 
-                            var result = await action();
-
-                            return result;
-                        }
-                        finally
+                        // Same lease pattern as the non-result overload: null is a soft-limit
+                        // admission signal, not a reason to drop the fire-and-forget action.
+                        var permit = await pool.AcquireAsync(cancellationToken);
+                        if (permit == null)
                         {
-                            if (queueLimitLock)
-                                BackgroundActionQueueLimitLock.Value.TryRelease();
+                            loggerFactory?.Invoke()
+                                .LogWarning(
+                                    "BackgroundLock: admission rejected on pool {Pool}; action runs without permit (fail-open).",
+                                    pool.Name);
+                            return await action();
                         }
+
+                        // Release the pool slot when the action returns a result. The result is
+                        // intentionally discarded by the fire-and-forget wrapper.
+                        using (permit) return await action();
                     }
 
                     try
                     {
                         await QueueDelayAsyncAction(
                             _ => WaitRetryThrowFinalExceptionAsync(
-                                LimitLockAction,
+                                PoolLockAction,
                                 retryDelayProvider,
                                 retryCount ?? DefaultResilientRetryCount,
                                 onRetry: (ex, span, retryAttempt, context) =>
@@ -382,6 +407,11 @@ public static partial class Util
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the background task.</param>
         /// <remarks>
         /// This method is useful for scheduling recurring tasks, such as cache invalidation or data seeding, in a non-blocking manner.
+        /// <para>
+        /// IMPORTANT: long-lived interval loops MUST NOT be wrapped in
+        /// <see cref="BackgroundLock.IPlatformBackgroundActionPermitPool"/> — the permit would be held for the
+        /// loop's lifetime and starve the pool. Use this method only for genuinely periodic work.
+        /// </para>
         /// </remarks>
         public static void QueueIntervalAsyncActionInBackground(
             Func<CancellationToken, Task> action,

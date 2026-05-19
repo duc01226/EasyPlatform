@@ -2,6 +2,8 @@
 
 using System.Collections.Concurrent;
 using System.Reflection;
+using Easy.Platform.Application.BackgroundLock;
+using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Extensions;
@@ -1439,25 +1441,78 @@ public static class DependencyInjectionExtension
     }
 
     /// <inheritdoc cref="ExecuteScopedInBackground" />
+    /// <remarks>
+    /// Auto-routes through the platform <c>Default</c> permit pool when
+    /// <see cref="IPlatformBackgroundActionPermitPoolRegistry"/> + <see cref="PlatformBackgroundLockConfig"/>
+    /// are registered. Service callers get bounded concurrency + metrics for free without
+    /// specifying a pool. Falls back to no-pool behavior when the platform background-lock
+    /// services are not registered (e.g., unit-test contexts or pre-platform modules).
+    /// </remarks>
     public static void ExecuteScopedInBackgroundAsync(
         this IServiceProvider serviceProvider,
         Func<IServiceScope, Task> method,
         int? retryCount = null,
         Func<int, TimeSpan>? retryDelayProvider = null,
-        Func<ILogger>? loggerFactory = null,
-        bool queueLimitLock = false)
+        Func<ILogger>? loggerFactory = null)
     {
-        var scope = serviceProvider.GetRequiredService<IPlatformRootServiceProvider>().CreateTrackedScope();
+        var rootSp = serviceProvider.GetRequiredService<IPlatformRootServiceProvider>();
+        var registry = rootSp.GetService<IPlatformBackgroundActionPermitPoolRegistry>();
 
+        // Scope MUST be created on the synchronous caller thread, BEFORE branching, so the
+        // parent serviceProvider cannot be disposed before the scope is captured by the
+        // background task (fire-and-forget pattern).
+        var scope = rootSp.CreateTrackedScope();
+
+        // DefaultPool keeps legacy callers branch-free: when background-lock services exist, they
+        // get the shared Default bulkhead; in minimal/unit-test containers registry can be absent
+        // and TaskRunner simply runs without admission throttling.
         Util.TaskRunner.QueueActionInBackground(
             async () =>
             {
                 await using (scope) await method(scope);
             },
+            registry?.DefaultPool,
+            retryCount,
+            retryDelayProvider,
+            loggerFactory);
+    }
+
+    /// <summary>
+    /// Pool-aware variant of <see cref="ExecuteScopedInBackgroundAsync(IServiceProvider, Func{IServiceScope, Task}, int?, Func{int, TimeSpan}?, Func{ILogger}?, bool)"/>.
+    /// Resolves the per-domain permit pool named <paramref name="permitPoolName"/> from the
+    /// <see cref="IPlatformBackgroundActionPermitPoolRegistry"/> and forwards to the pool-aware
+    /// <c>Util.TaskRunner.QueueActionInBackground</c> overload. Wait timeout is baked into the
+    /// pool at construction.
+    /// </summary>
+    public static void ExecuteScopedInBackgroundAsync(
+        this IServiceProvider serviceProvider,
+        Func<IServiceScope, Task> method,
+        string permitPoolName,
+        int? retryCount = null,
+        Func<int, TimeSpan>? retryDelayProvider = null,
+        Func<ILogger>? loggerFactory = null,
+        CancellationToken cancellationToken = default)
+    {
+        var rootSp = serviceProvider.GetRequiredService<IPlatformRootServiceProvider>();
+        var registry = rootSp.GetRequiredService<IPlatformBackgroundActionPermitPoolRegistry>();
+        var pool = registry.Get(permitPoolName);
+
+        // Scope MUST be created on the synchronous caller thread, BEFORE Task.Run, so the
+        // parent serviceProvider cannot be disposed before scope creation under fire-and-forget.
+        var scope = rootSp.CreateTrackedScope();
+
+        // Named pools isolate unrelated domains from each other: saturation in inbox consumption
+        // should not consume all slots used by outbox dispatch, cache writes, or default work.
+        Util.TaskRunner.QueueActionInBackground(
+            async () =>
+            {
+                await using (scope) await method(scope);
+            },
+            pool,
             retryCount,
             retryDelayProvider,
             loggerFactory,
-            queueLimitLock: queueLimitLock);
+            cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc cref="ExecuteScoped" />
@@ -1520,14 +1575,18 @@ public static class DependencyInjectionExtension
     }
 
     /// <inheritdoc cref="ExecuteInjectScopedInBackground" />
+    /// <remarks>
+    /// Auto-routes through the platform <c>Default</c> permit pool via the underlying
+    /// <see cref="ExecuteScopedInBackgroundAsync(IServiceProvider, Func{IServiceScope, Task}, int?, Func{int, TimeSpan}?, Func{ILogger}?)"/>.
+    /// Service callers get bounded concurrency + metrics for free without specifying a pool.
+    /// </remarks>
     public static void ExecuteInjectScopedInBackgroundAsync(
         this IServiceProvider serviceProvider,
         Delegate method,
         int? retryCount = null,
         Func<int, TimeSpan> retryDelayProvider = null,
         Func<ILogger> loggerFactory = null,
-        object[] manuallyParams = null,
-        bool queueLimitLock = false)
+        object[] manuallyParams = null)
     {
         manuallyParams ??= [];
 
@@ -1535,8 +1594,32 @@ public static class DependencyInjectionExtension
             scope => scope.ExecuteInjectAsync(method, manuallyParams),
             retryCount,
             retryDelayProvider,
+            loggerFactory);
+    }
+
+    /// <summary>
+    /// Pool-aware variant of <see cref="ExecuteInjectScopedInBackgroundAsync(IServiceProvider, Delegate, int?, Func{int, TimeSpan}, Func{ILogger}, object[])"/>.
+    /// Resolves the per-domain permit pool by name and forwards to the bounded-wait overload.
+    /// </summary>
+    public static void ExecuteInjectScopedInBackgroundAsync(
+        this IServiceProvider serviceProvider,
+        Delegate method,
+        string permitPoolName,
+        int? retryCount = null,
+        Func<int, TimeSpan> retryDelayProvider = null,
+        Func<ILogger> loggerFactory = null,
+        object[] manuallyParams = null,
+        CancellationToken cancellationToken = default)
+    {
+        manuallyParams ??= [];
+
+        serviceProvider.ExecuteScopedInBackgroundAsync(
+            scope => scope.ExecuteInjectAsync(method, manuallyParams),
+            permitPoolName,
+            retryCount,
+            retryDelayProvider,
             loggerFactory,
-            queueLimitLock: queueLimitLock);
+            cancellationToken);
     }
 
     /// <inheritdoc cref="ExecuteInjectScopedInBackground" />

@@ -435,6 +435,12 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     where TEvent : IPlatformCqrsEvent
 {
     /// <summary>
+    /// Named background-permit pool used for cross-handler fan-out throttling. Each consumer of the
+    /// background-lock infrastructure owns its pool-name constant (no central catalog).
+    /// </summary>
+    private const string BgPoolName = "EventHandlerFanOut";
+
+    /// <summary>
     /// Factory for creating loggers with appropriate categorization for this handler type.
     /// Used throughout the handler lifecycle for consistent logging and troubleshooting.
     /// </summary>
@@ -1194,6 +1200,15 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     /// </remarks>
     protected void ExecuteHandleInBackgroundNewScopeAsync(TEvent @event, CancellationToken cancellationToken = default)
     {
+        // Per-event perf pivot: capture caller-side timestamp + identifying tags. When the
+        // total background-dispatch wall time (which includes pool wait + Task.Run hop + handler
+        // run) exceeds BackgroundDispatchSlowThresholdMs, emit a structured warning attributing
+        // the slowness to a specific event type + handler type. Complements the pool-level
+        // wait_duration_ms histogram (which is tagged by pool only — no event-type cardinality).
+        var dispatchStartTs = Stopwatch.GetTimestamp();
+        var eventTypeName = @event.GetType().Name;
+        var handlerTypeName = GetType().Name;
+
         RootServiceProvider.ExecuteInjectScopedInBackgroundAsync(
             async (IServiceProvider sp) =>
             {
@@ -1215,11 +1230,39 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
                 {
                     LogError(@event, e, LoggerFactory);
                 }
+                finally
+                {
+                    var elapsedMs = Stopwatch.GetElapsedTime(dispatchStartTs).TotalMilliseconds;
+                    if (elapsedMs >= BackgroundDispatchSlowThresholdMs)
+                    {
+                        try
+                        {
+                            CreateLogger(LoggerFactory).LogWarning(
+                                "BackgroundLock: slow background event-handler dispatch in pool {Pool} — elapsed {ElapsedMs}ms (threshold {ThresholdMs}ms) for event {EventType} handler {HandlerType}",
+                                BgPoolName,
+                                elapsedMs,
+                                BackgroundDispatchSlowThresholdMs,
+                                eventTypeName,
+                                handlerTypeName);
+                        }
+                        catch (ObjectDisposedException) { }
+                    }
+                }
             },
+            permitPoolName: BgPoolName,
             loggerFactory: () => CreateLogger(LoggerFactory),
-            queueLimitLock: true
+            cancellationToken: cancellationToken
         );
     }
+
+    /// <summary>
+    /// Threshold (ms) above which <see cref="ExecuteHandleInBackgroundNewScopeAsync"/> emits a
+    /// structured warning attributing slow background dispatch (pool wait + handler run) to a
+    /// specific event type + handler type. Complements the pool-level <c>wait_duration_ms</c>
+    /// histogram which lacks event-type cardinality. Sized at 30000ms based on EventHandlerFanOut
+    /// pool sizing — typical fan-out dispatches complete well under this.
+    /// </summary>
+    protected virtual double BackgroundDispatchSlowThresholdMs => 30000;
 
     /// <summary>
     /// Executes custom logic before the main event handling begins. This virtual method provides

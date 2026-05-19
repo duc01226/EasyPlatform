@@ -102,7 +102,7 @@ graph TB
 | ------------------- | ------------------------------------------------- |
 | **Backend Core**    | .NET 9, ASP.NET Core, MediatR, FluentValidation   |
 | **Frontend Core**   | Angular 19, TypeScript, RxJS, NgRx ComponentStore |
-| **Data Access**     | Entity Framework Core, MongoDB Driver              |
+| **Data Access**     | Entity Framework Core, MongoDB Driver             |
 | **Messaging**       | RabbitMQ, Event Bus Patterns                      |
 | **Caching**         | Redis, In-Memory Cache                            |
 | **Background Jobs** | Hangfire                                          |
@@ -314,7 +314,9 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
             effectSubscriptionHandleFn?: (sub: Subscription) => unknown;
             notAutoObserveErrorLoadingState?: boolean;
         }
-    ) { /* ... automatic observerLoadingErrorState wrapping ... */ }
+    ) {
+        /* ... automatic observerLoadingErrorState wrapping ... */
+    }
 
     // Update state with immutable update pattern
     public updateState(partialState: Partial<TViewModel>): void;
@@ -1092,7 +1094,9 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
         generator: (origin: ProvidedType, isReloading?: boolean) => Observable<ReturnObservableType> | void,
         requestKey?: string | null,
         options?: { effectSubscriptionHandleFn?: (sub: Subscription) => unknown; notAutoObserveErrorLoadingState?: boolean }
-    ) { /* automatic observerLoadingErrorState wrapping */ }
+    ) {
+        /* automatic observerLoadingErrorState wrapping */
+    }
 
     protected observerLoadingErrorState<T>(): MonoTypeOperatorFunction<T> {
         return (source: Observable<T>) =>
@@ -1431,6 +1435,28 @@ public sealed class TextSnippetDataSeeder : PlatformApplicationDataSeeder
     }
 }
 ```
+
+### Background Lock Admission
+
+Fire-and-forget platform work can use named `BackgroundLock` permit pools such as `EventHandlerFanOut`, `OutboxDispatch`, `InboxConsume`, `CacheWrite`, and `Default`.
+
+```json
+{
+    "BackgroundLock": {
+        "DefaultMaxHoldTime": "00:00:30",
+        "DefaultMaxQueueDepthMultiplier": 30,
+        "Pools": {
+            "OutboxDispatch": {
+                "MaxConcurrent": 20,
+                "MaxQueueDepth": 200,
+                "MaxHoldTime": "00:01:00"
+            }
+        }
+    }
+}
+```
+
+`MaxConcurrent` caps active permit holders. `MaxQueueDepth` caps waiters. `MaxHoldTime` releases the permit slot only; the running action is not cancelled. Queue-full and wait-timeout both fail open so background side effects still run, with separate metrics: `easyplatform.bgqueue.queue_full_total` and `easyplatform.bgqueue.wait_timeout_total`.
 
 ---
 

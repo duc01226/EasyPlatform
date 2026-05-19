@@ -1115,6 +1115,13 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     /// </remarks>
     public virtual bool CanExecuteHandlingEventUsingInboxConsumer(TEvent @event)
     {
+        // Handlers requiring same-UoW execution MUST bypass inbox routing.
+        // Inbox processes events asynchronously in a new DI scope AFTER the parent UoW commits,
+        // which silently defeats MustRunHandlerInSameCurrentActiveUow=true and any Restrict-FK
+        // safety net that depends on child cleanup being visible inside the parent's transaction.
+        if (NeedRunHandlerInSameCurrentActiveUow(@event))
+            return false;
+
         return HasInboxMessageSupport() && (NotNeedWaitHandlerExecutionFinishedImmediately(@event) || IsCalledFromInboxBusMessageConsumer);
     }
 

@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using Easy.Platform.Application.BackgroundJob;
+using Easy.Platform.Application.BackgroundLock;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Application.Cqrs.Events;
 using Easy.Platform.Application.Cqrs.Queries;
@@ -18,6 +19,7 @@ using Easy.Platform.Application.Persistence;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Application.Services;
 using Easy.Platform.Common;
+using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.HostingBackgroundServices;
@@ -311,6 +313,55 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
     }
 
     /// <summary>
+    /// Support to customize the background-lock (per-domain permit pool) config.
+    /// Default binds from <c>appsettings.json</c> section <c>BackgroundLock</c> and falls back
+    /// to a default <see cref="PlatformBackgroundLockConfig"/> (<c>Enabled=true</c>) when section absent.
+    /// </summary>
+    protected virtual PlatformBackgroundLockConfig BackgroundLockConfigProvider(IServiceProvider serviceProvider)
+    {
+        var bound = Configuration?.GetSection("BackgroundLock").Get<PlatformBackgroundLockConfig>();
+        var config = bound ?? new PlatformBackgroundLockConfig();
+        config.Validate();
+        return config;
+    }
+
+    /// <summary>
+    /// Well-known background-lock pool names. Operators configuring unknown keys in
+    /// <c>appsettings.json</c>: <c>BackgroundLock.Pools</c> get a WARN at startup pointing at this set —
+    /// catches typos that would otherwise silently fall back to <see cref="PlatformBackgroundLockConfig.DefaultPool"/>.
+    /// </summary>
+    private static readonly string[] KnownBackgroundLockPoolNames =
+    [
+        "EventHandlerFanOut", "OutboxDispatch", "InboxConsume", "CacheWrite", "DbPostSave", "Default"
+    ];
+
+    private static void LogBackgroundLockStartup(ILogger logger, PlatformBackgroundLockConfig cfg)
+    {
+        var configured = cfg.Pools.Count;
+        var summary = configured == 0
+            ? string.Empty
+            : " [" + string.Join(", ", cfg.Pools.Select(kv => $"{kv.Key}={kv.Value.MaxConcurrent}")) + "]";
+        logger.LogInformation(
+            "BackgroundLock: enabled={Enabled}, pools={Configured}/{Known} configured{Summary}, defaultWait={DefaultWait}, defaultMaxHold={DefaultMaxHold}, defaultMaxQueueDepthMultiplier={DefaultMaxQueueDepthMultiplier}",
+            cfg.Enabled,
+            configured,
+            KnownBackgroundLockPoolNames.Length,
+            summary,
+            cfg.DefaultWaitTimeout,
+            cfg.DefaultMaxHoldTime,
+            cfg.DefaultMaxQueueDepthMultiplier);
+
+        var unknown = cfg.Pools.Keys.Where(k => !KnownBackgroundLockPoolNames.Contains(k)).ToList();
+        if (unknown.Count > 0)
+        {
+            logger.LogWarning(
+                "BackgroundLock: unknown pool keys {Unknown} in appsettings.json — known keys: {Known}. Unknown keys fall back to DefaultPool template",
+                unknown,
+                KnownBackgroundLockPoolNames);
+        }
+    }
+
+    /// <summary>
     /// Registers helper services from the specified assemblies into the service collection.
     /// Helpers are internal utility classes used within the module.
     /// </summary>
@@ -408,6 +459,22 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
             IPlatformBackgroundJobSchedulerCarryRequestContextService,
             PlatformApplicationBackgroundJobSchedulerCarryRequestContextService
         >(ServiceLifeTime.Scoped);
+
+        // Background-lock (per-domain permit pool) infrastructure is platform-wide, not bus-specific.
+        // The registry owns named bulkheads such as EventHandlerFanOut, InboxConsume, OutboxDispatch,
+        // CacheWrite, and Default. Call sites request a pool by name and TaskRunner applies the
+        // permit lease/fail-open behavior around the background action.
+        serviceCollection.Register(
+            typeof(PlatformBackgroundLockConfig),
+            BackgroundLockConfigProvider,
+            ServiceLifeTime.Singleton,
+            true,
+            DependencyInjectionExtension.CheckRegisteredStrategy.ByService
+        );
+        serviceCollection.Register<IPlatformBackgroundActionPermitPoolRegistry, PlatformBackgroundActionPermitPoolRegistry>(
+            ServiceLifeTime.Singleton,
+            true,
+            DependencyInjectionExtension.CheckRegisteredStrategy.ByService);
     }
 
     /// <summary>
@@ -418,6 +485,10 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
     protected override async Task InternalInit(IServiceScope serviceScope)
     {
         ThreadPool.SetMinThreads(MinWorkerThreadPool, MinIoThreadPool);
+
+        LogBackgroundLockStartup(
+            CreateLogger(LoggerFactory),
+            serviceScope.ServiceProvider.GetRequiredService<PlatformBackgroundLockConfig>());
 
         await IPlatformPersistenceModule.MigrateDependentModulesApplicationDataAsync(
             GetDependentModuleTypes().Select(moduleTypeProvider => moduleTypeProvider(Configuration)).ToList(),
@@ -764,6 +835,7 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
             true,
             DependencyInjectionExtension.CheckRegisteredStrategy.ByService
         );
+
     }
 }
 

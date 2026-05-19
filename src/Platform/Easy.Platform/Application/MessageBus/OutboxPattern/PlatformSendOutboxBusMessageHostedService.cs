@@ -30,14 +30,6 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
     private DateTime? firstTimeProcessDate;
     private bool isFirstTimeProcess = true;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PlatformSendOutboxBusMessageHostedService" /> class.
-    /// </summary>
-    /// <param name="serviceProvider">The service provider for the current scope.</param>
-    /// <param name="loggerFactory">A factory for creating loggers.</param>
-    /// <param name="applicationSettingContext">The application setting context.</param>
-    /// <param name="outboxConfig">The configuration for the outbox pattern.</param>
-    /// <param name="rootServiceProvider">The root service provider.</param>
     public PlatformSendOutboxBusMessageHostedService(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory,

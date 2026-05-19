@@ -272,8 +272,7 @@ public interface IPlatformDbContext : IDisposable
                 }
             },
             loggerFactory: () => Logger,
-            cancellationToken: CancellationToken.None,
-            queueLimitLock: false);
+            cancellationToken: CancellationToken.None);
     }
 
     public async Task UpsertOneDataMigrationHistorySaveChangesImmediatelyAsync(

@@ -494,9 +494,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                         currentStartProcessCancellationToken
                     ),
                 loggerFactory: () => Logger,
-                cancellationToken: currentStartProcessCancellationToken,
-                logFullStackTraceBeforeBackgroundTask: false,
-                queueLimitLock: false
+                cancellationToken: currentStartProcessCancellationToken
             );
         }
         catch (Exception ex)
@@ -670,9 +668,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                 );
             },
             loggerFactory: () => Logger,
-            cancellationToken: CancellationToken.None,
-            logFullStackTraceBeforeBackgroundTask: false,
-            queueLimitLock: false
+            cancellationToken: CancellationToken.None
         );
     }
 
@@ -800,9 +796,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                 );
             },
             loggerFactory: () => Logger,
-            cancellationToken: currentStartProcessCancellationToken,
-            logFullStackTraceBeforeBackgroundTask: false,
-            queueLimitLock: false
+            cancellationToken: currentStartProcessCancellationToken
         );
 
         return true;
@@ -939,9 +933,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                                 );
                             },
                             loggerFactory: () => Logger,
-                            cancellationToken: CancellationToken.None,
-                            logFullStackTraceBeforeBackgroundTask: false,
-                            queueLimitLock: false
+                            cancellationToken: CancellationToken.None
                         );
 
                         return;

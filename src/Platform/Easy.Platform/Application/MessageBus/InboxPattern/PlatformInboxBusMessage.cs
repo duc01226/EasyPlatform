@@ -20,6 +20,26 @@ public class PlatformInboxBusMessage : RootEntity<PlatformInboxBusMessage, strin
     public const int CheckProcessingPingIntervalSeconds = 60;
     public const int MaxAllowedProcessingPingMisses = 10;
 
+    /// <summary>
+    /// Default wall-clock ceiling (<b>7 days = 604800s</b>) used by
+    /// <c>PlatformConsumeInboxBusMessageHostedService.InvokeConsumerAsync</c> as a per-consume
+    /// <see cref="CancellationTokenSource.CancelAfter(TimeSpan)"/> safety net to bound a single
+    /// consumer invocation's wall-clock lifetime.
+    /// <para>
+    /// <b>Liveness is determined by ping</b> — <see cref="LastProcessingPingDate"/> refreshed every
+    /// <see cref="CheckProcessingPingIntervalSeconds"/>s, with re-pop after
+    /// <see cref="MaxAllowedProcessingPingMisses"/> misses (~600s stale window). A consumer that is
+    /// still progressing keeps the ping fresh; a hung consumer's ping eventually stops and the
+    /// ping-stale recovery branch in <see cref="CanHandleMessagesQueryBuilder"/> re-pops the row.
+    /// Wall-clock duration alone is NOT used as a recovery signal — long-running ≠ stuck.
+    /// </para>
+    /// <para>
+    /// <b>Per-service override:</b> If a consumer legitimately runs &gt;7 days, raise
+    /// <c>PlatformInboxConfig.MaxProcessingDurationSeconds</c> at module registration.
+    /// </para>
+    /// </summary>
+    public const int DefaultMaxProcessingDurationSeconds = 604800;
+
     public string JsonMessage { get; set; }
 
     public string MessageTypeFullName { get; set; }
@@ -112,20 +132,21 @@ public class PlatformInboxBusMessage : RootEntity<PlatformInboxBusMessage, strin
             .OrderBy(p => p.CreatedDate)
             .Take(limit);
 
-        // Part 3: Query for the top timed-out 'Processing' messages
-        // Note: You might need to make CheckProcessingPingIntervalSeconds and MaxAllowedProcessingPingMisses available here
-        var timeoutThreshold = Clock.UtcNow.AddSeconds(-CheckProcessingPingIntervalSeconds * MaxAllowedProcessingPingMisses);
-        var processingMessagesQuery = query
+        // Part 3: Ping-stale 'Processing' messages — the sole liveness signal. A consumer that is still
+        // progressing keeps refreshing LastProcessingPingDate via the background ping task; missing pings
+        // for ~600s means the consumer (or its host) is gone, and the row must be re-popped.
+        var pingTimeoutThreshold = Clock.UtcNow.AddSeconds(-CheckProcessingPingIntervalSeconds * MaxAllowedProcessingPingMisses);
+        var processingPingStaleQuery = query
             .Where(p => p.ConsumeStatus == ConsumeStatuses.Processing &&
-                        (p.LastProcessingPingDate == null || p.LastProcessingPingDate < timeoutThreshold) &&
+                        (p.LastProcessingPingDate == null || p.LastProcessingPingDate < pingTimeoutThreshold) &&
                         (p.ForApplicationName == null || p.ForApplicationName == forApplicationName))
             .OrderBy(p => p.CreatedDate)
             .Take(limit);
 
-        // Combine the three queries using Concat (which translates to UNION ALL)
+        // Combine all three queries using Concat (which translates to UNION ALL)
         var combinedQuery = newMessagesQuery
             .Concat(failedMessagesQuery)
-            .Concat(processingMessagesQuery);
+            .Concat(processingPingStaleQuery);
 
         // Apply the final sort and limit to the small, combined set of candidates
         return combinedQuery
