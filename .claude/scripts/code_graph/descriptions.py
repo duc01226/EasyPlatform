@@ -113,6 +113,13 @@ COMMAND_DESCRIPTIONS: dict[str, dict] = {
         "output": "Node counts by kind, edge counts by kind, languages, file count.",
         "examples": ["status --json"],
     },
+    "migrate-paths": {
+        "summary": "Convert stored graph file identities from absolute paths to repo-relative paths",
+        "when_to_use": "After discovering an existing graph.db was built with absolute file paths.",
+        "input": "None.",
+        "output": "Migration summary with inspected and deduplicated node/edge row counts.",
+        "examples": ["migrate-paths --json"],
+    },
     "build": {
         "summary": "Full graph rebuild — re-parses every file",
         "when_to_use": "First-time setup or after major restructuring.",

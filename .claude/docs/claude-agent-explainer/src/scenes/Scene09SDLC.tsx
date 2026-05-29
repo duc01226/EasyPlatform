@@ -14,7 +14,7 @@ const PHASES = [
     { num: '2', label: 'Requirements', skills: 'refine · story · prioritize · design-spec', color: C.blue, icon: '📋' },
     { num: '3', label: 'Test Specs', skills: 'tdd-spec (3 modes) · tdd-spec-review · idea-to-pbi', color: C.purple, icon: '🧪' },
     { num: '4', label: 'Planning', skills: 'plan · plan-review · plan-validate · why-review', color: C.purple, icon: '📐' },
-    { num: '5', label: 'Implementation', skills: 'cook · cook-hard · fix · refactoring · feature workflow', color: C.green, icon: '⚙️' },
+    { num: '5', label: 'Implementation', skills: 'cook · fix · refactoring · feature workflow', color: C.green, icon: '⚙️' },
     { num: '6', label: 'Testing', skills: 'integration-test → review → verify · test · webapp-testing', color: C.green, icon: '✅' },
     { num: '7', label: 'Code Review', skills: 'code-review · review-changes · prove-fix · sre-review', color: C.amber, icon: '🔍' },
     { num: '8', label: 'Documentation', skills: 'docs-update · feature-docs · changelog · release-notes', color: C.amber, icon: '📝' },

@@ -54,12 +54,12 @@ Platform
                     └── Feature  (individual detailed-feature doc)
 ```
 
-| Level                  | Canonical Location                       | Format                           | Depth                               | Owner Skill                 |
-| ---------------------- | ---------------------------------------- | -------------------------------- | ----------------------------------- | --------------------------- |
-| **Service/System**     | `docs/specs/{app-bucket}/{system-name}/` | Tech-agnostic bundle (A–F files) | Architect-level, 4,000 lines/module | `spec-discovery`            |
-| **Module**             | `docs/business-features/{Module}/`       | 17-section stakeholder doc       | Feature-level, 500–1,500 lines      | `feature-docs`              |
-| **Test Case Registry** | Feature doc Section 15                   | TC-{FEAT}-{NNN} GWT entries      | Per-test, GIVEN/WHEN/THEN           | `tdd-spec`                  |
-| **QA Dashboard**       | `docs/specs/{Module}/README.md`          | Aggregated TC dashboard          | Synced view, not canonical          | `tdd-spec [direction=sync]` |
+| Level                  | Canonical Location                                      | Format                           | Depth                               | Owner Skill                 |
+| ---------------------- | ------------------------------------------------------- | -------------------------------- | ----------------------------------- | --------------------------- |
+| **Service/System**     | `docs/specs/{app-bucket}/{system-name}/`                | Tech-agnostic bundle (A–F files) | Architect-level, 4,000 lines/module | `spec-discovery`            |
+| **Module**             | `docs/business-features/{Module}/`                      | 17-section stakeholder doc       | Feature-level, 500–1,500 lines      | `feature-docs`              |
+| **Test Case Registry** | Feature doc Section 15                                  | TC-{FEATURE}-{NNN} GWT entries   | Per-test, GIVEN/WHEN/THEN           | `tdd-spec`                  |
+| **QA Dashboard**       | `docs/specs/README.md` + `docs/specs/PRIORITY-INDEX.md` | Aggregated TC dashboard indexes  | Synced view, not canonical          | `tdd-spec [direction=sync]` |
 
 **MUST ATTENTION:** Canonical locations NEVER bypassed. QA dashboard = sync artifact derived from Section 15, NEVER hand-edited. Engineering spec bundle = primary tech-agnostic layer. Business feature doc = primary stakeholder layer. Both coexist and kept in sync.
 
@@ -235,7 +235,7 @@ Source Code
 Engineering Spec (docs/specs/{app-bucket}/{system-name}/)   ← tech-agnostic, AI-grade
 Business Feature Doc (docs/business-features/)              ← stakeholder-grade, TC canonical
     ↓ Section 15 read by tdd-spec [direction=sync]
-QA Dashboard (docs/specs/{Module}/)                         ← read-only derived artifact
+QA Dashboard indexes (docs/specs/README.md + docs/specs/PRIORITY-INDEX.md) ← read-only derived artifact
     ↓ TCs implemented by integration-test skill
 {Module}.IntegrationTests/                                  ← actual test code
 ```
@@ -323,12 +323,12 @@ last_updated: { YYYY-MM-DD }
 
 ### Maintenance Anti-Patterns
 
-| Anti-Pattern                    | Signal                                         | Fix                                                        |
-| ------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
-| **Date-prefixed spec folders**  | `260419-surveys-app/`                          | Use stable paths; version history in SPEC-CHANGELOG.md     |
-| **Hand-edited QA dashboard**    | `docs/specs/{Module}/` edited directly         | ALWAYS sync from Section 15; NEVER edit dashboard manually |
-| **Duplicate canonical sources** | TCs in both feature doc and engineering spec   | Feature doc Section 15 is ONE canonical TC registry        |
-| **No CHANGELOG**                | No SPEC-CHANGELOG.md or CHANGELOG.md in module | Maintain change history; staleness audits depend on it     |
+| Anti-Pattern                    | Signal                                                                   | Fix                                                        |
+| ------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| **Date-prefixed spec folders**  | `260419-surveys-app/`                                                    | Use stable paths; version history in SPEC-CHANGELOG.md     |
+| **Hand-edited QA dashboard**    | `docs/specs/README.md` or `docs/specs/PRIORITY-INDEX.md` edited directly | ALWAYS sync from Section 15; NEVER edit dashboard manually |
+| **Duplicate canonical sources** | TCs in both feature doc and engineering spec                             | Feature doc Section 15 is ONE canonical TC registry        |
+| **No CHANGELOG**                | No SPEC-CHANGELOG.md or CHANGELOG.md in module                           | Maintain change history; staleness audits depend on it     |
 
 ---
 
@@ -453,7 +453,7 @@ And {additional verification}
 
 - {Boundary condition} → {Expected outcome}
 
-**Evidence:** `{FilePath}:{LineRange}` or `TBD (pre-implementation)`
+**Evidence:** `[Source: {FilePath}:{LineRange}]` or `TBD (pre-implementation)`
 **IntegrationTest:** `{TestProject}/{TestFile}.cs::{MethodName}` or `Untested`
 **Status:** Tested | Untested | Planned
 

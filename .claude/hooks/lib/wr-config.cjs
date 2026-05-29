@@ -13,6 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { resolvePortabilityTokens } = require('./project-config-loader.cjs');
 
 /**
  * Get default workflow configuration
@@ -68,6 +69,33 @@ function getDefaultConfig() {
 }
 
 /**
+ * Resolve portability path tokens in every workflow's description + injectContext
+ * at the single load boundary, so all downstream consumers (catalog, injected
+ * protocol, p2/p3 step builders) receive concrete project paths — never a raw
+ * `{configured-...}` token. Fail-open: any error leaves config unmodified.
+ * @param {Object} config - parsed workflows.json
+ * @returns {Object} same config, tokens resolved in place
+ */
+function resolveWorkflowTokens(config) {
+  try {
+    const workflows = config && config.workflows;
+    if (!workflows || typeof workflows !== 'object') return config;
+    for (const wf of Object.values(workflows)) {
+      if (!wf || typeof wf !== 'object') continue;
+      if (typeof wf.description === 'string') {
+        wf.description = resolvePortabilityTokens(wf.description);
+      }
+      if (wf.preActions && typeof wf.preActions.injectContext === 'string') {
+        wf.preActions.injectContext = resolvePortabilityTokens(wf.preActions.injectContext);
+      }
+    }
+  } catch (e) {
+    console.error(`[workflow-router] token resolve failed: ${e.message}`);
+  }
+  return config;
+}
+
+/**
  * Load workflow configuration from file or defaults
  * @returns {Object} Workflow configuration
  */
@@ -80,14 +108,14 @@ function loadWorkflowConfig() {
   for (const configPath of configPaths) {
     if (fs.existsSync(configPath)) {
       try {
-        return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        return resolveWorkflowTokens(JSON.parse(fs.readFileSync(configPath, 'utf-8')));
       } catch (e) {
         console.error(`[workflow-router] Failed to parse ${configPath}: ${e.message}`);
       }
     }
   }
 
-  // Return default config if no file found
+  // Return default config if no file found (defaults carry no portability tokens)
   return getDefaultConfig();
 }
 

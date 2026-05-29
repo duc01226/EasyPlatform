@@ -37,7 +37,7 @@ license: Complete terms in LICENSE.txt
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
 - For screenshot inputs, extract design guidelines FIRST before coding
-- Never use generic fonts (Inter, Roboto, Arial) or cliched color schemes
+- Choose distinctive, characterful fonts and a bold cohesive palette — never use generic fonts (Inter, Roboto, Arial) or cliched color schemes
 - Match implementation complexity to aesthetic vision (maximalist = elaborate, minimalist = precise)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -189,7 +189,7 @@ Remember: Claude is capable of extraordinary creative work. Don't hold back, sho
 <!-- SYNC:ui-system-context:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-      <!-- /SYNC:ui-system-context:reminder -->
+    <!-- /SYNC:ui-system-context:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

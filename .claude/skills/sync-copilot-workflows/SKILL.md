@@ -22,6 +22,8 @@ description: '[AI & Tools] Use when you need to sync workflow catalog from workf
 
 ## When to Use
 
+> **Scope vs related skills:** Use for the **`workflows.json` catalog ONLY** (fast, no AI). To also sync docs/dev-rules → `/sync-to-copilot`. For skills/prompts/agents or Copilot→Claude → `/ai-dev-tools-sync`.
+
 - After adding, removing, or modifying workflows in `.claude/workflows.json`
 - After running `/ai-dev-tools-sync` to ensure workflow parity
 - When copilot workflow catalog is stale or drifted

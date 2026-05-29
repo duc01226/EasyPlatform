@@ -23,6 +23,7 @@ const useSkills = !args.has('--no-skills');
 const copySkills = args.has('--copy-skills');
 const normalizeSourceSkills = args.has('--normalize-source-skills');
 const MIRROR_EXCLUDED_DIRS = new Set(['.git', '.hg', '.svn', '.venv', 'node_modules', '__pycache__']);
+const TEXT_FILE_EXTENSIONS = new Set(['.cjs', '.css', '.html', '.js', '.json', '.lock', '.md', '.mjs', '.py', '.sh', '.toml', '.ts', '.tsx', '.yaml', '.yml']);
 const CODEX_PROTOCOLS_START = '<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->';
 const CODEX_PROTOCOLS_END = '<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->';
 const CODEX_PROJECT_REFERENCE_START = '<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->';
@@ -367,7 +368,7 @@ function normalizePromptProtocolText(text) {
     return normalized.length > 0 ? normalized : null;
 }
 
-async function loadWorkflowConfirmationMode() {
+async function loadCkConfig() {
     const ckConfigPath = path.join(rootDir, '.claude', '.ck.json');
     let ckConfigRaw;
     try {
@@ -376,14 +377,13 @@ async function loadWorkflowConfirmationMode() {
         if (err.code !== 'ENOENT') {
             console.warn(`[codex-migrate] could not read ${ckConfigPath}: ${err.message}`);
         }
-        return 'always';
+        return {};
     }
     try {
-        const mode = JSON.parse(ckConfigRaw)?.workflow?.confirmationMode;
-        return mode === 'never' ? 'never' : 'always';
+        return JSON.parse(ckConfigRaw);
     } catch (err) {
         console.warn(`[codex-migrate] malformed JSON in ${ckConfigPath}: ${err.message}`);
-        return 'always';
+        return {};
     }
 }
 
@@ -393,11 +393,15 @@ async function buildAlwaysInjectedPromptProtocolBlock() {
 
     try {
         const promptInjections = require(promptInjectionsPath);
-        const confirmationMode = await loadWorkflowConfirmationMode();
+        const ckConfig = await loadCkConfig();
+        const mode = ckConfig?.workflow?.confirmationMode;
+        const confirmationMode = mode === 'never' ? 'never' : 'always';
+        const portability = ckConfig?.portability ?? {};
+        // Per-skill mirrors must not inline learned-lessons content. The
+        // project-reference loading block points Codex to docs/project-reference/lessons.md.
         const sections = [
-            normalizePromptProtocolText(promptInjections.injectWorkflowProtocol?.('', confirmationMode)),
+            normalizePromptProtocolText(promptInjections.injectWorkflowProtocol?.('', confirmationMode, portability)),
             normalizePromptProtocolText(promptInjections.injectCriticalContext?.('', true)),
-            normalizePromptProtocolText(promptInjections.injectLessons?.('', true)),
             normalizePromptProtocolText(promptInjections.injectLessonReminder?.('')),
             normalizePromptProtocolText(
                 '**[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.'
@@ -599,6 +603,33 @@ async function pathExists(filePath) {
     }
 }
 
+async function normalizeTextFileLineEndings(filePath) {
+    if (!TEXT_FILE_EXTENSIONS.has(path.extname(filePath).toLowerCase())) return false;
+
+    const content = await fs.readFile(filePath, 'utf8');
+    if (!content.includes('\r')) return false;
+
+    await fs.writeFile(filePath, content.replace(/\r\n/g, '\n').replace(/\r/g, '\n'), 'utf8');
+    return true;
+}
+
+async function normalizeTextLineEndingsUnderDir(dirPath) {
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+    let normalized = 0;
+
+    for (const entry of entries) {
+        const childPath = path.join(dirPath, entry.name);
+        if (entry.isDirectory()) {
+            if (MIRROR_EXCLUDED_DIRS.has(entry.name)) continue;
+            normalized += await normalizeTextLineEndingsUnderDir(childPath);
+        } else if (entry.isFile() && await normalizeTextFileLineEndings(childPath)) {
+            normalized += 1;
+        }
+    }
+
+    return normalized;
+}
+
 async function isManagedAgentsSkillsMirror(dirPath) {
     return pathExists(path.join(dirPath, '.codex-mirror.json'));
 }
@@ -696,6 +727,7 @@ async function setupSkills() {
         force: true,
         filter: sourcePath => !sourcePath.split(path.sep).some(segment => MIRROR_EXCLUDED_DIRS.has(segment))
     });
+    await normalizeTextLineEndingsUnderDir(agentsSkillsDir);
     await canonicalizeSkillManifestNames(agentsSkillsDir);
     const alwaysInjectedProtocolBlock = await buildAlwaysInjectedPromptProtocolBlock();
     const sanitizedCount = await sanitizeSkillMirror(agentsSkillsDir, skillReferenceMap, alwaysInjectedProtocolBlock);
@@ -712,6 +744,7 @@ async function setupCodexNotifications() {
     await ensureDir(path.dirname(codexConfigPath));
     await ensureDir(codexScriptsDir);
     await fs.copyFile(bundledNotificationScriptPath, codexNotificationScriptPath);
+    await normalizeTextFileLineEndings(codexNotificationScriptPath);
 
     let existingConfig = '';
     try {

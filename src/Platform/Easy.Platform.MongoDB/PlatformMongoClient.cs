@@ -24,6 +24,8 @@ public class PlatformMongoClient : IPlatformMongoClient
                 .WithIf(options.Value.MaxConnectionIdleTimeSeconds.HasValue, p => p.MaxConnectionIdleTime = options.Value.MaxConnectionIdleTimeSeconds!.Value.Seconds())
                 .ToMongoUrl());
 
+        if (options.Value.ClusterConfigurator != null) clientSettings.ClusterConfigurator = options.Value.ClusterConfigurator;
+
         MongoClient = new MongoClient(clientSettings);
     }
 

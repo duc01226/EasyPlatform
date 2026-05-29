@@ -6,7 +6,6 @@ description: '[Documentation] Use when updating impacted documentation after cod
 > Codex compatibility note:
 >
 > - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.
 > - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
@@ -75,6 +74,8 @@ git diff → Triage → Phase 1: Project Docs (inline)
 - Pass triage context (changed files, detected modules, impacted sections) to each sub-skill via `$ARGUMENTS`
 - MUST ATTENTION dedup module list — backend + frontend changes for same module = ONE entry
 - MUST ATTENTION track step state live: `in_progress` -> execute -> `completed` (or `completed` with skip reason)
+- For `.claude` skills/hooks/workflows/sync tooling changes, flag generated mirror sync status (`npm run codex:sync` completed or explicit N/A). `docs-update` routes and reports this check; it does not edit generated mirrors directly.
+- **[BLOCKING] Tech-agnostic output:** when updating feature-docs/specs/README/INDEX, do NOT introduce framework/product/language/design-pattern names into prose or headings — preserve the evidence-field exception (`**Evidence**`, `IntegrationTest`, `[Source:]`, frontmatter, Mermaid). Authority: `docs/project-reference/spec-principles.md` §3.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80%.**
 
@@ -136,7 +137,7 @@ git diff → Triage → Phase 1: Project Docs (inline)
 
 | Changed File Pattern                                                                | Impact Category                                | Phases to Run |
 | ----------------------------------------------------------------------------------- | ---------------------------------------------- | ------------- |
-| `src/Services/**`                                                                   | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
+| `{backend-source-paths}/**` from `docs/project-config.json`                         | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
 | `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**`                     | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
 | `{legacy-frontend-dir}/**Client/**`                                                 | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
 | `src/{Framework}/**`                                                                | project-docs only                              | 1 only        |
@@ -158,25 +159,25 @@ Extract unique module names from changed paths. **MUST ATTENTION dedup:** `uniqu
 
 | Changed File Path Pattern                           | Detected Module                  |
 | --------------------------------------------------- | -------------------------------- |
-| `src/Services/{Module}/**`                          | {Module}                         |
+| `{backend-module-path}/{Module}/**`                 | {Module}                         |
 | `{frontend-apps-dir}/{app-name}/**`                 | {Module} (map app to module)     |
 | `{frontend-libs-dir}/{domain-lib}/src/{feature}/**` | {Module} (map feature to module) |
 | `{legacy-frontend-dir}/{Module}Client/**`           | {Module}                         |
 
-Build project-specific mapping:
+Build project-specific mapping from `docs/project-config.json` and project reference docs, not from hard-coded skill paths:
 
 ```bash
-ls -d src/Services/*/
-ls -d docs/business-features/*/
+node -e "const cfg=require('./docs/project-config.json'); console.log(JSON.stringify({sourcePaths: cfg.codebaseHealth?.sourcePaths, contextGroups: cfg.contextGroups?.map(g => ({name:g.name,pathRegexes:g.pathRegexes})), featureDocPath: cfg.workflowPatterns?.featureDocPath}, null, 2))"
+node -e "const cfg=require('./docs/project-config.json'); if (!cfg.workflowPatterns?.featureDocPath) { throw new Error('workflowPatterns.featureDocPath missing; initialize project config before docs-update'); } process.stdout.write(cfg.workflowPatterns.featureDocPath)"
 ```
 
 ### Step 0.5: Check Existing Docs for Each Module
 
 For each detected module:
 
-1. Check `docs/business-features/{Module}/` exists
-2. Check `docs/business-features/{Module}/detailed-features/` has docs
-3. Check `docs/specs/{Module}/` exists
+1. Check `{feature-docs-root}/{Module}/` exists using `workflowPatterns.featureDocPath`
+2. Check `{feature-docs-root}/{Module}/{configured-detail-docs-path}/` has docs, or use the project reference doc's feature-doc layout
+3. Check `{spec-docs-root}/{Module}/` exists using project config/reference docs
 4. Record: `hasFeatureDocs`, `hasTestSpecs`, `hasTestSpecsDashboard`
 
 ---
@@ -325,6 +326,8 @@ Output: updated spec files + SPEC-CHANGELOG.md entry.
 | User says "sync test specs"            | `sync`                   |
 | Tests exist with annotations, no docs  | `from-integration-tests` |
 
+**PBI/idea artifact route:** when changed artifacts match configured PBI/idea artifact roots from `docs/project-config.json` or project reference docs, `docs-update` performs detection/delegation only. It may identify affected module, feature doc, and TC scope, then route to `$feature-docs`, `$tdd-spec`, or `$tdd-spec [direction=sync]`. It must not generate TC content directly from PBI/idea artifacts or edit Section 15 itself. If artifact roots are not configured, ask the user to initialize project config/reference docs before assuming a path.
+
 ### Step 3.2: Invoke `$tdd-spec`
 
 ```
@@ -405,6 +408,7 @@ ALWAYS write full report to `plans/reports/docs-update-{YYMMDD}-{HHMM}.md`:
 
 **Triage:** {N} files changed → {categories detected}
 **Modules detected:** {module list}
+**Generated mirror sync:** {Completed / N/A / Required before close}
 
 **Phase 1 — Project Docs:**
 
@@ -443,14 +447,15 @@ ALWAYS write full report to `plans/reports/docs-update-{YYMMDD}-{HHMM}.md`:
 
 ## Decision Matrix: When to Use docs-update vs Direct Skill
 
-| Scenario                                       | Use docs-update?             | Use skill directly?          |
-| ---------------------------------------------- | ---------------------------- | ---------------------------- |
-| Post-implementation doc sync (any code change) | **Yes** — full orchestration | —                            |
-| Create new feature docs from scratch           | No                           | `$feature-docs`              |
-| Generate TCs for specific PBI (TDD-first)      | No                           | `$tdd-spec`                  |
-| Sync dashboard only (no code changes)          | No                           | `$tdd-spec [direction=sync]` |
-| Workflow step after `$code` or `$fix`          | **Yes** — full orchestration | —                            |
-| User asks "update docs after my changes"       | **Yes** — full orchestration | —                            |
+| Scenario                                       | Use docs-update?             | Use skill directly?                        |
+| ---------------------------------------------- | ---------------------------- | ------------------------------------------ |
+| Post-implementation doc sync (any code change) | **Yes** — full orchestration | —                                          |
+| Create new feature docs from scratch           | No                           | `$feature-docs`                            |
+| Generate TCs for specific PBI (TDD-first)      | No                           | `$tdd-spec`                                |
+| Route PBI/idea artifact changes                | Yes — detection/delegation   | `$feature-docs` + `$tdd-spec` owner skills |
+| Sync dashboard only (no code changes)          | No                           | `$tdd-spec [direction=sync]`               |
+| Workflow step after `$code` or `$fix`          | **Yes** — full orchestration | —                                          |
+| User asks "update docs after my changes"       | **Yes** — full orchestration | —                                          |
 
 ---
 
@@ -458,14 +463,14 @@ ALWAYS write full report to `plans/reports/docs-update-{YYMMDD}-{HHMM}.md`:
 
 Pass caller context via `$ARGUMENTS` to skip redundant triage or narrow scope:
 
-| Key             | Example                                 | Effect                                |
-| --------------- | --------------------------------------- | ------------------------------------- |
-| `modules`       | `modules=Growth,Employee`               | Skip auto-detect; use provided list   |
-| `changed_files` | `changed_files=src/Services/Growth/...` | Skip git diff; use provided file list |
-| `phases`        | `phases=2,3`                            | Run only specified phases             |
-| `mode`          | `mode=update`                           | Override feature-docs mode detection  |
-| `tc_mode`       | `tc_mode=implement-first`               | Override tdd-spec mode detection      |
-| `skip_phases`   | `skip_phases=1,2.5`                     | Skip specific phases                  |
+| Key             | Example                                              | Effect                                |
+| --------------- | ---------------------------------------------------- | ------------------------------------- |
+| `modules`       | `modules=ModuleA,ModuleB`                            | Skip auto-detect; use provided list   |
+| `changed_files` | `changed_files=<configured-source-path>/ModuleA/...` | Skip git diff; use provided file list |
+| `phases`        | `phases=2,3`                                         | Run only specified phases             |
+| `mode`          | `mode=update`                                        | Override feature-docs mode detection  |
+| `tc_mode`       | `tc_mode=implement-first`                            | Override tdd-spec mode detection      |
+| `skip_phases`   | `skip_phases=1,2.5`                                  | Skip specific phases                  |
 
 <additional_requests>
 $ARGUMENTS
@@ -690,9 +695,11 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure:
+3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
     - Question: "Which workflow do you want to activate?"
     - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
     - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
@@ -702,63 +709,8 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-
-## Learned Lessons
-
-# Lessons Learned
-
-> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
-
-## Quick Summary
-
-**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
-
-**Top Rules (apply always):**
-
-- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
-- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
-- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
-- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
-- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
-- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
-
----
-
-## Debugging & Root Cause Reasoning
-
-- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. ALWAYS cheapest check first.
-- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
-- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
-- [2026-04-01] **Code caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
-
-## Architecture Invariants
-
-- [2026-05-09] **User name materialization MUST ATTENTION go through `User.UpdateName(firstName, middleName, lastName)`.** Domain method (`src/Services/bravoTALENTS/Employee.Domain/AggregatesModel/User.cs:202-209`) recomputes `FullName` as single source of truth. Three sites still manually patch `user.FullName = user.GetFullName()` after assigning name fields — `src/Services/bravoTALENTS/Employee.Application/Factories/UserFactory.cs:50`, `src/Services/bravoSURVEYS/LearningPlatform.Application/ApplyPlatform/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:102`, `src/Services/bravoINSIGHTS/Analyze/Analyze.Application/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:66`. Next time touching any: replace manual patch with `user.UpdateName(...)` to maintain invariant.
-- [2026-03-31] **ParallelAsync + repo/UoW MUST ATTENTION use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
-- [2026-03-31] **Bus message naming MUST ATTENTION include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) leaders. Feature services (Growth, Talents) sending to core MUST ATTENTION use `{CoreServiceName}...RequestBusMessage` — NEVER define own event for core to consume.
-
-## Naming & Abstraction
-
-- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
-
-## Environment & Tooling
-
-- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be bash PATH under those names. Check: `where python` / `where py`. ALWAYS prefer `py` (Windows Python Launcher) one-liners, `node` if JS alternative exists.
-
-> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons `.claude/hooks/lib/prompt-injections.cjs`.
-
----
-
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
-- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
-- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
-- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
-- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
-- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
-- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
-- **IMPORTANT MUST ATTENTION** every claim needs `file:line` evidence — confidence >80% to act, NEVER speculate
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

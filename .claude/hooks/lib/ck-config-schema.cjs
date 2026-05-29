@@ -59,6 +59,16 @@ const CK_SCHEMA = {
       staleDays: { type: "number", required: false, min: 1, max: 365 },
     },
   },
+  portability: {
+    type: "object",
+    required: false,
+    properties: {
+      enabled: { type: "boolean", required: false },
+      rule: { type: "string", required: false },
+      projectConfigPath: { type: "string", required: false },
+      docsIndexPath: { type: "string", required: false },
+    },
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

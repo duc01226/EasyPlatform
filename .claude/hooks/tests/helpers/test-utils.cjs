@@ -98,7 +98,7 @@ function createTempDir() {
 
 function cleanupTempDir(dir) {
   if (dir && dir.includes(TEST_TEMP_PREFIX) && fs.existsSync(dir)) {
-    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
 
@@ -109,7 +109,7 @@ function cleanupAllTestDirs() {
     for (const entry of entries) {
       if (entry.startsWith(TEST_TEMP_PREFIX)) {
         const fullPath = path.join(tmpDir, entry);
-        fs.rmSync(fullPath, { recursive: true, force: true });
+        fs.rmSync(fullPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
       }
     }
   } catch (e) { /* ignore */ }

@@ -2,7 +2,7 @@
 /**
  * Project Config Loader
  *
- * Loads docs/project-config.json and provides helper functions
+ * Loads the configured project config file and provides helper functions
  * for hooks that need project-specific path patterns.
  *
  * Usage:
@@ -15,9 +15,42 @@
 
 const fs = require('fs');
 const path = require('path');
+const { loadConfig, DEFAULT_PORTABILITY } = require('./ck-config-loader.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const CONFIG_PATH = path.join(PROJECT_DIR, 'docs', 'project-config.json');
+
+function resolveConfiguredPath(configuredPath, fallbackPath) {
+    const rawPath = configuredPath || fallbackPath;
+    return path.isAbsolute(rawPath) ? rawPath : path.join(PROJECT_DIR, rawPath);
+}
+
+function getConfiguredProjectConfigPath() {
+    try {
+        const ckConfig = loadConfig({
+            includeProject: false,
+            includeAssertions: false,
+            includeLocale: false
+        });
+        return resolveConfiguredPath(ckConfig.portability?.projectConfigPath, DEFAULT_PORTABILITY.projectConfigPath);
+    } catch {
+        return resolveConfiguredPath(DEFAULT_PORTABILITY.projectConfigPath);
+    }
+}
+
+function getConfiguredDocsIndexPath() {
+    try {
+        const ckConfig = loadConfig({
+            includeProject: false,
+            includeAssertions: false,
+            includeLocale: false
+        });
+        return resolveConfiguredPath(ckConfig.portability?.docsIndexPath, DEFAULT_PORTABILITY.docsIndexPath);
+    } catch {
+        return resolveConfiguredPath(DEFAULT_PORTABILITY.docsIndexPath);
+    }
+}
+
+const CONFIG_PATH = getConfiguredProjectConfigPath();
 
 let _cache = null;
 
@@ -33,6 +66,48 @@ function loadProjectConfig() {
         _cache = {};
     }
     return _cache;
+}
+
+// Portability path tokens emitted in workflows.json (description + injectContext).
+// Resolved to concrete project roots at each runtime's load boundary so the AI
+// never receives a literal `{configured-...}` token.
+const SPEC_ROOT_TOKEN = /\{configured-engineering-spec-root\}/g;
+const FEATURE_ROOT_TOKEN = /\{configured-feature-doc-root\}/g;
+
+/**
+ * Strip trailing slashes from a configured root path.
+ * Tokens are always authored as `{configured-...-root}/...` (the slash follows the
+ * token), and config values carry a trailing slash (e.g. "docs/specs/"), so the
+ * resolved value MUST drop its trailing slash — otherwise `docs/specs//{system}`.
+ * @param {string} p
+ * @returns {string}
+ */
+function stripTrailingSlash(p) {
+    return typeof p === 'string' ? p.replace(/\/+$/, '') : p;
+}
+
+/**
+ * Resolve portability path tokens in workflow text destined for the AI.
+ * Substitutes `{configured-engineering-spec-root}` and `{configured-feature-doc-root}`
+ * with the project's configured roots (workflowPatterns.engineeringSpecRoot /
+ * .featureDocPath), trailing slash stripped.
+ *
+ * Single source of truth — the Codex mirror generator
+ * (.claude/scripts/codex/sync-context-workflows.mjs) requires THIS function so both
+ * runtimes resolve identically. Keep token set changes here only.
+ *
+ * @param {string} text - raw workflow text (description / injectContext)
+ * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
+ * @returns {string} text with tokens resolved (input returned unchanged when non-string)
+ */
+function resolvePortabilityTokens(text, config) {
+    if (typeof text !== 'string' || !text) return text;
+    const wp = (config || loadProjectConfig()).workflowPatterns || {};
+    const specRoot = stripTrailingSlash(wp.engineeringSpecRoot || 'docs/specs');
+    const featureRoot = stripTrailingSlash(wp.featureDocPath || 'docs/business-features');
+    return text
+        .replace(SPEC_ROOT_TOKEN, () => specRoot)
+        .replace(FEATURE_ROOT_TOKEN, () => featureRoot);
 }
 
 /**
@@ -435,6 +510,9 @@ function generateProjectSummary(config) {
 }
 
 module.exports = {
+    CONFIG_PATH,
+    getConfiguredProjectConfigPath,
+    getConfiguredDocsIndexPath,
     loadProjectConfig,
     buildRegexMap,
     buildPatternList,
@@ -447,5 +525,6 @@ module.exports = {
     isMultilingualProject,
     isConfigPopulated,
     isKnowledgePath,
-    generateProjectSummary
+    generateProjectSummary,
+    resolvePortabilityTokens
 };

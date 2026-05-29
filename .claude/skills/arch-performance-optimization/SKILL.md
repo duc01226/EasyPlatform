@@ -17,9 +17,9 @@ description: '[Architecture] Use when analyzing and improving performance for da
 
 **Key Rules:**
 
-- Never use `SELECT *` or unbounded result sets in production
+- Project only needed columns and bound every result set (paging/limits) in production; never use `SELECT *` or unbounded queries — why: unbounded reads spike memory and latency under real data volume
 - Always use async I/O; never block threads with `.Result`
-- Avoid N+1 queries — use eager loading or batch fetching
+- Use eager loading or batch fetching to collapse N+1 query patterns
 - Use bounded parallelism (`ParallelAsync` with `maxConcurrent`) for background jobs
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -309,7 +309,7 @@ foreach (var id in ids)
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

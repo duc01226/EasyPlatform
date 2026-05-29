@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Standalone orchestrator equivalent to `npm run codex:sync`.
-// Runs all 7 stages sequentially, fails fast on first non-zero exit.
+// Runs all stages sequentially, fails fast on first non-zero exit.
 // No npm dependency — pure node + spawned subprocesses.
 
 import { spawn } from "node:child_process";
@@ -45,6 +45,7 @@ const stages = [
     { id: "wf-cycle", label: "verify-wf-cycle",  cmd: "node", args: [path.join(sourceScriptsDir, "verify-workflow-cycle-compliance.mjs")] },
     { id: "sk-proto", label: "verify-sk-proto",  cmd: "node", args: [path.join(sourceScriptsDir, "verify-skill-protocol-compliance.mjs")] },
     { id: "residue",  label: "verify-residue",   cmd: "node", args: [path.join(sourceScriptsDir, "verify-no-project-residue.mjs")] },
+    { id: "sdd",      label: "verify-sdd",       cmd: "node", args: [path.join(sourceScriptsDir, "verify-sdd-semantic-compliance.mjs")] },
 ];
 
 function shouldRun(id) {
@@ -53,14 +54,17 @@ function shouldRun(id) {
     return true;
 }
 
-function runStage(stage, index, total) {
-    return new Promise(async (resolve, reject) => {
-        const argv = stage.argsAsync ? await stage.argsAsync() : stage.args;
-        const label = `[${index}/${total}] ${stage.label}`;
-        process.stdout.write(`${label} ...`);
-        if (verbose) process.stdout.write(`\n  $ ${stage.cmd} ${argv.join(" ")}\n`);
+async function runStage(stage, index, total) {
+    // Resolve async argv OUTSIDE the Promise executor: a throw here must reject
+    // runStage's promise, not vanish into a discarded async-executor promise
+    // (which would leave the orchestrator awaiting a Promise that never settles).
+    const argv = stage.argsAsync ? await stage.argsAsync() : stage.args;
+    const label = `[${index}/${total}] ${stage.label}`;
+    process.stdout.write(`${label} ...`);
+    if (verbose) process.stdout.write(`\n  $ ${stage.cmd} ${argv.join(" ")}\n`);
 
-        const startedAt = Date.now();
+    const startedAt = Date.now();
+    return new Promise((resolve, reject) => {
         const child = spawn(stage.cmd, argv, {
             cwd: rootDir,
             stdio: verbose ? "inherit" : ["ignore", "pipe", "pipe"],

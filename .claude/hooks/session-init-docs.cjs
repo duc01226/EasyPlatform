@@ -6,10 +6,15 @@
  *   - project-config-init.cjs  (config skeleton creation + schema validation)
  *   - init-reference-docs.cjs  (placeholder reference doc creation)
  *
- * Phase 1: Ensure docs/project-config.json exists (create skeleton if missing),
+ * Phase 1: Ensure the configured project config exists (create skeleton if missing),
  *          validate schema, output warnings for errors.
  * Phase 2: Create placeholder reference docs for any missing files,
  *          suggest scan skills for unpopulated placeholders.
+ *
+ * Generic skills rely on this hook as the project-specific extension point:
+ * skills stay portable, while local conventions live in configured project
+ * config and reference-doc paths. Defaults are docs/project-config.json and
+ * docs/project-reference/* unless portability paths override them.
  *
  * Idempotent — skips files that already exist.
  *
@@ -38,11 +43,17 @@ const {
 } = require('./lib/session-init-helpers.cjs');
 const { loadConfig } = require('./lib/ck-config-loader.cjs');
 const { SCAN_STALE_PATH, ensureProjectTmpDir } = require('./lib/ck-paths.cjs');
+const {
+    getConfiguredProjectConfigPath,
+    getConfiguredDocsIndexPath
+} = require('./lib/project-config-loader.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const CONFIG_PATH = path.join(PROJECT_DIR, 'docs', 'project-config.json');
-const DOCS_DIR = path.join(PROJECT_DIR, 'docs');
-const REF_DOCS_DIR = path.join(DOCS_DIR, 'project-reference');
+const CONFIG_PATH = getConfiguredProjectConfigPath();
+const CONFIG_DIR = path.dirname(CONFIG_PATH);
+const CONFIG_DISPLAY_PATH = path.relative(PROJECT_DIR, CONFIG_PATH).replace(/\\/g, '/') || path.basename(CONFIG_PATH);
+const DOCS_INDEX_PATH = getConfiguredDocsIndexPath();
+const REF_DOCS_DIR = path.dirname(DOCS_INDEX_PATH);
 
 // =============================================================================
 // MAIN EXECUTION
@@ -57,9 +68,9 @@ function main() {
         // (no content directories besides .claude, .git, etc.)
         if (!hasProjectContent()) process.exit(0);
 
-        // Ensure docs/ directory exists
-        if (!fs.existsSync(DOCS_DIR)) {
-            fs.mkdirSync(DOCS_DIR, { recursive: true });
+        // Ensure configured project config directory exists
+        if (!fs.existsSync(CONFIG_DIR)) {
+            fs.mkdirSync(CONFIG_DIR, { recursive: true });
         }
 
         // =====================================================================
@@ -76,14 +87,14 @@ function main() {
 
         // Schema validation errors — always warn
         if (status.hasSchemaErrors && status.schemaErrors[0] !== 'Invalid JSON') {
-            const output = ['', '## ⚠️ Project Config Schema Validation Failed', '', '`docs/project-config.json` has schema errors that may break hooks:', ''];
+            const output = ['', '## ⚠️ Project Config Schema Validation Failed', '', `\`${CONFIG_DISPLAY_PATH}\` has schema errors that may break hooks:`, ''];
             for (const err of status.schemaErrors) {
                 output.push(`- **ERROR:** ${err}`);
             }
             output.push('', 'Run `/project-config` to fix the config structure.', '');
             console.log(output.join('\n'));
         } else if (status.hasSchemaErrors) {
-            console.log('\n## ⚠️ `docs/project-config.json` contains invalid JSON. Run `/project-config` to fix.\n');
+            console.log(`\n## ⚠️ \`${CONFIG_DISPLAY_PATH}\` contains invalid JSON. Run \`/project-config\` to fix.\n`);
         }
 
         // Init enforcement is handled by init-prompt-gate.cjs (UserPromptSubmit exit 2).
@@ -104,7 +115,7 @@ function main() {
         const referenceDocs = getReferenceDocs();
         const created = [];
 
-        // Ensure docs/project-reference/ directory exists
+        // Ensure configured reference docs directory exists
         if (!fs.existsSync(REF_DOCS_DIR)) {
             fs.mkdirSync(REF_DOCS_DIR, { recursive: true });
         }
@@ -120,7 +131,8 @@ function main() {
                 }
                 const content = generatePlaceholderContent(doc);
                 fs.writeFileSync(filePath, content, 'utf-8');
-                created.push(`- \`docs/project-reference/${doc.filename}\` — ${doc.purpose || 'Reference document'}`);
+                const relativeFilePath = path.relative(PROJECT_DIR, filePath).replace(/\\/g, '/');
+                created.push(`- \`${relativeFilePath}\` — ${doc.purpose || 'Reference document'}`);
             }
         }
 

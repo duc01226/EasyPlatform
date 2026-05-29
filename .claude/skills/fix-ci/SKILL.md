@@ -26,7 +26,7 @@ disable-model-invocation: false
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-- Do NOT assume the first hypothesis is correct — verify with actual code traces
+- Verify each hypothesis against an actual code trace before acting — do NOT assume the first hypothesis is correct — why: the first guess is usually the nearest-attention trap, not the cause
 - Every root cause claim must include `file:line` evidence
 - If you cannot prove a root cause with a code trace, state "hypothesis, not confirmed"
 - Question assumptions: "Is this really the cause?" → trace the actual execution path
@@ -68,6 +68,11 @@ disable-model-invocation: false
 
 > **Skill Variant:** Variant of `/fix` — specialized for CI/GitHub Actions log analysis.
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -158,8 +163,8 @@ disable-model-invocation: false
 > 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
 > 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
 > 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
 >
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 

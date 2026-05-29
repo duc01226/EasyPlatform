@@ -6,7 +6,6 @@ description: '[Workflow] Use when activating the Code Review workflow for review
 > Codex compatibility note:
 >
 > - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.
 > - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
@@ -55,9 +54,12 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** Review codebase or specific scope, fix issues found, then spawn a **fresh code-reviewer sub-agent** for unbiased re-review — repeat until clean.
 
-**Sequence:** $review-architecture → $code-simplifier → $code-review → $performance → $integration-test-review → $integration-test-verify → $plan-hard → $plan-validate → $why-review → $cook → **fresh sub-agent re-review gate ($workflow-review WIW)\*\* → $docs-update → $watzup → $workflow-end
+**Sequence:** $review-architecture → $review-ui (if frontend changes) → $code-simplifier → $code-review → $performance → $integration-test-review → $integration-test-verify → $plan → $why-review → $plan-validate → $why-review → $cook → **fresh sub-agent re-review gate ($workflow-review WIW)\*\* → $docs-update → $watzup → $workflow-end
 
 **Key Rules:**
+
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
 
 - After `$cook` applies fixes → spawn fresh `code-reviewer` sub-agent per `SYNC:fresh-context-review` → integrate findings → fix → spawn NEW sub-agent → repeat
 - Main-agent re-review (with knowledge of its own fixes) is NOT sufficient — orchestrator-level confirmation bias
@@ -66,26 +68,49 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ---
 
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
+
 ## Mandatory Task Creation (ZERO TOLERANCE)
 
-Create EXACTLY these 14 tasks (source: `workflows.json` → `review.sequence`):
+Create EXACTLY these 16 tasks (source: `workflows.json` → `review.sequence`):
 
-| #   | Task Subject                                                                                         | Conditional?                                          |
-| --- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| 1   | `[Workflow] $review-architecture — Architecture compliance review`                                   | No                                                    |
-| 2   | `[Workflow] $code-simplifier — Simplify and refine code`                                             | No                                                    |
-| 3   | `[Workflow] $code-review — Comprehensive code review`                                                | No                                                    |
-| 4   | `[Workflow] $performance — Performance analysis`                                                     | No                                                    |
-| 5   | `[Workflow] $integration-test-review — Integration test quality review`                              | No                                                    |
-| 6   | `[Workflow] $integration-test-verify — Verify integration tests pass`                                | No                                                    |
-| 7   | `[Workflow] $plan-hard — Consolidate review findings into fix plan`                                  | Skip if all reviews PASS                              |
-| 8   | `[Workflow] $plan-validate — Critical questions on fix plan`                                         | Skip if all reviews PASS                              |
-| 9   | `[Workflow] $why-review — Sanity-check that proposed fixes are warranted`                            | Skip if all reviews PASS                              |
-| 10  | `[Workflow] $cook — Implement fixes from plan`                                                       | Skip if all reviews PASS                              |
-| 11  | `[Workflow] $workflow-review — Fresh sub-agent re-review gate (WIW: spawns code-reviewer sub-agent)` | Skip if all reviews PASS                              |
-| 12  | `[Workflow] $docs-update — Update impacted documentation`                                            | Always run (fast-exits when no business code changed) |
-| 13  | `[Workflow] $watzup — Wrap up and summarize`                                                         | No                                                    |
-| 14  | `[Workflow] $workflow-end — End workflow`                                                            | No                                                    |
+| #   | Task Subject                                                                                                                         | Conditional?                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| 1   | `[Workflow] $review-architecture — Architecture compliance review`                                                                   | No                                                                                                       |
+| 2   | `[Workflow] $review-ui — UI/frontend quality review (overflow, responsive flex, flex-vs-fixed sizing, z-index discipline, SCSS/BEM)` | Yes — skip if no files matching the project's configured frontend/UI file patterns in the reviewed scope |
+| 3   | `[Workflow] $code-simplifier — Simplify and refine code`                                                                             | No                                                                                                       |
+| 4   | `[Workflow] $code-review — Comprehensive code review`                                                                                | No                                                                                                       |
+| 5   | `[Workflow] $performance — Performance analysis`                                                                                     | No                                                                                                       |
+| 6   | `[Workflow] $integration-test-review — Integration test quality review`                                                              | No                                                                                                       |
+| 7   | `[Workflow] $integration-test-verify — Verify integration tests pass`                                                                | No                                                                                                       |
+| 8   | `[Workflow] $plan — Consolidate review findings into fix plan`                                                                       | Skip if all reviews PASS                                                                                 |
+| 9   | `[Workflow] $why-review — Design-rationale check on fix plan before validation`                                                      | Skip if all reviews PASS                                                                                 |
+| 10  | `[Workflow] $plan-validate — Critical questions on fix plan`                                                                         | Skip if all reviews PASS                                                                                 |
+| 11  | `[Workflow] $why-review — Sanity-check that proposed fixes are warranted`                                                            | Skip if all reviews PASS                                                                                 |
+| 12  | `[Workflow] $cook — Implement fixes from plan`                                                                                       | Skip if all reviews PASS                                                                                 |
+| 13  | `[Workflow] $workflow-review — Fresh sub-agent re-review gate (WIW: spawns code-reviewer sub-agent)`                                 | Skip if all reviews PASS                                                                                 |
+| 14  | `[Workflow] $docs-update — Update impacted documentation`                                                                            | Always run (fast-exits when no business code changed)                                                    |
+| 15  | `[Workflow] $watzup — Wrap up and summarize`                                                                                         | No                                                                                                       |
+| 16  | `[Workflow] $workflow-end — End workflow`                                                                                            | No                                                                                                       |
 
 NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional tasks `completed` with note "Skipped — all reviews passed".
 
@@ -96,19 +121,19 @@ NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional task
 ### Decision Logic
 
 ```
-Reviews (steps 1-6) → ALL PASS?
-  YES → skip steps 7-11, proceed to $docs-update → $watzup → $workflow-end → DONE
-  NO  → $plan-hard → $plan-validate → $why-review → $cook → FRESH SUB-AGENT RE-REVIEW GATE (step 11)
+Reviews (steps 1-7) → ALL PASS?
+  YES → skip steps 8-13, proceed to $docs-update → $watzup → $workflow-end → DONE
+  NO  → $plan → $why-review → $plan-validate → $why-review → $cook → FRESH SUB-AGENT RE-REVIEW GATE (step 13)
 ```
 
-### Fresh Sub-Agent Re-Review Gate (Step 11) — After `$cook` Applies Fixes
+### Fresh Sub-Agent Re-Review Gate (Step 13) — After `$cook` Applies Fixes
 
 1. **DO NOT** attempt main-agent re-review (main agent has confirmation bias from its own fixes)
 2. **DO** spawn a NEW `spawn_agent` tool call with `agent_type: "code-reviewer"` using the canonical template from `SYNC:review-protocol-injection` in `.claude/skills/shared/sync-inline-versions.md`. Inject all 9 required SYNC protocol blocks verbatim (`SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`). Target files = `"run git diff to see all uncommitted changes"`. Report path = `plans/reports/workflow-review-round{N}-{date}.md`.
 3. **DO** increment fresh-subagent round count in conversation context
 4. **DO** read the sub-agent's report and integrate findings — MUST NOT filter, reinterpret, or override
 5. **IF** fresh sub-agent returns PASS (zero Critical/High) → proceed through `$docs-update` → `$watzup` → `$workflow-end` → DONE
-6. **IF** fresh sub-agent returns FAIL and round count < 3 → run `$plan-hard` + `$cook` again, then spawn a NEW Agent call (never reuse the previous sub-agent) for Round N+1
+6. **IF** fresh sub-agent returns FAIL and round count < 3 → run `$plan` + `$cook` again, then spawn a NEW Agent call (never reuse the previous sub-agent) for Round N+1
 7. **IF** round count >= 3 → STOP and escalate via a direct user question — do NOT silently loop or fall back to any prior protocol
 
 ### Iteration Rules
@@ -136,11 +161,11 @@ Main Session: Review → Issues? → Plan → Fix ($cook) → Spawn fresh sub-ag
 
 ---
 
-**IMPORTANT MANDATORY Steps:** $review-architecture -> $code-simplifier -> $code-review -> $performance -> $integration-test-review -> $integration-test-verify -> $plan-hard -> $why-review -> $plan-validate -> $why-review -> $cook -> $workflow-review -> $docs-update -> $watzup -> $workflow-end
+**IMPORTANT MANDATORY Steps:** $review-architecture -> $review-ui -> $code-simplifier -> $code-review -> $performance -> $integration-test-review -> $integration-test-verify -> $plan -> $why-review -> $plan-validate -> $why-review -> $cook -> $workflow-review -> $docs-update -> $watzup -> $workflow-end
 
-**IMPORTANT MANDATORY Steps:** $review-architecture -> $code-simplifier -> $code-review -> $performance -> $integration-test-review -> $integration-test-verify -> $plan-hard -> $why-review -> $plan-validate -> $why-review -> $cook -> $workflow-review -> $docs-update -> $watzup -> $workflow-end
+**IMPORTANT MANDATORY Steps:** $review-architecture -> $review-ui -> $code-simplifier -> $code-review -> $performance -> $integration-test-review -> $integration-test-verify -> $plan -> $why-review -> $plan-validate -> $why-review -> $cook -> $workflow-review -> $docs-update -> $watzup -> $workflow-end
 
-> **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review` workflow (14 steps). When invoked as a step inside a parent workflow, it MUST execute via `spawn_agent` tool (`agent_type: "code-reviewer"`) — NEVER as an inline skill invocation call. Inline execution absorbs the entire nested workflow context into the parent session.
+> **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review` workflow (16 steps). When invoked as a step inside a parent workflow, it MUST execute via `spawn_agent` tool (`agent_type: "code-reviewer"`) — NEVER as an inline skill invocation call. Inline execution absorbs the entire nested workflow context into the parent session.
 >
 > **Sub-agent prompt must include:** target files or git diff context, task description, instruction to return SYNC:subagent-return-contract summary and write full findings to `plans/reports/`.
 >
@@ -162,7 +187,7 @@ Activate the `review` workflow. Run `$workflow-start review` with the user's pro
 >
 > **How:**
 >
-> 1. Spawn a NEW `spawn_agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 1. Spawn a NEW `spawn_agent` tool call — use `code-reviewer` agent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
 > 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
 > 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
 > 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
@@ -335,16 +360,24 @@ Activate the `review` workflow. Run `$workflow-start review` with the user's pro
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting — create ALL 14 tasks immediately
+**IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting — create ALL 16 tasks immediately
 **IMPORTANT MUST ATTENTION** after fixes in `$cook`, spawn a NEW `code-reviewer` sub-agent via the `spawn_agent` tool per `SYNC:fresh-context-review` — NEVER re-review with the main agent
 **IMPORTANT MUST ATTENTION** track fresh-subagent round count via conversation context (session-scoped) — max 3 rounds, escalate via a direct user question if exceeded
 **IMPORTANT MUST ATTENTION** PASS means a fresh sub-agent round finds ZERO Critical/High issues WITHOUT needing fixes — only then are changes ready to commit
-**IMPORTANT MUST ATTENTION** skip steps 7-11 when all reviews PASS (no fixes needed)
+**IMPORTANT MUST ATTENTION** skip steps 8-13 when all reviews PASS (no fixes needed)
 **IMPORTANT MUST ATTENTION** each step MUST invoke its skill invocation — marking completed without invocation is a violation
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
 
@@ -354,9 +387,11 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure:
+3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
     - Question: "Which workflow do you want to activate?"
     - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
     - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
@@ -366,63 +401,8 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-
-## Learned Lessons
-
-# Lessons Learned
-
-> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
-
-## Quick Summary
-
-**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
-
-**Top Rules (apply always):**
-
-- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
-- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
-- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
-- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
-- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
-- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
-
----
-
-## Debugging & Root Cause Reasoning
-
-- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. ALWAYS cheapest check first.
-- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
-- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
-- [2026-04-01] **Code caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
-
-## Architecture Invariants
-
-- [2026-05-09] **User name materialization MUST ATTENTION go through `User.UpdateName(firstName, middleName, lastName)`.** Domain method (`src/Services/bravoTALENTS/Employee.Domain/AggregatesModel/User.cs:202-209`) recomputes `FullName` as single source of truth. Three sites still manually patch `user.FullName = user.GetFullName()` after assigning name fields — `src/Services/bravoTALENTS/Employee.Application/Factories/UserFactory.cs:50`, `src/Services/bravoSURVEYS/LearningPlatform.Application/ApplyPlatform/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:102`, `src/Services/bravoINSIGHTS/Analyze/Analyze.Application/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:66`. Next time touching any: replace manual patch with `user.UpdateName(...)` to maintain invariant.
-- [2026-03-31] **ParallelAsync + repo/UoW MUST ATTENTION use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
-- [2026-03-31] **Bus message naming MUST ATTENTION include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) leaders. Feature services (Growth, Talents) sending to core MUST ATTENTION use `{CoreServiceName}...RequestBusMessage` — NEVER define own event for core to consume.
-
-## Naming & Abstraction
-
-- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
-
-## Environment & Tooling
-
-- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be bash PATH under those names. Check: `where python` / `where py`. ALWAYS prefer `py` (Windows Python Launcher) one-liners, `node` if JS alternative exists.
-
-> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons `.claude/hooks/lib/prompt-injections.cjs`.
-
----
-
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
-- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
-- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
-- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
-- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
-- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
-- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
-- **IMPORTANT MUST ATTENTION** every claim needs `file:line` evidence — confidence >80% to act, NEVER speculate
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

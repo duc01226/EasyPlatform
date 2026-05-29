@@ -77,13 +77,34 @@ Use these sources:
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80%.**
 
-- Do NOT accept correctness at face value — verify by reading actual implementations
+- Verify correctness by reading actual implementations, never accept it at face value
 - Every finding MUST include `file:line` evidence (grep results, read confirmations)
-- Cannot prove claim with trace → do NOT include in report
+- Include a claim only when a trace proves it; otherwise leave it out of the report
 - Question assumptions: "Does this actually work?" → trace call path to confirm
 - Challenge completeness: "Is this all?" → grep related usages
 - Verify side effects: "What else does this change break?" → check consumers and dependents
 - No "looks fine" without proof — state what was verified and how
+
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
 
 ## Core Principles (ENFORCE ALL)
 
@@ -195,6 +216,17 @@ ApiContract: [YES/NO] | SecurityChange: [YES/NO] | ConfigChange: [YES/NO] | Infr
 | ConfigChange TRUE   | `[Review-ConfigChange] Config/env change — all environments, no secrets committed`                   | New config key present in ALL environment configs? Hardcoded default masking missing production config? Any secret value in the diff? → CRITICAL if yes. Documented in setup guide? App fails fast if config missing?                                                 |
 | InfraChange TRUE    | `[Review-InfraChange] Infrastructure change — env parity, no dev values in prod, reproducible build` | Change affects all environments consistently? Hardcoded dev values (localhost, debug flags, dev credentials)? Pinned image/dependency versions? Local dev impact documented? CI/CD secret/permission requirements documented?                                         |
 
+**AI-SDD risk lenses:** Apply these lenses when the changed files touch specs, workflows, tooling, or shared guidance.
+
+| Lens                     | Review focus                                                                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| Contract/API/routes      | Public behavior, clients, generated specs, and regression tests still agree.                   |
+| Permissions/security     | Enforcement, display controls, negative tests, and authoritative permission definitions align. |
+| Config/flags             | All environments, examples, fail-fast behavior, and docs are current.                          |
+| Docs/spec/test drift     | Canonical specs, Section 15 TCs, dashboards, and test code are synchronized or explicitly N/A. |
+| Generated mirrors        | Shared skill/workflow/tooling changes were synced to generated agent surfaces.                 |
+| Reference-only artifacts | AI-extracted specs/TCs remain draft/reference until accepted by the owning review gate.        |
+
 **Step 3: Work through change-type tasks before dimensional review**
 
 For each created change-type task:
@@ -211,7 +243,7 @@ For each created change-type task:
 **Phase 0.7: Change Surface Detection + Dynamic Review Tasks (MANDATORY)**
 
 > **Purpose:** Let AI categorize the changes by nature and create review tasks accordingly.
-> Do NOT assume fixed categories — derive them from what the project's actual changed files are.
+> Derive categories from what the project's actual changed files are, never assume a fixed set.
 > **Think, don't classify into a preset grid.** The AI owns this step entirely.
 
 **Step 1: Derive categories from the diff**
@@ -278,6 +310,8 @@ For EACH identified category:
 | Infrastructure, CI/CD, config          | `general-purpose`       |
 | Mixed or default                       | `code-reviewer`         |
 
+> **UI/frontend dimension:** When a _Client-side logic_ or _Styles/Assets_ category surfaces frontend files matching the project's configured frontend/UI file patterns, apply the `/review-ui` checklist for that category — long-content overflow (wrap vs ellipsis+tooltip), responsive multi-screen via flex, flex-grow vs fixed sizing (prefer min/max + flex over fixed px), z-index scale discipline (no raw numbers, no `!important`), and SCSS/BEM quality. In a workflow, `/review-ui` runs as a dedicated parallel-batch member; standalone, fold its checks into the relevant category task. Skip entirely if no frontend files changed.
+
 **Step 3: Work through tasks in order**
 
 For each created task:
@@ -304,6 +338,7 @@ Check `## Plan Context` in injected context:
     - MUST ATTENTION verify **Scope match** — changed files listed in plan phases (warn on unplanned files)
     - MUST ATTENTION verify **Test evidence** — tests mapped to completed phases have evidence (file:line), not "TBD"
     - MUST ATTENTION verify **Success criteria met** — phase success criteria satisfied by changes
+    - MUST ATTENTION verify **Test intent traceability** — mapped tests name the business rule/invariant they protect, not just current behavior
 4. Add "Plan Compliance" section to review report
 
 **Phase 1: Get Changes and Create Report File**
@@ -411,7 +446,7 @@ For each changed file, identify related documentation:
 - Search for feature docs, architecture references, READMEs at module/service roots, API docs, test specs, setup guides
 - Flag any doc where content no longer matches the changed artifact
 - Flag missing docs for new features or components that should be documented
-- **Do NOT auto-fix** — flag in report with specific stale section and what changed
+- **Flag in the report** with the specific stale section and what changed, never auto-fix
 
 **Correctness & Bug Detection:** Apply `SYNC:bug-detection` — null safety, boundaries, error handling, resource cleanup, concurrency.
 
@@ -632,7 +667,7 @@ With all category findings combined, assess:
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in a workflow, MUST use `AskUserQuestion` to ask user. Do NOT judge task complexity or decide "simple enough to skip" — user decides, not you:
 >
-> 1. **Activate `review-changes` workflow** (Recommended) — review-changes → [parallel: review-architecture + review-domain-entities + performance + integration-test-review + security] → code-simplifier → code-review → integration-test-verify → why-review (synthesis) → plan → why-review → plan-validate → why-review → cook → workflow-review-changes (fresh-subagent re-review gate) → docs-update → watzup → workflow-end
+> 1. **Activate `review-changes` workflow** (Recommended) — review-changes → [parallel: review-architecture + review-ui (if frontend changes) + review-domain-entities (if domain entities changed) + performance + integration-test-review + security] → code-simplifier → code-review → integration-test-verify → why-review (synthesis) → plan → why-review → plan-validate → why-review → cook → workflow-review-changes (fresh-subagent re-review gate) → docs-update → watzup → workflow-end
 > 2. **Execute `/review-changes` directly** — run this skill standalone
 
 ---
@@ -695,14 +730,15 @@ If `architectureRules` not present in project-config.json, skip silently.
 
 ## Related Skills
 
-| Skill                      | Relationship                                                              | When to Call                                                                  |
-| -------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `/docs-update`             | **Primary downstream** — called when staleness detected                   | Triggered by Documentation Staleness findings                                 |
-| `/spec-discovery [update]` | **Spec updater** — called when artifact behavior differs from spec bundle | Call BEFORE docs-update if spec-was-wrong scenario detected                   |
-| `/feature-docs [update]`   | **Feature doc updater** — called for feature doc section changes          | Called internally by docs-update; call directly for targeted update           |
-| `/tdd-spec [update]`       | **Test spec updater** — called when test cases may be stale               | Called internally by docs-update; call directly for targeted test case update |
-| `/integration-test-review` | **Test quality gate** — detects test/spec mismatches                      | Call when changes touch areas covered by integration tests                    |
-| `/code-review`             | **Code quality** — deeper review of changed code                          | Always follows review-changes quality pass                                    |
+| Skill                      | Relationship                                                                | When to Call                                                                                                |
+| -------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `/docs-update`             | **Primary downstream** — called when staleness detected                     | Triggered by Documentation Staleness findings                                                               |
+| `/spec-discovery [update]` | **Spec updater** — called when artifact behavior differs from spec bundle   | Call BEFORE docs-update if spec-was-wrong scenario detected                                                 |
+| `/feature-docs [update]`   | **Feature doc updater** — called for feature doc section changes            | Called internally by docs-update; call directly for targeted update                                         |
+| `/tdd-spec [update]`       | **Test spec updater** — called when test cases may be stale                 | Called internally by docs-update; call directly for targeted test case update                               |
+| `/integration-test-review` | **Test quality gate** — detects test/spec mismatches                        | Call when changes touch areas covered by integration tests                                                  |
+| `/review-ui`               | **UI/frontend quality gate** — overflow, responsive flex, z-index, SCSS/BEM | Parallel-batch member; call when diff has files matching the project's configured frontend/UI file patterns |
+| `/code-review`             | **Code quality** — deeper review of changed code                            | Always follows review-changes quality pass                                                                  |
 
 ## Standalone Chain
 
@@ -781,8 +817,8 @@ review-changes (you are here)
 > 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
 > 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
 > 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
 >
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
@@ -800,7 +836,7 @@ review-changes (you are here)
 >
 > **Anti-patterns to flag:** God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
 >
-> **Serial Attention for Design Quality** — DO NOT scan all quality concerns simultaneously. Split attention misses violations that focused passes catch.
+> **Serial Attention for Design Quality** — Scan one quality dimension at a time (serial passes), not all concerns at once. — why: split attention misses violations that single-focus passes catch.
 >
 > 1. **Identify applicable dimensions** — Based on the code's language, domain, and patterns, determine which quality dimensions apply: DRY, SOLID principles (SRP/OCP/LSP/ISP/DIP), OOP idioms, cohesion/coupling, GRASP, Law of Demeter, CQRS invariants, etc. Your list is NOT fixed — derive from what the code actually does.
 > 2. **One focused pass per dimension** — Dedicate single-focus attention to EACH dimension in sequence. Do NOT mix concerns across passes.
@@ -1121,6 +1157,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > 2. **Happy Path Trace:** Walk through one complete success scenario through changed code
 > 3. **Error Path Trace:** Walk through one failure/edge case scenario through changed code
 > 4. **Acceptance Mapping:** If plan context available, map every acceptance criterion to a code change
+> 5. **Tests Verify Intent:** For test/spec changes, verify tests name the protected business rule or invariant and would fail if that intent breaks.
 >
 > **NEVER mark review PASS without completing both traces (happy + error path).**
 
@@ -1149,7 +1186,8 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > 2. For each changed code path, locate the corresponding test case — or flag as "needs test case"
 > 3. New functions/endpoints/handlers → flag for test spec creation
 > 4. If test spec evidence fields exist in the project, verify they point to actual code (`file:line`, not stale references)
-> 5. If no specs exist for a changed path → log gap and recommend `/tdd-spec`
+> 5. Verify each meaningful TC includes `Business Intent / Invariant Guarded`; flag behavior-only TCs that only mirror implementation details.
+> 6. If no specs exist for a changed path → log gap and recommend `/tdd-spec`
 >
 > **NEVER skip test mapping.** Untested code paths are the #1 source of production bugs.
 
@@ -1165,7 +1203,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > 4. If test MISSING → **MANDATORY**: use `AskUserQuestion`: "Business logic file `{file}` has no integration tests — run `/integration-test` before proceeding, or confirm tests already written?" Options: "Run `/integration-test` first" (Recommended) | "Tests already written/updated — proceed"
 > 5. Severity: **HIGH** — missing tests for changed business logic MUST be surfaced to the user; do NOT silently flag and continue
 >
-> **Do NOT silently skip. Business logic changes without test coverage require an explicit user decision via `AskUserQuestion`.**
+> **Surface every business-logic change that lacks test coverage for an explicit `AskUserQuestion` decision — never silently skip. — why: a silent skip ships untested business logic to production.**
 
 <!-- /SYNC:integration-test-sync-check -->
 
@@ -1295,6 +1333,11 @@ For each identified concern: create a `TaskCreate` sub-task, work through it wit
 
 <!-- /SYNC:task-tracking-external-report -->
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -1445,3 +1488,11 @@ For each identified concern: create a `TaskCreate` sub-task, work through it wit
 > **[FINAL PURPOSE REMINDER — MUST ATTENTION CRITICAL]**
 >
 > Ensure the changes is reasonable, no potential bugs or flaws, critical thinking hard.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

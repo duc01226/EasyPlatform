@@ -20,6 +20,7 @@
 - **Surgical changes (context-aware)** — Bug fix: every changed line traces to the bug (diff test). Review/enhancement: implement improvements AND announce them explicitly. Never silently scope-creep.
 - **Surface ambiguity before coding** — List assumptions (scope, format, volume), present interpretations with effort estimates, push back when simpler approach exists. Never pick silently and run.
 - **Goal-driven execution** — Each TaskCreate step needs explicit verify criterion: `step → verify: [observable check]`, not "make it work"
+- **Tests verify intent** — Tests must name the business rule or invariant they protect, not only assert observed behavior
 
 ---
 
@@ -258,6 +259,30 @@ For multi-step tasks, each step in `TaskCreate` must carry an explicit verify cr
 
 ---
 
+## Tests Verify Intent (MANDATORY)
+
+> **Tests must encode WHY behavior matters, not just WHAT the code currently does.**
+
+A valid test protects a business rule, invariant, user promise, or regression boundary. If a test would still pass after the protected rule is broken, the test is wrong even if it executes code.
+
+For every meaningful test or test case, state the protected intent:
+
+```
+Business Intent / Invariant Guarded: [rule this test protects]
+Failure Signal: [what change would make this test fail]
+```
+
+**Wrong:** Assert only that a method returns the current value or that no exception is thrown.
+**Right:** Assert the observable outcome that proves the intended rule still holds.
+
+When implementation and tests disagree, classify the mismatch before changing either side:
+
+- Spec/test is stale: update the test/spec to the intended rule.
+- Source is wrong: fix source and keep/add the failing test.
+- Intent is unclear: stop and ask; do not encode accidental behavior.
+
+---
+
 ## Pre-commit/Push Rules
 
 - Run linting before commit
@@ -304,6 +329,7 @@ After completing code changes, check for stale documentation:
 **MANDATORY IMPORTANT MUST ATTENTION** apply surgical changes (context-aware) — bug fix: diff test (every line traces to the bug). Review/enhancement: implement improvements you see AND announce them explicitly. Never silently scope-creep either way.
 **MANDATORY IMPORTANT MUST ATTENTION** surface ambiguity before coding — list assumptions (scope/format/volume/constraints), present interpretations with effort estimates, push back when simpler exists. Never pick silently.
 **MANDATORY IMPORTANT MUST ATTENTION** define verifiable success criteria per task — step → verify: [observable check], not "make it work"
+**MANDATORY IMPORTANT MUST ATTENTION** tests verify intent — each meaningful test names the business rule/invariant it protects and must fail if that rule breaks
 **MANDATORY IMPORTANT MUST ATTENTION** run doc review at session wrap-up (map changed files → affected docs)
 **MANDATORY IMPORTANT MUST ATTENTION** activate relevant skills from catalog during the process
 **MANDATORY IMPORTANT MUST ATTENTION** names express PURPOSE not CONTENT — "OrXxx/AndYyy" joining roles/types/statuses = content-driven = rename. "Or" in behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) is fine.

@@ -59,7 +59,7 @@ This skill is the explicit entry point for the `greenfield-init` workflow.
 
 - Existing codebase with code (use `/plan` or `/feature` instead)
 - Bug fixes, refactoring, or feature implementation
-- Quick prototyping (use `/cook-fast` instead)
+- Quick prototyping (use `/cook` instead)
 
 ## Output
 

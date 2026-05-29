@@ -17,7 +17,7 @@ description: '[Architecture] Use when designing or implementing cross-service co
 
 **Key Rules:**
 
-- Never access another service's database directly
+- Read another service's data via the message bus or its API; never access its database directly — why: direct DB access couples services and breaks data ownership
 - Use `LastMessageSyncDate` for conflict resolution (only update if newer)
 - Consumers must wait for dependencies with `TryWaitUntilAsync`
 - Messages defined in shared project (search for: shared message definitions, bus message classes)
@@ -319,7 +319,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

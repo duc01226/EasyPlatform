@@ -12,6 +12,7 @@ const agentsRoot = path.join(rootDir, '.codex', 'agents');
 const contextPath = path.join(rootDir, '.codex', 'CODEX_CONTEXT.md');
 const projectAgentsPath = path.join(rootDir, 'AGENTS.md');
 const SKILL_PROTOCOL_MARKER = 'CODEX:SYNC-PROMPT-PROTOCOLS:START';
+const SKILL_PROTOCOL_END_MARKER = 'CODEX:SYNC-PROMPT-PROTOCOLS:END';
 const CONTEXT_PROTOCOL_TOP_MARKER = 'PROMPT-PROTOCOLS:START';
 const CONTEXT_PROTOCOL_BOTTOM_MARKER = 'PROMPT-PROTOCOLS-BOTTOM:START';
 const WORKFLOWS_START_MARKER = 'WORKFLOWS:START';
@@ -26,6 +27,21 @@ const REQUIRED_CONTRACT_SNIPPETS = [
     'Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.',
     'For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.',
     'If a required step/tool cannot run in this environment, stop and ask the user before adapting.'
+];
+
+const FORBIDDEN_SKILL_PROTOCOL_PATTERNS = [
+    {
+        pattern: /^## Learned Lessons\b/m,
+        reason: 'inline learned-lessons section'
+    },
+    {
+        pattern: /^# Lessons Learned\b/m,
+        reason: 'raw lessons.md heading'
+    },
+    {
+        pattern: /\[\d{4}-\d{2}-\d{2}\].*Holistic-first:/,
+        reason: 'dated lessons.md entry'
+    }
 ];
 
 async function exists(targetPath) {
@@ -276,6 +292,15 @@ async function main() {
 
             if (!content.includes(SKILL_PROTOCOL_MARKER)) {
                 failures.push(`${relativePath} missing synced prompt-protocol marker (${SKILL_PROTOCOL_MARKER})`);
+            }
+
+            const protocolBlock = extractManagedBlock(content, SKILL_PROTOCOL_MARKER, SKILL_PROTOCOL_END_MARKER);
+            if (protocolBlock) {
+                for (const forbidden of FORBIDDEN_SKILL_PROTOCOL_PATTERNS) {
+                    if (forbidden.pattern.test(protocolBlock)) {
+                        failures.push(`${relativePath} synced prompt-protocol block contains ${forbidden.reason}; generated .agents skills must reference docs/project-reference/lessons.md instead of inlining learned lessons`);
+                    }
+                }
             }
 
             if (/\bAgent\(/.test(content) || /\bsubagent_type[=:]/.test(content)) {

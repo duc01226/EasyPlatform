@@ -7,7 +7,6 @@ disable-model-invocation: true
 > Codex compatibility note:
 >
 > - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.
 > - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
@@ -57,6 +56,12 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+- MUST ATTENTION apply the shared SDD Artifact Contract from `shared/sdd-artifact-contract.md` in the active skills root; use `docs/project-config.json` and `docs/project-reference/docs-index-reference.md` for project-specific conventions.
+- **[BLOCKING] Tech-agnostic output:** idea / PBI / story / problem-statement prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 — no framework/product/language/design-pattern names; source paths and class names appear ONLY in evidence fields (`**Evidence**`, `[Source:]`), frontmatter, and Mermaid.
+- MUST ATTENTION treat AI-generated ideas, PBIs, stories, mockups, and TCs as draft/reference until their review or acceptance gate approves them.
+- MUST ATTENTION allow any supported AI tool to produce or review artifacts when the shared contract, synced context, and local docs are available.
 - NEVER skip mandatory workflow or skill gates.
 
 ## When to Use
@@ -84,15 +89,18 @@ After confirming the workflow, present the full step list and let the user desel
 - [ ] Review existing artifact (review-artifact)   — CONDITIONAL
 - [ ] PO → BA handoff (handoff)                    — CONDITIONAL
 - [x] Refine to PBI (refine)
+- [x] Refinement rationale review (why-review)
 - [x] PBI review (refine-review)
-- [x] Design rationale review (why-review)
+- [x] Reviewed-PBI rationale review (why-review)
 - [x] User stories (story)
+- [x] Story rationale review (why-review)
 - [x] Story review (story-review)
 - [x] Test specifications (tdd-spec)
+- [x] Test-spec rationale review (why-review)
 - [x] Test specification review (tdd-spec-review)
 - [x] Dev BA PIC challenge (pbi-challenge)
 - [x] Definition of Ready gate (dor-gate)
-- [x] PBI mockup/wireframe (pbi-mockup)            — CONDITIONAL
+- [x] PBI HTML mock-up (pbi-mockup)                — CONDITIONAL
 - [x] Backlog prioritization (prioritize)
 - [x] Documentation synchronization (docs-update)
 ```
@@ -106,15 +114,18 @@ Mark skipped steps as completed immediately.
 ```
 Task tracking: "Idea capture"
 Task tracking: "Refine to PBI"
+Task tracking: "Refinement rationale review (why-review after refine)"
 Task tracking: "PBI review (refine-review)"
-Task tracking: "Design rationale review (why-review)"
+Task tracking: "Reviewed-PBI rationale review (why-review after refine-review)"
 Task tracking: "User stories (story)"
+Task tracking: "Story rationale review (why-review after story)"
 Task tracking: "Story review"
 Task tracking: "Test specifications (tdd-spec)"
+Task tracking: "Test-spec rationale review (why-review after tdd-spec)"
 Task tracking: "Test specification review (tdd-spec-review)"
 Task tracking: "Dev BA PIC challenge"
 Task tracking: "Definition of Ready gate"
-Task tracking: "PBI mockup" [if UI]
+Task tracking: "PBI HTML mock-up" [if UI]
 Task tracking: "Prioritize"
 Task tracking: "Documentation synchronization (docs-update)"
 Task tracking: "Session summary (watzup)"
@@ -125,6 +136,8 @@ One task per step. Mark each completed immediately when done — never batch.
 ### 3. Why-Review Gate (After refine-review, Before story)
 
 This is the adversarial design rationale check. Purpose: validate the **WHY** of this PBI before investing in stories.
+
+The workflow contains repeated `$why-review` gates. Use purpose-specific labels in sequence: refinement rationale, reviewed-PBI rationale, story rationale, and test-spec rationale. Do not deduplicate them.
 
 **Challenge prompts:**
 
@@ -146,9 +159,12 @@ This is the adversarial design rationale check. Purpose: validate the **WHY** of
 
 Generate and review test specifications before challenge and DoR gates so reviewers evaluate a testable PBI.
 
+AI-generated TC drafts are reference-only until `$tdd-spec-review`, `$pbi-challenge`, and `$dor-gate` accept them for delivery planning.
+
 **Output requirements:**
 
 - Map material acceptance criteria and user stories to TC IDs
+- Route planned TC IDs to Feature doc Section 15 through `$tdd-spec`; `$docs-update` later verifies feature docs and dashboard sync.
 - Cover happy path, validation failure, authorization/permission, and important edge cases where applicable
 - Run `$tdd-spec-review` before `$pbi-challenge`
 
@@ -156,30 +172,32 @@ Generate and review test specifications before challenge and DoR gates so review
 
 Each PBI artifact must contain:
 
-| Section             | Content                                     |
-| ------------------- | ------------------------------------------- |
-| Title               | Clear, actionable                           |
-| Problem Statement   | Why this needs to exist                     |
-| Hypothesis          | If we build X, users will Y, which drives Z |
-| Acceptance Criteria | GIVEN / WHEN / THEN format                  |
-| RICE Score          | Reach × Impact × Confidence / Effort        |
-| User Stories        | Who / What / Why                            |
-| Test Specs          | TC IDs mapped to acceptance criteria        |
-| DoR Status          | PASS / WARN / FAIL                          |
-| Mockup              | ASCII wireframe (if UI)                     |
+| Section             | Content                                                     |
+| ------------------- | ----------------------------------------------------------- |
+| Title               | Clear, actionable                                           |
+| Problem Statement   | Why this needs to exist                                     |
+| Hypothesis          | If we build X, users will Y, which drives Z                 |
+| Acceptance Criteria | GIVEN / WHEN / THEN format                                  |
+| RICE Score          | Reach × Impact × Confidence / Effort                        |
+| User Stories        | Who / What / Why                                            |
+| Test Specs          | TC IDs mapped to acceptance criteria                        |
+| DoR Status          | PASS / WARN / FAIL                                          |
+| Mockup              | HTML mock-up based on project reference design docs (if UI) |
 
 ### 6. Artifact Locations
 
-| Step           | Output Path                                       |
-| -------------- | ------------------------------------------------- |
-| Idea           | `team-artifacts/ideas/{date}-idea-{slug}.md`      |
-| PBI            | `team-artifacts/pbis/{date}-pbi-{slug}.md`        |
-| Stories        | Added to PBI artifact                             |
-| Test specs     | Feature doc Section 15 / `docs/specs/`            |
-| DoR result     | Added to PBI artifact                             |
-| Mockup         | Added to PBI artifact                             |
-| Prioritization | `team-artifacts/backlog/{date}-backlog-update.md` |
-| Docs sync      | `plans/reports/docs-update-{YYMMDD}-{HHMM}.md`    |
+| Step           | Output Path                                           |
+| -------------- | ----------------------------------------------------- |
+| Idea           | `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md` |
+| PBI            | `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md`          |
+| Stories        | Added to PBI artifact                                 |
+| Test specs     | Feature doc Section 15 / docs/specs dashboard sync    |
+| DoR result     | Added to PBI artifact                                 |
+| Mockup         | HTML mock-up file saved beside PBI artifact           |
+| Prioritization | `team-artifacts/backlog/{YYMMDD}-backlog-update.md`   |
+| Docs sync      | `plans/reports/docs-update-{YYMMDD}-{HHMM}.md`        |
+
+These roots intentionally match the child skills (`idea`, `refine`, `story`, `pbi-mockup`, `prioritize`, `docs-update`). If artifact roots become configurable later, update this workflow and all child skills in the same change.
 
 Write output IMMEDIATELY after each step — never batch across steps.
 
@@ -215,7 +233,7 @@ Purpose:
 Activate the `idea-to-pbi` workflow. Run `$workflow-start idea-to-pbi` with the user's prompt as context.
 
 **Steps:**
-$idea → $review-artifact (conditional) → $handoff (conditional) → $refine → $refine-review → $why-review → $story → $story-review → $tdd-spec → $tdd-spec-review → $pbi-challenge → $dor-gate → $pbi-mockup → $prioritize → $docs-update → $watzup → $workflow-end
+$idea → $review-artifact (conditional) → $handoff (conditional) → $refine → $why-review → $refine-review → $why-review → $story → $why-review → $story-review → $tdd-spec → $why-review → $tdd-spec-review → $pbi-challenge → $dor-gate → $pbi-mockup → $prioritize → $docs-update → $watzup → $workflow-end
 
 > **Conditional steps:**
 >
@@ -331,7 +349,7 @@ $idea → $review-artifact (conditional) → $handoff (conditional) → $refine 
 ## Closing Reminders
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting — one task per step
-- **MANDATORY IMPORTANT MUST ATTENTION** why-review runs after refine-review — FAIL blocks story writing, WARN requires user acknowledgment
+- **MANDATORY IMPORTANT MUST ATTENTION** run all four purpose-specific why-review gates: after refine, after refine-review, after story, and after tdd-spec; FAIL blocks the next artifact step, WARN requires user acknowledgment
 - **MANDATORY IMPORTANT MUST ATTENTION** tdd-spec and tdd-spec-review run after story-review and before pbi-challenge
 - **MANDATORY IMPORTANT MUST ATTENTION** pbi-challenge must be run by a reviewer different from the drafter
 - **MANDATORY IMPORTANT MUST ATTENTION** dor-gate must pass (PASS or WARN) before pbi-mockup is finalized
@@ -351,9 +369,11 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure:
+3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
     - Question: "Which workflow do you want to activate?"
     - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
     - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
@@ -363,63 +383,8 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-
-## Learned Lessons
-
-# Lessons Learned
-
-> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
-
-## Quick Summary
-
-**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
-
-**Top Rules (apply always):**
-
-- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
-- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
-- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
-- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
-- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
-- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
-
----
-
-## Debugging & Root Cause Reasoning
-
-- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. ALWAYS cheapest check first.
-- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
-- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
-- [2026-04-01] **Code caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
-
-## Architecture Invariants
-
-- [2026-05-09] **User name materialization MUST ATTENTION go through `User.UpdateName(firstName, middleName, lastName)`.** Domain method (`src/Services/bravoTALENTS/Employee.Domain/AggregatesModel/User.cs:202-209`) recomputes `FullName` as single source of truth. Three sites still manually patch `user.FullName = user.GetFullName()` after assigning name fields — `src/Services/bravoTALENTS/Employee.Application/Factories/UserFactory.cs:50`, `src/Services/bravoSURVEYS/LearningPlatform.Application/ApplyPlatform/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:102`, `src/Services/bravoINSIGHTS/Analyze/Analyze.Application/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:66`. Next time touching any: replace manual patch with `user.UpdateName(...)` to maintain invariant.
-- [2026-03-31] **ParallelAsync + repo/UoW MUST ATTENTION use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
-- [2026-03-31] **Bus message naming MUST ATTENTION include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) leaders. Feature services (Growth, Talents) sending to core MUST ATTENTION use `{CoreServiceName}...RequestBusMessage` — NEVER define own event for core to consume.
-
-## Naming & Abstraction
-
-- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
-
-## Environment & Tooling
-
-- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be bash PATH under those names. Check: `where python` / `where py`. ALWAYS prefer `py` (Windows Python Launcher) one-liners, `node` if JS alternative exists.
-
-> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons `.claude/hooks/lib/prompt-injections.cjs`.
-
----
-
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
-- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
-- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
-- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
-- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
-- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
-- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
-- **IMPORTANT MUST ATTENTION** every claim needs `file:line` evidence — confidence >80% to act, NEVER speculate
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

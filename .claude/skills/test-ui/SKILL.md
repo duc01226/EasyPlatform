@@ -21,7 +21,7 @@ disable-model-invocation: false
 
 **Key Rules:**
 
-- Do NOT implement fixes; this is a testing/reporting skill only
+- Test and report only — never implement fixes (this is a testing/reporting skill)
 - Save all screenshots in the report directory
 - Support authenticated routes via cookie/token/localStorage injection
 
@@ -126,7 +126,7 @@ How to write reports:
 - **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
 - **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
 
-**IMPORTANT**: **Do not** start implementing the fixes.
+**IMPORTANT**: Stop at testing and reporting — do not start implementing the fixes.
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 
 ---
@@ -158,6 +158,11 @@ How to write reports:
 
 <!-- /SYNC:evidence-based-reasoning -->
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:

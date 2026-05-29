@@ -66,6 +66,27 @@ Three practices: receiving feedback with technical rigor, requesting systematic 
 - ALWAYS question: "Does this actually work?" → trace it. "Is this all?" → grep cross-service
 - ALWAYS verify side effects: check consumers + dependents before approving
 
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
+
 ## Core Principles (ENFORCE ALL)
 
 | Principle          | Rule                                                                                                        |
@@ -191,7 +212,7 @@ After all files reviewed, re-read accumulated report:
 
 **Documentation Staleness Check:**
 
-For each changed file — grep file name/module across `docs/` and AI tooling dirs. Changed behavior → flag stale doc (specific section + what changed). **Do NOT auto-fix — flag only.**
+For each changed file — grep file name/module across `docs/` and AI tooling dirs. Changed behavior → flag stale doc (specific section + what changed). **Flag the staleness only — never auto-fix docs here.**
 
 Common staleness patterns: count/limit changed → docs embedding that number | API/contract changed → API usage docs | hook/skill added/removed → catalogs/README | schema changed → entity reference docs.
 
@@ -601,7 +622,7 @@ If `architectureRules` absent in project-config.json → skip silently.
 >
 > **Anti-patterns to flag:** God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
 >
-> **Serial Attention for Design Quality** — DO NOT scan all quality concerns simultaneously. Split attention misses violations that focused passes catch.
+> **Serial Attention for Design Quality** — Scan one quality dimension at a time (serial passes), not all concerns at once. — why: split attention misses violations that single-focus passes catch.
 >
 > 1. **Identify applicable dimensions** — Based on the code's language, domain, and patterns, determine which quality dimensions apply: DRY, SOLID principles (SRP/OCP/LSP/ISP/DIP), OOP idioms, cohesion/coupling, GRASP, Law of Demeter, CQRS invariants, etc. Your list is NOT fixed — derive from what the code actually does.
 > 2. **One focused pass per dimension** — Dedicate single-focus attention to EACH dimension in sequence. Do NOT mix concerns across passes.
@@ -914,6 +935,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > 2. **Happy Path Trace:** Walk through one complete success scenario through changed code
 > 3. **Error Path Trace:** Walk through one failure/edge case scenario through changed code
 > 4. **Acceptance Mapping:** If plan context available, map every acceptance criterion to a code change
+> 5. **Tests Verify Intent:** For test/spec changes, verify tests name the protected business rule or invariant and would fail if that intent breaks.
 >
 > **NEVER mark review PASS without completing both traces (happy + error path).**
 
@@ -936,14 +958,15 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:test-spec-verification -->
 
-> **Test Coverage Verification** — Map changed code to test coverage.
+> **Test Spec Verification** — Map changed code to test specifications.
 >
-> 1. **Find the project's test format** — search for test files, spec docs, or test catalogs near the changed files. Note the naming convention and location pattern.
-> 2. **Map changed behavior to tests** — every changed code path MUST ATTENTION map to a test (or flag as "needs test").
-> 3. **New functions/endpoints/handlers** → flag for test creation.
-> 4. **Verify test references point to actual code** (`file:line`, not stale).
-> 5. **Coverage by concern type:** Security-sensitive changes → auth/permission tests exist? Data-mutating changes → state assertion tests exist?
-> 6. **If no tests exist** → log gap and recommend creating tests.
+> 1. From changed files → find TC-{FEATURE}-{NNN} in `docs/business-features/{Service}/detailed-features/{Feature}.md` Section 15
+> 2. Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
+> 3. New functions/endpoints/handlers → flag for test spec creation
+> 4. Verify TC evidence fields point to actual code (`file:line`, not stale references)
+> 5. Verify each meaningful TC includes `Business Intent / Invariant Guarded`; flag behavior-only TCs that only mirror implementation details.
+> 6. Auth changes → TC-{FEATURE}-02x exist? Data changes → TC-{FEATURE}-01x exist?
+> 7. If no specs exist → log gap and recommend `/tdd-spec`
 >
 > **NEVER skip test mapping.** Untested code paths are the #1 source of production bugs.
 
@@ -972,6 +995,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:fix-layer-accountability -->
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -993,52 +1021,52 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:design-patterns-quality:reminder -->
 
 - **MANDATORY MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep for dangling refs after changes.
-    <!-- /SYNC:design-patterns-quality:reminder -->
+  <!-- /SYNC:design-patterns-quality:reminder -->
 
 <!-- SYNC:complexity-prevention:reminder -->
 
 - **MANDATORY MUST ATTENTION** apply complexity prevention — one business change = one code change. Flag change amplification (>3 edit sites for future change), scattered type-switches, anemic models, primitive obsession, leaked technology through abstractions, shallow modules, un-extracted utility logic (paging/datetime/string/retry → helpers), and logic in the wrong higher layer (downshift to callee/entity/VM). Don't rationalize silent duplication with pure YAGNI.
-    <!-- /SYNC:complexity-prevention:reminder -->
+  <!-- /SYNC:complexity-prevention:reminder -->
 
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-    <!-- /SYNC:double-round-trip-review:reminder -->
+  <!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:rationalization-prevention:reminder -->
 
 - **MANDATORY MUST ATTENTION** follow ALL steps regardless of perceived simplicity. "Too simple to plan" is evasion, not reason.
-    <!-- /SYNC:rationalization-prevention:reminder -->
+  <!-- /SYNC:rationalization-prevention:reminder -->
 
 <!-- SYNC:graph-assisted-investigation:reminder -->
 
 - **MANDATORY MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-    <!-- /SYNC:graph-assisted-investigation:reminder -->
+  <!-- /SYNC:graph-assisted-investigation:reminder -->
 
 <!-- SYNC:logic-and-intention-review:reminder -->
 
 - **MANDATORY MUST ATTENTION** verify every changed file serves stated purpose. Trace happy + error paths. Flag scope creep.
-    <!-- /SYNC:logic-and-intention-review:reminder -->
+  <!-- /SYNC:logic-and-intention-review:reminder -->
 
 <!-- SYNC:bug-detection:reminder -->
 
 - **MANDATORY MUST ATTENTION** check null safety, boundary conditions, error handling, resource management for every review.
-    <!-- /SYNC:bug-detection:reminder -->
+  <!-- /SYNC:bug-detection:reminder -->
 
 <!-- SYNC:test-spec-verification:reminder -->
 
 - **MANDATORY MUST ATTENTION** map every changed function/endpoint to a test. Search for project's test spec format near changed files. Flag coverage gaps, recommend test creation.
-    <!-- /SYNC:test-spec-verification:reminder -->
+  <!-- /SYNC:test-spec-verification:reminder -->
 
 <!-- SYNC:translation-sync-check:reminder -->
 
 - **MANDATORY MUST ATTENTION** for multilingual frontend/UI text changes, verify translation updates are present (or explicitly accepted by user as risk) before PASS.
-    <!-- /SYNC:translation-sync-check:reminder -->
+  <!-- /SYNC:translation-sync-check:reminder -->
 
 <!-- SYNC:fix-layer-accountability:reminder -->
 
@@ -1113,3 +1141,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY MUST ATTENTION** run `/why-review` after completing this review to validate design rationale, alternatives considered, and risk assessment
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

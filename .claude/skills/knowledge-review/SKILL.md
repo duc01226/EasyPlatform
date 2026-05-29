@@ -25,6 +25,27 @@ description: '[Research] Use when you need to review knowledge artifacts for com
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
+
 ## Adversarial Review Mindset (NON-NEGOTIABLE)
 
 **Default stance: SKEPTIC challenging research quality, not confirming research completeness.**
@@ -324,11 +345,11 @@ NEVER mark review PASS without completing both traces (happy + error path).
 
 ### Test Spec Verification
 Map changed code to test specifications.
-1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
+1. From changed files → find TC-{FEATURE}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
 3. New functions/endpoints/handlers → flag for test spec creation.
 4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+5. Auth changes → TC-{FEATURE}-02x exist? Data changes → TC-{FEATURE}-01x exist?
 6. If no specs exist → log gap and recommend /tdd-spec.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
 
@@ -525,3 +546,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

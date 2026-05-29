@@ -18,6 +18,9 @@ description: '[Workflow] Use when activating the Performance Optimization workfl
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+- MUST ATTENTION apply shared SDD Artifact Contract from `shared/sdd-artifact-contract.md`; use project config/reference docs only for local conventions.
 - NEVER skip mandatory workflow or skill gates.
 
 ---
@@ -30,7 +33,7 @@ Activate the `performance` workflow. Run `/workflow-start performance` with the 
 
 **Steps:** /scout → /investigate → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /code → /test → /workflow-review-changes → /sre-review → /docs-update → /watzup → /workflow-end
 
-> **[PERFORMANCE EXCEPTION — NO INTEGRATION TESTS]** Integration tests verify functional correctness — they cannot measure latency, throughput, or resource consumption. Do NOT run `/tdd-spec`, `/tdd-spec-review`, `/tdd-spec [direction=sync]`, `/integration-test`, or `/integration-test-review` in this workflow. Run `/test` only to confirm no functional regressions were introduced by the optimization.
+> **[PERFORMANCE-SDD ROUTE]** Performance work must be measured with target metric, baseline, measurement command, acceptable regression budget, and before/after result. Pure behavior-preserving optimization may skip new TC/integration-test generation only when it records an explicit skip reason and invariant-preservation evidence. If behavior, public contract, SLA, performance constraint, state timing boundary, or docs/spec boundary changes, update canonical specs/docs via `/tdd-spec`, `/tdd-spec-review`, `/tdd-spec [direction=sync]`, and `/docs-update`, then run relevant functional no-regression checks. `/test` remains mandatory.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 

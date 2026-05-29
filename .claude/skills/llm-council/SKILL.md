@@ -75,7 +75,7 @@ python .claude/scripts/code_graph trace <key-file> --direction both --json
 
 Skip graph only when `.code-graph/graph.db` missing or question is non-code.
 
-**Framed question includes:** core decision, user context, workspace evidence, stakes, constraints, known unknowns. Do not add your opinion. Ask exactly one clarifying question only if prompt is too vague.
+**Framed question includes:** core decision, user context, workspace evidence, stakes, constraints, known unknowns. Keep the framing neutral and opinion-free. Ask exactly one clarifying question only if prompt is too vague.
 
 ---
 
@@ -218,7 +218,6 @@ Opt-in escalation hook from host skills. NEVER wire into `bugfix`, `refactor`, `
 | `tech-stack-research`            | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
 | `domain-analysis`                | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
 | `arch-cross-service-integration` | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
-| `plan-two`                       | Always-offer after `## Next Steps`         | Skip                     | User chooses (multi-option gate auto-satisfied)                  |
 | `why-review`                     | Conditional on active plan/PBI frontmatter | Escalate when gate fires | Step A workflow blacklist suppression THEN 8-OR frontmatter gate |
 | `prioritize`                     | Conditional on ranking output              | Escalate when gate fires | RICE top-2 within 15%, MoSCoW tie, or stakeholder disagreement   |
 

@@ -38,7 +38,7 @@ context-budget: high
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-- Do NOT assume code is secure at face value — verify by reading actual implementations
+- Verify security by reading the actual implementations — never assume code is secure at face value
 - Every vulnerability finding must include `file:line` evidence
 - If you cannot prove a vulnerability with a code trace, state "potential risk, not confirmed"
 - Question assumptions: "Is this actually exploitable?" → trace the input path to confirm
@@ -135,7 +135,7 @@ When graph DB is available, use `trace` to analyze data flow paths for security 
 <!-- SYNC:sub-agent-selection -->
 
 > **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
-> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+> **Rule:** Route specialized domains (architecture, security, performance, DB, E2E, integration-test, git) to the matching specialist agent (see guide above) — NEVER use `code-reviewer` for these. — why: `code-reviewer` lacks each domain's checklist, so specialized issues slip through.
 
 <!-- /SYNC:sub-agent-selection -->
 
@@ -227,6 +227,11 @@ When graph DB is available, use `trace` to analyze data flow paths for security 
 
 <!-- /SYNC:evidence-based-reasoning -->
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:

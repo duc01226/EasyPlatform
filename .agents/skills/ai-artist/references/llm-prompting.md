@@ -24,7 +24,7 @@ You are [ROLE] with expertise in [DOMAIN].
 ### User Prompt Structure
 
 ```xml
-<context>[Background information]<$context>
+<context>[Background information]</context>
 <task>[Specific action required]</task>
 <format>[Output structure]</format>
 <constraints>[Additional limits]</constraints>

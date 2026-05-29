@@ -110,7 +110,7 @@ Call `code-reviewer` subagent: "Review changes for plan phase [phase-name]. Chec
 
 **Output:** `✓ Step 3: Code reviewed - [0] critical issues`
 
-**Validation:** If critical issues > 0, Step 3 INCOMPLETE - do not proceed.
+**Validation:** If critical issues > 0, keep Step 3 open and resolve them before advancing — Step 3 stays INCOMPLETE until the count is 0.
 
 Mark Step 3 complete in TaskCreate, mark Step 4 in_progress.
 
@@ -156,6 +156,27 @@ Mark Step 5 complete in TaskCreate.
 
 ---
 
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
+
 ## Critical Enforcement Rules
 
 **Step outputs must follow unified format:** `✓ Step [N]: [Brief status] - [Key metrics]`
@@ -186,7 +207,7 @@ Mark Step 5 complete in TaskCreate.
 
 **REMEMBER:**
 
-- Do not skip steps. Do not proceed if validation fails. Do not assume approval without user response.
+- Execute every step in order; proceed only when validation passes and the user has explicitly approved.
 - One plan phase per command run. Command focuses on single plan phase only.
 - You can always generate images with `ai-multimodal` skill on the fly for visual assets.
 - You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
@@ -253,13 +274,18 @@ Mark Step 5 complete in TaskCreate.
 > 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
 > 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
 > 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
 >
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
 <!-- /SYNC:understand-code-first -->
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -321,3 +347,11 @@ Mark Step 5 complete in TaskCreate.
 **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

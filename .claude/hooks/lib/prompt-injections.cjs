@@ -21,6 +21,7 @@ const {
     DEDUP_LINES,
     TOP_DEDUP_LINES
 } = require('./dedup-constants.cjs');
+const { DEFAULT_PORTABILITY } = require('./ck-config-loader.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 const LESSONS_PATH = path.join(PROJECT_DIR, 'docs', 'project-reference', 'lessons.md');
@@ -92,6 +93,8 @@ function injectCriticalContext(transcriptPath, skipDedup = false) {
         `**${CRITICAL_THINKING_MARKER}** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.`,
         `**Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.`,
         `**AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.`,
+        `**Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.`,
+        `**Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.`,
         ``
     ].join('\n');
 }
@@ -128,7 +131,7 @@ function injectAiMistakePrevention(transcriptPath, skipDedup = false) {
         `- **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.`,
         `- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.`,
         `- **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.`,
-        `- **Don't copy nearby patterns without evaluating fit.** Closest example ≠ matching preconditions. Verify new context has same constraints, base classes, scope, lifetime.`,
+        `- **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.`,
         `- **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.`,
         `- **Surgical changes — apply the diff test (context-aware).** Two modes: (1) Bug fix → every line traces to the bug; no restyling; orphan cleanup only for imports YOUR changes made unused. (2) Review/enhancement → implement improvements AND announce as "Enhancement beyond main request: [what]". Never silently scope-creep. Diff test: "Would this line exist if I wasn't asked to do X?" — if no, delete or announce.`,
         `- **Surface ambiguity before coding — don't pick silently.** Multiple valid interpretations → present each with effort: "[Request] could mean (1) [N h], (2) [N h]. Which matters?" List scope/format/volume/constraints assumptions first. If simpler path exists, say so. Never silently pick.`,
@@ -168,20 +171,33 @@ function injectLessonReminder(transcriptPath) {
     ].join('\n');
 }
 
+function buildPortabilityBoundary(portability = {}) {
+    const projectConfigPath = portability.projectConfigPath || DEFAULT_PORTABILITY.projectConfigPath;
+    const docsIndexPath = portability.docsIndexPath || DEFAULT_PORTABILITY.docsIndexPath;
+    const rule = portability.rule || DEFAULT_PORTABILITY.rule;
+
+    return `**Generic portability boundary:** ${rule} Apply shared AI-SDD from \`shared/sdd-artifact-contract.md\`. Read \`${projectConfigPath}\` and \`${docsIndexPath}\`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.`;
+}
+
 /**
  * Return workflow execution protocol text (detection + task breakdown guidance).
  * Content varies by confirmationMode: "always" asks user, "never" auto-executes.
  * @param {string} transcriptPath - Path to transcript for dedup check
  * @param {string} confirmationMode - "always" | "never"
+ * @param {object} portability - Configured portability paths and rule text
  * @returns {string|null} Protocol text or null if recently injected
  */
-function injectWorkflowProtocol(transcriptPath, confirmationMode) {
+function injectWorkflowProtocol(transcriptPath, confirmationMode, portability = {}) {
     if (wasMarkerRecentlyInjected(transcriptPath, WORKFLOW_PROTOCOL_MARKER, DEDUP_LINES.WORKFLOW_PROTOCOL)) {
         return null;
     }
 
+    const portabilityBoundary = buildPortabilityBoundary(portability);
+
     if (confirmationMode === 'never') {
         return `## ${WORKFLOW_PROTOCOL_MARKER} [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
+
+${portabilityBoundary}
 
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow; if no clean fit, compose a custom step combination that better serves the prompt
@@ -192,9 +208,11 @@ function injectWorkflowProtocol(transcriptPath, confirmationMode) {
 
     return `## ${WORKFLOW_PROTOCOL_MARKER} [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
+${portabilityBoundary}
+
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use \`AskUserQuestion\` with this structure:
+3. **ASK (REQUIRED FORMAT):** Use \`AskUserQuestion\` with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
    - Question: "Which workflow do you want to activate?"
    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
@@ -209,5 +227,6 @@ module.exports = {
     injectAiMistakePrevention,
     injectWorkflowProtocol,
     injectLessonReminder,
+    buildPortabilityBoundary,
     wasMarkerRecentlyInjected
 };

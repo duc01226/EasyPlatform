@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
+using Easy.Platform.Application.Persistence.BulkUpdate;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Extensions;
@@ -736,6 +737,27 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
         List<TEntity> entities,
         bool dismissSendEvent = false,
         bool checkDiff = true,
+        Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
+        CancellationToken cancellationToken = default
+    );
+
+    public abstract Task<int> UpdateManyAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
+        Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
+        CancellationToken cancellationToken = default
+    );
+
+    public abstract Task<int> UpdateManyAsync(
+        IPlatformUnitOfWork uow,
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default
     );

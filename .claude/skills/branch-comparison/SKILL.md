@@ -19,7 +19,7 @@ description: '[Git] Use when the user asks to compare branches, analyze git diff
 **Key Rules:**
 
 - All analysis must be evidence-based from actual git diffs
-- Never proceed past approval gate without explicit user approval
+- Proceed past the approval gate only after explicit user approval, never before
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -204,7 +204,7 @@ Verify updated specification accurately reflects all changes. Document under `##
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

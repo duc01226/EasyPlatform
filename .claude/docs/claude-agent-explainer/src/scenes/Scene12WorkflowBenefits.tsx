@@ -4,7 +4,7 @@ import { easeOut, staggeredEaseOut } from '../utils/animations';
 
 const SCRIPT_LINES = [
     'Walk through /feature to see how everything connects: scout → investigate → plan → approval gate → implement → tdd-spec → integration-test → docs-update. Every approval is explicit — the AI shows the plan and waits for confirmation before writing a single line of code.',
-    "The spec-driven loop is mandatory: /idea-to-pbi writes TC-{FEAT}-{NNN} test cases in Feature Doc Section 15 before development starts. The /feature and /fix workflows both require /tdd-spec — code satisfies pre-existing specs, not the other way around. This prevents 'write first, spec later' drift.",
+    "The spec-driven loop is mandatory: /idea-to-pbi writes TC-{FEATURE}-{NNN} test cases in Feature Doc Section 15 before development starts. The /feature and /fix workflows both require /tdd-spec — code satisfies pre-existing specs, not the other way around. This prevents 'write first, spec later' drift.",
     'Harness engineering is what separates this from a collection of prompts. edit-enforcement.cjs blocks file edits without an active TaskCreate plan. skill-enforcement.cjs auto-activates the right protocol when file patterns match. These are Node.js hooks — they run unconditionally, regardless of what the AI decides.'
 ];
 
@@ -62,7 +62,7 @@ const CALLOUTS = [
         color: C.purple,
         icon: '📐',
         points: [
-            { label: 'Specs before code', text: '/idea-to-pbi writes TC-{FEAT}-{NNN} in Feature Doc §15 before dev starts' },
+            { label: 'Specs before code', text: '/idea-to-pbi writes TC-{FEATURE}-{NNN} in Feature Doc §15 before dev starts' },
             { label: 'Traceability chain', text: 'Feature Doc §15 → test-specs dashboard → integration test [Trait("TestSpec", "TC-...")]' },
             { label: 'Mandatory spec step', text: '/feature and /fix both require /tdd-spec — code satisfies specs, not the other way around' }
         ]

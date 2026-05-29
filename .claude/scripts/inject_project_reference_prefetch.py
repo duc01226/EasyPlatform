@@ -24,16 +24,14 @@ SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
 SKILL_NAMES = [
     # Plan family
     "plan", "plan-analysis", "plan-archive", "plan-ci", "plan-cro",
-    "plan-fast", "plan-hard", "plan-parallel", "plan-review", "plan-two",
-    "plan-validate", "planning",
+    "plan-review", "plan-validate", "planning",
     # Cook family
-    "cook", "cook-auto", "cook-auto-fast", "cook-auto-parallel",
-    "cook-fast", "cook-hard", "cook-parallel",
+    "cook",
     # Code family
     "code", "code-auto", "code-no-test", "code-parallel",
     # Fix family
-    "fix", "fix-ci", "fix-fast", "fix-hard", "fix-issue",
-    "fix-logs", "fix-parallel", "fix-test", "fix-types", "fix-ui",
+    "fix", "fix-ci", "fix-issue", "fix-logs",
+    "fix-test", "fix-types", "fix-ui",
     # Feature family
     "feature", "feature-implementation", "create-feature",
     # Investigate / scout family

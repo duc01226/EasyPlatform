@@ -35,6 +35,8 @@ public static class AutoAddFieldUpdatedEventEntityExtensions
     /// </summary>
     public static readonly ConcurrentDictionary<Type, bool> TypeToHasTrackValueUpdatedDomainEventAttributeCachedResultDict = new();
 
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> TypeToTrackValueUpdatedPropertyInfosCachedResultDict = new();
+
     /// <summary>
     /// The AutoAddFieldUpdatedEvent method is an extension method for entities that implement the IEntity interface. The purpose of this method is to automatically track and add domain events for any changes made to the fields of an entity.
     /// <br />
@@ -55,24 +57,22 @@ public static class AutoAddFieldUpdatedEventEntityExtensions
     {
         if (entity.HasTrackValueUpdatedDomainEventAttribute())
         {
-            typeof(TEntity)
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.Name != nameof(IRowVersionEntity.ConcurrencyUpdateToken) && p.Name != nameof(IDateAuditedEntity.LastUpdatedDate))
-                .Where(propertyInfo =>
-                    propertyInfo.GetCustomAttribute<JsonIgnoreAttribute>() == null
-                    && propertyInfo.GetCustomAttribute<TrackFieldUpdatedDomainEventAttribute>() != null
-                )
-                .Where(propertyInfo => propertyInfo.GetValue(entity).IsValuesDifferent(propertyInfo.GetValue(existingOriginalEntity)))
-                .ForEach(propertyInfo =>
+            foreach (var propertyInfo in GetTrackValueUpdatedPropertyInfos(typeof(TEntity)))
+            {
+                var originalValue = propertyInfo.GetValue(existingOriginalEntity);
+                var newValue = propertyInfo.GetValue(entity);
+
+                if (newValue.IsValuesDifferent(originalValue))
                 {
                     entity
                         .As<ISupportDomainEventsEntity<TEntity>>()
                         .AddFieldUpdatedEvent(
                             propertyInfo,
-                            originalValue: propertyInfo.GetValue(existingOriginalEntity),
-                            newValue: propertyInfo.GetValue(entity)
+                            originalValue,
+                            newValue
                         );
-                });
+                }
+            }
         }
 
         return entity;
@@ -105,5 +105,19 @@ public static class AutoAddFieldUpdatedEventEntityExtensions
     private static bool CheckTypeHasTrackValueUpdatedDomainEventAttribute(Type type)
     {
         return type.GetCustomAttribute(typeof(TrackFieldUpdatedDomainEventAttribute), true) != null;
+    }
+
+    private static PropertyInfo[] GetTrackValueUpdatedPropertyInfos(Type type)
+    {
+        return TypeToTrackValueUpdatedPropertyInfosCachedResultDict.GetOrAdd(
+            type,
+            static type => type
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.Name != nameof(IRowVersionEntity.ConcurrencyUpdateToken) && p.Name != nameof(IDateAuditedEntity.LastUpdatedDate))
+                .Where(propertyInfo =>
+                    propertyInfo.GetCustomAttribute<JsonIgnoreAttribute>() == null
+                    && propertyInfo.GetCustomAttribute<TrackFieldUpdatedDomainEventAttribute>() != null
+                )
+                .ToArray());
     }
 }

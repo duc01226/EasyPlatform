@@ -265,14 +265,18 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                 CanHandleMessagesByProducerIdPrefixQueryBuilder(query, messageGroupedByTypeIdPrefix).Take(1)
         );
 
-        // Check if there are any messages and if there are no other unprocessed messages with the same sub-queue message ID prefix.
-        var result =
-            toHandleMessages.Any()
-            && !await outboxBusMessageRepository.AnyAsync(
-                PlatformOutboxBusMessage.CheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessageExpr(toHandleMessages.First())
+        if (toHandleMessages.IsEmpty())
+            return false;
+
+        var toHandleMessage = toHandleMessages.First();
+
+        var hasPreviousNotProcessedMessage =
+            PlatformOutboxBusMessage.GetSubQueuePrefix(toHandleMessage.Id).IsNotNullOrEmpty()
+            && await outboxBusMessageRepository.AnyAsync(
+                PlatformOutboxBusMessage.CheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessageExpr(toHandleMessage)
             );
 
-        return result;
+        return !hasPreviousNotProcessedMessage;
     }
 
     /// <summary>
@@ -376,13 +380,19 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                         );
 
                         // If there are no messages or another instance is already processing messages with the same prefix, return an empty list.
-                        if (
-                            toHandleMessages.IsEmpty()
-                            || await outboxEventBusMessageRepo.AnyAsync(
-                                PlatformOutboxBusMessage.CheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessageExpr(toHandleMessages.First()),
+                        if (toHandleMessages.IsEmpty())
+                            return [];
+
+                        var toHandleMessage = toHandleMessages.First();
+
+                        var hasPreviousNotProcessedMessage =
+                            PlatformOutboxBusMessage.GetSubQueuePrefix(toHandleMessage.Id).IsNotNullOrEmpty()
+                            && await outboxEventBusMessageRepo.AnyAsync(
+                                PlatformOutboxBusMessage.CheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessageExpr(toHandleMessage),
                                 cancellationToken
-                            )
-                        )
+                            );
+
+                        if (hasPreviousNotProcessedMessage)
                             return [];
 
                         // Mark the retrieved messages as "Processing" and update their last send date.

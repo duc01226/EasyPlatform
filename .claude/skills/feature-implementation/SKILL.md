@@ -217,7 +217,7 @@ Before completion, verify the implementation against all requirements. Document 
 
 - **Evidence-based approach:** Use `grep` and semantic search to verify assumptions
 - **Service boundary discovery:** Find endpoints before assuming responsibilities
-- **Never assume service ownership:** Verify patterns with code evidence
+- **Verify service ownership with code evidence:** confirm patterns from the source, never assume which service owns a domain
 - **Project-patterns-first approach:** Use established templates
 - **Cross-service sync:** Use an event bus, not direct database access
 - **CQRS adherence:** Follow established Command/Query patterns
@@ -309,8 +309,8 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 > 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
 > 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
 > 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
 >
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
@@ -400,6 +400,11 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 
 <!-- /SYNC:cross-service-check -->
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:

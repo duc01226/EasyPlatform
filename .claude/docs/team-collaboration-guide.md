@@ -25,11 +25,11 @@
 
 Claude Code uses a **three-pillar architecture** to assist every role:
 
-| Pillar                        | What It Does                                                     | Count        |
-| ----------------------------- | ---------------------------------------------------------------- | ------------ |
-| **Hooks** (Enforcement)       | Auto-inject context, enforce quality gates, block unsafe actions | 34 hooks     |
-| **Skills** (Intelligence)     | Prompt-engineered protocols loaded on demand via `/skill-name`   | 202 skills   |
-| **Workflows** (Orchestration) | Multi-step sequences of skills with progress tracking            | 48 workflows |
+| Pillar                        | What It Does                                                     | Count                   |
+| ----------------------------- | ---------------------------------------------------------------- | ----------------------- |
+| **Hooks** (Enforcement)       | Auto-inject context, enforce quality gates, block unsafe actions | 64 top-level hook files |
+| **Skills** (Intelligence)     | Prompt-engineered protocols loaded on demand via `/skill-name`   | 256 skills              |
+| **Workflows** (Orchestration) | Multi-step sequences of skills with progress tracking            | 37 workflows            |
 
 ### Workflow Detection
 
@@ -297,7 +297,7 @@ BA:             /refine ──→ [PBI with AC] ──→ /story ──→ [user
 **IMPORTANT MANDATORY Steps:** `/tdd-spec` → `/quality-gate`
 
 ```
-QA:  [PBI] ──→ /tdd-spec ──→ [test spec with TC-{FEAT}-{NNN}]
+QA:  [PBI] ──→ /tdd-spec ──→ [test spec with TC-{FEATURE}-{NNN}]
                                         │
 QC:                              /quality-gate ──→ [PASS/FAIL report]
 ```
@@ -516,7 +516,7 @@ CAPTURE & REQUIREMENTS
   /prioritize [framework]    Order backlog (rice|moscow|value-effort)
 
 TESTING & QUALITY
-  /tdd-spec {source}         Generate test specs (TC-{FEAT}-{NNN})
+  /tdd-spec {source}         Generate test specs (TC-{FEATURE}-{NNN})
   /integration-test          Generate integration tests
   /e2e-test                  Generate E2E tests
   /quality-gate {type}       Run quality checklist (pre-dev|pre-qa|pre-release)

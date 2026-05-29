@@ -27,6 +27,7 @@ description: '[Frontend] Use when you need to convert hand-drawn wireframes, dig
 
 - Always require human review — wireframe analysis is 70-80% accurate
 - Route to other skills when appropriate (Figma URL → `figma-design`, app screenshot → `design-screenshot`)
+- **[BLOCKING] Tech-agnostic output:** spec prose/headings follow `docs/project-reference/spec-principles.md` §3 — describe components by UX role, not framework/library names; source paths and class names appear ONLY in evidence fields (`**Evidence**`, `[Source:]`), frontmatter, and Mermaid.
 
 ## Input Routing
 

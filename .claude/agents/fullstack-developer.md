@@ -4,7 +4,7 @@ description: >-
     Execute implementation phases from parallel plans. Handles backend and frontend
     tasks using project-specific patterns. Designed for parallel execution with
     strict file ownership boundaries. Use when implementing a specific phase from
-    /plan-parallel output.
+    /plan output.
 model: inherit
 skills: code
 memory: project

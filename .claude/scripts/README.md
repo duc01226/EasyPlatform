@@ -134,7 +134,14 @@ python .claude/scripts/generate_catalogs.py --commands
 python .claude/scripts/generate_catalogs.py
 
 # Write to file instead of stdout
-python .claude/scripts/generate_catalogs.py --skills --output guide/SKILLS.yaml
+python .claude/scripts/generate_catalogs.py --skills --output .claude/SKILLS.yaml
+
+# Verify committed catalog matches regeneration
+python .claude/scripts/generate_catalogs.py --skills --check .claude/SKILLS.yaml
+
+# Refresh/check marker-region inventory counts
+python .claude/scripts/generate_catalogs.py --inject-counts CLAUDE.md
+python .claude/scripts/generate_catalogs.py --check-counts CLAUDE.md
 
 # View help
 python .claude/scripts/generate_catalogs.py --help
@@ -143,6 +150,7 @@ python .claude/scripts/generate_catalogs.py --help
 ### Input Files
 
 Located in the same directory as the script:
+
 - `commands_data.yaml` - Source data for commands
 - `skills_data.yaml` - Source data for skills
 

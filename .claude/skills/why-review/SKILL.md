@@ -21,7 +21,7 @@ description: '[Code Quality] Use when validating design rationale completeness i
 
 **Goal:** Validate that a plan contains sufficient design rationale (WHY, not just WHAT) before implementation begins.
 
-**Applies to:** Features and refactors only — bugfixes and trivial changes exempt.
+**Applies to:** Features, refactors, and bugfix/root-cause rationale gates. Trivial changes may be exempt when the active workflow permits a documented skip.
 
 **Why this exists:** AI code generation optimizes mechanics but misses conceptual quality. This skill ensures the human thinking happened before the mechanical coding starts.
 
@@ -30,6 +30,27 @@ description: '[Code Quality] Use when validating design rationale completeness i
 <task>
 $ARGUMENTS
 </task>
+
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
 
 ## Adversarial Review Mindset (NON-NEGOTIABLE)
 
@@ -87,7 +108,7 @@ If any check is incomplete → you have NOT completed the adversarial review. Go
 
 1. If arguments contain a path → use that plan directory
 2. Else check `## Plan Context` in injected context → use active plan path
-3. If no plan found → tell user: "No active plan found. Run `/plan` or `/plan-hard` first."
+3. If no plan found → tell user: "No active plan found. Run `/plan` first."
 
 ## Validation Checklist
 
@@ -104,6 +125,12 @@ Read the plan's `plan.md` and all `phase-*.md` files. Check each item below. **T
 | 3   | **Design Rationale**        | Explicit reasoning linking decision to trade-offs | Is reasoning causal (X leads to Y) or just descriptive (X is better)? Are hidden assumptions surfaced? Does it address failure modes, not just success modes?                      |
 | 4   | **Risk Assessment**         | At least 1 risk per phase                         | Are risks ranked by severity? Are mitigations concrete actions or vague intentions ("monitor closely")? Is there at least one risk about the approach itself (not just execution)? |
 | 5   | **Ownership**               | Clear who maintains code post-merge               | Implicit OK (author owns), explicit better                                                                                                                                         |
+
+## Residual Risk Gate
+
+- Challenge over-broad scope, weak rejected alternatives, and any High/Medium residual risk.
+- High/Medium risks must be fixed, reduced, or explicitly accepted by user/owner before PASS.
+- AI-extracted specs/TCs are not accepted evidence unless the canonical owner/review gate accepted them.
 
 ### Optional (Flag if Missing, Don't Fail)
 
@@ -225,7 +252,7 @@ The host `llm-council` skill blacklists routine workflows where 11 sub-agent cal
 - `package-upgrade` (version bumps — irreversibility caught upstream by `/tech-stack-research` when major)
 - `performance` (optimization with measurable rollback)
 - `verification` (validation-only, not a new commit)
-- `bugfix` (exempt from `/why-review` anyway — listed for clarity)
+- `bugfix` (use bugfix/root-cause rationale mode; council escalation remains suppressed)
 - Any workflow whose ID starts with `test-*` (test-only)
 
 **Detect workflow context** by reading `plans/.workflow-state.json` (or equivalent active-workflow marker) for the `workflowId` field. If the file is missing or the workflowId is not in the blacklist above, proceed to Step B.
@@ -515,11 +542,11 @@ NEVER mark review PASS without completing both traces (happy + error path).
 
 ### Test Spec Verification
 Map changed code to test specifications.
-1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
+1. From changed files → find TC-{FEATURE}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
 3. New functions/endpoints/handlers → flag for test spec creation.
 4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+5. Auth changes → TC-{FEATURE}-02x exist? Data changes → TC-{FEATURE}-01x exist?
 6. If no specs exist → log gap and recommend /tdd-spec.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
 
@@ -667,3 +694,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **[FINAL PURPOSE REMINDER — MUST ATTENTION CRITICAL]**
 >
 > Ensure the changes is reasonable, no potential bugs or flaws, critical thinking hard.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

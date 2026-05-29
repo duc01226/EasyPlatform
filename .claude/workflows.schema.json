@@ -5,7 +5,7 @@
     "definitions": {
         "CommandMappingEntry": {
             "additionalProperties": false,
-            "description": "Maps a logical command key to platform-specific command invocations for Claude Code and GitHub Copilot.",
+            "description": "Maps a logical command key to a Claude Code slash command invocation.",
             "properties": {
                 "claude": {
                     "description": "Claude Code slash command (must start with /).",
@@ -14,17 +14,9 @@
                     "pattern": "^/",
                     "title": "Claude Code Command",
                     "type": "string"
-                },
-                "copilot": {
-                    "description": "GitHub Copilot slash command (must start with /).",
-                    "examples": ["/plan", "/cook", "/fix"],
-                    "minLength": 2,
-                    "pattern": "^/",
-                    "title": "Copilot Command",
-                    "type": "string"
                 }
             },
-            "required": ["claude", "copilot"],
+            "required": ["claude"],
             "title": "Command Mapping Entry",
             "type": "object"
         },
@@ -177,7 +169,7 @@
             "type": "object"
         }
     },
-    "description": "Schema for Claude Code and GitHub Copilot workflow automation configuration. Defines AI-native intent detection, command mapping, and workflow sequences for AI agent orchestration.",
+    "description": "Schema for Claude Code workflow automation configuration. Defines AI-native intent detection, command mapping, and workflow sequences for AI agent orchestration.",
     "properties": {
         "$schema": {
             "description": "Path or URL to the JSON Schema file for IDE validation and autocompletion.",
@@ -188,7 +180,7 @@
             "additionalProperties": {
                 "$ref": "#/definitions/CommandMappingEntry"
             },
-            "description": "Maps logical command keys to platform-specific command strings for Claude Code and GitHub Copilot. Each key is referenced by workflow sequences.",
+            "description": "Maps logical command keys to Claude Code slash commands. Each key is referenced by workflow sequences.",
             "minProperties": 1,
             "title": "Command Mapping",
             "type": "object"

@@ -429,6 +429,43 @@ const integrationTests = [
         }
     },
     {
+        name: '[init-reference-docs] honors configured project config and docs index paths',
+        fn: async () => {
+            const tmpDir = createTempProjectDir();
+            try {
+                const ckConfigPath = path.join(tmpDir, '.claude', '.ck.json');
+                fs.mkdirSync(path.dirname(ckConfigPath), { recursive: true });
+                fs.writeFileSync(
+                    ckConfigPath,
+                    JSON.stringify({
+                        portability: {
+                            projectConfigPath: 'config/project-config.json',
+                            docsIndexPath: 'knowledge/reference/docs-index-reference.md'
+                        }
+                    })
+                );
+
+                const input = createUserPromptInput('hello');
+                const result = await runHook(HOOK_PATH, input, {
+                    cwd: tmpDir,
+                    env: { CLAUDE_PROJECT_DIR: tmpDir }
+                });
+
+                assertAllowed(result.code);
+
+                assertTrue(fs.existsSync(path.join(tmpDir, 'config', 'project-config.json')), 'Configured project config created');
+                assertTrue(!fs.existsSync(path.join(tmpDir, 'docs', 'project-config.json')), 'Default project config path not created');
+                assertTrue(
+                    fs.existsSync(path.join(tmpDir, 'knowledge', 'reference', 'project-structure-reference.md')),
+                    'Default reference docs created under configured docs index directory'
+                );
+                assertTrue(!fs.existsSync(path.join(tmpDir, 'docs', 'project-reference')), 'Default reference docs directory not created');
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
         name: '[init-reference-docs] skips existing files (idempotent)',
         fn: async () => {
             const tmpDir = createTempProjectDir();

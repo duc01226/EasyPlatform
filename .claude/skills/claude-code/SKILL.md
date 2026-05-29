@@ -17,7 +17,7 @@ description: '[Utilities] Use when you need claude Code CLI setup, configuration
 **Key Rules:**
 
 - Not for writing application code -- use feature/fix/refactor skills instead
-- Never modify settings without user approval
+- Obtain explicit user approval before modifying settings; never change them unilaterally
 - For hooks: check event type, script executability, and JSON output format
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -118,7 +118,7 @@ Help users install, configure, troubleshoot, and extend Claude Code CLI -- Anthr
 
 1. Read `references/configuration.md` for settings hierarchy
 2. Settings locations: `.claude/settings.json` (project), `~/.claude/settings.json` (user)
-3. IMPORTANT: Never modify settings without user approval
+3. IMPORTANT: Obtain explicit user approval before modifying settings; never change them unilaterally
 4. Common settings: model selection, allowed tools, output verbosity
 
 ### Step 3: Verification

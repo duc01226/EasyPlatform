@@ -432,6 +432,21 @@ const sedAwkTests = [
         expectBlock: false
     },
     {
+        name: 'awk -v before comma regex - should allow',
+        input: { tool_input: { command: "awk -v ws=plans/report.md '/,/{print $0}' plans/report.md" } },
+        expectBlock: false
+    },
+    {
+        name: 'awk -v before comma regex then real outside operand - should block',
+        input: { tool_input: { command: "awk -v ws=plans/report.md '/,/{print $0}' /etc/passwd" } },
+        expectBlock: true
+    },
+    {
+        name: 'awk -f outside script remains visible - should block',
+        input: { tool_input: { command: "awk -f /etc/script.awk '/,/{print $0}' plans/report.md" } },
+        expectBlock: true
+    },
+    {
         name: 'sed with -e flag and substitution - should allow',
         input: { tool_input: { command: "sed -e 's/docker/podman/g' file.txt" } },
         expectBlock: false
@@ -444,6 +459,24 @@ const sedAwkTests = [
     {
         name: 'sed then real outside path - should block',
         input: { tool_input: { command: "sed 's/old/new/' /etc/passwd" } },
+        expectBlock: true
+    },
+    // Regression: mixed-quote operand. Single-quoted program + DOUBLE-quoted
+    // outside path. A prefix that does not stop at the other quote char would
+    // empty the path operand across passes → bypass. Path must stay visible.
+    {
+        name: 'awk single-quote program then double-quoted outside path - should block',
+        input: { tool_input: { command: 'awk \'/x/\' "/etc/passwd"' } },
+        expectBlock: true
+    },
+    {
+        name: 'sed -i single-quote program then double-quoted outside path - should block',
+        input: { tool_input: { command: 'sed -i \'s/a/b/\' "/var/secret"' } },
+        expectBlock: true
+    },
+    {
+        name: 'awk double-quote program then single-quoted outside path - should block',
+        input: { tool_input: { command: 'awk "/x/" \'/etc/shadow\'' } },
         expectBlock: true
     }
 ];

@@ -47,7 +47,7 @@ def export_mermaid(
 
     Args:
         store: Open GraphStore instance.
-        file_path: Absolute path to the file to visualize.
+        file_path: Repo-relative path to the file to visualize.
         project_root: Absolute path to the project root (for display paths).
 
     Returns:

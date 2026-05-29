@@ -37,7 +37,7 @@ Execute MCP operations via **Gemini CLI** to preserve context budget.
 2. **Fallback to general-purpose subagent** (if Gemini CLI unavailable):
     - Use `general-purpose` subagent to discover and execute tools
     - If the subagent got issues with the scripts of `mcp-management` skill, use `mcp-builder` skill to fix them
-    - **DO NOT** create ANY new scripts
+    - Reuse the existing `mcp-management`/`mcp-builder` scripts only — **DO NOT** create ANY new scripts
     - The subagent can only use MCP tools if any to achieve this task
     - If the subagent can't find any suitable tools, just report it back to the main agent to move on to the next step
 

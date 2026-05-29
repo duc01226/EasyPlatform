@@ -1,5 +1,6 @@
 #region
 
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -215,6 +216,8 @@ public static class PlatformCqrsDomainEventsSupportEntityEventExtensions
 /// </summary>
 public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowEvent, IPlatformCqrsEntityEvent
 {
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> TypeToUpdatedFieldPropertyInfosCache = new();
+
     /// <summary>
     /// The event type value for entity events.
     /// </summary>
@@ -268,6 +271,16 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
     {
         EntityData = ((PlatformCqrsEntityEvent)originalEvent).EntityData;
         ExistingEntityData = ((PlatformCqrsEntityEvent)originalEvent).ExistingEntityData;
+    }
+
+    protected static PropertyInfo[] GetUpdatedFieldPropertyInfos(Type entityType)
+    {
+        return TypeToUpdatedFieldPropertyInfosCache.GetOrAdd(
+            entityType,
+            static type => type
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(prop => prop.GetCustomAttribute<JsonIgnoreAttribute>() == null)
+                .ToArray());
     }
 
     /// <summary>
@@ -691,9 +704,7 @@ public class PlatformCqrsEntityEvent<TEntity> : PlatformCqrsEntityEvent, IPlatfo
         if (EntityData == null || ExistingOriginalEntityData == null)
             return [];
 
-        return typeof(TEntity)
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(prop => prop.GetCustomAttribute<JsonIgnoreAttribute>() == null)
+        return GetUpdatedFieldPropertyInfos(typeof(TEntity))
             .Select(prop =>
             {
                 var oldValue = prop.GetValue(ExistingOriginalEntityData);

@@ -55,6 +55,7 @@ template_version: '1.0'
 
 - **Priority:** P1 | P2 | P3
 - **Type:** Positive | Negative | Boundary
+- **Business Intent / Invariant Guarded:** {Business rule, invariant, or user promise this TC protects; the TC must fail if it breaks}
 - **Preconditions:** {Setup required}
 - **Test Data:** {Data requirements}
 
@@ -76,6 +77,7 @@ template_version: '1.0'
 
 - **Priority:** P2
 - **Type:** Negative
+- **Business Intent / Invariant Guarded:** {Business rule, invariant, or user promise this TC protects; the TC must fail if it breaks}
 - **Preconditions:** {Setup required}
 
 **Given:** {Precondition}

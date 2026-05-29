@@ -5,7 +5,7 @@
 **Plan first approach:**
 
 ```bash
-$plan-hard implement payment integration with Stripe
+$plan implement payment integration with Stripe
 # Review plan, then proceed with implementation
 $cook implement payment integration with Stripe
 ```
@@ -14,7 +14,7 @@ $cook implement payment integration with Stripe
 
 ```bash
 $cook implement user authentication with JWT
-$cook-auto add dark mode toggle to settings
+$cook add dark mode toggle to settings
 ```
 
 ## Bug Fixing
@@ -22,7 +22,7 @@ $cook-auto add dark mode toggle to settings
 **Quick fixes:**
 
 ```bash
-$fix-fast login button not working
+$fix login button not working
 $fix-types  # Fix TypeScript errors
 ```
 
@@ -30,7 +30,7 @@ $fix-types  # Fix TypeScript errors
 
 ```bash
 $debug-investigate API returns 500 errors intermittently
-$fix-hard authentication flow breaks after password reset
+$fix authentication flow breaks after password reset
 ```
 
 **Test-driven fixes:**
@@ -111,8 +111,8 @@ $scout-ext find all payment-related files
 **Strategic planning:**
 
 ```bash
-$plan-hard implement real-time collaboration features
-$plan-two compare serverless vs traditional backend approaches
+$plan implement real-time collaboration features
+$plan compare serverless vs traditional backend approaches
 $brainstorm improve onboarding UX
 ```
 

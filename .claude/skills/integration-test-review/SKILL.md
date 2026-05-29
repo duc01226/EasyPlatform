@@ -37,6 +37,27 @@ description: '[Code Quality] Use when you need to review integration tests for a
 
 ---
 
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
+
 ## Phase 0: Scope Detection
 
 Classify BEFORE any gate review. Route wrong → waste all effort.
@@ -231,7 +252,7 @@ After sub-agents return:
 3. NEVER mark review complete until all tests pass — unverified reviews have zero value
 4. Record results under `## Test Execution Results`
 
-**Phase 8 — Failure Investigation (if Phase 7 fails):** Never just retry — investigate systematically.
+**Phase 8 — Failure Investigation (if Phase 7 fails):** Investigate systematically (classify → root-cause → fix plan), never just retry.
 
 1. **Classify failure:** Test bug (assertion/setup wrong) vs Service bug (handler broken) vs Environment (service not running, DB timeout)
 2. **Root cause:** Read failing output, trace handler source, identify exact mismatch
@@ -357,7 +378,7 @@ integration-test-review (you are here)
 ```
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-> **A test that cannot fail is not a test — it is decoration.** Every test MUST earn existence by proving it would FAIL if the bug it guards were reintroduced.
+> **A test that cannot fail is not a test — it is decoration.** Every test MUST earn existence by proving it would FAIL if the protected business rule/invariant changed or the bug it guards were reintroduced.
 > Every finding requires `file:line` proof with confidence >80%.
 
 <!-- SYNC:critical-thinking-mindset -->
@@ -511,11 +532,11 @@ NEVER mark review PASS without completing both traces (happy + error path).
 
 ### Test Spec Verification
 Map changed code to test specifications.
-1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
+1. From changed files → find TC-{FEATURE}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
 3. New functions/endpoints/handlers → flag for test spec creation.
 4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+5. Auth changes → TC-{FEATURE}-02x exist? Data changes → TC-{FEATURE}-01x exist?
 6. If no specs exist → log gap and recommend /tdd-spec.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
 
@@ -608,6 +629,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:repeatable-test-principle -->
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -714,7 +740,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 ## Closing Reminders
 
 - **MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` for ALL phases BEFORE starting
-- **MANDATORY IMPORTANT MUST ATTENTION** test that cannot fail is decoration — if it can't catch the bug, delete or fix it
+- **MANDATORY IMPORTANT MUST ATTENTION** test that cannot fail is decoration — if it can't catch the protected business rule/invariant breaking, delete or fix it
 - **MANDATORY IMPORTANT MUST ATTENTION** read handler source BEFORE judging assertions — cannot review without understanding
 - **MANDATORY IMPORTANT MUST ATTENTION** tests MUST be infinitely repeatable — unique data per run, no cleanup, no rollback
 - **MANDATORY IMPORTANT MUST ATTENTION** integration-test verification requires 3 consecutive passing runs without DB reset
@@ -743,3 +769,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 | "0 test files, nothing to review"         | Report gap and ask user — do NOT silently exit.                   |
 
 ---
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

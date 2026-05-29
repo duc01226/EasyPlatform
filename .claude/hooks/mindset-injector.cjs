@@ -29,18 +29,12 @@ const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-uti
 // Skills that benefit from mindset reminders before execution
 const MINDSET_SKILLS = new Set([
     'plan',
-    'plan-hard',
     'plan-validate',
     'planning',
     'cook',
-    'cook-fast',
-    'cook-hard',
     'code',
     'fix',
-    'fix-fast',
-    'fix-hard',
     'fix-issue',
-    'fix-parallel',
     'fix-types',
     'feature',
     'feature-implementation',
@@ -70,16 +64,13 @@ const GRAPH_REQUIRED_SKILLS = new Set([
     'feature-investigation',
     'debug',
     'fix',
-    'fix-fast',
-    'fix-hard',
     'fix-issue',
     'prove-fix',
     'code-review',
     'review-changes',
     'security',
     'performance',
-    'plan',
-    'plan-hard'
+    'plan'
 ]);
 
 function normalizeSkill(skill) {

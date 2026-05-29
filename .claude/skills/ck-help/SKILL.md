@@ -18,7 +18,7 @@ disable-model-invocation: true
 
 **Key Rules:**
 
-- Never replace or summarize script output; always show it fully then enhance
+- Always show script output fully, then enhance — never replace or summarize it
 - `/plan` then `/code` is the correct flow; NEVER suggest `/plan` then `/cook`
 - `/cook` is standalone (has its own planning)
 
@@ -132,7 +132,7 @@ Task-based command suggestions.
 
 **Script output = foundation. Your additions = value-add.**
 
-Never replace or summarize the script output. Always show it fully, then enhance with your knowledge and context.
+Always show the script output fully, then enhance with your knowledge and context — never replace or summarize it.
 
 ## Important: Correct Workflows
 

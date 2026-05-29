@@ -58,7 +58,7 @@
 
 1. **Identify domain** of the task (see decision table above)
 2. **Check for `## Sub-Agent Type Override`** section in the skill's SKILL.md
-3. **If override exists** → use the specified `subagent_type` — do NOT revert to `code-reviewer`
+3. **If override exists** → use the specified `agent_type` — do NOT revert to `code-reviewer`
 4. **If no override** → consult this table, select the domain-specific agent
 5. **Default to `code-reviewer`** ONLY when domain = "general code quality" with no specialized context
 
@@ -84,7 +84,7 @@
 ## Generic / Cross-Project Applicability
 
 This guide is project-agnostic. All agent types are built into the Claude Code harness.
-No project-specific configuration is needed — reference the correct `subagent_type` in `spawn_agent` tool calls.
+No project-specific configuration is needed — reference the correct `agent_type` in `spawn_agent` tool calls.
 
 The skills harness enforces specialization via `## Sub-Agent Type Override` blocks in each SKILL.md.
 Update those blocks — not this guide — when project-specific routing decisions differ.

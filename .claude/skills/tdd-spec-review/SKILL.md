@@ -22,7 +22,30 @@ description: '[Code Quality] Use when you need to review test specifications for
 
 **[BLOCKING] Read** `docs/project-reference/spec-principles.md` — use Section 4 (AI-Implementability Checklist) and Section 7 (TC Coverage Mapping) as review criteria in addition to adversarial techniques below.
 
+> **[BLOCKING] Tech-agnostic check:** flag framework/product/language/design-pattern names in a TC's behavioral prose as findings (per `spec-principles.md` §3). Source paths, class names, and test identifiers (e.g. `{File}.cs::Method`) are CORRECT in evidence fields (`**Evidence**`, `IntegrationTest`, `[Source:]`), frontmatter, and Mermaid — never flag those.
+
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
 
 ## Adversarial Review Mindset (NON-NEGOTIABLE)
 
@@ -91,9 +114,10 @@ If any box is unchecked → adversarial review incomplete. Go back.
 | 5   | **Error path** — Each story has at least one error/failure TC                                                                      | Is an error/failure TC present per story?                                         | Does the error TC verify the exact error response (code + message), not just that an error occurred?        |
 | 6   | **No duplicates** — No duplicate TCs testing the same scenario                                                                     | Are all TC IDs unique with distinct scenarios?                                    | Are there TCs that test the same scenario with slightly different input? Flag near-duplicates.              |
 | 7   | **Testable assertions** — Each TC has clear expected result (not vague "should work")                                              | Does each TC have a specific expected result?                                     | Is each assertion specific enough to catch regressions? Would it pass if the return value is wrong?         |
-| 8   | **Authorization TCs** — At least 1 TC per story verifying unauthorized access is rejected                                          | Is an authorization TC present per story?                                         | Does the authorization TC test a realistic access scenario, not just "wrong role → 403 without body check"? |
-| 9   | **TC format completeness** — Every TC has Related Files table and IntegrationTest field                                            | Does every TC include a Related Files table and `IntegrationTest:` field?         | Is IntegrationTest populated with `{File}.cs::{MethodName}` (not `Untested` for Tested-status TCs)?         |
-| 10  | **Preservation Tests (bugfix context)** — When fixing a bug, at least 1 TC verifies the pre-fix behavior is no longer reproducible | If this is a bugfix: is there a TC that would have CAUGHT the bug before the fix? | Does the preservation TC assert the exact broken behavior (not just "no exception")?                        |
+| 8   | **Business intent / invariant guarded** — Each TC names the rule it protects                                                       | Does every meaningful TC include `Business Intent / Invariant Guarded`?           | Would the TC fail if that business rule/invariant breaks, or does it only mirror implementation details?    |
+| 9   | **Authorization TCs** — At least 1 TC per story verifying unauthorized access is rejected                                          | Is an authorization TC present per story?                                         | Does the authorization TC test a realistic access scenario, not just "wrong role → 403 without body check"? |
+| 10  | **TC format completeness** — Every TC has Related Files table and IntegrationTest field                                            | Does every TC include a Related Files table and `IntegrationTest:` field?         | Is IntegrationTest populated with `{File}.cs::{MethodName}` (not `Untested` for Tested-status TCs)?         |
+| 11  | **Preservation Tests (bugfix context)** — When fixing a bug, at least 1 TC verifies the pre-fix behavior is no longer reproducible | If this is a bugfix: is there a TC that would have CAUGHT the bug before the fix? | Does the preservation TC assert the exact broken behavior (not just "no exception")?                        |
 
 ### Recommended (>=50% should pass)
 
@@ -413,11 +437,11 @@ NEVER mark review PASS without completing both traces (happy + error path).
 
 ### Test Spec Verification
 Map changed code to test specifications.
-1. From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
+1. From changed files → find TC-{FEATURE}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
 2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
 3. New functions/endpoints/handlers → flag for test spec creation.
 4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+5. Auth changes → TC-{FEATURE}-02x exist? Data changes → TC-{FEATURE}-01x exist?
 6. If no specs exist → log gap and recommend /tdd-spec.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
 
@@ -503,6 +527,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:graph-impact-analysis -->
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -523,7 +552,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-  <!-- /SYNC:double-round-trip-review:reminder -->
+      <!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:graph-impact-analysis:reminder -->
 
@@ -591,3 +620,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

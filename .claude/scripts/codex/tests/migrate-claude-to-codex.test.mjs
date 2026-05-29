@@ -39,7 +39,7 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-migrate-'));
     try {
         const skillDir = path.join(tempRoot, '.claude', 'skills', 'sample-skill');
-        const planHardSkillDir = path.join(tempRoot, '.claude', 'skills', 'plan-hard');
+        const planSkillDir = path.join(tempRoot, '.claude', 'skills', 'plan');
         const codeSimplifierSkillDir = path.join(tempRoot, '.claude', 'skills', 'code-simplifier');
         const codexSyncSkillDir = path.join(tempRoot, '.claude', 'skills', 'codex-sync');
         const portableSourceScriptsDir = path.join(tempRoot, '.claude', 'scripts', 'codex');
@@ -47,7 +47,7 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
         const codexDir = path.join(tempRoot, '.codex');
         const hooksDir = path.join(tempRoot, '.claude', 'hooks', 'lib');
         await fs.mkdir(skillDir, { recursive: true });
-        await fs.mkdir(planHardSkillDir, { recursive: true });
+        await fs.mkdir(planSkillDir, { recursive: true });
         await fs.mkdir(codeSimplifierSkillDir, { recursive: true });
         await fs.mkdir(codexSyncSkillDir, { recursive: true });
         await fs.mkdir(portableSourceScriptsDir, { recursive: true });
@@ -66,19 +66,24 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
                 '# Sample Skill',
                 '',
                 'Use /plan for planning.',
+                'Plan directory: `{plan-dir}/plan.md` + `{plan-dir}/research/*.md`.',
                 'Run /simplify after implementation.',
                 'Agent({ subagent_type: "architect", prompt: "review" })',
                 'Agent(review-architecture, subagent_type="code-reviewer", ...)',
+                'Use the specialized subagent_type when one exists.',
                 ''
             ].join('\n'),
             'utf8'
         );
 
-        await fs.writeFile(path.join(skillDir, 'README.md'), 'Legacy /simplify note.   \n', 'utf8');
+        await fs.writeFile(path.join(skillDir, 'README.md'), 'Legacy /simplify note.   \r\n', 'utf8');
+        await fs.writeFile(path.join(skillDir, 'package-lock.json'), '{\r\n  "lockfileVersion": 3\r\n}\r\n', 'utf8');
+        await fs.writeFile(path.join(skillDir, 'config.yaml'), 'name: sample\r\nsteps:\r\n  - plan\r\n', 'utf8');
+        await fs.writeFile(path.join(skillDir, 'settings.yml'), 'enabled: true\r\n', 'utf8');
 
         await fs.writeFile(
-            path.join(planHardSkillDir, 'SKILL.md'),
-            ['---', 'name: plan-hard', 'description: Plan hard', '---', '', '# Plan Hard', ''].join('\n'),
+            path.join(planSkillDir, 'SKILL.md'),
+            ['---', 'name: plan', 'description: Plan', '---', '', '# Plan', ''].join('\n'),
             'utf8'
         );
 
@@ -102,7 +107,22 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
             'utf8'
         );
 
-        await fs.writeFile(path.join(tempRoot, '.claude', '.ck.json'), JSON.stringify({ workflow: { confirmationMode: 'always' } }, null, 2), 'utf8');
+        await fs.writeFile(
+            path.join(tempRoot, '.claude', '.ck.json'),
+            JSON.stringify(
+                {
+                    workflow: { confirmationMode: 'always' },
+                    portability: {
+                        rule: 'Custom portable rule from local config.',
+                        projectConfigPath: 'custom/project-config.json',
+                        docsIndexPath: 'custom/docs-index.md'
+                    }
+                },
+                null,
+                2
+            ),
+            'utf8'
+        );
 
         await fs.writeFile(
             path.join(codexDir, 'config.toml'),
@@ -135,7 +155,7 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
             path.join(hooksDir, 'prompt-injections.cjs'),
             [
                 'module.exports = {',
-                "  injectWorkflowProtocol: () => '## Workflow Protocol Stub',",
+                "  injectWorkflowProtocol: (_transcriptPath, _confirmationMode, portability) => ['## Workflow Protocol Stub', portability.rule, portability.projectConfigPath, portability.docsIndexPath].join('\\n'),",
                 "  injectCriticalContext: () => '## Critical Context Stub',",
                 "  injectAiMistakePrevention: () => '## Mistake Prevention Stub',",
                 "  injectLessons: () => '## Lessons Stub',",
@@ -151,18 +171,35 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
         const mirroredSkill = await fs.readFile(path.join(tempRoot, '.agents', 'skills', 'sample-skill', 'SKILL.md'), 'utf8');
         const mirroredAgent = await fs.readFile(path.join(tempRoot, '.codex', 'agents', 'sample-agent.toml'), 'utf8');
         const mirroredReadme = await fs.readFile(path.join(tempRoot, '.agents', 'skills', 'sample-skill', 'README.md'), 'utf8');
+        const mirroredPackageLock = await fs.readFile(path.join(tempRoot, '.agents', 'skills', 'sample-skill', 'package-lock.json'), 'utf8');
+        const mirroredYaml = await fs.readFile(path.join(tempRoot, '.agents', 'skills', 'sample-skill', 'config.yaml'), 'utf8');
+        const mirroredYml = await fs.readFile(path.join(tempRoot, '.agents', 'skills', 'sample-skill', 'settings.yml'), 'utf8');
         const codexConfig = await fs.readFile(path.join(tempRoot, '.codex', 'config.toml'), 'utf8');
         const codexNotifyScript = await fs.readFile(path.join(tempRoot, '.codex', 'scripts', 'codex', 'codex-notify.mjs'), 'utf8');
 
         assert.match(mirroredSkill, /CODEX:SYNC-PROMPT-PROTOCOLS:START/);
         assert.match(mirroredSkill, /Hookless Prompt Protocol Mirror/);
+        assert.match(mirroredSkill, /Custom portable rule from local config\./);
+        assert.match(mirroredSkill, /custom\/project-config\.json/);
+        assert.match(mirroredSkill, /custom\/docs-index\.md/);
+        assert.doesNotMatch(mirroredSkill, /Lessons Stub/);
+        assert.match(mirroredSkill, /Lesson Reminder Stub/);
         assert.match(mirroredSkill, new RegExp(subagentAuthorizationSnippet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-        assert.match(mirroredSkill, /Use \$plan-hard for planning\./);
+        assert.match(mirroredSkill, /Use \$plan for planning\./);
+        assert.match(mirroredSkill, /Plan directory: `\{plan-dir\}\/plan\.md` \+ `\{plan-dir\}\/research\/\*\.md`\./);
+        assert.doesNotMatch(mirroredSkill, /\{plan-dir\}\$plan\.md|\{plan-dir\}\$research/);
         assert.match(mirroredSkill, /Run \$code-simplifier after implementation\./);
         assert.match(mirroredSkill, /spawn_agent\(\{ agent_type: "architect"/);
         assert.match(mirroredSkill, /spawn_agent\(review-architecture, agent_type="code-reviewer"/);
-        assert.doesNotMatch(mirroredSkill, /\bAgent\(|\bsubagent_type[=:]/);
+        assert.match(mirroredSkill, /Use the specialized agent_type when one exists\./);
+        assert.doesNotMatch(mirroredSkill, /\bAgent\(|\bsubagent_type\b/);
         assert.equal(mirroredReadme, 'Legacy $code-simplifier note.\n');
+        assert.equal(mirroredPackageLock, '{\n  "lockfileVersion": 3\n}\n');
+        assert.equal(mirroredYaml, 'name: sample\nsteps:\n  - plan\n');
+        assert.equal(mirroredYml, 'enabled: true\n');
+        assert.doesNotMatch(mirroredPackageLock, /\r/);
+        assert.doesNotMatch(mirroredYaml, /\r/);
+        assert.doesNotMatch(mirroredYml, /\r/);
         assert.doesNotMatch(mirroredSkill, /adr-service-pattern-v1-v2-split|integration-test-guide|seed-test-data-reference/);
         assert.match(mirroredAgent, /name = "sample-agent"/);
         assert.match(mirroredAgent, new RegExp(subagentAuthorizationSnippet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
@@ -254,8 +291,11 @@ test('codex-sync runner works from copied .claude without a root scripts folder'
         await execFileAsync(process.execPath, [runnerTarget, '--only=migrate,hooks,context'], { cwd: tempRoot });
 
         const codexConfig = await fs.readFile(path.join(tempRoot, '.codex', 'config.toml'), 'utf8');
+        const mirroredSkill = await fs.readFile(path.join(tempRoot, '.agents', 'skills', 'sample-skill', 'SKILL.md'), 'utf8');
         assert.match(codexConfig, /notify = \["node", "\.codex\/scripts\/codex\/codex-notify\.mjs"\]/);
         assert.match(codexConfig, /status_line = \["model-with-reasoning", "current-dir", "project-root", "context-used", "five-hour-limit", "weekly-limit"\]/);
+        assert.doesNotMatch(mirroredSkill, /Lessons Stub/);
+        assert.match(mirroredSkill, /Lesson Reminder Stub/);
         assert.equal(await pathExists(path.join(tempRoot, '.codex', 'scripts', 'codex', 'codex-notify.mjs')), true);
         assert.equal(await pathExists(path.join(tempRoot, 'scripts')), false);
         assert.equal(await pathExists(path.join(tempRoot, 'AGENTS.md')), true);

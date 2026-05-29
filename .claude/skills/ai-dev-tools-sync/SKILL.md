@@ -1,33 +1,36 @@
 ---
 name: ai-dev-tools-sync
 version: 1.0.0
-description: '[AI & Tools] Use when syncing Claude Code and GitHub Copilot configuration, skills, prompts, agents, instructions, or workflows.'
+description: '[AI & Tools] Use when syncing supported AI dev-tool configuration, skills, prompts, agents, instructions, or workflows.'
 ---
 
 ## Quick Summary
 
-**Goal:** Synchronize Claude Code and GitHub Copilot configurations to maintain feature parity across both AI dev tools.
+**Goal:** Synchronize supported AI dev-tool configurations so Claude, Codex, and GitHub Copilot can work from equivalent source guidance where their surfaces overlap.
 
 **Workflow:**
 
-1. **Understand** — Read current configs (CLAUDE.md, copilot-instructions.md, agents, workflows)
-2. **Research** — Search for latest features across both platforms
+1. **Understand** — Read current configs (CLAUDE.md, AGENTS.md, CODEX_CONTEXT.md, copilot-instructions.md, agents, workflows)
+2. **Research** — Search for latest features across the target platforms
 3. **Compare** — Identify gaps in skills, prompts, agents, or instructions
-4. **Sync** — Implement changes in both platforms maintaining compatibility
+4. **Sync** — Implement changes in source surfaces first, then regenerate managed mirrors where applicable
 
 **Key Rules:**
 
 - Copilot reads `.claude/skills/` automatically (backward compatibility)
 - Both platforms read `.github/prompts/*.prompt.md` and `.github/agents/*.md`
 - Always update both `CLAUDE.md` and `.github/copilot-instructions.md` + `.github/instructions/*.instructions.md` for instruction changes
+- Codex managed outputs are `.agents/skills/**`, `.codex/CODEX_CONTEXT.md`, and `AGENTS.md`; edit `.claude` source first and run Codex sync
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # AI Dev Tools Sync
 
-Synchronize Claude Code and GitHub Copilot configurations to maintain feature parity.
+Synchronize supported AI dev-tool configurations to maintain parity across active tool surfaces.
 
 ## When to Use
+
+> **Scope vs related skills:** This is the **broadest** sync — **bidirectional** (Claude↔Copilot), covering skills, prompts, agents, and instructions. For Claude→Copilot **knowledge/docs only** → `/sync-to-copilot`. For the **`workflows.json` catalog only** (fast, no AI) → `/sync-copilot-workflows`.
 
 Activate this skill when:
 
@@ -38,14 +41,14 @@ Activate this skill when:
 
 ## Quick Reference
 
-| Claude Code     | GitHub Copilot           | Location                               |
-| --------------- | ------------------------ | -------------------------------------- |
-| SKILL.md        | SKILL.md                 | `.claude/skills/` + `.github/skills/`  |
-| SKILL.md        | prompts/\*.prompt.md     | `.claude/skills/` + `.github/prompts/` |
-| agents/\*.md    | agents/\*.md             | `.github/agents/` (shared)             |
-| workflows/\*.md | -                        | `.claude/workflows/`                   |
-| CLAUDE.md       | copilot + instructions/  | Root + `.github/`                      |
-| -               | chatmodes/\*.chatmode.md | `.github/chatmodes/`                   |
+| Source surface    | Managed/peer surface              | Location                                                         |
+| ----------------- | --------------------------------- | ---------------------------------------------------------------- |
+| SKILL.md          | Codex skill mirror                | `.claude/skills/` -> `.agents/skills/`                           |
+| Context/workflows | Codex context mirror              | `.claude/**`, `.claude/workflows.json` -> `.codex/`, `AGENTS.md` |
+| SKILL.md          | Copilot skill/prompt              | `.claude/skills/` + `.github/skills/` / `.github/prompts/`       |
+| agents/\*.md      | agents/\*.md                      | `.github/agents/` (shared)                                       |
+| CLAUDE.md         | Copilot + Codex root instructions | Root `CLAUDE.md`, `AGENTS.md`, `.github/`                        |
+| -                 | chatmodes/\*.chatmode.md          | `.github/chatmodes/`                                             |
 
 ## Sync Process
 

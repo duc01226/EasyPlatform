@@ -207,15 +207,21 @@ function stripInlineCode(cmd) {
  */
 function stripSedAwkPatterns(cmd) {
     const tools = '(?:sed|awk|gawk|mawk)';
-    // Match: tool [optional-flags] 'pattern' → tool [flags] ''
-    // Flags: zero or more "-flag" arguments (e.g., -i, -e, -i.bak, -F,)
-    const flags = '(?:\\s+-\\S*)*\\s+';
+    // Match within the current command segment only: tool ... 'pattern' → tool ... ''
+    // Preserve option values and file operands before the quoted expression so
+    // real path arguments like `awk -f /etc/script.awk '/x/' file` still block.
+    // Both prefixes stop at EITHER quote char so a pass cannot cross out of its
+    // own quote region into an adjacent operand. Without the cross-quote stop,
+    // `awk '/x/' "/etc/passwd"` → pass1 `awk '' "/etc/passwd"` → pass2's prefix
+    // swallows `'' ` and empties the "/etc/passwd" path operand → boundary bypass.
+    const singleQuotedExprPrefix = `\\b${tools}\\b[^'";&|\\n]*`;
+    const doubleQuotedExprPrefix = `\\b${tools}\\b[^'";&|\\n]*`;
 
     // Single-quoted patterns
-    let result = cmd.replace(new RegExp(`(\\b${tools}\\b${flags})'[^']*'`, 'g'), "$1''");
+    let result = cmd.replace(new RegExp(`(${singleQuotedExprPrefix})'[^']*'`, 'g'), "$1''");
 
     // Double-quoted patterns
-    result = result.replace(new RegExp(`(\\b${tools}\\b${flags})"(?:[^"\\\\]|\\\\.)*"`, 'g'), '$1""');
+    result = result.replace(new RegExp(`(${doubleQuotedExprPrefix})"(?:[^"\\\\]|\\\\.)*"`, 'g'), '$1""');
 
     return result;
 }

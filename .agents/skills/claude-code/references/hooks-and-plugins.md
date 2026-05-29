@@ -8,7 +8,7 @@ Hooks are shell commands that execute in response to events.
 
 ### Detailed documentation
 
-https:/$code.claude.com/docs/en/hooks.md
+https://code.claude.com/docs/en/hooks.md
 
 ### Hook Types
 

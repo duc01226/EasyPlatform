@@ -22,6 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 const { generateProjectSummary } = require('./lib/project-config-loader.cjs');
+const { loadConfig, DEFAULT_PORTABILITY } = require('./lib/ck-config-loader.cjs');
 const {
     PROJECT_CONFIG_SUMMARY: PROJECT_CONFIG_SUMMARY_MARKER,
     DEDUP_LINES
@@ -43,11 +44,20 @@ async function main() {
 
         if (!isMarkerInContext(transcriptLines, PROJECT_CONFIG_SUMMARY_MARKER, DEDUP_LINES.PROJECT_CONFIG_SUMMARY)) {
             try {
+                const ckConfig = loadConfig({
+                    includeProject: false,
+                    includeAssertions: false,
+                    includeLocale: false
+                });
+                const projectConfigPath = ckConfig.portability?.projectConfigPath || DEFAULT_PORTABILITY.projectConfigPath;
+                const docsIndexPath = ckConfig.portability?.docsIndexPath || DEFAULT_PORTABILITY.docsIndexPath;
                 const summary = generateProjectSummary();
                 if (summary && summary.trim()) {
                     console.log([
                         '',
                         PROJECT_CONFIG_SUMMARY_MARKER,
+                        '',
+                        `Project-specific extension point: reusable skills stay generic. Apply local architecture, test, documentation, naming, and workflow rules from \`${projectConfigPath}\` and the docs named by \`${docsIndexPath}\`. Defaults: \`docs/project-config.json\` and \`docs/project-reference\`.`,
                         '',
                         summary,
                         '',

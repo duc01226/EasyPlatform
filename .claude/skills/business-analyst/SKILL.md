@@ -21,6 +21,7 @@ description: '[Project Management] Use when creating user stories, writing accep
 - User stories must pass INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 - Include entity context and related domain model in every story
 - MUST ATTENTION include `story_points` and `complexity` in all PBI/story outputs
+- **[BLOCKING] Tech-agnostic output:** story/acceptance-criteria prose follows `docs/project-reference/spec-principles.md` §3 — no framework/product/language/design-pattern names; source paths, class names, and test identifiers appear ONLY in evidence fields (`**Evidence**`, `IntegrationTest`, `[Source:]`), frontmatter, and Mermaid.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 

@@ -127,7 +127,7 @@ The difference: time in the product's world before any visual or structural thin
 
 ## Required Outputs
 
-**Do not propose any direction until you produce all four:**
+**Produce all four outputs below before proposing any direction:**
 
 **Domain:** Concepts, metaphors, vocabulary from this product's world. Not features — territory. Minimum 5.
 

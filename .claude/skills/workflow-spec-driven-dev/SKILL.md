@@ -36,11 +36,15 @@ disable-model-invocation: true
 
 **Key Rules:**
 
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+
 - Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0
 - Invoke `Skill` tool for EACH step — NEVER batch-complete or mark done without invocation
 - Spawn sub-agents for 4+ modules in ONE message — NEVER sequential
 - NEVER skip Phase A.ERD — mandatory with every Phase A extraction
 - Write findings incrementally after each section — NEVER hold in memory
+- If shared skills/workflows/hooks/sync tooling changed, run `npm run codex:sync` before `/workflow-end` or record explicit N/A evidence; verify generated mirrors are current.
 
 ---
 

@@ -833,9 +833,9 @@ Each phase file should contain:
 
 ###### Test Specifications
 
-| TC ID           | Requirement                   | Priority | Evidence           |
-| --------------- | ----------------------------- | -------- | ------------------ |
-| TC-{FEAT}-{NNN} | {requirement from this phase} | P0-P3    | {file:line} or TBD |
+| TC ID              | Requirement                   | Priority | Evidence           |
+| ------------------ | ----------------------------- | -------- | ------------------ |
+| TC-{FEATURE}-{NNN} | {requirement from this phase} | P0-P3    | {file:line} or TBD |
 
 Coverage: {X}/{Y} requirements mapped to TCs
 
@@ -991,7 +991,7 @@ When no Figma context:
 - Consider long-term maintainability
 - Design for future modifications
 - Document decision rationale
-- Avoid over-engineering
+- Keep designs minimal — avoid over-engineering
 - Fully respect the `./.claude/docs/development-rules.md` file.
 
 ##### Research Depth
@@ -1108,7 +1108,7 @@ All agents writing reports MUST ATTENTION:
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these three final tasks:
-    1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEAT}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
+    1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEATURE}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
     2. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
     3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
@@ -1414,7 +1414,7 @@ After creating all phase files, run the **recursive decomposition loop**:
 
 > **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
-> 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
+> 1. Add `## Test Specifications` section with TC-{FEATURE}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
 > 3. TC IDs follow `TC-{FEATURE}-{NNN}` format — reference by ID, never embed full content
 > 4. Before any new workflow step: call `TaskList` and re-read the phase file
@@ -1435,7 +1435,7 @@ After creating all phase files, run the **recursive decomposition loop**:
 > - ≤5 files modified
 > - ≤3h effort
 > - Follows cycle: plan → implement → review → fix → verify
-> - Do NOT start Phase N+1 until Phase N passes VERIFY
+> - Start Phase N+1 only after Phase N passes VERIFY — why: building on an unverified phase compounds errors downstream
 >
 > **Phase success = all TCs pass + code-reviewer agent approves + no CRITICAL findings.**
 
@@ -1460,7 +1460,7 @@ After creating all phase files, run the **recursive decomposition loop**:
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-  <!-- /SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:plan-quality:reminder -->
 

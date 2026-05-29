@@ -123,7 +123,7 @@ For each `docs/project-reference/*.md`:
 5. Are there duplicate entries in the lookup table (same path, different keyword)?
 6. Are uncategorized files documented in a separate section?
 
-**Do NOT proceed to Phase 6 until fresh-eyes verification passes.**
+**Proceed to Phase 6 only after fresh-eyes verification passes — do NOT advance while it is still failing.**
 
 ## Phase 6: Generate Reference Doc
 

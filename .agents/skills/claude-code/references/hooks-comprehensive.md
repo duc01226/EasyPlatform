@@ -631,10 +631,10 @@ echo "$FILE_HASH" >> "$CACHE_FILE"
 
 ## Reference Links
 
-- **Hooks Guide**: https:/$code.claude.com/docs/en/hooks-guide
-- **Hooks API Reference**: https:/$code.claude.com/docs/en/hooks
-- **Settings Configuration**: https:/$code.claude.com/docs/en/settings
-- **Plugins Reference**: https:/$code.claude.com/docs/en/plugins-reference
+- **Hooks Guide**: https://code.claude.com/docs/en/hooks-guide
+- **Hooks API Reference**: https://code.claude.com/docs/en/hooks
+- **Settings Configuration**: https://code.claude.com/docs/en/settings
+- **Plugins Reference**: https://code.claude.com/docs/en/plugins-reference
 - **GitHub Examples**: https://github.com/anthropics/claude-code/tree/main/examples/hooks
 
 ## See Also

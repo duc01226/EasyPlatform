@@ -38,6 +38,8 @@ git diff → Triage → Phase 1: Project Docs (inline)
 - Pass triage context (changed files, detected modules, impacted sections) to each sub-skill via `$ARGUMENTS`
 - MUST ATTENTION dedup module list — backend + frontend changes for same module = ONE entry
 - MUST ATTENTION track step state live: `in_progress` -> execute -> `completed` (or `completed` with skip reason)
+- For `.claude` skills/hooks/workflows/sync tooling changes, flag generated mirror sync status (`npm run codex:sync` completed or explicit N/A). `docs-update` routes and reports this check; it does not edit generated mirrors directly.
+- **[BLOCKING] Tech-agnostic output:** when updating feature-docs/specs/README/INDEX, do NOT introduce framework/product/language/design-pattern names into prose or headings — preserve the evidence-field exception (`**Evidence**`, `IntegrationTest`, `[Source:]`, frontmatter, Mermaid). Authority: `docs/project-reference/spec-principles.md` §3.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80%.**
 
@@ -99,7 +101,7 @@ git diff → Triage → Phase 1: Project Docs (inline)
 
 | Changed File Pattern                                                                | Impact Category                                | Phases to Run |
 | ----------------------------------------------------------------------------------- | ---------------------------------------------- | ------------- |
-| `src/Services/**`                                                                   | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
+| `{backend-source-paths}/**` from `docs/project-config.json`                         | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
 | `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**`                     | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
 | `{legacy-frontend-dir}/**Client/**`                                                 | **feature-docs** + **tdd-spec** + project-docs | 1 + 2 + 3 + 4 |
 | `src/{Framework}/**`                                                                | project-docs only                              | 1 only        |
@@ -121,25 +123,25 @@ Extract unique module names from changed paths. **MUST ATTENTION dedup:** `uniqu
 
 | Changed File Path Pattern                           | Detected Module                  |
 | --------------------------------------------------- | -------------------------------- |
-| `src/Services/{Module}/**`                          | {Module}                         |
+| `{backend-module-path}/{Module}/**`                 | {Module}                         |
 | `{frontend-apps-dir}/{app-name}/**`                 | {Module} (map app to module)     |
 | `{frontend-libs-dir}/{domain-lib}/src/{feature}/**` | {Module} (map feature to module) |
 | `{legacy-frontend-dir}/{Module}Client/**`           | {Module}                         |
 
-Build project-specific mapping:
+Build project-specific mapping from `docs/project-config.json` and project reference docs, not from hard-coded skill paths:
 
 ```bash
-ls -d src/Services/*/
-ls -d docs/business-features/*/
+node -e "const cfg=require('./docs/project-config.json'); console.log(JSON.stringify({sourcePaths: cfg.codebaseHealth?.sourcePaths, contextGroups: cfg.contextGroups?.map(g => ({name:g.name,pathRegexes:g.pathRegexes})), featureDocPath: cfg.workflowPatterns?.featureDocPath}, null, 2))"
+node -e "const cfg=require('./docs/project-config.json'); if (!cfg.workflowPatterns?.featureDocPath) { throw new Error('workflowPatterns.featureDocPath missing; initialize project config before docs-update'); } process.stdout.write(cfg.workflowPatterns.featureDocPath)"
 ```
 
 ### Step 0.5: Check Existing Docs for Each Module
 
 For each detected module:
 
-1. Check `docs/business-features/{Module}/` exists
-2. Check `docs/business-features/{Module}/detailed-features/` has docs
-3. Check `docs/specs/{Module}/` exists
+1. Check `{feature-docs-root}/{Module}/` exists using `workflowPatterns.featureDocPath`
+2. Check `{feature-docs-root}/{Module}/{configured-detail-docs-path}/` has docs, or use the project reference doc's feature-doc layout
+3. Check `{spec-docs-root}/{Module}/` exists using project config/reference docs
 4. Record: `hasFeatureDocs`, `hasTestSpecs`, `hasTestSpecsDashboard`
 
 ---
@@ -288,6 +290,8 @@ Output: updated spec files + SPEC-CHANGELOG.md entry.
 | User says "sync test specs"            | `sync`                   |
 | Tests exist with annotations, no docs  | `from-integration-tests` |
 
+**PBI/idea artifact route:** when changed artifacts match configured PBI/idea artifact roots from `docs/project-config.json` or project reference docs, `docs-update` performs detection/delegation only. It may identify affected module, feature doc, and TC scope, then route to `/feature-docs`, `/tdd-spec`, or `/tdd-spec [direction=sync]`. It must not generate TC content directly from PBI/idea artifacts or edit Section 15 itself. If artifact roots are not configured, ask the user to initialize project config/reference docs before assuming a path.
+
 ### Step 3.2: Invoke `/tdd-spec`
 
 ```
@@ -368,6 +372,7 @@ ALWAYS write full report to `plans/reports/docs-update-{YYMMDD}-{HHMM}.md`:
 
 **Triage:** {N} files changed → {categories detected}
 **Modules detected:** {module list}
+**Generated mirror sync:** {Completed / N/A / Required before close}
 
 **Phase 1 — Project Docs:**
 
@@ -406,14 +411,15 @@ ALWAYS write full report to `plans/reports/docs-update-{YYMMDD}-{HHMM}.md`:
 
 ## Decision Matrix: When to Use docs-update vs Direct Skill
 
-| Scenario                                       | Use docs-update?             | Use skill directly?          |
-| ---------------------------------------------- | ---------------------------- | ---------------------------- |
-| Post-implementation doc sync (any code change) | **Yes** — full orchestration | —                            |
-| Create new feature docs from scratch           | No                           | `/feature-docs`              |
-| Generate TCs for specific PBI (TDD-first)      | No                           | `/tdd-spec`                  |
-| Sync dashboard only (no code changes)          | No                           | `/tdd-spec [direction=sync]` |
-| Workflow step after `/code` or `/fix`          | **Yes** — full orchestration | —                            |
-| User asks "update docs after my changes"       | **Yes** — full orchestration | —                            |
+| Scenario                                       | Use docs-update?             | Use skill directly?                        |
+| ---------------------------------------------- | ---------------------------- | ------------------------------------------ |
+| Post-implementation doc sync (any code change) | **Yes** — full orchestration | —                                          |
+| Create new feature docs from scratch           | No                           | `/feature-docs`                            |
+| Generate TCs for specific PBI (TDD-first)      | No                           | `/tdd-spec`                                |
+| Route PBI/idea artifact changes                | Yes — detection/delegation   | `/feature-docs` + `/tdd-spec` owner skills |
+| Sync dashboard only (no code changes)          | No                           | `/tdd-spec [direction=sync]`               |
+| Workflow step after `/code` or `/fix`          | **Yes** — full orchestration | —                                          |
+| User asks "update docs after my changes"       | **Yes** — full orchestration | —                                          |
 
 ---
 
@@ -421,14 +427,14 @@ ALWAYS write full report to `plans/reports/docs-update-{YYMMDD}-{HHMM}.md`:
 
 Pass caller context via `$ARGUMENTS` to skip redundant triage or narrow scope:
 
-| Key             | Example                                 | Effect                                |
-| --------------- | --------------------------------------- | ------------------------------------- |
-| `modules`       | `modules=Growth,Employee`               | Skip auto-detect; use provided list   |
-| `changed_files` | `changed_files=src/Services/Growth/...` | Skip git diff; use provided file list |
-| `phases`        | `phases=2,3`                            | Run only specified phases             |
-| `mode`          | `mode=update`                           | Override feature-docs mode detection  |
-| `tc_mode`       | `tc_mode=implement-first`               | Override tdd-spec mode detection      |
-| `skip_phases`   | `skip_phases=1,2.5`                     | Skip specific phases                  |
+| Key             | Example                                              | Effect                                |
+| --------------- | ---------------------------------------------------- | ------------------------------------- |
+| `modules`       | `modules=ModuleA,ModuleB`                            | Skip auto-detect; use provided list   |
+| `changed_files` | `changed_files=<configured-source-path>/ModuleA/...` | Skip git diff; use provided file list |
+| `phases`        | `phases=2,3`                                         | Run only specified phases             |
+| `mode`          | `mode=update`                                        | Override feature-docs mode detection  |
+| `tc_mode`       | `tc_mode=implement-first`                            | Override tdd-spec mode detection      |
+| `skip_phases`   | `skip_phases=1,2.5`                                  | Skip specific phases                  |
 
 <additional_requests>
 $ARGUMENTS

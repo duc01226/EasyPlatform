@@ -121,8 +121,16 @@ class GraphStats:
 class GraphStore:
     """SQLite-backed code knowledge graph."""
 
+    _PATH_MARKERS = (
+        ".claude/", ".agents/", ".codex/", ".ai/",
+        "src/", "docs/", "scripts/", "plans/",
+        "README.md", "CLAUDE.md", "AGENTS.md", "EasyPlatform.README.md",
+        "package.json", "package-lock.json", "nx.json", "BravoSUITE.sln",
+    )
+
     def __init__(self, db_path: str | Path) -> None:
         self.db_path = Path(db_path)
+        self.repo_root = self.db_path.parent.parent.resolve()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(
             str(self.db_path), timeout=30, check_same_thread=False
@@ -154,10 +162,151 @@ class GraphStore:
 
     # --- Write operations ---
 
+    def _normalize_path(self, path: str) -> str:
+        """Store graph file identities as repo-relative POSIX paths.
+
+        Existing callers may pass absolute paths. The graph schema stores those
+        paths inside qualified names, so normalization belongs at the storage
+        boundary where every writer passes through one invariant.
+        """
+        if not path:
+            return path
+        cleaned = path.replace("\\", "/")
+        try:
+            p = Path(cleaned)
+            if p.is_absolute():
+                try:
+                    return str(p.resolve().relative_to(self.repo_root)).replace("\\", "/")
+                except (OSError, ValueError):
+                    try:
+                        return str(p.relative_to(self.repo_root)).replace("\\", "/")
+                    except ValueError:
+                        try:
+                            sibling_rel = p.relative_to(self.repo_root.parent)
+                            if len(sibling_rel.parts) > 1:
+                                return str(Path(*sibling_rel.parts[1:])).replace("\\", "/")
+                        except ValueError:
+                            pass
+                        for marker in self._PATH_MARKERS:
+                            marker_index = cleaned.find(marker)
+                            if marker_index >= 0:
+                                return cleaned[marker_index:]
+                        return cleaned
+        except (OSError, ValueError):
+            return cleaned
+        if cleaned.startswith("/"):
+            for marker in self._PATH_MARKERS:
+                marker_index = cleaned.find(marker)
+                if marker_index >= 0:
+                    return cleaned[marker_index:]
+            return cleaned.lstrip("/")
+        return cleaned[2:] if cleaned.startswith("./") else cleaned
+
+    def _normalize_identifier(self, value: str) -> str:
+        """Normalize path-bearing graph identifiers without touching bare names."""
+        if not value:
+            return value
+        if "::" in value:
+            file_part, symbol_part = value.split("::", 1)
+            return f"{self._normalize_path(file_part)}::{symbol_part}"
+        if "\\" in value or "/" in value or Path(value).is_absolute():
+            return self._normalize_path(value)
+        return value
+
+    @staticmethod
+    def _looks_path_like(value: str) -> bool:
+        return bool(
+            value and (
+                "\\" in value or "/" in value or "::" in value or Path(value).is_absolute()
+            )
+        )
+
+    def _has_absolute_paths(self) -> bool:
+        node_row = self._conn.execute(
+            "SELECT 1 FROM nodes WHERE file_path LIKE '_:%' OR file_path LIKE '/%' LIMIT 1"
+        ).fetchone()
+        if node_row:
+            return True
+        edge_row = self._conn.execute(
+            "SELECT 1 FROM edges WHERE file_path LIKE '_:%' OR file_path LIKE '/%' "
+            "OR source_qualified LIKE '_:%' OR source_qualified LIKE '/%' "
+            "OR target_qualified LIKE '_:%' OR target_qualified LIKE '/%' LIMIT 1"
+        ).fetchone()
+        return edge_row is not None
+
+    def migrate_absolute_paths_to_relative(self) -> dict[str, Any]:
+        """Convert existing absolute graph rows to repo-relative identities."""
+        if not self._has_absolute_paths():
+            self.set_metadata("path_storage_version", "relative-v1")
+            return {"nodes_migrated": 0, "edges_migrated": 0, "status": "ok"}
+
+        node_rows = self._conn.execute("SELECT * FROM nodes").fetchall()
+        nodes_by_qualified: dict[str, tuple] = {}
+        for row in node_rows:
+            file_path = self._normalize_path(row["file_path"])
+            qualified_name = (
+                file_path if row["kind"] == "File"
+                else self._normalize_identifier(row["qualified_name"])
+            )
+            name = file_path if row["kind"] == "File" else row["name"]
+            migrated = (
+                row["kind"], name, qualified_name, file_path,
+                row["line_start"], row["line_end"], row["language"],
+                row["parent_name"], row["params"], row["return_type"],
+                row["modifiers"], row["is_test"], row["file_hash"],
+                row["extra"], row["updated_at"],
+            )
+            existing = nodes_by_qualified.get(qualified_name)
+            if existing is None or row["updated_at"] >= existing[-1]:
+                nodes_by_qualified[qualified_name] = migrated
+
+        edge_rows = self._conn.execute("SELECT * FROM edges").fetchall()
+        migrated_edges: dict[tuple, tuple] = {}
+        for row in edge_rows:
+            migrated = (
+                row["kind"],
+                self._normalize_identifier(row["source_qualified"]),
+                self._normalize_identifier(row["target_qualified"]),
+                self._normalize_path(row["file_path"]),
+                row["line"],
+                row["extra"],
+                row["updated_at"],
+            )
+            migrated_edges[migrated[:5]] = migrated
+
+        self._conn.execute("DELETE FROM nodes")
+        self._conn.executemany(
+            """INSERT INTO nodes
+               (kind, name, qualified_name, file_path, line_start, line_end,
+                language, parent_name, params, return_type, modifiers, is_test,
+                file_hash, extra, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            list(nodes_by_qualified.values()),
+        )
+        self._conn.execute("DELETE FROM edges")
+        self._conn.executemany(
+            """INSERT INTO edges
+               (kind, source_qualified, target_qualified, file_path, line, extra, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            list(migrated_edges.values()),
+        )
+        self.set_metadata("path_storage_version", "relative-v1")
+        self._conn.commit()
+        self._invalidate_cache()
+        return {
+            "nodes_migrated": len(node_rows),
+            "nodes_after_dedupe": len(nodes_by_qualified),
+            "edges_migrated": len(edge_rows),
+            "edges_after_dedupe": len(migrated_edges),
+            "status": "ok",
+        }
+
     def upsert_node(self, node: NodeInfo, file_hash: str = "") -> int:
         """Insert or update a node. Returns the node ID."""
         now = time.time()
-        qualified = node.file_path if node.kind == "File" else qualify(node.name, node.file_path, node.parent_name)
+        file_path = self._normalize_path(node.file_path)
+        name = file_path if node.kind == "File" else node.name
+        qualified = file_path if node.kind == "File" else qualify(node.name, file_path, node.parent_name)
         extra = json.dumps(node.extra) if node.extra else "{}"
 
         self._conn.execute(
@@ -176,7 +325,7 @@ class GraphStore:
                  extra=excluded.extra, updated_at=excluded.updated_at
             """,
             (
-                node.kind, node.name, qualified, node.file_path,
+                node.kind, name, qualified, file_path,
                 node.line_start, node.line_end, node.language,
                 node.parent_name, node.params, node.return_type,
                 node.modifiers, int(node.is_test), file_hash,
@@ -191,6 +340,9 @@ class GraphStore:
     def upsert_edge(self, edge: EdgeInfo) -> int:
         """Insert or update an edge."""
         now = time.time()
+        source = self._normalize_identifier(edge.source)
+        target = self._normalize_identifier(edge.target)
+        file_path = self._normalize_path(edge.file_path)
         extra = json.dumps(edge.extra) if edge.extra else "{}"
 
         # Check for existing edge (include line so multiple call sites are preserved)
@@ -198,7 +350,7 @@ class GraphStore:
             """SELECT id FROM edges
                WHERE kind=? AND source_qualified=? AND target_qualified=?
                      AND file_path=? AND line=?""",
-            (edge.kind, edge.source, edge.target, edge.file_path, edge.line),
+            (edge.kind, source, target, file_path, edge.line),
         ).fetchone()
 
         if existing:
@@ -212,14 +364,26 @@ class GraphStore:
             """INSERT INTO edges
                (kind, source_qualified, target_qualified, file_path, line, extra, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (edge.kind, edge.source, edge.target, edge.file_path, edge.line, extra, now),
+            (edge.kind, source, target, file_path, edge.line, extra, now),
         )
         return self._conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 
     def remove_file_data(self, file_path: str) -> None:
         """Remove all nodes and edges associated with a file."""
-        self._conn.execute("DELETE FROM nodes WHERE file_path = ?", (file_path,))
-        self._conn.execute("DELETE FROM edges WHERE file_path = ?", (file_path,))
+        variants = {file_path, file_path.replace("\\", "/"), self._normalize_path(file_path)}
+        for variant in variants:
+            self._conn.execute("DELETE FROM nodes WHERE file_path = ?", (variant,))
+            self._conn.execute("DELETE FROM edges WHERE file_path = ?", (variant,))
+        normalized = self._normalize_path(file_path)
+        if normalized and self._looks_path_like(normalized):
+            self._conn.execute(
+                "DELETE FROM nodes WHERE REPLACE(file_path, ?, '/') LIKE ?",
+                ("\\", f"%/{normalized}"),
+            )
+            self._conn.execute(
+                "DELETE FROM edges WHERE REPLACE(file_path, ?, '/') LIKE ?",
+                ("\\", f"%/{normalized}"),
+            )
         self._invalidate_cache()
 
     def store_file_nodes_edges(
@@ -253,6 +417,17 @@ class GraphStore:
         row = self._conn.execute(
             "SELECT * FROM nodes WHERE qualified_name = ?", (qualified_name,)
         ).fetchone()
+        if not row:
+            normalized = self._normalize_identifier(qualified_name)
+            row = self._conn.execute(
+                "SELECT * FROM nodes WHERE qualified_name = ?",
+                (normalized,),
+            ).fetchone()
+            if not row and normalized != qualified_name and self._looks_path_like(normalized):
+                row = self._conn.execute(
+                    "SELECT * FROM nodes WHERE REPLACE(qualified_name, ?, '/') LIKE ? LIMIT 1",
+                    ("\\", f"%/{normalized}"),
+                ).fetchone()
         return self._row_to_node(row) if row else None
 
     def get_nodes_by_qualified_names(self, qnames: list[str]) -> list[GraphNode]:
@@ -272,21 +447,48 @@ class GraphStore:
         return results
 
     def get_nodes_by_file(self, file_path: str) -> list[GraphNode]:
+        normalized = self._normalize_path(file_path)
+        variants = list({file_path, file_path.replace("\\", "/"), normalized})
+        placeholders = ",".join("?" for _ in variants)
         rows = self._conn.execute(
-            "SELECT * FROM nodes WHERE file_path = ?", (file_path,)
+            f"SELECT * FROM nodes WHERE file_path IN ({placeholders})",  # nosec B608
+            variants,
         ).fetchall()
+        if not rows and normalized and self._looks_path_like(normalized):
+            rows = self._conn.execute(
+                "SELECT * FROM nodes WHERE REPLACE(file_path, ?, '/') LIKE ?",
+                ("\\", f"%/{normalized}"),
+            ).fetchall()
         return [self._row_to_node(r) for r in rows]
 
     def get_edges_by_source(self, qualified_name: str) -> list[GraphEdge]:
+        normalized = self._normalize_identifier(qualified_name)
+        variants = list({qualified_name, qualified_name.replace("\\", "/"), normalized})
+        placeholders = ",".join("?" for _ in variants)
         rows = self._conn.execute(
-            "SELECT * FROM edges WHERE source_qualified = ?", (qualified_name,)
+            f"SELECT * FROM edges WHERE source_qualified IN ({placeholders})",  # nosec B608
+            variants,
         ).fetchall()
+        if not rows and normalized and self._looks_path_like(normalized):
+            rows = self._conn.execute(
+                "SELECT * FROM edges WHERE REPLACE(source_qualified, ?, '/') LIKE ?",
+                ("\\", f"%/{normalized}"),
+            ).fetchall()
         return [self._row_to_edge(r) for r in rows]
 
     def get_edges_by_target(self, qualified_name: str) -> list[GraphEdge]:
+        normalized = self._normalize_identifier(qualified_name)
+        variants = list({qualified_name, qualified_name.replace("\\", "/"), normalized})
+        placeholders = ",".join("?" for _ in variants)
         rows = self._conn.execute(
-            "SELECT * FROM edges WHERE target_qualified = ?", (qualified_name,)
+            f"SELECT * FROM edges WHERE target_qualified IN ({placeholders})",  # nosec B608
+            variants,
         ).fetchall()
+        if not rows and normalized and self._looks_path_like(normalized):
+            rows = self._conn.execute(
+                "SELECT * FROM edges WHERE REPLACE(target_qualified, ?, '/') LIKE ?",
+                ("\\", f"%/{normalized}"),
+            ).fetchall()
         return [self._row_to_edge(r) for r in rows]
 
     def search_edges_by_target_name(self, name: str, kind: str = "CALLS") -> list[GraphEdge]:

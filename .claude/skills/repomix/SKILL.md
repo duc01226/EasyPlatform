@@ -241,7 +241,7 @@ Best practices:
 1. Always review output before sharing
 2. Use `.repomixignore` for sensitive files
 3. Enable security checks for unknown codebases
-4. Avoid packaging `.env` files
+4. Exclude `.env` files from packaging
 5. Check for hardcoded credentials
 
 Disable security checks if needed:

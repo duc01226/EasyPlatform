@@ -15,7 +15,7 @@ description: '[Project Management] Use when you need to generate an HTML mockup 
 
 ## Quick Summary
 
-**Goal:** Generate a self-contained HTML mockup file from finalized PBI/story artifacts, styled to match the project's existing UI, components, and domain entities. One HTML file per PBI covering all stories.
+**Goal:** Ask AI to generate a self-contained HTML mock-up file from finalized PBI/story artifacts, styled from the project's reference design docs, existing UI, components, and domain entities. One HTML file per PBI covering all stories.
 
 **Workflow:**
 
@@ -29,9 +29,11 @@ description: '[Project Management] Use when you need to generate an HTML mockup 
 
 **Key Rules:**
 
+- Ask AI to generate an **HTML mock-up** for UI PBIs; do not stop at an ASCII-only mockup.
 - One HTML file per PBI (all stories shown as sections/tabs)
 - Self-contained: inline CSS/JS, no external dependencies except Google Fonts
 - **Must resemble the project's current UI** — read existing component templates and page layouts
+- Design must be based on project reference design docs: `docs/project-reference/design-system/README.md`, `docs/project-reference/design-system/design-system-canonical.md`, and the matched per-app design-system doc from `docs/project-config.json`
 - Match project design system: colors, typography, spacing, BEM naming
 - Use **real domain entity fields and realistic sample data** — not Lorem ipsum
 - Include component states (default, loading, empty, error)
@@ -111,13 +113,14 @@ If no UI sections exist (backend-only PBI), inform user and skip mockup generati
 ### Step 3: Load Design System Context
 
 1. Read PBI `module` field from frontmatter
-2. Load design system docs dynamically (project-config.json + glob fallback):
-    - **Primary:** Read `docs/project-config.json` → find the module entry → check if it has a `designSystem` or related mapping field
+2. Load design system docs dynamically (project-config.json + glob fallback). The HTML mock-up design must be based on these project reference design docs:
+    - **Mandatory baseline:** Read `docs/project-reference/design-system/README.md` and `docs/project-reference/design-system/design-system-canonical.md`
+    - **Primary:** Read top-level `designSystem` in `docs/project-config.json`: use `designSystem.docsPath` + `designSystem.canonicalDoc`, then match the PBI/app context against `designSystem.appMappings[]` to select the per-app doc. Do NOT look for `designSystem` on module entries.
     - **Fallback:** `Glob("docs/project-reference/design-system/*.md")` → match module name against discovered file names (case-insensitive substring match)
     - **Default:** If no match found, use `docs/project-reference/design-system/README.md`
-    - **Triage rule (NEW vs REFACTOR):** For NEW pages/components → ALSO load `designSystem.canonicalDoc` from `project-config.json` (single source of truth for new code). For REFACTOR of existing screens → load per-app doc via `appMappings` (current-state inventory).
+    - **Triage rule (NEW vs REFACTOR):** For NEW pages/components → load `designSystem.canonicalDoc` from top-level `project-config.json` (single source of truth for new code). For REFACTOR of existing screens → load the matched per-app doc via top-level `designSystem.appMappings` (current-state inventory).
 
-3. Extract from design system doc (read first 200 lines for tokens):
+3. Extract from design system docs (read enough of the canonical and matched per-app docs to apply the rules):
     - **Colors:** Primary, secondary, accent, background, text colors
     - **Typography:** Font families, sizes, weights
     - **Spacing:** Margin/padding scale
@@ -219,6 +222,7 @@ Generate a **single self-contained HTML file** with the following structure:
 
 #### Styling Rules
 
+- Base every visual decision on the loaded project reference design docs; cite the docs used in the generation notes when reporting the mock-up.
 - Use CSS custom properties (variables) from design system tokens
 - Follow BEM naming: `mockup__header`, `mockup__nav`, `mockup__panel`
 - Match the project's color palette, typography, and spacing
@@ -272,6 +276,7 @@ Before completing:
 
 - [ ] HTML file is self-contained (opens correctly without a server)
 - [ ] All stories from PBI are represented as sections/tabs
+- [ ] Design is based on `design-system-canonical.md` plus the matched per-app design-system doc when available
 - [ ] Design system colors and typography match the project
 - [ ] Component states are toggleable (where defined in artifact)
 - [ ] Responsive layout works for mobile and desktop
@@ -286,7 +291,7 @@ Before completing:
 | Scenario                          | Handling                                                |
 | --------------------------------- | ------------------------------------------------------- |
 | Backend-only PBI (no UI sections) | Skip mockup, inform user                                |
-| No stories yet (PBI only)         | Generate mockup from PBI's UI Layout section only       |
+| No stories yet (PBI only)         | Generate HTML mock-up from PBI's UI Layout section only |
 | Multiple modules                  | Load primary module's design system                     |
 | No design system docs             | Use sensible defaults (Inter font, neutral palette)     |
 | Very large PBI (10+ stories)      | Group stories into categories, use collapsible sections |

@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using System.Linq.Expressions;
+using Easy.Platform.Application.Persistence.BulkUpdate;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs.Events;
@@ -464,6 +465,27 @@ public interface IPlatformDbContext : IDisposable
             .ThenAction(items => items.ForEach(updateAction));
 
         return await UpdateManyAsync<TEntity, TPrimaryKey>(toUpdateEntities, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
+    }
+
+    public async Task<int> UpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
+        Action<PlatformCqrsEntityEvent>? eventCustomConfig = null,
+        CancellationToken cancellationToken = default) where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        var ops = PlatformBulkUpdateOperationHelper.BuildOps(setBuilder);
+        var updatedEntities = await UpdateManyAsync<TEntity, TPrimaryKey>(
+            predicate,
+            entity => PlatformBulkUpdateOperationHelper.ApplyToEntity(entity, ops),
+            dismissSendEvent,
+            checkDiff: true,
+            eventCustomConfig,
+            cancellationToken);
+
+        return updatedEntities.Count;
     }
 
     public Task<TEntity> DeleteAsync<TEntity, TPrimaryKey>(

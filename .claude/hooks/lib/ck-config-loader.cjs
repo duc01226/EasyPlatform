@@ -68,8 +68,24 @@ const DEFAULT_CONFIG = {
   referenceDocs: {
     staleDays: 60,
   },
+  // Generic portability boundary: reusable skills stay generic, project rules
+  // are discovered from these configured local docs.
+  portability: {
+    enabled: true,
+    rule:
+      "Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from project docs.",
+    projectConfigPath: "docs/project-config.json",
+    docsIndexPath: "docs/project-reference/docs-index-reference.md",
+  },
   assertions: [],
 };
+
+// Canonical default portability paths — single source of truth.
+// Consumers (project-config-loader, prompt-injections, prompt-context-assembler-project-config)
+// reference this instead of re-hardcoding the literals, so a default change is one edit.
+// Safe to use in catch/fallback paths: it is a require-time constant, not a runtime call
+// that can throw — referencing it never re-triggers the loadConfig() failure those paths guard.
+const DEFAULT_PORTABILITY = DEFAULT_CONFIG.portability;
 
 /**
  * Deep merge objects (source values override target, nested objects merged recursively)
@@ -161,6 +177,26 @@ function sanitizeConfig(config, projectRoot) {
     result.locale = { ...result.locale };
   }
 
+  if (result.portability) {
+    result.portability = { ...result.portability };
+    const defaults = DEFAULT_CONFIG.portability;
+    if (typeof result.portability.enabled !== "boolean") {
+      result.portability.enabled = defaults.enabled;
+    }
+    if (
+      typeof result.portability.rule !== "string" ||
+      !result.portability.rule.trim()
+    ) {
+      result.portability.rule = defaults.rule;
+    }
+    if (!sanitizePath(result.portability.projectConfigPath, projectRoot)) {
+      result.portability.projectConfigPath = defaults.projectConfigPath;
+    }
+    if (!sanitizePath(result.portability.docsIndexPath, projectRoot)) {
+      result.portability.docsIndexPath = defaults.docsIndexPath;
+    }
+  }
+
   return result;
 }
 
@@ -182,6 +218,7 @@ function getDefaultConfig(
     codingLevel: -1, // Default: disabled (no injection, saves tokens)
     workflow: { ...DEFAULT_CONFIG.workflow },
     referenceDocs: { ...DEFAULT_CONFIG.referenceDocs },
+    portability: { ...DEFAULT_CONFIG.portability },
   };
   if (includeLocale) {
     result.locale = { ...DEFAULT_CONFIG.locale };
@@ -260,6 +297,9 @@ function loadConfig(options = {}) {
     // Reference docs staleness config (always included)
     result.referenceDocs = merged.referenceDocs || DEFAULT_CONFIG.referenceDocs;
 
+    // Generic portability config (always included)
+    result.portability = merged.portability || DEFAULT_CONFIG.portability;
+
     // Validate merged config — emit warnings to stderr, never block
     const validation = validateCkConfig(merged);
     if (validation.errors.length > 0 || validation.warnings.length > 0) {
@@ -283,6 +323,7 @@ module.exports = {
   LOCAL_OVERRIDE_PATH,
   GLOBAL_CONFIG_PATH,
   DEFAULT_CONFIG,
+  DEFAULT_PORTABILITY,
   deepMerge,
   loadConfigFromPath,
   loadConfig,

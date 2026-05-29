@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 ## Quick Summary
 
-**Goal:** [Workflow] Trigger Product Discovery workflow — raw vision or problem → structured brainstorm → prioritized opportunity map → N PBIs with stories, challenge review, DoR gate, and wireframes → cross-PBI ranked backlog ready for sprint planning.
+**Goal:** [Workflow] Trigger Product Discovery workflow — raw vision or problem → structured brainstorm → prioritized opportunity map → N PBIs with stories, challenge review, DoR gate, and HTML mock-ups → cross-PBI ranked backlog ready for sprint planning.
 
 **Workflow:**
 
@@ -19,6 +19,8 @@ disable-model-invocation: true
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
 - NEVER skip mandatory workflow or skill gates.
 
 ## When to Use
@@ -53,7 +55,7 @@ TaskCreate: "Opportunity {#}: User stories — {opportunity-slug}"
 TaskCreate: "Opportunity {#}: Story review — {opportunity-slug}"
 TaskCreate: "Opportunity {#}: Challenge review — {opportunity-slug}"
 TaskCreate: "Opportunity {#}: DoR gate — {opportunity-slug}"
-TaskCreate: "Opportunity {#}: Mockup — {opportunity-slug}" [skip if backend-only]
+TaskCreate: "Opportunity {#}: HTML mock-up — {opportunity-slug}" [skip if backend-only]
 ```
 
 **Plus:** `TaskCreate: "Cross-PBI prioritization (final step)"` — one task at the end.
@@ -100,16 +102,16 @@ Before committing to the per-PBI loop, validate the opportunity map rationale wi
 
 For **each selected opportunity**, the following steps run in sequence:
 
-| Step             | Purpose                                                        | Output                                          |
-| ---------------- | -------------------------------------------------------------- | ----------------------------------------------- |
-| `/idea`          | Capture as structured artifact                                 | `team-artifacts/ideas/{date}-po-idea-{slug}.md` |
-| `/refine`        | PBI with hypothesis, AC (GIVEN/WHEN/THEN), RICE                | `team-artifacts/pbis/{date}-pbi-{slug}.md`      |
-| `/refine-review` | BA quality check on PBI                                        | Reviewed PBI                                    |
-| `/story`         | User stories per PBI                                           | Stories in PBI artifact                         |
-| `/story-review`  | Story quality and completeness check                           | Reviewed stories                                |
-| `/pbi-challenge` | Dev BA PIC review — challenge prompts, AC quality, feasibility | Challenge log                                   |
-| `/dor-gate`      | INVEST check — PASS/WARN/FAIL                                  | DoR result                                      |
-| `/pbi-mockup`    | ASCII wireframe (skip for backend-only)                        | Mockup in PBI                                   |
+| Step             | Purpose                                                                     | Output                                          |
+| ---------------- | --------------------------------------------------------------------------- | ----------------------------------------------- |
+| `/idea`          | Capture as structured artifact                                              | `team-artifacts/ideas/{date}-po-idea-{slug}.md` |
+| `/refine`        | PBI with hypothesis, AC (GIVEN/WHEN/THEN), RICE                             | `team-artifacts/pbis/{date}-pbi-{slug}.md`      |
+| `/refine-review` | BA quality check on PBI                                                     | Reviewed PBI                                    |
+| `/story`         | User stories per PBI                                                        | Stories in PBI artifact                         |
+| `/story-review`  | Story quality and completeness check                                        | Reviewed stories                                |
+| `/pbi-challenge` | Dev BA PIC review — challenge prompts, AC quality, feasibility              | Challenge log                                   |
+| `/dor-gate`      | INVEST check — PASS/WARN/FAIL                                               | DoR result                                      |
+| `/pbi-mockup`    | HTML mock-up based on project reference design docs (skip for backend-only) | HTML mock-up file beside PBI artifact           |
 
 **Track progress:** After each opportunity loop, AI updates a session summary table in the plan dir.
 

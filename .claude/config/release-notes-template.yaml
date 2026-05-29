@@ -1,5 +1,5 @@
 # Release Notes Template Configuration
-# Single source of truth for Claude and Copilot skills
+# Single source of truth for Claude skills
 # No generator script — when commit_mapping or sections change here, hand-sync .claude/skills/release-notes/README.md to match.
 
 version: 1.0.0

@@ -26,8 +26,6 @@ const GRAPH_SKILLS = new Set([
     'scout',
     'debug',
     'fix',
-    'fix-fast',
-    'fix-hard',
     'code-simplifier',
     'refactoring',
     'prove-fix',

@@ -4,10 +4,15 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
-const PID_DIR = '/tmp';
+const PID_DIR = os.tmpdir();
 const PID_PREFIX = 'md-novel-viewer-';
+
+function ensurePidDir() {
+  fs.mkdirSync(PID_DIR, { recursive: true });
+}
 
 /**
  * Get PID file path for a port
@@ -24,6 +29,7 @@ function getPidFilePath(port) {
  * @param {number} pid - Process ID
  */
 function writePidFile(port, pid) {
+  ensurePidDir();
   const pidPath = getPidFilePath(port);
   fs.writeFileSync(pidPath, String(pid));
 }
@@ -59,6 +65,9 @@ function removePidFile(port) {
  */
 function findRunningInstances() {
   const instances = [];
+  if (!fs.existsSync(PID_DIR)) {
+    return instances;
+  }
   const files = fs.readdirSync(PID_DIR);
 
   for (const file of files) {

@@ -1,3 +1,5 @@
+using MongoDB.Driver.Core.Configuration;
+
 namespace Easy.Platform.MongoDB;
 
 public class PlatformMongoOptions
@@ -12,6 +14,8 @@ public class PlatformMongoOptions
     ///  => prevent max connection pool error, no connection if a db-context is idling (example run paging for a long time but has opened a db context outside and wait)
     /// </summary>
     public int? MaxConnectionIdleTimeSeconds { get; set; }
+
+    public Action<ClusterBuilder> ClusterConfigurator { get; set; }
 }
 
 public class PlatformMongoOptions<TDbContext> : PlatformMongoOptions

@@ -410,7 +410,7 @@ claude analytics cost --project my-project
 
 ```bash
 # 1. Plan feature
-claude $plan-hard "implement user authentication"
+claude $plan "implement user authentication"
 
 # 2. Create checkpoint
 claude checkpoint create "before auth implementation"
@@ -435,7 +435,7 @@ claude $git-cp
 claude $debug-investigate "login button not working"
 
 # 2. Fix
-claude $fix-fast "fix login button issue"
+claude $fix "fix login button issue"
 
 # 3. Test
 claude $test

@@ -6,7 +6,6 @@ description: '[Skill Management] Use when starting a detected workflow, initiali
 > Codex compatibility note:
 >
 > - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.
 > - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
@@ -49,13 +48,16 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 **Workflow:**
 
 1. **Detect** — Match prompt against workflow catalog; identify best catalog workflow + optional custom pipeline
-2. **Ask** — Use a direct user question to present up to THREE options before doing anything else
+2. **Ask/Confirm** — Ask for auto-detected workflows; explicit `/workflow-*` or `$workflow-start <id>` invocation counts as confirmation when local protocol allows.
 3. **Activate** — Create ALL task tracking items for chosen sequence; mark first `in_progress`
 
 **Key Rules:**
 
-- MUST ATTENTION **always** call a direct user question before activating — NEVER auto-activate or skip the confirmation step
-- Present THREE options: `A) Activate [Workflow] (Recommended)` | `B) Custom Pipeline: [step → ...]` | `C) Execute directly`
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+
+- MUST ATTENTION **ALWAYS** call a direct user question before activating auto-detected workflows — NEVER auto-activate an inferred workflow. Explicit `/workflow-*` or `$workflow-start <id>` invocation counts as confirmation when local project protocol allows. — why: silent activation runs a multi-step plan the user never agreed to.
+- Present the required standard-vs-custom choice: `A) Activate [Workflow] (Recommended)` | `B) Custom Pipeline: [step → ...]`
 - Propose Custom Pipeline when no catalog workflow is a strong fit (>80% steps relevant = use catalog)
 - `workflows.json` `workflows` field is an **OBJECT** — use `workflows[workflowId]`, NEVER `.find()` or `[index]`
 - Create ALL task tracking items BEFORE marking the first task `in_progress` — batch creation, then execute
@@ -97,13 +99,12 @@ Show full step sequences for ALL options so the user compares scope:
 
 ```
 Option A — Activate "Bug Fix" workflow (Recommended)
-  Steps: $scout → $investigate → $debug-investigate → $plan-hard → $fix → $prove-fix → $test → ...
+  Steps: $scout → $investigate → $debug-investigate → $plan → $fix → $prove-fix → $test → ...
 
 Option B — Custom Pipeline: "Quick Fix + Docs"
   Steps: $scout → $investigate → $fix → $docs-update
   Rationale: Prompt targets a known location — full TDD cycle is over-engineered here.
 
-Option C — Execute directly without workflow
 ```
 
 **Rules:**
@@ -112,6 +113,7 @@ Option C — Execute directly without workflow
 - One-sentence AI rationale for the custom pipeline
 - Catalog workflow = "(Recommended)" unless custom pipeline confidence is clearly higher
 - NEVER present custom pipeline as the only option — always include the catalog option
+- For project-specific architecture, test, documentation, naming, or workflow rules, read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`; keep this reusable workflow-start protocol generic.
 
 ### Task creation for Custom Pipeline
 
@@ -136,8 +138,8 @@ The workflow catalog is already injected as `## Workflow Catalog` in your contex
 3. Read the NEXT line: `  Use: ... | Steps: /step1 → /step2 → ...`
 4. Parse the `Steps:` value — these ARE the slash commands for task tracking
 
-**Example:** `Steps: $scout → $plan-hard → $cook → $test → $workflow-end`
-→ Create 5 task tracking items for `$scout`, `$plan-hard`, `$cook`, `$test`, `$workflow-end` in order.
+**Example:** `Steps: $scout → $plan → $cook → $test → $workflow-end`
+→ Create 5 task tracking items for `$scout`, `$plan`, `$cook`, `$test`, `$workflow-end` in order.
 
 ✅ Use Tier 1 for: all standard task tracking creation (no file reads needed)
 ⚠️ Use Tier 2 if: catalog not in context, OR you need `preActions.injectContext`
@@ -176,7 +178,7 @@ FIRST action after activation: create EXACTLY one task tracking for EACH entry i
 
 ```
 {
-  "commandMapping": { <stepId>: { "claude": "/cmd", "copilot": "/cmd" } },
+  "commandMapping": { <stepId>: { "claude": "/cmd" } },
   "settings":       { ... },
   "workflows":      { <workflowId>: WorkflowEntry }   ← OBJECT, keyed by ID
 }
@@ -243,7 +245,7 @@ Create ALL tasks first → then `TaskUpdate` first task to `in_progress`.
 Per step: `TaskUpdate in_progress` → **invoke skill invocation** → complete skill → `TaskUpdate completed`.
 
 - Completing a task without invoking its skill invocation = **workflow violation**
-- Validation gates (`$plan-validate`, `$plan-review`, `$why-review`) MUST use a direct user question — never auto-approve
+- Validation gates (`$plan-validate`, `$plan-review`, `$why-review`) MUST use explicit evidence and local project protocol — NEVER auto-approve inferred decisions. Explicit user approval in the prompt may satisfy the gate only when the gate's skill permits it.
 - To skip a conditional step: `TaskUpdate in_progress` → comment "Skipped — {reason}" → `TaskUpdate completed`. Never delete.
 
 ---
@@ -254,10 +256,10 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 
 **Steps requiring sub-agent delegation (hard gate):**
 
-| Step                       | Workflow activated | Steps | Agent type      |
-| -------------------------- | ------------------ | ----- | --------------- |
-| `$workflow-review-changes` | `review-changes`   | 16    | `code-reviewer` |
-| `$workflow-review`         | `review`           | 14    | `code-reviewer` |
+| Step                       | Workflow activated | Step count source                           | Agent type      |
+| -------------------------- | ------------------ | ------------------------------------------- | --------------- |
+| `$workflow-review-changes` | `review-changes`   | `len(workflows["review-changes"].sequence)` | `code-reviewer` |
+| `$workflow-review`         | `review`           | `len(workflows["review"].sequence)`         | `code-reviewer` |
 
 **Protocol when these steps appear in the active workflow sequence:**
 
@@ -272,12 +274,12 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 
 ---
 
-**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
+**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-or-confirm-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
 
-**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
+**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-or-confirm-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
 
 > **[MANDATORY]** task tracking FIRST — break every workflow into tasks before any action. NEVER skip.
-> **[MANDATORY]** a direct user question ALWAYS — present 3 options, NEVER auto-activate.
+> **[MANDATORY]** a direct user question ALWAYS for auto-detected workflows — present the standard-vs-custom (A/B) choice; NEVER auto-activate inferred workflows. Explicit workflow invocation may satisfy confirmation when local protocol allows.
 > **[MANDATORY]** skill invocation REQUIRED per step — NEVER mark a task `completed` without invoking it.
 
 <!-- SYNC:ai-mistake-prevention -->
@@ -363,7 +365,7 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 
 ## Closing Reminders
 
-**MUST ATTENTION** call a direct user question BEFORE activating — present all THREE options (catalog | custom pipeline | execute directly). Never auto-activate.
+**MUST ATTENTION** call a direct user question before activating auto-detected workflows; explicit `/workflow-*` or `$workflow-start <id>` invocation may satisfy confirmation when local protocol allows. Never auto-activate inferred workflows.
 **MUST ATTENTION** `workflows` is an OBJECT — `workflows[workflowId]`, NEVER `.find()` / `[index]` / `.forEach()`
 **MUST ATTENTION** create ALL task tracking items for the full sequence BEFORE marking the first task `in_progress`
 **MUST ATTENTION** never mark a task `completed` without invoking its skill invocation — skip means comment + completed, not delete
@@ -382,9 +384,11 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure:
+3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
     - Question: "Which workflow do you want to activate?"
     - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
     - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
@@ -394,63 +398,8 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-
-## Learned Lessons
-
-# Lessons Learned
-
-> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
-
-## Quick Summary
-
-**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
-
-**Top Rules (apply always):**
-
-- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
-- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
-- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
-- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
-- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
-- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
-
----
-
-## Debugging & Root Cause Reasoning
-
-- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. ALWAYS cheapest check first.
-- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
-- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
-- [2026-04-01] **Code caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
-
-## Architecture Invariants
-
-- [2026-05-09] **User name materialization MUST ATTENTION go through `User.UpdateName(firstName, middleName, lastName)`.** Domain method (`src/Services/bravoTALENTS/Employee.Domain/AggregatesModel/User.cs:202-209`) recomputes `FullName` as single source of truth. Three sites still manually patch `user.FullName = user.GetFullName()` after assigning name fields — `src/Services/bravoTALENTS/Employee.Application/Factories/UserFactory.cs:50`, `src/Services/bravoSURVEYS/LearningPlatform.Application/ApplyPlatform/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:102`, `src/Services/bravoINSIGHTS/Analyze/Analyze.Application/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:66`. Next time touching any: replace manual patch with `user.UpdateName(...)` to maintain invariant.
-- [2026-03-31] **ParallelAsync + repo/UoW MUST ATTENTION use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
-- [2026-03-31] **Bus message naming MUST ATTENTION include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) leaders. Feature services (Growth, Talents) sending to core MUST ATTENTION use `{CoreServiceName}...RequestBusMessage` — NEVER define own event for core to consume.
-
-## Naming & Abstraction
-
-- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
-
-## Environment & Tooling
-
-- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be bash PATH under those names. Check: `where python` / `where py`. ALWAYS prefer `py` (Windows Python Launcher) one-liners, `node` if JS alternative exists.
-
-> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons `.claude/hooks/lib/prompt-injections.cjs`.
-
----
-
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
-- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
-- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
-- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
-- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
-- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
-- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
-- **IMPORTANT MUST ATTENTION** every claim needs `file:line` evidence — confidence >80% to act, NEVER speculate
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

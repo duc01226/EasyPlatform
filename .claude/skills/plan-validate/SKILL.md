@@ -33,6 +33,27 @@ description: '[Planning] Use when you need validate plan with critical questions
 - Bugfix plans ALWAYS trigger Preservation question (keywords: fix, bug, regression, broken, defect)
 - NEVER modify phase files — only document what needs updating
 
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
+
 ## Phase 0: Detect Plan Type
 
 Classify plan type BEFORE generating questions — drives question category weighting:
@@ -51,7 +72,7 @@ Classify plan type BEFORE generating questions — drives question category weig
 
 1. `$ARGUMENTS` provided → use that path
 2. Check `## Plan Context` section → use active plan path
-3. No plan found → ask user to specify path or run `/plan-hard` first
+3. No plan found → ask user to specify path or run `/plan` first
 
 ## Configuration (from injected context)
 
@@ -121,13 +142,13 @@ Options (multi-select):
 1. "Current code correct on: {input A}. Fix preserves behavior." (Recommended)
 2. "Current code correct on: {input B}. Fix CHANGES behavior because: {justification}"
 3. "Current code has NO preserved-correctness inputs — every input was broken" (rare; requires confirmation)
-4. "Unsure — need to investigate" (STOP: run /plan-hard preservation analysis)
+4. "Unsure — need to investigate" (STOP: run /plan preservation analysis)
 ```
 
 **Follow-up rules:**
 
 - Option 2 selected → `plan.md` Preservation Inventory MUST cite Preservation TC asserting new behavior is intended
-- Option 4 selected → return BLOCKED status, recommend `/plan-hard` before proceeding
+- Option 4 selected → return BLOCKED status, recommend `/plan` before proceeding
 - Option 3 selected → `AskUserQuestion` follow-up: "Confirm: current code has NO preserved invariant? [Yes, every input broken / No, missed some — re-investigate]"
 
 ### Step 4: Interview User
@@ -272,8 +293,8 @@ After validation:
 > 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
 > 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
 > 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
 >
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
@@ -283,7 +304,7 @@ After validation:
 
 > **Plan Quality** — Every plan phase MUST ATTENTION include test specifications.
 >
-> 1. Add `## Test Specifications` section with TC-{FEAT}-{NNN} IDs to every phase file
+> 1. Add `## Test Specifications` section with TC-{FEATURE}-{NNN} IDs to every phase file
 > 2. Map every functional requirement to ≥1 TC (or explicit `TBD` with rationale)
 > 3. TC IDs follow `TC-{FEATURE}-{NNN}` format — reference by ID, never embed full content
 > 4. Before any new workflow step: call `TaskList` and re-read the phase file
@@ -420,3 +441,11 @@ After validation:
 | "Only ask a few questions"        | Use `questions` range from Plan Context. Never go below min.    |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

@@ -28,11 +28,11 @@ description: '[Documentation] Use when you need to create or update business fea
 
 **Key Rules:**
 
-- **[BLOCKING]** Read `docs/project-reference/spec-principles.md` — spec quality standards, AI-implementability criteria, tech-agnostic rules (read Section 4 completeness checklists before Phase 3.5 verification)
+- **[BLOCKING]** Read `docs/project-reference/spec-principles.md` — spec quality standards, AI-implementability criteria, tech-agnostic rules (§3 surface scope + §3.2 banned prose-token list) (read Section 4 completeness checklists before Phase 3.5 verification)
 - **[BLOCKING]** EVERY test case MUST have verifiable code evidence (`FilePath:LineNumber`) — no exceptions
 - Output MUST have exactly 17 sections matching master template
 - ALWAYS update CHANGELOG.md and Version History (Section 17) when modifying docs
-- Section 15 TCs: include `IntegrationTest` field → `IntegrationTest: Orders/OrderCommandIntegrationTests.cs::{MethodName}`. No test yet → `Status: Untested`
+- Section 15 TCs: the `IntegrationTest` field is an **evidence carrier** (implementation identifiers belong here, like `**Evidence**`) → `IntegrationTest: Orders/OrderCommandIntegrationTests.cs::{MethodName}`. Keep the TC's behavioral prose tech-agnostic (`spec-principles.md §3`); the test path lives ONLY in this evidence field. No test yet → `Status: Untested`
 - Verify every TC-{FEATURE}-{NNN} has `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` in integration tests. Missing → `Status: Untested`
 - Third verification pass finds >5 issues → HALT, re-run verification
 
@@ -74,6 +74,8 @@ Generate feature docs following project conventions.
 | `ErrorMessage.cs:83`            | `{FilePath}:{LineRange}` (template) |
 | `Handler.cs:42-52`              | `SomeFile.cs` (no line)             |
 | `interviews.service.ts:115-118` | "Based on CQRS pattern" (vague)     |
+
+> **Evidence-field only:** these file paths appear ONLY inside the `**Evidence**` / `IntegrationTest` fields — never in a test case's behavioral description, which stays tech-agnostic (`spec-principles.md §3`).
 
 ---
 
@@ -409,7 +411,7 @@ Note the highest existing ID before assigning new ones. See `.claude/skills/shar
 > | Type              | Path                                                         | Description                                              |
 > | ----------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
 > | Engineering Spec  | `docs/specs/{app-bucket}/{system-name}/`                     | Tech-agnostic spec bundle (create via /spec-discovery)   |
-> | QA Test Dashboard | `docs/specs/{Module}/README.md`                              | All TCs, execution status, integration test traceability |
+> | QA Test Dashboard | `docs/specs/README.md` + `docs/specs/PRIORITY-INDEX.md`      | All TCs, execution status, integration test traceability |
 > | Integration Tests | `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/` | Test code; linked by [Trait("TestSpec", "TC-...")]       |
 > | Parent Feature    | _(if sub-feature)_                                           |                                                          |
 > | Child Features    | _(if this doc is a parent)_                                  |                                                          |
@@ -624,7 +626,7 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 
 - {Invalid scenario} → {Expected error/behavior}
 
-**Evidence:** `{FilePath}:{LineRange}`
+**Evidence:** `[Source: {FilePath}:{LineRange}]`
 **IntegrationTest:** `{TestFile}.cs::{MethodName}` (or `Untested`)
 **Status:** Tested | Untested | Planned
 ```
@@ -900,15 +902,15 @@ _Reference: `docs/project-reference/spec-principles.md` Section 4 (AI-Implementa
 
 ## Related Skills
 
-| Skill                        | Relationship                                                                      | When to Call                                                                                        |
-| ---------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `/spec-discovery`            | **Producer** — extracts engineering spec bundle that feeds this skill's INIT mode | Run spec-discovery first when creating docs for the first time; use its output as Section 12 source |
-| `/tdd-spec`                  | **Consumer** — reads Section 15 to generate/validate TCs                          | After creating/updating feature docs, call tdd-spec to populate or review Section 15                |
-| `/tdd-spec-review`           | **Reviewer** — audits TC coverage in Section 15                                   | After tdd-spec, to validate TC completeness and GIVEN/WHEN/THEN quality                             |
-| `/tdd-spec [direction=sync]` | **Dashboard** — syncs `docs/specs/{Module}/README.md` from Section 15             | After tdd-spec update, to keep QA dashboard current                                                 |
-| `/integration-test`          | **End consumer** — generates test code from TCs in Section 15                     | After tdd-spec, to produce actual integration test files                                            |
-| `/docs-update`               | **Orchestrator** — calls this skill as Phase 2                                    | Run /docs-update for full chain sync; it calls /feature-docs internally                             |
-| `/review-changes`            | **Trigger** — detects feature doc staleness                                       | Calls /docs-update when business doc is stale relative to code changes                              |
+| Skill                        | Relationship                                                                                    | When to Call                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `/spec-discovery`            | **Producer** — extracts engineering spec bundle that feeds this skill's INIT mode               | Run spec-discovery first when creating docs for the first time; use its output as Section 12 source |
+| `/tdd-spec`                  | **Consumer** — reads Section 15 to generate/validate TCs                                        | After creating/updating feature docs, call tdd-spec to populate or review Section 15                |
+| `/tdd-spec-review`           | **Reviewer** — audits TC coverage in Section 15                                                 | After tdd-spec, to validate TC completeness and GIVEN/WHEN/THEN quality                             |
+| `/tdd-spec [direction=sync]` | **Dashboard** — syncs `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md` from Section 15 | After tdd-spec update, to keep QA dashboard current                                                 |
+| `/integration-test`          | **End consumer** — generates test code from TCs in Section 15                                   | After tdd-spec, to produce actual integration test files                                            |
+| `/docs-update`               | **Orchestrator** — calls this skill as Phase 2                                                  | Run /docs-update for full chain sync; it calls /feature-docs internally                             |
+| `/review-changes`            | **Trigger** — detects feature doc staleness                                                     | Calls /docs-update when business doc is stale relative to code changes                              |
 
 ## Standalone Chain
 
@@ -934,7 +936,7 @@ feature-docs (you are here)
   │     Validates TC coverage, GIVEN/WHEN/THEN completeness, no duplicate TC codes.
   │
   ├─ [REQUIRED] → /tdd-spec [direction=sync]
-  │     Syncs Section 15 TCs to QA dashboard at docs/specs/{Module}/README.md.
+  │     Syncs Section 15 TCs to QA dashboard indexes at docs/specs/README.md and docs/specs/PRIORITY-INDEX.md.
   │
   ├─ [RECOMMENDED] → /integration-test [from-changes or from-prompt mode]
   │     Generates/updates integration test files from changed TCs.
@@ -958,12 +960,12 @@ Template to insert or verify in `docs/business-features/{Module}/README.md`:
 ```markdown
 ## Related Documentation
 
-| Type              | Link                                                                              | Description                                                    |
-| ----------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Engineering Spec  | [docs/specs/{app-bucket}/{system-name}/](../../specs/{app-bucket}/{system-name}/) | Tech-agnostic spec bundle (domain model, rules, API contracts) |
-| QA Test Dashboard | [docs/specs/{Module}/README.md](../../specs/{Module}/README.md)                   | All TCs, execution status, integration test links              |
-| Integration Tests | `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/`                      | Test code linked to TCs via [Trait("TestSpec", "TC-...")]      |
-| Related Modules   | _(list any cross-module dependencies here)_                                       |                                                                |
+| Type              | Link                                                                                                          | Description                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Engineering Spec  | [docs/specs/{app-bucket}/{system-name}/](../../specs/{app-bucket}/{system-name}/)                             | Tech-agnostic spec bundle (domain model, rules, API contracts) |
+| QA Test Dashboard | [docs/specs/README.md](../../specs/README.md) + [docs/specs/PRIORITY-INDEX.md](../../specs/PRIORITY-INDEX.md) | All TCs, execution status, integration test links              |
+| Integration Tests | `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/`                                                  | Test code linked to TCs via [Trait("TestSpec", "TC-...")]      |
+| Related Modules   | _(list any cross-module dependencies here)_                                                                   |                                                                |
 ```
 
 Fill in `{app-bucket}`, `{system-name}`, `{Module}`, `{ServiceName}` from context.

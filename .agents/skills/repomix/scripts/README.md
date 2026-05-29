@@ -92,7 +92,7 @@ Create `repos.json` with repository configurations:
 Loads .env files in order of precedence:
 
 1. Process environment (highest priority)
-2. `.$repomix/.env` (skill-specific)
+2. `./repomix/.env` (skill-specific)
 3. `./skills/.env` (skills directory)
 4. `./.claude/.env` (lowest priority)
 

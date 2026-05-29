@@ -9,7 +9,7 @@
  *   "codeReview": {
  *     "enabled": true,
  *     "rulesPath": "docs/project-reference/code-review-rules.md",
- *     "injectOnSkills": ["code-review", "review-pr", "review-changes"]
+ *     "injectOnSkills": ["code-review", "review", "review-changes"]
  *   }
  *
  * Exit Codes:

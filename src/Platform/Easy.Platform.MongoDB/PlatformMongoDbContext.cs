@@ -7,12 +7,14 @@ using Easy.Platform.Application;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.Persistence;
+using Easy.Platform.Application.Persistence.BulkUpdate;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.MongoDB.BulkUpdate;
 using Easy.Platform.MongoDB.Migration;
 using Easy.Platform.Persistence;
 using Easy.Platform.Persistence.DataMigration;
@@ -1041,6 +1043,127 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         }
     }
 
+    public async Task<int> UpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
+        Action<PlatformCqrsEntityEvent>? eventCustomConfig = null,
+        CancellationToken cancellationToken = default)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        var ops = PlatformBulkUpdateOperationHelper.BuildOps(setBuilder);
+
+        if (!CanSmartDirectUpdate<TEntity, TPrimaryKey>(dismissSendEvent, concurrencyMode, out _))
+            return await FallbackUpdateManyAsync<TEntity, TPrimaryKey>(predicate, ops, dismissSendEvent, eventCustomConfig, cancellationToken);
+
+        var directOps = augmentInvariants
+            ? PlatformBulkUpdateOperationHelper.WithPlatformInvariants<TEntity>(ops, RequestContextAccessor.Current, concurrencyMode)
+            : ops;
+
+        return await ExecuteDirectUpdateManyAsync<TEntity, TPrimaryKey>(
+            predicate,
+            MongoBulkUpdateDefinitionBuilder.Build<TEntity>(directOps),
+            cancellationToken);
+    }
+
+    internal bool CanSmartDirectUpdate<TEntity, TPrimaryKey>(
+        bool dismissSendEvent,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode,
+        out string deniedReason)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        return PlatformBulkUpdateDirectGate.CanDirectUpdate(
+            typeof(TEntity),
+            dismissSendEvent,
+            PlatformCqrsEntityEvent.IsAnyKindsOfEventHandlerRegisteredForEntity<TEntity, TPrimaryKey>(RootServiceProvider),
+            hasProviderConcurrencyTokenThatRequiresFallback: false,
+            concurrencyMode: concurrencyMode,
+            out deniedReason);
+    }
+
+    internal void EnsureProviderNativeDirectUpdateSupported<TEntity, TPrimaryKey>(
+        bool dismissSendEvent,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        if (CanSmartDirectUpdate<TEntity, TPrimaryKey>(dismissSendEvent, concurrencyMode, out var deniedReason))
+            return;
+
+        throw new NotSupportedException(
+            $"Provider-native bulk update cannot run direct for {typeof(TEntity).Name}: {deniedReason} Use the unified builder UpdateManyAsync overload to allow fallback, or use the existing Action<TEntity> update path.");
+    }
+
+    internal async Task<int> ExecuteProviderNativeDirectUpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        UpdateDefinition<TEntity> updateDefinition,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode,
+        CancellationToken cancellationToken)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        return await ExecuteDirectUpdateManyAsync<TEntity, TPrimaryKey>(
+            predicate,
+            updateDefinition,
+            cancellationToken);
+    }
+
+    private async Task<int> FallbackUpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        IReadOnlyList<BulkUpdateOp> ops,
+        bool dismissSendEvent,
+        Action<PlatformCqrsEntityEvent>? eventCustomConfig,
+        CancellationToken cancellationToken)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        var updateAction = new Action<TEntity>(entity => PlatformBulkUpdateOperationHelper.ApplyToEntity(entity, ops));
+        var updatedCount = 0;
+
+        await Util.Pager.ExecuteAdaptiveSkipPagingAsync(
+            async (skip, take) =>
+            {
+                var pageEntities = await GetAllAsync(GetQuery<TEntity>().Where(predicate).Skip(skip).Take(take), cancellationToken);
+                if (pageEntities.Count == 0)
+                    return (PageCount: 0, MatchedCount: 0);
+
+                var pageEntityIds = pageEntities.Select(p => p.Id).ToList();
+
+                pageEntities.ForEach(updateAction);
+
+                var updatedEntities = await UpdateManyAsync<TEntity, TPrimaryKey>(
+                    pageEntities,
+                    dismissSendEvent,
+                    checkDiff: true,
+                    eventCustomConfig,
+                    cancellationToken);
+
+                updatedCount += updatedEntities.Count;
+
+                var remainingMatchedCount = await CountAsync(
+                    GetQuery<TEntity>().Where(predicate).Where(p => pageEntityIds.Contains(p.Id)),
+                    cancellationToken);
+
+                return (PageCount: pageEntities.Count, MatchedCount: pageEntities.Count - remainingMatchedCount);
+            },
+            ExecutionManyPageSize,
+            cancellationToken);
+
+        return updatedCount;
+    }
+
+    private async Task<int> ExecuteDirectUpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        UpdateDefinition<TEntity> updateDefinition,
+        CancellationToken cancellationToken)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        var result = await GetTable<TEntity>().UpdateManyAsync(predicate, updateDefinition, null, cancellationToken);
+
+        MappedUnitOfWork?.ClearCachedExistingOriginalEntity();
+
+        return (int)result.MatchedCount;
+    }
+
     public async Task<TEntity> DeleteAsync<TEntity, TPrimaryKey>(
         TPrimaryKey entityId,
         bool dismissSendEvent,
@@ -1170,29 +1293,35 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
     )
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        var totalCount = await CountAsync(queryBuilder(GetQuery<TEntity>()), cancellationToken);
-
         if (dismissSendEvent || !PlatformCqrsEntityEvent.IsAnyKindsOfEventHandlerRegisteredForEntity<TEntity, TPrimaryKey>(RootServiceProvider))
         {
+            var filterOnlyDeletePredicate = PlatformMongoFilterOnlyDeleteHelper.TryBuildFilterOnlyDeletePredicate(queryBuilder(GetQuery<TEntity>()));
+
+            if (filterOnlyDeletePredicate != null)
+                return (int)await GetTable<TEntity>().DeleteManyAsync(filterOnlyDeletePredicate, null, cancellationToken).Then(p => p.DeletedCount);
+
             var ids = await GetAllAsync<TEntity, TPrimaryKey>(query => queryBuilder(query).Select(p => p.Id), cancellationToken);
 
-            await GetTable<TEntity>().DeleteManyAsync(p => ids.Contains(p.Id), null, cancellationToken).Then(p => p.DeletedCount);
-        }
-        else
-        {
-            await Util.Pager.ExecuteScrollingPagingAsync(
-                async () =>
-                {
-                    var entities = await GetAllAsync(queryBuilder(GetQuery<TEntity>()).Take(ExecutionManyPageSize), cancellationToken);
+            if (ids.IsEmpty())
+                return 0;
 
-                    await DeleteManyAsync<TEntity, TPrimaryKey>(entities, false, eventCustomConfig, cancellationToken).Then(_ => entities.Count);
-
-                    return entities;
-                },
-                maxExecutionCount: totalCount / ExecutionManyPageSize,
-                cancellationToken: cancellationToken
-            );
+            return (int)await GetTable<TEntity>().DeleteManyAsync(p => ids.Contains(p.Id), null, cancellationToken).Then(p => p.DeletedCount);
         }
+
+        var totalCount = await CountAsync(queryBuilder(GetQuery<TEntity>()), cancellationToken);
+
+        await Util.Pager.ExecuteScrollingPagingAsync(
+            async () =>
+            {
+                var entities = await GetAllAsync(queryBuilder(GetQuery<TEntity>()).Take(ExecutionManyPageSize), cancellationToken);
+
+                await DeleteManyAsync<TEntity, TPrimaryKey>(entities, false, eventCustomConfig, cancellationToken).Then(_ => entities.Count);
+
+                return entities;
+            },
+            maxExecutionCount: totalCount / ExecutionManyPageSize,
+            cancellationToken: cancellationToken
+        );
 
         return totalCount;
     }
@@ -1448,24 +1577,20 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
     {
         if (entities.Any())
         {
-            var entityIds = entities.Select(p => p.Id);
+            var shouldMatchExistingEntitiesByPredicate = PlatformBulkUpsertMatchingHelper.ShouldMatchExistingEntitiesByPredicate<TEntity, TPrimaryKey>(
+                entities,
+                customCheckExistingPredicateBuilder
+            );
+            var existingEntitiesPredicate = PlatformBulkUpsertMatchingHelper.BuildExistingEntitiesPredicate<TEntity, TPrimaryKey>(
+                entities,
+                customCheckExistingPredicateBuilder
+            );
 
             var existingEntitiesQuery = GetQuery<TEntity>()
-                .Pipe(query =>
-                    customCheckExistingPredicateBuilder != null ||
-                    entities.FirstOrDefault()?.As<IUniqueCompositeIdSupport<TEntity>>()?.FindByUniqueCompositeIdExpr() != null
-                        ? query.Where(
-                            entities
-                                .Select(entity =>
-                                    customCheckExistingPredicateBuilder?.Invoke(entity) ?? entity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr()
-                                )
-                                .Aggregate((currentExpr, nextExpr) => currentExpr.Or(nextExpr))
-                        )
-                        : query.Where(p => entityIds.Contains(p.Id))
-                );
+                .Where(existingEntitiesPredicate);
 
             // Only need to check by entityIds if no custom check condition
-            if (customCheckExistingPredicateBuilder == null && entities.FirstOrDefault()?.As<IUniqueCompositeIdSupport<TEntity>>()?.FindByUniqueCompositeIdExpr() == null)
+            if (!shouldMatchExistingEntitiesByPredicate)
             {
                 var existingEntityIds = await existingEntitiesQuery
                     .ToListAsync(cancellationToken)
@@ -1487,26 +1612,25 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                     .ToListAsync(cancellationToken)
                     .Then(items => items.PipeAction(items => items.ForEach(p => MappedUnitOfWork?.SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p))));
 
-                var toUpsertEntityToExistingEntityPairs = entities.SelectList(toUpsertEntity =>
+                var toUpsertEntityToExistingEntityPairs = PlatformBulkUpsertMatchingHelper.MatchToExistingEntities<TEntity, TPrimaryKey>(
+                    entities,
+                    existingEntities,
+                    customCheckExistingPredicateBuilder
+                );
+
+                toUpsertEntityToExistingEntityPairs.ForEach(pair =>
                 {
-                    var matchedExistingEntity = existingEntities.FirstOrDefault(existingEntity =>
-                        customCheckExistingPredicateBuilder?.Invoke(toUpsertEntity).Compile()(existingEntity)
-                        ?? toUpsertEntity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr().Compile()(existingEntity)
-                    );
-
                     // Update to correct the id of toUpdateEntity to the matched existing entity Id
-                    if (matchedExistingEntity != null)
-                        toUpsertEntity.Id = matchedExistingEntity.Id;
-
-                    return new { toUpsertEntity, matchedExistingEntity };
+                    if (pair.MatchedExistingEntity != null)
+                        pair.ToUpsertEntity.Id = pair.MatchedExistingEntity.Id;
                 });
 
-                var (existingToUpdateEntities, newEntities) = toUpsertEntityToExistingEntityPairs.WhereSplitResult(p => p.matchedExistingEntity != null);
+                var (existingToUpdateEntities, newEntities) = toUpsertEntityToExistingEntityPairs.WhereSplitResult(p => p.MatchedExistingEntity != null);
 
                 await Util.TaskRunner.WhenAll(
-                    CreateManyAsync<TEntity, TPrimaryKey>(newEntities.Select(p => p.toUpsertEntity).ToList(), dismissSendEvent, eventCustomConfig, cancellationToken),
+                    CreateManyAsync<TEntity, TPrimaryKey>(newEntities.Select(p => p.ToUpsertEntity).ToList(), dismissSendEvent, eventCustomConfig, cancellationToken),
                     UpdateManyAsync<TEntity, TPrimaryKey>(
-                        existingToUpdateEntities.Select(p => p.toUpsertEntity).ToList(),
+                        existingToUpdateEntities.Select(p => p.ToUpsertEntity).ToList(),
                         dismissSendEvent,
                         checkDiff,
                         eventCustomConfig,

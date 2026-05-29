@@ -41,6 +41,7 @@ Review UI code for compliance with WCAG 2.2, Core Web Vitals, and modern web des
 - **Building** UI -- use `frontend-design`
 - **Creating** design specs -- use `design-spec`
 - **Full UX design** process -- use `ux-designer`
+- **Workflow-wired UI review gate** -- use `/review-ui` (the project UI review gate that runs in the `review-changes` parallel batch on frontend changes: long-content overflow, responsive flex, flex-vs-fixed sizing, z-index discipline, SCSS/BEM). This skill is the generic, framework-agnostic a11y/UX checklist that `/review-ui` cross-references — not a duplicate.
 - Project SCSS review -- also check `docs/project-reference/scss-styling-guide.md`
 
 ## Prerequisites
@@ -113,11 +114,12 @@ src/components/Modal.tsx:78 - no focus trap for modal dialog
 
 ## Related Skills
 
-| Skill             | When to use instead            |
-| ----------------- | ------------------------------ |
-| `frontend-design` | Building UI (not reviewing)    |
-| `design-spec`     | Creating design specifications |
-| `ux-designer`     | Full UX design process         |
+| Skill             | When to use instead                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `frontend-design` | Building UI (not reviewing)                                                                                               |
+| `design-spec`     | Creating design specifications                                                                                            |
+| `ux-designer`     | Full UX design process                                                                                                    |
+| `/review-ui`      | Project UI review gate (overflow, responsive flex, z-index, SCSS/BEM); runs in `review-changes` batch on frontend changes |
 
 ---
 

@@ -2,7 +2,25 @@
 
 > Template for test case entries in business feature docs Section 15.
 > Used by: `$tdd-spec` skill.
-> TC format: `TC-{FEATURE}-{NNN}` (feature codes in `docs/project-reference/feature-docs-reference.md`).
+> TC format: `TC-{FEATURE}-{NNN}` (resolve feature codes from project config/reference docs).
+
+## Quick Summary
+
+**Goal:** Provide compact Section 15 templates that generate traceable, intent-guarding TCs.
+
+**Workflow:**
+
+1. **Header** — Create priority summary for generated/manual test coverage.
+2. **TC Entry** — Capture objective, business intent/invariant, GWT steps, acceptance criteria, data, edge cases, evidence, and related files.
+3. **Categories** — Group TCs by CRUD, validation, permissions, workflows, edge cases, preservation, and integration concerns.
+4. **Evidence** — Start with `TBD (pre-implementation)` only in TDD-first mode; update after implementation.
+
+**Key Rules:**
+
+- MUST ATTENTION each TC names `Business Intent / Invariant Guarded`.
+- MUST ATTENTION preservation tests assert old healthy behavior before and after bugfixes.
+- MUST ATTENTION evidence changes from `TBD` to `[Source: file:line]` after implementation.
+- NEVER let generated tests mirror implementation mechanics without guarding behavior.
 
 ---
 
@@ -31,6 +49,8 @@
 #### TC-{FEATURE}-{NNN}: {Descriptive Test Name} [{Priority}]
 
 **Objective:** {One sentence: what this test verifies and why it matters}
+
+**Business Intent / Invariant Guarded:** {Business rule or invariant this TC protects; the TC must fail if this rule breaks}
 
 **Preconditions:**
 
@@ -65,15 +85,15 @@ And {additional verification}
 - {Concurrency: simultaneous updates}
 - {Cross-service: message bus timing}
 
-**Evidence:** `{FilePath}:{LineRange}` or `TBD (pre-implementation)`
+**Evidence:** `[Source: {FilePath}:{LineRange}]` or `TBD (pre-implementation)`
 
 **Related Files:**
 | Layer | Type | File |
 | ------ | ------------- | ------------------------------------------------------------------------------------- |
-| API | Controller | `src/Services/{service}/{Service}.Service/Controllers/{Feature}Controller.cs` |
-| App | Command/Query | `src/Services/{service}/{Service}.Application/UseCaseCommands/{Feature}/{Command}.cs` |
-| Domain | Entity | `src/Services/{service}/{Service}.Domain/Entities/{Feature}/{Entity}.cs` |
-| Test | Integration | `src/Services/{service}/{Service}.IntegrationTests/{Feature}/{TestClass}.cs` |
+| API | Controller/Endpoint | `{configured-source-path}/{module}/{api-layer-path}/{FeatureEndpointFile}` |
+| App | Command/Query/Use Case | `{configured-source-path}/{module}/{application-layer-path}/{FeatureUseCaseFile}` |
+| Domain | Entity/Model | `{configured-source-path}/{module}/{domain-layer-path}/{FeatureEntityFile}` |
+| Test | Integration | `{configured-test-path}/{FeatureTestFile}` |
 ```
 
 ---
@@ -126,8 +146,6 @@ And {no orphan/side-effect created in downstream store}
 
 (Cross-service message bus flows, event handler chains)
 
-```
-
 ---
 
 ## Priority Definitions
@@ -149,4 +167,10 @@ When generating TCs before implementation:
 - Use descriptive command/entity names as placeholders in Related Files
 - Focus on WHAT the behavior should be, not HOW it's implemented
 - After implementation, run `$tdd-spec update` to fill in evidence
-```
+
+## Closing Reminders
+
+- MUST ATTENTION Section 15 TCs protect behavior and invariants, not implementation shape.
+- MUST ATTENTION bugfix specs include preservation tests for pre-existing good behavior.
+- MUST ATTENTION replace `TBD (pre-implementation)` with concrete evidence after implementation.
+- NEVER ship Section 15 with untraceable TC intent or smoke-only acceptance criteria.

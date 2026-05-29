@@ -435,7 +435,7 @@ claude /git-cp
 claude /debug-investigate "login button not working"
 
 # 2. Fix
-claude /fix-fast "fix login button issue"
+claude /fix "fix login button issue"
 
 # 3. Test
 claude /test

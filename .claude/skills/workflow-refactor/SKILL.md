@@ -19,6 +19,9 @@ disable-model-invocation: true
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+- MUST ATTENTION apply shared SDD Artifact Contract from `shared/sdd-artifact-contract.md`; use project config/reference docs only for local conventions.
 - NEVER skip mandatory workflow or skill gates.
 
 ---
@@ -31,7 +34,7 @@ Activate the `refactor` workflow. Run `/workflow-start refactor` with the user's
 
 **Steps:** /scout → /investigate → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /code → /tdd-spec → /why-review → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /changelog → /test → /docs-update → /watzup → /workflow-end
 
-> **[PERFORMANCE EXCEPTION]** If this refactor is performance-driven (query optimization, caching, reducing allocations, improving throughput), skip `/tdd-spec`, `/tdd-spec-review`, `/tdd-spec [direction=sync]`, `/integration-test`, `/integration-test-review`, and `/integration-test-verify`. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead.
+> **[PERFORMANCE-SDD ROUTE]** If this refactor is performance-driven (query optimization, caching, reducing allocations, improving throughput), activate `/workflow-performance` for benchmark evidence while preserving observable behavior. Do not use performance/refactor scope to bypass spec, test, or docs sync when behavior, public contract, SLA, performance constraint, state timing boundary, or docs/spec boundary changes. Pure behavior-preserving optimization may skip new TC/integration-test generation only with explicit skip reason and invariant-preservation evidence. `/test` remains mandatory.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 

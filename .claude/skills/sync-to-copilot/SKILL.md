@@ -53,6 +53,8 @@ tags:
 
 ## When to Use This Skill
 
+> **Scope vs related skills:** Syncs **Claude→Copilot knowledge** (docs, dev-rules, workflow catalog) into Copilot instructions via script + AI enrichment. For the **`workflows.json` catalog only** (fast, no AI pass) → `/sync-copilot-workflows`. For **bidirectional** sync incl. skills/prompts/agents → `/ai-dev-tools-sync`.
+
 Trigger this skill when:
 
 - **Workflows added/modified** — After editing `.claude/workflows.json`
@@ -134,7 +136,7 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 **Rules:**
 
 - Extract ONLY `##` level headings from the source file (not `###` or deeper)
-- Do NOT copy content — just list heading names
+- List heading names only — do NOT copy content
 - Keep the READ prompt from the registry `whenToRead` field
 - If a file is very large (>30KB), note the file size: `(~59KB - read relevant sections)`
 

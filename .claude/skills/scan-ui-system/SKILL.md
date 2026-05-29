@@ -83,7 +83,7 @@ Activate `/scan-frontend-patterns` → populates `docs/project-reference/fronten
 
 ## Phase 3: Verify Sub-Skill Outputs
 
-**Do NOT proceed to Phase 4 until all 3 are verified.**
+**Proceed to Phase 4 only after all 3 outputs are verified — do NOT advance while any remain unverified.**
 
 For each output doc:
 

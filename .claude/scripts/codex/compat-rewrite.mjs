@@ -1,5 +1,4 @@
 const PREFERRED_SKILL_ALIASES = new Map([
-  ["plan", "plan-hard"],
   ["debug", "debug-investigate"],
   ["simplify", "code-simplifier"],
 ]);
@@ -7,7 +6,6 @@ const PREFERRED_SKILL_ALIASES = new Map([
 const COMPATIBILITY_NOTE_LINES = [
   "> Codex compatibility note:",
   "> - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.",
-  "> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.",
   "> - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.",
   "> - User-question prompts mean to ask the user directly in Codex.",
   "> - Ignore Claude-specific mode-switch instructions when they appear.",
@@ -48,6 +46,9 @@ export function rewriteSkillMentionsForCodex(text, skillReferenceMap) {
   return text.replace(
     /(^|[^A-Za-z0-9_$-])([/$])([a-z][a-z0-9-]*)(?=$|[^A-Za-z0-9_-])/gm,
     (match, prefix, sigil, commandName) => {
+      if (sigil === "/" && prefix && !/[\s([{'"`>:-]/.test(prefix)) {
+        return match;
+      }
       const normalizedName = normalizeName(commandName);
       const mappedName = skillReferenceMap.get(normalizedName);
       if (!mappedName) return match;
@@ -84,6 +85,7 @@ export function rewriteClaudeToolTermsForCodex(text) {
     .replace(/\bAgent\(/g, "spawn_agent(")
     .replace(/\bsubagent_type:/g, "agent_type:")
     .replace(/\bsubagent_type=/g, "agent_type=")
+    .replace(/\bsubagent_type\b/g, "agent_type")
     .replace(/\bTaskCreate:/g, "Task tracking:")
     .replace(/\bTaskCreate\b/g, "task tracking")
     .replace(/\bTaskList\b/g, "the current task list")

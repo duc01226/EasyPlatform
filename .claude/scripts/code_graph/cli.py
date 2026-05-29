@@ -55,6 +55,11 @@ def main() -> None:
     status_cmd.add_argument("--repo", default=None)
     status_cmd.add_argument("--json", action="store_true", dest="json_output")
 
+    # migrate-paths
+    migrate_cmd = sub.add_parser("migrate-paths", help="Convert stored graph paths to repo-relative form")
+    migrate_cmd.add_argument("--repo", default=None)
+    migrate_cmd.add_argument("--json", action="store_true", dest="json_output")
+
     # graph-blast-radius (also accepts blast-radius for backward compat)
     br_cmd = sub.add_parser("graph-blast-radius", aliases=["blast-radius"], help="Impact analysis of changes")
     br_cmd.add_argument("--base", default="HEAD~1")
@@ -294,6 +299,8 @@ def _dispatch(args) -> dict:
     # ── Read operations (ensure connectors ran at least once) ──
     elif args.command == "status":
         return list_graph_stats(repo_root=args.repo)
+    elif args.command == "migrate-paths":
+        return _migrate_paths(args)
     elif args.command in ("graph-blast-radius", "blast-radius"):
         _ensure_connectors_ran(args.repo)
         return get_impact_radius(
@@ -375,7 +382,7 @@ def _export_graph(args) -> dict:
         all_nodes = []
         if filter_files:
             # Export only selected files + their connected nodes
-            target_paths = {str(root / f) for f in filter_files}
+            target_paths = {f.replace("\\", "/") for f in filter_files}
             for file_path in target_paths:
                 for node in store.get_nodes_by_file(file_path):
                     all_nodes.append(node_to_dict(node))
@@ -386,7 +393,7 @@ def _export_graph(args) -> dict:
 
         if filter_files:
             # Only edges involving the selected files
-            target_paths = {str(root / f) for f in filter_files}
+            target_paths = {f.replace("\\", "/") for f in filter_files}
             all_edges = [
                 edge_to_dict(e) for e in store.get_all_edges()
                 if e.file_path in target_paths
@@ -438,7 +445,7 @@ def _export_mermaid(args) -> dict:
 
     root = Path(args.repo) if args.repo else find_project_root()
     db_path = get_db_path(root)
-    file_path = str(root / file_arg)
+    file_path = file_arg.replace("\\", "/")
     store = GraphStore(db_path)
 
     try:
@@ -628,6 +635,26 @@ def _connect_api(args) -> dict:
     store = GraphStore(db_path)
     try:
         return connect_api_endpoints(store, root, config)
+    finally:
+        store.close()
+
+
+def _migrate_paths(args) -> dict:
+    """Convert existing graph rows from absolute to repo-relative paths."""
+    from .graph import GraphStore
+    from .incremental import find_project_root, get_db_path
+
+    root = Path(args.repo) if args.repo else find_project_root()
+    db_path = get_db_path(root)
+    store = GraphStore(db_path)
+    try:
+        result = store.migrate_absolute_paths_to_relative()
+        result["summary"] = (
+            "Path migration complete: "
+            f"{result.get('nodes_migrated', 0)} node rows and "
+            f"{result.get('edges_migrated', 0)} edge rows inspected."
+        )
+        return result
     finally:
         store.close()
 

@@ -8,6 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const os = require('os');
 
 const { isPortAvailable, findAvailablePort, DEFAULT_PORT } = require('../lib/port-finder.cjs');
 const { writePidFile, readPidFile, removePidFile, findRunningInstances } = require('../lib/process-mgr.cjs');
@@ -53,6 +54,10 @@ function assertIncludes(str, substr, message) {
   if (!str.includes(substr)) {
     throw new Error(`${message}: expected to include "${substr}"`);
   }
+}
+
+function fileRoute(basePath, imagePath) {
+  return `/file/${encodeURIComponent(path.resolve(basePath, imagePath))}`;
 }
 
 // Test suites
@@ -134,7 +139,7 @@ test('resolveImages converts relative paths', () => {
   const md = '![Alt](./image.png)';
   const resolved = resolveImages(md, '/base/path');
   assertIncludes(resolved, '/file/', 'Should include /file/ route');
-  assertIncludes(resolved, '/base/path', 'Should include base path');
+  assertIncludes(resolved, fileRoute('/base/path', './image.png'), 'Should include encoded base path');
 });
 
 test('resolveImages preserves absolute URLs', () => {
@@ -147,19 +152,19 @@ test('resolveImages handles reference-style definitions', () => {
   const md = '![Step 1 Initial]\n\n[Step 1 Initial]: ./screenshots/step1.png';
   const resolved = resolveImages(md, '/base/path');
   assertIncludes(resolved, '/file/', 'Should include /file/ route in ref definition');
-  assertIncludes(resolved, '/base/path/screenshots/step1.png', 'Should resolve relative path');
+  assertIncludes(resolved, fileRoute('/base/path', './screenshots/step1.png'), 'Should resolve relative path');
 });
 
 test('resolveImages handles reference-style with titles', () => {
   const md = '[logo]: ./images/logo.png "Company Logo"';
   const resolved = resolveImages(md, '/project');
-  assertIncludes(resolved, '/file/project/images/logo.png', 'Should resolve path with title');
+  assertIncludes(resolved, fileRoute('/project', './images/logo.png'), 'Should resolve path with title');
 });
 
 test('resolveImages handles inline images with titles', () => {
   const md = '![Alt](./image.png "Title text")';
   const resolved = resolveImages(md, '/base');
-  assertIncludes(resolved, '/file/base/image.png', 'Should resolve inline with title');
+  assertIncludes(resolved, fileRoute('/base', './image.png'), 'Should resolve inline with title');
 });
 
 test('addHeadingIds adds id attributes', () => {
@@ -200,7 +205,7 @@ test('renderTOCHtml handles empty array', () => {
 console.log('\n--- Plan Navigator Tests ---');
 
 // Create temp plan structure for testing
-const testPlanDir = '/tmp/test-novel-viewer-plan';
+const testPlanDir = path.join(os.tmpdir(), 'test-novel-viewer-plan');
 const testPlanFile = path.join(testPlanDir, 'plan.md');
 const testPhaseFile = path.join(testPlanDir, 'phase-01-test.md');
 
@@ -238,7 +243,7 @@ test('detectPlan identifies plan directory', () => {
 });
 
 test('detectPlan returns false for non-plan', () => {
-  const result = detectPlan('/tmp/random-file.md');
+  const result = detectPlan(path.join(os.tmpdir(), 'random-file.md'));
   assertFalse(result.isPlan, 'Should not be plan');
 });
 
@@ -264,7 +269,7 @@ test('generateNavSidebar returns HTML', () => {
 });
 
 test('generateNavSidebar returns empty for non-plan', () => {
-  const html = generateNavSidebar('/tmp/random.md');
+  const html = generateNavSidebar(path.join(os.tmpdir(), 'random.md'));
   assertEqual(html, '', 'Should return empty string');
 });
 

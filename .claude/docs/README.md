@@ -7,10 +7,10 @@
 | Goal                         | Document                                                                                        |
 | ---------------------------- | ----------------------------------------------------------------------------------------------- |
 | **New to Claude Code?**      | [quick-start.md](./quick-start.md) - 5-minute onboarding                                        |
-| **Need a skill?**            | [skills/README.md](./skills/README.md) - 272 skills catalog                                     |
+| **Need a skill?**            | [skills/README.md](./skills/README.md) - 257 skills catalog                                     |
 | **Building a feature?**      | [skills/README.md](./skills/README.md) + `docs/project-reference/` patterns                     |
-| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 37 hooks deep-dive                                       |
-| **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 34 workflows                                      |
+| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 64 top-level hook files deep-dive                        |
+| **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 37 workflows                                      |
 | **Configuring Claude?**      | [configuration/README.md](./configuration/README.md)                                            |
 | **Team collaboration?**      | [team-collaboration-guide.md](./team-collaboration-guide.md) - PO, BA, QA, QC, UX, PM workflows |
 | **Graph intelligence?**      | [code-graph-mechanism.md](./code-graph-mechanism.md) - How structural code analysis works       |
@@ -23,11 +23,11 @@
 |-- README.md                 <- You are here (Navigation hub)
 |-- quick-start.md            5-minute onboarding guide
 |
-|-- skills/                   272 skills across 15+ domains
+|-- skills/                   257 skills across 15+ domains
 |   |-- README.md             Skills overview + full catalog
 |   +-- (patterns)           → docs/project-reference/
 |
-|-- hooks/                    ~37 logical hooks (53 files), 27 lib modules
+|-- hooks/                    64 top-level hook files, 29 lib modules
 |   |-- README.md             Hooks overview, lessons system, session lifecycle
 |   +-- extending-hooks.md    How to create custom hooks
 |
@@ -118,11 +118,9 @@
 
 ## Complete Guides (Large Reference Docs)
 
-| Document                                       | Size  | Use Case                             |
-| ---------------------------------------------- | ----- | ------------------------------------ |
-| `docs/backend-complete-guide.md`               | ~76KB | Full backend reference (in `docs/`)  |
-| `docs/frontend-complete-guide.md`              | ~57KB | Complete frontend guide (in `docs/`) |
-| `docs/project-reference/scss-styling-guide.md` | ~30KB | BEM, design tokens (in `docs/`)      |
+| Document                                       | Size  | Use Case                        |
+| ---------------------------------------------- | ----- | ------------------------------- |
+| `docs/project-reference/scss-styling-guide.md` | ~30KB | BEM, design tokens (in `docs/`) |
 
 ## Related Documentation
 
@@ -143,18 +141,17 @@
 
 ## Statistics
 
-| Category                 | Count |
-| ------------------------ | ----- |
-| Skills                   | 258   |
-| Hooks (logical)          | ~37   |
-| Hook files (incl. parts) | 53    |
-| Lib Modules              | 27    |
-| Hook Events              | 9     |
-| Agents                   | 28    |
-| Workflows                | 48    |
-| Tests                    | 300   |
-| Documentation Files      | 30    |
+| Category               | Count |
+| ---------------------- | ----- |
+| Skills                 | 257   |
+| Hook files (top-level) | 64    |
+| Lib Modules            | 29    |
+| Hook Events            | 9     |
+| Agents                 | 28    |
+| Workflows              | 37    |
+| Hook Tests             | 369   |
+| Documentation Files    | 28    |
 
 ---
 
-_Last updated: 2026-04-13 | Source: `.claude/` directory analysis_
+_Last updated: 2026-05-14 | Source: `.claude/` directory analysis_

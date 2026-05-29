@@ -95,5 +95,5 @@ Specializes in React, TypeScript, CSS...
 
 - [GitHub Copilot Docs](https://docs.github.com/en/copilot)
 - [Custom Instructions](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)
-- [Agent Skills](https:/$code.visualstudio.com/docs/copilot/customization/agent-skills)
+- [Agent Skills](https://code.visualstudio.com/docs/copilot/customization/agent-skills)
 - [Awesome Copilot](https://github.com/github/awesome-copilot)

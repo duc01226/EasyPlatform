@@ -18,7 +18,7 @@
     ],
     "codeReview": {
         "enabled": true,
-        "injectOnSkills": ["code-review", "review-pr", "review-changes", "code-reviewer", "review"],
+        "injectOnSkills": ["code-review", "review", "review:codebase", "review-changes", "code-reviewer"],
         "rulesPath": "docs/project-reference/code-review-rules.md"
     },
     "codingLevel": 3,
@@ -29,6 +29,12 @@
     "paths": {
         "docs": "docs",
         "plans": "plans"
+    },
+    "portability": {
+        "enabled": true,
+        "rule": "Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/.",
+        "projectConfigPath": "docs/project-config.json",
+        "docsIndexPath": "docs/project-reference/docs-index-reference.md"
     },
     "plan": {
         "dateFormat": "YYMMDD-HHmm",

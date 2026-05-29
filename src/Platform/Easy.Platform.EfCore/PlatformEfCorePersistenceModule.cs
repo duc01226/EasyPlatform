@@ -75,7 +75,7 @@ public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPers
             sp => new PooledDbContextFactory<TDbContext>(sp.GetRequiredService<DbContextOptions<TDbContext>>(), options.PoolSize),
             ServiceLifeTime.Singleton);
         serviceCollection.AddDbContextPool<TDbContext>(
-            o => ConfigureDbContextOptionsBuilder(serviceCollection.BuildServiceProvider(), o),
+            (sp, o) => ConfigureDbContextOptionsBuilder(sp, o),
             options.PoolSize);
     }
 
@@ -181,7 +181,36 @@ public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPers
 
         DbContextOptionsBuilderActionProvider(serviceProvider).Invoke(builder);
 
+        var interceptors = ResolveInterceptorsOrThrow(serviceProvider);
+        if (interceptors.Count > 0) builder.AddInterceptors(interceptors);
+
         if (Debugger.IsAttached && serviceProvider.GetRequiredService<IPlatformPersistenceConfiguration<TDbContext>>().EnableDebugQueryLog)
             builder.UseLoggerFactory(Microsoft.Extensions.Logging.LoggerFactory.Create(builder => builder.AddDebug()));
+    }
+
+    /// <summary>
+    /// Resolves <see cref="IInterceptor" /> registrations for the pooled <typeparamref name="TDbContext"/>.
+    /// AddDbContextPool resolves dependencies from the root provider, so any <see cref="IInterceptor"/>
+    /// registered as Scoped or Transient is unsupported. This wrapper rethrows the underlying DI error
+    /// with an actionable message pointing at the lifetime contract — but only when the underlying
+    /// exception message indicates a scoped-from-root resolution failure, so unrelated constructor
+    /// errors propagate unchanged and are not misattributed as a lifetime issue.
+    /// </summary>
+    private static List<IInterceptor> ResolveInterceptorsOrThrow(IServiceProvider serviceProvider)
+    {
+        try
+        {
+            return serviceProvider.GetServices<IInterceptor>().ToList();
+        }
+        catch (InvalidOperationException ex) when (
+            ex.Message.Contains("scope", StringComparison.OrdinalIgnoreCase) ||
+            ex.Message.Contains("root provider", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"IInterceptor services injected into pooled DbContext '{typeof(TDbContext).Name}' must be registered as Singleton. " +
+                "AddDbContextPool resolves dependencies from the root service provider; Scoped/Transient IInterceptor registrations are not supported. " +
+                "Re-register your interceptor with ServiceLifetime.Singleton, or wrap per-request state behind a singleton facade.",
+                ex);
+        }
     }
 }

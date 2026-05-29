@@ -26,7 +26,7 @@ description: '[Utilities] Use when you need to review recent changes and wrap up
 
 **Key Rules:**
 
-- READ-ONLY: do not implement or fix anything, only flag
+- READ-ONLY: only flag findings, never implement or fix anything
 - Doc staleness check is REQUIRED (see mapping table below)
 - Lesson-learned analysis is REQUIRED (see section below)
 - Final review task MUST ATTENTION include doc-staleness check AND lesson-learned analysis
@@ -37,7 +37,7 @@ Review my current branch and the most recent commits.
 Provide a detailed summary of all changes, including what was modified, added, or removed.
 Analyze the overall impact and quality of the changes.
 
-**IMPORTANT**: **Do not** start implementing.
+**IMPORTANT**: Review and summarize only, never start implementing.
 
 ---
 

@@ -33,7 +33,7 @@ description: '[Architecture] Use when you need research, analyze, and compare te
 - **MANDATORY IMPORTANT MUST ATTENTION** include confidence % with evidence for every recommendation
 - **MANDATORY IMPORTANT MUST ATTENTION** run user validation interview at end (never skip)
 - All claims must cite sources (URL, benchmark, case study)
-- Never recommend based on familiarity alone — evidence required
+- Recommend based on benchmarked evidence (URL, benchmark, case study); never on familiarity alone
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -242,10 +242,10 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
+      <!-- /SYNC:critical-thinking-mindset:reminder -->
+      <!-- SYNC:ai-mistake-prevention:reminder -->
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+    <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 

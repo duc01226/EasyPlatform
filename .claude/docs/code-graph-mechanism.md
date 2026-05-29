@@ -302,7 +302,7 @@ sequenceDiagram
 | `kind`           | TEXT    | File, Class, Function, Type, Test               |
 | `name`           | TEXT    | Short name (e.g., `login`)                      |
 | `qualified_name` | TEXT    | Unique: `file_path::ClassName.method_name`      |
-| `file_path`      | TEXT    | Absolute path to source file                    |
+| `file_path`      | TEXT    | Repo-relative path to source file               |
 | `line_start`     | INTEGER | Start line number                               |
 | `line_end`       | INTEGER | End line number                                 |
 | `language`       | TEXT    | Detected language                               |

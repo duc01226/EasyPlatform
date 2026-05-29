@@ -241,6 +241,24 @@ function logSubsection(title) {
     console.log(`\n  ${COLORS.dim}─── ${title} ───${COLORS.reset}`);
 }
 
+async function runNodeScript(scriptName, args = []) {
+    return new Promise(resolve => {
+        const scriptPath = path.join(__dirname, scriptName);
+        const proc = spawn(process.execPath, [scriptPath, ...args], {
+            cwd: path.resolve(__dirname, '..', '..', '..'),
+            env: process.env,
+            stdio: ['ignore', 'pipe', 'pipe']
+        });
+
+        let stdout = '';
+        let stderr = '';
+        proc.stdout.on('data', data => { stdout += data.toString(); });
+        proc.stderr.on('data', data => { stderr += data.toString(); });
+        proc.on('close', code => resolve({ code: code || 0, stdout, stderr }));
+        proc.on('error', err => resolve({ code: -1, stdout: '', stderr: err.message }));
+    });
+}
+
 // ============================================================================
 // Test Cases: Session Lifecycle
 // ============================================================================
@@ -2624,6 +2642,19 @@ async function testEdgeCases() {
     }
 }
 
+async function testCountDriftSuite() {
+    logSection('Suite Runner: count-drift');
+
+    const result = await runNodeScript('run-all-tests.cjs', ['--filter=count-drift']);
+    if (VERBOSE && result.stdout) console.log(result.stdout);
+    if (VERBOSE && result.stderr) console.error(result.stderr);
+    logResult(
+        'count-drift suite passes through primary runner',
+        result.code === 0,
+        result.code === 0 ? '' : (result.stderr || result.stdout).trim()
+    );
+}
+
 // ============================================================================
 // Main Test Runner
 // ============================================================================
@@ -2711,6 +2742,11 @@ async function runAllTests() {
     // Edge Cases
     if (!FILTER || 'edge'.includes(FILTER)) {
         await testEdgeCases();
+    }
+
+    // Generated inventory / catalog drift
+    if (!FILTER || 'count-drift'.includes(FILTER) || 'catalog'.includes(FILTER)) {
+        await testCountDriftSuite();
     }
 
     // Summary

@@ -22,6 +22,7 @@ description: '[Documentation] Use when scanning feature documentation structure,
 - Generic — works with any documentation structure
 - Discover organization dynamically from file system
 - Every reference must point to real files
+- **[BLOCKING] Tech-agnostic output:** registry/overview/summary prose and headings stay tech-agnostic per `docs/project-reference/spec-principles.md` §3 (+ §3.2 banned-token list) — no framework/product/language/design-pattern names; source paths and class names appear ONLY in evidence fields (`**Evidence**`, `[Source:]`), frontmatter, and Mermaid.
 
 ---
 
@@ -188,7 +189,7 @@ Read report. Apply fresh-eyes protocol:
 <!-- SYNC:scan-and-update-reference-doc:reminder -->
 
 - **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+    <!-- /SYNC:scan-and-update-reference-doc:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

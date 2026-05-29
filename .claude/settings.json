@@ -7,8 +7,7 @@
     "autoMemoryEnabled": false,
     "cleanupPeriodDays": 30,
     "disabledMcpjsonServers": ["chrome-devtools", "figma", "memory", "sequential-thinking"],
-    "effortLevel": "high",
-    "skillListingBudgetFraction": 0.05,
+    "effortLevel": "xhigh",
     "enableAllProjectMcpServers": false,
     "enabledMcpjsonServers": ["context7", "github", "mongodb", "postgres"],
     "enabledPlugins": {
@@ -603,6 +602,7 @@
             "Write(**/node_modules/**)"
         ]
     },
+    "skillListingBudgetFraction": 0.05,
     "statusLine": {
         "command": "npx -y ccstatusline@latest --config .claude/ccstatusline.json",
         "padding": 0,

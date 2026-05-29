@@ -13,6 +13,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Easy.Platform\Easy.Platform.csproj" />
+    <ProjectReference Include="..\Easy.Platform.Benchmark\Easy.Platform.Benchmark.csproj" />
+    <ProjectReference Include="..\Easy.Platform.EfCore\Easy.Platform.EfCore.csproj" />
+    <ProjectReference Include="..\Easy.Platform.MongoDB\Easy.Platform.MongoDB.csproj" />
   </ItemGroup>
 
   <ItemGroup>

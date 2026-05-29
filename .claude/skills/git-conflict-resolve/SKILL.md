@@ -215,7 +215,7 @@ Create a comprehensive report at `{REPORT_PATH}` with:
 ## Notes
 
 - Always create backup files BEFORE any resolution
-- Never force-resolve without understanding the root cause
+- Understand the root cause first, then resolve — never force-resolve blind. — why: a guessed resolution silently drops or duplicates legitimate changes
 - For complex conflicts (>3 conflict regions in one file), extract both clean versions for side-by-side analysis
 - Check for prerequisite commits: if a cherry-pick modifies files from prior commits not on target, note this in the report
 - Use `git diff <commit>^..<commit> -- <file>` to see the actual diff of a specific commit (not the full file state)
@@ -259,8 +259,8 @@ Create a comprehensive report at `{REPORT_PATH}` with:
 > 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
 > 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
 > 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation
+> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
 >
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
@@ -269,7 +269,7 @@ Create a comprehensive report at `{REPORT_PATH}` with:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
+    <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

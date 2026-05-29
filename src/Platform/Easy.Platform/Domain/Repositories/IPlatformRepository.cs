@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Linq.Expressions;
+using Easy.Platform.Application.Persistence.BulkUpdate;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
@@ -665,6 +666,37 @@ public interface IPlatformRootRepository<TEntity, TPrimaryKey> : IPlatformReposi
         CancellationToken cancellationToken = default
     );
 
+    public Task<int> UpdateManyAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
+        Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
+        CancellationToken cancellationToken = default
+    );
+
+    public async Task<int> UpdateManyAsync(
+        IPlatformUnitOfWork uow,
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
+        Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await UpdateManyAsync(
+            predicate,
+            setBuilder,
+            dismissSendEvent,
+            augmentInvariants,
+            concurrencyMode,
+            eventCustomConfig,
+            cancellationToken);
+    }
+
     /// <summary>
     /// Asynchronously update multiple entities in the repository within the context of a unit of work.
     /// </summary>
@@ -1096,9 +1128,9 @@ public interface IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
     /// <summary>
     /// Repository resolver for navigation property loading.
     /// </summary>
-    IPlatformRepositoryResolver Resolver { get; }
+    public IPlatformRepositoryResolver Resolver { get; }
 
-    IPlatformRootServiceProvider GetRootServiceProvider();
+    public IPlatformRootServiceProvider GetRootServiceProvider();
 
     public async Task<List<TEntity>> DeleteManyReturnDeletedItemsAsync(
         Func<IQueryable<TEntity>, IQueryable<TEntity>> queryBuilder,

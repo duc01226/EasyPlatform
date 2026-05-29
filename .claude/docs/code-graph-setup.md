@@ -57,6 +57,7 @@ The tool auto-creates `.code-graph/.gitignore` with `*` content (prevents commit
 python .claude/scripts/code_graph build --json                         # Full rebuild
 python .claude/scripts/code_graph update --json                        # Incremental (changed files only)
 python .claude/scripts/code_graph status --json                        # Graph stats
+python .claude/scripts/code_graph migrate-paths --json                 # Convert existing DB paths to repo-relative storage
 python .claude/scripts/code_graph graph-blast-radius --json            # Impact analysis
 python .claude/scripts/code_graph query callers_of <fn> --json         # Who calls this?
 python .claude/scripts/code_graph query importers_of <file> --json     # Who imports this file?

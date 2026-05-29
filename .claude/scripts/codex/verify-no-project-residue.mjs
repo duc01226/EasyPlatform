@@ -5,6 +5,13 @@ import path from 'node:path';
 
 const rootDir = process.cwd();
 const scanRoots = ['.codex', '.agents', '.claude/scripts/codex'];
+const genericSourceRoots = ['.claude/skills'];
+const genericSourceFiles = [
+    '.claude/.ck.json',
+    '.claude/hooks/lib/prompt-injections.cjs',
+    '.claude/hooks/prompt-context-assembler-project-config.cjs',
+    '.claude/hooks/session-init-docs.cjs'
+];
 const forbiddenTerms = ['br' + 'avo', 'Br' + 'avoSuite'];
 const ignoredParts = new Set(['node_modules', 'plans', '.git', '.venv', '__pycache__', 'tmp']);
 const ignoredExtensions = new Set(['.pyc', '.pyo', '.exe', '.dll', '.png', '.jpg', '.jpeg', '.gif', '.webp']);
@@ -75,24 +82,41 @@ function computeManagedBlockMask(lines) {
     return mask;
 }
 
+async function scanFileForForbiddenTerms(filePath, failures, skipManagedBlocks) {
+    const content = await fs.readFile(filePath, 'utf8').catch(() => null);
+    if (content === null) return;
+
+    const lines = content.split(/\r?\n/);
+    const skipLine = skipManagedBlocks ? computeManagedBlockMask(lines) : new Array(lines.length).fill(false);
+    lines.forEach((line, index) => {
+        if (skipLine[index]) return;
+        if (forbiddenTerms.some(term => line.toLowerCase().includes(term.toLowerCase()))) {
+            failures.push(`${normalize(filePath)}:${index + 1}: ${line.trim()}`);
+        }
+    });
+}
+
 async function main() {
     const failures = [];
 
     for (const scanRoot of scanRoots) {
         const absoluteRoot = path.join(rootDir, scanRoot);
         for await (const filePath of walk(absoluteRoot)) {
-            const content = await fs.readFile(filePath, 'utf8').catch(() => null);
-            if (content === null) continue;
-
-            const lines = content.split(/\r?\n/);
-            const skipLine = computeManagedBlockMask(lines);
-            lines.forEach((line, index) => {
-                if (skipLine[index]) return;
-                if (forbiddenTerms.some(term => line.toLowerCase().includes(term.toLowerCase()))) {
-                    failures.push(`${normalize(filePath)}:${index + 1}: ${line.trim()}`);
-                }
-            });
+            await scanFileForForbiddenTerms(filePath, failures, true);
         }
+    }
+
+    for (const sourceRoot of genericSourceRoots) {
+        const absoluteRoot = path.join(rootDir, sourceRoot);
+        for await (const filePath of walk(absoluteRoot)) {
+            await scanFileForForbiddenTerms(filePath, failures, false);
+        }
+    }
+
+    for (const sourceFile of genericSourceFiles) {
+        const filePath = path.join(rootDir, sourceFile);
+        if (!(await exists(filePath))) continue;
+        await scanFileForForbiddenTerms(filePath, failures, false);
     }
 
     if (failures.length > 0) {

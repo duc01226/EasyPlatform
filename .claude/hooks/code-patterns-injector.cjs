@@ -140,7 +140,7 @@ function featureDocsGuidance() {
         '',
         FEATURE_DOCS_DEDUP_MARKER,
         '',
-        'Read: `docs/project-reference/feature-docs-reference.md` — 17-section template, TC-{FEAT}-{NNN} IDs, Section 15 as canonical TC source.',
+        'Read: `docs/project-reference/feature-docs-reference.md` — 17-section template, TC-{FEATURE}-{NNN} IDs, Section 15 as canonical TC source.',
         ''
     ].join('\n');
 }

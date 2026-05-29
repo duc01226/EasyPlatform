@@ -776,7 +776,7 @@ Re-checking runs in the main session — spawn fresh sub-agent only if re-check 
 >
 > **Business Feature Doc:** `docs/business-features/{Module}/README.md`
 > _(primary stakeholder view; Sections 1-14 business context, Section 15 test cases)_
-> **QA Spec Dashboard:** `docs/specs/{Module}/README.md`
+> **QA Spec Dashboard:** `docs/specs/README.md` + `docs/specs/PRIORITY-INDEX.md`
 > _(TC execution status, integration test traceability)_
 > **Integration Tests:** `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/`
 > _(subcutaneous tests; each test annotated with [Trait("TestSpec", "TC-{MODULE}-{NNN}")])_
@@ -913,7 +913,7 @@ MANDATORY PROTOCOLS — apply throughout your entire execution:
 
 > Cross-Scope Boundary — HARD GATE: Do NOT read files outside your assigned module's scope. If you discover a dependency on an unlisted module, note it as [CROSS-REF: {module-name} — not in scope] in the spec output and stop — do not follow the reference into that module.
 
-> Tech-Agnostic Output — FORBIDDEN in all spec output: framework names (e.g., Entity Framework, Django), ORM types, language generics (List<T>), nullable annotations (string?), file paths or class names from source, architectural pattern names (CQRS, middleware). Use business-meaning descriptions only.
+> Tech-Agnostic Output — FORBIDDEN in all spec output: framework names (e.g., Entity Framework, Django), ORM types, language generics (List<T>), nullable annotations (string?), file paths or class names from source, architectural pattern names (CQRS, middleware). Use business-meaning descriptions only. **This applies equally to the README / INDEX / 00-module-registry overview surfaces you emit — not only the A-E narrative — per `docs/project-reference/spec-principles.md` §3.1.** Tech names remain correct ONLY in evidence carriers (`[Source:]`, `**Evidence**`, frontmatter, Mermaid).
 
 ---
 
@@ -1067,14 +1067,14 @@ Track completeness in `docs/specs/{app-bucket}/{system-name}/README.md`. Each se
 
 ## Related Skills
 
-| Skill                        | Relationship                                                                    | When to Call                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `/feature-docs`              | **Consumer** — ingests spec bundle to produce 17-section business doc           | After spec-discovery init/update, to create the stakeholder layer         |
-| `/tdd-spec`                  | **Indirect consumer** — feature-docs Section 15 feeds tdd-spec                  | After feature-docs, to generate test cases from the spec                  |
-| `/integration-test`          | **End consumer** — TCs from tdd-spec become integration tests                   | After tdd-spec, to generate actual test code                              |
-| `/docs-update`               | **Orchestrator** — runs spec-discovery update as Phase 2.5                      | When code changes need full doc sync (calls spec-discovery automatically) |
-| `/review-changes`            | **Trigger** — detects code changes and surfaces doc staleness                   | Run after code changes; it will suggest /docs-update if stale             |
-| `/tdd-spec [direction=sync]` | **Dashboard sync** — syncs QA spec dashboard at `docs/specs/{Module}/README.md` | After tdd-spec update, to keep dashboard current                          |
+| Skill                        | Relationship                                                                                                      | When to Call                                                              |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `/feature-docs`              | **Consumer** — ingests spec bundle to produce 17-section business doc                                             | After spec-discovery init/update, to create the stakeholder layer         |
+| `/tdd-spec`                  | **Indirect consumer** — feature-docs Section 15 feeds tdd-spec                                                    | After feature-docs, to generate test cases from the spec                  |
+| `/integration-test`          | **End consumer** — TCs from tdd-spec become integration tests                                                     | After tdd-spec, to generate actual test code                              |
+| `/docs-update`               | **Orchestrator** — runs spec-discovery update as Phase 2.5                                                        | When code changes need full doc sync (calls spec-discovery automatically) |
+| `/review-changes`            | **Trigger** — detects code changes and surfaces doc staleness                                                     | Run after code changes; it will suggest /docs-update if stale             |
+| `/tdd-spec [direction=sync]` | **Dashboard sync** — syncs QA spec dashboard indexes at `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md` | After tdd-spec update, to keep dashboard current                          |
 
 ## Standalone Chain
 
@@ -1092,7 +1092,7 @@ spec-discovery (you are here)
   │     Skip if: spec update was structural only (paths, formatting) with no behavior change.
   │
   ├─ [REQUIRED] → /tdd-spec [direction=sync]
-  │     Syncs QA dashboard (docs/specs/{Module}/README.md) with updated Section 15 TCs.
+  │     Syncs QA dashboard indexes (docs/specs/README.md and docs/specs/PRIORITY-INDEX.md) with updated Section 15 TCs.
   │
   ├─ [RECOMMENDED] → /integration-test [from-changes mode]
   │     Generates/updates integration test files for TCs that changed.
@@ -1119,7 +1119,7 @@ Every spec bundle MUST include `## Related Documentation` in `README.md`:
 ## Related Documentation
 
 - **Business Feature Doc:** [docs/business-features/{Module}/README.md](../../../docs/business-features/{Module}/README.md)
-- **QA Spec Dashboard:** [docs/specs/{Module}/README.md](../../../docs/specs/{Module}/README.md)
+- **QA Spec Dashboard:** [docs/specs/README.md](../../../docs/specs/README.md) + [docs/specs/PRIORITY-INDEX.md](../../../docs/specs/PRIORITY-INDEX.md)
 - **Integration Tests:** `src/Services/{Service}/{Service}.IntegrationTests/`
 ```
 

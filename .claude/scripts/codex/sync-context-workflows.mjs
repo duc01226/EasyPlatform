@@ -13,9 +13,39 @@ import {
 const rootDir = process.cwd();
 const require = createRequire(import.meta.url);
 const workflowsPath = path.join(rootDir, ".claude", "workflows.json");
+const ckConfigPath = path.join(rootDir, ".claude", ".ck.json");
 const claudeInstructionsPath = path.join(rootDir, "CLAUDE.md");
 const contextPath = path.join(rootDir, ".codex", "CODEX_CONTEXT.md");
 const agentsPath = path.join(rootDir, "AGENTS.md");
+const sharedSyncInlinePath = path.join(rootDir, ".claude", "skills", "shared", "sync-inline-versions.md");
+const sharedAiSddSyncTags = ["ai-sdd-artifact-contract", "ai-sdd-artifact-contract:reminder"];
+
+const SPEC_ROOT_TOKEN = /\{configured-engineering-spec-root\}/g;
+const FEATURE_ROOT_TOKEN = /\{configured-feature-doc-root\}/g;
+
+function stripTrailingSlash(value) {
+  return typeof value === "string" ? value.replace(/\/+$/, "") : value;
+}
+
+function resolvePortabilityTokensFallback(text, config) {
+  if (typeof text !== "string" || !text) return text;
+  const wp = config?.workflowPatterns || {};
+  const specRoot = stripTrailingSlash(wp.engineeringSpecRoot || "docs/specs");
+  const featureRoot = stripTrailingSlash(wp.featureDocPath || "docs/business-features");
+  return text
+    .replace(SPEC_ROOT_TOKEN, () => specRoot)
+    .replace(FEATURE_ROOT_TOKEN, () => featureRoot);
+}
+
+function loadResolvePortabilityTokens() {
+  try {
+    return require("../../hooks/lib/project-config-loader.cjs").resolvePortabilityTokens;
+  } catch {
+    return resolvePortabilityTokensFallback;
+  }
+}
+
+const resolvePortabilityTokens = loadResolvePortabilityTokens();
 
 const START_MARKER = "<!-- WORKFLOWS:START -->";
 const END_MARKER = "<!-- WORKFLOWS:END -->";
@@ -239,11 +269,11 @@ function buildWorkflowSection(workflowEntries) {
 
   for (const [workflowId, workflow] of sorted) {
     const name = safeLine(workflow?.name) || workflowId;
-    const description = safeLine(workflow?.description);
+    const description = safeLine(resolvePortabilityTokens(workflow?.description));
     const whenToUse = safeLine(workflow?.whenToUse);
     const whenNotToUse = safeLine(workflow?.whenNotToUse);
     const sequence = Array.isArray(workflow?.sequence) ? workflow.sequence : [];
-    const protocol = workflow?.preActions?.injectContext;
+    const protocol = resolvePortabilityTokens(workflow?.preActions?.injectContext);
 
     lines.push(`### ${workflowId} — ${name}`);
     if (description) lines.push(`- Description: ${description}`);
@@ -267,15 +297,40 @@ function normalizePromptProtocolText(text) {
   return normalized.length > 0 ? normalized : null;
 }
 
-async function loadWorkflowConfirmationMode() {
+function extractSyncBlock(markdown, tag) {
+  const marker = `## SYNC:${tag}`;
+  const start = markdown.indexOf(marker);
+  if (start === -1) return null;
+
+  const next = markdown.indexOf("\n---\n\n## SYNC:", start + marker.length);
+  const end = next === -1 ? markdown.length : next;
+  return markdown.slice(start, end).trim();
+}
+
+async function buildSharedAiSddMarkerSection() {
   try {
-    const ckConfigPath = path.join(rootDir, ".claude", ".ck.json");
-    const ckConfigRaw = await fs.readFile(ckConfigPath, "utf8");
-    const ckConfig = JSON.parse(ckConfigRaw);
-    const mode = ckConfig?.workflow?.confirmationMode;
-    return mode === "never" ? "never" : "always";
+    const content = await fs.readFile(sharedSyncInlinePath, "utf8");
+    const blocks = sharedAiSddSyncTags.map((tag) => extractSyncBlock(content, tag)).filter(Boolean);
+    if (blocks.length === 0) return null;
+
+    return [
+      "## Shared AI-SDD Protocol Markers",
+      "",
+      "Source: `.claude/skills/shared/sync-inline-versions.md`",
+      "",
+      blocks.join("\n\n---\n\n"),
+    ].join("\n");
   } catch {
-    return "always";
+    return null;
+  }
+}
+
+async function loadCkConfig() {
+  try {
+    const ckConfigRaw = await fs.readFile(ckConfigPath, "utf8");
+    return JSON.parse(ckConfigRaw);
+  } catch {
+    return {};
   }
 }
 
@@ -283,11 +338,15 @@ async function buildPromptProtocolMirrorSection(headingSuffix = "Auto-Synced") {
   const promptInjectionsPath = path.join(rootDir, ".claude", "hooks", "lib", "prompt-injections.cjs");
   try {
     const promptInjections = require(promptInjectionsPath);
-    const confirmationMode = await loadWorkflowConfirmationMode();
+    const ckConfig = await loadCkConfig();
+    const mode = ckConfig?.workflow?.confirmationMode;
+    const confirmationMode = mode === "never" ? "never" : "always";
+    const portability = ckConfig?.portability ?? {};
     const sections = [
       normalizePromptProtocolText(
-        promptInjections.injectWorkflowProtocol?.("", confirmationMode)
+        promptInjections.injectWorkflowProtocol?.("", confirmationMode, portability)
       ),
+      normalizePromptProtocolText(await buildSharedAiSddMarkerSection()),
       normalizePromptProtocolText(
         "**[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes."
       ),

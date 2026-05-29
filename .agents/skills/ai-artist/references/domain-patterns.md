@@ -18,7 +18,7 @@ All domain prompts follow:
 ```
 <context>
 [Domain-specific background]
-<$context>
+</context>
 
 <task>
 [Specific action]

@@ -13,13 +13,19 @@
 const fs = require('fs');
 const path = require('path');
 const { validateConfig } = require('./project-config-schema.cjs');
-const { loadProjectConfig, isConfigPopulated } = require('./project-config-loader.cjs');
+const {
+    loadProjectConfig,
+    isConfigPopulated,
+    getConfiguredProjectConfigPath,
+    getConfiguredDocsIndexPath
+} = require('./project-config-loader.cjs');
 const { SCAN_STALE_PATH, ensureProjectTmpDir } = require('./ck-paths.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const CONFIG_PATH = path.join(PROJECT_DIR, 'docs', 'project-config.json');
-const DOCS_DIR = path.join(PROJECT_DIR, 'docs');
-const REFERENCE_DOCS_DIR = path.join(DOCS_DIR, 'project-reference');
+const CONFIG_PATH = getConfiguredProjectConfigPath();
+const DOCS_INDEX_PATH = getConfiguredDocsIndexPath();
+const REFERENCE_DOCS_DIR = path.dirname(DOCS_INDEX_PATH);
+const DOCS_DIR = path.dirname(REFERENCE_DOCS_DIR);
 
 // =============================================================================
 // SKELETON — from project-config-init.cjs
@@ -535,7 +541,10 @@ function isGreenfieldProject(projectDir) {
         }
 
         // Check for populated project-config.json
-        const configPath = path.join(dir, 'docs', 'project-config.json');
+        const configuredConfigPath = path.relative(PROJECT_DIR, CONFIG_PATH);
+        const configPath = dir === PROJECT_DIR
+            ? CONFIG_PATH
+            : path.join(dir, configuredConfigPath);
         if (fs.existsSync(configPath)) {
             try {
                 const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));

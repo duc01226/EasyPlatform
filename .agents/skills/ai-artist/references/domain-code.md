@@ -42,8 +42,8 @@ Show before/after.
 
 ```
 <error>[Error message/behavior]</error>
-<code>[Relevant code]<$code>
-<context>[When it occurs]<$context>
+<code>[Relevant code]</code>
+<context>[When it occurs]</context>
 
 Analyze:
 1. Root cause

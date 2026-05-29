@@ -30,7 +30,7 @@ const FEATURE_DOCS_CONTEXT = `
 **Mandatory fields:**
 - Section 5: Mermaid ERD (cannot be omitted)
 - Section 6: \`[Source: file:line]\` citations for every business rule
-- Section 15: Canonical TC source — TC-{FEAT}-{NNN} IDs, Evidence field with \`file:line\`
+- Section 15: Canonical TC source — TC-{FEATURE}-{NNN} IDs, Evidence field with \`file:line\`
 
 **Rules:**
 - TC IDs live in Section 15 only — never in \`docs/specs/\` directly

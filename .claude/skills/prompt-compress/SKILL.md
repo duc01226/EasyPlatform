@@ -18,7 +18,7 @@ description: '[Skill Management] Use when reducing token bloat in prompts, skill
 **Key Rules:**
 
 - Compress FIRST, enhance SECOND — compression removes noise; enhancement then structures signal
-- Never remove meaningful rules, constraints, code examples, or `file:line` evidence
+- Preserve meaningful rules, constraints, code examples, and `file:line` evidence — never remove them
 - Post-optimization rule density (MUST ATTENTION/NEVER/ALWAYS per 100 lines) must be ≥ pre-optimization
 - Caveman compression applies to prose only — never compress code blocks, YAML, or structured tables
 - Prompt quality > token count, but verbose prompts degrade quality — optimize clarity-per-token
@@ -203,6 +203,8 @@ For each `.claude/` protocol reference:
 > 7. **Example Economy** — 3-5 examples optimal for few-shot; diminishing returns after. **Action:** 1 best example per pattern. Use BAD→GOOD pairs (2-3 lines each) for anti-patterns.
 > 8. **Deferred Tool Loading** — Claude Code delays loading tool definitions when they exceed 10% of context window. **Action:** Keep injected docs well under 10% of context budget. Docs exceeding ~3,000 lines are too large for injection — split or compress.
 > 9. **Rule Density Verification** — Post-optimization rule count (MUST ATTENTION/NEVER/ALWAYS) must be ≥ pre-optimization count. Compression should preserve or increase density, never decrease it. **Action:** Count before and after every optimization pass.
+> 10. **Affirmative Directives** — Models comply with affirmative directives more reliably than prohibitions; a bare "don't X" leaves the correct action unspecified, so the model substitutes an arbitrary alternative. **Action:** State the action to take, not only the action to avoid. Keep `NEVER`/forbidden guardrails for hard invariants — but pair each with the right path ("Do X" not just "Don't do Y").
+> 11. **Rationale-Carrying Instructions** — A rule shipped with its reason generalizes to edge cases the rule never enumerated and survives compression; a bare imperative gets misapplied or silently dropped. **Action:** Append a terse `— why: …` clause to every non-obvious rule. The reason names the failure prevented or outcome wanted — never restates the rule.
 
 <!-- /SYNC:context-engineering-principles -->
 
@@ -323,6 +325,7 @@ For each `.claude/` protocol reference:
 **IMPORTANT MUST ATTENTION** apply caveman compression FIRST before any structural enhancement — never skip Phase 1
 **IMPORTANT MUST ATTENTION** never compress code blocks, YAML frontmatter, structured tables, or SYNC tags
 **IMPORTANT MUST ATTENTION** verify rule density post-compression ≥ pre-compression — compression must not dilute signal
+**IMPORTANT MUST ATTENTION** state the action to take, not only what to avoid — pair every `NEVER` with the right path, and append a terse `— why:` to each non-obvious rule — why: affirmative directives + carried rationale are followed more reliably and survive compression (principles #10/#11)
 **IMPORTANT MUST ATTENTION** apply primacy-recency anchoring — 3 critical rules in first 5 AND last 5 lines of every enhanced file
 **IMPORTANT MUST ATTENTION** add inline summaries only for `.claude/` protocol files, never for `docs/` project files
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act). NEVER speculate without proof.

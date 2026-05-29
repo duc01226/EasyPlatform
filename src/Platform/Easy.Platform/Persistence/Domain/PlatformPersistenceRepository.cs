@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Easy.Platform.Application.Persistence;
+using Easy.Platform.Application.Persistence.BulkUpdate;
 using Easy.Platform.Common.Exceptions.Extensions;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
@@ -709,6 +710,87 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
 
         return await ExecuteWithBadQueryWarningForWriteHandling(
             uow => GetUowDbContext(uow).UpdateManyAsync<TEntity, TPrimaryKey>(entities, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken),
+            uow);
+    }
+
+    public override async Task<int> UpdateManyAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
+        Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (IsDistributedTracingEnabled)
+        {
+            using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(UpdateManyAsync)}"))
+            {
+                activity?.AddTag("EntityType", typeof(TEntity).FullName);
+                activity?.AddTag("Predicate", predicate.ToString());
+
+                return await ExecuteAutoOpenUowUsingOnceTimeForWrite(uow =>
+                    GetUowDbContext(uow).UpdateManyAsync<TEntity, TPrimaryKey>(
+                        predicate,
+                        setBuilder,
+                        dismissSendEvent,
+                        augmentInvariants,
+                        concurrencyMode,
+                        eventCustomConfig,
+                        cancellationToken));
+            }
+        }
+
+        return await ExecuteAutoOpenUowUsingOnceTimeForWrite(uow =>
+            GetUowDbContext(uow).UpdateManyAsync<TEntity, TPrimaryKey>(
+                predicate,
+                setBuilder,
+                dismissSendEvent,
+                augmentInvariants,
+                concurrencyMode,
+                eventCustomConfig,
+                cancellationToken));
+    }
+
+    public override async Task<int> UpdateManyAsync(
+        IPlatformUnitOfWork uow,
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
+        Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (IsDistributedTracingEnabled)
+        {
+            using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(UpdateManyAsync)}"))
+            {
+                activity?.AddTag("EntityType", typeof(TEntity).FullName);
+                activity?.AddTag("Predicate", predicate.ToString());
+
+                return await ExecuteWithBadQueryWarningForWriteHandling(
+                    uow => GetUowDbContext(uow).UpdateManyAsync<TEntity, TPrimaryKey>(
+                        predicate,
+                        setBuilder,
+                        dismissSendEvent,
+                        augmentInvariants,
+                        concurrencyMode,
+                        eventCustomConfig,
+                        cancellationToken),
+                    uow);
+            }
+        }
+
+        return await ExecuteWithBadQueryWarningForWriteHandling(
+            uow => GetUowDbContext(uow).UpdateManyAsync<TEntity, TPrimaryKey>(
+                predicate,
+                setBuilder,
+                dismissSendEvent,
+                augmentInvariants,
+                concurrencyMode,
+                eventCustomConfig,
+                cancellationToken),
             uow);
     }
 

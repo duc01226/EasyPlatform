@@ -27,6 +27,21 @@ def extract_frontmatter(content: str) -> Dict:
             return {}
     return {}
 
+def normalize_date(value) -> str:
+    """Render YAML date/datetime/string lifecycle fields as ISO-8601 strings.
+
+    PyYAML deserializes unquoted `YYYY-MM-DD` literals into `datetime.date`
+    objects. Catalog consumers expect strings, so we stringify defensively.
+    Returns None when the field is absent or empty.
+    """
+    if value is None or value == '':
+        return None
+    # datetime.date / datetime.datetime both expose .isoformat()
+    if hasattr(value, 'isoformat'):
+        return value.isoformat()
+    return str(value)
+
+
 def extract_first_paragraph(content: str) -> str:
     """Extract first meaningful paragraph after frontmatter."""
     # Remove frontmatter
@@ -56,7 +71,7 @@ def scan_skills(base_path: Path) -> List[Dict]:
     """Scan all skill files and extract metadata."""
     skills = []
 
-    for skill_file in sorted(base_path.rglob('SKILL.md')):
+    for skill_file in sorted(base_path.glob('*/SKILL.md')):
         # Get skill directory name
         skill_dir = skill_file.parent
         skill_name = skill_dir.name
@@ -81,13 +96,23 @@ def scan_skills(base_path: Path) -> List[Dict]:
             # Categorize based on content/name
             category = categorize_skill(skill_name, description, content)
 
+            # Lifecycle fields per ADR-0001 (additive, all optional).
+            # Absent `status` defaults to 'active'; other fields stay None when
+            # the skill has not been deprecated.
+            status = frontmatter.get('status') or 'active'
+
             skills.append({
                 'name': skill_name,
-                'path': str(skill_file.relative_to(Path('.claude/skills'))),
+                'path': skill_file.relative_to(base_path).as_posix(),
                 'description': description,
                 'category': category,
                 'has_scripts': (skill_dir / 'scripts').exists(),
-                'has_references': (skill_dir / 'references').exists()
+                'has_references': (skill_dir / 'references').exists(),
+                'status': status,
+                'deprecated_by': frontmatter.get('deprecated_by'),
+                'deprecated_since': normalize_date(frontmatter.get('deprecated_since')),
+                'removal_after': normalize_date(frontmatter.get('removal_after')),
+                'last_reviewed': normalize_date(frontmatter.get('last_reviewed')),
             })
         except Exception as e:
             print(f"Error processing {skill_file}: {e}")

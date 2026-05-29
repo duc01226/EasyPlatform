@@ -10,7 +10,7 @@
 
 <!-- /SECTION:tldr -->
 
-**Sections:** [TL;DR](#tldr) | [Search First](#mandatory-search-existing-code-first) | [Task Planning](#important-task-planning-rules-must-follow) | [Code Hierarchy](#code-responsibility-hierarchy-critical) | [Naming](#naming-conventions) | [Key Locations](#key-file-locations) | [Dev Commands](#development-commands) | [Evidence](#evidence-based-reasoning--investigation-protocol-mandatory) | [Graph Intelligence](#graph-intelligence-mandatory-when-code-graphgraphdb-exists) | [Skill Activation](#automatic-skill-activation-mandatory)
+**Sections:** [TL;DR](#tldr--what-you-must-know-before-writing-any-code) | [Search First](#search-existing-code-first) | [Task Planning](#task-planning-rules) | [Code Hierarchy](#code-responsibility-hierarchy) | [Naming](#naming-conventions) | [Key Locations](#key-file-locations) | [Dev Commands](#development-commands) | [Evidence](#evidence-based-reasoning--investigation) | [Graph Intelligence](#graph-intelligence-when-code-graphgraphdb-exists) | [Skill Activation](#automatic-skill-activation)
 
 ---
 
@@ -48,50 +48,44 @@
 
 <!-- /SECTION:decision-quick-ref -->
 
-## MANDATORY: Search Existing Code FIRST
+## Search Existing Code First
 
-**Before writing ANY code:**
+Before writing code, you MUST grep/glob for 3+ similar examples and follow the local pattern over generic framework docs. Cite `file:line` evidence in the plan.
 
-1. **Grep/Glob search** for similar patterns (find 3+ examples)
-2. **Follow codebase pattern**, NOT generic framework docs
-3. **Provide evidence** in plan (file:line references)
+1. Grep/Glob for similar patterns (find 3+ examples).
+2. Follow the codebase pattern; don't default to framework docs.
+3. Provide `file:line` evidence in the plan.
 
-**Why:** Projects have conventions that differ from framework defaults.
-
-**Enforced by:** Feature/Bugfix/Refactor workflows (scout > investigate steps)
-
----
-
-## FIRST ACTION DECISION (Before ANY tool call)
-
-```
-1. Explicit slash command invocation — message STARTS with /command-name as first token (e.g. `$plan-hard do X`). Skill names referenced as nouns (e.g. "update /skill-a") are NOT slash commands — workflow detection required.
-2. Detect nearest matching workflow from the Workflow Catalog
-3. ALWAYS ask user via ask the user directly to confirm: activate workflow or execute directly
-4. FALLBACK -> MUST ATTENTION invoke $plan-hard <prompt> FIRST
-```
-
-**CRITICAL: Modification > Research.** If prompt contains BOTH research AND modification intent, **modification workflow wins** (investigation is a substep of `$plan-hard`).
+**Why:** projects have local conventions that differ from framework defaults.
+**Enforced by:** Feature/Bugfix/Refactor workflows (scout → investigate steps).
 
 ---
 
-## IMPORTANT: Task Planning Rules (MUST ATTENTION FOLLOW)
+## First Action Decision (before any tool call)
 
-1. **MANDATORY task creation for file-modifying prompts** — If the prompt could result in ANY file changes, you MUST ATTENTION create task tracking items BEFORE making changes.
-2. **Always break work into many small todo tasks** — granular tasks prevent losing track of progress
-3. **Always add a final review todo task** to review all work done
-4. **Mark todos as completed IMMEDIATELY** after finishing each task
-5. **Exactly ONE task in_progress at a time**
-6. **On context loss/compaction**, ALWAYS call the current task list FIRST — resume existing tasks, do NOT create duplicates
-7. **No speculation or hallucination** — always answer with proof
-8. **Evidence-based recommendations** — complete investigation before recommending changes
-9. **Breaking change assessment** — Any recommendation that could break functionality requires validation
+1. Explicit slash command — the message starts with `/command-name` as the first token (e.g. `$plan do X`). Skill names referenced as nouns (e.g. "update /skill-a") are NOT slash commands; workflow detection still required.
+2. Workflow Catalog has a matching workflow → ask via a direct user question whether to activate the workflow or run the underlying skill directly.
+3. No matching workflow AND prompt would modify files → MUST invoke `$plan <prompt>` first.
+4. No matching workflow AND prompt is read-only/conversational → answer directly.
+
+**Modification beats research.** When a prompt mixes research and modification intent, treat it as modification (investigation is a substep of `$plan`).
 
 ---
 
-## Code Responsibility Hierarchy (CRITICAL)
+## Task Planning Rules
 
-**Place logic in the LOWEST appropriate layer to enable reuse and prevent duplication.**
+1. Before editing files, MUST create a task tracking item per change.
+2. Break work into small todos; add a final review todo.
+3. Mark todos `completed` immediately after each one finishes. Keep exactly one `in_progress`.
+4. On context loss or compaction, call the current task list first — resume existing tasks, don't duplicate.
+5. Recommendations need traced evidence (`file:line`, grep, graph). No speculation.
+6. Recommendations that could break behavior require validation before proposing.
+
+---
+
+## Code Responsibility Hierarchy
+
+Place logic in the lowest appropriate layer to enable reuse and prevent duplication.
 
 ```
 Entity/Model (Lowest)  >  Service  >  Component/Handler (Highest)
@@ -101,9 +95,9 @@ Entity/Model (Lowest)  >  Service  >  Component/Handler (Highest)
 | ---------------- | ----------------------------------------------------------------------- |
 | **Entity/Model** | Business logic, display helpers, static factory methods, default values |
 | **Service**      | API calls, command factories, data transformation                       |
-| **Component**    | UI event handling ONLY — delegates all logic to lower layers            |
+| **Component**    | UI event handling only — delegates all logic to lower layers            |
 
-**Anti-Pattern**: Logic in component/handler that should be in entity > leads to duplicated code.
+**Anti-pattern:** logic in a component/handler that belongs in the entity → leads to duplicated code.
 
 ---
 
@@ -175,17 +169,17 @@ Entity/Model (Lowest)  >  Service  >  Component/Handler (Highest)
 
 ---
 
-## Evidence-Based Reasoning & Investigation Protocol (MANDATORY)
+## Evidence-Based Reasoning & Investigation
 
-Speculation is FORBIDDEN. Every claim about code behavior, every recommendation for changes, must be backed by evidence.
+Don't speculate. Every claim about code behavior — and every recommendation for changes — must be backed by evidence.
 
 ### Core Rules
 
-1. **Evidence before conclusion** — Cite `file:line`, grep results, or framework docs. Never use "obviously...", "I think..." without proof.
-2. **Confidence declaration required** — Every recommendation must state confidence level with evidence list.
-3. **Inference alone is FORBIDDEN** — Always upgrade to code evidence. When unsure: _"I don't have enough evidence yet."_
-4. **Cross-service validation** — Check ALL services before recommending architectural changes.
-5. **Graph trace before conclusion** — When investigating code flow, you MUST ATTENTION run graph trace on key files.
+1. **Evidence before conclusion** — cite `file:line`, grep results, or framework docs. Don't use "obviously…", "I think…" without proof.
+2. **State your confidence** — every recommendation lists its confidence level and the evidence it rests on.
+3. **Inference alone isn't enough** — upgrade to code evidence when possible. When unsure, say _"I don't have enough evidence yet."_
+4. **Cross-service validation** — check all services before recommending architectural changes.
+5. **Graph trace before conclusion** — when investigating code flow, run a graph trace on key files.
 
 ### Confidence Levels
 
@@ -198,12 +192,10 @@ Speculation is FORBIDDEN. Every claim about code behavior, every recommendation 
 
 ---
 
-## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
+## Graph Intelligence (when .code-graph/graph.db exists)
 
 <HARD-GATE>
-You MUST ATTENTION run at least ONE graph command on key files before concluding any investigation,
-creating any plan, or verifying any fix. Proceeding without graph evidence is FORBIDDEN.
-Skip only if `.code-graph/graph.db` does not exist.
+You MUST run at least one graph command on key files before concluding any investigation, plan, or fix verification. Skip only when `.code-graph/graph.db` is absent.
 </HARD-GATE>
 
 ### Quick CLI Reference
@@ -222,11 +214,11 @@ python .claude/scripts/code_graph search <keyword> --kind Function --json       
 
 ---
 
-## Automatic Skill Activation (MANDATORY)
+## Automatic Skill Activation
 
 <!-- SECTION:skill-activation -->
 
-When working in specific areas, these skills MUST ATTENTION be automatically activated BEFORE any file creation or modification:
+These skills auto-activate before file edits in their path patterns:
 
 | Path Pattern   | Skill / Auto-Context | Pre-Read Files   |
 | -------------- | -------------------- | ---------------- |

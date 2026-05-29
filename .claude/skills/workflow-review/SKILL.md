@@ -17,9 +17,12 @@ description: '[Workflow] Use when activating the Code Review workflow for review
 
 **Goal:** Review codebase or specific scope, fix issues found, then spawn a **fresh code-reviewer sub-agent** for unbiased re-review — repeat until clean.
 
-**Sequence:** /review-architecture → /code-simplifier → /code-review → /performance → /integration-test-review → /integration-test-verify → /plan → /plan-validate → /why-review → /cook → **fresh sub-agent re-review gate (/workflow-review WIW)** → /docs-update → /watzup → /workflow-end
+**Sequence:** /review-architecture → /review-ui (if frontend changes) → /code-simplifier → /code-review → /performance → /integration-test-review → /integration-test-verify → /plan → /why-review → /plan-validate → /why-review → /cook → **fresh sub-agent re-review gate (/workflow-review WIW)** → /docs-update → /watzup → /workflow-end
 
 **Key Rules:**
+
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
 
 - After `/cook` applies fixes → spawn fresh `code-reviewer` sub-agent per `SYNC:fresh-context-review` → integrate findings → fix → spawn NEW sub-agent → repeat
 - Main-agent re-review (with knowledge of its own fixes) is NOT sufficient — orchestrator-level confirmation bias
@@ -28,26 +31,49 @@ description: '[Workflow] Use when activating the Code Review workflow for review
 
 ---
 
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
+
 ## Mandatory Task Creation (ZERO TOLERANCE)
 
-Create EXACTLY these 14 tasks (source: `workflows.json` → `review.sequence`):
+Create EXACTLY these 16 tasks (source: `workflows.json` → `review.sequence`):
 
-| #   | Task Subject                                                                                         | Conditional?                                          |
-| --- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| 1   | `[Workflow] /review-architecture — Architecture compliance review`                                   | No                                                    |
-| 2   | `[Workflow] /code-simplifier — Simplify and refine code`                                             | No                                                    |
-| 3   | `[Workflow] /code-review — Comprehensive code review`                                                | No                                                    |
-| 4   | `[Workflow] /performance — Performance analysis`                                                     | No                                                    |
-| 5   | `[Workflow] /integration-test-review — Integration test quality review`                              | No                                                    |
-| 6   | `[Workflow] /integration-test-verify — Verify integration tests pass`                                | No                                                    |
-| 7   | `[Workflow] /plan — Consolidate review findings into fix plan`                                       | Skip if all reviews PASS                              |
-| 8   | `[Workflow] /plan-validate — Critical questions on fix plan`                                         | Skip if all reviews PASS                              |
-| 9   | `[Workflow] /why-review — Sanity-check that proposed fixes are warranted`                            | Skip if all reviews PASS                              |
-| 10  | `[Workflow] /cook — Implement fixes from plan`                                                       | Skip if all reviews PASS                              |
-| 11  | `[Workflow] /workflow-review — Fresh sub-agent re-review gate (WIW: spawns code-reviewer sub-agent)` | Skip if all reviews PASS                              |
-| 12  | `[Workflow] /docs-update — Update impacted documentation`                                            | Always run (fast-exits when no business code changed) |
-| 13  | `[Workflow] /watzup — Wrap up and summarize`                                                         | No                                                    |
-| 14  | `[Workflow] /workflow-end — End workflow`                                                            | No                                                    |
+| #   | Task Subject                                                                                                                         | Conditional?                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| 1   | `[Workflow] /review-architecture — Architecture compliance review`                                                                   | No                                                                                                       |
+| 2   | `[Workflow] /review-ui — UI/frontend quality review (overflow, responsive flex, flex-vs-fixed sizing, z-index discipline, SCSS/BEM)` | Yes — skip if no files matching the project's configured frontend/UI file patterns in the reviewed scope |
+| 3   | `[Workflow] /code-simplifier — Simplify and refine code`                                                                             | No                                                                                                       |
+| 4   | `[Workflow] /code-review — Comprehensive code review`                                                                                | No                                                                                                       |
+| 5   | `[Workflow] /performance — Performance analysis`                                                                                     | No                                                                                                       |
+| 6   | `[Workflow] /integration-test-review — Integration test quality review`                                                              | No                                                                                                       |
+| 7   | `[Workflow] /integration-test-verify — Verify integration tests pass`                                                                | No                                                                                                       |
+| 8   | `[Workflow] /plan — Consolidate review findings into fix plan`                                                                       | Skip if all reviews PASS                                                                                 |
+| 9   | `[Workflow] /why-review — Design-rationale check on fix plan before validation`                                                      | Skip if all reviews PASS                                                                                 |
+| 10  | `[Workflow] /plan-validate — Critical questions on fix plan`                                                                         | Skip if all reviews PASS                                                                                 |
+| 11  | `[Workflow] /why-review — Sanity-check that proposed fixes are warranted`                                                            | Skip if all reviews PASS                                                                                 |
+| 12  | `[Workflow] /cook — Implement fixes from plan`                                                                                       | Skip if all reviews PASS                                                                                 |
+| 13  | `[Workflow] /workflow-review — Fresh sub-agent re-review gate (WIW: spawns code-reviewer sub-agent)`                                 | Skip if all reviews PASS                                                                                 |
+| 14  | `[Workflow] /docs-update — Update impacted documentation`                                                                            | Always run (fast-exits when no business code changed)                                                    |
+| 15  | `[Workflow] /watzup — Wrap up and summarize`                                                                                         | No                                                                                                       |
+| 16  | `[Workflow] /workflow-end — End workflow`                                                                                            | No                                                                                                       |
 
 NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional tasks `completed` with note "Skipped — all reviews passed".
 
@@ -58,12 +84,12 @@ NEVER consolidate, rename, or omit steps. If reviews PASS, mark conditional task
 ### Decision Logic
 
 ```
-Reviews (steps 1-6) → ALL PASS?
-  YES → skip steps 7-11, proceed to /docs-update → /watzup → /workflow-end → DONE
-  NO  → /plan → /plan-validate → /why-review → /cook → FRESH SUB-AGENT RE-REVIEW GATE (step 11)
+Reviews (steps 1-7) → ALL PASS?
+  YES → skip steps 8-13, proceed to /docs-update → /watzup → /workflow-end → DONE
+  NO  → /plan → /why-review → /plan-validate → /why-review → /cook → FRESH SUB-AGENT RE-REVIEW GATE (step 13)
 ```
 
-### Fresh Sub-Agent Re-Review Gate (Step 11) — After `/cook` Applies Fixes
+### Fresh Sub-Agent Re-Review Gate (Step 13) — After `/cook` Applies Fixes
 
 1. **DO NOT** attempt main-agent re-review (main agent has confirmation bias from its own fixes)
 2. **DO** spawn a NEW `Agent` tool call with `subagent_type: "code-reviewer"` using the canonical template from `SYNC:review-protocol-injection` in `.claude/skills/shared/sync-inline-versions.md`. Inject all 9 required SYNC protocol blocks verbatim (`SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`). Target files = `"run git diff to see all uncommitted changes"`. Report path = `plans/reports/workflow-review-round{N}-{date}.md`.
@@ -98,11 +124,11 @@ Main Session: Review → Issues? → Plan → Fix (/cook) → Spawn fresh sub-ag
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /review-architecture -> /code-simplifier -> /code-review -> /performance -> /integration-test-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /review-architecture -> /review-ui -> /code-simplifier -> /code-review -> /performance -> /integration-test-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review -> /docs-update -> /watzup -> /workflow-end
 
-**IMPORTANT MANDATORY Steps:** /review-architecture -> /code-simplifier -> /code-review -> /performance -> /integration-test-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /review-architecture -> /review-ui -> /code-simplifier -> /code-review -> /performance -> /integration-test-review -> /integration-test-verify -> /plan -> /why-review -> /plan-validate -> /why-review -> /cook -> /workflow-review -> /docs-update -> /watzup -> /workflow-end
 
-> **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review` workflow (14 steps). When invoked as a step inside a parent workflow, it MUST execute via `Agent` tool (`subagent_type: "code-reviewer"`) — NEVER as an inline `Skill` tool call. Inline execution absorbs the entire nested workflow context into the parent session.
+> **[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow]** This skill activates the full `review` workflow (16 steps). When invoked as a step inside a parent workflow, it MUST execute via `Agent` tool (`subagent_type: "code-reviewer"`) — NEVER as an inline `Skill` tool call. Inline execution absorbs the entire nested workflow context into the parent session.
 >
 > **Sub-agent prompt must include:** target files or git diff context, task description, instruction to return SYNC:subagent-return-contract summary and write full findings to `plans/reports/`.
 >
@@ -297,13 +323,21 @@ Activate the `review` workflow. Run `/workflow-start review` with the user's pro
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — create ALL 14 tasks immediately
+**IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — create ALL 16 tasks immediately
 **IMPORTANT MUST ATTENTION** after fixes in `/cook`, spawn a NEW `code-reviewer` sub-agent via the `Agent` tool per `SYNC:fresh-context-review` — NEVER re-review with the main agent
 **IMPORTANT MUST ATTENTION** track fresh-subagent round count via conversation context (session-scoped) — max 3 rounds, escalate via `AskUserQuestion` if exceeded
 **IMPORTANT MUST ATTENTION** PASS means a fresh sub-agent round finds ZERO Critical/High issues WITHOUT needing fixes — only then are changes ready to commit
-**IMPORTANT MUST ATTENTION** skip steps 7-11 when all reviews PASS (no fixes needed)
+**IMPORTANT MUST ATTENTION** skip steps 8-13 when all reviews PASS (no fixes needed)
 **IMPORTANT MUST ATTENTION** each step MUST invoke its `Skill` tool — marking completed without invocation is a violation
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

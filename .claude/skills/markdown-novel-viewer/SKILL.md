@@ -210,7 +210,7 @@ The server returns the local URL in its output:
 
 **Images not loading**: Ensure image paths are relative to markdown file
 
-**Server won't stop**: Check `/tmp/md-novel-viewer-*.pid` for stale PID files
+**Server won't stop**: Check the platform temp directory (`os.tmpdir()`, usually `%TEMP%` on Windows) for `md-novel-viewer-*.pid` stale PID files
 
 **Remote access denied**: This viewer is intended for local use; keep `--host localhost` unless you have explicitly accepted the network exposure.
 

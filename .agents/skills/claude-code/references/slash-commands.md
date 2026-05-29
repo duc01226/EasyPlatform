@@ -25,13 +25,13 @@ $cook add payment integration with Stripe
 
 **When to use**: Feature implementation with iterative development
 
-### $plan-hard [task]
+### $plan [task]
 
 Research, analyze, and create implementation plans.
 
 ```bash
-$plan-hard implement OAuth2 authentication
-$plan-hard migrate from SQLite to PostgreSQL
+$plan implement OAuth2 authentication
+$plan migrate from SQLite to PostgreSQL
 ```
 
 **When to use**: Before starting complex implementations
@@ -211,32 +211,32 @@ Create pull request.
 
 ## Planning Commands
 
-### $plan-hard:two [task]
+### $plan:two [task]
 
 Create implementation plan with 2 alternative approaches.
 
 ```bash
-$plan-hard:two implement caching layer
+$plan:two implement caching layer
 ```
 
 **When to use**: Need to evaluate multiple approaches
 
-### $plan-hard:ci [url]
+### $plan:ci [url]
 
 Analyze GitHub Actions logs and create fix plan.
 
 ```bash
-$plan-hard:ci https://github.com/owner/repo/actions/runs/123456
+$plan:ci https://github.com/owner/repo/actions/runs/123456
 ```
 
 **When to use**: CI/CD failure analysis
 
-### $plan-hard:cro [issue]
+### $plan:cro [issue]
 
 Create conversion rate optimization plan.
 
 ```bash
-$plan-hard:cro landing page conversion improvement
+$plan:cro landing page conversion improvement
 ```
 
 **When to use**: Marketing/conversion optimization

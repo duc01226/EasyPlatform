@@ -19,6 +19,13 @@ disable-model-invocation: true
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION require test specs/tests to name `Business Intent / Invariant Guarded` and fail if that intent breaks.
+- MUST ATTENTION apply the shared SDD Artifact Contract from `shared/sdd-artifact-contract.md` in the active skills root; use `docs/project-config.json` and `docs/project-reference/docs-index-reference.md` for project-specific conventions.
+- MUST ATTENTION preserve expected, unchanged, and no-regression behavior in the plan and review evidence when behavior can change.
+- MUST ATTENTION treat code-extracted specs and TCs as reference-only until canonical review accepts them.
+- MUST ATTENTION allow any supported AI tool to implement or review when the shared contract, synced context, and local docs are available.
 - NEVER skip mandatory workflow or skill gates.
 
 ## Repeated Steps Disambiguation (CRITICAL for task creation)
@@ -70,7 +77,9 @@ Activate the `feature` workflow. Run `/workflow-start feature` with the user's p
 
 **Steps:** /scout → /investigate → /domain-analysis → /why-review → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /tdd-spec → /why-review → /tdd-spec-review → /plan → /why-review → /plan-review → /why-review → /cook → /review-domain-entities → /tdd-spec → /why-review → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
 
-> **[PERFORMANCE EXCEPTION]** If this feature is a performance enhancement (query optimization, caching, throughput improvement, latency reduction), skip `/tdd-spec` (both occurrences), `/tdd-spec-review` (both occurrences), PLAN₂ + its `/plan-review`, `/tdd-spec [direction=sync]`, `/integration-test`, `/integration-test-review`, and `/integration-test-verify`. Do NOT skip `/cook` — implementation still runs. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead.
+> **[PERFORMANCE-SDD ROUTE]** If this feature is a performance enhancement (latency, throughput, memory, query speed, load behavior), activate `/workflow-performance` and require SLA/benchmark evidence: target metric, baseline, measurement command, and acceptable regression budget. Run `/cook` even on the performance route — never skip it. If behavior can change, run `/test` and any relevant functional no-regression checks. Update docs/specs for changed SLA, performance constraints, or behavior boundaries. Use project-specific performance docs from `docs/project-config.json` / `docs/project-reference/` when available.
+
+> **[AI-SDD CLOSURE]** Before `/workflow-end`, confirm changed behavior, unchanged behavior, TCs/tests, docs/specs, and generated mirror sync are either completed or explicitly skipped with evidence.
 
 <!-- SYNC:nested-task-creation -->
 

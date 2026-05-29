@@ -48,7 +48,7 @@ description: '[Documentation] Use when scanning design tokens, component invento
 3. Resolve config-driven paths from `docs/project-config.json`:
     - `designSystem.canonicalDoc` — single source of truth for new code
     - `designSystem.tokenFiles` — drop-in token files
-    - **Never hardcode these names** — content varies per project, names come from config.
+    - **Read these names from config** — content varies per project; never hardcode them.
 
 4. Check for app-specific design docs in the same directory
 

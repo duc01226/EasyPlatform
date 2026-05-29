@@ -314,7 +314,7 @@ async function main() {
                 : `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Find best-match OR compose custom workflow \u2192 present all options with recommendation \u2192 ask user \u2192 then proceed.**`
             );
             // Tier 2: full protocol — deduped (100-line window)
-            const workflowProtocol = injectWorkflowProtocol(payload.transcript_path, confirmationMode);
+            const workflowProtocol = injectWorkflowProtocol(payload.transcript_path, confirmationMode, wfConfig.portability);
             if (workflowProtocol) console.log(workflowProtocol);
         }
 

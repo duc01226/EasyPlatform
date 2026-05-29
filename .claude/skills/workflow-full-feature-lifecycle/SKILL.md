@@ -19,6 +19,11 @@ disable-model-invocation: true
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+- MUST ATTENTION apply the shared SDD Artifact Contract from `shared/sdd-artifact-contract.md` in the active skills root; use project config/docs for local conventions.
+- MUST ATTENTION treat AI-extracted specs, PBIs, stories, and TCs as draft/reference until the owning review or acceptance step approves them.
+- MUST ATTENTION allow any supported AI tool to implement or review when the shared contract, synced context, and local docs are available.
 - NEVER skip mandatory workflow or skill gates.
 
 ## Closing Rule
@@ -36,6 +41,8 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 Activate the `full-feature-lifecycle` workflow. Run `/workflow-start full-feature-lifecycle` with the user's prompt as context.
 
 **Steps:** /idea → /refine → /why-review → /refine-review → /domain-analysis → /why-review → /story → /why-review → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /design-spec → /why-review → /interface-design → /frontend-design → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /cook → /review-domain-entities → /tdd-spec → /why-review → /tdd-spec-review → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /workflow-review-changes → /sre-review → /quality-gate → /docs-update → /watzup → /acceptance → /workflow-end
+
+> **[AI-SDD CLOSURE]** Before `/workflow-end`, confirm accepted artifacts, behavior evidence, TCs/tests, docs/specs, and generated mirror sync are current or explicitly skipped with evidence.
 
 <!-- SYNC:ai-mistake-prevention -->
 

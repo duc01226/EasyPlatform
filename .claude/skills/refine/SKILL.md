@@ -341,7 +341,7 @@ Compute `delta_pct = (new_likely_days - draft_likely_days) / draft_likely_days �
 - New frontmatter fields: `reestimate_delta_pct`, `reestimate_reason` (always populate even when within tolerance — creates a paper trail for retrospective comparison against actual implementation time)
 - If rescoped: updated acceptance criteria/scope sections reflecting the user's choice
 
-> **DO NOT skip this phase.** A PBI that ships with stale Phase 6 estimates is the source of unreliable velocity data. The whole point is to make the post-validation numbers — not the pre-validation guesses — the ones the team commits to.
+> **Run this re-estimation phase against the locked scope — never skip it.** A PBI that ships with stale Phase 6 estimates is the source of unreliable velocity data. The whole point is to make the post-validation numbers — not the pre-validation guesses — the ones the team commits to.
 
 ---
 
@@ -855,7 +855,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
+    <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:ui-system-context:reminder -->
 

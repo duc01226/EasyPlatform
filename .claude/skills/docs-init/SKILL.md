@@ -17,7 +17,7 @@ disable-model-invocation: true
 
 **Key Rules:**
 
-- Do NOT create docs manually -- the hook handles placeholder creation automatically
+- Let the hook create placeholders automatically -- do not create docs manually
 - Each reference doc has a corresponding `/scan-*` skill that populates it
 - Scan skills do deep codebase scanning; expect 5-15 min per skill
 

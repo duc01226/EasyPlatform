@@ -111,7 +111,7 @@ def _resolve_target_node(store: GraphStore, root: Path, target: str):
 
     Resolution order:
     1. Exact qualified name match
-    2. Relative file path → absolute path
+    2. Relative file path lookup
     3. Exact class/function name match (prefer Class over Function)
     4. Keyword search fallback (single match → use; multiple → ambiguous)
     """
@@ -367,10 +367,10 @@ def get_impact_radius(
                 "total_impacted": 0,
             }
 
-        # Convert to absolute paths for graph lookup
-        abs_files = [str(root / f) for f in changed_files]
+        # Graph file identities are stored repo-relative.
+        graph_files = [f.replace("\\", "/") for f in changed_files]
         result = store.get_impact_radius(
-            abs_files, max_depth=max_depth, max_nodes=max_results
+            graph_files, max_depth=max_depth, max_nodes=max_results
         )
 
         root_str = str(root)

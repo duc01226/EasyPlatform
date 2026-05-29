@@ -6,7 +6,7 @@ Scans .claude/skills/ directory to build catalog at runtime.
 Usage:
     python ck-help.py                    # Overview with quick start
     python ck-help.py fix                # Category guide with workflow
-    python ck-help.py plan-fast          # Skill details
+    python ck-help.py plan                # Skill details
     python ck-help.py debug login error  # Task recommendations
     python ck-help.py auth               # Search (unknown word)
 """
@@ -77,8 +77,7 @@ CATEGORY_GUIDES = {
     "plan": {
         "title": "Planning",
         "workflow": [
-            ("Quick plan", "`/plan-fast` \"your task\""),
-            ("Deep research", "`/plan-hard` \"complex task\""),
+            ("Plan", "`/plan` \"your task\""),
             ("Validate", "`/plan-validate` (interview to confirm decisions)"),
             ("Execute plan", "`/code` (runs the plan)"),
         ],
@@ -87,8 +86,7 @@ CATEGORY_GUIDES = {
     "cook": {
         "title": "Implementation",
         "workflow": [
-            ("Quick impl", "`/cook` \"your feature\""),
-            ("Auto mode", "`/cook-auto` \"trust me bro\""),
+            ("Implement", "`/cook` \"your feature\""),
             ("Test", "`/test`"),
         ],
         "tip": "Cook is standalone - it plans internally. Use /plan → /code for explicit planning",
@@ -237,7 +235,7 @@ def discover_skills(skills_dir: Path, prefix: str) -> dict:
         skill_dir = skill_file.parent
         skill_name = skill_dir.name
 
-        # Derive category from skill name prefix (e.g., fix-fast -> fix)
+        # Derive category from skill name prefix (e.g., plan-review -> plan)
         parts = skill_name.split('-')
         category = parts[0] if len(parts) > 1 else "core"
 

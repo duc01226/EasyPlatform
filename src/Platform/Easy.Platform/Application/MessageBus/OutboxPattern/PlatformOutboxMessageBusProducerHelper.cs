@@ -398,15 +398,23 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                                                 p => existingOutboxMessagesDict.Keys.Contains(p.Id),
                                                 cancellationToken);
 
-                                            await toUpdateExistingOutboxMessages.ParallelAsync(async toUpdateExistingOutboxMessage =>
+                                            if (toUpdateExistingOutboxMessages.Any())
                                             {
-                                                await outboxBusMessageRepository.SetAsync(
-                                                    toUpdateExistingOutboxMessage.With(p => p.LastProcessingPingDate = Clock.UtcNow),
-                                                    cancellationToken: cancellationToken);
+                                                var pingDate = Clock.UtcNow;
 
-                                                existingOutboxMessagesDict[toUpdateExistingOutboxMessage.Id].LastProcessingPingDate =
-                                                    toUpdateExistingOutboxMessage.LastProcessingPingDate;
-                                            });
+                                                toUpdateExistingOutboxMessages.ForEach(toUpdateExistingOutboxMessage =>
+                                                {
+                                                    toUpdateExistingOutboxMessage.LastProcessingPingDate = pingDate;
+                                                    existingOutboxMessagesDict[toUpdateExistingOutboxMessage.Id].LastProcessingPingDate = pingDate;
+                                                });
+
+                                                await outboxBusMessageRepository.UpdateManyAsync(
+                                                    toUpdateExistingOutboxMessages,
+                                                    dismissSendEvent: true,
+                                                    checkDiff: false,
+                                                    eventCustomConfig: null,
+                                                    cancellationToken);
+                                            }
 
                                             if (!cancellationToken.IsCancellationRequested) await uow.CompleteAsync(cancellationToken);
                                         }

@@ -25,6 +25,7 @@ test("sync-context-workflows mirrors subagent authorization into AGENTS.md", asy
 
   try {
     await fs.mkdir(path.join(tempRoot, ".claude", "skills", "test"), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, ".claude", "skills", "shared"), { recursive: true });
     await fs.mkdir(path.join(tempRoot, ".claude", "hooks", "lib"), { recursive: true });
     await fs.mkdir(path.join(tempRoot, ".codex"), { recursive: true });
 
@@ -65,6 +66,25 @@ test("sync-context-workflows mirrors subagent authorization into AGENTS.md", asy
     );
 
     await fs.writeFile(
+      path.join(tempRoot, ".claude", "skills", "shared", "sync-inline-versions.md"),
+      [
+        "## SYNC:ai-sdd-artifact-contract",
+        "",
+        "> Any supported AI tool may execute with synced context.",
+        "> Code-to-spec extraction is reference-only until accepted.",
+        "> Active reference: `shared/sdd-artifact-contract.md`.",
+        "",
+        "---",
+        "",
+        "## SYNC:ai-sdd-artifact-contract:reminder",
+        "",
+        "- MANDATORY keep generated mirrors current.",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    await fs.writeFile(
       path.join(tempRoot, "CLAUDE.md"),
       ["# Claude Source Instructions", "", "Use /test from the Claude source instructions.", ""].join("\n"),
       "utf8"
@@ -98,6 +118,9 @@ test("sync-context-workflows mirrors subagent authorization into AGENTS.md", asy
       assert.match(agentsText, new RegExp(requiredDoc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
     assert.match(contextText, /Which workflow do you want to activate\?/);
+    assert.match(contextText, /SYNC:ai-sdd-artifact-contract/);
+    assert.match(contextText, /Any supported AI tool/);
+    assert.match(contextText, /reference-only until accepted/);
     assert.doesNotMatch(contextText, /Confirm First:/);
     assert.doesNotMatch(contextText, /if workflow requires confirmation or ambiguity exists/);
     assert.match(agentsText, new RegExp(subagentAuthorizationSnippet.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
@@ -106,6 +129,7 @@ test("sync-context-workflows mirrors subagent authorization into AGENTS.md", asy
     assert.match(agentsText, /Use \$test from the Claude source instructions\./);
     assert.match(agentsText, /<!-- CODEX-CONTEXT-MIRROR:START -->/);
     assert.match(agentsText, /Use \$test for local test execution\./);
+    assert.match(agentsText, /SYNC:ai-sdd-artifact-contract/);
     assert.ok(agentsText.indexOf("<!-- CLAUDE-MIRROR:START -->") < agentsText.indexOf("<!-- CODEX-CONTEXT-MIRROR:START -->"));
     assert.doesNotMatch(agentsText, /<!-- CLAUDE-MERGE:START -->/);
     assert.doesNotMatch(agentsText, /Legacy generated instructions\./);
@@ -179,6 +203,90 @@ test("sync-context-workflows creates Codex context and AGENTS when both are miss
     await execFileAsync(process.execPath, [syncContextScript], { cwd: tempRoot });
     const agentsTextAfterSecondRun = await fs.readFile(path.join(tempRoot, "AGENTS.md"), "utf8");
     assert.equal(agentsTextAfterSecondRun, agentsText);
+  } finally {
+    await fs.rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("sync-context-workflows passes portability config into prompt protocol mirror", async () => {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "codex-sync-context-portability-"));
+
+  try {
+    await fs.mkdir(path.join(tempRoot, ".claude", "skills", "test"), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, ".claude", "hooks", "lib"), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, ".codex"), { recursive: true });
+
+    await fs.writeFile(
+      path.join(tempRoot, ".claude", "workflows.json"),
+      JSON.stringify(
+        {
+          workflows: {
+            testing: {
+              name: "Testing",
+              description: "Run local tests",
+              sequence: ["test"],
+              preActions: { injectContext: "Use /test for local test execution." },
+            },
+          },
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    await fs.writeFile(
+      path.join(tempRoot, ".claude", ".ck.json"),
+      JSON.stringify(
+        {
+          workflow: { confirmationMode: "always" },
+          portability: {
+            rule: "Custom portable rule from local config.",
+            projectConfigPath: "custom/project-config.json",
+            docsIndexPath: "custom/docs-index.md",
+          },
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    await fs.writeFile(
+      path.join(tempRoot, ".claude", "skills", "test", "SKILL.md"),
+      ["---", "name: test", "description: Test skill", "---", "", "# Test", ""].join("\n"),
+      "utf8"
+    );
+
+    await fs.writeFile(
+      path.join(tempRoot, ".claude", "hooks", "lib", "prompt-injections.cjs"),
+      [
+        "module.exports = {",
+        "  injectWorkflowProtocol: (_transcriptPath, _confirmationMode, portability) => [",
+        "    '## Workflow Protocol Stub',",
+        "    portability.rule,",
+        "    portability.projectConfigPath,",
+        "    portability.docsIndexPath,",
+        "  ].join('\\n'),",
+        "};",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    await execFileAsync(process.execPath, [syncContextScript], { cwd: tempRoot });
+
+    const contextText = await fs.readFile(path.join(tempRoot, ".codex", "CODEX_CONTEXT.md"), "utf8");
+    const agentsText = await fs.readFile(path.join(tempRoot, "AGENTS.md"), "utf8");
+
+    for (const expected of [
+      "Custom portable rule from local config.",
+      "custom/project-config.json",
+      "custom/docs-index.md",
+    ]) {
+      assert.match(contextText, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+      assert.match(agentsText, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
   }

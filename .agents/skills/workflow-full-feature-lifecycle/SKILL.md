@@ -7,7 +7,6 @@ disable-model-invocation: true
 > Codex compatibility note:
 >
 > - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.
 > - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
@@ -57,6 +56,11 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+- MUST ATTENTION apply the shared SDD Artifact Contract from `shared/sdd-artifact-contract.md` in the active skills root; use project config/docs for local conventions.
+- MUST ATTENTION treat AI-extracted specs, PBIs, stories, and TCs as draft/reference until the owning review or acceptance step approves them.
+- MUST ATTENTION allow any supported AI tool to implement or review when the shared contract, synced context, and local docs are available.
 - NEVER skip mandatory workflow or skill gates.
 
 ## Closing Rule
@@ -65,15 +69,17 @@ Every step = `TaskUpdate in_progress` → skill invocation → complete skill �
 
 ---
 
-**IMPORTANT MANDATORY Steps:** $idea -> $refine -> $why-review -> $refine-review -> $domain-analysis -> $why-review -> $story -> $why-review -> $story-review -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $design-spec -> $why-review -> $interface-design -> $frontend-design -> $plan-hard -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $cook -> $review-domain-entities -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $sre-review -> $quality-gate -> $docs-update -> $watzup -> $acceptance -> $workflow-end
+**IMPORTANT MANDATORY Steps:** $idea -> $refine -> $why-review -> $refine-review -> $domain-analysis -> $why-review -> $story -> $why-review -> $story-review -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $design-spec -> $why-review -> $interface-design -> $frontend-design -> $plan -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $cook -> $review-domain-entities -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $sre-review -> $quality-gate -> $docs-update -> $watzup -> $acceptance -> $workflow-end
 
-**IMPORTANT MANDATORY Steps:** $idea -> $refine -> $why-review -> $refine-review -> $domain-analysis -> $why-review -> $story -> $why-review -> $story-review -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $design-spec -> $why-review -> $interface-design -> $frontend-design -> $plan-hard -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $cook -> $review-domain-entities -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $sre-review -> $quality-gate -> $docs-update -> $watzup -> $acceptance -> $workflow-end
+**IMPORTANT MANDATORY Steps:** $idea -> $refine -> $why-review -> $refine-review -> $domain-analysis -> $why-review -> $story -> $why-review -> $story-review -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $design-spec -> $why-review -> $interface-design -> $frontend-design -> $plan -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $cook -> $review-domain-entities -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $sre-review -> $quality-gate -> $docs-update -> $watzup -> $acceptance -> $workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `full-feature-lifecycle` workflow. Run `$workflow-start full-feature-lifecycle` with the user's prompt as context.
 
-**Steps:** $idea → $refine → $why-review → $refine-review → $domain-analysis → $why-review → $story → $why-review → $story-review → $pbi-challenge → $dor-gate → $pbi-mockup → $design-spec → $why-review → $interface-design → $frontend-design → $plan-hard → $why-review → $plan-review → $why-review → $plan-validate → $why-review → $cook → $review-domain-entities → $tdd-spec → $why-review → $tdd-spec-review → $integration-test → $integration-test-review → $integration-test-verify → $tdd-spec [direction=sync] → $workflow-review-changes → $sre-review → $quality-gate → $docs-update → $watzup → $acceptance → $workflow-end
+**Steps:** $idea → $refine → $why-review → $refine-review → $domain-analysis → $why-review → $story → $why-review → $story-review → $pbi-challenge → $dor-gate → $pbi-mockup → $design-spec → $why-review → $interface-design → $frontend-design → $plan → $why-review → $plan-review → $why-review → $plan-validate → $why-review → $cook → $review-domain-entities → $tdd-spec → $why-review → $tdd-spec-review → $integration-test → $integration-test-review → $integration-test-verify → $tdd-spec [direction=sync] → $workflow-review-changes → $sre-review → $quality-gate → $docs-update → $watzup → $acceptance → $workflow-end
+
+> **[AI-SDD CLOSURE]** Before `$workflow-end`, confirm accepted artifacts, behavior evidence, TCs/tests, docs/specs, and generated mirror sync are current or explicitly skipped with evidence.
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -196,9 +202,11 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure:
+3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
     - Question: "Which workflow do you want to activate?"
     - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
     - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
@@ -208,63 +216,8 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-
-## Learned Lessons
-
-# Lessons Learned
-
-> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
-
-## Quick Summary
-
-**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
-
-**Top Rules (apply always):**
-
-- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
-- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
-- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
-- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
-- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
-- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
-
----
-
-## Debugging & Root Cause Reasoning
-
-- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. ALWAYS cheapest check first.
-- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
-- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
-- [2026-04-01] **Code caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
-
-## Architecture Invariants
-
-- [2026-05-09] **User name materialization MUST ATTENTION go through `User.UpdateName(firstName, middleName, lastName)`.** Domain method (`src/Services/bravoTALENTS/Employee.Domain/AggregatesModel/User.cs:202-209`) recomputes `FullName` as single source of truth. Three sites still manually patch `user.FullName = user.GetFullName()` after assigning name fields — `src/Services/bravoTALENTS/Employee.Application/Factories/UserFactory.cs:50`, `src/Services/bravoSURVEYS/LearningPlatform.Application/ApplyPlatform/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:102`, `src/Services/bravoINSIGHTS/Analyze/Analyze.Application/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:66`. Next time touching any: replace manual patch with `user.UpdateName(...)` to maintain invariant.
-- [2026-03-31] **ParallelAsync + repo/UoW MUST ATTENTION use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
-- [2026-03-31] **Bus message naming MUST ATTENTION include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) leaders. Feature services (Growth, Talents) sending to core MUST ATTENTION use `{CoreServiceName}...RequestBusMessage` — NEVER define own event for core to consume.
-
-## Naming & Abstraction
-
-- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
-
-## Environment & Tooling
-
-- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be bash PATH under those names. Check: `where python` / `where py`. ALWAYS prefer `py` (Windows Python Launcher) one-liners, `node` if JS alternative exists.
-
-> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons `.claude/hooks/lib/prompt-injections.cjs`.
-
----
-
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
-- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
-- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
-- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
-- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
-- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
-- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
-- **IMPORTANT MUST ATTENTION** every claim needs `file:line` evidence — confidence >80% to act, NEVER speculate
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

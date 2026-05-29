@@ -402,7 +402,7 @@ const frontendTypescriptContextTests = [
                     uiPathPatterns: ['src[\\\\/](WebV2|Web)[\\\\/].*\\.(ts|tsx|html|scss|css)$']
                 });
                 const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.modernAppBase}/app/component.ts`,
+                    file_path: 'src/WebV2/app/component.ts',
                     old_string: 'title = "Old";',
                     new_string: 'title = "New";'
                 });
@@ -427,7 +427,7 @@ const frontendTypescriptContextTests = [
                     translationFilePatterns: ['src[\\\\/]i18n[\\\\/].*\\.(json|ts)$']
                 });
                 const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.modernAppBase}/app/component.ts`,
+                    file_path: 'src/WebV2/app/component.ts',
                     old_string: 'title = "Old";',
                     new_string: 'title = "New";'
                 });

@@ -6,7 +6,6 @@ description: '[Documentation] Use when you need to create or update business fea
 > Codex compatibility note:
 >
 > - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Prefer the `plan-hard` skill for planning guidance in this Codex mirror.
 > - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
 > - User-question prompts mean to ask the user directly in Codex.
 > - Ignore Claude-specific mode-switch instructions when they appear.
@@ -65,11 +64,11 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Key Rules:**
 
-- **[BLOCKING]** Read `docs/project-reference/spec-principles.md` — spec quality standards, AI-implementability criteria, tech-agnostic rules (read Section 4 completeness checklists before Phase 3.5 verification)
+- **[BLOCKING]** Read `docs/project-reference/spec-principles.md` — spec quality standards, AI-implementability criteria, tech-agnostic rules (§3 surface scope + §3.2 banned prose-token list) (read Section 4 completeness checklists before Phase 3.5 verification)
 - **[BLOCKING]** EVERY test case MUST have verifiable code evidence (`FilePath:LineNumber`) — no exceptions
 - Output MUST have exactly 17 sections matching master template
 - ALWAYS update CHANGELOG.md and Version History (Section 17) when modifying docs
-- Section 15 TCs: include `IntegrationTest` field → `IntegrationTest: Orders/OrderCommandIntegrationTests.cs::{MethodName}`. No test yet → `Status: Untested`
+- Section 15 TCs: the `IntegrationTest` field is an **evidence carrier** (implementation identifiers belong here, like `**Evidence**`) → `IntegrationTest: Orders/OrderCommandIntegrationTests.cs::{MethodName}`. Keep the TC's behavioral prose tech-agnostic (`spec-principles.md §3`); the test path lives ONLY in this evidence field. No test yet → `Status: Untested`
 - Verify every TC-{FEATURE}-{NNN} has `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` in integration tests. Missing → `Status: Untested`
 - Third verification pass finds >5 issues → HALT, re-run verification
 
@@ -111,6 +110,8 @@ Generate feature docs following project conventions.
 | `ErrorMessage.cs:83`            | `{FilePath}:{LineRange}` (template) |
 | `Handler.cs:42-52`              | `SomeFile.cs` (no line)             |
 | `interviews.service.ts:115-118` | "Based on CQRS pattern" (vague)     |
+
+> **Evidence-field only:** these file paths appear ONLY inside the `**Evidence**` / `IntegrationTest` fields — never in a test case's behavioral description, which stays tech-agnostic (`spec-principles.md §3`).
 
 ---
 
@@ -446,7 +447,7 @@ Note the highest existing ID before assigning new ones. See `.claude/skills/shar
 > | Type              | Path                                                         | Description                                              |
 > | ----------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
 > | Engineering Spec  | `docs/specs/{app-bucket}/{system-name}/`                     | Tech-agnostic spec bundle (create via $spec-discovery)   |
-> | QA Test Dashboard | `docs/specs/{Module}/README.md`                              | All TCs, execution status, integration test traceability |
+> | QA Test Dashboard | `docs/specs/README.md` + `docs/specs/PRIORITY-INDEX.md`      | All TCs, execution status, integration test traceability |
 > | Integration Tests | `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/` | Test code; linked by [Trait("TestSpec", "TC-...")]       |
 > | Parent Feature    | _(if sub-feature)_                                           |                                                          |
 > | Child Features    | _(if this doc is a parent)_                                  |                                                          |
@@ -661,7 +662,7 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 
 - {Invalid scenario} → {Expected error/behavior}
 
-**Evidence:** `{FilePath}:{LineRange}`
+**Evidence:** `[Source: {FilePath}:{LineRange}]`
 **IntegrationTest:** `{TestFile}.cs::{MethodName}` (or `Untested`)
 **Status:** Tested | Untested | Planned
 ```
@@ -937,15 +938,15 @@ _Reference: `docs/project-reference/spec-principles.md` Section 4 (AI-Implementa
 
 ## Related Skills
 
-| Skill                        | Relationship                                                                      | When to Call                                                                                        |
-| ---------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `$spec-discovery`            | **Producer** — extracts engineering spec bundle that feeds this skill's INIT mode | Run spec-discovery first when creating docs for the first time; use its output as Section 12 source |
-| `$tdd-spec`                  | **Consumer** — reads Section 15 to generate/validate TCs                          | After creating/updating feature docs, call tdd-spec to populate or review Section 15                |
-| `$tdd-spec-review`           | **Reviewer** — audits TC coverage in Section 15                                   | After tdd-spec, to validate TC completeness and GIVEN/WHEN/THEN quality                             |
-| `$tdd-spec [direction=sync]` | **Dashboard** — syncs `docs/specs/{Module}/README.md` from Section 15             | After tdd-spec update, to keep QA dashboard current                                                 |
-| `$integration-test`          | **End consumer** — generates test code from TCs in Section 15                     | After tdd-spec, to produce actual integration test files                                            |
-| `$docs-update`               | **Orchestrator** — calls this skill as Phase 2                                    | Run $docs-update for full chain sync; it calls $feature-docs internally                             |
-| `$review-changes`            | **Trigger** — detects feature doc staleness                                       | Calls $docs-update when business doc is stale relative to code changes                              |
+| Skill                        | Relationship                                                                                    | When to Call                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `$spec-discovery`            | **Producer** — extracts engineering spec bundle that feeds this skill's INIT mode               | Run spec-discovery first when creating docs for the first time; use its output as Section 12 source |
+| `$tdd-spec`                  | **Consumer** — reads Section 15 to generate/validate TCs                                        | After creating/updating feature docs, call tdd-spec to populate or review Section 15                |
+| `$tdd-spec-review`           | **Reviewer** — audits TC coverage in Section 15                                                 | After tdd-spec, to validate TC completeness and GIVEN/WHEN/THEN quality                             |
+| `$tdd-spec [direction=sync]` | **Dashboard** — syncs `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md` from Section 15 | After tdd-spec update, to keep QA dashboard current                                                 |
+| `$integration-test`          | **End consumer** — generates test code from TCs in Section 15                                   | After tdd-spec, to produce actual integration test files                                            |
+| `$docs-update`               | **Orchestrator** — calls this skill as Phase 2                                                  | Run $docs-update for full chain sync; it calls $feature-docs internally                             |
+| `$review-changes`            | **Trigger** — detects feature doc staleness                                                     | Calls $docs-update when business doc is stale relative to code changes                              |
 
 ## Standalone Chain
 
@@ -971,7 +972,7 @@ feature-docs (you are here)
   │     Validates TC coverage, GIVEN/WHEN/THEN completeness, no duplicate TC codes.
   │
   ├─ [REQUIRED] → $tdd-spec [direction=sync]
-  │     Syncs Section 15 TCs to QA dashboard at docs/specs/{Module}/README.md.
+  │     Syncs Section 15 TCs to QA dashboard indexes at docs/specs/README.md and docs/specs/PRIORITY-INDEX.md.
   │
   ├─ [RECOMMENDED] → $integration-test [from-changes or from-prompt mode]
   │     Generates/updates integration test files from changed TCs.
@@ -995,12 +996,12 @@ Template to insert or verify in `docs/business-features/{Module}/README.md`:
 ```markdown
 ## Related Documentation
 
-| Type              | Link                                                                              | Description                                                    |
-| ----------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Engineering Spec  | [docs/specs/{app-bucket}/{system-name}/](../../specs/{app-bucket}/{system-name}/) | Tech-agnostic spec bundle (domain model, rules, API contracts) |
-| QA Test Dashboard | [docs/specs/{Module}/README.md](../../specs/{Module}/README.md)                   | All TCs, execution status, integration test links              |
-| Integration Tests | `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/`                      | Test code linked to TCs via [Trait("TestSpec", "TC-...")]      |
-| Related Modules   | _(list any cross-module dependencies here)_                                       |                                                                |
+| Type              | Link                                                                                                          | Description                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Engineering Spec  | [docs/specs/{app-bucket}/{system-name}/](../../specs/{app-bucket}/{system-name}/)                             | Tech-agnostic spec bundle (domain model, rules, API contracts) |
+| QA Test Dashboard | [docs/specs/README.md](../../specs/README.md) + [docs/specs/PRIORITY-INDEX.md](../../specs/PRIORITY-INDEX.md) | All TCs, execution status, integration test links              |
+| Integration Tests | `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/`                                                  | Test code linked to TCs via [Trait("TestSpec", "TC-...")]      |
+| Related Modules   | _(list any cross-module dependencies here)_                                                                   |                                                                |
 ```
 
 Fill in `{app-bucket}`, `{system-name}`, `{Module}`, `{ServiceName}` from context.
@@ -1114,9 +1115,11 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+
 1. **DETECT:** Match prompt against workflow catalog
 2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure:
+3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
     - Question: "Which workflow do you want to activate?"
     - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
     - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
@@ -1126,63 +1129,8 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-
-## Learned Lessons
-
-# Lessons Learned
-
-> **[CRITICAL]** Hard-won project debugging/architecture rules. MUST ATTENTION apply BEFORE forming hypothesis or writing code.
-
-## Quick Summary
-
-**Goal:** Prevent recurrence of known failure patterns — debugging, architecture, naming, AI orchestration, environment.
-
-**Top Rules (apply always):**
-
-- MUST ATTENTION verify ALL preconditions (config, env, DB names, DI regs) BEFORE code-layer hypothesis
-- MUST ATTENTION fix responsible layer — NEVER patch symptom sites with caller-specific defensive code
-- MUST ATTENTION use `ExecuteInjectScopedAsync` for parallel async + repo/UoW — NEVER `ExecuteUowTask`
-- MUST ATTENTION name by PURPOSE not CONTENT — adding member forces rename = abstraction broken
-- MUST ATTENTION persist sub-agent findings incrementally after each file — NEVER batch at end
-- MUST ATTENTION Windows bash: verify Python alias (`where python`/`where py`) — NEVER assume `python`/`python3` resolves
-
----
-
-## Debugging & Root Cause Reasoning
-
-- [2026-04-11] **Holistic-first: verify environment before code.** Failure → list ALL preconditions (config, env vars, DB names, endpoints, DI regs, credentials, permissions, data prerequisites) → verify each via evidence (grep/cat/query) BEFORE code-layer hypothesis. Worst rabbit holes: diving nearest layer while bug sits elsewhere — e.g., hours debugging "sync timeout", real cause: test appsettings pointing wrong DB. ALWAYS cheapest check first.
-- [2026-04-01] **Ask "whose responsibility?" before fixing.** Trace: bug caller (wrong data) or callee (wrong handling)? Fix responsible layer — NEVER patch symptom site masking real issue.
-- [2026-04-01] **Trace data lifecycle, not error site.** Follow data: creation → transformation → consumption. Bug usually where data created wrong, not consumed.
-- [2026-04-01] **Code caller-agnostic.** Functions/handlers/consumers don't know who invokes them. Comments/guards/messages describe business intent — NEVER reference specific callers (tests, seeders, scripts).
-
-## Architecture Invariants
-
-- [2026-05-09] **User name materialization MUST ATTENTION go through `User.UpdateName(firstName, middleName, lastName)`.** Domain method (`src/Services/bravoTALENTS/Employee.Domain/AggregatesModel/User.cs:202-209`) recomputes `FullName` as single source of truth. Three sites still manually patch `user.FullName = user.GetFullName()` after assigning name fields — `src/Services/bravoTALENTS/Employee.Application/Factories/UserFactory.cs:50`, `src/Services/bravoSURVEYS/LearningPlatform.Application/ApplyPlatform/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:102`, `src/Services/bravoINSIGHTS/Analyze/Analyze.Application/MessageBus/Consumers/AccountUserDeletedEventBusConsumer.cs:66`. Next time touching any: replace manual patch with `user.UpdateName(...)` to maintain invariant.
-- [2026-03-31] **ParallelAsync + repo/UoW MUST ATTENTION use `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask`.** `ExecuteUowTask` creates new UoW but reuses outer DI scope (same DbContext) — parallel iterations sharing non-thread-safe DbContext silently corrupt data. `ExecuteInjectScopedAsync` creates new UoW + new DI scope (fresh repo per iteration).
-- [2026-03-31] **Bus message naming MUST ATTENTION include service name prefix — core services NEVER consume feature events.** Prefix declares schema ownership (`AccountUserEntityEventBusMessage` = Accounts owns). Core services (Accounts, Communication) leaders. Feature services (Growth, Talents) sending to core MUST ATTENTION use `{CoreServiceName}...RequestBusMessage` — NEVER define own event for core to consume.
-
-## Naming & Abstraction
-
-- [2026-04-12] **Name PURPOSE not CONTENT — "OrXxx" anti-pattern.** `HrManagerOrHrOrPayrollHrOperationsPolicy` names set members, not what guards. Add role → rename = broken abstraction. **Rule:** names express DOES/GUARDS, not CONTAINS. **Test:** adding/removing member forces rename? YES = content-driven = bad → rename to purpose (e.g., `HrOperationsAccessPolicy`). **Nuance:** "Or" fine behavioral idioms (`FirstOrDefault`, `SuccessOrThrow`) — expresses HAPPENS, not membership.
-
-## Environment & Tooling
-
-- [2026-04-20] **Windows bash: NEVER assume `python`/`python3` resolves — verify alias first.** Python may not be bash PATH under those names. Check: `where python` / `where py`. ALWAYS prefer `py` (Windows Python Launcher) one-liners, `node` if JS alternative exists.
-
-> Test-specific lessons → `docs/project-reference/integration-test-reference.md` Lessons Learned section. Production-code anti-patterns → `docs/project-reference/backend-patterns-reference.md` Anti-Patterns section. Generic debugging/refactoring reminders → System Lessons `.claude/hooks/lib/prompt-injections.cjs`.
-
----
-
-## Closing Reminders
-
-- **IMPORTANT MUST ATTENTION** holistic-first: verify ALL preconditions (config, env, DB names, endpoints, DI regs) BEFORE code-layer hypothesis — cheapest check first
-- **IMPORTANT MUST ATTENTION** fix responsible layer — NEVER patch symptom site; trace caller (wrong data) vs callee (wrong handling), fix root owner
-- **IMPORTANT MUST ATTENTION** parallel async + repo/UoW → ALWAYS `ExecuteInjectScopedAsync`, NEVER `ExecuteUowTask` (shared DbContext = silent data corruption)
-- **IMPORTANT MUST ATTENTION** bus message prefix = schema ownership; feature services NEVER define events for core services — use `{CoreServiceName}...RequestBusMessage`
-- **IMPORTANT MUST ATTENTION** name by PURPOSE — adding/removing member forces rename = broken abstraction
-- **IMPORTANT MUST ATTENTION** sub-agents MUST write findings after each file/section — NEVER batch all findings into one final write
-- **IMPORTANT MUST ATTENTION** Windows bash: NEVER assume `python`/`python3` resolves — run `where python`/`where py` first, use `py` launcher or `node`
-- **IMPORTANT MUST ATTENTION** every claim needs `file:line` evidence — confidence >80% to act, NEVER speculate
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 

@@ -50,7 +50,7 @@ Before diving into implementation, understand how to design tools for AI agents 
 
 **Build for Workflows, Not Just API Endpoints:**
 
-- Don't simply wrap existing API endpoints - build thoughtful, high-impact workflow tools
+- Build thoughtful, high-impact workflow tools — don't simply wrap existing API endpoints one-to-one
 - Consolidate related operations (e.g., `schedule_event` that both checks availability and creates event)
 - Focus on tools that enable complete tasks, not just individual API calls
 - Consider what workflows agents actually need to accomplish

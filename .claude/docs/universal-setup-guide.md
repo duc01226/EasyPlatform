@@ -17,11 +17,11 @@ cp -r .claude/ /path/to/your-project/.claude/
 
 Copy the entire `.claude/` directory to your target project. This includes:
 
-- `skills/` — 272 skills for planning, implementation, review, testing, etc.
+- `skills/` — 256 skills for planning, implementation, review, testing, etc.
 - `agents/` — 28 specialized agents (code-reviewer, debugger, architect, etc.)
-- `hooks/` — 53 hook files with context injection, workflow routing, enforcement
-- `workflows/` — 32 workflow definitions (feature, bugfix, refactor, etc.)
-- `scripts/` — Catalog generators, audit scripts
+- `hooks/` — 64 top-level hook files plus 29 hook libraries with context injection, workflow routing, enforcement
+- `workflows/` — 37 workflow definitions (feature, bugfix, refactor, etc.)
+- `scripts/` — Catalog generators, audit scripts, Codex sync/verification tooling
 - `docs/` — Framework documentation
 
 ### Step 2: Initialize Project Configuration

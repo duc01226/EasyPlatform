@@ -95,6 +95,8 @@ Run `python .claude/scripts/code_graph describe --json` to get MCP-style structu
 
 `build`, `update`, `status`, `blast-radius`, `query`, `connections`, `trace`, `search`, `find-path`, `batch-query`, `sync`, `export`, `export-mermaid`, `connect-api`, `connect-implicit`, `review-context`, `describe`
 
+`migrate-paths` is also available to convert existing databases built with absolute file paths into repo-relative storage without reparsing the repository.
+
 ### Common Mistakes (DO NOT USE)
 
 | Invalid Command         | Correct Alternative                                               |

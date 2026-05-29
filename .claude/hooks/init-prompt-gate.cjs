@@ -20,7 +20,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { isConfigPopulated: _isConfigPopulated } = require('./lib/project-config-loader.cjs');
+const { isConfigPopulated: _isConfigPopulated, getConfiguredProjectConfigPath } = require('./lib/project-config-loader.cjs');
 const { hasProjectContent } = require('./lib/session-init-helpers.cjs');
 
 const {
@@ -32,7 +32,9 @@ const {
 } = require('./lib/ck-paths.cjs');
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const CONFIG_PATH = path.join(PROJECT_DIR, 'docs', 'project-config.json');
+// Honor the configured portability.projectConfigPath (fail-open to docs/project-config.json).
+// Must match where session-init creates the config, else a custom-path project blocks every prompt.
+const CONFIG_PATH = getConfiguredProjectConfigPath();
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
 const SCAN_DISMISS_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
 

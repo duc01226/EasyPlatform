@@ -46,7 +46,7 @@ If any of these are missing → `AskUserQuestion`: "/linter-setup appears incomp
 Check for `.ai/workspace/harness/harness-inventory.md`
 
 - If found → `AskUserQuestion`: "Harness inventory already exists — re-run to enhance existing harness, or skip?"
-- Do NOT block on `CLAUDE.md`/`AGENTS.md` presence — those are feedforward guides this skill may enhance, not signals to skip
+- Proceed even when `CLAUDE.md`/`AGENTS.md` are present — those are feedforward guides this skill may enhance, never signals to skip
 
 ---
 

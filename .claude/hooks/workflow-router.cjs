@@ -139,8 +139,6 @@ function getStepDescription(step) {
         'plan-validate': 'Validate plan with critical questions',
         'why-review': 'Validate design rationale completeness',
         cook: 'Implement the feature',
-        'cook-fast': 'Fast implementation with minimal planning',
-        'cook-hard': 'Thorough implementation with maximum verification',
         code: 'Execute existing plan',
         'code-simplifier': 'Simplify and clean up code',
         'code-review': 'Review code quality',

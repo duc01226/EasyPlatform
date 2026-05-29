@@ -11,13 +11,16 @@ description: '[Skill Management] Use when starting a detected workflow, initiali
 **Workflow:**
 
 1. **Detect** — Match prompt against workflow catalog; identify best catalog workflow + optional custom pipeline
-2. **Ask** — Use `AskUserQuestion` to present up to THREE options before doing anything else
+2. **Ask/Confirm** — Ask for auto-detected workflows; explicit `/workflow-*` or `/workflow-start <id>` invocation counts as confirmation when local protocol allows.
 3. **Activate** — Create ALL TaskCreate items for chosen sequence; mark first `in_progress`
 
 **Key Rules:**
 
-- MUST ATTENTION **always** call `AskUserQuestion` before activating — NEVER auto-activate or skip the confirmation step
-- Present THREE options: `A) Activate [Workflow] (Recommended)` | `B) Custom Pipeline: [step → ...]` | `C) Execute directly`
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+
+- MUST ATTENTION **ALWAYS** call `AskUserQuestion` before activating auto-detected workflows — NEVER auto-activate an inferred workflow. Explicit `/workflow-*` or `/workflow-start <id>` invocation counts as confirmation when local project protocol allows. — why: silent activation runs a multi-step plan the user never agreed to.
+- Present the required standard-vs-custom choice: `A) Activate [Workflow] (Recommended)` | `B) Custom Pipeline: [step → ...]`
 - Propose Custom Pipeline when no catalog workflow is a strong fit (>80% steps relevant = use catalog)
 - `workflows.json` `workflows` field is an **OBJECT** — use `workflows[workflowId]`, NEVER `.find()` or `[index]`
 - Create ALL `TaskCreate` items BEFORE marking the first task `in_progress` — batch creation, then execute
@@ -65,7 +68,6 @@ Option B — Custom Pipeline: "Quick Fix + Docs"
   Steps: /scout → /investigate → /fix → /docs-update
   Rationale: Prompt targets a known location — full TDD cycle is over-engineered here.
 
-Option C — Execute directly without workflow
 ```
 
 **Rules:**
@@ -74,6 +76,7 @@ Option C — Execute directly without workflow
 - One-sentence AI rationale for the custom pipeline
 - Catalog workflow = "(Recommended)" unless custom pipeline confidence is clearly higher
 - NEVER present custom pipeline as the only option — always include the catalog option
+- For project-specific architecture, test, documentation, naming, or workflow rules, read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`; keep this reusable workflow-start protocol generic.
 
 ### Task creation for Custom Pipeline
 
@@ -138,7 +141,7 @@ FIRST action after activation: create EXACTLY one `TaskCreate` for EACH entry in
 
 ```
 {
-  "commandMapping": { <stepId>: { "claude": "/cmd", "copilot": "/cmd" } },
+  "commandMapping": { <stepId>: { "claude": "/cmd" } },
   "settings":       { ... },
   "workflows":      { <workflowId>: WorkflowEntry }   ← OBJECT, keyed by ID
 }
@@ -205,7 +208,7 @@ Create ALL tasks first → then `TaskUpdate` first task to `in_progress`.
 Per step: `TaskUpdate in_progress` → **invoke `Skill` tool** → complete skill → `TaskUpdate completed`.
 
 - Completing a task without invoking its `Skill` tool = **workflow violation**
-- Validation gates (`/plan-validate`, `/plan-review`, `/why-review`) MUST use `AskUserQuestion` — never auto-approve
+- Validation gates (`/plan-validate`, `/plan-review`, `/why-review`) MUST use explicit evidence and local project protocol — NEVER auto-approve inferred decisions. Explicit user approval in the prompt may satisfy the gate only when the gate's skill permits it.
 - To skip a conditional step: `TaskUpdate in_progress` → comment "Skipped — {reason}" → `TaskUpdate completed`. Never delete.
 
 ---
@@ -216,10 +219,10 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 
 **Steps requiring sub-agent delegation (hard gate):**
 
-| Step                       | Workflow activated | Steps | Agent type      |
-| -------------------------- | ------------------ | ----- | --------------- |
-| `/workflow-review-changes` | `review-changes`   | 16    | `code-reviewer` |
-| `/workflow-review`         | `review`           | 14    | `code-reviewer` |
+| Step                       | Workflow activated | Step count source                           | Agent type      |
+| -------------------------- | ------------------ | ------------------------------------------- | --------------- |
+| `/workflow-review-changes` | `review-changes`   | `len(workflows["review-changes"].sequence)` | `code-reviewer` |
+| `/workflow-review`         | `review`           | `len(workflows["review"].sequence)`         | `code-reviewer` |
 
 **Protocol when these steps appear in the active workflow sequence:**
 
@@ -234,12 +237,12 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 
 ---
 
-**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
+**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-or-confirm-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
 
-**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-user-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
+**IMPORTANT MANDATORY Steps:** detect-workflow -> analyze-best-match -> ask-or-confirm-workflow-choice -> activate-workflow -> create-task-tracking -> execute-sequence
 
 > **[MANDATORY]** `TaskCreate` FIRST — break every workflow into tasks before any action. NEVER skip.
-> **[MANDATORY]** `AskUserQuestion` ALWAYS — present 3 options, NEVER auto-activate.
+> **[MANDATORY]** `AskUserQuestion` ALWAYS for auto-detected workflows — present the standard-vs-custom (A/B) choice; NEVER auto-activate inferred workflows. Explicit workflow invocation may satisfy confirmation when local protocol allows.
 > **[MANDATORY]** `Skill` tool REQUIRED per step — NEVER mark a task `completed` without invoking it.
 
 <!-- SYNC:ai-mistake-prevention -->
@@ -325,7 +328,7 @@ Some workflow steps ARE themselves full workflows. Running them inline causes th
 
 ## Closing Reminders
 
-**MUST ATTENTION** call `AskUserQuestion` BEFORE activating — present all THREE options (catalog | custom pipeline | execute directly). Never auto-activate.
+**MUST ATTENTION** call `AskUserQuestion` before activating auto-detected workflows; explicit `/workflow-*` or `/workflow-start <id>` invocation may satisfy confirmation when local protocol allows. Never auto-activate inferred workflows.
 **MUST ATTENTION** `workflows` is an OBJECT — `workflows[workflowId]`, NEVER `.find()` / `[index]` / `.forEach()`
 **MUST ATTENTION** create ALL `TaskCreate` items for the full sequence BEFORE marking the first task `in_progress`
 **MUST ATTENTION** never mark a task `completed` without invoking its `Skill` tool — skip means comment + completed, not delete

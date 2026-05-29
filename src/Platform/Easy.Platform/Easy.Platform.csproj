@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Easy.Platform.EfCore" />
+    <InternalsVisibleTo Include="Easy.Platform.MongoDB" />
     <InternalsVisibleTo Include="Easy.Platform.Tests.Unit" />
   </ItemGroup>
 

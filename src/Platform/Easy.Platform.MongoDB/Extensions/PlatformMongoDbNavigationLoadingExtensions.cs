@@ -515,7 +515,7 @@ public static class PlatformMongoDbNavigationLoadingExtensions
             }
 
             if (step.IsCollection)
-                await entities.ParallelAsync(entity => LoadCollectionNavigationTypedAsync<TEntity, TPrimaryKey>(entity, step, resolver, ct));
+                await LoadCollectionNavigationBatchTypedAsync<TEntity, TPrimaryKey>(entities, step, resolver, ct);
             else
                 await LoadSingleNavigationBatchTypedAsync<TEntity, TPrimaryKey>(entities, step, resolver, ct);
 
@@ -715,6 +715,60 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         var lambda = Expression.Lambda(converted, param);
 
         await (Task)genericMethod.Invoke(null, [entities, lambda, resolver, ct])!;
+    }
+
+    /// <summary>
+    /// Batch loads collection navigation by aggregating FK ids across all parent entities.
+    /// </summary>
+    private static async Task LoadCollectionNavigationBatchTypedAsync<TEntity, TPrimaryKey>(
+        List<TEntity> entities,
+        NavigationStep step,
+        IPlatformRepositoryResolver resolver,
+        CancellationToken ct)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        var fkProp = typeof(TEntity).GetProperty(step.Attribute!.ForeignKeyProperty);
+        if (fkProp == null) return;
+
+        var navEntityType = step.ElementType;
+        var entityFkValues = new List<(TEntity Entity, List<object> FkValues)>(entities.Count);
+        var distinctFkValues = new List<object>();
+        var distinctFkValueSet = new HashSet<object>();
+
+        foreach (var entity in entities)
+        {
+            var rawFkValue = fkProp.GetValue(entity);
+            var fkValues = rawFkValue is IEnumerable enumerableFkValues && rawFkValue is not string
+                ? enumerableFkValues.Cast<object>().Where(p => p != null).ToList()
+                : [];
+
+            entityFkValues.Add((entity, fkValues));
+
+            foreach (var fkValue in fkValues)
+            {
+                if (distinctFkValueSet.Add(fkValue))
+                    distinctFkValues.Add(fkValue);
+            }
+        }
+
+        if (distinctFkValues.Count == 0)
+        {
+            foreach (var entity in entities)
+                SetEmptyCollection(entity, step, navEntityType);
+
+            return;
+        }
+
+        var fkType = distinctFkValues[0].GetType();
+        var repo = ResolveRepository(resolver, navEntityType, fkType);
+        if (repo == null) return;
+
+        var loaded = await InvokeGetByIdsAsync(repo, distinctFkValues, fkType, ct);
+        if (loaded == null) return;
+
+        var loadedById = BuildLoadedEntityDictionary(loaded, navEntityType);
+        foreach (var (entity, fkValues) in entityFkValues)
+            SetCollectionNavigationFromLoadedEntities(entity, step, navEntityType, fkValues, loadedById);
     }
 
     /// <summary>
@@ -1143,6 +1197,40 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         var listType = typeof(List<>).MakeGenericType(elementType);
         var emptyList = Activator.CreateInstance(listType);
         step.Property.SetValue(entity, emptyList);
+    }
+
+    private static Dictionary<object, object> BuildLoadedEntityDictionary(object loaded, Type navEntityType)
+    {
+        var idProp = GetIdProperty(navEntityType);
+        var loadedById = new Dictionary<object, object>();
+
+        foreach (var loadedEntity in (IEnumerable)loaded)
+        {
+            var id = idProp?.GetValue(loadedEntity);
+            if (id != null && !loadedById.ContainsKey(id))
+                loadedById[id] = loadedEntity;
+        }
+
+        return loadedById;
+    }
+
+    private static void SetCollectionNavigationFromLoadedEntities(
+        object entity,
+        NavigationStep step,
+        Type navEntityType,
+        List<object> fkValues,
+        Dictionary<object, object> loadedById)
+    {
+        var listType = typeof(List<>).MakeGenericType(navEntityType);
+        var navigationItems = (IList)Activator.CreateInstance(listType)!;
+
+        foreach (var fkValue in fkValues)
+        {
+            if (loadedById.TryGetValue(fkValue, out var loadedEntity))
+                navigationItems.Add(loadedEntity);
+        }
+
+        step.Property.SetValue(entity, navigationItems);
     }
 
     #endregion

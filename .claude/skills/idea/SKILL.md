@@ -35,6 +35,7 @@ description: '[Project Management] Use when capturing new ideas, feature request
 - Validation NEVER optional — MANDATORY step
 - Auto-detect module silently; prompt only when ambiguous
 - MUST ATTENTION include `t_shirt_size` (XS/S/M/L/XL) in artifact for early sizing
+- **[BLOCKING] Tech-agnostic output:** the problem statement stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 (all modes, not only greenfield) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase.
 
 ## Greenfield Mode
 

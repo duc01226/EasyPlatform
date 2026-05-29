@@ -1,6 +1,6 @@
 # Hooks Reference
 
-> 73 hook files + 29 lib modules for context-aware AI behavior (some hooks register on multiple events)
+> 64 top-level hook files + 29 lib modules for context-aware AI behavior (some hooks register on multiple events)
 
 ## Overview
 
@@ -41,9 +41,9 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 | `session-resume.cjs`                          | SessionStart                   | `resume`                          | Inject pending-tasks warning from prev session, restore todos from checkpoint                                                                                                         |
 | `npm-auto-install.cjs`                        | SessionStart                   | `startup`                         | Auto-install missing npm packages from root `package.json`                                                                                                                            |
 | `session-init-docs.cjs`                       | SessionStart                   | `startup`                         | Config skeleton + reference doc placeholder creation                                                                                                                                  |
-| `workflow-router.cjs`                         | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject first third of 32-workflow catalog + detection instructions (part 1 of 3)                                                                                                      |
-| `workflow-router-p2.cjs`                      | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject second third of 32-workflow catalog (part 2 of 3)                                                                                                                              |
-| `workflow-router-p3.cjs`                      | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject final third of 32-workflow catalog (part 3 of 3)                                                                                                                               |
+| `workflow-router.cjs`                         | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject first third of 37-workflow catalog + detection instructions (part 1 of 3)                                                                                                      |
+| `workflow-router-p2.cjs`                      | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject second third of 37-workflow catalog (part 2 of 3)                                                                                                                              |
+| `workflow-router-p3.cjs`                      | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject final third of 37-workflow catalog (part 3 of 3)                                                                                                                               |
 | `prompt-context-assembler.cjs`                | SessionStart, UserPromptSubmit | `startup`, `*`                    | Assemble session context, rules, modularization guidance, lessons (part 1 of 2)                                                                                                       |
 | `prompt-context-assembler-closers.cjs`        | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject graph protocol tier 1, graph compact reminder, workflow gate, lesson-learned reminder                                                                                          |
 | `prompt-context-assembler-docs.cjs`           | SessionStart, UserPromptSubmit | `startup`, `*`                    | Guidance pointer for project-structure-reference.md (merged from former p1+p2 full-content hooks)                                                                                     |
@@ -100,7 +100,7 @@ Lessons are managed via `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 | Hook                                                                     | Event                                             | Purpose                                                             |
 | ------------------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------- |
 | `init-prompt-gate.cjs`                                                   | UserPromptSubmit                                  | Block prompts until config populated + graph built (exit 2 = block) |
-| `workflow-router.cjs` (+ p2, p3)                                         | SessionStart, UserPromptSubmit                    | Inject 32-workflow catalog in three parts (split for size safety)   |
+| `workflow-router.cjs` (+ p2, p3)                                         | SessionStart, UserPromptSubmit                    | Inject 37-workflow catalog in three parts (split for size safety)   |
 | `prompt-context-assembler.cjs` (+ closers, docs, claude, project-config) | SessionStart, UserPromptSubmit                    | Assemble all session context in 5 parts (split for size safety)     |
 | `session-init-docs.cjs`                                                  | SessionStart:`startup`                            | Config skeleton + reference doc placeholder creation                |
 | `workflow-step-tracker.cjs`                                              | PostToolUse:`Skill`                               | Track workflow step completion                                      |
@@ -315,31 +315,29 @@ Hooks are registered in `settings.json` under `hooks.{EventName}[].hooks[]`. Eac
 
 `code-review-rules-injector.cjs` auto-injects `docs/project-reference/code-review-rules.md` when code review skills activate. Configure via `.ck.json`:
 
-| Field                       | Default                                       | Description                   |
-| --------------------------- | --------------------------------------------- | ----------------------------- |
-| `codeReview.enabled`        | `true`                                        | Enable/disable rule injection |
-| `codeReview.rulesPath`      | `docs/project-reference/code-review-rules.md` | Path to rules file            |
-| `codeReview.injectOnSkills` | `["code-review", "review-pr"]`                | Skills that trigger injection |
+| Field                       | Default                                                                           | Description                          |
+| --------------------------- | --------------------------------------------------------------------------------- | ------------------------------------ |
+| `codeReview.enabled`        | `true`                                                                            | Enable/disable rule injection        |
+| `codeReview.rulesPath`      | `docs/project-reference/code-review-rules.md`                                     | Path to rules file                   |
+| `codeReview.injectOnSkills` | `["code-review", "review", "review:codebase", "review-changes", "code-reviewer"]` | Skills/agents that trigger injection |
 
 ---
 
 ## Testing
 
-614 tests across 8 suites, all passing:
+Current primary hook test status: `test-all-hooks.cjs` passes with 369 tests, 0 failures. The suite runner also exposes 16 discoverable suites, including `count-drift`.
 
-| Suite               | Tests | File                                  |
-| ------------------- | ----- | ------------------------------------- |
-| Hook behavior tests | 300   | `tests/test-all-hooks.cjs`            |
-| Core lib tests      | 10    | `tests/test-lib-modules.cjs`          |
-| Extended lib tests  | 145   | `tests/test-lib-modules-extended.cjs` |
-| Swap engine tests   | 50    | `tests/test-swap-engine.cjs`          |
-| Context tracker     | 23    | `tests/test-context-tracker.cjs`      |
-| Init reference docs | 5     | `tests/test-init-reference-docs.cjs`  |
-| Shared utilities    | 17    | `tests/test-shared-utilities.cjs`     |
-| Workflow task guard | 13    | `tests/test-workflow-task-guard.cjs`  |
-| Git commit block    | 56    | `tests/test-git-commit-block.cjs`     |
+| Test Surface          | Count | File/Location                            |
+| --------------------- | ----- | ---------------------------------------- |
+| Primary hook runner   | 369   | `tests/test-all-hooks.cjs`               |
+| Discoverable suites   | 16    | `tests/suites/*.test.cjs`                |
+| Standalone test files | 13    | `tests/test-*.cjs/.js` excluding runner  |
+| Scout-block tests     | 7     | `scout-block/tests/test-*.js`            |
+| Lib unit tests        | 1     | `lib/__tests__/ck-config-utils.test.cjs` |
 
-Run all: `node .claude/hooks/tests/test-all-hooks.cjs && node .claude/hooks/tests/test-lib-modules.cjs && node .claude/hooks/tests/test-lib-modules-extended.cjs && node .claude/hooks/tests/test-swap-engine.cjs && node .claude/hooks/tests/test-context-tracker.cjs && node .claude/hooks/tests/test-init-reference-docs.cjs && node .claude/hooks/tests/test-shared-utilities.cjs && node .claude/hooks/tests/test-workflow-task-guard.cjs && node .claude/hooks/tests/test-git-commit-block.cjs`
+Run all primary hook tests: `node .claude/hooks/tests/test-all-hooks.cjs`
+
+Run a suite subset: `node .claude/hooks/tests/run-all-tests.cjs --filter=count-drift`
 
 ---
 

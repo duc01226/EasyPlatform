@@ -18,7 +18,7 @@ description: '[Git] Use when asked to "commit", "stage and commit", "save change
 
 **Key Rules:**
 
-- DO NOT push unless explicitly requested
+- Stop after the commit; push only when the user explicitly requests it
 - Never commit secrets, credentials, or .env files
 - Never use `--amend` or `--no-verify` unless explicitly requested
 - Include `Generated with [Claude Code]` attribution footer
@@ -129,7 +129,7 @@ Extract from file paths:
 - Include a detailed summary body (not title-only commits)
 - Describe what changed and why in 2-6 concise bullet points
 - Keep each bullet specific to files/behavior changed
-- Avoid vague lines like "update code" or "minor fixes"
+- Write specific bullets tied to the files and behavior changed, never vague lines like "update code" or "minor fixes"
 
 ### Step 4: Commit
 
@@ -172,7 +172,7 @@ fix(validation): handle empty date range
 ## Critical Rules
 
 - **ALWAYS stage all unstaged changes** before committing — run `git add .` (or specific files) so nothing is left behind
-- **DO NOT push** to remote unless explicitly requested
+- **Stop after the commit; push** to remote only when the user explicitly requests it
 - **Review staged changes** before committing
 - **Never commit** secrets, credentials, or .env files
 - **Never use** `git commit --amend` unless explicitly requested AND the commit was created in this session AND not yet pushed
@@ -209,7 +209,7 @@ Spawn `git-manager` after committing when user says "push", "create PR", or "ope
 <!-- SYNC:sub-agent-selection -->
 
 > **Sub-Agent Selection** — Full routing contract: `.claude/skills/shared/sub-agent-selection-guide.md`
-> **Rule:** NEVER use `code-reviewer` for specialized domains (architecture, security, performance, DB, E2E, integration-test, git).
+> **Rule:** Route specialized domains (architecture, security, performance, DB, E2E, integration-test, git) to the matching specialist agent (see guide above) — NEVER use `code-reviewer` for these. — why: `code-reviewer` lacks each domain's checklist, so specialized issues slip through.
 
 <!-- /SYNC:sub-agent-selection -->
 

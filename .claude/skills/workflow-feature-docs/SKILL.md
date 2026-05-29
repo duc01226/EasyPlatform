@@ -19,12 +19,14 @@ disable-model-invocation: true
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
 - NEVER skip mandatory workflow or skill gates.
 
 **IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /docs-update -> /workflow-review-changes -> /review-post-task -> /watzup -> /workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
-> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before starting this workflow — use it as the baseline for completeness, tech-agnostic wording, and TC quality expectations.
+> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before starting this workflow — baseline for completeness, TC quality, and **tech-agnostic output (§3)**: generated prose/headings name no framework/product/language/design-pattern; source paths and class names appear ONLY in evidence fields (`**Evidence**`, `[Source:]`), frontmatter, and Mermaid.
 
 Activate the `feature-docs` workflow. Run `/workflow-start feature-docs` with the user's prompt as context.
 

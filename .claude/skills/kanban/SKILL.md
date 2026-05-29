@@ -18,7 +18,7 @@ disable-model-invocation: false
 **Key Rules:**
 
 - Always run server as Claude Code background task (visible in `/tasks`)
-- Never truncate URL to just host:port; display full path + query string
+- Display the full URL path + query string — never truncate to just host:port
 - Set `timeout: 300000` to prevent premature termination
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**

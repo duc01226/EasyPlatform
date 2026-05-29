@@ -1,5 +1,3 @@
 using BenchmarkDotNet.Running;
-using Easy.Platform.Benchmark;
 
-BenchmarkRunner.Run<CheckDiffBenchmarkExecutor>();
-BenchmarkRunner.Run<DeepCloneBenchmarkExecutor>();
+BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);

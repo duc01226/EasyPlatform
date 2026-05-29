@@ -34,6 +34,8 @@ triggers: 'tdd spec, tdd test, test driven, write test specs, create test cases,
 
 > **Evidence Gate:** [BLOCKING] — every claim/finding/recommendation requires `file:line` proof + confidence % (>80% act, <80% verify first).
 
+> **[BLOCKING] Tech-agnostic output:** generated TC prose follows `docs/project-reference/spec-principles.md` §3 — no framework/product/language/design-pattern names in the behavioral description; source paths, class names, and test identifiers (e.g. `{File}.cs::Method`) are correct ONLY in evidence fields (`**Evidence**`, `IntegrationTest`, `[Source:]`), frontmatter, and Mermaid.
+
 > **Graph Context (MANDATORY when graph.db exists):** Before generating test specs for cross-service features, run:
 >
 > ```bash
@@ -41,6 +43,27 @@ triggers: 'tdd spec, tdd test, test driven, write test specs, create test cases,
 > ```
 >
 > Use output to identify: event consumers, message bus subscribers, background jobs triggered by this feature. These are cross-service TC candidates (category 041–049).
+
+## First Principle — Easy to Change
+
+> **The success metric of every coding decision is _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
+> technique exists to serve one goal: **making the next change cheaper**.
+
+When evaluating code, a refactor, a test, or an abstraction, ask:
+**does this make the next change cheaper or more expensive?**
+
+- Reject "best practices" that raise change cost (premature abstraction,
+  speculative generality, leaky indirection, ceremony without payoff).
+- Name the real enemies in findings: **coupling, hidden state, duplicated
+  knowledge, unclear intent, irreversible decisions exposed too early**.
+- A simpler design that is easy to change beats a sophisticated design that
+  isn't.
+
+Apply this lens **before** invoking any specific rule, pattern, or checklist
+below — if a downstream rule would raise change cost, this principle wins.
+
+---
 
 ## Estimation & Reference Summary
 
@@ -94,7 +117,7 @@ triggers: 'tdd spec, tdd test, test driven, write test specs, create test cases,
 
 - **Unified format:** `TC-{FEATURE}-{NNN}` — feature codes in `docs/project-reference/feature-docs-reference.md`
 - **Source of truth:** Feature docs Section 15 — canonical TC registry. NEVER write TCs to `docs/specs/` as primary destination.
-- **Evidence required:** Every TC MUST have `Evidence: {FilePath}:{LineRange}` or `TBD (pre-implementation)` for TDD-first
+- **Evidence required:** Every TC MUST have `Evidence: [Source: {FilePath}:{LineRange}]` or `TBD (pre-implementation)` for TDD-first
 - **Minimum 4 categories:** Positive (happy path) · Negative (error handling) · **Authorization** (role-based access — MANDATORY) · Edge cases
     - **Bugfix specs:** MANDATORY Preservation Tests — see `references/tdd-spec-template.md#preservation-tests-mandatory-for-bugfix-specs`
     - **Query-Only exception:** Read-only, no auth boundaries, no events → validation + authorization + edge cases minimum
@@ -113,20 +136,20 @@ triggers: 'tdd spec, tdd test, test driven, write test specs, create test cases,
 
 ### Related Skills
 
-| Skill                       | Relationship                                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `tdd-spec [direction=sync]` | **Native sync mode** — syncs S15 TCs to/from `docs/specs/` dashboard (replaces `test-specs-docs`) |
-| `integration-test`          | Code generator → generates integration tests FROM TCs written by this skill                       |
-| `feature-docs`              | Feature doc creator → creates the Section 15 that this skill populates                            |
-| `/spec-discovery`           | **Upstream spec** — engineering spec bundle is the source of truth for domain model               | When TCs reveal implementation doesn't match spec-discovery output: run spec-discovery audit/update |
+| Skill                       | Relationship                                                                        |
+| --------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `tdd-spec [direction=sync]` | **Native sync mode** — syncs S15 TCs to/from `docs/specs/` dashboard                |
+| `integration-test`          | Code generator → generates integration tests FROM TCs written by this skill         |
+| `feature-docs`              | Feature doc creator → creates the Section 15 that this skill populates              |
+| `/spec-discovery`           | **Upstream spec** — engineering spec bundle is the source of truth for domain model | When TCs reveal implementation doesn't match spec-discovery output: run spec-discovery audit/update |
 
 ### Output Locations
 
-| Artifact                  | Path                                                                     |
-| ------------------------- | ------------------------------------------------------------------------ |
-| TCs (canonical)           | `docs/business-features/{App}/detailed-features/{feature}.md` Section 15 |
-| Dashboard (optional)      | `docs/specs/{Module}/README.md` Implementation Index                     |
-| Priority index (optional) | `docs/specs/PRIORITY-INDEX.md`                                           |
+| Artifact                     | Path                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| TCs (canonical)              | `docs/business-features/{App}/detailed-features/{feature}.md` Section 15 |
+| Dashboard indexes (optional) | `docs/specs/README.md` + `docs/specs/PRIORITY-INDEX.md`                  |
+| Priority index (optional)    | `docs/specs/PRIORITY-INDEX.md`                                           |
 
 > **Phase-Mapped Coverage:** When a plan exists with multiple phases, generate test cases
 > PER PHASE — not just per feature. Each phase's success criteria must have ≥1 test case.
@@ -207,16 +230,18 @@ If 2+ fail → `AskUserQuestion`: "Spec readiness below TC generation threshold.
 **Use Case Inventory (implement-first):**
 
 ```bash
-# Write-side: CQRS command handlers
-grep -r "ICommandHandler\|CommandHandler\b" src/Services/{service}/ --include="*.cs" -l
-# Write-side: REST mutating endpoints
-grep -r "\[HttpPost\]\|\[HttpPut\]\|\[HttpPatch\]\|\[HttpDelete\]" src/Services/{service}/ --include="*.cs" -l
-# Event consumers / background jobs
-grep -r "IConsumer\|EventHandler\|IMessageConsumer\|BackgroundJob\|IHostedService" src/Services/{service}/ --include="*.cs" -l
-# Read-side: CQRS query handlers
-grep -r "IQueryHandler\|QueryHandler\b" src/Services/{service}/ --include="*.cs" -l
-# Read-side: REST GET endpoints
-grep -r "\[HttpGet\]" src/Services/{service}/ --include="*.cs" -l
+# First resolve {target-source-path} and source file globs from docs/project-config.json
+# and the project reference docs named by docs/project-reference/docs-index-reference.md.
+# Write-side handlers/operations
+rg "{project write-handler patterns}" {target-source-path} -g "{source-file-glob}" -l
+# Write-side mutating endpoints/actions
+rg "{project mutating-endpoint patterns}" {target-source-path} -g "{source-file-glob}" -l
+# Event consumers / background jobs / async processors
+rg "{project event-or-background-job patterns}" {target-source-path} -g "{source-file-glob}" -l
+# Read-side handlers/operations
+rg "{project read-handler patterns}" {target-source-path} -g "{source-file-glob}" -l
+# Read-side query endpoints/actions
+rg "{project read-endpoint patterns}" {target-source-path} -g "{source-file-glob}" -l
 ```
 
 Count: N (write) + M (read) + K (event/background) = **minimum TC count**.
@@ -226,14 +251,14 @@ If minimum > 20: split into operation-group batches (≤20 ops each per `TaskCre
 
 ```bash
 # Permission attributes and role guards
-grep -r "\[Authorize\]\|RequirePermission\|IsInRole\|HasPermission" src/Services/{service}/ --include="*.cs" -n | head -30
+rg "{project authorization/permission guard patterns}" {target-source-path} -g "{source-file-glob}" -n | head -30
 # Role/permission enums
-grep -r "enum.*Role\|enum.*Permission" src/Services/{service}/ --include="*.cs" -n | head -20
+rg "{project actor/role/permission definition patterns}" {target-source-path} -g "{source-file-glob}" -n | head -20
 ```
 
 Build actor catalog: `[Role1, Role2,...]`. Authorization TC minimum = actor count × 2 (authorized succeeds + unauthorized rejected). Every actor MUST appear in ≥1 authorization TC.
 
-1. Grep commands/queries: `grep -r "class.*Command.*:" src/Services/{service}/`
+1. Grep commands/queries using project patterns from `docs/project-config.json` and the referenced architecture/test docs.
 2. Grep entities and domain events
 3. Trace: Controller → Command → Handler → Entity → Event Handler
 4. Identify testable behaviors from implementation
@@ -244,12 +269,12 @@ Build actor catalog: `[Role1, Role2,...]`. Authorization TC minimum = actor coun
 
 ```bash
 # Write-side
-grep -r "ICommandHandler\|CommandHandler\b" src/Services/{service}/ --include="*.cs" -l
-grep -r "\[HttpPost\]\|\[HttpPut\]\|\[HttpPatch\]\|\[HttpDelete\]" src/Services/{service}/ --include="*.cs" -l
-grep -r "IConsumer\|EventHandler\|IMessageConsumer\|BackgroundJob\|IHostedService" src/Services/{service}/ --include="*.cs" -l
+rg "{project write-handler patterns}" {target-source-path} -g "{source-file-glob}" -l
+rg "{project mutating-endpoint patterns}" {target-source-path} -g "{source-file-glob}" -l
+rg "{project event-or-background-job patterns}" {target-source-path} -g "{source-file-glob}" -l
 # Read-side
-grep -r "IQueryHandler\|QueryHandler\b" src/Services/{service}/ --include="*.cs" -l
-grep -r "\[HttpGet\]" src/Services/{service}/ --include="*.cs" -l
+rg "{project read-handler patterns}" {target-source-path} -g "{source-file-glob}" -l
+rg "{project read-endpoint patterns}" {target-source-path} -g "{source-file-glob}" -l
 ```
 
 - Count N+M+K (Grand Total) = minimum TC count.
@@ -302,7 +327,7 @@ grep -rl "{event-name}" docs/business-features/ | grep -v "{current-module}"
 
 1. Check if the referenced TC (Section 15) still describes valid behavior
 2. If TC is stale → add to the UPDATE mode summary as "POTENTIALLY STALE: TC-{FEATURE}-{NNN} in {other-module} — review recommended"
-3. Do NOT auto-update those TCs — only the owner of that feature doc should update them
+3. Leave those TCs for the owner of that feature doc to update — never auto-update them yourself
 
 **Summary format for watzup/session end:**
 
@@ -323,8 +348,8 @@ TC Blast Radius Analysis:
 **Sync mode (bidirectional reconciliation):**
 
 1. Read feature docs Section 15 TCs for target module
-2. Read `docs/specs/{Module}/README.md` TCs
-3. Read test files: grep for test spec annotations in `src/Services/{service}*.IntegrationTests/`
+2. Read `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md` TCs
+3. Read test files: grep for test spec annotations in the integration-test paths configured by `docs/project-config.json` or the project integration-test reference doc.
 4. Build 3-way comparison table:
 
 ```
@@ -416,6 +441,8 @@ Options:
 
 **Objective:** {What this test verifies}
 
+**Business Intent / Invariant Guarded:** {Business rule or invariant this TC protects; the TC must fail if this rule breaks}
+
 **Preconditions:**
 
 - {Setup requirement}
@@ -443,18 +470,18 @@ And {additional verification}
 
 - {Boundary condition}
 
-**Evidence:** `{FilePath}:{LineRange}` or `TBD (pre-implementation)`
+**Evidence:** `[Source: {FilePath}:{LineRange}]` or `TBD (pre-implementation)`
 ```
 
 **Evidence rules by mode:**
 
 - **TDD-first:** `Evidence: TBD (pre-implementation)` — will be updated after implementation
-- **Implement-first:** `Evidence: {actual file}:{actual lines}` — trace to real code
+- **Implement-first:** `Evidence: [Source: {actual file}:{actual lines}]` — trace to real code
 - **Update:** Update existing evidence references if code moved
 
 ### Phase 5: Update docs/specs/ Dashboard (Optional)
 
-If `docs/specs/{Module}/README.md` exists:
+If `docs/specs/README.md` exists:
 
 1. Update Implementation Index with TC→test method mappings
 2. TDD-first: map to expected test method names (created by `/integration-test`)
@@ -529,10 +556,10 @@ Based on mode, suggest via `AskUserQuestion`:
 
 **Collision prevention:**
 
-1. Grep the feature doc for `TC-{FEAT}-` to list all existing IDs
+1. Grep the feature doc for `TC-{FEATURE}-` to list all existing IDs
 2. Find the highest NNN in the target decade → assign next sequential
 3. If a decade is full (9 entries), use the next available decade in the same category grouping
-4. Never reuse a deprecated TC ID
+4. Assign only fresh, never-before-used TC IDs — never reuse a deprecated ID
 
 > **Authoritative reference:** `.claude/skills/shared/tc-format.md` — Decade-Based Numbering section
 
@@ -571,7 +598,7 @@ When feature behavior removed or significantly changed:
 ## See Also
 
 - `tdd-spec-review` — TC quality review (use AFTER this skill to validate TC coverage and correctness)
-- `tdd-spec [direction=sync]` — Native dashboard sync mode (aggregates TCs from feature docs to `docs/specs/` — replaces `test-specs-docs`)
+- `tdd-spec [direction=sync]` — Native dashboard sync mode (aggregates TCs from feature docs to `docs/specs/`)
 - `integration-test` — Integration test code generator (use AFTER this skill to generate test stubs)
 - `feature-docs` — Feature doc creator (creates the Section 15 that this skill populates)
 - `refine` — PBI refinement (feeds acceptance criteria into this skill's TDD-first mode)
@@ -582,7 +609,7 @@ When feature behavior removed or significantly changed:
 
 **Triggered when:** "sync test specs", "update dashboard", "sync to feature docs", "reverse sync", "full sync", or `[direction=sync|forward|reverse|full]`.
 
-> Engineering specs live at `docs/specs/{app-bucket}/{system-name}/`. This mode manages ONLY QA dashboard at `docs/specs/{Module}/`.
+> Engineering specs live at `docs/specs/{app-bucket}/{system-name}/`. This mode manages ONLY QA dashboard indexes at `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md`.
 > **NEVER sync engineering specs here** — maintained by `workflow-spec-driven-dev`.
 
 ### Direction Detection
@@ -607,8 +634,8 @@ Produce quality report alongside sync output. **Do NOT block sync** — surface 
 
 ### Forward Sync Algorithm (Feature Docs → Dashboard)
 
-1. Read all `TC-{FEAT}-{NNN}` entries from feature doc Section 15 (canonical source)
-2. Read `docs/specs/{Module}/README.md` — extract existing TC IDs
+1. Read all `TC-{FEATURE}-{NNN}` entries from feature doc Section 15 (canonical source)
+2. Read `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md` — extract existing TC IDs
 3. Run quality gate — flag issues, log report
 4. **Full-overwrite strategy:** Replace entire TC section in dashboard with re-extracted TCs from feature doc
     - NEVER merge — dashboard is derived, not canonical. Section 15 = single source of truth.
@@ -635,11 +662,11 @@ Produce quality report alongside sync output. **Do NOT block sync** — surface 
 > **Also add to dashboard header block:**
 >
 > ```markdown
-> | Related Feature Doc | [docs/business-features/{Module}/README.md](../../business-features/{Module}/README.md) |
+> | Related Feature Doc | [docs/business-features/{Module}/detailed-features/README.{FeatureName}.md](../../business-features/{Module}/detailed-features/README.{FeatureName}.md) |
 > | Engineering Spec | [docs/specs/{app-bucket}/{system-name}/](../{app-bucket}/{system-name}/) |
 > ```
 
-5. Update frontmatter in `docs/specs/{Module}/README.md`:
+5. Update frontmatter in `docs/specs/README.md`:
     ```yaml
     last_synced: YYYY-MM-DD
     last_synced_source: docs/business-features/{Module}/detailed-features/README.{FeatureName}.md
@@ -651,16 +678,19 @@ Produce quality report alongside sync output. **Do NOT block sync** — surface 
 
 ### Reverse Sync Algorithm (Dashboard → Feature Docs)
 
-1. Read all TC IDs from `docs/specs/{Module}/README.md`
+Reverse sync is emergency recovery only. Use it when canonical Section 15 content was lost or a dashboard orphan must be rescued with explicit user confirmation and a recovery report. Do not use reverse sync as a normal update path; forward sync from feature docs remains the default.
+
+1. Read all TC IDs from `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md`
 2. Read feature doc Section 15 — extract existing TC IDs
 3. **ID-keyed merge:** TC in dashboard NOT in feature doc → insert into Section 15
     - NEVER overwrite existing TCs in feature doc (canonical)
     - Append new TCs at end of appropriate decade group
 4. **[BLOCKING]** `AskUserQuestion` — present inserted TCs for user review before saving
+5. Write a recovery report naming recovered TC IDs, source dashboard path, target feature doc, and why reverse sync was required.
 
 ### Orphaned TC Detection
 
-TC orphaned when exists in `docs/specs/{Module}/README.md` but NOT in feature doc Section 15.
+TC orphaned when exists in `docs/specs/README.md` or `docs/specs/PRIORITY-INDEX.md` but NOT in feature doc Section 15.
 
 1. After forward sync: compute `orphans = dashboard_ids - feature_doc_ids`
 2. Non-empty orphans:
@@ -705,7 +735,7 @@ Non-empty output → warn: `⚠ Source feature doc changed since last sync on {l
 | `/feature-docs`              | **TC host** — Section 15 is where TCs live; feature-docs creates/updates the doc structure | Before calling tdd-spec, feature doc must exist; run /feature-docs if missing                       |
 | `/tdd-spec-review`           | **Reviewer** — audits TC coverage, GIVEN/WHEN/THEN quality, no duplicates                  | Always call after tdd-spec (CREATE or UPDATE) — never ship TCs without review                       |
 | `/integration-test`          | **Consumer** — generates test code from TCs                                                | After tdd-spec + review, integration-test converts TCs to `.cs` test files                          |
-| `/tdd-spec [direction=sync]` | **Self (sync mode)** — syncs QA dashboard from Section 15                                  | Always call after tdd-spec UPDATE; syncs `docs/specs/{Module}/README.md`                            |
+| `/tdd-spec [direction=sync]` | **Self (sync mode)** — syncs QA dashboard from Section 15                                  | Always call after tdd-spec UPDATE; syncs `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md`  |
 | `/docs-update`               | **Orchestrator** — calls tdd-spec as Phase 3 of doc sync chain                             | Run /docs-update for full automated sync (calls tdd-spec UPDATE + sync internally)                  |
 
 ## Standalone Chain
@@ -716,7 +746,7 @@ Non-empty output → warn: `⚠ Source feature doc changed since last sync on {l
 tdd-spec (you are here)
   │
   ├─ PREREQUISITE:
-  │    [REQUIRED] feature-docs doc must exist at docs/business-features/{Module}/README.md
+  │    [REQUIRED] feature-docs doc must exist at docs/business-features/{Module}/detailed-features/README.{FeatureName}.md
   │    If not found → run /feature-docs init first
   │
   ├─ CREATE mode (new feature):
@@ -761,6 +791,11 @@ TC-REG-001: GIVEN payment processed WHEN amount > limit THEN reject with Payment
 
 # TDD Spec — Test-Driven Specification Writer
 
+<!-- SYNC:source-test-drift-check -->
+
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+
+<!-- /SYNC:source-test-drift-check -->
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -1043,7 +1078,7 @@ TC-REG-001: GIVEN payment processed WHEN amount > limit THEN reject with Payment
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-  <!-- /SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:rationalization-prevention:reminder -->
 
@@ -1127,3 +1162,11 @@ TC-REG-001: GIVEN payment processed WHEN amount > limit THEN reject with Payment
 **IMPORTANT MUST ATTENTION** authorization TCs are MANDATORY — every role must appear in ≥1 authorization TC.
 
 ---
+
+---
+
+> **Closing reminder — Easy to Change is the success metric.** Every finding,
+> test, refactor, and abstraction must answer one question: _does this make
+> the next change cheaper or more expensive?_ If it doesn't reduce future
+> change cost, reject it. Coupling, hidden state, duplicated knowledge, and
+> unclear intent are the real enemies — call them out by name.

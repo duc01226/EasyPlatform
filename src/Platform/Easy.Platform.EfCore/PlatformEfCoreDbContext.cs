@@ -6,18 +6,21 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using Easy.Platform.Application.Persistence;
+using Easy.Platform.Application.Persistence.BulkUpdate;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.EfCore.BulkUpdate;
 using Easy.Platform.EfCore.EntityConfiguration;
 using Easy.Platform.Persistence;
 using Easy.Platform.Persistence.DataMigration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 
 #endregion
@@ -198,6 +201,8 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
 
         IsUsingLazyLoadingProxy = options.IsUsingLazyLoadingProxy();
     }
+
+    public virtual int ExecutionManyPageSize => 100;
 
     /// <summary>
     /// Gets or sets a value indicating whether this database context is configured to use Entity Framework Core lazy loading proxies.
@@ -1062,6 +1067,151 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
             );
     }
 
+    public async Task<int> UpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        Action<IPlatformBulkUpdateBuilder<TEntity>> setBuilder,
+        bool dismissSendEvent = false,
+        bool augmentInvariants = true,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode = PlatformBulkUpdateConcurrencyMode.PreserveExistingSemantics,
+        Action<PlatformCqrsEntityEvent>? eventCustomConfig = null,
+        CancellationToken cancellationToken = default)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        var ops = PlatformBulkUpdateOperationHelper.BuildOps(setBuilder);
+
+        if (!CanSmartDirectUpdate<TEntity, TPrimaryKey>(dismissSendEvent, concurrencyMode, out _))
+            return await FallbackUpdateManyAsync<TEntity, TPrimaryKey>(predicate, ops, dismissSendEvent, eventCustomConfig, cancellationToken);
+
+        var directOps = augmentInvariants
+            ? PlatformBulkUpdateOperationHelper.WithPlatformInvariants<TEntity>(ops, RequestContextAccessor.Current, concurrencyMode)
+            : ops;
+
+        return await ExecuteDirectUpdateManyAsync<TEntity, TPrimaryKey>(
+            predicate,
+            EfBulkUpdateExpressionBuilder.Build<TEntity>(directOps),
+            cancellationToken);
+    }
+
+    internal bool CanSmartDirectUpdate<TEntity, TPrimaryKey>(
+        bool dismissSendEvent,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode,
+        out string deniedReason)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        return PlatformBulkUpdateDirectGate.CanDirectUpdate(
+            typeof(TEntity),
+            dismissSendEvent,
+            PlatformCqrsEntityEvent.IsAnyKindsOfEventHandlerRegisteredForEntity<TEntity, TPrimaryKey>(RootServiceProvider),
+            HasConcurrencyTokenThatRequiresFallback<TEntity>(concurrencyMode),
+            concurrencyMode,
+            out deniedReason);
+    }
+
+    internal void EnsureProviderNativeDirectUpdateSupported<TEntity, TPrimaryKey>(
+        bool dismissSendEvent,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        if (CanSmartDirectUpdate<TEntity, TPrimaryKey>(dismissSendEvent, concurrencyMode, out var deniedReason))
+            return;
+
+        throw new NotSupportedException(
+            $"Provider-native bulk update cannot run direct for {typeof(TEntity).Name}: {deniedReason} Use the unified builder UpdateManyAsync overload to allow fallback, or use the existing Action<TEntity> update path.");
+    }
+
+    internal async Task<int> ExecuteProviderNativeDirectUpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls,
+        PlatformBulkUpdateConcurrencyMode concurrencyMode,
+        CancellationToken cancellationToken)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        return await ExecuteDirectUpdateManyAsync<TEntity, TPrimaryKey>(
+            predicate,
+            setPropertyCalls,
+            cancellationToken);
+    }
+
+    private async Task<int> FallbackUpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        IReadOnlyList<BulkUpdateOp> ops,
+        bool dismissSendEvent,
+        Action<PlatformCqrsEntityEvent>? eventCustomConfig,
+        CancellationToken cancellationToken)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        var updateAction = new Action<TEntity>(entity => PlatformBulkUpdateOperationHelper.ApplyToEntity(entity, ops));
+        var updatedCount = 0;
+
+        await Util.Pager.ExecuteAdaptiveSkipPagingAsync(
+            async (skip, take) =>
+            {
+                var pageEntities = await GetAllAsync(GetQuery<TEntity>().Where(predicate).Skip(skip).Take(take), cancellationToken);
+                if (pageEntities.Count == 0)
+                    return (PageCount: 0, MatchedCount: 0);
+
+                var pageEntityIds = pageEntities.Select(p => p.Id).ToList();
+
+                pageEntities.ForEach(updateAction);
+
+                var updatedEntities = await UpdateManyAsync<TEntity, TPrimaryKey>(
+                    pageEntities,
+                    dismissSendEvent,
+                    checkDiff: true,
+                    eventCustomConfig,
+                    cancellationToken);
+
+                updatedCount += updatedEntities.Count;
+
+                await SaveChangesAsync(cancellationToken);
+                ChangeTracker.Clear();
+
+                var remainingMatchedCount = await CountAsync(
+                    GetQuery<TEntity>().Where(predicate).Where(p => pageEntityIds.Contains(p.Id)),
+                    cancellationToken);
+
+                return (PageCount: pageEntities.Count, MatchedCount: pageEntities.Count - remainingMatchedCount);
+            },
+            ExecutionManyPageSize,
+            cancellationToken);
+
+        return updatedCount;
+    }
+
+    private async Task<int> ExecuteDirectUpdateManyAsync<TEntity, TPrimaryKey>(
+        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls,
+        CancellationToken cancellationToken)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        var updatedCount = await ContextThreadSafeLock.ExecuteLockActionAsync(
+            () => GetTable<TEntity>().Where(predicate).ExecuteUpdateAsync(setPropertyCalls, cancellationToken),
+            cancellationToken);
+
+        MappedUnitOfWork?.ClearCachedExistingOriginalEntity();
+
+        return updatedCount;
+    }
+
+    private bool HasConcurrencyTokenThatRequiresFallback<TEntity>(PlatformBulkUpdateConcurrencyMode concurrencyMode)
+        where TEntity : class
+    {
+        var entityType = Model.FindEntityType(typeof(TEntity));
+        if (entityType == null)
+            return false;
+
+        var allowedBypassConcurrencyTokenName =
+            typeof(IRowVersionEntity).IsAssignableFrom(typeof(TEntity)) &&
+            concurrencyMode == PlatformBulkUpdateConcurrencyMode.BypassOptimisticConcurrencyAndStampToken
+                ? nameof(IRowVersionEntity.ConcurrencyUpdateToken)
+                : null;
+
+        return entityType
+            .GetProperties()
+            .Where(property => property.IsConcurrencyToken)
+            .Any(property => allowedBypassConcurrencyTokenName == null || property.Name != allowedBypassConcurrencyTokenName);
+    }
+
     public async Task<TEntity> DeleteAsync<TEntity, TPrimaryKey>(
         TPrimaryKey entityId,
         bool dismissSendEvent,
@@ -1412,25 +1562,21 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
     {
         if (entities.Any())
         {
-            var entityIds = entities.Select(p => p.Id);
+            var shouldMatchExistingEntitiesByPredicate = PlatformBulkUpsertMatchingHelper.ShouldMatchExistingEntitiesByPredicate<TEntity, TPrimaryKey>(
+                entities,
+                customCheckExistingPredicateBuilder
+            );
+            var existingEntitiesPredicate = PlatformBulkUpsertMatchingHelper.BuildExistingEntitiesPredicate<TEntity, TPrimaryKey>(
+                entities,
+                customCheckExistingPredicateBuilder
+            );
 
             var existingEntitiesQuery = GetQuery<TEntity>()
                 .AsNoTracking()
-                .Pipe(query =>
-                    customCheckExistingPredicateBuilder != null ||
-                    entities.FirstOrDefault()?.As<IUniqueCompositeIdSupport<TEntity>>()?.FindByUniqueCompositeIdExpr() != null
-                        ? query.Where(
-                            entities
-                                .Select(entity =>
-                                    customCheckExistingPredicateBuilder?.Invoke(entity) ?? entity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr()
-                                )
-                                .Aggregate((currentExpr, nextExpr) => currentExpr.Or(nextExpr))
-                        )
-                        : query.Where(p => entityIds.Contains(p.Id))
-                );
+                .Where(existingEntitiesPredicate);
 
             // Only need to check by entityIds if no custom check condition
-            if (customCheckExistingPredicateBuilder == null && entities.FirstOrDefault()?.As<IUniqueCompositeIdSupport<TEntity>>()?.FindByUniqueCompositeIdExpr() == null)
+            if (!shouldMatchExistingEntitiesByPredicate)
             {
                 var existingEntityIds = await ContextThreadSafeLock.ExecuteLockActionAsync(
                     () =>
@@ -1459,26 +1605,25 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                     cancellationToken
                 );
 
-                var toUpsertEntityToExistingEntityPairs = entities.Select(toUpsertEntity =>
+                var toUpsertEntityToExistingEntityPairs = PlatformBulkUpsertMatchingHelper.MatchToExistingEntities<TEntity, TPrimaryKey>(
+                    entities,
+                    existingEntities,
+                    customCheckExistingPredicateBuilder
+                );
+
+                toUpsertEntityToExistingEntityPairs.ForEach(pair =>
                 {
-                    var matchedExistingEntity = existingEntities.FirstOrDefault(existingEntity =>
-                        customCheckExistingPredicateBuilder?.Invoke(toUpsertEntity).Compile()(existingEntity)
-                        ?? toUpsertEntity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr().Compile()(existingEntity)
-                    );
-
                     // Update to correct the id of toUpdateEntity to the matched existing entity Id
-                    if (matchedExistingEntity != null)
-                        toUpsertEntity.Id = matchedExistingEntity.Id;
-
-                    return new { toUpsertEntity, matchedExistingEntity };
+                    if (pair.MatchedExistingEntity != null)
+                        pair.ToUpsertEntity.Id = pair.MatchedExistingEntity.Id;
                 });
 
-                var (existingToUpdateEntities, newEntities) = toUpsertEntityToExistingEntityPairs.WhereSplitResult(p => p.matchedExistingEntity != null);
+                var (existingToUpdateEntities, newEntities) = toUpsertEntityToExistingEntityPairs.WhereSplitResult(p => p.MatchedExistingEntity != null);
 
                 // Ef core is not thread safe so that couldn't use when all
-                await CreateManyAsync<TEntity, TPrimaryKey>(newEntities.Select(p => p.toUpsertEntity).ToList(), dismissSendEvent, eventCustomConfig, cancellationToken);
+                await CreateManyAsync<TEntity, TPrimaryKey>(newEntities.Select(p => p.ToUpsertEntity).ToList(), dismissSendEvent, eventCustomConfig, cancellationToken);
                 await UpdateManyAsync<TEntity, TPrimaryKey>(
-                    existingToUpdateEntities.Select(p => p.toUpsertEntity).ToList(),
+                    existingToUpdateEntities.Select(p => p.ToUpsertEntity).ToList(),
                     dismissSendEvent,
                     checkDiff,
                     eventCustomConfig,

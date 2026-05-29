@@ -17,7 +17,7 @@ description: '[Code Quality] Use when the user asks to enhance documentation, ad
 
 **Key Rules:**
 
-- Never proceed without explicit user approval of the documentation plan
+- Proceed only after explicit user approval of the documentation plan — never without it
 - Verify every documented feature against actual code (no assumptions)
 - For business feature docs, use `feature-docs` skill instead
 - Include practical examples and copy-pasteable code snippets
@@ -324,7 +324,7 @@ Every 10 operations:
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
+    <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

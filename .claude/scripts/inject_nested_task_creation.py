@@ -27,8 +27,7 @@ SKILL_NAMES = [
     # ---- Child skills (multi-phase work that nests under workflow steps) ----
     # Plan family
     "plan", "plan-analysis", "plan-archive", "plan-ci", "plan-cro",
-    "plan-fast", "plan-hard", "plan-parallel", "plan-review", "plan-two",
-    "plan-validate", "planning",
+    "plan-review", "plan-validate", "planning",
     # Review family
     "arch-security-review", "code-review", "integration-test-review",
     "knowledge-review", "refine-review", "review-architecture",
@@ -36,15 +35,14 @@ SKILL_NAMES = [
     "review-post-task", "sre-review", "story-review", "tdd-spec-review",
     "why-review",
     # Cook family
-    "cook", "cook-auto", "cook-auto-fast", "cook-auto-parallel",
-    "cook-fast", "cook-hard", "cook-parallel",
+    "cook",
     # Code family
     "code", "code-auto", "code-no-test", "code-parallel",
     # Feature family
     "feature", "feature-implementation", "create-feature",
     # Fix family
-    "fix", "fix-ci", "fix-fast", "fix-hard", "fix-issue",
-    "fix-logs", "fix-parallel", "fix-test", "fix-types", "fix-ui",
+    "fix", "fix-ci", "fix-issue", "fix-logs",
+    "fix-test", "fix-types", "fix-ui",
     # Investigate / scout family
     "investigate", "debug-investigate", "feature-investigation",
     "scout", "scout-ext",
@@ -78,6 +76,8 @@ SKILL_NAMES = [
 
 TAG = "SYNC:nested-task-creation"
 REMINDER_TAG = "SYNC:nested-task-creation:reminder"
+TOP_OPEN = f"<!-- {TAG} -->"
+REMINDER_OPEN = f"<!-- {REMINDER_TAG} -->"
 
 TOP_BLOCK = load_wrapped_sync_block(TAG)
 BOTTOM_BLOCK = load_wrapped_sync_block(REMINDER_TAG)
@@ -103,20 +103,30 @@ def find_skill_path(name: str) -> Path | None:
 
 
 def inject(text: str) -> tuple[str, dict]:
-    status = {"top": "skipped", "bottom": "skipped", "already_present": False}
+    status = {"top": "skipped", "bottom": "skipped", "already_present": False, "errors": []}
 
-    if TAG in text:
+    top_present = TOP_OPEN in text
+    bottom_present = REMINDER_OPEN in text
+
+    if top_present:
         status["already_present"] = True
         m = TOP_BLOCK_RE.search(text)
-        if m and m.group(0).strip() != TOP_BLOCK.strip():
+        if not m:
+            status["errors"].append(f"malformed {TAG} block")
+        elif m.group(0).strip() != TOP_BLOCK.strip():
             text = text[: m.start()] + TOP_BLOCK + text[m.end():]
             status["top"] = "refreshed"
-        if REMINDER_TAG in text:
-            m = BOTTOM_BLOCK_RE.search(text)
-            if m and m.group(0).strip() != BOTTOM_BLOCK.strip():
-                text = text[: m.start()] + BOTTOM_BLOCK + text[m.end():]
-                status["bottom"] = "refreshed"
-        else:
+
+    if bottom_present:
+        m = BOTTOM_BLOCK_RE.search(text)
+        if not m:
+            status["errors"].append(f"malformed {REMINDER_TAG} block")
+        elif m.group(0).strip() != BOTTOM_BLOCK.strip():
+            text = text[: m.start()] + BOTTOM_BLOCK + text[m.end():]
+            status["bottom"] = "refreshed"
+
+    if top_present:
+        if not bottom_present:
             m = CLOSING_RE.search(text)
             if m:
                 text = text[: m.start()] + BOTTOM_BLOCK + "\n" + text[m.start():]
@@ -135,17 +145,18 @@ def inject(text: str) -> tuple[str, dict]:
     text = head + TOP_BLOCK + tail
     status["top"] = "before-sync-region-start"
 
-    # --- BOTTOM insert: before `## Closing Reminders` heading ---
-    m = CLOSING_RE.search(text)
-    if m:
-        insert_at = m.start()
-        text = text[:insert_at] + BOTTOM_BLOCK + "\n" + text[insert_at:]
-        status["bottom"] = "before-closing-reminders"
-    else:
-        if not text.endswith("\n"):
-            text += "\n"
-        text += "\n" + BOTTOM_BLOCK
-        status["bottom"] = "appended-eof"
+    if not bottom_present:
+        # --- BOTTOM insert: before `## Closing Reminders` heading ---
+        m = CLOSING_RE.search(text)
+        if m:
+            insert_at = m.start()
+            text = text[:insert_at] + BOTTOM_BLOCK + "\n" + text[insert_at:]
+            status["bottom"] = "before-closing-reminders"
+        else:
+            if not text.endswith("\n"):
+                text += "\n"
+            text += "\n" + BOTTOM_BLOCK
+            status["bottom"] = "appended-eof"
 
     return text, status
 
@@ -166,6 +177,9 @@ def main() -> int:
             continue
         original = path.read_text(encoding="utf-8")
         new_text, status = inject(original)
+        if status.get("errors"):
+            results.append((name, "MALFORMED", status))
+            continue
         if status["already_present"] and new_text == original:
             results.append((name, "ALREADY-PRESENT", status))
             continue
@@ -184,11 +198,16 @@ def main() -> int:
         top = status.get("top", "-")
         bot = status.get("bottom", "-")
         print(f"{name:<42} {kind:<18} {top} / {bot}")
+        for error in status.get("errors", []):
+            print(f"{'':<42} {'':<18} ERROR: {error}")
 
     updated = sum(1 for _, k, _ in results if k == "UPDATED")
     already = sum(1 for _, k, _ in results if k == "ALREADY-PRESENT")
     missing = sum(1 for _, k, _ in results if k == "MISSING")
-    print(f"\nTotal: {len(results)} | Updated: {updated} | Already-present: {already} | Missing: {missing}")
+    malformed = sum(1 for _, k, _ in results if k == "MALFORMED")
+    print(f"\nTotal: {len(results)} | Updated: {updated} | Already-present: {already} | Missing: {missing} | Malformed: {malformed}")
+    if malformed:
+        return 1
     return 1 if check and any(k == "WOULD-UPDATE" for _, k, _ in results) else 0
 
 

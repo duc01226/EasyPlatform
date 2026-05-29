@@ -19,6 +19,13 @@ disable-model-invocation: true
 
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
+- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
+- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
+- MUST ATTENTION require regression tests to name `Business Intent / Invariant Guarded` and fail if that intent breaks.
+- MUST ATTENTION apply the shared SDD Artifact Contract from `shared/sdd-artifact-contract.md` in the active skills root; use `docs/project-config.json` and `docs/project-reference/docs-index-reference.md` for project-specific conventions.
+- MUST ATTENTION record current behavior, expected behavior, and unchanged behavior that must be preserved before fixing.
+- MUST ATTENTION treat code-extracted specs and TCs as reference-only until canonical review accepts them.
+- MUST ATTENTION allow any supported AI tool to implement or review when the shared contract, synced context, and local docs are available.
 - NEVER skip mandatory workflow or skill gates.
 
 ## Repeated Steps Disambiguation (CRITICAL for task creation)
@@ -46,13 +53,21 @@ Activate the `bugfix` workflow. Run `/workflow-start bugfix` with the user's pro
 
 > **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
 
+> **[BLOCKING] Code Bug vs Spec Bug Gate:** Before writing regression TCs, classify the issue:
+>
+> - **Code Bug** — the canonical spec describes intended behavior, but code diverged. Write regression TCs for the intended behavior before fixing code.
+> - **Spec Bug** — the spec documents wrong behavior and code faithfully implements it. Update canonical spec/docs first, then write TCs for the corrected behavior.
+> - **Ambiguous** — ask the user or product owner which behavior is intended before writing TCs.
+>
+> Include a behavior preservation note: `current behavior -> expected behavior -> unchanged behavior to preserve -> regression TC/test evidence`.
+
 **Steps:** /scout → /investigate → /debug-investigate → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /tdd-spec → /why-review → /tdd-spec-review → /integration-test → /fix → /prove-fix → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /workflow-review-changes → /changelog → /test → /docs-update → /watzup → /workflow-end
 
-> **[PERFORMANCE EXCEPTION]** If this bug fix is performance-related (latency, throughput, memory, query speed), skip `/tdd-spec`, `/tdd-spec-review`, `/integration-test` (both occurrences), `/integration-test-review`, and `/integration-test-verify`. Integration tests verify functional correctness — they cannot measure performance. Use `/test` only to confirm no functional regressions. Activate `/workflow-performance` instead when the primary goal is performance optimization.
+> **[PERFORMANCE-SDD ROUTE]** If this bug fix is performance-related (latency, throughput, memory, query speed, load behavior), activate `/workflow-performance` and require SLA/benchmark evidence: target metric, baseline, measurement command, and acceptable regression budget. Do not use performance scope to bypass functional no-regression checks: run `/test` and any relevant functional checks when behavior can change. Update docs/specs for changed SLA, performance constraints, or behavior boundaries.
 
 > **[TDD-FIRST BUG FIX]** The two `/integration-test` occurrences are intentional and serve distinct purposes:
 >
-> **First `/integration-test` (RED phase):** Write a regression test that REPRODUCES the bug. Run it — it MUST FAIL. If it passes, the test does not catch the bug. Never proceed to fix until the test fails.
+> **First `/integration-test` (RED phase):** Write a regression test that REPRODUCES the bug. Run it — it MUST FAIL. If it passes, the test does not catch the bug. Proceed to fix only after the test fails — never start the fix while the test still passes.
 > **Second `/integration-test` (GREEN phase):** Re-run integration tests after the fix — expect all to PASS. Confirms the fix works AND the regression guard is in place.
 > **`/integration-test-review`:** Verify tests have real assertion value (not smoke/existence-only checks).
 

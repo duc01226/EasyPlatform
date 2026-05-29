@@ -11,12 +11,32 @@ consumers: [feature-docs, tdd-spec, tdd-spec (sync mode)]
 > **Single source of truth** for TC entry format. Referenced by: `feature-docs`, `tdd-spec`, `tdd-spec (sync mode)`.
 > To update TC format: edit THIS file only, then update all consumer skills to reflect the change.
 
+## Quick Summary
+
+**Goal:** Keep TC entries consistent, traceable, and reusable across feature docs, TDD specs, and sync mode.
+
+**Workflow:**
+
+1. **Author** — Write each TC with objective, preconditions, GWT steps, acceptance criteria, data, edge cases, evidence, and related files.
+2. **Trace** — Link every TC to code/test evidence or mark `TBD (pre-implementation)`.
+3. **Preserve** — For bugfixes, add preservation TCs before changing code semantics.
+4. **Deprecate** — Mark removed behavior as deprecated; never delete historical TCs.
+
+**Key Rules:**
+
+- MUST ATTENTION preserve `TC-{FEATURE}-{NNN}` identity and evidence fields.
+- MUST ATTENTION state business intent/invariant so generated tests fail when protected behavior breaks.
+- MUST ATTENTION use preservation TCs for every healthy input that must remain unchanged after a bugfix.
+- NEVER delete deprecated TCs; keep audit trail and version history.
+
 ## TC Entry Format
 
 ````markdown
-#### TC-{FEAT}-{NNN}: {Descriptive Test Name} [P{0-3}]
+#### TC-{FEATURE}-{NNN}: {Descriptive Test Name} [P{0-3}]
 
 **Objective:** {One sentence: what this test verifies and why it matters}
+
+**Business Intent / Invariant Guarded:** {Business rule, invariant, or user promise this TC protects; the TC must fail if it breaks}
 
 **Preconditions:**
 
@@ -32,7 +52,6 @@ And {additional action if needed}
 Then {expected outcome}
 And {additional verification}
 ```
-````
 
 **Acceptance Criteria:**
 
@@ -54,25 +73,24 @@ And {additional verification}
 - {Concurrency: simultaneous updates} → {expected behavior}
 - {Cross-service: message bus timing} → {expected behavior}
 
-**Evidence:** `{FilePath}:{LineRange}` or `TBD (pre-implementation)`
+**Evidence:** `[Source: {FilePath}:{LineRange}]` or `TBD (pre-implementation)`
 
 **Related Files:**
 | Layer | Type | File |
 |----------|---------------|---------------------------------------------------------------------------------------|
-| API | Controller | `src/Services/{service}/{Service}.Service/Controllers/{Feature}Controller.cs` |
-| App | Command/Query | `src/Services/{service}/{Service}.Application/UseCaseCommands/{Feature}/{Command}.cs` |
-| Domain | Entity | `src/Services/{service}/{Service}.Domain/Entities/{Feature}/{Entity}.cs` |
-| Test | Integration | `src/Services/{service}/{Service}.IntegrationTests/{Feature}/{TestClass}.cs` |
+| API | Controller/Endpoint | `{configured-source-path}/{module}/{api-layer-path}/{FeatureEndpointFile}` |
+| App | Command/Query/Use Case | `{configured-source-path}/{module}/{application-layer-path}/{FeatureUseCaseFile}` |
+| Domain | Entity/Model | `{configured-source-path}/{module}/{domain-layer-path}/{FeatureEntityFile}` |
+| Test | Integration | `{configured-test-path}/{FeatureTestFile}` |
 
 **IntegrationTest:** `{IntegrationTests}/{TestFile}.cs::{MethodName}` (or `Untested`)
 **Status:** Tested | Untested | Planned
-
 ````
 
 ## TC Priority Classification
 
 | Priority | Label    | Description                    | Guideline                                       |
-|----------|----------|--------------------------------|-------------------------------------------------|
+| -------- | -------- | ------------------------------ | ----------------------------------------------- |
 | P0       | Critical | Security, auth, data integrity | If this fails, users can't work or data at risk |
 | P1       | High     | Core business workflows        | Core happy-path for business operations         |
 | P2       | Medium   | Secondary features             | Enhances but doesn't block core workflows       |
@@ -82,21 +100,22 @@ And {additional verification}
 
 Group TCs by category using decade blocks to prevent collisions:
 
-| NNN Range | Category                              |
-|-----------|---------------------------------------|
-| 001–009   | CRUD / Core operations (P0-P1)        |
-| 011–019   | Validation / Business rules (P1-P2)   |
-| 021–029   | Authorization / Permissions (P0-P1)   |
-| 031–039   | Events / Background jobs (P1-P2)      |
-| 041–049   | Cross-service / Integration (P1-P2)   |
-| 051–059   | Edge cases / Error scenarios (P2-P3)  |
-| 061–069   | UI / User journey flows (P2-P3)       |
-| 071–099   | Reserved for feature-specific groups  |
+| NNN Range | Category                             |
+| --------- | ------------------------------------ |
+| 001–009   | CRUD / Core operations (P0-P1)       |
+| 011–019   | Validation / Business rules (P1-P2)  |
+| 021–029   | Authorization / Permissions (P0-P1)  |
+| 031–039   | Events / Background jobs (P1-P2)     |
+| 041–049   | Cross-service / Integration (P1-P2)  |
+| 051–059   | Edge cases / Error scenarios (P2-P3) |
+| 061–069   | UI / User journey flows (P2-P3)      |
+| 071–099   | Reserved for feature-specific groups |
 
 **Collision prevention:**
+
 1. Check existing TC IDs in the feature doc's Section 15 first
 2. Find the next free decade for the category
-3. Never reuse a deprecated TC ID — mark deprecated TCs with `[DEPRECATED]` suffix instead
+3. Mark deprecated TCs with a `[DEPRECATED]` suffix instead — never reuse a deprecated TC ID
 
 ## TC Category Sections
 
@@ -104,23 +123,29 @@ Organize TCs into named category sections. Minimum 3 categories required (query-
 
 ```markdown
 ### CRUD Tests
+
 (Create, Read, Update, Delete — happy path operations)
 
 ### Validation Tests
+
 (Input validation, business rule enforcement, error responses)
 
 ### Permission Tests
+
 (Role-based access, cross-tenant isolation, authorization checks)
 
 ### Workflow Tests
+
 (Multi-step processes, state transitions, event handler side effects)
 
 ### Edge Case Tests
+
 (Boundary conditions, concurrent operations, data migration scenarios)
 
 ### Integration Tests
+
 (Cross-service message bus flows, event handler chains)
-````
+```
 
 ## Preservation Tests (Bugfix Context)
 
@@ -131,9 +156,11 @@ When writing TCs for a bugfix, add a Preservation Tests section **before** the n
 
 > These TCs verify pre-existing correct behavior that the fix must not regress.
 
-#### TC-{FEAT}-{NNN}: {Existing Behavior Name} [P{0-3}]
+#### TC-{FEATURE}-{NNN}: {Existing Behavior Name} [P{0-3}]
 
 **Objective:** Verify that {pre-existing behavior} is unchanged after the fix.
+
+**Business Intent / Invariant Guarded:** {Healthy behavior or invariant that must stay true before and after the bugfix}
 
 **Test Steps:**
 
@@ -178,3 +205,10 @@ When a behavior is removed:
 | P2        | {n}     | {n}       | 0      |
 | **Total** | **{N}** | **{N}**   | **0**  |
 ````
+
+## Closing Reminders
+
+- MUST ATTENTION keep this file canonical; update consumer skills only after this format changes.
+- MUST ATTENTION every TC protects a named behavior, invariant, or regression path.
+- MUST ATTENTION preserve evidence links and deprecated TC history for traceability.
+- NEVER replace specific assertions with smoke checks or existence-only checks.
