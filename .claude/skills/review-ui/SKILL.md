@@ -266,11 +266,11 @@ Update report with final sections:
 
 > **Severity vocabulary (single source of truth).** Category headers and this verdict table use `BLOCKED` / `WARN` / `PASS`. The fresh sub-agent (Phase 5 and Round 2) emits `Critical / High / Medium / Low` + `PASS / FAIL` from the shared review-protocol template. Reconcile the two with this mapping — do NOT treat them as separate scales:
 >
-> | This skill | Sub-agent (Round 2) | Merge gate                    |
-> | ---------- | ------------------- | ----------------------------- |
-> | BLOCKED    | Critical / High → FAIL | Must fix before merge      |
-> | WARN       | Medium / Low → WARN/INFO | Review and decide        |
-> | PASS       | (no findings) → PASS | Merge-clear                  |
+> | This skill | Sub-agent (Round 2)      | Merge gate            |
+> | ---------- | ------------------------ | --------------------- |
+> | BLOCKED    | Critical / High → FAIL   | Must fix before merge |
+> | WARN       | Medium / Low → WARN/INFO | Review and decide     |
+> | PASS       | (no findings) → PASS     | Merge-clear           |
 >
 > A category's **"(HIGH when …)"** note is NOT a separate tier — it means that WARN **escalates to BLOCKED** when the stated condition holds (i.e., the finding is a real rendered bug, not a latent risk).
 

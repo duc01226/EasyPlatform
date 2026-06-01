@@ -37,14 +37,14 @@ description: '[Documentation] Use when scanning frontend component, state, form,
 
 2. Detect frontend framework:
 
-| Signal                                   | Framework       | Key Patterns to Search                                               |
-| ---------------------------------------- | --------------- | -------------------------------------------------------------------- |
+| Signal                                   | Framework       | Key Patterns to Search                                                |
+| ---------------------------------------- | --------------- | --------------------------------------------------------------------- |
 | `angular.json` + `nx.json`               | Angular (Nx)    | base component class, view-model store, `untilDestroyed`, BEM classes |
-| `angular.json` (no Nx)                   | Angular         | `@Component`, `OnDestroy`, reactive forms, `HttpClient`              |
-| `package.json` with `react`/`next`       | React           | hooks, context, `useState`, `useEffect`, `fetch` wrappers            |
-| `package.json` with `vue`/`nuxt`         | Vue             | Composition API, `ref`, `reactive`, Pinia stores                     |
-| `package.json` with `svelte`/`sveltekit` | Svelte          | `$:` reactivity, stores, `onMount`/`onDestroy`                       |
-| Multiple frameworks                      | Multi-framework | Document each separately — DO NOT merge                              |
+| `angular.json` (no Nx)                   | Angular         | `@Component`, `OnDestroy`, reactive forms, `HttpClient`               |
+| `package.json` with `react`/`next`       | React           | hooks, context, `useState`, `useEffect`, `fetch` wrappers             |
+| `package.json` with `vue`/`nuxt`         | Vue             | Composition API, `ref`, `reactive`, Pinia stores                      |
+| `package.json` with `svelte`/`sveltekit` | Svelte          | `$:` reactivity, stores, `onMount`/`onDestroy`                        |
+| Multiple frameworks                      | Multi-framework | Document each separately — DO NOT merge                               |
 
 3. Detect scan mode:
 

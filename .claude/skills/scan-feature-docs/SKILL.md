@@ -189,7 +189,7 @@ Read report. Apply fresh-eyes protocol:
 <!-- SYNC:scan-and-update-reference-doc:reminder -->
 
 - **[REQUIRED]** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
-  <!-- /SYNC:scan-and-update-reference-doc:reminder -->
+      <!-- /SYNC:scan-and-update-reference-doc:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
