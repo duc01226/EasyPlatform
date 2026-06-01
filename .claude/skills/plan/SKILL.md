@@ -256,14 +256,14 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 ## Post-Plan Granularity Self-Check (MANDATORY)
 
-## Preservation Inventory (MANDATORY for bugfixes)
-
 After creating all phase files, run **recursive decomposition loop**:
 
 1. Score each phase against 5-point criteria (file paths, no planning verbs, ≤30min steps, ≤5 files, no open decisions)
 2. Each FAILING phase → create task to decompose into sub-plan (with own /plan → /plan-review → /plan-validate → fix cycle)
 3. Re-score new phases. Repeat until ALL leaf phases pass (max depth: 3)
 4. **Self-question:** "For each phase, can I start coding RIGHT NOW? If any needs 'figuring out' → sub-plan it."
+
+## Preservation Inventory (MANDATORY for bugfixes)
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. Prevents context loss from long files. For simple tasks, MUST ATTENTION ask user whether to skip.
 
@@ -647,7 +647,7 @@ After creating all phase files, run **recursive decomposition loop**:
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-  <!-- /SYNC:estimation-framework:reminder -->
+      <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:plan-quality:reminder -->
 

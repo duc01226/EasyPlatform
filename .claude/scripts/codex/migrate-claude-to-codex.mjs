@@ -4,15 +4,16 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { buildSkillReferenceMap, prependCodexCompatibilityNote, rewriteClaudeToolTermsForCodex, rewriteSkillMentionsForCodex } from './compat-rewrite.mjs';
+import { fileURLToPath } from 'node:url';
 
 const args = new Set(process.argv.slice(2));
 const rootDir = process.cwd();
 const require = createRequire(import.meta.url);
 
 const claudeAgentsDir = path.join(rootDir, '.claude', 'agents');
-const claudeSkillsDir = path.join(rootDir, '.claude', 'skills');
+export const claudeSkillsDir = path.join(rootDir, '.claude', 'skills');
 const codexAgentsDir = path.join(rootDir, '.codex', 'agents');
-const agentsSkillsDir = path.join(rootDir, '.agents', 'skills');
+export const agentsSkillsDir = path.join(rootDir, '.agents', 'skills');
 const codexConfigPath = path.join(rootDir, '.codex', 'config.toml');
 const codexScriptsDir = path.join(rootDir, '.codex', 'scripts', 'codex');
 const codexNotificationScriptPath = path.join(codexScriptsDir, 'codex-notify.mjs');
@@ -696,6 +697,22 @@ async function migrateAgents() {
     return migrated;
 }
 
+// Single source of truth for materializing the skill mirror into `targetDir`.
+// Called by the real writer (setupSkills → agentsSkillsDir) AND by the sync-divergence
+// oracle gate (→ throwaway staging dir). Sharing this path means the gate's "expected"
+// output can never drift from real sync behavior. Returns the sanitized manifest count.
+export async function materializeSkillMirror(targetDir, skillReferenceMap) {
+    await fs.cp(claudeSkillsDir, targetDir, {
+        recursive: true,
+        force: true,
+        filter: sourcePath => !sourcePath.split(path.sep).some(segment => MIRROR_EXCLUDED_DIRS.has(segment))
+    });
+    await normalizeTextLineEndingsUnderDir(targetDir);
+    await canonicalizeSkillManifestNames(targetDir);
+    const alwaysInjectedProtocolBlock = await buildAlwaysInjectedPromptProtocolBlock();
+    return sanitizeSkillMirror(targetDir, skillReferenceMap, alwaysInjectedProtocolBlock);
+}
+
 async function setupSkills() {
     if (!useSkills) return 'skipped (--no-skills)';
 
@@ -722,15 +739,7 @@ async function setupSkills() {
         await fs.rm(agentsSkillsDir, { recursive: true, force: true });
     }
 
-    await fs.cp(claudeSkillsDir, agentsSkillsDir, {
-        recursive: true,
-        force: true,
-        filter: sourcePath => !sourcePath.split(path.sep).some(segment => MIRROR_EXCLUDED_DIRS.has(segment))
-    });
-    await normalizeTextLineEndingsUnderDir(agentsSkillsDir);
-    await canonicalizeSkillManifestNames(agentsSkillsDir);
-    const alwaysInjectedProtocolBlock = await buildAlwaysInjectedPromptProtocolBlock();
-    const sanitizedCount = await sanitizeSkillMirror(agentsSkillsDir, skillReferenceMap, alwaysInjectedProtocolBlock);
+    const sanitizedCount = await materializeSkillMirror(agentsSkillsDir, skillReferenceMap);
     await writeAgentsSkillsMirrorSentinel();
     const modeLabel = copySkills ? 'copied' : 'mirrored';
     return `${modeLabel} + sanitized + rewritten ${sanitizedCount} skill manifest(s)`;
@@ -778,4 +787,10 @@ async function main() {
     console.log(`[codex-migrate] notifications setup: ${notificationsResult}`);
 }
 
-await main();
+// CLI guard: only run the (destructive) migration when invoked directly as a script.
+// Importing this module (e.g. the verify-sync-divergence oracle gate, or unit tests)
+// must NOT trigger a real sync that would wipe and regenerate .agents/skills.
+const invokedAsScript = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedAsScript) {
+    await main();
+}

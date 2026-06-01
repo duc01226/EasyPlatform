@@ -143,6 +143,8 @@ After ≥5 rows, run pattern detection on the CSV: if `scope_var_pct` is consist
 
 ## Estimation Framework (canonical — applied in Step 4)
 
+The canonical framework lives in the **Estimation Framework** sync block at the end of this skill; Step 4 applies it verbatim to the observed (post-hoc) scope.
+
 ## Output Report Template
 
 ```markdown

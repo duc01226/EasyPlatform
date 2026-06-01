@@ -2,6 +2,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const rootDir = process.cwd();
 const scanRoots = ['.codex', '.agents', '.claude/scripts/codex'];
@@ -13,6 +14,45 @@ const genericSourceFiles = [
     '.claude/hooks/session-init-docs.cjs'
 ];
 const forbiddenTerms = ['br' + 'avo', 'Br' + 'avoSuite'];
+
+// Project-specific framework symbols (this codebase's .NET/Angular base classes) that must NOT
+// leak into portable generic skills. Case-SENSITIVE, word-boundary matched, scanned ONLY within
+// genericSourceRoots (.claude/skills). Generic language idioms are deliberately excluded
+// (e.g. bare `Store`, `Service`, `Component`) — too broad → false positives on framework examples.
+export const projectSymbolDenylist = [
+    'AppBaseComponent',
+    'AppBaseVmStoreComponent',
+    'AppBaseFormComponent',
+    'PlatformVmStore',
+    'PlatformApiService',
+    'IPlatformRootRepository',
+    'ExecuteInjectScopedAsync',
+    'ExecuteUowTask'
+];
+
+// Per-file exemptions: skills that legitimately document THIS project's architecture
+// (review-architecture asserts these exact base classes; scan-seed-test-data greps for them in
+// .NET source). Keyed by repo-relative forward-slash path → symbols allowed for that file only.
+export const projectSymbolAllowlist = {
+    '.claude/skills/review-architecture/SKILL.md': [
+        'AppBaseComponent',
+        'AppBaseVmStoreComponent',
+        'AppBaseFormComponent',
+        'PlatformVmStore',
+        'PlatformApiService',
+        'IPlatformRootRepository'
+    ],
+    '.claude/skills/project-config/SKILL.md': ['IPlatformRootRepository'],
+    '.claude/skills/scan-seed-test-data/SKILL.md': ['ExecuteInjectScopedAsync', 'ExecuteUowTask'],
+    '.claude/skills/shared/affirmative-rewrite-rubric.md': ['PlatformVmStore']
+};
+
+// No `g` flag → safe to reuse each compiled matcher across lines/files (`.test()` is stateless
+// without `g`). Symbols are pure `[A-Za-z]`, so `\b` word boundaries behave as intended.
+const projectSymbolMatchers = projectSymbolDenylist.map(symbol => ({
+    symbol,
+    matcher: new RegExp(`\\b${symbol}\\b`)
+}));
 const ignoredParts = new Set(['node_modules', 'plans', '.git', '.venv', '__pycache__', 'tmp']);
 const ignoredExtensions = new Set(['.pyc', '.pyo', '.exe', '.dll', '.png', '.jpg', '.jpeg', '.gif', '.webp']);
 const ignoredFilenamePatterns = [/\.local\.json$/i];
@@ -96,6 +136,37 @@ async function scanFileForForbiddenTerms(filePath, failures, skipManagedBlocks) 
     });
 }
 
+// Pure core (exported for unit tests): returns {line, symbol, text} for each denylisted project
+// symbol present in `content`, minus any symbol allowlisted for `relPath`. Case-sensitive,
+// word-boundary. `relPath` MUST be repo-relative forward-slash (use normalize()).
+export function findProjectSymbolViolations(content, relPath, { skipManagedBlocks = false } = {}) {
+    const allowed = new Set(projectSymbolAllowlist[relPath] ?? []);
+    const lines = content.split(/\r?\n/);
+    const skipLine = skipManagedBlocks ? computeManagedBlockMask(lines) : new Array(lines.length).fill(false);
+    const violations = [];
+    lines.forEach((line, index) => {
+        if (skipLine[index]) return;
+        for (const { symbol, matcher } of projectSymbolMatchers) {
+            if (allowed.has(symbol)) continue;
+            if (matcher.test(line)) {
+                violations.push({ line: index + 1, symbol, text: line.trim() });
+            }
+        }
+    });
+    return violations;
+}
+
+async function scanFileForProjectSymbols(filePath, failures) {
+    const content = await fs.readFile(filePath, 'utf8').catch(() => null);
+    if (content === null) return;
+    const relPath = normalize(filePath);
+    for (const violation of findProjectSymbolViolations(content, relPath, { skipManagedBlocks: false })) {
+        failures.push(
+            `${relPath}:${violation.line}: project symbol "${violation.symbol}" (genericize, or add to projectSymbolAllowlist if intentional) — ${violation.text}`
+        );
+    }
+}
+
 async function main() {
     const failures = [];
 
@@ -110,6 +181,7 @@ async function main() {
         const absoluteRoot = path.join(rootDir, sourceRoot);
         for await (const filePath of walk(absoluteRoot)) {
             await scanFileForForbiddenTerms(filePath, failures, false);
+            await scanFileForProjectSymbols(filePath, failures);
         }
     }
 
@@ -131,4 +203,6 @@ async function main() {
     console.log('[codex-verify-no-project-residue] PASS');
 }
 
-await main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+    await main();
+}

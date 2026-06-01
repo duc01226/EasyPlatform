@@ -220,11 +220,75 @@ export function checkMainContentBeforeSyncBlocks(content, relativePath) {
     return `${relativePath} layout invalid: ${offendingH2s.length} "## H2" heading(s) appear AFTER first <!-- SYNC:${firstSyncOpenerTag} --> opener at line ${firstSyncOpenerLine}; main content must consolidate ABOVE all SYNC blocks. Examples: ${firstFew}. Re-run \`python .claude/scripts/refactor_skill_layout.py\` then codex-sync.`;
 }
 
+// Orphan-heading hygiene (authoring quality on SOURCE skills; the mirror inherits it).
+// An "orphan" is a heading whose next non-blank line is ANOTHER heading of the SAME or
+// SHALLOWER level with zero intervening body — an empty section, usually a SYNC/template
+// leftover. `##`->`###` (section->subsection) is legitimate and must pass. Two classes of
+// legitimate consecutive headings are excluded:
+//   1. headings inside fenced code blocks (skills document their output format as fenced
+//      markdown templates with stacked `## ...` section headers), and
+//   2. `{placeholder}` output-template headings (e.g. `## Verdict: {PASS | WARN | BLOCKED}`)
+//      that review skills stack on purpose.
+export function checkOrphanHeadings(content, relativePath) {
+    const lines = content.split('\n');
+    const orphans = [];
+    let inFence = false;
+    let fenceChar = '';
+    const headingLevel = idx => {
+        const match = lines[idx].match(/^(#{1,6}) +\S/);
+        return match ? match[1].length : 0;
+    };
+    for (let i = 0; i < lines.length; i++) {
+        const fenceMatch = lines[i].match(/^\s*(```+|~~~+)/);
+        if (fenceMatch) {
+            const marker = fenceMatch[1][0];
+            if (!inFence) {
+                inFence = true;
+                fenceChar = marker;
+            } else if (marker === fenceChar) {
+                inFence = false;
+                fenceChar = '';
+            }
+            continue;
+        }
+        if (inFence) continue;
+
+        const level = headingLevel(i);
+        if (level === 0) continue;
+        if (lines[i].includes('{')) continue;
+
+        let next = i + 1;
+        while (next < lines.length && lines[next].trim() === '') next++;
+        if (next >= lines.length) continue;
+        if (/^\s*(```+|~~~+)/.test(lines[next])) continue;
+
+        const nextLevel = headingLevel(next);
+        if (nextLevel === 0) continue;
+        if (nextLevel <= level) {
+            orphans.push({ line: i + 1, text: lines[i].trim() });
+        }
+    }
+
+    if (orphans.length === 0) return null;
+    const firstFew = orphans
+        .slice(0, 5)
+        .map(o => `line ${o.line}: ${o.text.slice(0, 60)}`)
+        .join('; ');
+    return `${relativePath} has ${orphans.length} orphan heading(s) — a heading immediately followed by a same-or-shallower-level heading with no body (empty section). Add content or remove the heading. Examples: ${firstFew}.`;
+}
+
 async function main() {
     const failures = [];
 
     if (!(await exists(claudeSkillsRoot))) {
         failures.push(`Missing source skills directory: ${path.relative(rootDir, claudeSkillsRoot)}`);
+    } else {
+        const orphanScanFiles = await collectFilesByName(claudeSkillsRoot, 'SKILL.md', { caseInsensitive: true });
+        for (const sourcePath of orphanScanFiles) {
+            const sourceContent = await fs.readFile(sourcePath, 'utf8');
+            const orphanFailure = checkOrphanHeadings(sourceContent, toRelativeNormalized(sourcePath, rootDir));
+            if (orphanFailure) failures.push(orphanFailure);
+        }
     }
 
     if (!(await exists(skillsRoot))) {

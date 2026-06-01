@@ -104,6 +104,8 @@ Phase G: Self-Review — re-invoke $project-config to verify all config matches 
 
 ### Step 3: Review Plan (`$plan-review`)
 
+Run `$plan-review` on the generated scan plan; resolve blocking findings before executing any phase.
+
 ### Step 4: Execute
 
 Per phase: task tracking → scan → merge → validate → spot-check → fix → next phase.

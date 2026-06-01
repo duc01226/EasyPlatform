@@ -20,7 +20,7 @@ description: '[Project Management] Use when creating user stories from PBIs, sli
 > **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `project-structure-reference.md` -- project patterns and structure
->     <!-- SYNC:estimation-framework -->
+>   <!-- SYNC:estimation-framework -->
 
 > **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
 >
@@ -371,7 +371,7 @@ SP 21:    ❌ MUST ATTENTION split — epic-level, not sprint-ready
 
 ## Scenario Templates
 
-### Minimum 3 scenarios per story:
+**Minimum 3 scenarios per story:**
 
 ### 1. Happy Path (Positive)
 

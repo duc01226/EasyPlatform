@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 const GLOBAL_TIMEOUT_MS = parseInt(process.env.MCP_TIMEOUT || '120000', 10);
 let globalManager = null;
 function setupShutdownHandlers() {
-    const shutdown = async signal => {
+    const shutdown = async (signal) => {
         console.log(`\nReceived ${signal}, cleaning up...`);
         if (globalManager) {
             await globalManager.cleanup();
@@ -21,7 +21,7 @@ function setupShutdownHandlers() {
     process.on('SIGINT', () => shutdown('SIGINT'));
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGHUP', () => shutdown('SIGHUP'));
-    process.on('unhandledRejection', reason => {
+    process.on('unhandledRejection', (reason) => {
         console.error('Unhandled rejection:', reason);
         void cleanupAndExit(1);
     });
@@ -76,7 +76,8 @@ async function main() {
         }
         clearTimeout(timeoutHandle);
         await cleanupAndExit(0);
-    } catch (error) {
+    }
+    catch (error) {
         clearTimeout(timeoutHandle);
         console.error('Error:', error);
         await cleanupAndExit(1);
@@ -100,7 +101,8 @@ async function listTools(manager) {
         mkdirSync(assetsDir, { recursive: true });
         writeFileSync(toolsPath, JSON.stringify(tools, null, 2));
         console.log(`\n✓ Tools saved to ${toolsPath}`);
-    } catch (error) {
+    }
+    catch (error) {
         console.error(`\n✗ Failed to save tools: ${error}`);
     }
 }
@@ -111,7 +113,7 @@ async function listPrompts(manager) {
         console.log(`💬 ${prompt.serverName} / ${prompt.name}`);
         console.log(`   ${prompt.description}`);
         if (prompt.arguments && prompt.arguments.length > 0) {
-            console.log(`   Arguments: ${prompt.arguments.map(a => a.name).join(', ')}`);
+            console.log(`   Arguments: ${prompt.arguments.map((a) => a.name).join(', ')}`);
         }
         console.log('');
     }

@@ -73,14 +73,14 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 2. Detect frontend framework:
 
-| Signal                                   | Framework       | Key Patterns to Search                                               |
-| ---------------------------------------- | --------------- | -------------------------------------------------------------------- |
-| `angular.json` + `nx.json`               | Angular (Nx)    | `AppBaseComponent`, `PlatformVmStore`, `untilDestroyed`, BEM classes |
-| `angular.json` (no Nx)                   | Angular         | `@Component`, `OnDestroy`, reactive forms, `HttpClient`              |
-| `package.json` with `react`/`next`       | React           | hooks, context, `useState`, `useEffect`, `fetch` wrappers            |
-| `package.json` with `vue`/`nuxt`         | Vue             | Composition API, `ref`, `reactive`, Pinia stores                     |
-| `package.json` with `svelte`/`sveltekit` | Svelte          | `$:` reactivity, stores, `onMount`/`onDestroy`                       |
-| Multiple frameworks                      | Multi-framework | Document each separately — DO NOT merge                              |
+| Signal                                   | Framework       | Key Patterns to Search                                                |
+| ---------------------------------------- | --------------- | --------------------------------------------------------------------- |
+| `angular.json` + `nx.json`               | Angular (Nx)    | base component class, view-model store, `untilDestroyed`, BEM classes |
+| `angular.json` (no Nx)                   | Angular         | `@Component`, `OnDestroy`, reactive forms, `HttpClient`               |
+| `package.json` with `react`/`next`       | React           | hooks, context, `useState`, `useEffect`, `fetch` wrappers             |
+| `package.json` with `vue`/`nuxt`         | Vue             | Composition API, `ref`, `reactive`, Pinia stores                      |
+| `package.json` with `svelte`/`sveltekit` | Svelte          | `$:` reactivity, stores, `onMount`/`onDestroy`                        |
+| Multiple frameworks                      | Multi-framework | Document each separately — DO NOT merge                               |
 
 3. Detect scan mode:
 
@@ -115,7 +115,7 @@ All findings → `plans/reports/scan-frontend-patterns-{YYMMDD}-{HHMM}-report.md
 
 **Think (Cleanup dimension):** How are subscriptions cleaned up? Is there a shared mechanism (e.g., `untilDestroyed()`) or is each component responsible?
 
-- Grep for component base classes (`extends.*Component`, `AppBaseComponent`, `React.Component`, `defineComponent`)
+- Grep for component base classes (`extends.*Component`, `React.Component`, `defineComponent`)
 - Find form handling patterns (reactive forms, form builders, validation approach, error display)
 - Discover component lifecycle conventions (init, destroy, cleanup patterns)
 - Find template/JSX conventions (structural patterns, conditional rendering, BEM class patterns)
@@ -129,8 +129,8 @@ All findings → `plans/reports/scan-frontend-patterns-{YYMMDD}-{HHMM}-report.md
 
 **Think (Subscription dimension):** What patterns prevent memory leaks? Is cleanup enforced by a linter/base class or left to developer discipline?
 
-- Grep for state management (`PlatformVmStore`, `Store`, `useReducer`, `createStore`, `defineStore`, signals)
-- Find API service base classes (`extends.*Service`, `PlatformApiService`, `HttpClient`, `fetch` wrappers)
+- Grep for state management (`Store`, `useReducer`, `createStore`, `defineStore`, signals)
+- Find API service base classes (`extends.*Service`, `HttpClient`, `fetch` wrappers)
 - Discover data fetching patterns (interceptors, error handling, loading states, caching)
 - Find subscription/cleanup patterns (`untilDestroyed`, `takeUntil`, `unsubscribe`, dispose callbacks)
 - Look for shared/common service patterns and DI registration

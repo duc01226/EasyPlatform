@@ -503,3 +503,5 @@ tmpclaude-*
 .claude/.commit-skill-active
 plans/
 .claude/scheduled_tasks.lock
+.claude/scripts/codex/tests/fixtures/
+.codex/hooks.sync.report.json

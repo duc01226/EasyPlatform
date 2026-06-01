@@ -225,8 +225,6 @@ After plan-type detection (Phase 0), evaluate each dimension below using this re
 
 ---
 
-## Behavioral Delta Matrix (MANDATORY for bugfixes)
-
 ## Your mission
 
 Perform automatic self-review of an implementation plan to ensure it's valid, correct, follows best practices, and identify anything needing fixes before proceeding.

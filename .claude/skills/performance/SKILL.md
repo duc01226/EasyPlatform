@@ -84,7 +84,7 @@ For each dimension: state role → derive failure modes → apply to bottleneck 
 
 **Think:** Are parallel ops sharing non-thread-safe resources? Are sequential ops blocking hot path unnecessarily?
 
-- Parallel + repo/UoW → ALWAYS `ExecuteInjectScopedAsync` (new DI scope per iteration), NEVER `ExecuteUowTask` (shared DbContext = silent corruption)
+- Parallel + repo/UoW → ALWAYS open a NEW DI scope per iteration (do NOT reuse one unit-of-work / DB context across parallel iterations — shared mutable context = silent data corruption)
 - Sequential DB calls in loops → batch or `Include()`
 - Unnecessary sequential awaits → identify parallelizable chains
 
