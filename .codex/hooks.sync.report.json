@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-31T14:18:23.574Z",
+  "generated_at": "2026-06-13T10:59:56.626Z",
   "source": ".claude/settings.json",
   "target": ".codex/hooks.json",
   "notes": [
@@ -15,11 +15,11 @@
     },
     {
       "event": "PreToolUse",
-      "groups": 19
+      "groups": 20
     },
     {
       "event": "SessionStart",
-      "groups": 6
+      "groups": 7
     },
     {
       "event": "Stop",
@@ -48,11 +48,11 @@
       "reason": "unsupported-by-codex"
     }
   ],
-  "converted_groups_total": 36,
+  "converted_groups_total": 38,
   "skipped_groups": [
     {
       "event": "SessionStart",
-      "group_index": 3,
+      "group_index": 4,
       "matcher": "startup",
       "reason": "disabled-for-codex-startup-auto-install"
     }

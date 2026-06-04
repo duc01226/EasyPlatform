@@ -1,8 +1,10 @@
-<!-- Last scanned: 2026-04-03 -->
+<!-- Last scanned: 2026-06-12 -->
 
 # Code Review Rules
 
-**Top 3 rules (most bugs prevented):** (1) Validation via `PlatformValidationResult` fluent API, NEVER throw exceptions. (2) Side effects in entity event handlers (`UseCaseEvents/`), NEVER in command handlers. (3) Logic in LOWEST layer: Entity > Service > Component/Handler.
+**Purpose:** Give every PR reviewer the repo-specific DO/DON'T rules + real `file:line` anti-patterns so violations are caught before merge — not generic style advice.
+
+**Top 3 rules (most bugs prevented):** (1) Validation via `PlatformValidationResult` fluent API, NEVER throw exceptions for business rules. (2) Side effects in entity event handlers (`UseCaseEvents/`), NEVER in command handlers. (3) Logic in LOWEST layer: Entity > Service > Component/Handler.
 
 ---
 
@@ -85,13 +87,26 @@ public PlatformValidationResult<TextSnippetEntity> ValidateCanBePublished()
         .And(_ => SnippetText.IsNotNullOrEmpty(), "Snippet text is required to publish");
 }
 
-// DO — call from handler
+// DO — call from handler (async + severity tagging)
+// SaveSnippetTextCommand.cs:307 — .ValidateSavePermission(...).And(...).AndAsync(...).EnsureValidAsync()
 entity.ValidateCanBePublished().EnsureValid();
 
 // DON'T — throw exceptions for validation
 if (entity.Status == SnippetStatus.Published)
     throw new InvalidOperationException("Already published"); // WRONG
 ```
+
+**Fluent operators (use the right one):**
+
+| Operator                                                                                          | Purpose                                   | Evidence                                                                |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
+| `.And(...)` / `.AndNot(...)`                                                                      | Chain sync conditions (fail-fast)         | `SaveSnippetTextCommand.cs:36-51`                                       |
+| `.AndAsync(...)`                                                                                  | Chain async/DB conditions                 | `SaveSnippetTextCommand.cs:307-316`                                     |
+| `.ValidateAsync(must: async () => ...)`                                                           | Entity-level async DB check               | `TextSnippetEntity.cs:276-286`                                          |
+| `.ThenValidate(...)`                                                                              | Continue only if prior passed             | `SaveSnippetTextCommand.cs:36-43`                                       |
+| `.CombineValidations()`                                                                           | Fail-fast across a list                   | `SaveSnippetTextCommand.cs:336`                                         |
+| `.AggregateValidations()`                                                                         | Collect ALL errors across a list          | `SaveSnippetTextCommand.cs:345`                                         |
+| `.WithPermissionException()` / `.WithDomainValidationException()` / `.WithApplicationException()` | Tag severity → correct HTTP/error mapping | `TextSnippetEntity.cs:336,341`; `SaveSnippetTextCommand.cs:324,328,331` |
 
 ### Static Validators on Entity
 
@@ -151,17 +166,52 @@ internal sealed class SendNotificationOnPublishSnippetEventHandler
 
 ### Repositories
 
-MUST define service-specific repository interface. NEVER use `IPlatformRootRepository<T>` directly in application code.
+MUST define service-specific repository interface. NEVER use `IPlatformRootRepository<T>` directly in application code. **Read-vs-Root split:** inject the READ interface (`ITextSnippetRepository<T>`) in queries; inject the ROOT interface (`ITextSnippetRootRepository<T>`) only where writes happen.
 
 ```csharp
-// DO — src/Backend/.../Domain/Repositories/ITextSnippetRepository.cs
-public interface ITextSnippetRootRepository<TEntity>
+// DO — src/Backend/.../Domain/Repositories/ITextSnippetRepository.cs:6,11
+public interface ITextSnippetRepository<TEntity>          // READ — inject in queries (SearchSnippetTextQuery.cs:86,93)
+    : IPlatformQueryableRepository<TEntity, string> { }
+public interface ITextSnippetRootRepository<TEntity>      // WRITE — inject in command handlers (SaveSnippetTextCommand.cs:63,70,78)
     : IPlatformQueryableRootRepository<TEntity, string>, ITextSnippetRepository<TEntity>
     where TEntity : class, IRootEntity<string>, new() { }
 
-// DON'T — inject generic interface
+// DON'T — inject generic interface, or inject the Root (write) interface in a read-only query
 public MyHandler(IPlatformRootRepository<MyEntity> repo) // WRONG — use service-specific
 ```
+
+### Logging — Structured, Named Placeholders
+
+MUST use structured logging with named placeholders. NEVER use string interpolation in log messages (defeats structured fields). Acquire the logger via injected `ILogger<T>` / `ILoggerFactory`, or `CreateLogger(LoggerFactory)` / `CreateGlobalLogger()` in event handlers.
+
+```csharp
+// DO — src/Backend/.../UseCaseEvents/Snippet/SendNotificationOnPublishSnippetEventHandler.cs:67
+logger.LogInformation("NOTIFICATION: '{SnippetText}' (ID: {SnippetId}) {PreviousStatus} {UserId} {CategoryId}", ...);
+// DO — exception as first arg — SaveSnippetTextCommand.cs:296
+logger.LogWarning(e, "...");
+
+// DON'T — interpolated message loses structured fields
+logger.LogInformation($"User {userId} published {snippetId}"); // WRONG
+```
+
+### Background Jobs — `[PlatformRecurringJob]` Executor
+
+Scheduled work MUST live in a `PlatformApplicationBackgroundJobExecutor` decorated with `[PlatformRecurringJob(cron, ...)]`. NEVER put cron logic in a command handler. Connection strings MUST come from `Configuration.GetSection(...)` — never hardcoded.
+
+```csharp
+// DO — src/Backend/.../BackgroundJob/TestRecurringBackgroundJobExecutor.cs:18
+[PlatformRecurringJob("0 0 * * *", timeZoneOffset: -7)]
+public sealed class TestRecurringBackgroundJobExecutor : PlatformApplicationBackgroundJobExecutor
+{
+    protected override async Task ProcessAsync(object param) { /* job body */ }
+}
+// DO — connection from config — Persistence.Mongo/TextSnippetMongoPersistenceModule.cs:18
+Configuration.GetSection("MongoDB:ConnectionString");
+
+// DON'T — cron/scheduled logic inside a command handler; hardcoded connection string
+```
+
+> Data migrations use `PlatformDataMigrationExecutor<TDbContext>` (framework pattern) — no example currently exists in TextSnippet.Application.
 
 ---
 
@@ -207,10 +257,12 @@ export class AppStore extends PlatformVmStore<AppVm> {
     });
 }
 
-// DON'T — manual signals, direct HttpClient, or state outside store
-private items = signal<Item[]>([]);                    // WRONG
-this.http.get<Item[]>('/api/items').subscribe(...);    // WRONG
+// DON'T — domain/list/async state via manual signal, or direct HttpClient, or state outside store
+private items = signal<Item[]>([]);                    // WRONG — list/domain state belongs in the VM store
+this.http.get<Item[]>('/api/items').subscribe(...);    // WRONG — go through PlatformApiService
 ```
+
+> **Nuance:** `signal()` IS allowed for ephemeral local UI flags (e.g. `selectedTask`, `showTaskDetail` — `app.component.ts:64-65`). The forbidden case is domain/list/async/paged state, which MUST live in the `PlatformVmStore` view model.
 
 ### API Services
 
@@ -269,20 +321,30 @@ export class TextSnippetDataModel extends PlatformDataModel {
 
 ### ESLint Enforced Rules
 
-| Rule                                               | Severity | What It Catches                                                 |
-| -------------------------------------------------- | -------- | --------------------------------------------------------------- |
-| `@typescript-eslint/no-explicit-any`               | error    | Untyped code — use proper types                                 |
-| `@typescript-eslint/explicit-member-accessibility` | error    | Missing `public`/`private`/`protected` on members               |
-| `@typescript-eslint/strict-boolean-expressions`    | error    | Truthy/falsy bugs — use explicit boolean checks                 |
-| `unused-imports/no-unused-imports`                 | error    | Dead imports                                                    |
-| `@typescript-eslint/typedef`                       | error    | Missing types on parameters and properties                      |
-| `prettier/prettier`                                | error    | Formatting violations (printWidth:160, singleQuote, tabWidth:4) |
+Source of truth: `src/Frontend/.eslintrc.json` (root `*.ts` override) + per-app `apps/playground-text-snippet/.eslintrc.json`.
+
+| Rule                                                                    | Severity | What It Catches                                               |
+| ----------------------------------------------------------------------- | -------- | ------------------------------------------------------------- |
+| `@typescript-eslint/no-explicit-any`                                    | error    | Untyped code — use proper types                               |
+| `@typescript-eslint/explicit-member-accessibility`                      | error    | Missing `public`/`private`/`protected` (constructors exempt)  |
+| `@typescript-eslint/strict-boolean-expressions`                         | error    | Truthy/falsy bugs (allowNullable + allowString/Number=true)   |
+| `@typescript-eslint/typedef`                                            | error    | Missing types on parameters + property declarations           |
+| `@typescript-eslint/no-unused-vars`                                     | error    | Unused vars (`{ args: none }`)                                |
+| `unused-imports/no-unused-imports`                                      | error    | Dead imports                                                  |
+| `import/first` · `import/newline-after-import` · `import/no-duplicates` | error    | Import ordering / duplicate imports                           |
+| `@nx/enforce-module-boundaries`                                         | error    | Cross-lib imports that violate Nx project boundaries          |
+| `sonar/function-name`                                                   | error    | Non-camelCase function names                                  |
+| `prettier/prettier`                                                     | error    | Formatting (`{ endOfLine: auto }`; widths from `.prettierrc`) |
+| `@angular-eslint/prefer-on-push-component-change-detection`             | error    | Missing `ChangeDetectionStrategy.OnPush` (app override)       |
+| `@angular-eslint/relative-url-prefix`                                   | error    | Non-relative template/style URLs (app override)               |
+
+> Formatting widths (printWidth 160, tabWidth 4, singleQuote, trailingComma none, arrowParens avoid) come from `.prettierrc`, not the eslint rule option. Template files: `prettier/prettier` off, `@angular-eslint/template/recommended` extended.
 
 ---
 
 ## Architecture Rules
 
-### Layer Dependency Direction
+**Runtime call flow:**
 
 ```
 Controller → CQRS → Handler → Repository/Entity
@@ -290,16 +352,33 @@ Controller → CQRS → Handler → Repository/Entity
 Frontend Component → Store → API Service → Backend API
 ```
 
+**Project-reference direction (csproj `ProjectReference` — the authoritative compile-time contract; dependency inversion):**
+
+```
+Api ──> Application + Infrastructure + Persistence(.*)      (composition root — references everything)  [Api.csproj:41-46]
+Application ──> Domain + Shared + Easy.Platform             (NO persistence, NO infrastructure)          [Application.csproj:20-22]
+Infrastructure ──> Application + Easy.Platform              (implements Application-defined interfaces)   [Infrastructure.csproj:20-21]
+Persistence(.*) ──> Application + Domain + EfCore/MongoDB                                                 [Persistence.csproj:12-15]
+Domain ──> Easy.Platform ONLY      (leaf)                                                                 [Domain.csproj:20]
+Shared ──> Easy.Platform ONLY      (leaf)                                                                 [Shared.csproj:20]
+```
+
 - Controllers MUST NOT contain business logic — only forward to CQRS
 - Handlers MUST NOT contain side effects — only core use case logic
-- Entities MUST NOT depend on infrastructure — only domain primitives
+- Entities MUST NOT depend on infrastructure — only domain primitives (Domain references framework core ONLY)
+- Application MUST NOT reference Persistence/Infrastructure — they depend UP on Application (dependency inversion)
 - Frontend components MUST NOT call API services directly — go through store
 
 ### Cross-Service Communication
 
-- MUST use RabbitMQ message bus (`EntityEventBusMessageProducer`, `PlatformApplicationMessageBusConsumer`)
-- NEVER access another service's database
-- Location: `MessageBus/Producers/` and `MessageBus/Consumers/{Type}Consumers/`
+- MUST use RabbitMQ message bus. Producers/Consumers extend `PlatformCqrs{Entity,Command,Domain}EventBusMessage{Producer,Consumer}`; consumers are `internal sealed`, discovered by DI assembly scan (graph trace = 0 static edges — decoupled, not statically wired)
+- NEVER access another service's database — a consumer reads/writes ITS OWN service DB; assert cross-service visibility with `WaitUntilAsync` polling (`CrossService/TextSnippetCrossServiceIntegrationTests.cs:62-99`)
+- Location: `MessageBus/Producers/{Entity,Command,Domain}EventBusProducers/` and `MessageBus/Consumers/{Entity,Command,Domain}EventConsumers/`, `FreeFormatConsumers/`
+
+### Shared Project Boundary
+
+- `PlatformExampleApp.Shared` holds ONLY cross-assembly message contracts + global usings; references `Easy.Platform` ONLY (`Shared.csproj:20`)
+- NEVER reference Domain from Shared or place business entities/DTOs there — that couples the reusable layer to one consumer's domain
 
 ### Where Logic Goes
 
@@ -312,6 +391,21 @@ Frontend Component → Store → API Service → Backend API
 | Side effects (notifications, cache) | Entity event handler                       | Command handler    |
 | API calls                           | Store (`effectSimple()`)                   | Component          |
 | Dropdown options                    | Entity/Model (static field)                | Component          |
+
+### Testing Conventions
+
+- Integration tests extend `PlatformServiceIntegrationTestWithAssertions<TModule>` (`TextSnippetIntegrationTestBase.cs:33-34`)
+- Drive use cases via `ExecuteCommandAsync` / `ExecuteQueryAsync` — never call handlers directly
+- Generate ALL test data with `IntegrationTestHelper.UniqueName(...)` (alias defined `IntegrationTests/GlobalUsings.cs:16`) — never literal/static names (collide across parallel runs)
+- Assert DB state via `AssertEntityMatchesAsync<T>` / `WaitUntilAsync` (eventual consistency) — never a single immediate read
+- Tag tests with `[Trait("TestSpec", "TC-...")]` for spec traceability
+- **NO mocking libraries** — `grep Moq|NSubstitute` across `src/Backend` = 0. Integration-first against real DB + real bus (`FluentAssertions` only)
+
+### Configuration & Secrets
+
+- Bind config via `__`-delimited env vars with `${VAR:-default}` shell defaults (`src/platform-example-app.docker-compose.override.yml:64-71`); connection strings from `Configuration.GetSection(...)` (`TextSnippetMongoPersistenceModule.cs:18`)
+- Keep `appsettings.Production.json` secret-free — runtime values come from env vars (verified clean)
+- NEVER commit real (non-localhost) credentials. The example app's `appsettings.json:32-72` ships **localhost dev defaults** (SQL/Postgres/Mongo/RabbitMQ/Hangfire) — replace with env-var-only bindings when forking; do not treat as a credential pattern to copy
 
 ---
 
@@ -328,18 +422,22 @@ Frontend Component → Store → API Service → Backend API
 | Direct repo in controller: `await repo.GetById(id)`         | `Cqrs.SendQuery(new GetByIdQuery { Id = id })`    |
 | Generic repo: `IPlatformRootRepository<T>`                  | Service-specific: `ITextSnippetRootRepository<T>` |
 
+> **Real violations exist in the repo as deliberate framework-demo scaffolding — DO NOT copy into a real service:**
+> `TextSnippetController.cs:24-26` injects repos/DbContext into a controller; `:158-160` writes via DbContext directly; `:208-840` holds ~600 lines of business logic (all `Test*`/`Demo*` endpoints). `SaveSnippetTextCommand.cs:88` calls `sendMailService.SendEmail(...)` inside the handler **constructor** (a side-effect-in-handler anti-pattern). `TaskItemController.cs` is the clean thin-controller reference.
+
 ### Frontend Anti-Patterns
 
-| Anti-Pattern                              | Correct Pattern                          |
-| ----------------------------------------- | ---------------------------------------- |
-| `extends PlatformComponent` directly      | `extends AppBaseComponent`               |
-| `private http: HttpClient` + direct calls | `extends PlatformApiService`             |
-| `private items = signal<T[]>([])`         | `PlatformVmStore` + `effectSimple()`     |
-| `.subscribe()` without `untilDestroyed()` | `.pipe(this.untilDestroyed())`           |
-| `ChangeDetectionStrategy.Default`         | `ChangeDetectionStrategy.OnPush`         |
-| Elements without CSS class                | BEM classes on every element             |
-| `public` missing on class members         | Explicit accessibility (ESLint enforced) |
-| `any` type annotation                     | Proper typed interfaces/classes          |
+| Anti-Pattern                                                                                                                       | Correct Pattern                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `extends PlatformComponent` directly                                                                                               | `extends AppBaseComponent`                                                                     |
+| `private http: HttpClient` + direct calls                                                                                          | `extends PlatformApiService`                                                                   |
+| `signal<T[]>([])` for list/domain/async state                                                                                      | `PlatformVmStore` + `effectSimple()` (ephemeral local UI flags via `signal()` are OK)          |
+| Option-array + label helpers duplicated in components (`task-list.component.ts:71-84,174-218`, `task-detail.component.ts:131-144`) | Static `dropdownOptions` + label helpers on the data model (`task-item.data-model.ts:220,238`) |
+| `.subscribe()` without `untilDestroyed()`                                                                                          | `.pipe(this.untilDestroyed())`                                                                 |
+| `ChangeDetectionStrategy.Default`                                                                                                  | `ChangeDetectionStrategy.OnPush`                                                               |
+| Elements without CSS class                                                                                                         | BEM classes on every element                                                                   |
+| `public` missing on class members                                                                                                  | Explicit accessibility (ESLint enforced)                                                       |
+| `any` type annotation                                                                                                              | Proper typed interfaces/classes                                                                |
 
 ---
 
@@ -399,8 +497,10 @@ Frontend Component → Store → API Service → Backend API
 
 - Logic placed in lowest appropriate layer (Entity > Service > Component)
 - No direct cross-service database access — message bus only
-- Integration tests use `ExecuteCommandAsync`/`ExecuteQueryAsync` pattern
-- Test data uses `IntegrationTestHelper.UniqueName()` for uniqueness
+- Integration tests extend `PlatformServiceIntegrationTestWithAssertions<TModule>`, use `ExecuteCommandAsync`/`ExecuteQueryAsync` — no mocking libraries
+- Test data uses `IntegrationTestHelper.UniqueName()` for uniqueness; DB asserts use `AssertEntityMatchesAsync`/`WaitUntilAsync`
+- Tests tagged with `[Trait("TestSpec", "TC-...")]` for spec traceability
+- No hardcoded credentials committed (config binds via `__` env vars)
 - File naming follows kebab-case (frontend) / PascalCase (backend)
 - Booleans prefixed with `is`, `has`, `can`, `should`
 - Constants use UPPER_SNAKE_CASE
@@ -408,3 +508,5 @@ Frontend Component → Store → API Service → Backend API
 ---
 
 **Reminder: Top 3 rules** -- (1) `PlatformValidationResult` for validation, never throw. (2) Side effects in `UseCaseEvents/` entity event handlers, never in command handlers. (3) Logic in lowest layer: Entity > Service > Component.
+
+**MUST ATTENTION** `TextSnippetController.cs` + `SaveSnippetTextCommand.cs:88` contain REAL violations as deliberate framework-demo scaffolding — DO NOT copy them; `TaskItemController.cs` is the clean thin-controller reference. — why: the showcase code intentionally breaks the rules to demo framework features.

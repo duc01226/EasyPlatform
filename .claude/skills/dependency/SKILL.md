@@ -41,15 +41,15 @@ Analyze and visualize dependencies between features, services, modules, or work 
 ## When NOT to Use
 
 - Single-service code changes with no cross-boundary impact -- just implement directly
-- Performance analysis -- use `arch-performance-optimization` instead
-- Security dependency auditing -- use `arch-security-review` instead
+- Performance analysis -- use `performance` instead
+- Security dependency auditing -- use `security-review` instead
 - Package/npm dependency upgrades -- use `package-upgrade` instead
 
 ## Prerequisites
 
 - Read the feature/PBI/plan files to understand scope
 - Access to `docs/project-reference/project-structure-reference.md` for service boundary reference
-- Understand the project's microservice boundaries (search `src/Services/` for service list)
+- Understand the project's microservice boundaries (read the project's structure reference / `docs/project-config.json` for the service-root location, then list the services under it)
 
 ## Workflow
 
@@ -67,7 +67,7 @@ For each dependency found, classify by type:
 
 | Type               | Direction                      | Description                                 | Example                                           |
 | ------------------ | ------------------------------ | ------------------------------------------- | ------------------------------------------------- |
-| **Data**           | Entity A requires Entity B     | Foreign key, navigation property, shared ID | Employee requires Company                         |
+| **Data**           | Entity A requires Entity B     | Foreign key, navigation property, shared ID | Order requires Customer                           |
 | **Service**        | Service A calls Service B      | Message bus, API call, event consumer       | Service A consumes entity events from Service B   |
 | **UI**             | Component A embeds Component B | Shared component, library dependency        | Feature form uses shared component library select |
 | **Infrastructure** | Feature needs infra change     | Database migration, config, new queue       | New feature needs Redis cache key                 |
@@ -132,22 +132,22 @@ Output structured dependency report (see Output Format).
 
 ### Example 1: Backend Cross-Service Feature
 
-**Input**: "Map dependencies for adding a new Coaching feature in {ServiceA}"
+**Input**: "Map dependencies for adding a new Shipment feature in {ServiceA}"
 
 **Analysis**:
 
 ```mermaid
 graph TD
-    E[Employee Entity - ServiceA] -->|data| C[Coaching Entity]
+    E[Order Entity - ServiceA] -->|data| C[Shipment Entity]
     U[User Entity - AuthService] -->|service| C
     C -->|service| N[Notification - ServiceB]
-    C -->|UI| CF[Coaching Form Component]
+    C -->|UI| CF[Shipment Form Component]
     CF -->|UI| BC[shared-components select]
 ```
 
-**Critical path**: Employee Entity -> Coaching Entity -> Coaching API -> Coaching Form
-**Ready to start**: Employee Entity already exists, shared component select exists
-**Blocked**: Coaching Entity creation, then API, then UI
+**Critical path**: Order Entity -> Shipment Entity -> Shipment API -> Shipment Form
+**Ready to start**: Order Entity already exists, shared component select exists
+**Blocked**: Shipment Entity creation, then API, then UI
 
 ### Example 2: Frontend Module Dependency
 
@@ -173,8 +173,7 @@ graph TD
 ## Related Skills
 
 - `project-manager` -- for sprint planning and status tracking
-- `feature-implementation` -- for implementing features after dependency analysis
-- `arch-cross-service-integration` -- for designing cross-service communication
+- `workflow-feature` -- for implementing features after dependency analysis
 - `package-upgrade` -- for npm/NuGet package dependency upgrades
 
 ---
@@ -197,6 +196,7 @@ graph TD
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -226,7 +226,7 @@ graph TD
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-      <!-- /SYNC:understand-code-first:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

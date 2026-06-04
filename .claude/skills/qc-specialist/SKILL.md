@@ -63,6 +63,42 @@ Define pass/fail criteria at each stage:
 - [ ] Regression suite passed
 - [ ] PO sign-off received
 
+#### PO Acceptance Decision (per-AC verdict — how "PO sign-off received" is earned)
+
+For each acceptance criterion from the PBI/story:
+
+1. **Read criterion** — Ensure it's testable and measurable
+2. **Check evidence** — Review test results, screenshots, demo recordings
+3. **Verify** — Does the implementation satisfy the criterion?
+4. **Verdict** — PASS or FAIL with specific evidence
+
+**Decision rules:** Every acceptance criterion must have a PASS/FAIL verdict. REJECT must list the specific items that failed. CONDITIONAL ACCEPT must list conditions and a timeline.
+
+```
+## Acceptance Decision
+
+**Feature/PBI:** {Reference}
+**Reviewer:** {PO name/role}
+**Date:** {date}
+**Verdict:** ACCEPT | REJECT | CONDITIONAL ACCEPT
+
+### Criteria Review
+
+| # | Criterion | Verdict | Evidence |
+|---|-----------|---------|----------|
+| 1 | {AC text} | PASS | {Evidence} |
+| 2 | {AC text} | FAIL | {Why it failed} |
+
+### Decision Details
+- {Rationale for overall verdict}
+
+### Conditions (if CONDITIONAL)
+- {Condition — deadline}
+
+### Rejected Items (if REJECT)
+- {Item — what needs to change}
+```
+
 ### 2. Compliance Verification
 
 - Code follows architecture patterns
@@ -246,7 +282,7 @@ Before completing QC artifacts:
 
 ## Related
 
-- `tdd-spec`
+- `spec`
 - `code-review`
 
 ---
@@ -269,6 +305,7 @@ Before completing QC artifacts:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -299,7 +336,7 @@ Before completing QC artifacts:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 

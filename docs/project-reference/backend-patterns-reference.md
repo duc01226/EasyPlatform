@@ -1,8 +1,10 @@
-<!-- Last scanned: 2026-04-03 -->
+<!-- Last scanned: 2026-06-12 -->
 
 # Backend Patterns Reference
 
-**CRITICAL:** Logic MUST live in LOWEST layer: Entity > Service > Handler. DTOs own mapping. Validation uses fluent `PlatformValidationResult`, NEVER throw exceptions. Side effects go in entity event handlers, NEVER in command handlers.
+**Final Purpose:** Make AI write Easy.Platform backend code (CQRS, repositories, validation, entities, events, messaging, jobs, migrations) that matches the PlatformExampleApp reference conventions on the first try — every pattern below cites real `file:line` evidence.
+
+**CRITICAL:** Logic MUST live in LOWEST layer: Entity > Service > Handler. DTOs own mapping. Validation uses fluent `PlatformValidationResult`, NEVER throw exceptions — build a result and `.EnsureValid()`. Side effects go in entity event handlers (`UseCaseEvents/`), NEVER in command handlers. Cross-service via RabbitMQ message bus ONLY, NEVER direct DB.
 
 ## Entity Patterns
 
@@ -113,16 +115,19 @@ internal sealed class TextSnippetRootRepository<TEntity>
 
 ### Key Repository Methods
 
-| Method                               | Purpose                                |
-| ------------------------------------ | -------------------------------------- |
-| `CreateOrUpdateAsync(entity)`        | Upsert entity                          |
-| `GetAllAsync(queryBuilder, ct)`      | Query with LINQ builder                |
-| `FirstOrDefaultAsync(predicate, ct)` | Single entity lookup                   |
-| `CountAsync(queryBuilder, ct)`       | Count query                            |
-| `AnyAsync(predicate)`                | Existence check                        |
-| `GetQueryBuilder(builderFn)`         | Create reusable query builder function |
-| `UpdateAsync(entity)`                | Update only                            |
-| `DeleteAsync(entity)`                | Delete entity                          |
+| Method                                                   | Purpose                                                                           |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `CreateOrUpdateAsync(entity)`                            | Upsert entity                                                                     |
+| `GetAllAsync(queryBuilder, ct)`                          | Query with LINQ builder                                                           |
+| `FirstOrDefaultAsync(predicate, ct)`                     | Single entity lookup                                                              |
+| `CountAsync(queryBuilder, ct)`                           | Count query                                                                       |
+| `AnyAsync(predicate)`                                    | Existence check                                                                   |
+| `GetQueryBuilder(builderFn)`                             | Create reusable query builder function                                            |
+| `UpdateAsync(entity)`                                    | Update only                                                                       |
+| `SetAsync(entity)`                                       | Set data only — NO domain event / row-version bump (`IPlatformRepository.cs:468`) |
+| `DeleteAsync(entity)`                                    | Delete entity                                                                     |
+| `CreateOrUpdateManyAsync(entities)`                      | Bulk upsert                                                                       |
+| `UpdateManyAsync(entities, dismissSendEvent, checkDiff)` | Bulk update; `dismissSendEvent: true` suppresses events (loop prevention)         |
 
 ## CQRS Patterns
 
@@ -253,12 +258,12 @@ NEVER throw exceptions for validation. MUST use `PlatformValidationResult<T>` fl
 // BAD: throwing exceptions
 if (entity.CreatedByUserId != userId) throw new Exception("No permission");
 
-// GOOD: fluent validation chain (src/Backend/.../SaveSnippetTextCommand.cs:307)
+// GOOD: fluent validation chain (src/Backend/.../SaveSnippetTextCommand.cs:312)
 var validEntity = await toSaveEntity
-    .ValidateSavePermission(userId: RequestContext.UserId<string>())  // WithPermissionException
+    .ValidateSavePermission(userId: RequestContext.UserId<string>())  // entity/app helper -> WithPermissionException
     .And(entity => toSaveEntity.ValidateSomeSpecificIsXxxLogic())     // WithDomainException
     .AndAsync(ValidateSomeThisCommandApplicationLogic)                // WithApplicationException
-    .EnsureValidAsync();
+    .EnsureValidAsync();                                              // EnsureValidAsync() at :316
 ```
 
 ### Reusable Validators as Query Filters
@@ -271,7 +276,7 @@ public static PlatformExpressionValidator<TextSnippetEntity> SavePermissionValid
     => new(must: p => p.CreatedByUserId == null || userId == null || p.CreatedByUserId == userId,
            errorMessage: "User must be the creator");
 
-// Reuse in queries: src/Backend/.../SaveSnippetTextCommand.cs:348
+// Reuse in queries: src/Backend/.../SaveSnippetTextCommand.cs:349
 var permittedEntities = await repository.GetAllAsync(
     predicate: TextSnippetEntity.SavePermissionValidator(userId).ValidExpr, cancellationToken);
 ```
@@ -355,6 +360,36 @@ internal sealed class ClearCacheOnSaveSnippetTextEntityEventHandler
 }
 ```
 
+### Synchronous side effect + loop prevention
+
+To run a side effect synchronously (ordered with the command, not async) override `EnableInboxEventBusMessage => false`. When the handler itself updates an entity, pass `dismissSendEvent: true` to avoid re-triggering the same event chain.
+
+```csharp
+// src/Backend/.../UseCaseEvents/Snippet/UpdateCategoryStatsOnSnippetChangeEventHandler.cs:47
+public override bool EnableInboxEventBusMessage => false; // run sync, in-order with command
+
+// loop prevention when handler writes back (same file:139)
+await categoryRepository.UpdateAsync(category, dismissSendEvent: true, cancellationToken: ct);
+```
+
+### Bulk Entity Event Handler
+
+For batch CRUD, extend `PlatformCqrsBulkEntitiesEventApplicationHandler<TEntity, TKey>` — exposes `@event.Entities` and per-id `@event.DomainEvents`.
+
+```csharp
+// src/Backend/.../UseCaseEvents/DemoBulkEntitiesEventHandler.cs:13
+internal sealed class DemoBulkEntitiesEventHandler
+    : PlatformCqrsBulkEntitiesEventApplicationHandler<TextSnippetEntity, string>
+{
+    protected override Task HandleAsync(PlatformCqrsBulkEntitiesEvent<TextSnippetEntity, string> @event, CancellationToken ct)
+    {
+        // @event.Entities, @event.CrudAction, @event.DomainEvents.GetValueOrDefault(entity.Id)
+    }
+}
+```
+
+> NOTE: filename can differ from class name — `DemoUsingPropertyValueUpdatedDomainEventOnSnippetTextEntityEventHandler.cs` declares class `DemoUsingFieldUpdatedDomainEventOnSnippetTextEntityEventHandler`. Grep by class name, not filename.
+
 ## Message Bus
 
 Cross-service communication MUST use RabbitMQ message bus. NEVER direct database access across services. Three message types:
@@ -362,7 +397,8 @@ Cross-service communication MUST use RabbitMQ message bus. NEVER direct database
 | Type                | Producer Base                                                    | Consumer Base                                              | Naming                                  |
 | ------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------- |
 | Entity Event        | `PlatformCqrsEntityEventBusMessageProducer<TMsg, TEntity, TKey>` | `PlatformCqrsEntityEventBusMessageConsumer<TMsg, TEntity>` | `{Entity}EventBusMessage`               |
-| Command Event       | (auto-produced)                                                  | `PlatformCqrsCommandEventBusMessageConsumer<TCommand>`     | per command class name                  |
+| Command Event       | `PlatformCqrsCommandEventBusMessageProducer<TCommand>`           | `PlatformCqrsCommandEventBusMessageConsumer<TCommand>`     | per command class name                  |
+| Domain Event        | `PlatformCqrsDomainEventBusMessageProducer<TDomainEvent>`        | `PlatformCqrsDomainEventBusMessageConsumer<TDomainEvent>`  | `{DomainEvent}EventBusMessage`          |
 | Free-format Event   | `IPlatformApplicationBusMessageProducer.SendAsync(msg)`          | `PlatformApplicationMessageBusConsumer<TMessage>`          | `[LeaderService]+XXX+EventBusMessage`   |
 | Free-format Request | `IPlatformApplicationBusMessageProducer.SendAsync(msg)`          | `PlatformApplicationMessageBusConsumer<TMessage>`          | `[LeaderService]+XXX+RequestBusMessage` |
 
@@ -394,13 +430,14 @@ public sealed class DemoAskDoSomethingRequestBusMessage : PlatformTrackableBusMe
 
 ## Background Jobs
 
-Three job patterns. All use `[PlatformRecurringJob("cron")]` for scheduling.
+Job patterns. Recurring jobs use `[PlatformRecurringJob("cron")]`; the parameterized variant is scheduled manually (no attribute).
 
-| Pattern          | Base Class                                                                           | Use When                                          |
-| ---------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| Simple recurring | `PlatformApplicationBackgroundJobExecutor`                                           | One-shot or simple recurring logic                |
-| Paged processing | `PlatformApplicationPagedBackgroundJobExecutor<TParam>`                              | Sequential page processing, no parallelism needed |
-| Batch scrolling  | `PlatformApplicationBatchScrollingBackgroundJobExecutor<TEntity, TBatchKey, TParam>` | Parallel batch processing with logical grouping   |
+| Pattern              | Base Class                                                                           | Use When                                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Simple recurring     | `PlatformApplicationBackgroundJobExecutor`                                           | One-shot or simple recurring logic                                                                                          |
+| Parameterized/manual | `PlatformApplicationBackgroundJobExecutor<TParam>`                                   | Scheduled manually with a typed param, no cron attr (`DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecutor.cs:13`) |
+| Paged processing     | `PlatformApplicationPagedBackgroundJobExecutor<TParam>`                              | Sequential page processing, no parallelism needed                                                                           |
+| Batch scrolling      | `PlatformApplicationBatchScrollingBackgroundJobExecutor<TEntity, TBatchKey, TParam>` | Parallel batch processing with logical grouping                                                                             |
 
 ```csharp
 // Simple: src/Backend/.../BackgroundJob/TestRecurringBackgroundJobExecutor.cs:19
@@ -441,7 +478,7 @@ internal sealed class DemoMigrateUpdateSeedDataWhenSeedDataLogicIsUpdated : Plat
 }
 ```
 
-EF Core schema migrations live in `Persistence/Migrations/` (standard EF Core migration files).
+EF Core schema migrations live in `Persistence/Migrations/` (standard EF Core migration files). DI registration is by service-specific module classes (e.g. `TextSnippetApplicationModule : PlatformApplicationModule`, `TextSnippetApplicationModule.cs:19`); handlers/consumers/jobs/seeders are auto-discovered by assembly scan — do NOT hand-register `AddScoped/Singleton` for them.
 
 ## Data Seeding
 
@@ -459,6 +496,19 @@ public sealed class TextSnippetApplicationDataSeeder : PlatformApplicationDataSe
     }
 }
 ```
+
+## Anti-Patterns (Confirmed Violations)
+
+Real violations found in the codebase by convention audit. These are live teaching/legacy code — treat as DON'T examples, not patterns to copy.
+
+| Convention violated                                              | Where                                                                                                                                                                                                                   | Severity | Fix                                                                                                                    |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Validation via raw `throw` instead of `PlatformValidationResult` | `UseCaseCommands/Snippet/BulkUpdateSnippetStatusCommand.cs:141` — `throw new PlatformValidationException(...)` as control flow; class is a locally-defined plain `Exception` (`:223`) shadowing the framework type name | MAJOR    | Build a `PlatformValidationResult` and `.EnsureValid()`; delete the shadow exception class                             |
+| State-transition logic + side effects in handler, not entity     | `BulkUpdateSnippetStatusCommand.cs:163-177` (inline `Status` set + `PublishedDate` rules) and `:197` (`ValidateStatusTransition` duplicates `TextSnippetEntity.ValidateCanBePublished()`)                               | MAJOR    | Move to an entity method e.g. `TextSnippetEntity.ChangeStatusTo(newStatus, userId)` reusing `ValidateCanBePublished()` |
+| DTO mapping done in handler, not DTO-owned                       | `UseCaseQueries/GetMyTextSnippetsQuery.cs:78-91` — manual `new TextSnippetEntityDto { Id = ..., SnippetText = ... }` initializer                                                                                        | MAJOR    | Use `new TextSnippetEntityDto(entity)` then `.WithCreatedByUser(...)` for enrichment                                   |
+| Business rule + magic constant in handler (teaching demo)        | `UseCaseCommands/CreateTextSnippetWithCurrentUserCommand.cs:107,117` — `throw new InvalidOperationException`, daily-limit constant `10` inline                                                                          | MINOR    | Move rule + limit to entity/model; replace throw with validation chain                                                 |
+
+Conventions confirmed WELL-followed (no violations): service-specific repository injection (zero generic `IPlatformRootRepository<>` in handlers), no cross-service direct DB access, bus message ownership-prefix naming, no uncleaned fire-and-forget (`Task.Run` results are returned/awaited).
 
 ---
 

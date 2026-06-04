@@ -17,17 +17,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 const CK_SCHEMA = {
-  workflow: {
-    type: "object",
-    required: false,
-    properties: {
-      confirmationMode: {
-        type: "string",
-        required: false,
-        enum: ["always", "never", "off"],
-      },
-    },
-  },
   codingLevel: { type: "number", required: false, min: -1, max: 5 },
   locale: {
     type: "object",

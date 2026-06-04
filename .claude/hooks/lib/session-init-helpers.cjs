@@ -80,7 +80,6 @@ const SKELETON = {
         cssMethodology: '',
         stateManagement: '',
         crossModuleValidation: '',
-        featureDocPath: '',
         featureDocTemplate: '',
         reviewRulesDoc: ''
     },
@@ -146,21 +145,21 @@ function checkConfigStatus() {
 // =============================================================================
 
 const SCAN_SKILL_MAP = {
-    'project-structure-reference.md': 'scan-project-structure',
-    'backend-patterns-reference.md': 'scan-backend-patterns',
-    'seed-test-data-reference.md': 'scan-seed-test-data',
-    'frontend-patterns-reference.md': 'scan-frontend-patterns',
-    'integration-test-reference.md': 'scan-integration-tests',
-    'feature-docs-reference.md': 'scan-feature-docs',
-    'code-review-rules.md': 'scan-code-review-rules',
-    'scss-styling-guide.md': 'scan-scss-styling',
-    'design-system/README.md': 'scan-design-system',
-    'design-system/design-system-canonical.md': 'scan-design-system',
-    'design-system/design-tokens.scss': 'scan-design-system',
-    'design-system/design-tokens.css': 'scan-design-system',
-    'e2e-test-reference.md': 'scan-e2e-tests',
-    'domain-entities-reference.md': 'scan-domain-entities',
-    'docs-index-reference.md': 'scan-docs-index'
+    'project-structure-reference.md': 'scan --target=project-structure',
+    'backend-patterns-reference.md': 'scan --target=backend-patterns',
+    'seed-test-data-reference.md': 'scan --target=seed-test-data',
+    'frontend-patterns-reference.md': 'scan --target=frontend-patterns',
+    'integration-test-reference.md': 'scan --target=integration-tests',
+    'feature-spec-reference.md': 'scan --target=feature-spec',
+    'code-review-rules.md': 'scan --target=code-review-rules',
+    'scss-styling-guide.md': 'scan --target=scss-styling',
+    'design-system/README.md': 'scan --target=design-system',
+    'design-system/design-system-canonical.md': 'scan --target=design-system',
+    'design-system/design-tokens.scss': 'scan --target=design-system',
+    'design-system/design-tokens.css': 'scan --target=design-system',
+    'e2e-test-reference.md': 'scan --target=e2e-tests',
+    'domain-entities-reference.md': 'scan --target=domain-entities',
+    'docs-index-reference.md': 'scan --target=docs-index'
     // lessons.md excluded — managed by /learn skill
 };
 
@@ -196,15 +195,28 @@ const DEFAULT_REFERENCE_DOCS = [
         sections: ['Test Architecture', 'Test Base Classes', 'Test Helpers', 'Service-Specific Setup']
     },
     {
-        filename: 'feature-docs-reference.md',
+        filename: 'feature-spec-reference.md',
         purpose: 'Feature documentation patterns: app-to-service mapping, doc structure, templates, and conventions.',
-        sections: ['App-to-Service Mapping', 'Feature Doc Structure', 'Templates', 'Conventions']
+        sections: ['App-to-Service Mapping', 'Feature Doc Structure', 'Templates', 'Conventions'],
+        templatePath: '.claude/templates/reference-docs/feature-spec-reference.md'
+    },
+    {
+        filename: 'spec-system-reference.md',
+        purpose: 'Spec system routing: fixed spec root, canonical Feature Spec ownership, TC registry location, and derived index/ERD rules.',
+        sections: [],
+        templatePath: '.claude/templates/reference-docs/spec-system-reference.md'
     },
     {
         filename: 'spec-principles.md',
         purpose: 'Spec quality principles: completeness criteria, AI-implementability, test coverage mapping, and tech-agnostic standards.',
         sections: [],
         templatePath: '.claude/templates/reference-docs/spec-principles.md'
+    },
+    {
+        filename: 'workflow-spec-test-code-cycle-reference.md',
+        purpose: 'Workflow spec-test-code cycle: local workflow sequence, artifact ownership, verification gates, and generated mirror sync.',
+        sections: [],
+        templatePath: '.claude/templates/reference-docs/workflow-spec-test-code-cycle-reference.md'
     },
     {
         filename: 'code-review-rules.md',
@@ -259,7 +271,7 @@ const PLACEHOLDER_MARKER = "<!-- Fill in your project's details below. -->";
 // Claude-only sentinel for SCSS/CSS placeholders — non-prose so a real authored
 // token file cannot collide with this string by accident. Detection in
 // isPlaceholderFile is LINE-ANCHORED (full-line equality, not substring).
-// MUST be removed by /scan-design-system Phase 3 authoring step.
+// MUST be removed by /scan --target=design-system Phase 3 authoring step.
 const PLACEHOLDER_MARKER_SCSS = "/* @claude:placeholder — do not commit */";
 
 // =============================================================================

@@ -15,21 +15,21 @@ description: '[DDD Quality] Use when you need to review domain entities and valu
 
 ## Quick Summary
 
-**Goal:** Detect DDD design quality violations in domain entities and value objects across any technology stack. Adapts to project-specific patterns via config/reference docs discovery.
+**Goal:** Detect DDD design quality violations in domain entities and value objects across any technology stack — adapting to project-specific patterns via config/reference docs discovery — so domain entities and value objects preserve invariants, aggregate boundaries, and discovered DDD conventions.
 
 **Workflow:**
 
 1. **Phase 0** — Discover project stack + entity patterns + blast radius **(MANDATORY FIRST)**
 2. **Phase 1** — Collect entity files; run mandatory grep patterns; create report
 3. **Phase 2** — Entity-by-entity DDD review (universal checklist + project-specific rules)
-4. **Phase 3** — Fresh `code-reviewer` sub-agent holistic assessment (Round 2)
+4. **Phase 3** — Holistic synthesis in the current review pass; fresh context only after validated fixes or explicit high-risk synthesis trigger
 5. **Phase 4** — Final report: critical issues, health score, recommendations
 
 **Key Rules:**
 
 - MUST ATTENTION discover project base classes in Phase 0 — NEVER assume generic patterns apply
 - MUST ATTENTION run mandatory grep patterns in Phase 1 BEFORE reading individual files
-- Clean Round 1 ENDS the review. When issues are found, NEVER declare PASS without fresh sub-agent Round 2 after fixing.
+- A clean review pass ENDS the review. When findings exist, validate them before fixing; do not spend a fresh-context pass re-reviewing the same findings before validation/fix.
 - NEVER report finding without `file:line` evidence
 
 **Severity Classification:**
@@ -45,22 +45,16 @@ description: '[DDD Quality] Use when you need to review domain entities and valu
 
 ## First Principle — Easy to Change
 
-> **The success metric of every coding decision is _future change cost_.**
-> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
-> technique exists to serve one goal: **making the next change cheaper**.
+> **Success metric of every coding decision = _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every technique serves one goal: **make next change cheaper**.
 
-When evaluating code, a refactor, a test, or an abstraction, ask:
-**does this make the next change cheaper or more expensive?**
+Evaluating code, refactor, test, abstraction — ask: **does this make next change cheaper or more expensive?**
 
-- Reject "best practices" that raise change cost (premature abstraction,
-  speculative generality, leaky indirection, ceremony without payoff).
-- Name the real enemies in findings: **coupling, hidden state, duplicated
-  knowledge, unclear intent, irreversible decisions exposed too early**.
-- A simpler design that is easy to change beats a sophisticated design that
-  isn't.
+- Reject "best practices" raising change cost (premature abstraction, speculative generality, leaky indirection, ceremony without payoff).
+- Name real enemies in findings: **coupling, hidden state, duplicated knowledge, unclear intent, irreversible decisions exposed too early**.
+- Simpler design easy to change beats sophisticated design that isn't.
 
-Apply this lens **before** invoking any specific rule, pattern, or checklist
-below — if a downstream rule would raise change cost, this principle wins.
+Apply this lens **before** invoking any specific rule, pattern, or checklist below — if a downstream rule raises change cost, this principle wins.
 
 ---
 
@@ -73,7 +67,7 @@ below — if a downstream rule would raise change cost, this principle wins.
 - `[Phase 0] Project stack discovery + mode detection + blast radius` — in_progress **(FIRST)**
 - `[Phase 1] Collect entity files + grep patterns + create report` — pending
 - `[Phase 2] Entity-by-entity DDD review` — pending
-- `[Phase 3] Fresh sub-agent holistic review (Round 2)` — pending
+- `[Phase 3] Holistic synthesis and fresh-context gate` — pending
 - `[Phase 4] Generate final findings` — pending
 
 ### 0.1 Discover Project Stack and Entity Conventions
@@ -83,13 +77,13 @@ below — if a downstream rule would raise change cost, this principle wins.
 ls docs/project-reference/ 2>/dev/null
 ls docs/ 2>/dev/null | grep -i "entity\|domain\|backend\|pattern"
 
-# Detect tech stack
-find . -name "*.csproj" -o -name "pom.xml" -o -name "build.gradle" -o -name "package.json" | head -5
+# Detect configured build/runtime markers from project config and project-reference docs
+rg --files | rg "(project|package|build|config|settings|manifest)" | head -20
 
 # Find entity/VO base classes actually used
-grep -rn "class.*Entity\|class.*RootEntity\|class.*BaseEntity\|class.*AbstractEntity" src/ | head -10
-grep -rn ": PlatformValueObject\|: ValueObject\|@ValueObject\|extends AbstractValueObject" src/ | head -5
-grep -rn "@Entity\|@Document\|@Table\|@Aggregate" src/ | head -10
+rg "class.*Entity|class.*RootEntity|class.*BaseEntity|class.*AbstractEntity" {configured-source-roots} | head -10
+rg "ValueObject|Aggregate|Entity" {configured-source-roots} | head -20
+rg "{configured-entity-markers}" {configured-source-roots} | head -10
 ```
 
 **Record in report (required before Phase 2):**
@@ -126,66 +120,26 @@ Record: entity file count, downstream consumers, risk level. Use to prioritize r
 
 Initialize with: Mode, Tech Stack, Discovered Conventions, Blast Radius Summary.
 
-### Mandatory Grep Patterns
+### Mandatory Search Intent
 
-MUST ATTENTION run these BEFORE reading individual files — highest-signal violations detected in seconds.
+MUST ATTENTION run high-signal searches BEFORE reading individual files. Derive the actual roots, file globs, framework markers, and naming conventions from `docs/project-config.json` plus the repository's project-reference docs. Do not copy a source-root, extension, framework type, or folder name from this skill as if it were canonical.
 
-```bash
-# ─── .NET / C# ───────────────────────────────────────────────────────────
-# CRITICAL: public new Validate() — hides base virtual, framework validation NEVER runs
-grep -rn "public new.*Validate()" src/ --include="*.cs"
+Search for these intent categories with the configured source roots and discovered stack syntax:
 
-# CRITICAL: navigation properties missing serialization-ignore annotation
-grep -rn "public.*Entity\|public.*List<[A-Z]\|public.*ICollection<[A-Z]" src/ \
-    --include="*.cs" | grep -v "\[JsonIgnore\]\|//\|private\|static\|protected"
+- Validation methods that hide or bypass the base/domain validation path.
+- Relationship/navigation fields that can serialize recursively or expose internal graph structure.
+- Value objects with mutable public state or missing structural equality.
+- Domain methods throwing low-context generic errors instead of configured domain/validation errors.
+- Business conditionals and entity mutation leaking into a higher layer when the entity/value object owns the invariant.
+- Query/filter expressions placed in handlers/services when the entity, repository extension, specification, or equivalent local pattern owns them.
+- Entity classes missing identity markers required by the configured persistence framework.
+- Domain models performing direct persistence, network, or infrastructure work.
+  rg "{configured-persistence-or-query-markers}" {configured-domain-source-roots} | head -20
 
-# HIGH: VO files with mutable public setters
-find src -path "*/ValueObjects/*.cs" | xargs grep -n "{ get; set; }" 2>/dev/null
+# HIGH: business conditions leaked above the owning domain layer
 
-# HIGH: domain methods throwing wrong exception type
-grep -rn "throw new ArgumentException\|throw new InvalidOperationException" \
-    src/**/Domain/ --include="*.cs" | grep -v "//\|test\|Test"
+rg "{configured-business-condition-patterns}" {configured-application-source-roots} | head -20
 
-# HIGH: business conditionals leaked into application layer
-grep -rn "\.Status ==" src/**/Application/UseCaseCommands/ --include="*.cs" 2>/dev/null | head -20
-grep -rn "if.*entity\.\|entity\.\w* = " src/**/Application/UseCaseCommands/ \
-    --include="*.cs" | grep -v "CreatedBy\|Id =" | head -20
-
-# HIGH: static query expressions in handlers (should be on entity)
-grep -rn "Expression<Func<" src/**/Application/ --include="*.cs" \
-    | grep -v "Extensions\|Helper\|Repository" | head -20
-
-# ─── Java / Spring ───────────────────────────────────────────────────────
-# CRITICAL: entity equals() by reference (default Object)
-grep -rn "@Entity" src/ --include="*.java" | xargs grep -L "equals\|@EqualsAndHashCode"
-
-# HIGH: @Entity without @Id field
-grep -rn "class.*@Entity\|@Entity" src/ --include="*.java" | xargs grep -L "@Id"
-
-# HIGH: business logic in service layer
-grep -rn "entity\.set\|entity\.status\b" src/**/service/ --include="*.java" | head -20
-
-# HIGH: VO with mutable setters
-find src -path "*/valueobject*/*.java" -o -path "*/vo*/*.java" \
-    | xargs grep -n "public.*set[A-Z]" 2>/dev/null
-
-# ─── TypeScript / NestJS ─────────────────────────────────────────────────
-# CRITICAL: entity equality by reference
-grep -rn "class.*Entity" src/ --include="*.entity.ts" | xargs grep -L "equals\|id ==="
-
-# HIGH: VO missing readonly properties
-find src -name "*.vo.ts" -o -name "*.value-object.ts" \
-    | xargs grep -n "^\s*public " | grep -v readonly | head -20
-
-# HIGH: business logic in services
-grep -rn "entity\.\w* =" src/**/services/ --include="*.ts" | grep -v "// \|id\b" | head -20
-
-# ─── Python (Django / SQLAlchemy) ────────────────────────────────────────
-# HIGH: Model methods doing direct DB access
-grep -rn "\.objects\.\|\.query\." src/**/domain/ --include="*.py" | head -20
-
-# HIGH: business conditions in views/commands
-grep -rn "if.*\.status ==" src/**/application/ --include="*.py" | head -20
 ```
 
 Write ALL grep results to report IMMEDIATELY.
@@ -231,16 +185,9 @@ For EACH entity/VO file: read file → append findings to report IMMEDIATELY. NE
 
 > Mutable VOs are a design contradiction — they imply identity through mutation, which entities have, not VOs.
 
-- NEVER allow mutable properties on VO:
-    - C#: MUST use `{ get; init; }` or `{ get; }` — NEVER `{ get; set; }`
-    - Java: fields MUST be `final` — NEVER bare fields with setters
-    - TypeScript: MUST be `readonly` — NEVER bare mutable fields
-    - Python: MUST use `@dataclass(frozen=True)` or `__slots__` + no setters
+- NEVER allow mutable public state on value objects. Use the immutability mechanism idiomatic to the configured language/runtime.
 - Parameterless/default constructor allowed when required for framework deserialization.
-- MUST ATTENTION verify equality based on structural value — NEVER reference equality:
-    - C#: `Equals()` + `GetHashCode()` + operators OR extends platform VO base
-    - Java: `equals()` + `hashCode()` on fields — NEVER default `Object` methods
-    - TypeScript: custom `equals()` method
+- MUST ATTENTION verify equality based on structural value — NEVER reference equality. Use the equality mechanism idiomatic to the configured language/runtime or the repository's documented value-object base pattern.
 - MUST ATTENTION verify `validate()` overridden when VO has constraints (format, range, required).
 - MUST ATTENTION verify factory method exists for non-trivial construction: `Create()`, `New()`, `Of()`, `From*()`.
 - NEVER put async operations, repository calls, or infrastructure dependencies inside VO.
@@ -286,10 +233,7 @@ For EACH entity/VO file: read file → append findings to report IMMEDIATELY. NE
 
 > Navigation properties serializing into each other = circular reference crash or infinite memory allocation.
 
-- CRITICAL: ALL navigation properties MUST carry serialization-ignore annotation:
-    - C#: `[JsonIgnore]`
-    - Java: `@JsonIgnore` or `@JsonBackReference`
-    - TypeScript: `@Exclude()` or manual DTO projection
+- CRITICAL: ALL navigation/relationship properties that can serialize recursively MUST use the configured serialization-ignore mechanism or an explicit DTO/projection boundary.
 - Navigation properties MUST be nullable/optional — not always loaded.
 - FK ID MUST be stored as primitive alongside navigation — NEVER navigation-only reference.
 - NEVER use navigation properties in domain logic without null guard.
@@ -346,19 +290,29 @@ For EACH entity/VO file: read file → append findings to report IMMEDIATELY. NE
 
 ---
 
-## Phase 3: Holistic Fresh Sub-Agent Review (Round 2)
+## Phase 3: Holistic Synthesis + Fresh-Context Gate
 
-After all Phase 2 files reviewed, spawn fresh `code-reviewer` sub-agent. Sub-agent has **ZERO memory of Phase 2**.
+After all Phase 2 files are reviewed, synthesize cross-entity DDD concerns in the current report. Do not spawn a fresh sub-agent only because findings exist. Findings must go through the why-review validation gate before any fix.
 
-**Build Agent call dynamically** — set Target Files and Reference Docs from Phase 0/1 discoveries:
+Spawn a fresh `code-reviewer` sub-agent only when one of these conditions is true:
+
+- A validated-finding fix cycle has already changed the entity review target and this is the full re-review restart.
+- The user/workflow explicitly requests an independent high-risk synthesis pass for broad entity-model changes.
+- Phase 2 produced contradictory evidence that cannot be resolved in the current session without an independent read.
+
+When a fresh-context pass is triggered, build the Agent call dynamically — set Target Files and Reference Docs from Phase 0/1 discoveries:
 
 ```
+
 Agent({
-  description: "Fresh Round 2 — DDD entity holistic review",
-  subagent_type: "code-reviewer",
-  prompt: `
+description: "Fresh full DDD entity review after validated fixes or explicit high-risk trigger",
+subagent_type: "code-reviewer",
+prompt: `
+
 ## Task
+
 Review domain entity and value object files holistically for DDD design quality:
+
 - Domain model coherence: entities vs VOs correctly classified across entire model?
 - Aggregate boundary consistency across service/module?
 - Anemic domain model: business logic consistently in entity or scattered in handlers?
@@ -366,24 +320,29 @@ Review domain entity and value object files holistically for DDD design quality:
 - Ubiquitous language consistency across all entities
 - Missed cross-entity interactions
 
-## Round
-Round 2. ZERO memory of prior rounds. Re-read all target files from scratch via own tool calls.
+## Review Mode
+
+Fresh full review after a validated fix cycle or explicit high-risk trigger. ZERO memory of prior rounds. Re-read all target files from scratch via own tool calls.
 
 ## Protocols (follow VERBATIM)
 
 ### Evidence-Based Reasoning
+
 Every claim needs proof. Cite file:line or grep results. Confidence: >80% act, 60-80% verify first, <60% DO NOT report.
 NEVER write: "obviously", "I think", "should be", "probably".
 
 ### Project-Specific Discovery (MANDATORY before any finding)
+
 1. Check docs/project-reference/ for entity reference docs, backend patterns, code review rules
-2. grep -rn "class.*Entity\|class.*BaseEntity\|class.*RootEntity" src/ | head -10
-3. grep -rn "ValueObject\|@ValueObject\|AbstractValueObject" src/ | head -10
+2. grep -rn "class.*Entity\|class.*BaseEntity\|class.\*RootEntity" <source-root>/ | head -10
+3. grep -rn "ValueObject\|@ValueObject\|AbstractValueObject" <source-root>/ | head -10
 4. Read discovered project reference docs — extract project-specific rules
 5. NEVER flag violations contradicting discovered project conventions — verify against docs first
 
 ### Bug Detection for Domain Entities
+
 Check every entity:
+
 1. Null Safety: navigation properties guarded before use? Computed properties NPE-safe?
 2. Boundary Conditions: empty collections in domain methods? Zero/negative invariants?
 3. Error Handling: domain violations using project-specific exception type — NEVER raw language exceptions?
@@ -391,6 +350,7 @@ Check every entity:
 5. Serialization Safety: navigation properties missing serialize-ignore annotation?
 
 ### DDD Design Patterns Quality
+
 1. Entity = identity + lifecycle. VO = structural equality + immutable. NEVER swap roles.
 2. Invariants enforced at entity level (lowest layer) — NEVER application layer only.
 3. Aggregate: only root has repository; cross-aggregate = ID only; child mutations = domain method.
@@ -398,21 +358,27 @@ Check every entity:
 5. Anemic model: entity has no domain methods + handlers contain all logic → CRITICAL violation.
 
 ### Fix-Layer Accountability
+
 NEVER fix at crash site. Validation fails because handler skips entity validate()? → fix entity, not handler. Aggregate boundary violated? → fix entity relationship, not handler defensiveness.
 
 ### Graph-Assisted Investigation
+
 When .code-graph/graph.db exists: run trace --direction both on 2-3 entity files.
 CLI: python .claude/scripts/code_graph trace <file> --direction both --json --node-mode file
 
 ## Reference Docs
+
 {insert docs discovered in Phase 0}
 If none: read 3 existing entity files to infer project conventions before reviewing.
 
 ## Target Files
+
 {insert entity/VO file list from Phase 1}
 
 ## Output
-Write to plans/reports/domain-entities-round2-{date}.md:
+
+Write to plans/reports/domain-entities-rerun{N}-{date}.md:
+
 - Status: PASS | FAIL
 - Critical Issues (file:line evidence)
 - High Priority Issues (file:line evidence)
@@ -423,15 +389,16 @@ Write to plans/reports/domain-entities-round2-{date}.md:
 Return report path and status. Every finding MUST have file:line evidence.
 `
 })
-```
+
+````
 
 After sub-agent returns:
 
-1. Read sub-agent report
-2. Integrate as `## Round 2 Findings (Fresh Sub-Agent)` in main report — NEVER filter or override
-3. If FAIL: fix issues → spawn NEW Round 3 agent (NEVER reuse Round 2 agent)
-4. Max 3 fresh rounds → escalate via `AskUserQuestion` if still failing
-5. Final verdict MUST incorporate ALL rounds
+1. Read the sub-agent report
+2. Integrate as `## Re-Review {N} Findings` in main report — NEVER filter or override
+3. If findings remain: validate the new finding set before any additional fixes
+4. Repeat only after another validated-finding fix cycle; if the same blocker repeats across 3 full invocations with no progress, escalate via `AskUserQuestion`
+5. Final verdict MUST incorporate every review pass that actually ran
 
 ---
 
@@ -460,22 +427,36 @@ Graph risk: {HIGH | MEDIUM | LOW | N/A} | Downstream consumers: {N}
 
 ## High Priority Issues (must fix)
 
+{severity} | {description} | {file:line} | {fix}
+
 ## Medium Issues (should fix)
+
+{severity} | {description} | {file:line} | {fix}
 
 ## Low / Informational
 
-## Round 2 Findings (Fresh Sub-Agent)
+{severity} | {description} | {file:line} | {fix}
+
+## Re-Review Findings (if a fresh full re-review ran)
 
 {integrated — not filtered}
 
 ## Positive Observations
 
+{observation} | {evidence}
+
 ## Refactoring Priority (highest-impact first)
 
-## Project-Specific Rules Applied
+{priority} | {target} | {reason}
+
+## Repository-Specific Rules Applied
+
+{rule} | {evidence}
 
 ## Unresolved Questions
-```
+
+{question} | {owner/next step}
+````
 
 ---
 
@@ -574,7 +555,7 @@ Report: plans/reports/domain-entities-review-{date}-{slug}.md
 
 1. Read own finalized report from `plans/reports/{skill}-{date}-{slug}.md`
 2. Invoke `/why-review` skill with arg: `validate findings in plans/reports/{skill}-{date}-{slug}.md — verify each finding has file:line proof, steel-man each rejected interpretation, and stress-test severity classifications`
-3. Read why-review output from `plans/reports/why-review-{date}.md`
+3. Read the validation verdict path returned by why-review, expected as `plans/reports/why-review-validate-{date}.md`
 4. **If why-review demotes/removes any finding:** UPDATE own finalized report with revised severities, remove false positives, and add a `## Why-Review Validation Notes` section citing what changed and why
 5. **If why-review confirms all findings:** Append `## Why-Review Validation` line to own report stating "All N findings re-validated against actual code; no severity changes."
 
@@ -592,7 +573,7 @@ Report: plans/reports/domain-entities-review-{date}-{slug}.md
 MUST ATTENTION use `AskUserQuestion` after completing to present:
 
 - **`/fix` (Recommended if FAIL)** — Fix critical and high-priority issues
-- **`/scan-domain-entities`** — Update domain-entities-reference.md (scan mode)
+- **`/scan --target=domain-entities`** — Update domain-entities-reference.md (scan mode)
 - **`/integration-test`** — Add integration tests for newly-enforced invariants
 - **`/docs-update`** — Update feature docs if entity contracts changed
 - **"Skip, continue manually"** — user decides
@@ -601,7 +582,7 @@ MUST ATTENTION use `AskUserQuestion` after completing to present:
 
 > **[IMPORTANT]** `TaskCreate` for ALL phases BEFORE starting. Mark each completed immediately.
 
-> **CRITICAL RULES** — (1) MUST ATTENTION run Phase 0 project discovery FIRST — discovered conventions override ALL generic rules. (2) When Round 1 finds issues, NEVER declare PASS without fresh sub-agent Round 2 after fixing. Clean Round 1 ENDS the review. (3) NEVER report a finding without `file:line` evidence.
+> **CRITICAL RULES** — (1) MUST ATTENTION run Phase 0 project discovery FIRST — discovered conventions override ALL generic rules. (2) Validate findings before fixes; after validated fixes, restart a full review before declaring PASS. A clean review pass ENDS the review. (3) NEVER report a finding without `file:line` evidence.
 
 ---
 
@@ -627,22 +608,11 @@ MUST ATTENTION use `AskUserQuestion` after completing to present:
 **Entity file detection — adapt to discovered stack:**
 
 ```bash
-# .NET / C#
-git diff --name-only HEAD | grep -E "(Domain|Entities|ValueObjects|AggregatesModel).*\.cs$"
-find src -path "*/Domain/*.cs" -o -path "*/Entities/*.cs" -o -path "*/ValueObjects/*.cs" | grep -v "obj\|bin\|Tests"
-
-# Java / Spring
-git diff --name-only HEAD | grep -E "domain/.*\.java$|entity/.*\.java$"
-find src -path "*/domain/*.java" -o -path "*/entity/*.java" | grep -v "test\|Test"
-
-# TypeScript / Node
-git diff --name-only HEAD | grep -E "\.(entity|vo|value-object|aggregate)\.ts$"
-find src -name "*.entity.ts" -o -name "*.vo.ts" -o -name "*.aggregate.ts" | grep -v "spec\|test"
-
-# Python (Django / SQLAlchemy)
-git diff --name-only HEAD | grep -E "(models|domain)/.*\.py$"
-find src -path "*/domain/*.py" -o -path "*/models/*.py" | grep -v "test\|migration"
+git diff --name-only HEAD
+rg --files {configured-source-roots}
 ```
+
+Filter those results using the entity/value-object/aggregate naming conventions discovered from project config and project-reference docs. Never hardcode source roots, extensions, or framework folder names from this skill.
 
 If no domain entity files match in changes mode → announce "No domain entity changes detected" and report clean.
 
@@ -650,9 +620,10 @@ If no domain entity files match in changes mode → announce "No domain entity c
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -667,6 +638,7 @@ If no domain entity files match in changes mode → announce "No domain entity c
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -690,11 +662,11 @@ If no domain entity files match in changes mode → announce "No domain entity c
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -749,16 +721,16 @@ If no domain entity files match in changes mode → announce "No domain entity c
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
+> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
 > **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
 > **Decision after Round 1:**
 >
 > - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
+> - **Issues found (FAIL, or any non-zero findings)** → run the active review skill's findings-validation gate first; for review skills the default gate is `/why-review --validate-findings <report-path>`, fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
 >
-> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `Agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
+> **Fresh full re-review after every fix cycle:** Re-run the whole review protocol over the current full target. When sub-agents are part of that protocol, spawn NEW `Agent` calls — never reuse prior agents. Reviewers re-read ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh full review must catch:
 >
 > - Cross-cutting concerns missed in the prior round
 > - Interaction bugs between changed files
@@ -767,16 +739,17 @@ If no domain entity files match in changes mode → announce "No domain entity c
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
+> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via `AskUserQuestion`.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
-> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
+> - NEVER fix unvalidated findings; validate first using the caller's validation gate
+> - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
+> - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via `AskUserQuestion` (do NOT silently loop)
-> - Track round count in conversation context (session-scoped)
+> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
+> - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
 > **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
@@ -785,15 +758,15 @@ If no domain entity files match in changes mode → announce "No domain entity c
 
 <!-- SYNC:fresh-context-review -->
 
-> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
+> **Fresh Context Re-Review** — Eliminate orchestrator confirmation bias after fixes by restarting the full review with isolated sub-agents where applicable.
 >
 > **Why:** The main agent knows what it (or `/cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
 >
-> **When:** ONLY after a fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: fix → fresh sub-agent re-review.
+> **When:** ONLY after a validated-finding fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: validate findings → fix → full review restart from the first phase.
 >
 > **How:**
 >
-> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 1. Start a NEW full review invocation/task breakdown; when that protocol calls for agents, spawn NEW `Agent` tool calls — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
 > 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
 > 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
 > 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
@@ -801,11 +774,11 @@ If no domain entity files match in changes mode → announce "No domain entity c
 >
 > **Rules:**
 >
-> - SKIP fresh sub-agent when the prior round found zero issues (no fixes = nothing new to verify)
-> - NEVER skip fresh sub-agent after a fix cycle — every fix invalidates the prior verdict
+> - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
+> - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
-> - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
-> - Track iteration count in conversation context (session-scoped, no persistent files)
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via `AskUserQuestion`
+> - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
 
@@ -844,6 +817,7 @@ If no domain entity files match in changes mode → announce "No domain entity c
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -867,12 +841,18 @@ If no domain entity files match in changes mode → announce "No domain entity c
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Ensure domain entities and value objects preserve invariants, aggregate boundaries, and discovered DDD conventions.
+
 - **MANDATORY MUST ATTENTION** Phase 0 project discovery FIRST — discovered conventions override ALL generic rules. NEVER apply generic patterns without verifying project base classes.
 - **MANDATORY MUST ATTENTION** run mandatory grep patterns in Phase 1 BEFORE reading individual files — fastest path to highest-signal violations.
-- **MANDATORY MUST ATTENTION** when Round 1 finds issues, always spawn fresh sub-agent for Round 2 after fixing. Clean Round 1 ENDS the review.
+- **MANDATORY MUST ATTENTION** validate findings before fixes; after validated fixes, restart the full review before declaring PASS. A clean review pass ENDS the review.
 - **MANDATORY MUST ATTENTION** NEVER report any finding without `file:line` evidence — confidence >80% to act.
 - **MANDATORY MUST ATTENTION** NEVER throw raw language exceptions for domain violations — use project's domain exception type.
 - **MANDATORY MUST ATTENTION** NEVER allow mutable properties on Value Objects — structural immutability is non-negotiable.
+- **MANDATORY MUST ATTENTION** derive entity rules from discovered project patterns before applying generic DDD judgment.
+- **MANDATORY MUST ATTENTION** inspect entity callers/usages before classifying anemic model or misplaced invariant.
+- **MANDATORY MUST ATTENTION** treat repeated entity design violations as structural findings, not isolated style notes.
+- **MANDATORY MUST ATTENTION** preserve validation-first loop: findings → validation → validated fixes → full review restart.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
@@ -885,3 +865,10 @@ If no domain entity files match in changes mode → announce "No domain entity c
 > the next change cheaper or more expensive?_ If it doesn't reduce future
 > change cost, reject it. Coupling, hidden state, duplicated knowledge, and
 > unclear intent are the real enemies — call them out by name.
+> **Anti-Rationalization:**
+
+| Evasion                          | Rebuttal                                                                      |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| "Purpose obvious"                | Anchor it anyway — primacy/recency keeps outcome active through long prompts. |
+| "Existing reminders enough"      | Echo Goal in Closing Reminders — bottom anchor prevents drift.                |
+| "Skip evidence for prompt edits" | Cite changed file evidence and verify no stale protocol text remains.         |

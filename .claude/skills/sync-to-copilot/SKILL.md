@@ -1,7 +1,7 @@
 ---
 name: sync-to-copilot
-version: 2.0.0
-description: '[AI & Tools] Use when you need to sync Claude Code knowledge to GitHub Copilot instructions.'
+version: 2.3.0
+description: '[AI & Tools] Use when you need to sync Claude Code knowledge to GitHub Copilot instructions. Auto-inits docs/copilot-registry.json when missing. Flag: --fast (script-only workflow-catalog sync, no registry-curation pass).'
 tags:
     - ai-tools
     - sync
@@ -34,18 +34,23 @@ tags:
 
 **What gets synced:**
 
+- Workflow-First Gate (from `.claude/skills/shared/workflow-first-gate.md`) — **SCRIPT-GENERATED**, stamped at the top of `copilot-instructions.md` so Copilot (no hooks) gets the same bug→`workflow-bugfix` / feature→`workflow-feature` routing rule
 - Workflow catalog (from workflows.json) — **SCRIPT-GENERATED**
 - Dev rules (from development-rules.md) — **SCRIPT-GENERATED**
+- Missing `docs/copilot-registry.json` bootstrap — **AI-CREATED before generation**, from current `CLAUDE.md` + `docs/project-reference/**/*.md`
 - Project-reference summaries (from copilot-registry.json) — **SCRIPT-GENERATED**
-- Enriched section headings and key patterns — **AI-GENERATED** (this skill)
+- Registry summary accuracy + golden-rule parity + missing-doc entries — **AI-CURATED** in `docs/copilot-registry.json`, then re-generated (this skill)
 
 **Usage:**
 
 ```
-/sync-to-copilot
+/sync-to-copilot          # full sync: registry bootstrap + generation + registry curation + verification
+/sync-to-copilot --fast   # fast path: registry bootstrap if missing + script generation only (former /sync-copilot-workflows)
 ```
 
 **Script:** `.claude/scripts/sync-copilot-workflows.cjs`
+
+> **Name note:** the script name is historical — despite its name, it generates the **entire** Copilot instruction set (project-specific + common-protocol + all per-group files). This skill runs that script and then adds a registry-curation pass (verify golden rules, fix stale summaries, add missing doc entries — then re-run the script) on top. The generated files are NEVER hand-edited. The former `/sync-copilot-workflows` skill (workflow-catalog-only wrapper around the same script) was absorbed into this skill as the `--fast` mode.
 
 ---
 
@@ -53,26 +58,52 @@ tags:
 
 ## When to Use This Skill
 
-> **Scope vs related skills:** Syncs **Claude→Copilot knowledge** (docs, dev-rules, workflow catalog) into Copilot instructions via script + AI enrichment. For the **`workflows.json` catalog only** (fast, no AI pass) → `/sync-copilot-workflows`. For **bidirectional** sync incl. skills/prompts/agents → `/ai-dev-tools-sync`.
+> **Scope vs related skills:** Syncs **Claude→Copilot knowledge** (docs, dev-rules, workflow catalog) into Copilot instructions via script + a registry-curation pass. For the **`workflows.json` catalog only** (fast, no curation pass) → use `--fast` mode below. For the full pipeline — **bidirectional** source sync (skills/prompts/agents) **+** ordered both-mirror regen → `/sync-ai-dev-tools` (user-invoke-only).
 
 Trigger this skill when:
 
-- **Workflows added/modified** — After editing `.claude/workflows.json`
+- **Workflows added/modified** — After editing `.claude/workflows.json` (`--fast` is enough)
+- **Workflow catalog stale/drifted** — When the Copilot catalog no longer matches `workflows.json` (`--fast` is enough)
 - **Development rules changed** — After editing `.claude/docs/development-rules.md`
 - **Project-reference docs updated** — After modifying files in `docs/project-reference/`
 - **Registry entries changed** — After editing `docs/copilot-registry.json`
 - **Regular maintenance** — Quarterly sync to ensure Copilot parity
 - **Copilot setup** — First-time Copilot instructions creation
 
+**NOT for**: Claude Code workflow issues (Claude gets the catalog auto-injected on every prompt via the `workflow-router.cjs` hook).
+
 ---
 
 ## Workflow
 
+### Phase 0: Registry Bootstrap (Auto-init Required)
+
+Before running the generator in **any mode**:
+
+1. Check whether `docs/copilot-registry.json` exists.
+2. If it is missing, create it automatically before script generation. Do **not** ask the user and do **not** run the generator first, because the script produces `0 docs` without this source.
+3. Build the initial registry from current files:
+    - `projectInstructions.goldenRules`: copy the Golden Rules from `CLAUDE.md` exactly, without punctuation normalization.
+    - `projectInstructions.decisionQuickRef`, `keyFileLocations`, and `devCommands`: derive concise project-specific entries from `CLAUDE.md`, `docs/project-config.json`, and existing package scripts.
+    - `instructionFileConfig`: include the standard groups `backend-csharp`, `frontend`, `styling-scss`, `testing`, and `project-reference` with their `.github/instructions/{group}.instructions.md` filenames and `applyTo` globs.
+    - `registry`: include one entry for every `docs/project-reference/**/*.md` file. Use the first H1 as `title` when available; write `summary` and `whenToRead` from the actual file headings/content; choose `group` by topic:
+        - `backend-csharp`: backend, hook architecture, CQRS/API/domain implementation references
+        - `frontend`: frontend patterns and design-system references
+        - `styling-scss`: SCSS/CSS/styling references
+        - `testing`: integration and E2E test references
+        - `project-reference`: cross-cutting docs, specs, lessons, project structure, code review, docs index
+4. Validate the JSON parses, then verify the registry file list exactly covers `docs/project-reference/**/*.md` before Phase 1.
+
+In `--fast` mode, Phase 0 still runs when the registry is missing; `--fast` only skips the post-generation curation pass when the registry already exists.
+
 ### Phase 1: Script Generation (Automated)
 
 ```bash
-node .claude/scripts/sync-copilot-workflows.cjs
+node .claude/scripts/sync-copilot-workflows.cjs            # generate
+node .claude/scripts/sync-copilot-workflows.cjs --dry-run  # preview changes without writing
 ```
+
+In `--fast` mode, Phase 0 + this phase are the whole sync: run the script (optionally `--dry-run` first), confirm the workflow count matches `workflows.json`, and stop — no registry-curation pass.
 
 This generates:
 
@@ -81,25 +112,18 @@ This generates:
 - `.github/instructions/{group}.instructions.md` — per-group instruction files
 - Removes old `.github/common.copilot-instructions.md` if it exists
 
-### Phase 2: AI Enrichment (This Skill)
+### Phase 2: Registry Curation (This Skill)
 
-After the script runs, the AI MUST ATTENTION enrich the generated instruction files:
+After the script runs, the AI MUST ATTENTION curate the **sources** the script reads — NEVER hand-edit the generated files:
 
-1. **For each per-group instruction file** in `.github/instructions/`:
-    - Read the corresponding `docs/project-reference/*.md` source file
-    - Extract the `##` section headings from the source file
-    - Add a "Key Sections" list under each doc entry showing the headings
-    - Keep it concise — headings only, no content duplication
+> **Do NOT hand-edit `.github/instructions/*.instructions.md` or `.github/copilot-instructions.md`.** They are fully regenerated by the script and gated by `copilot:verify:divergence`, which does **full-file equality** against fresh generator output (`.claude/scripts/verify-copilot-divergence.cjs:62-69,109`). Any manual edit fails that oracle and is clobbered on the next run. ALL enrichment flows through the curated sources below → re-run the script.
 
-2. **For `.github/copilot-instructions.md`**:
-    - Verify the TL;DR golden rules in `docs/copilot-registry.json` → `projectInstructions.goldenRules` still match CLAUDE.md
-    - Check if any new project-reference files exist but are missing from `docs/copilot-registry.json`
-    - If missing entries found, add them to the registry and re-run the script
-
-3. **For `docs/copilot-registry.json`**:
-    - Verify each `summary` field accurately describes the current file content
-    - Update stale summaries based on actual file content
-    - Add entries for any new `docs/project-reference/*.md` files
+1. **For `docs/copilot-registry.json`** (the per-group summaries source):
+    - If Phase 0 created the file, treat it as a first draft and refine it immediately
+    - Verify each `summary` field accurately describes the current file content; update stale summaries based on the actual file
+    - Check for new `docs/project-reference/**/*.md` files missing from the registry; add entries (`file`, `title`, `summary`, `whenToRead`, `group`)
+2. **For golden rules**: verify `projectInstructions.goldenRules` in `docs/copilot-registry.json` still match CLAUDE.md
+3. **Re-run the script** so the curated sources reach the generated files: `node .claude/scripts/sync-copilot-workflows.cjs`
 
 ### Phase 3: Verification
 
@@ -110,49 +134,22 @@ Check that:
 - [x] Per-group instruction files contain READ prompts
 - [x] No old `common.copilot-instructions.md` file remains
 - [x] Workflow count matches workflows.json
+- [x] `docs/copilot-registry.json` exists and parses
 - [x] All project-reference files are represented in the registry
-
----
-
-## AI Enrichment Protocol
-
-When enriching per-group instruction files, follow this pattern for each doc entry:
-
-```markdown
-## [Doc Title](relative/path)
-
-**Summary:** One-line summary from registry.
-
-**Key Sections:**
-
-- Section 1 Name
-- Section 2 Name
-- Section 3 Name
-- ...
-
-> **READ** `docs/project-reference/filename.md` when: trigger description
-```
-
-**Rules:**
-
-- Extract ONLY `##` level headings from the source file (not `###` or deeper)
-- List heading names only — do NOT copy content
-- Keep the READ prompt from the registry `whenToRead` field
-- If a file is very large (>30KB), note the file size: `(~59KB - read relevant sections)`
 
 ---
 
 ## Output Files
 
-| File                                                     | Type                                    | Content                                        |
-| -------------------------------------------------------- | --------------------------------------- | ---------------------------------------------- |
-| `.github/copilot-instructions.md`                        | Project-specific                        | TL;DR + project-reference index + READ prompts |
-| `.github/instructions/common-protocol.instructions.md`   | Generic (applyTo: `**/*`)               | Prompt protocol + workflow catalog + dev rules |
-| `.github/instructions/backend-csharp.instructions.md`    | Backend (applyTo: `**/*.cs`)            | Backend doc summaries + READ prompts           |
-| `.github/instructions/frontend-angular.instructions.md`  | Frontend (applyTo: `**/*.ts,**/*.html`) | Frontend doc summaries + READ prompts          |
-| `.github/instructions/styling-scss.instructions.md`      | Styling (applyTo: `**/*.scss,**/*.css`) | Styling doc summaries + READ prompts           |
-| `.github/instructions/testing.instructions.md`           | Testing (applyTo: `**/*Test*/**,...`)   | Testing doc summaries + READ prompts           |
-| `.github/instructions/project-reference.instructions.md` | Cross-cutting (applyTo: `**/*`)         | General project doc summaries + READ prompts   |
+| File                                                     | Type                                          | Content                                        |
+| -------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------- |
+| `.github/copilot-instructions.md`                        | Project-specific                              | TL;DR + project-reference index + READ prompts |
+| `.github/instructions/common-protocol.instructions.md`   | Generic (applyTo: `**/*`)                     | Prompt protocol + workflow catalog + dev rules |
+| `.github/instructions/backend-csharp.instructions.md`    | Backend (applyTo: `**/*.cs`)                  | Backend doc summaries + READ prompts           |
+| `.github/instructions/frontend.instructions.md`          | Frontend (applyTo: configured frontend globs) | Frontend doc summaries + READ prompts          |
+| `.github/instructions/styling-scss.instructions.md`      | Styling (applyTo: `**/*.scss,**/*.css`)       | Styling doc summaries + READ prompts           |
+| `.github/instructions/testing.instructions.md`           | Testing (applyTo: `**/*Test*/**,...`)         | Testing doc summaries + READ prompts           |
+| `.github/instructions/project-reference.instructions.md` | Cross-cutting (applyTo: `**/*`)               | General project doc summaries + READ prompts   |
 
 ---
 
@@ -184,6 +181,10 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 
 **Solution:** Add entries to `docs/copilot-registry.json`, then re-run script
 
+### Issue: `docs/copilot-registry.json` not found
+
+**Solution:** Re-run this skill, not the raw script. The skill MUST auto-create `docs/copilot-registry.json` in Phase 0, then run the generator. If manually running only `node .claude/scripts/sync-copilot-workflows.cjs`, create or restore the registry first.
+
 ### Issue: Stale summaries
 
 **Solution:** Run this skill — AI will read files and update summaries
@@ -192,8 +193,7 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 
 ## Related Skills
 
-- `/ai-dev-tools-sync` — Broader Claude/Copilot sync (skills, prompts, agents)
-- `/sync-copilot-workflows` — Workflow-only sync (subset of this skill)
+- `/sync-ai-dev-tools` — Full-pipeline Claude/Copilot sync (skills, prompts, agents) + ordered both-mirror regen (user-invoke-only)
 
 ---
 
@@ -227,6 +227,7 @@ Sync Claude Code knowledge to GitHub Copilot instructions. Two-tier output: proj
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -252,6 +253,7 @@ Sync Claude Code knowledge to GitHub Copilot instructions. Two-tier output: proj
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
+**IMPORTANT MUST ATTENTION** auto-create `docs/copilot-registry.json` before generation when it is missing
 **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality

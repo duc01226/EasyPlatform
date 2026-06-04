@@ -20,6 +20,7 @@
 - **Surgical changes (context-aware)** — Bug fix: every changed line traces to the bug (diff test). Review/enhancement: implement improvements AND announce them explicitly. Never silently scope-creep.
 - **Surface ambiguity before coding** — List assumptions (scope, format, volume), present interpretations with effort estimates, push back when simpler approach exists. Never pick silently and run.
 - **Goal-driven execution** — Each TaskCreate step needs explicit verify criterion: `step → verify: [observable check]`, not "make it work"
+- **Goal Contract** — Before planned, workflow, or non-trivial skill work: resolve the active Goal Contract (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from request via `.claude/templates/goal-contract-template.md`), execute against its saved success criteria, append iteration evidence, and close only when the Goal Satisfaction matrix passes or a blocker is escalated. See `SYNC:goal-contract-satisfaction-loop` in `.claude/skills/shared/sync-inline-versions.md`. Tiny conversational tasks may skip only with a recorded reason.
 - **Tests verify intent** — Tests must name the business rule or invariant they protect, not only assert observed behavior
 
 ---
@@ -28,7 +29,7 @@
 
 - **File Naming**: kebab-case with meaningful names — LLMs must understand purpose from filename alone without reading content
 - **File Size**: Keep code files under 200 lines — split into focused components, extract utilities, use composition over inheritance
-- Skills: `docs-seeker` (docs via Context7), `ai-multimodal` (images/video), `sequential-thinking`/`debug-investigate` (analysis), `gh` (GitHub)
+- Skills/tools: `docs-seeker` (docs via Context7), available image/video analysis tools, `sequential-thinking`/`debug-investigate` (analysis), `gh` (GitHub)
 - **[IMPORTANT]** Follow codebase structure and code standards in `./docs` during implementation
 - **[IMPORTANT]** Always implement real code — never simulate or mock implementations
 - **[CRITICAL] Class Responsibility Rule:**
@@ -309,8 +310,8 @@ After completing code changes, check for stale documentation:
 1. Run `git diff --name-only` to list changed files
 2. Map changed files to relevant docs:
     - Hook/skill/workflow files → `.claude/docs/` reference docs
-    - Backend service code → `docs/business-features/` for affected module
-    - Frontend app code → `docs/project-reference/frontend-patterns-reference.md` + business-feature docs
+    - Backend service code → `docs/specs/` Feature Spec for affected capability
+    - Frontend app code → `docs/project-reference/frontend-patterns-reference.md` + `docs/specs/` Feature Specs
     - `CLAUDE.md` structural changes → `.claude/docs/README.md`
 3. Flag stale docs in final review task or update immediately
 4. Output `No doc updates needed` if no mapping applies

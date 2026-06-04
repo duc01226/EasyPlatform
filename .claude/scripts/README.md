@@ -28,16 +28,16 @@ Centralized environment variable resolver that follows Claude Code's hierarchy.
 
 ```bash
 # Resolve a variable for a specific skill
-python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --skill ai-multimodal
+python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --skill visual analysis tooling
 
 # With verbose output
-python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --skill ai-multimodal --verbose
+python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --skill visual analysis tooling --verbose
 
 # Find all locations where variable is defined
 python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --find-all
 
 # Show hierarchy for a skill
-python ~/.claude/scripts/resolve_env.py --show-hierarchy --skill ai-multimodal
+python ~/.claude/scripts/resolve_env.py --show-hierarchy --skill visual analysis tooling
 
 # Export format for shell sourcing
 eval $(python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --export)
@@ -54,21 +54,21 @@ sys.path.insert(0, str(Path.home() / '.claude' / 'scripts'))
 from resolve_env import resolve_env, find_all, show_hierarchy
 
 # Simple resolution
-api_key = resolve_env('GEMINI_API_KEY', skill='ai-multimodal')
+api_key = resolve_env('GEMINI_API_KEY', skill='visual analysis tooling')
 
 # With default value
-api_key = resolve_env('GEMINI_API_KEY', skill='ai-multimodal', default='fallback-key')
+api_key = resolve_env('GEMINI_API_KEY', skill='visual analysis tooling', default='fallback-key')
 
 # With verbose output
-api_key = resolve_env('GEMINI_API_KEY', skill='ai-multimodal', verbose=True)
+api_key = resolve_env('GEMINI_API_KEY', skill='visual analysis tooling', verbose=True)
 
 # Find all locations
-locations = find_all('GEMINI_API_KEY', skill='ai-multimodal')
+locations = find_all('GEMINI_API_KEY', skill='visual analysis tooling')
 for description, value, path in locations:
     print(f"{description}: {value}")
 
 # Show hierarchy
-show_hierarchy(skill='ai-multimodal')
+show_hierarchy(skill='visual analysis tooling')
 ```
 
 ### Integration Pattern
@@ -85,11 +85,11 @@ sys.path.insert(0, str(Path.home() / '.claude' / 'scripts'))
 from resolve_env import resolve_env
 
 # Resolve API key
-api_key = resolve_env('GEMINI_API_KEY', skill='ai-multimodal')
+api_key = resolve_env('GEMINI_API_KEY', skill='visual analysis tooling')
 
 if not api_key:
     print("Error: GEMINI_API_KEY not found")
-    print("Run: python ~/.claude/scripts/resolve_env.py --show-hierarchy --skill ai-multimodal")
+    print("Run: python ~/.claude/scripts/resolve_env.py --show-hierarchy --skill visual analysis tooling")
     sys.exit(1)
 
 # Use api_key...
@@ -114,7 +114,7 @@ export TEST_VAR=from-runtime
 python ~/.claude/scripts/resolve_env.py TEST_VAR --verbose
 
 # Test with skill context
-python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --skill ai-multimodal --find-all
+python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --skill visual analysis tooling --find-all
 ```
 
 ## generate_catalogs.py

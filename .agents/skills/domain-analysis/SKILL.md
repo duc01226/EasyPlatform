@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,7 +56,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Analyze business domain: bounded contexts, aggregates, entities, VOs, domain events, cross-context relationships. Generate domain model report + ERD.
+**Goal:** Analyze business domain (bounded contexts, aggregates, entities, VOs, domain events, cross-context relationships) and generate a domain model report + ERD — producing a user-validated DDD domain model with correct bounded contexts, aggregate boundaries, and event flows so downstream implementation builds on the right invariants and avoids costly boundary rework after consumers depend on them.
 
 **Workflow:**
 
@@ -91,7 +95,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Ubiquitous Language Rules:**
 
-- Every noun in codebase matches domain expert vocabulary exactly (not "User" when domain says "Employee")
+- Every noun in codebase matches domain expert vocabulary exactly (not "User" when the domain says "Customer")
 - Class/method/variable names reflect ubiquitous language — zero translation layers inside bounded context
 - Developers say "we call it X but domain means Y" → model is wrong, fix it
 
@@ -149,7 +153,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 | Primitive Usage                          | Replace With                          |
 | ---------------------------------------- | ------------------------------------- |
-| `string employeeId`                      | `EmployeeId` typed wrapper            |
+| `string orderId`                         | `OrderId` typed wrapper               |
 | `decimal amount, string currency`        | `Money { amount, currency }`          |
 | `string street, string city, string zip` | `Address { ... }`                     |
 | `DateTime start, DateTime end`           | `DateRange { start, end }`            |
@@ -161,9 +165,13 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ### Value Object Construction Pattern
 
+A VO is self-validating: invariants enforced at construction via a factory (no public constructor that can produce an invalid instance), immutable, and equality-by-value. The base class and factory names below are one illustrative instantiation — translate to your language's equivalents.
+
+**Example (illustrative — adapt to your language):**
+
 ```csharp
 // Self-validating VO — never an invalid instance in memory
-public sealed class Email : PlatformValueObject<Email>
+public sealed class Email : ValueObject<Email>
 {
     private Email(string value) { Value = value; }
     public string Value { get; }
@@ -186,12 +194,12 @@ public sealed class Email : PlatformValueObject<Email>
 
 ### VO Persistence Strategies
 
-| Strategy                    | When to Use                                  | Trade-offs                               |
-| --------------------------- | -------------------------------------------- | ---------------------------------------- |
-| Owned types (EF Core)       | VO maps to same table as owning entity       | Simple, no FK, nullable columns possible |
-| Embedded document (MongoDB) | VO stored as subdocument                     | Natural fit, no joins                    |
-| JSON column                 | Complex VO, low query frequency on VO fields | Flexible, not queryable by parts         |
-| Serialized string           | Simple VOs (Email, PostalCode)               | Compact, unqueryable by parts            |
+| Strategy                | When to Use                                  | Trade-offs                               |
+| ----------------------- | -------------------------------------------- | ---------------------------------------- |
+| Owned types (EF Core)   | VO maps to same table as owning entity       | Simple, no FK, nullable columns possible |
+| Embedded document store | VO stored as subdocument                     | Natural fit, no joins                    |
+| JSON column             | Complex VO, low query frequency on VO fields | Flexible, not queryable by parts         |
+| Serialized string       | Simple VOs (Email, PostalCode)               | Compact, unqueryable by parts            |
 
 **Rule:** VOs NEVER have own table with primary key — that makes them entities by infrastructure.
 
@@ -222,47 +230,51 @@ public sealed class Email : PlatformValueObject<Email>
 | ---------------------------------------- | ------------------------------------------- |
 | Entity is data bag, logic in services    | Entity contains behavior + invariants       |
 | `public set` on all properties           | Private setters, mutation via named methods |
-| `EmployeeService.Activate(employee)`     | `employee.Activate()`                       |
+| `OrderService.Confirm(order)`            | `order.Confirm()`                           |
 | Service checks rules then mutates entity | Entity refuses invalid state transitions    |
 | Logic duplicated across services         | Single authoritative location in entity     |
 
 **Tell Don't Ask Principle:**
 
-- BAD: `if (employee.Status == Active) { employee.Status = Suspended; }` (external ask + mutate)
-- GOOD: `employee.Suspend(reason)` (entity enforces its own invariants)
+- BAD: `if (order.Status == Confirmed) { order.Status = OnHold; }` (external ask + mutate)
+- GOOD: `order.Hold(reason)` (entity enforces its own invariants)
 
 ### Entity Invariant Enforcement
 
-```csharp
-public class Employee : RootAuditedEntity<Employee, string, string>
-{
-    private Employee() { }  // ORM hydration only
+A rich entity guards its own state: a private constructor reserved for ORM/persistence hydration, named factory methods for valid creation, and intent-named mutation methods that reject invalid transitions and emit domain events. The base class, guard helper, and ID generator below are one illustrative instantiation — substitute your language's equivalents.
 
-    public static Employee Create(string name, Email email, DepartmentId departmentId)
+**Example (illustrative — adapt to your language):**
+
+```csharp
+public class Order : AuditedAggregateRoot<Order, string>
+{
+    private Order() { }  // ORM hydration only
+
+    public static Order Create(string name, Email email, WarehouseId warehouseId)
     {
         Guard.NotNullOrWhitespace(name, nameof(name));
         Guard.NotNull(email, nameof(email));
-        return new Employee
+        return new Order
         {
             Id = Ulid.NewUlid().ToString(),
             Name = name,
             Email = email,
-            DepartmentId = departmentId,
-            Status = EmployeeStatus.Active
+            WarehouseId = warehouseId,
+            Status = OrderStatus.Confirmed
         };
     }
 
-    public void Terminate(string reason, DateOnly terminationDate)
+    public void Cancel(string reason, DateOnly cancellationDate)
     {
-        if (Status == EmployeeStatus.Terminated)
-            throw new DomainException("Employee already terminated");
-        if (terminationDate < DateOnly.FromDateTime(DateTime.UtcNow))
-            throw new DomainException("Termination date cannot be in the past");
+        if (Status == OrderStatus.Cancelled)
+            throw new DomainException("Order already cancelled");
+        if (cancellationDate < DateOnly.FromDateTime(DateTime.UtcNow))
+            throw new DomainException("Cancellation date cannot be in the past");
 
-        Status = EmployeeStatus.Terminated;
-        TerminationReason = reason;
-        TerminationDate = terminationDate;
-        AddDomainEvent(new EmployeeTerminatedDomainEvent(Id, terminationDate));
+        Status = OrderStatus.Cancelled;
+        CancellationReason = reason;
+        CancellationDate = cancellationDate;
+        AddDomainEvent(new OrderCancelledDomainEvent(Id, cancellationDate));
     }
 }
 ```
@@ -289,12 +301,12 @@ Active → Archived (Archive())
 
 ### Domain Validation Layers
 
-| Layer                   | What It Validates                               | Returns                             |
-| ----------------------- | ----------------------------------------------- | ----------------------------------- |
-| **Value Object**        | Single-value format/range invariants            | Exception or Result at construction |
-| **Entity method**       | Aggregate consistency rules, state transitions  | DomainException                     |
-| **Application service** | Cross-aggregate rules, authorization, existence | ValidationResult / ProblemDetails   |
-| **Infrastructure**      | DB constraints (last resort, NEVER first line)  | Database exception                  |
+| Layer                   | What It Validates                               | Failure Signal (per stack)                                                       |
+| ----------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------- |
+| **Value Object**        | Single-value format/range invariants            | Construction failure (raised error or result type)                               |
+| **Entity method**       | Aggregate consistency rules, state transitions  | Domain rule violation (e.g. `DomainException`)                                   |
+| **Application service** | Cross-aggregate rules, authorization, existence | Structured validation result (e.g. `ValidationResult` / problem-details payload) |
+| **Infrastructure**      | DB constraints (last resort, NEVER first line)  | Persistence-layer error (last-resort constraint)                                 |
 
 **Decision rule:**
 
@@ -308,8 +320,8 @@ Use when: construction requires domain logic, multiple paths, raises domain even
 
 **Naming:**
 
-- `Employee.Create(...)` — primary creation
-- `Employee.Hire(...)` — semantically loaded creation (domain language)
+- `Order.Create(...)` — primary creation
+- `Order.Place(...)` — semantically loaded creation (domain language)
 - Private constructor — ORM hydration only, NEVER called directly
 
 ### Temporal (Bi-Temporal) Entities
@@ -317,9 +329,9 @@ Use when: construction requires domain logic, multiple paths, raises domain even
 Two time axes: **valid time** (fact true in real world) + **transaction time** (recorded in system).
 
 ```
-EmployeeSalary {
-    validFrom: DateOnly     // valid time: salary effective from
-    validTo: DateOnly       // valid time: salary effective until
+ProductPrice {
+    validFrom: DateOnly     // valid time: price effective from
+    validTo: DateOnly       // valid time: price effective until
     recordedAt: DateTime    // transaction time: when entered into system
 }
 ```
@@ -366,6 +378,10 @@ Use when: regulatory compliance, retroactive corrections, "as-of" queries.
 | Deletion cascade                          | Domain event → handler → compensating action in other aggregate   |
 
 ### Aggregate Invariant Enforcement
+
+All mutation flows through the aggregate root, which checks every invariant before applying a change and recomputes derived state so no member can be left inconsistent. The throw-on-violation idiom below is one illustrative instantiation — your language may surface invariant breaches differently (exceptions, result types).
+
+**Example (illustrative — adapt to your language):**
 
 ```csharp
 public void AddLineItem(ProductId productId, int quantity, Money unitPrice)
@@ -432,7 +448,7 @@ public void AddLineItem(ProductId productId, int quantity, Money unitPrice)
 | Type            | FK in Child PK?            | Child Existence                                             |
 | --------------- | -------------------------- | ----------------------------------------------------------- |
 | Identifying     | YES (FK is part of PK)     | Child cannot exist without parent (line item without order) |
-| Non-identifying | NO (FK is separate column) | Child can exist independently (employee without department) |
+| Non-identifying | NO (FK is separate column) | Child can exist independently (order without warehouse)     |
 
 **Mapping to DDD:** Identifying relationship → child entity inside parent aggregate. Non-identifying FK → likely separate aggregates.
 
@@ -472,12 +488,12 @@ public void AddLineItem(ProductId productId, int quantity, Money unitPrice)
 
 **Format:** `{AggregateNoun}{PastTenseVerb}` — what happened, not what to do.
 
-| Good                 | Bad                                  |
-| -------------------- | ------------------------------------ |
-| `EmployeeTerminated` | `TerminateEmployee` (command naming) |
-| `OrderConfirmed`     | `OrderStatusChanged` (too generic)   |
-| `PaymentProcessed`   | `PaymentComplete` (not past tense)   |
-| `SalaryBandUpdated`  | `SalaryChanged` (vague)              |
+| Good                | Bad                                |
+| ------------------- | ---------------------------------- |
+| `OrderCancelled`    | `CancelOrder` (command naming)     |
+| `OrderConfirmed`    | `OrderStatusChanged` (too generic) |
+| `PaymentProcessed`  | `PaymentComplete` (not past tense) |
+| `SalaryBandUpdated` | `SalaryChanged` (vague)            |
 
 ### Event Payload Design Rules
 
@@ -485,7 +501,7 @@ public void AddLineItem(ProductId productId, int quantity, Money unitPrice)
 | ---------------------- | -------------------------------------------------------------------------------------- |
 | Minimal vs fat         | **Minimal (default):** AggregateId + what changed. Consumer queries for rest if needed |
 | Fat event              | Accept when: round-trip cost high AND consumers known AND staleness acceptable         |
-| Required fields always | `AggregateId`, `OccurredOn: DateTime (UTC)`, `Version`, `CorrelationId`                |
+| Required fields always | `AggregateId`, `OccurredOn` (UTC timestamp), `Version`, `CorrelationId`                |
 | No mutable references  | Payload contains value copies, not object references                                   |
 
 ### Domain Events vs Integration Events
@@ -493,7 +509,7 @@ public void AddLineItem(ProductId productId, int quantity, Money unitPrice)
 | Dimension        | Domain Event               | Integration Event                           |
 | ---------------- | -------------------------- | ------------------------------------------- |
 | Scope            | Within one bounded context | Across bounded contexts                     |
-| Delivery         | In-process, post-commit    | Via message bus (RabbitMQ, Kafka)           |
+| Delivery         | In-process, post-commit    | Via configured message bus or event stream  |
 | Schema ownership | Domain owns, internal      | Published Language contract                 |
 | Versioning       | Internal refactor freely   | Versioned, backward-compatible              |
 | Failure handling | Transaction rollback       | At-least-once delivery, idempotent consumer |
@@ -521,10 +537,10 @@ public void AddLineItem(ProductId productId, int quantity, Money unitPrice)
 ### Interface Design Principles
 
 1. One repository per aggregate root — NEVER one for child entities
-2. Domain language in methods — `GetActiveEmployeesInDepartment()` not `FindAll(e => e.Status == Active)`
+2. Domain language in methods — `GetConfirmedOrdersInWarehouse()` not `FindAll(e => e.Status == Active)`
 3. Return domain objects — repositories return entities, not DTOs
-4. No infrastructure concerns — no `IQueryable`, no `DbSet`, no connection strings in interface
-5. Async-first — all methods return `Task<T>` or `IAsyncEnumerable<T>`
+4. No infrastructure concerns — no leaked query/ORM types or connection strings in the interface.
+5. Async-first — methods return the configured runtime's async primitive.
 
 ### Repository vs DAO
 
@@ -539,10 +555,14 @@ public void AddLineItem(ProductId productId, int quantity, Money unitPrice)
 
 Use when: rule used in multiple places, warrants naming + testing, needs composition.
 
+A specification names a query predicate as a reusable, composable, testable unit owned by the domain. The expression-tree form below is one illustrative instantiation — your language may model it as a predicate function, query builder, or specification object.
+
+**Example (illustrative — adapt to your language):**
+
 ```csharp
 // Static expression on entity — composable, testable
-public static Expression<Func<Employee, bool>> ByDepartmentExpression(string deptId)
-    => e => e.DepartmentId == deptId && e.Status == EmployeeStatus.Active;
+public static Expression<Func<Order, bool>> ByWarehouseExpression(string warehouseId)
+    => o => o.WarehouseId == warehouseId && o.Status == OrderStatus.Confirmed;
 ```
 
 **When NOT to use Specification:** Simple single-use predicate → inline lambda. Rule only used once → repository method directly.
@@ -551,20 +571,20 @@ public static Expression<Func<Employee, bool>> ByDepartmentExpression(string dep
 
 ## DDD Reference: Anti-Patterns Quick Reference
 
-| Anti-Pattern                | Detection Signal                                                   | Fix                                           |
-| --------------------------- | ------------------------------------------------------------------ | --------------------------------------------- |
-| **Anemic domain model**     | Services have entity-specific logic; entity has all public setters | Move logic to entity                          |
-| **God aggregate**           | Aggregate > 5 entities or 100+ ms load time                        | Extract sub-aggregates                        |
-| **Leaky aggregate**         | External code mutates child entities directly                      | Private setters + root mutation methods       |
-| **Primitive obsession**     | 3+ primitives always travel together as group                      | Introduce Value Object                        |
-| **Implicit concept**        | Domain expert names it, code doesn't model it                      | Explicit class                                |
-| **Feature envy**            | Method uses more of B's data than A's                              | Move method to B                              |
-| **Getter/setter entity**    | All mutation via property assignment, no intent-named methods      | Replace with `Terminate()`, `Approve()`, etc. |
-| **Cross-aggregate loading** | Full aggregate loaded just to read one field                       | Pass scalar; resolve in app service           |
-| **Side effects in handler** | Command handler calls multiple services after save                 | Domain event + separate handlers              |
-| **Cross-service FK**        | Database FK across microservice schemas                            | ID reference + event-driven sync              |
-| **Shared Kernel overuse**   | Two teams, one shared model, constant coordination overhead        | Split to Customer-Supplier                    |
-| **Missing ACL**             | External model types bleed into domain classes                     | ACL at integration boundary                   |
+| Anti-Pattern                | Detection Signal                                                   | Fix                                        |
+| --------------------------- | ------------------------------------------------------------------ | ------------------------------------------ |
+| **Anemic domain model**     | Services have entity-specific logic; entity has all public setters | Move logic to entity                       |
+| **God aggregate**           | Aggregate > 5 entities or 100+ ms load time                        | Extract sub-aggregates                     |
+| **Leaky aggregate**         | External code mutates child entities directly                      | Private setters + root mutation methods    |
+| **Primitive obsession**     | 3+ primitives always travel together as group                      | Introduce Value Object                     |
+| **Implicit concept**        | Domain expert names it, code doesn't model it                      | Explicit class                             |
+| **Feature envy**            | Method uses more of B's data than A's                              | Move method to B                           |
+| **Getter/setter entity**    | All mutation via property assignment, no intent-named methods      | Replace with `Cancel()`, `Approve()`, etc. |
+| **Cross-aggregate loading** | Full aggregate loaded just to read one field                       | Pass scalar; resolve in app service        |
+| **Side effects in handler** | Command handler calls multiple services after save                 | Domain event + separate handlers           |
+| **Cross-service FK**        | Database FK across microservice schemas                            | ID reference + event-driven sync           |
+| **Shared Kernel overuse**   | Two teams, one shared model, constant coordination overhead        | Split to Customer-Supplier                 |
+| **Missing ACL**             | External model types bleed into domain classes                     | ACL at integration boundary                |
 
 ---
 
@@ -637,7 +657,7 @@ Per bounded context: classify each concept using Entity vs VO matrix above, then
 - **Child Entities:** {list — share aggregate boundary, identifying FK}
 - **Value Objects:** {list — immutable, no identity, embedded}
 - **Invariants:** {business rules this aggregate enforces atomically}
-- **Factory method:** {Employee.Create(...) / Employee.Hire(...)}
+- **Factory method:** {Order.Create(...) / Order.Place(...)}
 
 **Other Aggregates in this Context:**
 
@@ -669,9 +689,9 @@ Per bounded context: classify each concept using Entity vs VO matrix above, then
 #### Intra-Context Relationships
 
 ```markdown
-| From | To        | Type | Cardinality     | Relationship Kind       | Description              |
-| ---- | --------- | ---- | --------------- | ----------------------- | ------------------------ |
-| Job  | Candidate | M:N  | via Application | Non-identifying (assoc) | Candidates apply to jobs |
+| From  | To      | Type | Cardinality   | Relationship Kind       | Description             |
+| ----- | ------- | ---- | ------------- | ----------------------- | ----------------------- |
+| Order | Product | M:N  | via OrderLine | Non-identifying (assoc) | Orders contain products |
 ```
 
 Apply identifying vs non-identifying rule:
@@ -682,9 +702,9 @@ Apply identifying vs non-identifying rule:
 #### Cross-Context Integration (Context Map)
 
 ```markdown
-| Upstream Context | Downstream Context | Pattern | Integration Point          | Sync Mechanism |
-| ---------------- | ------------------ | ------- | -------------------------- | -------------- |
-| Recruitment      | Employee           | ACL     | Candidate becomes Employee | Domain event   |
+| Upstream Context | Downstream Context | Pattern | Integration Point  | Sync Mechanism |
+| ---------------- | ------------------ | ------- | ------------------ | -------------- |
+| Sales            | Order              | ACL     | Cart becomes Order | Domain event   |
 ```
 
 Integration patterns to apply (see context map reference table above):
@@ -698,9 +718,9 @@ Integration patterns to apply (see context map reference table above):
 
 Identify events crossing bounded context boundaries. Apply naming: `{AggregateNoun}{PastTenseVerb}`.
 
-| Event            | Source Context | Target Context(s)    | Payload (minimal)            | Trigger        |
-| ---------------- | -------------- | -------------------- | ---------------------------- | -------------- |
-| `CandidateHired` | Recruitment    | Employee, Onboarding | candidateId, jobId, hireDate | Offer accepted |
+| Event         | Source Context | Target Context(s)  | Payload (minimal)             | Trigger            |
+| ------------- | -------------- | ------------------ | ----------------------------- | ------------------ |
+| `OrderPlaced` | Sales          | Order, Fulfillment | cartId, productId, placedDate | Checkout completed |
 
 **Event design — MUST ATTENTION verify:**
 
@@ -884,6 +904,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -919,6 +940,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Produce a user-validated DDD domain model — correct bounded contexts, aggregate boundaries, and event flows — so downstream implementation builds on the right invariants and avoids costly boundary rework after consumers depend on them.
 **MUST ATTENTION** task tracking ALL tasks BEFORE starting — never begin without task breakdown
 **MUST ATTENTION** validate EVERY bounded context + key relationship with user via a direct user question — never auto-decide
 **MUST ATTENTION** domain events ALWAYS follow `{AggregateNoun}{PastTenseVerb}` naming — NEVER command-style
@@ -938,17 +960,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -966,7 +985,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

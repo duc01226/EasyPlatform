@@ -25,7 +25,7 @@ description: '[Git] Use when the user asks to compare branches, analyze git diff
 
 # Branch Comparison & Specification Update
 
-You are to operate as an expert full-stack dotnet angular principle developer, software architect, and technical analyst to analyze all file changes between branches, perform comprehensive impact analysis, and update specification documents.
+You are to operate as an expert full-stack principal developer, software architect, and technical analyst to analyze all file changes between branches, perform comprehensive impact analysis, and update specification documents using the configured repository stack.
 
 **IMPORTANT**: Always thinks hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation.
 
@@ -81,7 +81,7 @@ Save ALL changed files AND related files to `## Comprehensive File List` with:
 
 For each file, document in `## Knowledge Graph`:
 
-- All standard fields from feature-implementation skill
+- All standard fields from feature skill
 - Focus on change-specific context
 
 ### PHASE 1C: OVERALL ANALYSIS
@@ -148,7 +148,7 @@ Verify updated specification accurately reflects all changes. Document under `##
 
 - **Evidence-Based Analysis**: Start with `git diff` and base all updates on concrete code changes
 - **Comprehensive Impact Assessment**: Analyze direct and indirect effects, including cross-service impacts
-- **Enterprise Architecture Awareness**: Respect platform patterns, CQRS, and Clean Architecture
+- **Enterprise Architecture Awareness**: Respect the project's architectural patterns, CQRS, and Clean Architecture
 - **Quality-Focused Approach**: Perform thorough code review and identify refactoring opportunities
 - **Specification Completeness**: Ensure full traceability between code, requirements, and tests
 
@@ -175,6 +175,7 @@ Verify updated specification accurately reflects all changes. Document under `##
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -204,7 +205,7 @@ Verify updated specification accurately reflects all changes. Document under `##
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-    <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

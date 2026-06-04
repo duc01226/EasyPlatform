@@ -87,15 +87,15 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/python-call-guide.cjs"
-                },
-                {
-                    "type": "command",
                     "command": "node ./.claude/hooks/windows-command-detector.cjs"
                 },
                 {
                     "type": "command",
                     "command": "node ./.claude/hooks/git-commit-block.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/doc-sync-gate.cjs"
                 }
             ],
             "matcher": "Bash"
@@ -136,6 +136,10 @@
                 {
                     "type": "command",
                     "command": "node ./.claude/hooks/skill-enforcement.cjs"
+                },
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/agent-files-skill-gate.cjs"
                 }
             ],
             "matcher": "Skill"
@@ -153,7 +157,7 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/graph-context-injector.cjs"
+                    "command": "node ./.claude/hooks/pretooluse-ctx-graph.cjs"
                 }
             ],
             "matcher": "Skill|Agent"
@@ -162,15 +166,7 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/code-review-rules-injector.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/dev-rules-injector.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/mindset-injector.cjs"
+                    "command": "node ./.claude/hooks/pretooluse-ctx-crr.cjs"
                 }
             ],
             "matcher": "Skill|Agent|Edit|Write|MultiEdit|TaskCreate|TaskUpdate"
@@ -179,7 +175,25 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/mindset-compact-injector.cjs"
+                    "command": "node ./.claude/hooks/pretooluse-ctx-dev.cjs"
+                }
+            ],
+            "matcher": "Skill|Agent|Edit|Write|MultiEdit|TaskCreate|TaskUpdate"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/pretooluse-ctx-mindset.cjs"
+                }
+            ],
+            "matcher": "Skill|Agent|Edit|Write|MultiEdit|TaskCreate|TaskUpdate"
+        },
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/pretooluse-ctx-readbash.cjs"
                 }
             ],
             "matcher": "Read|Grep|Glob|Bash"
@@ -188,35 +202,7 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/knowledge-context.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/design-system-context.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/design-system-canonical-guide.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/code-patterns-injector.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/backend-context.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/frontend-context.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/scss-styling-context.cjs"
-                },
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/lessons-injector.cjs"
+                    "command": "node ./.claude/hooks/pretooluse-ctx-edit.cjs"
                 }
             ],
             "matcher": "Edit|Write|MultiEdit"
@@ -225,10 +211,10 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/role-context-injector.cjs"
+                    "command": "node ./.claude/hooks/pretooluse-ctx-edit-tail.cjs"
                 }
             ],
-            "matcher": "Write"
+            "matcher": "Edit|Write|MultiEdit"
         },
         {
             "hooks": [
@@ -243,7 +229,7 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/feature-docs-context.cjs"
+                    "command": "node ./.claude/hooks/pretooluse-ctx-edit-spec.cjs"
                 }
             ],
             "matcher": "Write|Edit|MultiEdit"
@@ -252,7 +238,7 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/test-specs-context.cjs"
+                    "command": "node ./.claude/hooks/doc-sync-gate.cjs"
                 }
             ],
             "matcher": "Write|Edit|MultiEdit"
@@ -270,19 +256,10 @@
             "hooks": [
                 {
                     "type": "command",
-                    "command": "node ./.claude/hooks/design-system-canonical-guide.cjs"
+                    "command": "node ./.claude/hooks/pretooluse-ctx-canon.cjs"
                 }
             ],
             "matcher": "Read|Skill"
-        },
-        {
-            "hooks": [
-                {
-                    "type": "command",
-                    "command": "node ./.claude/hooks/artifact-path-resolver.cjs"
-                }
-            ],
-            "matcher": "Write"
         },
         {
             "hooks": [
@@ -295,6 +272,15 @@
         }
     ],
     "SessionStart": [
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "node ./.claude/hooks/verify-install.cjs"
+                }
+            ],
+            "matcher": "startup|resume"
+        },
         {
             "hooks": [
                 {

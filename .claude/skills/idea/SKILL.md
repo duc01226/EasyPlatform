@@ -15,7 +15,7 @@ description: '[Project Management] Use when capturing new ideas, feature request
 
 ## Quick Summary
 
-**Goal:** Capture raw product ideas as structured backlog artifacts with project module context.
+**Goal:** Turn a vague product idea into a validated, tech-agnostic, module-anchored backlog artifact ready for `/refine` to convert into a PBI — preserving problem intent without leaking solution or stack choices.
 
 > **MANDATORY IMPORTANT MUST ATTENTION** TaskCreate task to READ project-specific reference doc:
 > `project-structure-reference.md` — project patterns and structure. Not found → search: project documentation, coding standards, architecture docs.
@@ -35,11 +35,12 @@ description: '[Project Management] Use when capturing new ideas, feature request
 - Validation NEVER optional — MANDATORY step
 - Auto-detect module silently; prompt only when ambiguous
 - MUST ATTENTION include `t_shirt_size` (XS/S/M/L/XL) in artifact for early sizing
-- **[BLOCKING] Tech-agnostic output:** the problem statement stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 (all modes, not only greenfield) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase.
+- **[BLOCKING] Tech-agnostic output (M1):** the problem statement stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 (all modes, not only greenfield) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase.
+- **M3 Logical-ID Assignment (forward to PBI):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. An idea is a tech-agnostic business-intent definition only — do NOT assign logical IDs yet. When the idea advances to a PBI (via `/refine`), the PBI assigns logical IDs (`FR-`/`BR-`) as the PRIMARY citation spine and tracks `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths) in a SEPARATE carrier from the business-intent prose. Keep the idea's problem/value narrative free of source identifiers so the PBI can inherit it cleanly.
 
 ## Greenfield Mode
 
-> **Auto-detected:** No codebase found (no `src/`, `app/`, `lib/`, `server/`, `packages/` dirs; no `package.json`/`*.sln`/`go.mod`; no `project-config.json`) → greenfield mode. Planning artifacts (`docs/`, `plans/`, `.claude/`) don't count — project must have actual code dirs with content.
+> **Auto-detected:** No codebase found (no discovered source directories, no manifest files, no populated `project-config.json`) → greenfield mode. Planning artifacts (`docs/`, `plans/`, `.claude/`) don't count — repository must have actual code directories with content.
 
 **When greenfield detected:**
 
@@ -74,7 +75,7 @@ description: '[Project Management] Use when capturing new ideas, feature request
 
 **Dynamic Discovery:**
 
-1. Run: `Glob("docs/business-features/*/README.md")`
+1. Run: `Glob("docs/specs/*/README.md")`
 2. Extract module names from paths
 3. Match idea keywords against module keywords
 
@@ -86,7 +87,7 @@ description: '[Project Management] Use when capturing new ideas, feature request
 
 **If module detected:**
 
-1. Read `docs/business-features/{module}/README.md` (first 200 lines)
+1. Read `docs/specs/{module}/README.md` (first 200 lines)
 2. Extract feature list from Quick Navigation section
 3. Add to frontmatter: `module: {detected_module}`, `related_features: [Feature1, Feature2]`
 
@@ -160,7 +161,7 @@ Document under `## Validation Summary`. Update artifact based on answers.
 `AskUserQuestion` after capture:
 
 1. `/refine` — Refine into PBI (Recommended)
-2. `/tdd-spec` — Jump straight to test spec
+2. `/spec [mode=tests]` — Jump straight to test spec
 3. `/plan` — Start implementation planning
 
 Output: "Idea captured! To refine into a PBI, run: `/refine {filename}`"
@@ -225,7 +226,7 @@ Module detected: "Module context from {module} will be used during refinement."
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** Not already in workflow → MUST ATTENTION use `AskUserQuestion`:
 >
-> 1. **Activate `idea-to-pbi` workflow** (Recommended) — idea → refine → refine-review → story → story-review → prioritize
+> 1. **Activate `workflow-idea-to-pbi` workflow** (Recommended) — idea → refine → review-artifact --type=pbi → story → review-artifact --type=story → prioritize
 > 2. **Execute `/idea` directly** — run standalone
 
 ---
@@ -266,6 +267,7 @@ Module detected: "Module context from {module} will be used during refinement."
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -296,7 +298,7 @@ Module detected: "Module context from {module} will be used during refinement."
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -331,10 +333,12 @@ Module detected: "Module context from {module} will be used during refinement."
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Turn a vague product idea into a validated, tech-agnostic, module-anchored backlog artifact ready for `/refine` to convert into a PBI — preserving problem intent without leaking solution or stack choices.
 **IMPORTANT MUST ATTENTION** `TaskCreate` break ALL work into small tasks BEFORE starting
 **IMPORTANT MUST ATTENTION** validate all decisions with user via `AskUserQuestion` — NEVER auto-decide
 **IMPORTANT MUST ATTENTION** Discovery Interview + Validation NEVER optional — MANDATORY steps
-**IMPORTANT MUST ATTENTION** NEVER ask about tech stack in greenfield mode — defer to business-evaluation phase
+**IMPORTANT MUST ATTENTION** NEVER ask about tech stack in greenfield mode — defer to business-evaluation phase — why: stack is a research-driven decision after business analysis, not a capture-time guess
+**IMPORTANT MUST ATTENTION** ALWAYS keep problem statement tech-agnostic (M1) — name no framework/product/language/pattern — why: PBI inherits the narrative cleanly downstream
 **IMPORTANT MUST ATTENTION** auto-detect module silently — prompt only when ambiguous
 **IMPORTANT MUST ATTENTION** add final review task to verify work quality
 

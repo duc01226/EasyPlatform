@@ -69,7 +69,7 @@ template_version: '1.0'
 
 - {Expected outcome}
 
-**Evidence:** `{FilePath}:{LineNumber}`
+**Evidence:** `[Source: namespace/service/id]`
 
 ---
 
@@ -84,7 +84,7 @@ template_version: '1.0'
 **When:** {Action}
 **Then:** {Expected result}
 
-**Evidence:** `{FilePath}:{LineNumber}`
+**Evidence:** `[Source: namespace/service/id]`
 
 ---
 
@@ -136,4 +136,4 @@ template_version: '1.0'
 
 ---
 
-_To generate detailed test cases, run: `/test-spec {this-file}`_
+_To generate detailed test cases, run: `/spec [mode=tests] {this-file}`_

@@ -31,7 +31,7 @@ Research, analyze, and create implementation plans.
 
 ```bash
 /plan implement OAuth2 authentication
-/plan migrate from SQLite to PostgreSQL
+/plan migrate from one database engine to another
 ```
 
 **When to use**: Before starting complex implementations

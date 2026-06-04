@@ -14,7 +14,7 @@ services:
             - '3000:3000'
         environment:
             - NODE_ENV=production
-            - DATABASE_URL=postgresql://user:pass@db:5432/app
+            - DATABASE_URL={database-url}
         depends_on:
             - db
             - redis
@@ -31,7 +31,7 @@ services:
             POSTGRES_PASSWORD: pass
             POSTGRES_DB: app
         volumes:
-            - postgres_data:/var/lib/postgresql/data
+            - db_data:{configured-db-data-path}
         networks:
             - app-network
         healthcheck:
@@ -194,7 +194,7 @@ services:
 
 ```bash
 # .env
-DATABASE_URL=postgresql://user:pass@db:5432/app
+DATABASE_URL={database-url}
 API_KEY=secret
 ```
 
@@ -216,7 +216,7 @@ services:
             - db
         environment:
             # Use service name as hostname
-            - DATABASE_URL=postgresql://user:pass@db:5432/app
+            - DATABASE_URL={database-url}
 ```
 
 ## Volume Backup/Restore
@@ -258,8 +258,8 @@ services:
         build: ./services/users
     order-service:
         build: ./services/orders
-    rabbitmq:
-        image: rabbitmq:3-management
+    broker:
+        image: { broker-image }
 ```
 
 ## Best Practices

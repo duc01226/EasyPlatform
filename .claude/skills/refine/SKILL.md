@@ -15,7 +15,7 @@ description: '[Project Management] Use when converting ideas to PBIs, validating
 
 ## Quick Summary
 
-**Goal:** Transform raw ideas into actionable PBIs using BA best practices, hypothesis validation, domain research.
+**Goal:** Transform raw ideas into a Definition-of-Ready PBI using BA best practices, hypothesis validation, and domain research — problem-validated, tech-agnostic, with testable acceptance criteria, estimates, and a Dependencies table — so a team can build it without re-asking what or why.
 
 **Workflow:**
 
@@ -52,7 +52,7 @@ description: '[Project Management] Use when converting ideas to PBIs, validating
 
 ## Greenfield Mode
 
-> **Auto-detected:** No code directories (`src/`, `app/`, `lib/`, `server/`, `packages/`, etc.) and no manifest files (`package.json`/`*.sln`/`go.mod`) found. Planning artifacts (docs/, plans/, .claude/) don't count.
+> **Auto-detected:** No discovered source directories and no manifest files found. Planning artifacts (docs/, plans/, .claude/) don't count.
 
 **When greenfield detected:**
 
@@ -76,7 +76,7 @@ If running in workflow (big-feature, greenfield-init, etc.):
 2. Read `plan.md` — project scope, goals, architecture decisions, domain model
 3. Read existing research — `{plan-dir}/research/*.md` for business evaluation, domain analysis
 4. Read `docs/project-reference/domain-entities-reference.md` (if exists) — existing domain entities
-5. Use plan context — don't re-ask questions already answered in prior steps
+5. Use plan context — don't re-ask questions answered in prior steps
 
 ## Phase 1: Idea Intake & Context Loading
 
@@ -97,7 +97,7 @@ Use WebSearch with domain terms. Summarize in max 3 bullets (market context, com
 
 ## Phase 3: Problem Hypothesis Validation
 
-Validate hypothesis with user via AskUserQuestion. 42% of startups fail due to no market need — validate before building.
+Validate hypothesis with user via AskUserQuestion. 42% of startups fail from no market need — validate before building.
 
 **Skip:** `--skip-hypothesis`, validated hypothesis exists, bug fix/tech debt.
 
@@ -176,31 +176,42 @@ Scenario: {Descriptive title}
 ### Example Scenarios
 
 ```gherkin
-Scenario: Employee creates goal with valid data
-  Given employee has permission to create goals
-    And employee is on the goal creation page
-  When employee submits goal form with all required fields
-  Then goal is created with status "Draft"
-    And goal appears in employee's goal list
+Scenario: User creates invoice with valid data
+  Given user has permission to create invoices
+    And user is on the invoice creation page
+  When user submits invoice form with all required fields
+  Then invoice is created with status "Draft"
+    And invoice appears in user's invoice list
 
-Scenario: Goal creation fails with missing required field
-  Given employee is on the goal creation page
-  When employee submits form without title
+Scenario: Invoice creation fails with missing required field
+  Given user is on the invoice creation page
+  When user submits form without title
   Then validation error "Title is required" is displayed
-    And goal is not created
+    And invoice is not created
 
-Scenario: Manager reviews subordinate goal
-  Given manager has direct reports
-    And subordinate has submitted goal for review
-  When manager opens goal review page
-  Then subordinate's goal is visible with "Pending Review" status
+Scenario: Approver reviews a submitted invoice
+  Given approver has invoices awaiting approval
+    And an invoice has been submitted for approval
+  When approver opens the invoice review page
+  Then the invoice is visible with "Pending Review" status
 ```
 
 ### Project Test Case Format
 
 - **Format:** `TC-{FEATURE}-{NNN}` (e.g., TC-GM-001)
-- **Evidence:** `file:line` format
+- **Evidence:** `[Source: namespace/service/id]` abstract-anchor format (never `file:line`)
 - See `business-analyst` skill for detailed patterns
+
+---
+
+### Phase 5.1: AI-SDD Mandate Gate (M1-M5) — BLOCKING
+
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. The generated PBI MUST satisfy M1-M5 or be reworked before Phase 8 writes it:
+
+- **Separate intent from implementation (M1/M2):** Keep a tech-agnostic **Business Intent** narrative (Description, Business Value, Acceptance Criteria) free of framework/product/language/design-pattern names and source identifiers. Put any optional implementation hints in a clearly separated **Implementation Notes** block, and put source references only in evidence carriers (`[Source: namespace/service/id]`, `**Evidence**`). Prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3.
+- **Logical Requirement ID first (M3):** Assign each requirement a logical ID (`FR-`/`BR-`) as the PRIMARY citation spine; keep `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths — those live only in the provenance sidecar) as a SECONDARY carrier in a separate evidence column/section — KEEP it, never remove it.
+- **Testable, observable acceptance criteria (M4):** Every acceptance criterion has ONE valid interpretation, observable completion states, named failure modes, and NO implementation details. Reject vague phrasing ("handle appropriately", "fast", "user-friendly").
+- **Rebuild-from-scratch validation (M5):** Before emitting, confirm a competent team with zero codebase knowledge could re-implement identical business behavior on ANY stack from the PBI alone. If a reader would have to guess a rule, limit, role, or failure mode, add it as a clarification — never guess.
 
 ---
 
@@ -220,12 +231,12 @@ Use `AskUserQuestion` with 2-3 questions:
 
 For EACH acceptance criterion, generate corresponding test case outline:
 
-| AC   | Test Outline                                            | Priority |
-| ---- | ------------------------------------------------------- | -------- |
-| AC-1 | TC: Create goal with valid data → verify persisted      | P0       |
-| AC-2 | TC: Create goal without title → verify validation error | P1       |
+| AC   | Test Outline                                               | Priority |
+| ---- | ---------------------------------------------------------- | -------- |
+| AC-1 | TC: Create invoice with valid data → verify persisted      | P0       |
+| AC-2 | TC: Create invoice without title → verify validation error | P1       |
 
-Seed for `/tdd-spec` if user chooses TDD-first. Document in PBI under `## Testability Assessment`.
+Seed for `/spec [mode=tests]` if user chooses TDD-first. Document in PBI under `## Testability Assessment`.
 
 ---
 
@@ -369,6 +380,15 @@ source_idea: '{idea artifact path or ID}'
 
 # {PBI Title}
 
+> **Business Intent (tech-agnostic — M1/M2):** Description, Business Value, Business Rules, and Acceptance Criteria below describe observable business behavior only — no framework/product/language/design-pattern names, no source identifiers. Keep implementation hints in `## Implementation Notes` and source references in evidence carriers.
+
+## Requirement IDs (M3 — logical-IDs-first)
+
+| Logical ID   | Statement (tech-agnostic) | Evidence (secondary, re-anchorable)       |
+| ------------ | ------------------------- | ----------------------------------------- |
+| FR-{MOD}-XXX | {functional requirement}  | `[Source: path:line]` or `TBD (pre-impl)` |
+| BR-{MOD}-XXX | {business rule}           | `[Source: path:line]` or `TBD (pre-impl)` |
+
 ## Description
 
 **As a** {user role}
@@ -479,6 +499,10 @@ Then error "{message}"
 **Entities:** {Entity1}, {Entity2}
 **Related Features:** {feature doc paths}
 
+## Implementation Notes
+
+> Optional, clearly separated from Business Intent. Implementation hints / source identifiers may appear here and in evidence carriers only — never in the tech-agnostic sections above. If none: `N/A — no implementation hints; rebuild from Business Intent + Requirement IDs.`
+
 ## UI Layout
 
 ### Wireframe
@@ -562,7 +586,7 @@ Then error "{message}"
 
 ## Project Integration
 
-For domain PBIs: detect module from `docs/business-features/` directory names, extract business rules from `docs/business-features/{module}/`, load entity context from feature doc. Target 8-12K tokens for feature context.
+For domain PBIs: detect module from `docs/specs/` directory names, extract business rules from `docs/specs/{module}/`, load entity context from feature doc. Target 8-12K tokens for feature context.
 
 ---
 
@@ -570,7 +594,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 - **Role Skill:** `business-analyst` (detailed patterns)
 - **Input:** `/idea` output
-- **Next Step:** `/story`, `/tdd-spec` (Recommended for TDD), `/design-spec`
+- **Next Step:** `/story`, `/spec [mode=tests]` (Recommended for TDD), `/design-spec`
 - **Prioritization:** `/prioritize`
 
 ---
@@ -583,7 +607,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 - **"/domain-analysis"** — If PBI creates/modifies domain entities, model bounded contexts before writing stories
 - **"/story"** — Break PBI into implementable user stories
 - **"/pbi-mockup"** — Generate HTML mockup from PBI
-- **"/tdd-spec"** — If using TDD approach
+- **"/spec [mode=tests]"** — If using TDD approach
 - **"Skip, continue manually"** — user decides
 
 ---
@@ -608,6 +632,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -848,14 +873,14 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:ui-system-context:reminder -->
 
@@ -906,10 +931,11 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 ## Closing Reminders
 
+- **IMPORTANT MUST ATTENTION Goal:** emit a Definition-of-Ready PBI — problem-validated, tech-agnostic, with testable acceptance criteria, estimates, and a Dependencies table — so a team can build it without re-asking what or why
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small tasks via `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
 - **MANDATORY IMPORTANT MUST ATTENTION** add final review task to verify work quality
-- **MANDATORY IMPORTANT MUST ATTENTION** add task: run `/why-review` — validate PBI design rationale before `/story` or `/tdd-spec`
+- **MANDATORY IMPORTANT MUST ATTENTION** add task: run `/why-review` — validate PBI design rationale before `/story` or `/spec [mode=tests]`
 - **MANDATORY IMPORTANT MUST ATTENTION** add task: run `/pbi-challenge` — Dev BA PIC review before `/dor-gate` or `/story`
 
 **Anti-Rationalization:**

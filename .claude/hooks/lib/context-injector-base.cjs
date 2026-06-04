@@ -19,16 +19,29 @@ const {
 
 /**
  * Check if a marker was recently injected in the transcript.
+ *
+ * M1 (single-scan): when `preloadedLines` (an array of transcript lines) is
+ * supplied, the internal readFileSync/split is skipped and the caller-provided
+ * lines are used instead. This lets a dispatcher read the transcript ONCE and
+ * pass the parsed lines to every builder. Backward-compatible: omit the param
+ * and the function reads the transcript itself, exactly as before.
+ *
  * @param {string} transcriptPath
  * @param {string} marker - Dedup marker string
  * @param {number} lines - Number of trailing lines to check
+ * @param {string[]|null} [preloadedLines] - Pre-split transcript lines (skips fs read)
  * @returns {boolean}
  */
-function wasRecentlyInjected(transcriptPath, marker, lines) {
+function wasRecentlyInjected(transcriptPath, marker, lines, preloadedLines = null) {
   try {
-    if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
-    const transcript = fs.readFileSync(transcriptPath, "utf-8");
-    return transcript.split("\n").slice(-lines).join("\n").includes(marker);
+    let allLines;
+    if (Array.isArray(preloadedLines)) {
+      allLines = preloadedLines;
+    } else {
+      if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
+      allLines = fs.readFileSync(transcriptPath, "utf-8").split("\n");
+    }
+    return allLines.slice(-lines).join("\n").includes(marker);
   } catch {
     return false;
   }
@@ -37,14 +50,43 @@ function wasRecentlyInjected(transcriptPath, marker, lines) {
 /**
  * Check if code patterns were recently injected (shared across frontend/backend).
  * @param {string} transcriptPath
+ * @param {string[]|null} [preloadedLines] - Pre-split transcript lines (M1 single-scan)
  * @returns {boolean}
  */
-function werePatternRecentlyInjected(transcriptPath) {
+function werePatternRecentlyInjected(transcriptPath, preloadedLines = null) {
   return wasRecentlyInjected(
     transcriptPath,
     SHARED_PATTERN_MARKER,
     DEDUP_LINES.CODE_PATTERNS,
+    preloadedLines,
   );
+}
+
+/**
+ * Parse an ALREADY-PARSED PreToolUse payload (no stdin read) and extract the
+ * common fields, mirroring parsePreToolUseInput's predicate exactly. Used by the
+ * pretooluse-context dispatchers, which read+parse stdin once and hand the
+ * payload to each builder.
+ *
+ * @param {object} payload - Parsed PreToolUse event payload
+ * @param {object} [options]
+ * @param {boolean} [options.skipKnowledgeCheck=false]
+ * @returns {{ filePath: string, transcriptPath: string, payload: object } | null}
+ */
+function parsePayloadForContext(payload, options = {}) {
+  if (!payload || typeof payload !== "object") return null;
+  const toolName = payload.tool_name || "";
+  const toolInput = payload.tool_input || {};
+  const transcriptPath = payload.transcript_path || "";
+
+  if (!["Edit", "Write", "MultiEdit"].includes(toolName)) return null;
+
+  const filePath = toolInput.file_path || toolInput.filePath || "";
+  if (!filePath) return null;
+
+  if (!options.skipKnowledgeCheck && isKnowledgePath(filePath)) return null;
+
+  return { filePath, transcriptPath, payload };
 }
 
 /**
@@ -107,6 +149,7 @@ function readAndInjectDoc(docPath, options = {}) {
 
 module.exports = {
   parsePreToolUseInput,
+  parsePayloadForContext,
   wasRecentlyInjected,
   werePatternRecentlyInjected,
   readAndInjectDoc,

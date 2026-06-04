@@ -4,7 +4,7 @@ import { easeOut, staggeredEaseOut } from '../utils/animations';
 
 const SCRIPT_LINES = [
     'State management solves a fundamental LLM limitation: Claude forgets everything when context compacts. Four state stores persist to disk: TaskCreate state tracks todos, Workflow state records the current step, Edit state counts file modifications, and the Swap Engine offloads outputs over 50KB to disk — so the AI always picks up exactly where it left off.',
-    '28 specialized agents embody a key design insight: a generic assistant with full-system context is worse than a scoped expert with minimal context. Each agent has defined tools, a tight system prompt, and a structured output contract. The architect agent, for example, checks all 12 microservices by design — that knowledge is baked into its prompt, not hoped for.'
+    '29 specialized agents embody a key design insight: a generic assistant with full-system context is worse than a scoped expert with minimal context. Each agent has defined tools, a tight system prompt, and a structured output contract. The architect agent, for example, checks all 12 microservices by design — that knowledge is baked into its prompt, not hoped for.'
 ];
 
 const STATE_BOXES = [
@@ -77,10 +77,10 @@ export const Scene11StateAgents: React.FC = () => {
                     })}
                 </div>
 
-                {/* Right: 28 agents */}
+                {/* Right: 29 agents */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ opacity: easeOut(frame, 14, 14), fontSize: 14, fontWeight: 700, color: C.amber, letterSpacing: 3 }}>
-                        28 SPECIALIZED AGENTS
+                        29 SPECIALIZED AGENTS
                     </div>
                     <div style={{ opacity: easeOut(frame, 20, 18), fontSize: 38, fontWeight: 800, color: C.text, lineHeight: 1.1, marginBottom: 4 }}>
                         Right expert for
@@ -114,7 +114,7 @@ export const Scene11StateAgents: React.FC = () => {
                         })}
 
                         <div style={{ opacity: easeOut(frame, 108, 16), fontSize: 14, color: C.dim, fontStyle: 'italic', paddingLeft: 4 }}>
-                            + 20 more: business-analyst, database-admin, docs-manager, e2e-runner, performance-optimizer…
+                            + 21 more: business-analyst, database-admin, docs-manager, e2e-runner, performance-optimizer…
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 ---
 name: plan-validate
 version: 2.0.0
-description: '[Planning] Use when you need validate plan with critical questions interview.'
+description: '[Planning] Use when you need to validate a plan with critical questions interview.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,7 +15,7 @@ description: '[Planning] Use when you need validate plan with critical questions
 
 ## Quick Summary
 
-**Goal:** Interview user with critical questions to validate assumptions and surface issues in plan before coding begins.
+**Goal:** Force every assumption-laden plan decision and every preservation-critical behavior through explicit user confirmation BEFORE implementation — by interviewing the user with critical questions that validate assumptions and surface issues — so no unstated assumption silently reaches code.
 
 **Workflow:**
 
@@ -39,18 +39,17 @@ description: '[Planning] Use when you need validate plan with critical questions
 > DRY, SRP, abstraction, design patterns, naming, layering, tests — every
 > technique exists to serve one goal: **making the next change cheaper**.
 
-When evaluating code, a refactor, a test, or an abstraction, ask:
-**does this make the next change cheaper or more expensive?**
+Evaluating code, refactor, test, abstraction, ask:
+**does this make next change cheaper or more expensive?**
 
-- Reject "best practices" that raise change cost (premature abstraction,
+- Reject "best practices" raising change cost (premature abstraction,
   speculative generality, leaky indirection, ceremony without payoff).
-- Name the real enemies in findings: **coupling, hidden state, duplicated
+- Name real enemies in findings: **coupling, hidden state, duplicated
   knowledge, unclear intent, irreversible decisions exposed too early**.
-- A simpler design that is easy to change beats a sophisticated design that
-  isn't.
+- Simpler design easy to change beats sophisticated design that isn't.
 
 Apply this lens **before** invoking any specific rule, pattern, or checklist
-below — if a downstream rule would raise change cost, this principle wins.
+below — if a downstream rule raises change cost, this principle wins.
 
 ---
 
@@ -267,7 +266,7 @@ After validation:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -276,11 +275,11 @@ After validation:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -311,7 +310,7 @@ After validation:
 > 5. On context compaction: call `TaskList` FIRST — never create duplicate tasks
 > 6. Verify TC satisfaction per phase before marking complete (evidence must be `file:line`, not TBD)
 >
-> **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/tdd-spec` fills after.
+> **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/spec [mode=tests]` fills after.
 
 <!-- /SYNC:plan-quality -->
 
@@ -348,6 +347,7 @@ After validation:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -398,6 +398,7 @@ After validation:
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -421,14 +422,14 @@ After validation:
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Force every assumption-laden plan decision and every preservation-critical behavior through explicit user confirmation BEFORE implementation — so no unstated assumption silently reaches code.
+
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
 - **MANDATORY IMPORTANT MUST ATTENTION** detect plan type (Phase 0) BEFORE generating questions — bugfix ALWAYS triggers Preservation
 - **MANDATORY IMPORTANT MUST ATTENTION** add final review task to verify work quality
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER modify phase files — document what needs updating only
 - **MANDATORY IMPORTANT MUST ATTENTION** for bugfix plans, trigger Preservation question (keywords: fix, bug, regression, broken, defect)
-
-**IMPORTANT MUST ATTENTION** for bugfix plans, trigger Preservation question (keywords: fix, bug, regression, broken, defect)
 
 **Anti-Rationalization:**
 

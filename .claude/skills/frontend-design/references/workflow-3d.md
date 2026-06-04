@@ -6,7 +6,7 @@ Create immersive interactive 3D designs with Three.js.
 
 - Activate `ui-ux-pro-max` skill first
 - Activate `threejs` skill for 3D and WebGL expertise
-- Have `ai-multimodal` skill ready for asset generation
+- Have `visual analysis tooling` skill ready for asset generation
 
 ## Initial Research
 
@@ -42,14 +42,14 @@ Use `ui-ux-designer` subagent to build:
 
 ### 3. Generate 3D Assets
 
-Use `ai-multimodal` skill for:
+Use `visual analysis tooling` skill for:
 
 - Textures and materials
 - Skyboxes and environment maps
 - Particle sprites
 - Video backgrounds
 
-Use `media-processing` skill for:
+Use media processing tooling for:
 
 - Texture optimization for WebGL
 - Normal/height map generation

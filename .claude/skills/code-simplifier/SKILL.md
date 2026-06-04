@@ -1,7 +1,7 @@
 ---
 name: code-simplifier
 version: 2.2.0
-description: '[Code Quality] Use when you need to simplify and refines code for clarity, consistency, and maintainability while preserving all functionality.'
+description: '[Code Quality] Use when you need to simplify and refine code for clarity, consistency, and maintainability while preserving all functionality.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,7 +15,7 @@ description: '[Code Quality] Use when you need to simplify and refines code for 
 
 ## Quick Summary
 
-**Goal:** Simplify and refine code for clarity, consistency, maintainability — preserving all functionality.
+**Goal:** Lower the cost of the next change — cut coupling, hidden state, duplicated knowledge, unclear intent — by simplifying and refining code for clarity, consistency, and maintainability without altering any observable behavior. — why: every simplification serves future change cost, not aesthetics.
 
 > **MANDATORY IMPORTANT MUST ATTENTION** Plan task to READ:
 >
@@ -31,38 +31,36 @@ description: '[Code Quality] Use when you need to simplify and refines code for 
 3. **Analyze** — Apply simplification dimensions (see below)
 4. **Apply** — One refactoring type at a time following KISS/DRY/YAGNI
 5. **Verify** — Run related tests, confirm no behavior changes
-6. **Fresh-Context Review** — Spawn code-reviewer sub-agent (MANDATORY)
+6. **Self-Recursive Check** — Re-run this skill's simplification analysis until no simplification findings remain
+7. **Self-Review Gate (MANDATORY when code changed)** — If this skill modified any files, self-invoke `/code-review` scoped to ONLY those changed files; skip + log if nothing changed
 
 **Key Rules:**
 
 - Preserve all existing functionality — no behavior changes
-- Follow platform patterns (entity expressions, fluent helpers, store base, BEM)
+- Follow the project's documented patterns (entity expressions, fluent helpers, store base, BEM)
+- Easy to Change is the primary simplification goal for source files; DRY, SOLID, abstraction, and patterns are valid only when they lower future edit sites or cognitive load
 - Tests pass after every change
 - Apply simplification only when certain it preserves behavior — NEVER apply when unsure
 
-### Frontend/UI Context (if applicable)
-
-> When task involves frontend/UI changes:
-
 ## Phase 0: Artifact Detection
 
-**MUST ATTENTION** classify before simplifying — detection drives focus and sub-agent routing:
+**MUST ATTENTION** classify before simplifying — detection drives focus and optional escalation only:
 
-| Artifact Type      | Detection                   | Key Focus                                             |
-| ------------------ | --------------------------- | ----------------------------------------------------- |
-| Backend (C#/.NET)  | `.cs` files                 | Entity expressions, fluent API, DRY via OOP, SOLID    |
-| Frontend (TS/HTML) | `.ts`, `.html`, `.scss`     | BEM, store base, subscription cleanup, component base |
-| Tests              | `*Test.cs`, `*.spec.ts`     | Assertions, `WaitUntilAsync`, data isolation          |
-| Config/Generated   | Migrations, `*.generated.*` | **SKIP** — NEVER simplify generated/migration code    |
+| Artifact Type    | Detection                                                                  | Key Focus                                                                                       |
+| ---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Backend          | Backend source files for the current stack (e.g. `.cs`)                    | Domain-model expressions, fluent API, DRY via OOP, SOLID                                        |
+| Frontend         | Frontend source files for the current stack (e.g. `.ts`, `.html`, `.scss`) | BEM, store base, subscription cleanup, component base                                           |
+| Tests            | Test source files for the current stack (e.g. `*Test.cs`, `*.spec.ts`)     | Assertions, async-assertion helpers (e.g. an await-until-condition poll helper), data isolation |
+| Config/Generated | Migrations, generated/vendor files (e.g. `*.generated.*`)                  | **SKIP** — NEVER simplify generated/migration code                                              |
 
-Sub-agent routing by artifact:
+Optional escalation by artifact:
 
-| Artifact             | Sub-agent               |
-| -------------------- | ----------------------- |
-| Source code/diffs    | `code-reviewer`         |
-| Security-sensitive   | `security-auditor`      |
-| Performance-critical | `performance-optimizer` |
-| Plans/docs/specs     | `general-purpose`       |
+| Artifact             | Escalate only when                                       |
+| -------------------- | -------------------------------------------------------- |
+| Source code/diffs    | Broad review is requested after simplifier loop is clean |
+| Security-sensitive   | Security-specific risk is present                        |
+| Performance-critical | Performance behavior is part of the change               |
+| Plans/docs/specs     | Artifact review is explicitly requested                  |
 
 ## First Principle — Easy to Change
 
@@ -77,6 +75,10 @@ When evaluating code, a refactor, a test, or an abstraction, ask:
   speculative generality, leaky indirection, ceremony without payoff).
 - Name the real enemies in findings: **coupling, hidden state, duplicated
   knowledge, unclear intent, irreversible decisions exposed too early**.
+- Favor project-owned boundaries around external libraries, for example
+  component/service input-output contracts, when they localize future library
+  changes; reject pass-through wrappers that add ceremony without lowering
+  change cost.
 - A simpler design that is easy to change beats a sophisticated design that
   isn't.
 
@@ -156,7 +158,7 @@ Dimension-based reasoning replaces fixed checklists. Each dimension has a `Think
 - Use project store base (search: store base class) for state management
 - Apply subscription cleanup (search: subscription cleanup pattern) to all subscriptions
 - BEM class naming on ALL template elements
-- Use platform base classes (search: base component class, store component base class)
+- Use the project's base classes (search: base component class, store component base class)
 
 ## Graph Intelligence (MANDATORY if graph.db exists)
 
@@ -203,23 +205,37 @@ function getData() {
 
 - **Preserve functionality** — no behavior changes
 - **Tests passing** — verify after every change
-- **Follow patterns** — use platform conventions, never invent
+- **Follow patterns** — use the project's conventions, never invent
 - **Doc staleness** — cross-ref changed files against feature docs, test specs, READMEs; flag updates needed
 
 ---
 
-## Fresh Sub-Agent Verification (MANDATORY after simplifications in a review workflow)
+## Self-Recursive Verification (MANDATORY after simplifications)
 
-After simplifications applied, verification requires **fresh sub-agent review** to eliminate confirmation bias. See SYNC blocks below.
+After simplifications applied, verification requires a **self-recursive simplification pass** over the updated diff. Do NOT spawn a fresh-context reviewer to re-review this skill's own findings. Repeat analyze → simplify → verify until this skill finds no further simplification opportunities, or stop on an unsafe/no-progress/user-decision blocker.
 
-When used standalone (outside a review workflow), run `/workflow-review-changes` to trigger the full review cycle with fresh sub-agent re-review.
+## Self-Review Gate (MANDATORY when this skill changed code)
+
+> **This skill is a code MUTATOR. It owns the review of its own output.** Once the self-recursive simplification loop above is clean, gate the result:
+>
+> 1. **Did this skill modify any files?** Determine the exact set of files this skill changed (its own edits — not the whole working tree).
+>     - **No files changed** → SKIP this gate and **log the skip reason** ("code-simplifier made no changes — no self-review needed"). Done.
+>     - **Files changed** → continue.
+> 2. **Self-invoke `/code-review` scoped to ONLY the changed files.** Pass the explicit changed-file set as the review target — not the full diff, not unrelated files.
+> 3. **Integrate the `/code-review` findings.** If it surfaces blocking issues caused by the simplification, fix them (behavior-preserving only) and re-run the self-recursive loop + this gate. If issues are out of simplification scope, report them up — do not silently drop.
+>
+> **Recursion safety:** `/code-review` is a LEAF review skill — it does NOT invoke `/code-simplifier` back, so there is no cycle. Use `/code-review` here, NEVER `/review-changes` (the heavyweight workflow that itself contains `/code-simplifier` and would recurse).
+>
+> **Why this gate exists:** `/code-simplifier` rewrites code after the main review batch has already run. Without this gate, the simplifier's output would ship unreviewed. This gate moves that review responsibility into the mutator itself — so the `workflow-review-changes` workflow no longer needs a separate `/code-review` step after `/code-simplifier`.
+
+Used standalone (outside a review workflow), this self-review gate is sufficient for the simplifier's own changes; you may still finish with `/review-changes` or the active workflow's review gate for broader, whole-changeset coverage.
 
 ## Workflow Recommendation
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in workflow, use `AskUserQuestion` to ask user. Do NOT decide this is "simple enough to skip" — the user decides:
 >
-> 1. **Activate `quality-audit` workflow** (Recommended) — code-simplifier → review-changes → code-review
-> 2. **Execute `/code-simplifier` directly** — run standalone
+> 1. **Activate `workflow-review-changes` workflow** (Recommended) — full review-changes restart gate → validated fix cycle (plan → plan-review → cook) → re-review → docs
+> 2. **Execute `/code-simplifier` directly** — run standalone (this skill self-reviews its own changes via the Self-Review Gate)
 
 ---
 
@@ -253,6 +269,31 @@ When used standalone (outside a review workflow), run `/workflow-review-changes`
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns for base class extraction. Same-suffix classes (`*Entity`, `*Dto`, `*Service`) MUST ATTENTION inherit common base. Verify stack has linting/analyzer configured.
 
+## Self-Recursive Simplification Loop
+
+**Purpose:** Avoid spending tokens on a fresh-context review of this skill's own findings. The simplifier owns its own convergence loop; broader review workflows can still run after the simplifier reports clean.
+
+Loop:
+
+1. Analyze the current target/diff for simplification findings with `file:line` evidence.
+2. Apply only behavior-preserving simplifications that satisfy the evidence gate.
+3. Run targeted verification after each change set.
+4. Re-read the updated diff and re-run this skill's simplification dimensions.
+5. Repeat until this skill finds zero simplification findings.
+
+Stop conditions:
+
+- The same simplification finding repeats for 3 passes with no progress.
+- A simplification needs product/owner input or has behavior-change risk.
+- Verification cannot run or cannot prove behavior preservation.
+
+Rules:
+
+- Do not spawn a fresh-context reviewer just because simplifications were applied.
+- Do not re-review known findings in a fresh context before fixing them.
+- Do not hand off as clean until the self-recursive pass finds zero simplification findings.
+- After the self-recursive loop is clean, run the **Self-Review Gate** — if any files were changed, self-invoke `/code-review` scoped to those files (recursion-safe leaf skill); skip + log if nothing changed.
+
 <!-- SYNC:ui-system-context -->
 
 > **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
@@ -273,241 +314,12 @@ When used standalone (outside a review workflow), run `/workflow-review-changes`
 
 <!-- /SYNC:shared-protocol-duplication-policy -->
 
-<!-- SYNC:double-round-trip-review -->
-
-> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
->
-> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
->
-> **Decision after Round 1:**
->
-> - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
->
-> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `Agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
->
-> - Cross-cutting concerns missed in the prior round
-> - Interaction bugs between changed files
-> - Convention drift (new code vs existing patterns)
-> - Missing pieces that should exist but don't
-> - Subtle edge cases the prior round rationalized away
-> - Regressions introduced by the fixes themselves
->
-> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
->
-> **Rules:**
->
-> - A clean Round 1 ENDS the review — no mandatory Round 2
-> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
-> - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via `AskUserQuestion` (do NOT silently loop)
-> - Track round count in conversation context (session-scoped)
-> - Final verdict must incorporate ALL rounds executed
->
-> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
-
-<!-- /SYNC:double-round-trip-review -->
-
-<!-- SYNC:fresh-context-review -->
-
-> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
->
-> **Why:** The main agent knows what it (or `/cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
->
-> **When:** ONLY after a fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: fix → fresh sub-agent re-review.
->
-> **How:**
->
-> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
-> 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
-> 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
-> 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
-> 5. Main agent reads the report, integrates findings into its own report, DOES NOT override or filter
->
-> **Rules:**
->
-> - SKIP fresh sub-agent when the prior round found zero issues (no fixes = nothing new to verify)
-> - NEVER skip fresh sub-agent after a fix cycle — every fix invalidates the prior verdict
-> - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
-> - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
-> - Track iteration count in conversation context (session-scoped, no persistent files)
-
-<!-- /SYNC:fresh-context-review -->
-
-<!-- SYNC:review-protocol-injection -->
-
-> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
->
-> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 10 protocol bodies pre-embedded.
-
-### Subagent Type Selection
-
-- `code-reviewer` — for code reviews (reviewing source files, git diffs, implementation)
-- `general-purpose` — for plan / doc / artifact reviews (reviewing markdown plans, docs, specs)
-
-### Canonical Agent Call Template (Copy Verbatim)
-
-```
-Agent({
-description: "Fresh Round {N} review",
-subagent_type: "code-reviewer",
-prompt: `
-## Task
-{review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
-
-## Round
-Round {N}. You have ZERO memory of prior rounds. Re-read all target files from scratch via your own tool calls. Do NOT trust anything from the main agent beyond this prompt.
-
-## Protocols (follow VERBATIM — these are non-negotiable)
-
-### Evidence-Based Reasoning
-Speculation is FORBIDDEN. Every claim needs proof.
-1. Cite file:line, grep results, or framework docs for EVERY claim
-2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
-3. Cross-service validation required for architectural changes
-4. "I don't have enough evidence" is valid and expected output
-BLOCKED until: Evidence file path (file:line) provided; Grep search performed; 3+ similar patterns found; Confidence level stated.
-Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because".
-If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
-
-### Bug Detection
-MUST check categories 1-4 for EVERY review. Never skip.
-1. Null Safety: Can params/returns be null? Are they guarded? Optional chaining gaps? .find() returns checked?
-2. Boundary Conditions: Off-by-one (< vs <=)? Empty collections handled? Zero/negative values? Max limits?
-3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
-4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
-5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
-6. Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
-Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
-
-### Design Patterns Quality
-Priority checks for every code change:
-1. DRY via OOP: Same-suffix classes (*Entity, *Dto, *Service) MUST share base class. 3+ similar patterns → extract to shared abstraction.
-2. Right Responsibility: Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
-3. SOLID: Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
-4. After extraction/move/rename: Grep ENTIRE scope for dangling references. Zero tolerance.
-5. YAGNI gate: NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
-Anti-patterns to flag: God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
-
-### Complexity Prevention (Ousterhout)
-MANDATORY. Measure code by cost of change: one business change = one code change. Flag ALL 13:
-1. Change amplification — >3 edit sites for plausible future change = structural flaw. Reject.
-2. Cognitive load — deep inheritance, long param lists, boolean traps, implicit ordering = reader overload.
-3. Cross-cutting duplication at entry points — logging/error/validation/auth/tx reimplemented per handler → lift to middleware/interceptor/filter/decorator/aspect.
-4. Leaked implementation technology — repos returning IQueryable/QuerySet/raw cursors/ORM entities → return finished results + intent-revealing methods.
-5. Type-switch scattering — switch/if-chains on enum/discriminator in >1 place → polymorphism/strategy. New variant = 1 new file, not N edits.
-6. Anemic models — getters/setters only, logic in services → move invariants/behavior onto object (`order.Checkout()`, not `order.Status = ...`).
-7. Primitive obsession — raw string/int/decimal for account/email/money/percent/date-range → value objects / records / structs validating once at construction.
-8. Inline cross-cutting concerns — authz/tenant/audit/sanitization at top of every handler → declarative markers (`@RequirePermission`), enforce centrally.
-9. Shallow modules — tiny class, big interface wrapping little logic → inline or deepen.
-10. Missing base class for repeated component/handler lifecycle — 3+ forms/CRUD handlers/list views reimplementing loading/dirty/submit/pagination → base class/hook/composable/mixin/trait.
-11. Premature vs delayed abstraction — rule-of-three. First write it; second notice; third extract. No generic frameworks before real variation; no copy-paste for the 4th time.
-12. Embedded utility logic not extracted — inline paging/retry/datetime/string parsing/URL building → extract to util/helper/extensions. Inline duplicates = duplicated bug surface.
-13. Logic in wrong (higher) layer — caller computing what callee owns → downshift. Lowest responsible layer wins (Entity > Domain Service > App Service > Controller · Model/VM > Store > Component).
-Pre-commit edit-site test (reject if answer is "many"): Add new variant → 1 new file. Change HTTP error format → 1 middleware. Add timestamp to every entity → 1 base/interceptor. Add authorization to an endpoint → 1 declarative marker. Swap DB/ORM → data layer only. Change business calculation → 1 method on entity. Add loading pattern to forms → 1 base/hook. Add validation to primitive → 1 value-object ctor. Change paging/retry/datetime algorithm → 1 helper. Change entity derivation → 1 method on entity.
-Heuristics: write call site first · count edit sites for plausible future change · pre-reuse scan (grep similar algorithms before writing) · layer placement test ("would a sibling caller re-derive this?") · open-case-for-future-reuse (don't rationalize silent duplication with pure YAGNI — extract now if cheap or track TODO) · prefer removing code · surface assumptions at boundaries, hide details inside.
-The measure of good code is the cost of change.
-
-### Logic & Intention Review
-Verify WHAT code does matches WHY it was changed.
-1. Change Intention Check: Every changed file MUST serve the stated purpose. Flag unrelated changes as scope creep.
-2. Happy Path Trace: Walk through one complete success scenario through changed code.
-3. Error Path Trace: Walk through one failure/edge case scenario through changed code.
-4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
-NEVER mark review PASS without completing both traces (happy + error path).
-
-### Test Spec Verification
-Map changed code to test specifications.
-1. From changed files → find TC-{FEATURE}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
-2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
-3. New functions/endpoints/handlers → flag for test spec creation.
-4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEATURE}-02x exist? Data changes → TC-{FEATURE}-01x exist?
-6. If no specs exist → log gap and recommend /tdd-spec.
-NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
-
-### Fix-Layer Accountability
-NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
-MANDATORY before ANY fix:
-1. Trace full data flow — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where bad state ENTERS, not where it CRASHES.
-2. Identify the invariant owner — Which layer's contract guarantees this value is valid? Fix at the LOWEST layer that owns the invariant, not the highest layer that consumes it.
-3. One fix, maximum protection — If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
-4. Verify no bypass paths — Confirm all data flows through the fix point. Check for direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
-BLOCKED until: Full data flow traced (origin → crash); Invariant owner identified with file:line evidence; All access sites audited (grep count); Fix layer justified (lowest layer that protects most consumers).
-Anti-patterns (REJECT): "Fix it where it crashes" (crash site ≠ cause site, trace upstream); "Add defensive checks at every consumer" (scattered defense = wrong layer); "Both fix is safer" (pick ONE authoritative layer).
-
-### Rationalization Prevention
-AI skips steps via these evasions. Recognize and reject:
-- "Too simple for a plan" → Simple + wrong assumptions = wasted time. Plan anyway.
-- "I'll test after" → RED before GREEN. Write/verify test first.
-- "Already searched" → Show grep evidence with file:line. No proof = no search.
-- "Just do it" → Still need TaskCreate. Skip depth, never skip tracking.
-- "Just a small fix" → Small fix in wrong location cascades. Verify file:line first.
-- "Code is self-explanatory" → Future readers need evidence trail. Document anyway.
-- "Combine steps to save time" → Combined steps dilute focus. Each step has distinct purpose.
-
-### Graph-Assisted Investigation
-MANDATORY when .code-graph/graph.db exists.
-HARD-GATE: MUST run at least ONE graph command on key files before concluding any investigation.
-Pattern: Grep finds files → trace --direction both reveals full system flow → Grep verifies details.
-- Investigation/Scout: trace --direction both on 2-3 entry files
-- Fix/Debug: callers_of on buggy function + tests_for
-- Feature/Enhancement: connections on files to be modified
-- Code Review: tests_for on changed functions
-- Blast Radius: trace --direction downstream
-CLI: python .claude/scripts/code_graph {command} --json. Use --node-mode file first (10-30x less noise), then --node-mode function for detail.
-
-### Understand Code First
-HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
-1. Search 3+ similar patterns (grep/glob) — cite file:line evidence.
-2. Read existing files in target area — understand structure, base classes, conventions.
-3. Run python .claude/scripts/code_graph trace <file> --direction both --json when .code-graph/graph.db exists.
-4. Map dependencies via connections or callers_of — know what depends on your target.
-5. Write investigation to .ai/workspace/analysis/ for non-trivial tasks (3+ files).
-6. Re-read analysis file before implementing — never work from memory alone.
-7. NEVER invent new patterns when existing ones work — match exactly or document deviation.
-BLOCKED until: Read target files; Grep 3+ patterns; Graph trace (if graph.db exists); Assumptions verified with evidence.
-
-## Reference Docs (READ before reviewing)
-- docs/project-reference/code-review-rules.md
-- {skill-specific reference docs — e.g., integration-test-reference.md for integration-test-review; backend-patterns-reference.md for backend reviews; frontend-patterns-reference.md for frontend reviews}
-
-## Target Files
-{explicit file list OR "run git diff to see uncommitted changes" OR "read all files under {plan-dir}"}
-
-## Output
-Write a structured report to plans/reports/{review-type}-round{N}-{date}.md with sections:
-- Status: PASS | FAIL
-- Issue Count: {number}
-- Critical Issues (with file:line evidence)
-- High Priority Issues (with file:line evidence)
-- Medium / Low Issues
-- Cross-cutting findings
-
-Return the report path and status to the main agent.
-Every finding MUST have file:line evidence. Speculation is forbidden.
-`
-})
-```
-
-### Rules
-
-- DO copy the template wholesale — including all 10 embedded protocol sections
-- DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
-- DO choose `code-reviewer` subagent_type for code reviews and `general-purpose` for plan / doc / artifact reviews
-- DO NOT paraphrase, summarize, or skip any protocol section
-- DO NOT pass file contents inline — the sub-agent reads via its own tool calls so it has a fresh context
-- DO NOT reference protocols by file path or tag name — the bodies are already embedded above
-- DO NOT introduce placeholder markers for the protocols — they must stay literally expanded
-
-<!-- /SYNC:review-protocol-injection -->
-
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -522,6 +334,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -660,6 +473,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ## Closing Reminders
 
+- **IMPORTANT MUST ATTENTION Goal:** lower the cost of the next change — cut coupling, hidden state, duplicated knowledge, unclear intent — without altering observable behavior
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks via `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide
 - **MANDATORY IMPORTANT MUST ATTENTION** add final review task to verify work quality
@@ -667,18 +481,20 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE modification. Run graph trace when graph.db exists.
 - **MANDATORY IMPORTANT MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID. Grep dangling refs after changes.
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER simplify generated code, migrations, vendor files
-- **MANDATORY IMPORTANT MUST ATTENTION** spawn fresh sub-agent for re-review ONLY after a fix cycle. A clean Round 1 ENDS the review.
+- **MANDATORY IMPORTANT MUST ATTENTION** run the self-recursive simplification loop until this skill finds zero simplification findings; do not spawn a fresh-context reviewer for this skill's own findings.
+- **MANDATORY IMPORTANT MUST ATTENTION** Self-Review Gate — when this skill changed code, self-invoke `/code-review` scoped to ONLY the changed files (recursion-safe leaf skill; NEVER `/review-changes`); skip + log when nothing changed. The simplifier owns review of its own output.
 
 **Anti-Rationalization:**
 
-| Evasion                          | Rebuttal                                                                                                                               |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| "Too simple for graph trace"     | Wrong assumptions waste more time. Run trace anyway.                                                                                   |
-| "Already searched"               | Show `file:line` evidence. No proof = no search.                                                                                       |
-| "Just a small simplification"    | Small change at wrong layer cascades. Verify consumers first.                                                                          |
-| "Code is self-explanatory"       | Future readers need evidence trail. Document non-obvious intent.                                                                       |
-| "Simplification is safe"         | NEVER assume safe without grepping all usages first.                                                                                   |
-| "Skip Round 2 even after fixing" | Every fix triggers fresh sub-agent round. Clean Round 1 (zero issues) does end the review — but ANY fix invalidates the prior verdict. |
+| Evasion                             | Rebuttal                                                                                                                            |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| "Too simple for graph trace"        | Wrong assumptions waste more time. Run trace anyway.                                                                                |
+| "Already searched"                  | Show `file:line` evidence. No proof = no search.                                                                                    |
+| "Just a small simplification"       | Small change at wrong layer cascades. Verify consumers first.                                                                       |
+| "Code is self-explanatory"          | Future readers need evidence trail. Document non-obvious intent.                                                                    |
+| "Simplification is safe"            | NEVER assume safe without grepping all usages first.                                                                                |
+| "Best practice says abstract it"    | Abstract only when it lowers future change cost; pass-through indirection is complexity, not simplification.                        |
+| "Skip recursive check after fixing" | Every simplification changes the diff. Re-run this skill's own simplification analysis until it finds zero simplification findings. |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break into small todo tasks using TaskCreate.
 

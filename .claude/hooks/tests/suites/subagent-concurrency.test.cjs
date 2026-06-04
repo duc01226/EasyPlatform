@@ -18,8 +18,8 @@
  *   - Idempotent cleanup: other-session done files survive
  *   - TOCTOU: file deleted before hook → exits 0 (no crash)
  *   - Concurrent recovery invocations → both exit 0
- *   - subagent-init-todos no-env → exits 0
- *   - subagent-init-todos no-todos → exits 0 silently
+ *   - subagent-init-3 (context-guard + todos) no-env → exits 0
+ *   - subagent-init-3 parent-todo builder no-todos → emits no Parent Task Context section
  *   - write-compact-marker creates separate markers per session
  */
 
@@ -64,7 +64,10 @@ const { setEditState, getEditState, clearEditState } = require('../../lib/edit-s
 const BASH_CLEANUP = getHookPath('bash-cleanup.cjs');
 const POST_COMPACT_RECOVERY = getHookPath('post-compact-recovery.cjs');
 const WRITE_COMPACT_MARKER = getHookPath('write-compact-marker.cjs');
-const SUBAGENT_INIT_TODOS = getHookPath('subagent-init-todos.cjs');
+// Parent todos are builder 8 of dispatcher 3/3 (subagent-init-3.cjs). When the payload carries a
+// session_id, dispatcher 3 also emits the context-guard block (builder 7) before todos — the
+// assertions below target the parent-todo builder's behavior, which is unaffected by that prefix.
+const SUBAGENT_INIT_TODOS = getHookPath('subagent-init-3.cjs');
 
 // ============================================================================
 // Local helpers (mirror lifecycle.test.cjs helpers)
@@ -434,10 +437,10 @@ const tests = [
     },
 
     // -------------------------------------------------------------------------
-    // TC-SUBCTX-069: subagent-init-todos exits 0 when no CLAUDE_SESSION_ID env
+    // TC-SUBCTX-069: subagent-init-3 (context-guard + todos) exits 0 when no CLAUDE_SESSION_ID env
     // -------------------------------------------------------------------------
     {
-        name: 'TC-SUBCTX-069: subagent-init-todos exits 0 when CLAUDE_SESSION_ID is absent',
+        name: 'TC-SUBCTX-069: subagent-init-3 exits 0 when CLAUDE_SESSION_ID is absent',
         async fn() {
             const tmpDir = createTempDir();
             try {
@@ -459,10 +462,10 @@ const tests = [
     },
 
     // -------------------------------------------------------------------------
-    // TC-SUBCTX-070: subagent-init-todos exits 0 silently when hasTodos=false
+    // TC-SUBCTX-070: subagent-init-3 (context-guard + todos) omits Parent Task Context when hasTodos=false
     // -------------------------------------------------------------------------
     {
-        name: 'TC-SUBCTX-070: subagent-init-todos exits 0 and omits Parent Task Context when hasTodos=false',
+        name: 'TC-SUBCTX-070: subagent-init-3 exits 0 and omits Parent Task Context when hasTodos=false',
         async fn() {
             const tmpDir = createTempDir();
             const sessionId = 'sess-070-notodos';
@@ -485,7 +488,8 @@ const tests = [
                     env: { CLAUDE_SESSION_ID: sessionId }
                 });
                 assertEqual(result.code, 0, 'Must exit 0 when hasTodos=false');
-                // Should produce no output (emitSubagentContext exits silently when no lines)
+                // dispatcher-3 may still emit a context-guard block for this session; the
+                // parent-todo builder must contribute NO Parent Task Context when hasTodos=false.
                 const output = result.stdout.trim();
                 if (output) {
                     const parsed = JSON.parse(output);

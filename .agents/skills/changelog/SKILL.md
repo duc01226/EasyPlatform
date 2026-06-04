@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,7 +56,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Generate business-focused changelog entries by systematically reviewing file changes.
+**Goal:** Produce a Keep-a-Changelog entry under `[Unreleased]` by systematically reviewing file changes — telling users, in business terms citing affected logical IDs and flagging breaking changes, what changed and why it matters, NEVER what files/classes were touched.
 
 **Workflow:**
 
@@ -67,6 +71,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - Use business-focused language, not technical jargon (e.g., "Added pipeline management" not "Added PipelineController.cs")
 - Group related changes by module/feature, not by file
 - Always insert under the `[Unreleased]` section; create it if missing
+- **Cite logical IDs + flag breaking changes (M3/M1):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Each entry cites the logical IDs it affects (`FR-`/`TC-`, plus `BR-` where relevant) and a business-level change description; keep implementation jargon and class/file names out of entry prose per `docs/project-reference/spec-principles.md` §3. Explicitly flag any breaking change with a `**BREAKING:**` prefix and a one-line migration/impact note.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -79,15 +84,15 @@ Generate business-focused changelog entries by systematically reviewing file cha
 1. **Find existing CHANGELOG.md location**
     - Check root: `./CHANGELOG.md` (preferred)
     - Fallback: `./docs/CHANGELOG.md`
-    - If not found: Create at root
+    - Not found: create at root
 
-2. **Read current changelog** to understand format and last entries
+2. **Read current changelog** — understand format + last entries
 
 ## Workflow
 
 ### Step 1: Gather Changes
 
-Determine change scope based on mode:
+Determine change scope by mode:
 
 ```bash
 # PR/Branch-based (default)
@@ -149,25 +154,25 @@ For each changed file:
 
 1. Read file or diff
 2. Identify **business impact** (not just technical change)
-3. Check box and note in temp file
+3. Check box, note in temp file
 4. Categorize into appropriate section
 
 **Business Focus Guidelines**:
 
-| Technical (Avoid)               | Business-Focused (Use)                       |
-| ------------------------------- | -------------------------------------------- |
-| Added `StageCategory` enum      | Added stage categories for pipeline tracking |
-| Created `PipelineController.cs` | Added API endpoints for pipeline management  |
-| Fixed null reference in GetById | Fixed pipeline loading error                 |
-| Added migration file            | Database schema updated for new features     |
+| Technical (Avoid)                  | Business-Focused (Use)                       |
+| ---------------------------------- | -------------------------------------------- |
+| Added `StageCategory` enum         | Added stage categories for pipeline tracking |
+| Created `PipelineController` class | Added API endpoints for pipeline management  |
+| Fixed null reference in GetById    | Fixed pipeline loading error                 |
+| Added migration file               | Database schema updated for new features     |
 
 ### Step 4: Holistic Review
 
 Read temp notes file completely. Ask:
 
-- What's the main feature/fix?
-- Who benefits and how?
-- What can users now do that they couldn't before?
+- Main feature/fix?
+- Who benefits, how?
+- What can users now do they couldn't before?
 
 ### Step 5: Generate Changelog Entry
 
@@ -179,6 +184,7 @@ Format (Keep a Changelog):
 ### {Module}: {Feature Title}
 
 **Feature/Fix**: {One-line business description}
+**Refs**: {FR-/BR-/TC- logical IDs affected}
 
 #### Added
 
@@ -191,13 +197,19 @@ Format (Keep a Changelog):
 #### Fixed
 
 - {What issue was resolved}
+
+#### Breaking
+
+- **BREAKING:** {what changed} — {migration/impact note}
 ```
+
+> If no breaking change: omit the `#### Breaking` block. Cite logical IDs in `**Refs**`; keep class/file names out of all entry prose.
 
 ### Step 6: Update Changelog
 
 1. Read existing CHANGELOG.md
 2. Insert new entry under `[Unreleased]` section
-3. If no `[Unreleased]` section, create it after header
+3. No `[Unreleased]` section → create it after header
 4. Preserve existing entries
 
 ### Step 7: Cleanup
@@ -209,9 +221,9 @@ Delete temp notes file: `.ai/workspace/changelog-notes-*.md`
 Group related changes by module/feature:
 
 ```markdown
-### Your Service: Hiring Process Management
+### Your Service: Order Pipeline Management
 
-**Feature**: Customizable hiring process/pipeline management.
+**Feature**: Customizable order pipeline/stage management.
 
 #### Added
 
@@ -223,7 +235,7 @@ Group related changes by module/feature:
 
 **Frontend**:
 
-- Pages: hiring-process-page
+- Pages: order-pipeline-page
 - Components: pipeline-filter, pipeline-stage-display
 ```
 
@@ -241,21 +253,21 @@ Group related changes by module/feature:
 ### Good Entry
 
 ```markdown
-### Your Service: Hiring Process Management
+### Your Service: Order Pipeline Management
 
-**Feature**: Customizable hiring process/pipeline management for recruitment workflows.
+**Feature**: Customizable order pipeline/stage management for fulfillment workflows.
 
 #### Added
 
 - Drag-and-drop pipeline stage builder with default templates
-- Stage categories (Sourced, Applied, Interviewing, Offered, Hired, Rejected)
+- Stage categories (Created, Confirmed, Packed, Shipped, Delivered, Cancelled)
 - Pipeline duplication for quick setup
 - Multi-language stage names (EN/VI)
 
 #### Changed
 
-- Candidate cards now show current pipeline stage
-- Job creation wizard includes pipeline selection
+- Order cards now show current pipeline stage
+- Order creation wizard includes pipeline selection
 ```
 
 ### Bad Entry (Too Technical)
@@ -288,7 +300,7 @@ See `references/keep-a-changelog-format.md` for format specification.
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → changelog
+> 1. **Activate `workflow-feature` workflow** (Recommended) — scout → investigate → plan → cook → review → changelog
 > 2. **Execute `$changelog` directly** — run this skill standalone
 
 ---
@@ -321,6 +333,7 @@ See `references/keep-a-changelog-format.md` for format specification.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -336,11 +349,11 @@ See `references/keep-a-changelog-format.md` for format specification.
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -360,6 +373,7 @@ See `references/keep-a-changelog-format.md` for format specification.
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `$project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -376,6 +390,9 @@ See `references/keep-a-changelog-format.md` for format specification.
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Produce a Keep-a-Changelog entry under `[Unreleased]` that tells users — in business terms, citing affected logical IDs and flagging breaking changes — what changed and why it matters, NEVER what files/classes were touched.
+**MANDATORY IMPORTANT MUST ATTENTION** use business-focused language, group by module/feature, cite `FR-`/`BR-`/`TC-` logical IDs, flag breaking changes with `**BREAKING:**` — why: changelog readers track impact, not implementation.
+**MANDATORY IMPORTANT MUST ATTENTION** always insert under `[Unreleased]`; create it if missing; delete the temp notes file when done.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via a direct user question — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
@@ -392,17 +409,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -420,7 +434,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

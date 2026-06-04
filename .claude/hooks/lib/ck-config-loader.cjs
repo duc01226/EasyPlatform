@@ -56,14 +56,6 @@ const DEFAULT_CONFIG = {
     packageManager: "auto",
     framework: "auto",
   },
-  // Workflow behavior settings (user-configurable in .ck.json)
-  workflow: {
-    // Controls whether workflow detection requires user confirmation via AskUserQuestion.
-    // "always" — always ask before activating (default, collaborative)
-    // "never"  — auto-execute without asking (power user, quickMode forced globally)
-    // "off"    — disable workflow detection entirely (plain Claude, no injection)
-    confirmationMode: "always",
-  },
   // Reference docs staleness enforcement (configurable threshold)
   referenceDocs: {
     staleDays: 60,

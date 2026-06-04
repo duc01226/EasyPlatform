@@ -50,7 +50,7 @@ Use MCP Memory for **reusable knowledge**. Use File Checkpoints for **task-speci
 
 ### Checkpoint File Location
 
-Files saved to: `plans/reports/checkpoint-{timestamp}-{slug}.md`
+Files saved to: `plans/reports/checkpoint-{YYYYMMDD}-{HHMMSS}-{slug}.md`
 
 ### CHECKPOINT_CREATE Protocol
 
@@ -125,9 +125,9 @@ The system automatically creates checkpoints before context compaction. These au
 | `Pattern`         | Recurring code patterns                | CQRS, Validation, Repository   |
 | `Decision`        | Architectural/design decisions         | Why we chose X over Y          |
 | `BugFix`          | Bug solutions for future reference     | Race condition fixes           |
-| `ServiceBoundary` | Service ownership and responsibilities | Growth owns Employees          |
+| `ServiceBoundary` | Service ownership and responsibilities | Sales owns Orders              |
 | `SessionSummary`  | End-of-session progress snapshots      | Task progress, next steps      |
-| `Dependency`      | Cross-service dependencies             | Growth depends on Accounts     |
+| `Dependency`      | Cross-service dependencies             | Sales depends on Identity      |
 | `AntiPattern`     | Patterns to avoid                      | Don't call side effects in cmd |
 
 ---
@@ -139,13 +139,13 @@ The system automatically creates checkpoints before context compaction. These au
 ```javascript
 mcp__memory__create_entities([
     {
-        name: 'EmployeeValidationPattern',
+        name: 'OrderValidationPattern',
         entityType: 'Pattern',
         observations: [
             'Use project validation fluent API (see docs/project-reference/backend-patterns-reference.md)',
             'Chain with .And() and .AndAsync()',
             "Return validation result, don't throw",
-            'Location: {Service}.Application/UseCaseCommands/'
+            'Location: the application-layer command folder (per project structure reference)'
         ]
     }
 ]);
@@ -161,7 +161,7 @@ mcp__memory__create_relations([
         relationType: 'depends_on'
     },
     {
-        from: 'EmployeeEntity',
+        from: 'OrderEntity',
         to: 'UserEntity',
         relationType: 'syncs_from'
     }
@@ -173,7 +173,7 @@ mcp__memory__create_relations([
 ```javascript
 mcp__memory__add_observations([
     {
-        entityName: 'EmployeeValidationPattern',
+        entityName: 'OrderValidationPattern',
         contents: [
             'Also supports .AndNot() for negative validation',
             'Use .Of<ICqrsRequest>() for type conversion (see docs/project-reference/backend-patterns-reference.md)'
@@ -190,7 +190,7 @@ mcp__memory__search_nodes({ query: 'validation pattern' });
 
 // Open specific entities
 mcp__memory__open_nodes({
-    names: ['EmployeeValidationPattern', 'ServiceAModule']
+    names: ['OrderValidationPattern', 'ServiceAModule']
 });
 
 // Read entire graph
@@ -206,7 +206,7 @@ mcp__memory__delete_entities({ entityNames: ['OutdatedPattern'] });
 // Delete specific observations
 mcp__memory__delete_observations([
     {
-        entityName: 'EmployeeValidationPattern',
+        entityName: 'OrderValidationPattern',
         observations: ['Outdated observation text']
     }
 ]);
@@ -326,13 +326,13 @@ mcp__memory__create_entities([
 │  └── ValidationPattern                                      │
 │                                                             │
 │  Entities                                                   │
-│  ├── Employee ──syncs_from──> User                          │
-│  ├── Company ──syncs_from──> Organization                   │
-│  └── LeaveRequest ──owned_by──> ServiceA                     │
+│  ├── Order ──syncs_from──> User                             │
+│  ├── Customer ──syncs_from──> Account                       │
+│  └── Return ──owned_by──> ServiceA                          │
 │                                                             │
 │  Sessions                                                   │
-│  ├── Session_LeaveRequest_2025-01-15                        │
-│  └── Session_EmployeeImport_2025-01-14                      │
+│  ├── Session_Return_2025-01-15                              │
+│  └── Session_OrderImport_2025-01-14                         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -439,24 +439,26 @@ All long-running workflows should follow this pattern:
 
 ### Checkpoint Naming Convention
 
-| Type              | Format                                      | Example                                |
-| ----------------- | ------------------------------------------- | -------------------------------------- |
-| Manual checkpoint | `checkpoint-{YYMMDD}-{HHMM}-{slug}.md`      | `checkpoint-250106-1430-user-auth.md`  |
-| Auto checkpoint   | `memory-checkpoint-{timestamp}.md`          | `memory-checkpoint-20250106-143000.md` |
-| Analysis notes    | `{type}-{date}-{slug}.md`                   | `analysis-250106-payment-flow.md`      |
-| Task notes        | `.ai/workspace/analysis/{slug}.analysis.md` | Used by feature-implementation         |
+| Type              | Format                                      | Example                                   |
+| ----------------- | ------------------------------------------- | ----------------------------------------- |
+| Manual checkpoint | `checkpoint-{YYYYMMDD}-{HHMMSS}-{slug}.md`  | `checkpoint-20250106-143000-user-auth.md` |
+| Auto checkpoint   | `checkpoint-{YYYYMMDD}-{HHMMSS}-{slug}.md`  | `checkpoint-20250106-143000-autosave.md`  |
+| Analysis notes    | `{type}-{date}-{slug}.md`                   | `analysis-250106-payment-flow.md`         |
+| Task notes        | `.ai/workspace/analysis/{slug}.analysis.md` | Used by feature                           |
+
+> **Legacy back-read:** checkpoints written before grammar unification — `memory-checkpoint-*.md`, or `checkpoint-{YYMMDD}-{HHMM}-{slug}.md` without seconds — are still discovered by `/recover` and the resume hooks (`session-resume.cjs`, `post-compact-recovery.cjs`). No on-disk checkpoint is orphaned by the rename.
 
 ### Related Commands & Skills
 
-| Command/Skill            | Purpose                             |
-| ------------------------ | ----------------------------------- |
-| `/checkpoint`            | Create manual memory checkpoint     |
-| `/context`               | Load project context                |
-| `/compact`               | Manually trigger context compaction |
-| `/watzup`                | Generate progress summary           |
-| `feature-implementation` | Uses task analysis notes pattern    |
-| `debug-investigate`      | Uses investigation logs             |
-| `feature-investigation`  | Uses analysis report pattern        |
+| Command/Skill           | Purpose                             |
+| ----------------------- | ----------------------------------- |
+| `/checkpoint`           | Create manual memory checkpoint     |
+| `/context`              | Load project context                |
+| `/compact`              | Manually trigger context compaction |
+| `/watzup`               | Generate progress summary           |
+| `workflow-feature`      | Uses task analysis notes pattern    |
+| `debug-investigate`     | Uses investigation logs             |
+| `feature-investigation` | Uses analysis report pattern        |
 
 ### Memory Decision Matrix
 
@@ -492,6 +494,7 @@ All long-running workflows should follow this pattern:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

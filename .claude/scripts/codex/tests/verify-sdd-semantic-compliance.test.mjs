@@ -28,6 +28,8 @@ const {
   findBannedProseTechTerms,
   isSdd022TargetFile,
   scanProseForBannedTokens,
+  classifyEvidenceBody,
+  findProseSourceIdentifiers,
 } = await import(pathToFileURL(verifierPath).href);
 
 test("evaluateCheck fails unsafe drift wording", () => {
@@ -54,6 +56,29 @@ test("evaluateCheck fails stale performance exception wording", () => {
   );
 
   assert.ok(failures.some((failure) => failure.includes("PERFORMANCE EXCEPTION routes")));
+});
+
+test("evaluateCheck fails renamed spec tests skip wording", () => {
+  const failures = evaluateCheck(
+    {
+      requireAll: ["PERFORMANCE-SDD ROUTE"],
+      forbidAny: STALE_PERFORMANCE_SKIP_TERMS,
+      message: "workflow prompt surfaces must not preserve stale performance skip rules.",
+    },
+    "PERFORMANCE-SDD ROUTE says skip /spec [mode=tests] for this route"
+  );
+
+  assert.ok(failures.some((failure) => failure.includes("skip /spec [mode=tests]")));
+
+  const featureCheck = CHECKS.find(
+    (check) => check.code === "SDD008" && check.file === ".claude/skills/workflow-feature/SKILL.md"
+  );
+  assert.ok(featureCheck);
+  const patternFailures = evaluateCheck(
+    featureCheck,
+    "performance-review SLA functional no-regression but skip /spec [mode=tests]"
+  );
+  assert.ok(patternFailures.some((failure) => failure.includes("forbidden pattern found")));
 });
 
 test("evaluateCheck fails stale TC placeholder wording", () => {
@@ -127,7 +152,7 @@ test("runChecks scans prompt surfaces for stale placeholders and unconfigured ar
     await fs.writeFile(staleClaudeMd, "Root context uses TC-{FEAT}-{NNN}\n", "utf8");
     await fs.writeFile(
       staleTemplate,
-      "**Evidence:** `{FilePath}:{LineRange}` or `TBD (pre-implementation)`\n",
+      "**Evidence:** `{FilePath}:{LineRange}` or **Evidence:** `{FilePath}:{LineNumber}` or Evidence: {file}:{line} or Evidence field with file:line format\n",
       "utf8"
     );
 
@@ -144,13 +169,25 @@ test("runChecks scans prompt surfaces for stale placeholders and unconfigured ar
     assert.ok(result.failures.some((failure) => /configured-idea-artifact-root/.test(failure.message)));
     assert.ok(result.failures.some((failure) => /docs\/specs\/\{Module\}/.test(failure.message)));
     assert.ok(result.failures.some((failure) => /\*\*Evidence:\*\* `\{FilePath\}:\{LineRange\}`/.test(failure.message)));
+    assert.ok(result.failures.some((failure) => /\*\*Evidence:\*\* `\{FilePath\}:\{LineNumber\}`/.test(failure.message)));
+    assert.ok(result.failures.some((failure) => /Evidence: \{file\}:\{line\}/.test(failure.message)));
+    assert.ok(result.failures.some((failure) => /Evidence field with file:line format/.test(failure.message)));
     assert.equal(result.sddMetrics.staleTcPlaceholderFindings, 9);
-    assert.equal(result.sddMetrics.staleTcEvidenceFormatFindings, 1);
+    assert.equal(result.sddMetrics.staleTcEvidenceFormatFindings, 4);
     assert.equal(result.sddMetrics.staleQaDashboardPathFindings, 1);
     assert.equal(result.sddMetrics.unconfiguredArtifactRootFindings, 1);
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
   }
+});
+
+test("canonical Feature Spec template requires business intent on every test case", async () => {
+  const template = await fs.readFile(
+    path.join(repoRoot, ".claude", "templates", "detailed-feature-spec-template.md"),
+    "utf8"
+  );
+
+  assert.match(template, /\*\*Business Intent \/ Invariant Guarded:\*\*/);
 });
 
 test("runChecks fails SDD022 banned tech terms in changed feature/spec prose only", async () => {
@@ -178,13 +215,15 @@ test("runChecks fails SDD022 banned tech terms in changed feature/spec prose onl
     );
 
     const result = await runChecks(tempRoot, [], { sdd022Files: [relativeFile] });
-    assert.equal(result.failures.length, 2);
-    assert.ok(result.failures.every((failure) => failure.code === "SDD022"));
+    const sdd022 = result.failures.filter((failure) => failure.code === "SDD022");
+    assert.equal(sdd022.length, 2);
     assert.deepEqual(
-      result.failures.map((failure) => failure.message.match(/"([^"]+)"/)?.[1]).sort(),
+      sdd022.map((failure) => failure.message.match(/"([^"]+)"/)?.[1]).sort(),
       ["CQRS", "PlatformValidationResult"]
     );
     assert.equal(result.sddMetrics.bannedProseTechTermFindings, 2);
+    // The physical `[Source: src/Foo.cs ...]` carrier is now an SDD023 (legacy-physical) warn.
+    assert.ok(result.failures.some((failure) => failure.code === "SDD023" && failure.severity === "warn"));
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
   }
@@ -195,15 +234,15 @@ test("runChecks skips SDD022 carrier lines and documented exempt guide files", a
   try {
     const files = new Map([
       [
-        "docs/business-features/DOCUMENTATION-GUIDE.md",
+        "docs/specs/DOCUMENTATION-GUIDE.md",
         "This guide may mention Angular and CQRS while explaining documentation rules.",
       ],
       [
-        "docs/specs/06-reimplementation-guide.md",
-        "The rebuild guide may mention .NET and RabbitMQ by design.",
+        "docs/specs/CandidateApp/CandidateApp.reimplementation-guide.md",
+        "The derived rebuild guide may mention .NET and RabbitMQ by design.",
       ],
       [
-        "docs/business-features/candidate-profile.md",
+        "docs/specs/CandidateApp/README.CandidateProfileFeature.md",
         [
           "---",
           "service: Angular",
@@ -225,10 +264,135 @@ test("runChecks skips SDD022 carrier lines and documented exempt guide files", a
     }
 
     const result = await runChecks(tempRoot, [], { sdd022Files: [...files.keys()] });
-    assert.deepEqual(result.failures, []);
+    // SDD022 (banned prose) and SDD024 (prose identifiers) must stay clean — every banned
+    // token and identifier here lives inside a carrier, mermaid block, or exempt guide file.
+    // The legacy `[Source: src/Foo.cs ...]` physical carrier legitimately raises an SDD023 warn.
+    assert.deepEqual(result.failures.filter((failure) => failure.code !== "SDD023"), []);
     assert.equal(result.sddMetrics.bannedProseTechTermFindings, 0);
-    assert.equal(isSdd022TargetFile("docs/business-features/DOCUMENTATION-GUIDE.md"), false);
+    assert.equal(result.sddMetrics.proseSourceIdentifierFindings, 0);
+    // Exempt guide (exact path), derived reimplementation guide (suffix), and post-move scan root.
+    assert.equal(isSdd022TargetFile("docs/specs/DOCUMENTATION-GUIDE.md"), false);
+    assert.equal(
+      isSdd022TargetFile("docs/specs/CandidateApp/CandidateApp.reimplementation-guide.md"),
+      false
+    );
+    assert.equal(isSdd022TargetFile("docs/business-features/anything.md"), false);
+    assert.equal(
+      isSdd022TargetFile("docs/specs/CandidateApp/README.CandidateProfileFeature.md"),
+      true
+    );
     assert.deepEqual(findBannedProseTechTerms("Manual OAuth text"), ["OAuth"]);
+  } finally {
+    await fs.rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("classifyEvidenceBody accepts abstract anchors and flags physical/malformed bodies", () => {
+  // Valid, fully-migrated abstract anchors (single + comma-grouped) are exempt.
+  assert.equal(classifyEvidenceBody("operation/accounts/CreateUser"), null);
+  assert.equal(
+    classifyEvidenceBody("event/accounts/AccountUserSaved, schema/accounts/UserStore"),
+    null
+  );
+  // Doc cross-references and literal placeholders are not code anchors.
+  assert.equal(classifyEvidenceBody("docs/specs/example/A-domain-model.md"), null);
+  assert.equal(classifyEvidenceBody("file:line"), null);
+  // Canonical abstract-anchor placeholder (the literal teaching token in doc headers / MIGRATION.md)
+  // is an instructional placeholder, never a real anchor — exempt, not an unknown-namespace flag.
+  assert.equal(classifyEvidenceBody("namespace/service/id"), null);
+  // Legacy physical evidence (file path / extension / line range).
+  assert.deepEqual(classifyEvidenceBody("src/Services/Accounts/Foo.cs:12-20"), {
+    kind: "legacy-physical",
+  });
+  assert.deepEqual(classifyEvidenceBody("Bar.cs:5"), { kind: "legacy-physical" });
+  // Anchor-shaped but unknown namespace.
+  assert.deepEqual(classifyEvidenceBody("widget/accounts/Thing"), { kind: "unknown-namespace" });
+});
+
+test("findProseSourceIdentifiers detects code identifiers, filenames, and src paths", () => {
+  assert.deepEqual(
+    findProseSourceIdentifiers("The CreateUserCommandHandler validates input.").sort(),
+    ["CreateUserCommandHandler"]
+  );
+  assert.deepEqual(
+    findProseSourceIdentifiers("publishes AccountUserSavedEventBusMessage to consumers"),
+    ["AccountUserSavedEventBusMessage"]
+  );
+  assert.ok(
+    findProseSourceIdentifiers("See src/Services/Accounts/Foo.cs for details.").some((term) =>
+      term.startsWith("src/")
+    )
+  );
+  // Pure business prose has no source identifiers.
+  assert.deepEqual(findProseSourceIdentifiers("After saving, the system notifies subscribers."), []);
+});
+
+test("runChecks flags legacy physical evidence and unknown-namespace anchors (SDD023)", async () => {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "codex-verify-sdd023-"));
+  try {
+    const relativeFile = "docs/specs/example/B-business-rules.md";
+    const target = path.join(tempRoot, relativeFile);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(
+      target,
+      [
+        "# Rules",
+        "Valid abstract anchors stay clean.",
+        "[Source: operation/accounts/CreateUser]",
+        "[Source: event/accounts/AccountUserSaved, schema/accounts/UserStore]",
+        "Legacy physical reference must be flagged.",
+        "[Source: src/Services/Accounts/Foo.cs:12-20]",
+        "Bold-label physical carrier must be flagged.",
+        "**Source:** `Bar.cs:5`",
+        "Unknown namespace must be flagged.",
+        "[Source: widget/accounts/Thing]",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const result = await runChecks(tempRoot, [], { sdd022Files: [relativeFile] });
+    const sdd023 = result.failures.filter((failure) => failure.code === "SDD023");
+    // Two legacy-physical (bracket file:line + bold-label .cs) + one unknown-namespace.
+    assert.equal(result.sddMetrics.legacyPhysicalEvidenceFindings, 2);
+    assert.equal(result.sddMetrics.malformedAbstractAnchorFindings, 1);
+    assert.ok(sdd023.every((failure) => failure.severity === "warn"));
+    assert.ok(sdd023.some((failure) => failure.message.includes("widget/accounts/Thing")));
+    // The two well-formed abstract carriers produce no SDD023 findings.
+    assert.equal(sdd023.length, 3);
+  } finally {
+    await fs.rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("runChecks flags source identifiers leaking into prose (SDD024 / M2)", async () => {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "codex-verify-sdd024-"));
+  try {
+    const relativeFile = "docs/specs/example/A-domain-model.md";
+    const target = path.join(tempRoot, relativeFile);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(
+      target,
+      [
+        "# Domain",
+        "After save, the service publishes AccountUserSavedEventBusMessage to consumers.",
+        "The CreateUserCommandHandler validates input.",
+        "See src/Services/Accounts/Foo.cs for details.",
+        "Business prose about creating a user has no leak.",
+        "[Source: operation/accounts/CreateUser]",
+        "**Handler:** `AccountUserSavedEventBusConsumer`",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const result = await runChecks(tempRoot, [], { sdd022Files: [relativeFile] });
+    const sdd024 = result.failures.filter((failure) => failure.code === "SDD024");
+    const terms = sdd024.map((failure) => failure.message.match(/"([^"]+)"/)?.[1]);
+    assert.ok(terms.includes("AccountUserSavedEventBusMessage"));
+    assert.ok(terms.includes("CreateUserCommandHandler"));
+    assert.ok(terms.some((term) => term.startsWith("src/")));
+    // The `[Source:]` anchor and `**Handler:**` carrier lines are exempt from prose scanning.
+    assert.ok(!terms.includes("AccountUserSavedEventBusConsumer"));
+    assert.ok(sdd024.every((failure) => failure.severity === "warn"));
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
   }
@@ -258,15 +422,15 @@ test("runChecks passes positive SDD fixture", async () => {
     const files = new Map([
       [
         ".claude/skills/workflow-feature/SKILL.md",
-        "shared/sdd-artifact-contract.md workflow-performance SLA functional no-regression docs/project-config.json",
+        "shared/sdd-artifact-contract.md performance-review SLA functional no-regression docs/project-config.json",
       ],
       [
         ".claude/skills/workflow-bugfix/SKILL.md",
-        "Code Bug vs Spec Bug Spec Bug Code Bug workflow-performance SLA functional no-regression docs/project-config.json",
+        "Code Bug vs Spec Bug Spec Bug Code Bug performance-review SLA functional no-regression docs/project-config.json",
       ],
       [
         ".claude/skills/workflow-idea-to-pbi/SKILL.md",
-        "Feature doc Section 15 TC IDs docs-update docs/project-config.json team-artifacts/ideas team-artifacts/pbis plans/reports/docs-update",
+        "Feature doc Section 8 TC IDs docs-update docs/project-config.json team-artifacts/ideas team-artifacts/pbis plans/reports/docs-update",
       ],
       [
         ".claude/skills/docs-update/SKILL.md",
@@ -277,12 +441,12 @@ test("runChecks passes positive SDD fixture", async () => {
         "adjudication required canonical product/spec intent",
       ],
       [
-        ".claude/skills/tdd-spec/SKILL.md",
-        "emergency recovery AskUserQuestion recovery report target-source-path",
+        ".claude/skills/spec/references/sync.md",
+        "emergency recovery AskUserQuestion recovery report from-integration-tests",
       ],
       [
-        ".claude/skills/feature-docs/SKILL.md",
-        "Section 15 owned exclusively by /tdd-spec",
+        ".claude/skills/spec/SKILL.md",
+        "Section 8 is the canonical TC registry tests mode owns generation MUST NOT be overwritten during update",
       ],
       [
         ".claude/skills/shared/sdd-artifact-contract.md",
@@ -293,24 +457,20 @@ test("runChecks passes positive SDD fixture", async () => {
         "SYNC:ai-sdd-artifact-contract reference-only until accepted Any supported AI tool shared/sdd-artifact-contract.md",
       ],
       [
-        ".claude/skills/workflow-performance/SKILL.md",
-        "PERFORMANCE-SDD ROUTE baseline acceptable regression budget behavior docs/spec",
-      ],
-      [
         ".claude/skills/workflow-refactor/SKILL.md",
-        "PERFORMANCE-SDD ROUTE workflow-performance observable behavior docs/spec",
+        "PERFORMANCE-SDD ROUTE performance-review observable behavior docs/spec",
       ],
       [
         ".claude/workflows.json",
-        "PERFORMANCE-SDD ROUTE workflow-performance SLA functional no-regression",
+        "PERFORMANCE-SDD ROUTE performance-review SLA functional no-regression",
       ],
       [
         ".codex/CODEX_CONTEXT.md",
-        "PERFORMANCE-SDD ROUTE workflow-performance shared/sdd-artifact-contract.md SYNC:ai-sdd-artifact-contract reference-only until accepted Any supported AI tool",
+        "PERFORMANCE-SDD ROUTE performance-review shared/sdd-artifact-contract.md SYNC:ai-sdd-artifact-contract reference-only until accepted Any supported AI tool",
       ],
       [
         "AGENTS.md",
-        "PERFORMANCE-SDD ROUTE workflow-performance shared/sdd-artifact-contract.md SYNC:ai-sdd-artifact-contract reference-only until accepted Any supported AI tool",
+        "PERFORMANCE-SDD ROUTE performance-review shared/sdd-artifact-contract.md SYNC:ai-sdd-artifact-contract reference-only until accepted Any supported AI tool",
       ],
       [
         ".claude/hooks/session-init-docs.cjs",
@@ -330,22 +490,22 @@ test("runChecks passes positive SDD fixture", async () => {
       ],
       [
         ".agents/skills/workflow-idea-to-pbi/SKILL.md",
-        "Feature doc Section 15 TC IDs docs-update shared/sdd-artifact-contract.md team-artifacts/ideas team-artifacts/pbis plans/reports/docs-update",
+        "Feature doc Section 8 TC IDs docs-update shared/sdd-artifact-contract.md team-artifacts/ideas team-artifacts/pbis plans/reports/docs-update",
       ],
       [
         ".agents/skills/docs-update/SKILL.md",
         "configured PBI/idea artifact roots detection/delegation docs/project-config.json",
       ],
       [
-        ".agents/skills/tdd-spec/SKILL.md",
-        "emergency recovery AskUserQuestion recovery report target-source-path",
+        ".agents/skills/spec/references/sync.md",
+        "emergency recovery AskUserQuestion recovery report from-integration-tests",
       ],
       [
-        ".claude/skills/tdd-spec/references/tdd-spec-template.md",
+        ".claude/skills/spec/references/spec-tests-template.md",
         "configured-source-path configured-test-path",
       ],
       [
-        ".agents/skills/tdd-spec/references/tdd-spec-template.md",
+        ".agents/skills/spec/references/spec-tests-template.md",
         "configured-source-path configured-test-path",
       ],
       [

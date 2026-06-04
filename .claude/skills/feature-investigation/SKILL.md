@@ -38,7 +38,14 @@ description: '[Investigation] Use when the user asks to investigate, explore, un
 - Use anti-hallucination protocols: validate assumptions, chain evidence, anchor to original question
 - Re-read original question every 10 operations to prevent context drift
 
-> **Skill Variant:** READ-ONLY exploration - no code changes. For implementing features, use `feature-implementation`. For debugging, use `debug-investigate`.
+### Logical-ID Extraction & Business-Intent Rule (M3/M5)
+
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. When extracting operations, business rules, or events into findings:
+
+- Assign each extracted operation/rule/event a logical ID (FR-/BR- for operations and rules) as the PRIMARY identifier. Keep the `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths — those live only in the provenance sidecar) as a SEPARATE carrier — never fold the source link into the rule statement itself (M3).
+- For every rule, explain **WHY** it exists (the business intent / invariant it protects), not only **WHAT** the code does. State the rule in tech-agnostic business terms so the finding is reusable by a rebuild team on any stack (M5).
+
+> **Skill Variant:** READ-ONLY exploration - no code changes. For implementing features, use `workflow-feature`. For debugging, use `debug-investigate`.
 
 # Feature Investigation & Logic Exploration
 
@@ -200,7 +207,7 @@ Create at `.ai/workspace/analysis/[feature-name]-investigation.analysis.md`:
 
 ## Framework Pattern Usage
 
-[Documentation of platform patterns used]
+[Documentation of the project's framework patterns used]
 ```
 
 ---
@@ -209,7 +216,8 @@ Create at `.ai/workspace/analysis/[feature-name]-investigation.analysis.md`:
 
 ```bash
 # Domain Entities (HIGH PRIORITY)
-grep: "class.*{EntityName}.*:.*RootEntity|RootAuditedEntity"
+# Resolve {EntityBaseClass} from the project's backend reference doc (docs/project-reference/)
+grep: "class.*{EntityName}.*:.*{EntityBaseClass}"
 
 # Commands & Queries (HIGH PRIORITY)
 grep: ".*Command.*{EntityName}|{EntityName}.*Command"
@@ -295,11 +303,11 @@ For each file, document:
 - **dependencyInjection**: DI registrations
 - **genericTypeParameters**: Generic type relationships
 
-**Message Bus Analysis (FOR CONSUMERS ONLY):**
+**Messaging Analysis (FOR CONSUMERS ONLY):**
 
-- **messageBusMessage**: Message type consumed
-- **messageBusProducers**: Files that publish this message (MUST ATTENTION grep across ALL services)
-- **crossServiceIntegration**: Cross-service data flow description
+- **messageName**: Message/event contract consumed
+- **messageProducers**: Files that publish this message/event contract (MUST ATTENTION grep across all configured service/module roots)
+- **crossBoundaryIntegration**: Cross-boundary data flow description
 
 **Targeted Aspect Analysis:**
 
@@ -315,10 +323,12 @@ For each file, document:
 
 **For Consumer Components:**
 
-- `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`
+- `messageName`, `messageProducers`, `crossBoundaryIntegration`
 - `handleLogicWorkflow`, `dependencyWaiting`
 
 **Code Examples:**
+
+Include relevant code snippets that demonstrate key logic, in the language of the file under analysis. **Example (illustrative — use the file's own language):**
 
 ```csharp
 // Include relevant code snippets that demonstrate key logic
@@ -354,12 +364,12 @@ For each file, document:
 
 **Detailed Flow:**
 
-1. **Frontend Entry Point**: `Component.ts:line` - User interaction, validation, API call
-2. **API Layer**: `Controller.cs:line` - Endpoint, authorization, command dispatch
-3. **Application Layer**: `CommandHandler.cs:line` - Validation, business logic, repository ops
-4. **Domain Layer**: `Entity.cs:line` - Business rules, state changes, domain events
-5. **Event Handling**: `EventHandler.cs:line` - Events handled, side effects, integrations
-6. **Cross-Service**: `Consumer.cs:line` - Message consumed, producer service, sync logic
+1. **Frontend Entry Point**: `<entry-component-file>:line` - User interaction, validation, API call
+2. **API Layer**: `<api-endpoint-file>:line` - Endpoint, authorization, command dispatch
+3. **Application Layer**: `<command-handler-file>:line` - Validation, business logic, repository ops
+4. **Domain Layer**: `<domain-entity-file>:line` - Business rules, state changes, domain events
+5. **Event Handling**: `<event-handler-file>:line` - Events handled, side effects, integrations
+6. **Cross-Service**: `<message-consumer-file>:line` - Message consumed, producer service, sync logic
 
 ### 2. Key Architectural Patterns and Relationships
 
@@ -411,9 +421,9 @@ Critical findings, recommendations, uncertainties requiring clarification.
 
 ## Key Files
 
-| File                  | Purpose   |
-| --------------------- | --------- |
-| `path/to/file.cs:123` | [Purpose] |
+| File                                         | Purpose   |
+| -------------------------------------------- | --------- |
+| `{configured-source-root}/path/to/file:line` | [Purpose] |
 
 ## Data Flow
 ```
@@ -480,8 +490,8 @@ I can explain further:
 
 - Project store component base (search for: store component base class) - State management components
 - Project store base (search for: store base class) - Store implementations
-- `effectSimple` / `tapResponse` - Effect handling
-- `observerLoadingErrorState` - Loading/error states
+- Reactive-effect + response-tap operators (search: the project's state library effect/tap helpers, e.g. an effect that maps an API call to state) - Effect handling
+- Loading/error state observer helper (search: the project's loading/error state primitive) - Loading/error states
 - API services extending project API service base class
 
 ---
@@ -510,7 +520,7 @@ I can explain further:
 After ALL files analyzed, write comprehensive analysis:
 
 - End-to-end workflows, architectural patterns, business logic
-- Integration points, business rules, platform patterns, key insights
+- Integration points, business rules, architectural patterns, key insights
 - **Use the Overall Analysis Template** above
 
 ### Phase 2: Presentation
@@ -554,9 +564,9 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 
 ## See Also
 
-- `feature-implementation` - For implementing new features (code changes)
+- `workflow-feature` - For implementing new features (code changes)
 - `debug-investigate` - For debugging and fixing issues
-- `planning` - For creating implementation plans
+- `plan` - For creating implementation plans
 - `graph-query` - Natural language graph queries for code relationships
 
 ## References
@@ -692,11 +702,11 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -741,7 +751,7 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -766,9 +776,10 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -783,6 +794,7 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -821,6 +833,7 @@ When graph DB is available, use `trace` to understand the complete feature flow:
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 

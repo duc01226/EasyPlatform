@@ -37,16 +37,15 @@ runHook(
 
         // Your logic here
 
-        return {
-            continue: true, // false = block operation
-            inject: 'Context text', // Optional: inject into Claude's context
-            message: 'User message' // Optional: display to user
-        };
+        // Return a STRING to inject it into Claude's context
+        // (written raw to stdout; stdout text + exit 0 = injected context).
+        // Return undefined for a silent no-op.
+        return '## My Context\n\nGuidance text to inject...';
     },
     {
         exitCode: 0, // Success exit code
         errorExitCode: 0, // Non-blocking on error
-        outputResult: true // Write return value to stdout
+        outputResult: true // Write return value to stdout (strings raw, objects JSON-serialized)
     }
 );
 ```
@@ -77,8 +76,8 @@ For simple synchronous hooks:
 const { runHookSync } = require('./lib/hook-runner.cjs');
 
 runHookSync('my-sync-hook', event => {
-    // Synchronous logic only
-    return { continue: true };
+    // Synchronous logic only; return a string (with outputResult: true)
+    // to inject context, or return nothing for a silent no-op.
 });
 ```
 
@@ -129,21 +128,15 @@ const event = {
 
 ### Standard Output (stdout)
 
-Return JSON to communicate with Claude Code:
+Hooks communicate with Claude Code via **plain text on stdout plus the exit code** — there is no special JSON output field for injection. The framework's context-injection hooks simply `console.log(text)` (or return a string from `runHook` with `outputResult: true`, which writes it raw to stdout — `hook-runner.cjs:79-84`) and exit 0.
 
-```json
-{
-    "continue": true,
-    "inject": "## Context\n\nGuidance text to inject...",
-    "message": "Message to display to user"
-}
-```
+| Channel     | Exit code | Effect                                                                |
+| ----------- | --------- | --------------------------------------------------------------------- |
+| stdout text | `0`       | Text is injected into Claude's context                                |
+| stderr text | `2`       | Operation is blocked; stderr message is shown (and visible to Claude) |
+| no output   | `0`       | Silent no-op                                                          |
 
-| Field      | Type    | Purpose                                            |
-| ---------- | ------- | -------------------------------------------------- |
-| `continue` | boolean | `true` = proceed, `false` = block operation        |
-| `inject`   | string  | Text injected into Claude's context window         |
-| `message`  | string  | Message displayed to user (stderr is also visible) |
+`runBlockingHook` implements the blocking channel for you: return `{ allowed: false, message }` and it writes `message` to stderr and exits 2 (`hook-runner.cjs:161-168`).
 
 ### Exit Codes
 
@@ -183,16 +176,17 @@ Register hooks in `.claude/settings.json`:
 
 ### Event Types & Matchers
 
-| Event              | Matcher Values                                                       | When Triggered            |
-| ------------------ | -------------------------------------------------------------------- | ------------------------- |
-| `SessionStart`     | `startup`, `resume`, `clear`, `compact`                              | New or resumed session    |
-| `SessionEnd`       | `clear`, `exit`, `compact`                                           | Session ending            |
-| `UserPromptSubmit` | (none needed)                                                        | User submits prompt       |
-| `PreToolUse`       | Tool names: `Read`, `Edit`, `Write`, `Bash`, `Glob`, `Grep`, `Skill` | Before tool execution     |
-| `PostToolUse`      | Tool names (same as above)                                           | After tool execution      |
-| `PreCompact`       | `manual`, `auto`                                                     | Before context compaction |
-| `SubagentStart`    | `*`                                                                  | Subagent spawning         |
-| `Notification`     | (none needed)                                                        | Waiting for user input    |
+| Event              | Matcher Values                                                       | When Triggered                 |
+| ------------------ | -------------------------------------------------------------------- | ------------------------------ |
+| `SessionStart`     | `startup`, `resume`, `clear`, `compact`                              | New or resumed session         |
+| `SessionEnd`       | `clear`, `exit`, `compact`                                           | Session ending                 |
+| `UserPromptSubmit` | (none needed)                                                        | User submits prompt            |
+| `PreToolUse`       | Tool names: `Read`, `Edit`, `Write`, `Bash`, `Glob`, `Grep`, `Skill` | Before tool execution          |
+| `PostToolUse`      | Tool names (same as above)                                           | After tool execution           |
+| `PreCompact`       | `manual`, `auto`                                                     | Before context compaction      |
+| `SubagentStart`    | `*`                                                                  | Subagent spawning              |
+| `Stop`             | (none needed)                                                        | Main agent finishes responding |
+| `Notification`     | (none needed)                                                        | Waiting for user input         |
 
 ### Matcher Patterns
 
@@ -240,23 +234,37 @@ const raw = readStdinSync({ trim: true });
 
 ### ck-paths.cjs
 
-```javascript
-const paths = require('./lib/ck-paths.cjs');
+Runtime tmp/state directories and marker-file helpers (not source-tree paths):
 
-paths.claudeDir; // .claude/
-paths.memoryDir; // .claude/memory/
-paths.hooksDir; // .claude/hooks/
-paths.plansDir; // plans/
-paths.reportsDir; // plans/reports/
+```javascript
+const {
+    CK_TMP_DIR,
+    MARKERS_DIR,
+    DEBUG_DIR,
+    SWAP_DIR,
+    SESSION_STATE_DIR,
+    ensureDir,
+    getMarkerPath,
+    getDebugLogPath,
+    getSessionStatePath
+} = require('./lib/ck-paths.cjs');
+
+CK_TMP_DIR; // OS-tmp scoped framework state root
+MARKERS_DIR; // dedup/injection marker files
+DEBUG_DIR; // debug log files
+getMarkerPath('my-hook'); // marker file path for a hook
+getSessionStatePath(sessionId); // per-session state file
+ensureDir(MARKERS_DIR); // create directory if missing
 ```
 
 ### ck-config-loader.cjs
 
 ```javascript
-const { loadCkConfig } = require('./lib/ck-config-loader.cjs');
+const { loadConfig } = require('./lib/ck-config-loader.cjs');
 
-const config = loadCkConfig();
-// config.privacyBlock, config.scoutBlockMb, config.ace, etc.
+const config = loadConfig();
+// config.codingLevel, config.privacyBlock, config.paths, config.subagent, etc.
+// (top-level keys of .claude/.ck.json merged with DEFAULT_CONFIG)
 ```
 
 ---
@@ -368,14 +376,14 @@ runHook(
     async event => {
         // Only for Edit/Write operations
         if (!['Edit', 'Write'].includes(event.toolName)) {
-            return { continue: true };
+            return undefined; // silent no-op
         }
 
         const filePath = event.toolInput?.file_path || '';
 
         // Check if editing a controller file
         if (!CONTROLLER_PATTERN.test(filePath)) {
-            return { continue: true };
+            return undefined;
         }
 
         debug('api-docs-context', `Controller detected: ${filePath}`);
@@ -383,14 +391,13 @@ runHook(
         // Load API guidelines if they exist
         const docsPath = path.join(event.cwd, API_DOCS_PATH);
         if (!fs.existsSync(docsPath)) {
-            return { continue: true };
+            return undefined;
         }
 
         const guidelines = fs.readFileSync(docsPath, 'utf-8');
 
-        return {
-            continue: true,
-            inject: `
+        // Returned string is written to stdout (exit 0) = injected context
+        return `
 ## API Design Guidelines
 
 You are editing a controller file. Follow these API design patterns:
@@ -398,8 +405,7 @@ You are editing a controller file. Follow these API design patterns:
 ${guidelines.slice(0, 2000)}  <!-- Truncate to avoid context bloat -->
 
 ---
-`
-        };
+`;
     },
     { outputResult: true }
 );
@@ -476,10 +482,10 @@ Keep injected text concise to preserve context window:
 
 ```javascript
 // ❌ Don't inject entire documentation files
-inject: fs.readFileSync('huge-guide.md', 'utf-8');
+return fs.readFileSync('huge-guide.md', 'utf-8');
 
 // ✅ Inject focused, relevant snippets
-inject: `## Key Pattern\n\n${relevantSection.slice(0, 500)}`;
+return `## Key Pattern\n\n${relevantSection.slice(0, 500)}`;
 ```
 
 ### 3. Fast Execution

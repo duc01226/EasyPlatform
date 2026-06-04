@@ -49,6 +49,7 @@
 ## Example
 
 **Obscure library without llms.txt:**
+
 ```bash
 # 1. Find
 WebSearch: "MyLibrary github repository"
@@ -69,7 +70,7 @@ Read: /tmp/docs-analysis/repomix-output.xml
 - README.md: Installation, overview
 - docs/: Usage guides, API reference
 - examples/: Code samples
-- src/: Implementation patterns
+- {source-root}/: Implementation patterns
 
 # 6. Present
 Source: Repository analysis (no llms.txt)

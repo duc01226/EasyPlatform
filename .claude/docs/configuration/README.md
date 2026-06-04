@@ -11,8 +11,8 @@ Claude Code uses multiple configuration files to customize behavior, permissions
 ├── settings.json        # Main settings (hooks, permissions, plugins)
 ├── .ck.json             # Claude Kit configuration (levels, assertions)
 ├── workflows.json       # Workflow automation definitions
-├── .mcp.json            # MCP server integrations
-└── CLAUDE.md            # Project instructions (read by Claude)
+└── .mcp.json            # MCP server integrations
+CLAUDE.md                # Project instructions at repo root (read by Claude)
 ```
 
 ---
@@ -115,35 +115,28 @@ The `codeReview` section configures automatic injection of project-specific revi
 {
     "settings": {
         "enabled": true,
-        "showDetection": true,
-        "confirmHighImpact": true,
-        "overridePrefix": "quick:",
-        "supportedLanguages": ["en", "vi", "zh", "ja", "ko"]
+        "showDetection": true
     },
     "workflows": {
         "feature": {
-            "priority": 10,
-            "confirmFirst": true,
             "sequence": ["plan", "cook", "test", "code-review", "docs-update"],
-            "triggerPatterns": ["\\b(implement|add|create)\\b.*\\b(feature)\\b"],
-            "excludePatterns": ["\\b(fix|bug|error)\\b"]
+            "whenToUse": "User wants to implement new functionality",
+            "whenNotToUse": "Bug fixes or documentation-only work"
         }
     }
 }
 ```
 
-| Workflow          | Priority | Sequence                                        | Triggers                             |
-| ----------------- | -------- | ----------------------------------------------- | ------------------------------------ |
-| `feature`         | 10       | plan → cook → test → review → docs              | "implement", "add feature", "create" |
-| `batch-operation` | 15       | plan → code → test                              | "all files", "batch update"          |
-| `bugfix`          | 20       | scout → investigate → debug → plan → fix → test | "bug", "fix", "not working"          |
-| `refactor`        | 25       | plan → code → simplify → review → test          | "refactor", "clean up", "improve"    |
-| `documentation`   | 30       | scout → investigate → docs-update               | "document", "readme", "update docs"  |
-| `review`          | 35       | code-review → watzup                            | "review code", "check PR"            |
-| `testing`         | 40       | test                                            | "add test", "run tests"              |
-| `investigation`   | 50       | scout → investigate                             | "how does", "where is", "explain"    |
+**Schema:** Each workflow entry supports `description`, `name`, `parallelGroups`, `preActions`, `sequence`, `stepMeta`, `whenNotToUse`, `whenToUse`. There are NO `priority` or `triggers` properties — detection is semantic: the model matches the prompt against each workflow's `whenToUse`/`whenNotToUse` descriptions and auto-selects the best fit (works in any prompt language).
 
-**Multilingual Support:** Patterns include English, Vietnamese, Chinese, Japanese, Korean.
+**Live catalog (17 workflows):** `workflow-big-feature`, `workflow-bugfix`, `workflow-e2e`, `workflow-feature`, `workflow-feature-spec`, `workflow-greenfield-init`, `workflow-idea-to-pbi`, `workflow-product-discovery`, `workflow-refactor`, `workflow-research`, `workflow-review-changes`, `workflow-spec-driven-dev`, `workflow-spec-to-pbi`, `workflow-spec-sync`, `workflow-visualize`, `workflow-seed-test-data`, `workflow-write-integration-test`.
+
+| Workflow                  | Sequence (abridged, from `workflows.json`)                                                        | whenToUse (abridged)                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `workflow-feature`        | scout → investigate → … → plan → plan-review → … → cook → … → integration-test → … → workflow-end | Well-defined feature implementation               |
+| `workflow-bugfix`         | scout → investigate → debug-investigate → … → fix → prove-fix → … → workflow-end                  | Bug, error, crash, regression; end-to-start trace |
+| `workflow-refactor`       | scout → investigate → plan → … → code → … → workflow-end                                          | Restructure code without behavior change          |
+| `workflow-review-changes` | review-changes → why-review → parallel reviewers → code-simplifier → … → workflow-end             | Review uncommitted changes before committing      |
 
 ---
 
@@ -313,8 +306,11 @@ Configuration is loaded in order with later files overriding earlier:
 | `UserPromptSubmit` | User sends message        |
 | `PreToolUse`       | Before tool execution     |
 | `PostToolUse`      | After tool execution      |
-| `Stop`             | Session/task ends         |
+| `Stop`             | Response complete         |
 | `PreCompact`       | Before context compaction |
+| `SessionEnd`       | Session ends              |
+| `SubagentStart`    | Subagent spawning         |
+| `Notification`     | Idle/waiting events       |
 
 ### Hook Structure
 

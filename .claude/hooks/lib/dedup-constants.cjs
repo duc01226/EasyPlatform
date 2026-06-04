@@ -21,10 +21,12 @@
  *   LESSONS             → prompt-context-assembler (via lib/prompt-injections), lessons-injector (PreToolUse)
  *   CRITICAL_THINKING   → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   AI_MISTAKE_PREVENTION → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
- *   WORKFLOW_CATALOG    → workflow-router (p1), workflow-router-p2 (p2), workflow-router-p3 (p3)
+ *   WORKFLOW_CATALOG / _P2 / _P3 → workflow-router (p1) / workflow-router-p2 (p2) / workflow-router-p3 (p3)
  *     NOTE: catalog stays inline (not collapsed to a guidance pointer like other refs) because
  *     it drives workflow SELECTION on every prompt — collapsing would force a tool call before
  *     every user message, costing more than the inline payload. Paging is intentional.
+ *     The 3 per-part markers are centralized below (single source of truth) but kept DISTINCT —
+ *     see the block comment at their definition for the behavior-preservation rationale.
  *   INTEGRATION_TEST_CONTEXT → code-patterns-injector (guidance only)
  *   FEATURE_DOCS_CONTEXT     → code-patterns-injector (guidance only)
  *   PROJECT_STRUCTURE    → prompt-context-assembler-docs (guidance only — merged from p1+p2)
@@ -123,7 +125,7 @@ const CONTENT_SOURCES = {
     // Guidance-only injections (no full content) — fixed 100-line dedup window
     CODE_PATTERNS: { type: 'fixed', value: 100 },
     // Note: CODE_REVIEW_RULES is also injected as full content by code-review-rules-injector.cjs;
-    // fixed:100 applies to the guidance-pointer hooks (subagent-init-code-review-rules.cjs).
+    // fixed:100 applies to the guidance-pointer emitted by the code-review-rules builder (dispatcher 1/3).
     CODE_REVIEW_RULES: { type: 'fixed', value: 100 },
     E2E_CONTEXT: { type: 'fixed', value: 100 },
     INTEGRATION_TEST_CONTEXT: { type: 'fixed', value: 100 },
@@ -318,8 +320,35 @@ module.exports = {
     /** Marker for lessons injection */
     LESSONS: '## Learned Lessons',
 
-    /** Marker for workflow catalog injection */
+    /**
+     * Workflow catalog dedup markers — single source of truth for all 3 router parts.
+     *
+     * The catalog is paged across 3 UserPromptSubmit hooks (workflow-router{,-p2,-p3}.cjs) to stay
+     * under the harness per-hook size limit. Each part dedups on its OWN marker + OWN window:
+     *   WORKFLOW_CATALOG     → workflow-router.cjs    (part 1)  bottom window: DEDUP_LINES.WORKFLOW_CATALOG (computed)
+     *   WORKFLOW_CATALOG_P2  → workflow-router-p2.cjs (part 2)  bottom window: 150 (inline)
+     *   WORKFLOW_CATALOG_P3  → workflow-router-p3.cjs (part 3)  bottom window: 150 (inline)
+     *
+     * Markers are kept DISTINCT (NOT collapsed to one shared base string) deliberately:
+     *   1. Behavior preservation — `WORKFLOW_CATALOG` ('## Workflow Catalog') is a SUBSTRING of both
+     *      P2/P3 markers, and the parts use DIFFERENT dedup windows. Collapsing all three to the base
+     *      marker would flip part 2/3's re-emit decision in a reachable transcript-depth band (its
+     *      header at depth ~150–165), changing observable output. Distinct markers keep each part's
+     *      dedup byte-identical to its historical behavior.
+     *   2. KNOWN LATENT desync (NOT fixed here — fixing it is a behavior change): p1's window is
+     *      computed (~workflows×2) while p2/p3 are fixed at 150, so the three can theoretically fall
+     *      out of their windows at slightly different depths. In practice all three fire together on
+     *      the same prompt with headers ~15 lines apart, so they dedup in lockstep every normal
+     *      session. Any future window-unification must be a deliberate, tested behavior change.
+     */
+    /** Marker for workflow catalog injection (part 1) */
     WORKFLOW_CATALOG: '## Workflow Catalog',
+
+    /** Marker for workflow catalog injection (part 2 — continued) */
+    WORKFLOW_CATALOG_P2: '## Workflow Catalog (continued)',
+
+    /** Marker for workflow catalog injection (part 3) */
+    WORKFLOW_CATALOG_P3: '## Workflow Catalog (part 3)',
 
     /** Marker for workflow execution protocol injection */
     WORKFLOW_PROTOCOL: '[WORKFLOW-EXECUTION-PROTOCOL]',

@@ -1,13 +1,13 @@
 ---
 name: graph-export
-description: '[Code Intelligence] Use when you need export the code review knowledge graph to a JSON file.'
+description: '[Code Intelligence] Use when you need to export the code review knowledge graph. Flag: --format={json|mermaid} (default json); --format=json dumps the full graph to a JSON file, --format=mermaid renders a single file as a Mermaid flowchart diagram.'
 disable-model-invocation: true
 version: 1.0.0
 ---
 
 ## Quick Summary
 
-**Goal:** [Code Intelligence] Export the code review knowledge graph to a JSON file. Dumps all nodes (functions, classes, files) and edges (calls, imports, inheritance) from graph.db for external analysis or inspection.
+**Goal:** [Code Intelligence] Export the code review knowledge graph. `--format=json` (default) dumps all nodes (functions, classes, files) and edges (calls, imports, inheritance) from graph.db for external analysis; `--format=mermaid` renders a single file's internal call graph as a Mermaid flowchart in markdown (folds former `/graph-export-mermaid`).
 
 **Workflow:**
 
@@ -17,6 +17,7 @@ version: 1.0.0
 
 **Key Rules:**
 
+- **Format flag** (see [Format Mode](#format-mode---format)): `--format=json` (default) = full graph → `.code-graph/graph-export.json` (CLI `export`); `--format=mermaid` = single-file diagram, requires `<path>` (CLI `export-mermaid`).
 - MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
 - NEVER skip mandatory workflow or skill gates.
@@ -26,7 +27,18 @@ version: 1.0.0
 - Graph must be built first: run `/graph-build` if `.code-graph/graph.db` doesn't exist
 - Requires Python 3.10+ with tree-sitter, tree-sitter-language-pack, networkx
 
+## Format Mode (`--format=`)
+
+| `--format`       | CLI verb                                  | Output                                                      | Requires |
+| ---------------- | ----------------------------------------- | ----------------------------------------------------------- | -------- |
+| `json` (default) | `code_graph export --json`                | Full graph dump → `.code-graph/graph-export.json`           | —        |
+| `mermaid`        | `code_graph export-mermaid <path> --json` | Single-file Mermaid diagram → `.code-graph/<name>-graph.md` | `<path>` |
+
+`--format=json` dumps ALL nodes + edges from the whole graph. `--format=mermaid` renders ONE file's internal call graph as a Mermaid flowchart (folds former `/graph-export-mermaid`). Pick `--format` FIRST (default `json`), then run the matching branch below.
+
 ## Steps
+
+### `--format=json` (default) — full graph → JSON
 
 1. **Export graph** — Run via Bash:
 
@@ -34,15 +46,15 @@ version: 1.0.0
     python .claude/scripts/code_graph export --json
     ```
 
-Default output: `.code-graph/graph-export.json`
+    Default output: `.code-graph/graph-export.json`
 
 2. **Export specific files only** (optional):
 
     ```bash
-    python .claude/scripts/code_graph export --files src/auth.py src/api.py --json
+    python .claude/scripts/code_graph export --files {source-root}/auth {source-root}/api --json
     ```
 
-This exports only nodes and edges belonging to the specified files.
+    This exports only nodes and edges belonging to the specified files.
 
 3. **Custom output path** (optional):
 
@@ -52,7 +64,31 @@ This exports only nodes and edges belonging to the specified files.
 
 4. **Report results:** File path, node count, edge count, file size.
 
+### `--format=mermaid` — single file → Mermaid diagram
+
+1. **Export file graph as Mermaid** — Run via Bash (positional or `--file` flag both work):
+
+    ```bash
+    python .claude/scripts/code_graph export-mermaid <relative-path> --json
+    # OR
+    python .claude/scripts/code_graph export-mermaid --file <relative-path> --json
+    ```
+
+    Default output: `.code-graph/<path-based-unique-name>-graph.md` (e.g., `docs--project-config-graph.md`)
+
+2. **Custom output path** (optional):
+
+    ```bash
+    python .claude/scripts/code_graph export-mermaid <relative-path> -o custom-path.md --json
+    ```
+
+3. **Report results:** File path, node count, edge count.
+
+**Mermaid scope:** functions/classes/test functions within the file + internal call relationships (caller AND callee in-file); class membership via nested subgraphs; edge types calls/imports/inherits/implements/tests/depends. Excludes external/stdlib calls, cross-file callers, and CONTAINS edges (shown structurally). Implicit `MESSAGE_BUS` / `TRIGGERS_EVENT` / `API_ENDPOINT` edges render when present.
+
 ## Output Format
+
+**`--format=json`:**
 
 ```json
 {
@@ -66,6 +102,8 @@ This exports only nodes and edges belonging to the specified files.
   ]
 }
 ```
+
+**`--format=mermaid`:** a markdown file containing a `flowchart TD` — functions/classes as nodes, calls/imports as labelled edges, class membership as nested subgraphs (e.g., `login -->|calls| validate`).
 
 ## Implicit Edges in Export
 
@@ -106,6 +144,7 @@ Export the complete knowledge graph from `.code-graph/graph.db` to a readable JS
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

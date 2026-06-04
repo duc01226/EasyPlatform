@@ -15,7 +15,7 @@ description: '[Project Management] Use when you need to generate an HTML mockup 
 
 ## Quick Summary
 
-**Goal:** Ask AI to generate a self-contained HTML mock-up file from finalized PBI/story artifacts, styled from the project's reference design docs, existing UI, components, and domain entities. One HTML file per PBI covering all stories.
+**Goal:** Give stakeholders a realistic, system-matching visual preview of every story's UI — by generating a self-contained HTML mock-up file (one per PBI covering all stories) from finalized PBI/story artifacts, styled from the project's reference design docs, existing UI, components, and real domain entity data — before implementation begins, so layout/UX/state gaps surface while changes are still cheap.
 
 **Workflow:**
 
@@ -39,6 +39,7 @@ description: '[Project Management] Use when you need to generate an HTML mockup 
 - Include component states (default, loading, empty, error)
 - Responsive layout with mobile/desktop preview
 - Save in same directory as the PBI artifact
+- **Tech-agnostic descriptive prose (M1/M2):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Any narrative, captions, annotations, generation notes, or component/state descriptions accompanying the mock-up describe components and states by business/observable terms (e.g., "status indicator", "record list", "loading placeholder"), NOT by framework component names or CSS class names. The rendered HTML itself may use real class names internally (that is implementation, not prose), but the human-readable descriptions stay tech-agnostic per `docs/project-reference/spec-principles.md` §3.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -53,9 +54,9 @@ Generate visual HTML mockup reports from PBI and user story artifacts.
 - After PBI and stories are finalized (reviewed, challenged, gated)
 - Before moving to implementation planning or design spec
 - When stakeholders need a visual preview of the feature
-- As the final step in `idea-to-pbi` and similar workflows
+- As the final step in `workflow-idea-to-pbi` and similar workflows
 
-**NOT for**: Implementing production UI (use `/cook`), creating design specs (use `/design-spec`), or wireframing from scratch (use `/wireframe-to-spec`).
+**NOT for**: Implementing production UI (use `/cook`), creating design specs (use `/design-spec`), or wireframing from scratch (use `/design-spec --mode=wireframe`).
 
 ---
 
@@ -159,7 +160,7 @@ Use real domain entities and relationships for realistic mockup data:
     - Entity relationships → navigation links, dropdowns, nested displays
     - Entity statuses/enums → status badges, filter options
     - Date fields → realistic date values
-    - String fields → domain-appropriate sample text (employee names, goal titles, etc.)
+    - String fields → domain-appropriate sample text (customer names, invoice titles, etc.)
 
 > **Key principle:** Sample data should use actual entity field names and realistic domain values — not "Lorem ipsum" or "Item 1, Item 2".
 
@@ -314,7 +315,7 @@ Before completing:
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `idea-to-pbi` workflow** (Recommended) — includes mockup as final step
+> 1. **Activate `workflow-idea-to-pbi` workflow** (Recommended) — includes mockup as final step
 > 2. **Execute `/pbi-mockup` directly** — run this skill standalone on an existing PBI
 
 ---
@@ -346,6 +347,7 @@ Before completing:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -381,6 +383,7 @@ Before completing:
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Give stakeholders a realistic, system-matching visual preview of every story's UI — built from real domain data and the project's actual design system — before implementation begins, so layout/UX/state gaps surface while changes are still cheap.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

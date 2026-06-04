@@ -14,7 +14,7 @@ Resolves environment variables following the Claude Code hierarchy:
 Usage:
     from resolve_env import resolve_env
 
-    api_key = resolve_env('GEMINI_API_KEY', skill='ai-multimodal')
+    api_key = resolve_env('GEMINI_API_KEY', skill='visual analysis tooling')
     api_key = resolve_env('GEMINI_API_KEY')  # Without skill context
 """
 
@@ -260,17 +260,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Resolve GEMINI_API_KEY for ai-multimodal skill
-  %(prog)s GEMINI_API_KEY --skill ai-multimodal
+  # Resolve GEMINI_API_KEY for visual analysis tooling
+  %(prog)s GEMINI_API_KEY --skill visual analysis tooling
 
   # Resolve with verbose output
-  %(prog)s GEMINI_API_KEY --skill ai-multimodal --verbose
+  %(prog)s GEMINI_API_KEY --skill visual analysis tooling --verbose
 
   # Find all locations where variable is defined
   %(prog)s GEMINI_API_KEY --find-all
 
   # Show hierarchy
-  %(prog)s --show-hierarchy --skill ai-multimodal
+  %(prog)s --show-hierarchy --skill visual analysis tooling
         """
     )
 

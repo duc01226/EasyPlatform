@@ -58,7 +58,7 @@ gcloud container clusters delete my-cluster --zone=us-central1-a
 # Deploy container
 gcloud run deploy my-service \
   --image=gcr.io/PROJECT_ID/my-image:tag \
-  --platform=managed \
+  {configured-run-mode-flag} \
   --region=us-central1 \
   --allow-unauthenticated
 
@@ -283,17 +283,17 @@ gcloud monitoring metrics-descriptors list
 
 ## Quick Reference
 
-| Service | Command Prefix |
-|---------|----------------|
-| Compute Engine | `gcloud compute` |
-| GKE | `gcloud container` |
-| Cloud Run | `gcloud run` |
-| App Engine | `gcloud app` |
-| Cloud Storage | `gsutil` |
-| BigQuery | `bq` |
-| Cloud SQL | `gcloud sql` |
+| Service         | Command Prefix     |
+| --------------- | ------------------ |
+| Compute Engine  | `gcloud compute`   |
+| GKE             | `gcloud container` |
+| Cloud Run       | `gcloud run`       |
+| App Engine      | `gcloud app`       |
+| Cloud Storage   | `gsutil`           |
+| BigQuery        | `bq`               |
+| Cloud SQL       | `gcloud sql`       |
 | Cloud Functions | `gcloud functions` |
-| IAM | `gcloud iam` |
+| IAM             | `gcloud iam`       |
 
 ## Resources
 

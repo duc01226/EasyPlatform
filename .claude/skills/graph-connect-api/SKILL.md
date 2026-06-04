@@ -6,7 +6,7 @@ version: 2.0.0
 
 ## Quick Summary
 
-**Goal:** [Code Intelligence] Detect frontend-to-backend API connections using the knowledge graph. Matches HTTP calls (Angular, React, Vue, fetch, axios) with backend routes (.NET, Spring, Express, FastAPI) via project-config.json configuration.
+**Goal:** [Code Intelligence] Detect frontend-to-backend API connections using the knowledge graph. Matches configured frontend HTTP-call patterns with configured backend route patterns via project-config.json configuration.
 
 **Workflow:**
 
@@ -28,30 +28,30 @@ The connector scans frontend files for HTTP calls and backend files for route de
 2. **Prefix-augmented** — prepends `routePrefix` to frontend path
 3. **Suffix match** — strips `routePrefix` from backend, matches remainder
 4. **Deep strip** — strips leading `{param}` segments from backend (handles class-level `{companyId}` routes)
-5. **Controller resolution** — resolves .NET `[controller]` placeholder to actual class name
+5. **Controller resolution** — resolves configured route placeholders to actual route owner names
 
 ## Zero-Config Auto-Detection
 
 **No configuration needed.** The connector auto-detects frameworks by scanning for marker files:
 
-| Frontend | Markers                                                    |
-| -------- | ---------------------------------------------------------- |
-| Angular  | `angular.json`, `nx.json`, `@angular/core` in package.json |
-| React    | `react` in package.json                                    |
-| Vue      | `vue.config.js`, `vue` in package.json                     |
-| Next.js  | `next.config.js`, `next` in package.json                   |
-| Svelte   | `svelte.config.js`, `svelte` in package.json               |
+| Frontend                      | Markers                                                      |
+| ----------------------------- | ------------------------------------------------------------ |
+| Configured frontend framework | framework manifests and package metadata from project config |
+| React                         | `react` in package.json                                      |
+| Vue                           | `vue.config.js`, `vue` in package.json                       |
+| Next.js                       | `next.config.js`, `next` in package.json                     |
+| Svelte                        | `svelte.config.js`, `svelte` in package.json                 |
 
-| Backend | Markers                                     |
-| ------- | ------------------------------------------- |
-| .NET    | `*.csproj` with `Microsoft.AspNetCore`      |
-| Spring  | `pom.xml`/`build.gradle` with `spring-boot` |
-| Express | `express` in package.json                   |
-| NestJS  | `@nestjs/core` in package.json              |
-| FastAPI | `fastapi` in requirements.txt               |
-| Django  | `manage.py` with django                     |
-| Rails   | `Gemfile` with `rails`                      |
-| Go      | `go.mod` (Gin/Echo patterns)                |
+| Backend                      | Markers                                                  |
+| ---------------------------- | -------------------------------------------------------- |
+| Configured backend framework | backend manifests and route metadata from project config |
+| Spring                       | `pom.xml`/`build.gradle` with `spring-boot`              |
+| Express                      | `express` in package.json                                |
+| NestJS                       | `@nestjs/core` in package.json                           |
+| FastAPI                      | `fastapi` in requirements.txt                            |
+| Django                       | `manage.py` with django                                  |
+| Rails                        | `Gemfile` with `rails`                                   |
+| Go                           | `go.mod` (Gin/Echo patterns)                             |
 
 ## Auto-Run Behavior
 
@@ -74,13 +74,13 @@ For projects with custom HTTP patterns (e.g., base class API service), add to `d
         "apiEndpoints": {
             "enabled": true,
             "frontend": {
-                "framework": "angular",
-                "paths": ["src/app/"],
+                "framework": "{configured-frontend-framework}",
+                "paths": ["{frontend-source-root}/"],
                 "customPatterns": ["this\\.\\s*(get|post|put|delete|patch)\\s*[<(]\\s*['\"]([^\"']+)"]
             },
             "backend": {
                 "framework": "dotnet",
-                "paths": ["src/Api/Controllers/"],
+                "paths": ["{api-source-root}/"],
                 "routePrefix": "api",
                 "customPatterns": []
             }
@@ -148,6 +148,7 @@ Detect frontend HTTP calls and match them to backend route definitions, creating
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

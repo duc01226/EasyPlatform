@@ -15,7 +15,7 @@ description: '[Project Management] Use when you need to prioritize backlog items
 
 ## Quick Summary
 
-**Goal:** Order 3+ backlog items using RICE, MoSCoW, or Value-Effort frameworks with scores and rationale.
+**Goal:** Produce a defensible ranked ordering of 3+ backlog items using RICE, MoSCoW, or Value-Effort frameworks so the team works highest-value items first — every rank backed by a score and tech-agnostic rationale (value/effort/risk/impact).
 
 **Workflow:**
 
@@ -29,32 +29,33 @@ description: '[Project Management] Use when you need to prioritize backlog items
 - Minimum 3 items required; fewer than 3 should be discussed directly
 - Default to RICE if unsure; ask user if ambiguous
 - Optionally update PBI file priority fields after ranking
+- **Tech-agnostic rationale (M1):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Justify every ranking by value, effort, risk, and business impact — NOT by implementation technology. Rationale prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3: no framework/product/language/design-pattern names; effort may cite story points and relative complexity, never a named stack.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Backlog Prioritization
 
-Order backlog items using data-driven prioritization frameworks to produce a ranked list with scores and rationale.
+Order backlog items using data-driven frameworks → ranked list with scores and rationale.
 
 ## When to Use
 
-- Sprint planning needs an ordered backlog (3+ items to rank)
-- Stakeholders need a priority ranking with justification
+- Sprint planning needs ordered backlog (3+ items to rank)
+- Stakeholders need priority ranking with justification
 - Feature roadmap ordering with objective criteria
 - Comparing competing features or initiatives
 
 ## When NOT to Use
 
-- Fewer than 3 items (just discuss directly)
+- Fewer than 3 items (discuss directly)
 - Creating PBIs or writing stories -- use `product-owner` or `story`
 - Full product strategy -- use `product-owner`
 - Project status tracking -- use `project-manager`
 
 ## Prerequisites
 
-- A list of 3+ backlog items (PBIs, features, or user stories)
+- List of 3+ backlog items (PBIs, features, user stories)
 - IF items exist as files: read from `team-artifacts/pbis/` or user-provided path
-- IF items provided inline: use the provided descriptions
+- IF items provided inline: use provided descriptions
 
 ## Workflow
 
@@ -163,7 +164,7 @@ Order backlog items using data-driven prioritization frameworks to produce a ran
 
 ## Optional Escalation: /llm-council on Ties
 
-**Gate evaluation:** After producing the prioritized backlog (per `## Workflow` step output), inspect the ranking output:
+**Gate evaluation:** After producing prioritized backlog (per `## Workflow` step output), inspect ranking output:
 
 - Top-2 RICE scores within 15% of each other → gate fires
 - Explicit MoSCoW tie (≥2 items in same Must/Should/Could band with material scope overlap) → gate fires
@@ -201,6 +202,7 @@ If gate does NOT fire, the prioritization decision stands; do NOT prompt.
 
 ## Closing Reminders
 
+- **IMPORTANT MUST ATTENTION Goal:** produce a defensible ranked ordering so the team works highest-value items first — every rank backed by a score and tech-agnostic rationale (value/effort/risk/impact)
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
@@ -229,15 +231,16 @@ If gate does NOT fire, the prioritization decision stands; do NOT prompt.
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->

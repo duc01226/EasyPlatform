@@ -17,7 +17,7 @@ description: '[Project Management] Use when creating user stories, writing accep
 
 **Key Rules:**
 
-- Always reference existing business rules from `docs/business-features/` before creating new ones
+- Always reference existing business rules from `docs/specs/` before creating new ones
 - User stories must pass INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 - Include entity context and related domain model in every story
 - MUST ATTENTION include `story_points` and `complexity` in all PBI/story outputs
@@ -41,8 +41,8 @@ When refining domain-related PBIs, automatically extract and reference existing 
 
 **Dynamic Discovery:**
 
-1. Run: `Glob("docs/business-features/{module}/detailed-features/*.md")` for feature docs
-2. Or: `Glob("docs/business-features/{module}/detailed-features/**/*.md")` for nested features
+1. Run: `Glob("docs/specs/{module}/*.md")` for feature docs
+2. Or: `Glob("docs/specs/{module}/**/*.md")` for nested features
 
 From PBI frontmatter or module detection:
 
@@ -96,7 +96,7 @@ When refining domain-related PBIs, investigate related entities using feature do
 ### Step 1: Load Feature Doc
 
 ```
-Glob("docs/business-features/{module}/detailed-features/*.md")
+Glob("docs/specs/{module}/*.md")
 ```
 
 Select file matching feature from PBI context.
@@ -185,14 +185,14 @@ Scenario: {Descriptive title}
 
 1. Reference existing test case patterns from feature docs
 2. Use TC-{FEATURE}-{NNN} format (e.g., TC-GM-001)
-3. Include Evidence field: `file:line` format
-4. Example from GoalManagement feature:
+3. Include Evidence field: `[Source: namespace/service/id]` abstract-anchor format — never physical code coordinates or repository-root paths (stack-portable; see `shared/tc-format.md`)
+4. Example from InvoiceManagement feature:
     ```
-    TC-GRO-GOAL-001: Create goal with valid data
-    GIVEN employee has permission to create goals
-    WHEN employee submits goal form with all required fields
-    THEN goal is created and appears in goal list
-    Evidence: goal.service.ts:87, goal.component.ts:142
+    TC-INV-001: Create invoice with valid data
+    GIVEN user has permission to create invoices
+    WHEN user submits invoice form with all required fields
+    THEN invoice is created and appears in invoice list
+    Evidence: [Source: operation/sales/CreateInvoice], [Source: component/sales/Invoice]
     ```
 
 ### 4. Business Rules Documentation
@@ -204,7 +204,7 @@ BR-{MOD}-{NNN}: {Rule name}
 IF {condition}
 THEN {action/result}
 ELSE {alternative}
-Evidence: {file}:{line}
+Evidence: [Source: rule/{service}/{RuleName}]
 ```
 
 ### 5. Gap Analysis
@@ -224,7 +224,7 @@ Before finalizing user story:
 - [ ] Business rules don't conflict with existing BR-{MOD}-XXX rules
 - [ ] Test case format matches existing TC-{FEATURE}-{NNN} patterns
 - [ ] Entity names match those in feature docs
-- [ ] Evidence format follows file:line convention
+- [ ] Evidence format follows the abstract-anchor convention (`[Source: namespace/service/id]`) — no physical code coordinates or repository-root paths
 
 ### Documentation Links
 
@@ -233,9 +233,9 @@ Add to user story:
 ```markdown
 ## Reference Documentation
 
-- Feature Doc: `docs/business-features/{module}/detailed-features/{feature}.md`
-- Related Entities: `docs/business-features/{module}/detailed-features/*.md`
-- Existing Test Cases: See feature doc Section 15 (Test Specifications)
+- Feature Doc: `docs/specs/{module}/{feature}.md`
+- Related Entities: `docs/specs/{module}/*.md`
+- Existing Test Cases: See feature doc Section 8 (Test Specifications)
 ```
 
 If conflicts found, note in "Unresolved Questions" section.
@@ -470,6 +470,7 @@ Add to user story/PBI:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -500,7 +501,7 @@ Add to user story/PBI:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 

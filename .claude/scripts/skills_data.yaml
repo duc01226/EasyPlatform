@@ -1,87 +1,3 @@
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Process] Use when QA hands off to PO for sign-off.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: acceptance
-  path: acceptance/SKILL.md
-  removal_after: null
-  status: active
-- category: ai-ml
-  deprecated_by: null
-  deprecated_since: null
-  description: '[AI & Tools] Use when crafting prompts for LLMs (Claude, GPT, Gemini),
-    image generators (Midjourney, DALL-E, Stable Diffusion, Imagen, Flux), or video
-    generators (Veo, Runway).'
-  has_references: true
-  has_scripts: false
-  last_reviewed: null
-  name: ai-artist
-  path: ai-artist/SKILL.md
-  removal_after: null
-  status: active
-- category: ai-ml
-  deprecated_by: null
-  deprecated_since: null
-  description: '[AI & Tools] Use when processing multimedia content with Gemini vision,
-    audio, video, document, image, or video-generation APIs.'
-  has_references: true
-  has_scripts: true
-  last_reviewed: null
-  name: ai-multimodal
-  path: ai-multimodal/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Architecture] Use when designing or modifying REST API endpoints,
-    controller structure, route patterns, request/response DTOs.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: api-design
-  path: api-design/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Architecture] Use when designing or implementing cross-service communication,
-    data synchronization, or service boundary patterns.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: arch-cross-service-integration
-  path: arch-cross-service-integration/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Architecture] Use when analyzing and improving performance for database
-    queries, API endpoints, or frontend rendering.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: arch-performance-optimization
-  path: arch-performance-optimization/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Architecture] Use when reviewing code for security vulnerabilities,
-    implementing authorization, or ensuring data protection.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: arch-security-review
-  path: arch-security-review/SKILL.md
-  removal_after: null
-  status: active
 - category: frontend
   deprecated_by: null
   deprecated_since: null
@@ -170,25 +86,13 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Utilities] Use when you need to save analysis context to checkpoint
-    file for recovery.'
+  description: '[Utilities] Use when you need to save analysis context to a checkpoint
+    file for recovery (user-facing alias for memory-management Part 1 CHECKPOINT_CREATE).'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: checkpoint
   path: checkpoint/SKILL.md
-  removal_after: null
-  status: active
-- category: multimedia
-  deprecated_by: null
-  deprecated_since: null
-  description: '[AI & Tools] Use when you need browser automation, debugging, and
-    performance analysis using Puppeteer CLI scripts.'
-  has_references: true
-  has_scripts: true
-  last_reviewed: null
-  name: chrome-devtools
-  path: chrome-devtools/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -205,7 +109,7 @@
 - category: dev-tools
   deprecated_by: null
   deprecated_since: null
-  description: '[Utilities] Use when you need claude Code CLI setup, configuration,
+  description: '[Utilities] Use when you need Claude Code CLI setup, configuration,
     troubleshooting, and feature guidance.'
   has_references: true
   has_scripts: false
@@ -230,48 +134,13 @@
   deprecated_by: null
   deprecated_since: null
   description: '[Implementation] Use when you need to start coding & testing an existing
-    plan.'
+    plan. Flags: --approval=off (auto/trust mode, no approval gate), --tests=off (skip
+    the test step), --parallel (parallel phase execution via subagents).'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: code
   path: code/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need [AUTO] Start coding & testing an
-    existing plan.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: code-auto
-  path: code-auto/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need to start coding an existing plan
-    (no testing).'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: code-no-test
-  path: code-no-test/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need to execute parallel or sequential
-    phases based on plan structure.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: code-parallel
-  path: code-parallel/SKILL.md
   removal_after: null
   status: active
 - category: utilities
@@ -289,25 +158,13 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Quality] Use when you need to simplify and refines code for
-    clarity, consistency, and maintainability while preserving all functionality.'
+  description: '[Code Quality] Use when you need to simplify and refine code for clarity,
+    consistency, and maintainability while preserving all functionality.'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: code-simplifier
   path: code-simplifier/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Codex] Use when you need to run full Codex mirror sync (migrate →
-    hooks → context → verify) standalone, no npm/package JSON needed.'
-  has_references: false
-  has_scripts: true
-  last_reviewed: null
-  name: codex-sync
-  path: codex-sync/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -326,7 +183,8 @@
   deprecated_by: null
   deprecated_since: null
   description: '[Git] Use when asked to "commit", "stage and commit", "save changes",
-    or after completing implementation tasks.'
+    or after completing implementation tasks. Flag: --push (a.k.a. "commit and push")
+    stages + commits + pushes to remote in one shot.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -338,7 +196,7 @@
   deprecated_by: null
   deprecated_since: null
   description: '[Utilities] Use when you need to compress context to optimize token
-    usage.'
+    usage (user-facing alias for context-optimization Strategy #3 Compress).'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -410,18 +268,6 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Implementation] Use when you need to scaffold a new feature with
-    backend and frontend components.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: create-feature
-  path: create-feature/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
   description: '[AI & Tools] Use when you need create, verify, or enhance Claude Code
     custom agents (Claude Code custom agent files).'
   has_references: false
@@ -445,7 +291,9 @@
 - category: utilities
   deprecated_by: null
   deprecated_since: null
-  description: '[Fix & Debug] Use when bugfix workflow reaches debug step.'
+  description: '[Fix & Debug] Use when investigating a bug''s root cause — reproduce
+    the symptom, trace it end-to-start through the code, form and test hypotheses,
+    and pinpoint the defect before any fix.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -479,68 +327,27 @@
 - category: frontend
   deprecated_by: null
   deprecated_since: null
-  description: '[Design] Use when you need describe a design based on screenshot/video.'
+  description: '[Design] Create or describe a UI design — quick (fast), immersive
+    (good), or recreated/described from a screenshot or video. Dispatch via --mode={fast|good|describe|screenshot|video}
+    (default fast).'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: design-describe
-  path: design-describe/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Design] Use when you need to create a quick design.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: design-fast
-  path: design-fast/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Design] Use when you need to create an immersive design.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: design-good
-  path: design-good/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Design] Use when you need to create a design based on screenshot.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: design-screenshot
-  path: design-screenshot/SKILL.md
+  name: design
+  path: design/SKILL.md
   removal_after: null
   status: active
 - category: frontend
   deprecated_by: null
   deprecated_since: null
   description: '[Project Management] Use when you need to create UI/UX design specifications
-    from requirements, PBIs, or user stories.'
+    from requirements, PBIs, or user stories. Use --mode=wireframe to convert hand-drawn/digital
+    wireframes or UI sketches into structured specs.'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: design-spec
   path: design-spec/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Design] Use when you need to create a design based on video.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: design-video
-  path: design-video/SKILL.md
   removal_after: null
   status: active
 - category: infrastructure
@@ -631,13 +438,27 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Quality] Use when you need validate PBI against Definition of
-    Ready before grooming.'
+  description: '[Code Quality] Use when you need to validate a PBI against Definition
+    of Ready before grooming.'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: dor-gate
   path: dor-gate/SKILL.md
+  removal_after: null
+  status: active
+- category: other
+  deprecated_by: null
+  deprecated_since: null
+  description: '[User-Invoked] Use ONLY when the user explicitly types /dual-ai or
+    /dual-ai <workflow-id> — fans out one prompt, or one workflow invocation per tool,
+    to two fresh parallel AI sessions (Claude Code + Codex CLI), both pre-set to xhigh
+    reasoning effort and full-permission mode before the prompt executes. NEVER auto-activate.'
+  has_references: false
+  has_scripts: true
+  last_reviewed: null
+  name: dual-ai
+  path: dual-ai/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -650,17 +471,6 @@
   last_reviewed: null
   name: e2e-test
   path: e2e-test/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Utilities] Use when configuring or explaining the easy-claude framework.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: easy-claude-help
-  path: easy-claude-help/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -685,42 +495,6 @@
   last_reviewed: null
   name: excalidraw-diagram
   path: excalidraw-diagram/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when the user asks to implement a new feature,
-    enhancement, add functionality, build something new, or create new capabilities.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: feature
-  path: feature/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when you need to create or update business feature
-    documentation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-21'
-  name: feature-docs
-  path: feature-docs/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when the user asks to implement a new feature,
-    enhancement, add functionality, build something new, or create new capabilities.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: feature-implementation
-  path: feature-implementation/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -751,80 +525,13 @@
   deprecated_by: null
   deprecated_since: null
   description: '[Implementation] Use when you need to analyze and fix issues [INTELLIGENT
-    ROUTING].'
+    ROUTING]. Flag: --target={ci|issue|logs|test|types|ui} scopes the fix; --target=types
+    resolves TypeScript errors inline.'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: fix
   path: fix/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need to analyze GitHub Actions logs
-    and fix issues.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: fix-ci
-  path: fix-ci/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need to debug and fix GitHub issues
-    with systematic investigation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: fix-issue
-  path: fix-issue/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need to analyze logs and fix issues.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: fix-logs
-  path: fix-logs/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need to run test suite and fix issues.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: fix-test
-  path: fix-test/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need to fix type errors.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: fix-types
-  path: fix-types/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Implementation] Use when you need to analyze and fix UI issues.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: fix-ui
-  path: fix-ui/SKILL.md
   removal_after: null
   status: active
 - category: frontend
@@ -854,13 +561,13 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Git] Use when you need stage, commit and push all code in the current
-    branch.'
-  has_references: false
-  has_scripts: false
+  description: '[Git] Use when generating developer KPI, performance, contribution
+    value, story point, man-day, or code-quality reports from local git commit history.'
+  has_references: true
+  has_scripts: true
   last_reviewed: null
-  name: git-cp
-  path: git-cp/SKILL.md
+  name: git-developer-performance
+  path: git-developer-performance/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -889,8 +596,10 @@
 - category: frontend
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Intelligence] Use when you need to build or update the code
-    review knowledge graph.'
+  description: '[Code Intelligence] Use when you need to build, update, or sync the
+    code review knowledge graph. Flag: --scope={full|update|sync} (default auto-detect);
+    --scope=full forces a full rebuild, --scope=update re-parses uncommitted working-tree
+    changes, --scope=sync syncs committed git changes then updates the working tree.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -913,25 +622,15 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Intelligence] Use when you need export the code review knowledge
-    graph to a JSON file.'
+  description: '[Code Intelligence] Use when you need to export the code review knowledge
+    graph. Flag: --format={json|mermaid} (default json); --format=json dumps the full
+    graph to a JSON file, --format=mermaid renders a single file as a Mermaid flowchart
+    diagram.'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: graph-export
   path: graph-export/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Code Intelligence] Use when you need export a single file''s knowledge
-    graph as a Mermaid flowchart diagram in markdown.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: graph-export-mermaid
-  path: graph-export-mermaid/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -949,18 +648,6 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Intelligence] Use when you need to sync the code review knowledge
-    graph with current git state.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: graph-sync
-  path: graph-sync/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
   description: '[Code Intelligence] Use when investigating what happens when code
     executes, understanding blast radius, or tracing frontend-to-backend flows.'
   has_references: false
@@ -968,18 +655,6 @@
   last_reviewed: null
   name: graph-trace
   path: graph-trace/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Code Intelligence] Use when you need to update the knowledge graph
-    with uncommitted working tree changes.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: graph-update
-  path: graph-update/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -993,17 +668,6 @@
   last_reviewed: null
   name: greenfield
   path: greenfield/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Process] Use when transitioning work between PO/BA/Dev/QA.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: handoff
-  path: handoff/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -1045,7 +709,9 @@
   deprecated_by: null
   deprecated_since: null
   description: '[Code Quality] Use when you need to review integration tests for assertion
-    quality, bug protection, repeatability, and test-spec traceability.'
+    quality, bug protection, repeatability, and test-spec traceability — AND verify
+    the review target (changed production code) has test coverage (integration-first)
+    with spec↔test↔code alignment.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -1080,8 +746,10 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Fix & Debug] Use when you need investigate and explain how existing
-    features or logic work.'
+  description: '[Fix & Debug] Use when you need to investigate and explain how existing
+    features or logic work. Flag: --mode=explain produces a one-way developer-narrative
+    explanation (Purpose → How → Why → Impact) tuned by coding level; use /understand
+    for the standalone prompt-driven explainer.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -1092,24 +760,13 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Utilities] Use when you need to write some journal entries.'
+  description: '[Utilities] Use when recording an engineering journal entry — capture
+    decisions, blockers, lessons, or progress notes during work.'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: journal
   path: journal/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Project Management] Use when you need aI agent orchestration board
-    (Coming Soon).'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: kanban
-  path: kanban/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -1127,8 +784,8 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Research] Use when you need synthesize research findings into structured
-    report using template.'
+  description: '[Research] Use when you need to synthesize research findings into
+    structured report using template.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -1233,42 +890,6 @@
   path: market-analysis/SKILL.md
   removal_after: null
   status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[AI & Tools] Use when building MCP servers to integrate external APIs
-    or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).'
-  has_references: false
-  has_scripts: true
-  last_reviewed: null
-  name: mcp-builder
-  path: mcp-builder/SKILL.md
-  removal_after: null
-  status: active
-- category: dev-tools
-  deprecated_by: null
-  deprecated_since: null
-  description: '[AI & Tools] Use when discovering, filtering, executing, or integrating
-    MCP tools, prompts, and resources.'
-  has_references: true
-  has_scripts: true
-  last_reviewed: null
-  name: mcp-management
-  path: mcp-management/SKILL.md
-  removal_after: null
-  status: active
-- category: multimedia
-  deprecated_by: null
-  deprecated_since: null
-  description: '[AI & Tools] Use when processing multimedia files with FFmpeg, ImageMagick,
-    or AI background removal tools.'
-  has_references: true
-  has_scripts: true
-  last_reviewed: null
-  name: media-processing
-  path: media-processing/SKILL.md
-  removal_after: null
-  status: active
 - category: other
   deprecated_by: null
   deprecated_since: null
@@ -1279,18 +900,6 @@
   last_reviewed: null
   name: memory-management
   path: memory-management/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Architecture] Use when you need to create data or schema migrations
-    following platform patterns.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: migration
-  path: migration/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -1309,8 +918,8 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Quality] Use when you need aI-assisted Dev BA PIC review of
-    PBI drafts.'
+  description: '[Code Quality] Use when you need an AI-assisted Dev BA PIC review
+    of PBI drafts.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -1345,28 +954,31 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Debugging] Use when you need to analyze and optimize performance
-    bottlenecks.'
+  description: '[Debugging] Use when analyzing or optimizing performance bottlenecks:
+    database queries, N+1 fan-out, indexing, API latency, memory, concurrency, frontend
+    rendering, caching, and distributed paths.'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: performance
-  path: performance/SKILL.md
+  name: performance-review
+  path: performance-review/SKILL.md
   removal_after: null
   status: active
-- category: other
+- category: utilities
   deprecated_by: null
   deprecated_since: null
   description: '[Planning] Use when you need intelligent plan creation with prompt
-    enhancement.'
-  has_references: false
+    enhancement. Flag: --mode={ci|cro} (default none — standard planning); --mode=ci
+    plans a fix from a GitHub Actions CI run/log, --mode=cro plans conversion-rate
+    optimization (25-item CRO framework).'
+  has_references: true
   has_scripts: false
   last_reviewed: null
   name: plan
   path: plan/SKILL.md
   removal_after: null
   status: active
-- category: other
+- category: utilities
   deprecated_by: null
   deprecated_since: null
   description: '[Planning] Use when the user provides an implementation plan file
@@ -1379,47 +991,12 @@
   path: plan-analysis/SKILL.md
   removal_after: null
   status: active
-- category: other
+- category: utilities
   deprecated_by: null
   deprecated_since: null
-  description: '[Planning] Use when you need to write journal entries and archive
-    specific plans or all plans.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: plan-archive
-  path: plan-archive/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Planning] Use when you need to analyze GitHub Actions logs and provide
-    a plan to fix the issues.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: plan-ci
-  path: plan-ci/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Planning] Use when you need to create a CRO plan for the given content.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: plan-cro
-  path: plan-cro/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Planning] Use when you need auto-review plan for validity, correctness,
-    and best practices — recursive: review, fix issues, re-review until PASS (max
-    3 iterations).'
+  description: '[Planning] Use when you need to auto-review a plan for validity, correctness,
+    and best practices — recursive: review, validate findings with why-review, fix
+    validated findings, full re-review until no findings.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -1427,40 +1004,16 @@
   path: plan-review/SKILL.md
   removal_after: null
   status: active
-- category: other
+- category: utilities
   deprecated_by: null
   deprecated_since: null
-  description: '[Planning] Use when you need validate plan with critical questions
+  description: '[Planning] Use when you need to validate a plan with critical questions
     interview.'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: plan-validate
   path: plan-validate/SKILL.md
-  removal_after: null
-  status: active
-- category: utilities
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Planning] Use when you need to research, analyze, investigate, plan,
-    design, or architect technical solutions.'
-  has_references: true
-  has_scripts: false
-  last_reviewed: null
-  name: planning
-  path: planning/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Planning] Use when you need plans dashboard server with progress
-    tracking and timeline visualization.'
-  has_references: false
-  has_scripts: true
-  last_reviewed: null
-  name: plans-kanban
-  path: plans-kanban/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -1526,6 +1079,20 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
+  description: '[Utilities] Use when initializing or re-evaluating portable project
+    context: project-config, project-reference docs, CLAUDE.md, AGENTS.md, universal
+    agent rules, hookless setup. Triggers on: project init, init project, missing
+    project-config, missing project docs, missing CLAUDE.md, missing AGENTS.md.'
+  has_references: true
+  has_scripts: false
+  last_reviewed: null
+  name: project-init
+  path: project-init/SKILL.md
+  removal_after: null
+  status: active
+- category: other
+  deprecated_by: null
+  deprecated_since: null
   description: '[Project Management] Use when you need to generate project status
     reports, track dependencies, manage risk registers, and facilitate team sync meetings.'
   has_references: true
@@ -1538,20 +1105,10 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Skill Management] Use when reducing token bloat in prompts, skills,
-    or injected docs.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: prompt-compress
-  path: prompt-compress/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Skill Management] Use when enhancing prompts, docs, or skills with
-    compression and attention anchoring.'
+  description: '[Skill Management] Use when enhancing, compressing, or expanding prompts,
+    docs, or skills with attention anchoring [INTELLIGENT ROUTING]. Flag: --op={compress|expand|enhance}
+    (default enhance); --op=compress strips token bloat, --op=expand reconstructs
+    compressed text.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -1562,20 +1119,8 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Skill Management] Use when reconstructing compressed prompts/docs/skills
-    into readable, well-structured form.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: prompt-expand
-  path: prompt-expand/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Code Quality] Use when you need prove fix correctness with code proof
-    traces, confidence scoring, and stack-trace-style evidence chains.'
+  description: '[Code Quality] Use when you need to prove fix correctness with code
+    proof traces, confidence scoring, and stack-trace-style evidence chains.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -1645,18 +1190,6 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Quality] Use when you need to review PBI artifact for completeness,
-    missing concerns, and quality before proceeding to story creation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: refine-review
-  path: refine-review/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
   description: '[Documentation] Use when you need to generate a detailed, AI-analyzed
     release document from git history over a time range or custom prompt.'
   has_references: false
@@ -1689,19 +1222,6 @@
   path: remotion/SKILL.md
   removal_after: null
   status: active
-- category: dev-tools
-  deprecated_by: null
-  deprecated_since: null
-  description: '[AI & Tools] Use when you need to package code repositories into single
-    AI-friendly files using Repomix with customizable patterns and multiple output
-    formats.'
-  has_references: true
-  has_scripts: true
-  last_reviewed: null
-  name: repomix
-  path: repomix/SKILL.md
-  removal_after: null
-  status: active
 - category: utilities
   deprecated_by: null
   deprecated_since: null
@@ -1712,17 +1232,6 @@
   last_reviewed: null
   name: research
   path: research/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Process] Use when you need sprint retrospective facilitation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: retro
-  path: retro/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -1740,8 +1249,8 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Quality] Use when you need to review artifact quality before
-    handoff.'
+  description: '[Code Quality] Use when you need to review artifact quality (PBI,
+    user story, test spec, design spec) before handoff. Supports --type={pbi|story|spec-tests|design}.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -1784,6 +1293,19 @@
   path: review-post-task/SKILL.md
   removal_after: null
   status: active
+- category: frontend
+  deprecated_by: null
+  deprecated_since: null
+  description: '[Code Quality] Use when reviewing UI/frontend changes for long-content
+    overflow, responsive multi-screen layout, flex-vs-fixed sizing, z-index discipline,
+    and SCSS/BEM styling quality.'
+  has_references: false
+  has_scripts: false
+  last_reviewed: null
+  name: review-ui
+  path: review-ui/SKILL.md
+  removal_after: null
+  status: active
 - category: other
   deprecated_by: null
   deprecated_since: null
@@ -1799,6 +1321,23 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
+  description: '[Documentation] Use when scanning the codebase to (re)generate ONE
+    project-reference doc. Parameterized by `--target=<key>`: project-structure |
+    backend-patterns | frontend-patterns | scss-styling | design-system | code-review-rules
+    | domain-entities | feature-spec | docs-index | e2e-tests | integration-tests
+    | seed-test-data | ui-system. Shared 4-phase scan engine; per-target detail lives
+    in references/targets.md. `ui-system` is an orchestrator meta-target (`kind: orchestrator`)
+    that runs the 3 UI child scans in parallel instead of the 4-phase engine.'
+  has_references: true
+  has_scripts: false
+  last_reviewed: null
+  name: scan
+  path: scan/SKILL.md
+  removal_after: null
+  status: active
+- category: other
+  deprecated_by: null
+  deprecated_since: null
   description: '[Documentation] Use when you need orchestrate all reference doc scans
     in parallel.'
   has_references: false
@@ -1806,30 +1345,6 @@
   last_reviewed: null
   name: scan-all
   path: scan-all/SKILL.md
-  removal_after: null
-  status: active
-- category: backend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning backend code to refresh repository,
-    CQRS, validation, entity, event, and migration guidance.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: scan-backend-patterns
-  path: scan-backend-patterns/SKILL.md
-  removal_after: null
-  status: active
-- category: utilities
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning code conventions, anti-patterns,
-    architecture rules, and review checklists.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: scan-code-review-rules
-  path: scan-code-review-rules/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -1842,138 +1357,6 @@
   last_reviewed: null
   name: scan-codebase-health
   path: scan-codebase-health/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning design tokens, component inventory,
-    and app-to-doc design system mappings.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: scan-design-system
-  path: scan-design-system/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning documentation structure, counts,
-    relationships, categories, and lookup tables.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: scan-docs-index
-  path: scan-docs-index/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning domain entities, data models, DTOs,
-    aggregate boundaries, sync patterns, and ER diagrams.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: scan-domain-entities
-  path: scan-domain-entities/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning E2E test architecture, page objects,
-    step definitions, configuration, and framework patterns.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: scan-e2e-tests
-  path: scan-e2e-tests/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning feature documentation structure,
-    app-to-service mapping, templates, and conventions.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-22'
-  name: scan-feature-docs
-  path: scan-feature-docs/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning frontend component, state, form,
-    API, routing, and styling patterns.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-22'
-  name: scan-frontend-patterns
-  path: scan-frontend-patterns/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning integration test base classes, fixtures,
-    helpers, configuration, and service setup.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-22'
-  name: scan-integration-tests
-  path: scan-integration-tests/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning service architecture, ports, directory
-    layout, tech stack, and module registry.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-22'
-  name: scan-project-structure
-  path: scan-project-structure/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when scanning SCSS architecture, BEM conventions,
-    mixins, variables, theming, and responsive patterns.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-22'
-  name: scan-scss-styling
-  path: scan-scss-styling/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when you need to scan seeder patterns and populate/sync
-    docs/project-reference/seed-test-data-reference markdown from real code evidence.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: scan-seed-test-data
-  path: scan-seed-test-data/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Documentation] Use when you need orchestrate all UI system scans
-    in parallel: design system + SCSS styling + frontend patterns.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-22'
-  name: scan-ui-system
-  path: scan-ui-system/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -1991,25 +1374,15 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Investigation] Use when scouting directories with external agentic
-    tools.'
+  description: '[Code Quality] Use when you need to perform a security review or audit
+    on any scope — application code (OWASP Top 10 2025), secrets exposure, dependency/supply-chain
+    malware, third-party repository vetting before install, infrastructure/config,
+    CI/CD pipeline, AI-agent risks, and host/VPS compromise detection.'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: scout-ext
-  path: scout-ext/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Code Quality] Use when you need perform security review on specified
-    scope.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: security
-  path: security/SKILL.md
+  name: security-review
+  path: security-review/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2037,36 +1410,14 @@
   path: sequential-thinking/SKILL.md
   removal_after: null
   status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Skill Management] Use when you need add new reference files or scripts
-    to a skill.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: skill-add
-  path: skill-add/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Skill Management] Use when you need to create new Claude Code skills
-    or scan/fix invalid skill headers.'
-  has_references: false
-  has_scripts: true
-  last_reviewed: null
-  name: skill-create
-  path: skill-create/SKILL.md
-  removal_after: null
-  status: active
 - category: dev-tools
   deprecated_by: null
   deprecated_since: null
-  description: '[Skill Management] Use when you need guide for creating effective
-    skills, adding skill references, skill scripts or optimizing existing skills.'
-  has_references: false
+  description: '[Skill Management] Use when creating a new Claude Code skill, adding
+    reference files or scripts to an existing skill, scanning/fixing invalid skill
+    headers, or optimizing/packaging skills. Triggers on: create skill, new skill,
+    add skill reference, add skill script, fix skill, validate skill, package skill.'
+  has_references: true
   has_scripts: true
   last_reviewed: null
   name: skill-creator
@@ -2076,36 +1427,29 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Skill Management] Use when fixing a skill from captured logs.'
-  has_references: false
+  description: '[Documentation] Use to author, audit, amend, or test-spec a business
+    Feature Spec. The single spec skill — modes init|update|audit|amend create/maintain
+    the tech-free 8-section Feature Spec; tests generates Section 8 TC-{FEATURE}-{NNN}
+    test specifications; sync reconciles §8 TCs ↔ integration test code. Per-mode
+    procedure lives in references/{author,tests,sync}.md.'
+  has_references: true
   has_scripts: false
-  last_reviewed: null
-  name: skill-fix-logs
-  path: skill-fix-logs/SKILL.md
+  last_reviewed: '2026-06-12'
+  name: spec
+  path: spec/SKILL.md
   removal_after: null
   status: active
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Skill Management] Use when you need optimize an existing agent skill
-    for token efficiency, attention anchoring, and SYNC protocol compliance.'
+  description: '[General] Use when you need to (re)generate a DERIVED navigation index,
+    cross-capability ERD, or reimplementation guide assembled FROM the canonical Feature
+    Specs under docs/specs/**. Never extracts a separate A-E engineering tree.'
   has_references: false
   has_scripts: false
-  last_reviewed: null
-  name: skill-optimize
-  path: skill-optimize/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[General] Use when you need reverse-engineer a complete, tech-agnostic
-    specification bundle from an existing codebase.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-21'
-  name: spec-discovery
-  path: spec-discovery/SKILL.md
+  last_reviewed: '2026-06-10'
+  name: spec-index
+  path: spec-index/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2123,13 +1467,13 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Project Management] Use when creating status reports, checking progress,
-    or summarizing sprint metrics.'
+  description: '[Skill Management] Use when starting a detected workflow, initializing
+    workflow state, or activating a workflow sequence.'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: status
-  path: status/SKILL.md
+  name: start-workflow
+  path: start-workflow/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2144,18 +1488,6 @@
   path: story/SKILL.md
   removal_after: null
   status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Code Quality] Use when you need to review user stories for completeness,
-    coverage, dependencies, and quality before implementation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: story-review
-  path: story-review/SKILL.md
-  removal_after: null
-  status: active
 - category: frontend
   deprecated_by: null
   deprecated_since: null
@@ -2168,6 +1500,32 @@
   path: strategy-builder/SKILL.md
   removal_after: null
   status: active
+- category: ai-ml
+  deprecated_by: null
+  deprecated_since: null
+  description: '[AI & Tools] USER-INVOKED. Use when you (the USER) need to reconcile
+    AI dev-tool SOURCE guidance (Claude↔Copilot skills/prompts/agents/instructions)
+    and/or regenerate BOTH generated mirror surfaces by delegating to the two mirror
+    skills (/sync-to-copilot FIRST then /sync-codex) with both divergence oracles.'
+  has_references: true
+  has_scripts: false
+  last_reviewed: null
+  name: sync-ai-dev-tools
+  path: sync-ai-dev-tools/SKILL.md
+  removal_after: null
+  status: active
+- category: other
+  deprecated_by: null
+  deprecated_since: null
+  description: '[Codex] Use when you need to run full Codex mirror sync (migrate →
+    hooks → context → verify) standalone, no npm/package JSON needed.'
+  has_references: false
+  has_scripts: true
+  last_reviewed: null
+  name: sync-codex
+  path: sync-codex/SKILL.md
+  removal_after: null
+  status: active
 - category: other
   deprecated_by: null
   deprecated_since: null
@@ -2176,51 +1534,28 @@
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: sync-protocols
-  path: sync-protocols/SKILL.md
+  name: sync-skills-shared-protocols
+  path: sync-skills-shared-protocols/SKILL.md
   removal_after: null
   status: active
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Testing] Use when you need to generate or update test specifications
-    in feature docs (Section 15) with unified TC-{FEATURE}-{NNN} format.'
-  has_references: true
-  has_scripts: false
-  last_reviewed: '2026-04-21'
-  name: tdd-spec
-  path: tdd-spec/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Code Quality] Use when you need to review test specifications for
-    coverage, completeness, and correctness before implementation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: '2026-04-21'
-  name: tdd-spec-review
-  path: tdd-spec-review/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Project Management] Use when preparing standups, sprint reviews,
-    retros, weekly syncs, or team meetings.'
+  description: '[AI & Tools] Use when you need to sync Claude Code knowledge to GitHub
+    Copilot instructions. Auto-inits docs/copilot-registry.json when missing. Flag:
+    --fast (script-only workflow-catalog sync, no registry-curation pass).'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: team-sync
-  path: team-sync/SKILL.md
+  name: sync-to-copilot
+  path: sync-to-copilot/SKILL.md
   removal_after: null
   status: active
 - category: utilities
   deprecated_by: null
   deprecated_since: null
-  description: '[Architecture] Use when you need research, analyze, and compare tech
-    stack options as a solution architect.'
+  description: '[Architecture] Use when you need to research, analyze, and compare
+    tech stack options as a solution architect.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -2276,28 +1611,21 @@
   path: ui-ux-pro-max/SKILL.md
   removal_after: null
   status: active
-- category: dev-tools
+- category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[AI & Tools] Use when working with Model Context Protocol (MCP) server
-    tools.'
+  description: '[Process] Use when the developer wants something explained — by default
+    the current working tasks + changes in context, or whatever the prompt names (a
+    plan, a subsystem, a decision, a concept, a bug). AI derives WHAT to explain from
+    the prompt and ALWAYS delivers a detailed, one-way explanation of purpose (why
+    it exists), how (the mechanics), and why-this-way (trade-offs/alternatives) —
+    regardless of coding level. Never asks the user questions, never quizzes, never
+    blocks.'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: use-mcp
-  path: use-mcp/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Project Management] Use when creating design specs, documenting components,
-    auditing accessibility, or preparing handoffs.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: ux-designer
-  path: ux-designer/SKILL.md
+  name: understand
+  path: understand/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2327,7 +1655,8 @@
 - category: utilities
   deprecated_by: null
   deprecated_since: null
-  description: '[Research] Use when starting any research task.'
+  description: '[Research] Use when starting a web research task — discover, gather,
+    and triage candidate sources on a topic to feed deeper investigation.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -2350,49 +1679,13 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Code Quality] Use when validating design rationale completeness in
-    plan files before implementation.'
+  description: '[Code Quality] Use when reviewing rationale and change quality for
+    plans, PBIs, commits, diffs, docs, specs, reports, or explicit artifacts.'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: why-review
   path: why-review/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Frontend] Use when you need to convert hand-drawn wireframes, digital
-    wireframes, or UI sketches into structured design specifications.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: wireframe-to-spec
-  path: wireframe-to-spec/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the BA to Dev Handoff workflow for
-    ba hands off refined stories to development team with quality gate.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-ba-dev-handoff
-  path: workflow-ba-dev-handoff/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Batch Operation workflow for bulk
-    modifications across multiple files with planning and review.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-batch-operation
-  path: workflow-batch-operation/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2422,129 +1715,19 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Workflow] Use when activating the Business Idea Evaluation workflow
-    for research market, evaluate business idea viability with bmc, financials, risk
-    matrix, and execution plan.'
+  description: '[Workflow] Use when activating the E2E testing workflow to generate,
+    update, or maintain Playwright/E2E tests. Pick mode with --source={changes|recording|update-ui}.'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: workflow-business-evaluation
-  path: workflow-business-evaluation/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Course Material Builder workflow
-    for research a topic and build structured learning/teaching course material with
-    bloom taxonomy objectives.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-course-building
-  path: workflow-course-building/SKILL.md
+  name: workflow-e2e
+  path: workflow-e2e/SKILL.md
   removal_after: null
   status: active
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Workflow] Use when activating the Deployment & Infrastructure workflow
-    for cI/CD pipelines, Docker, Kubernetes setup and deployment.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-deployment
-  path: workflow-deployment/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Design Workflow for product, marketing,
-    or creative UI design work.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-design
-  path: workflow-design/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Designer to Dev Handoff workflow
-    for designer hands off design spec to developer for implementation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-design-dev-handoff
-  path: workflow-design-dev-handoff/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Dev to QA Handoff workflow for
-    development complete, handoff to qa for testing.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-dev-qa-handoff
-  path: workflow-dev-qa-handoff/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Documentation Update workflow for
-    documentation creation and update workflow with plan validation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-documentation
-  path: workflow-documentation/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the E2E from Changes workflow for update
-    e2e tests based on code or spec changes.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-e2e-from-changes
-  path: workflow-e2e-from-changes/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the E2E from Recording workflow for
-    generate playwright e2e tests from chrome devtools recordings.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-e2e-from-recording
-  path: workflow-e2e-from-recording/SKILL.md
-  removal_after: null
-  status: active
-- category: frontend
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the E2E Update UI workflow for update
-    e2e screenshot baselines after ui changes.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-e2e-update-ui
-  path: workflow-e2e-update-ui/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Process] Use when you need end the active workflow and clear state.'
+  description: '[Process] Use when you need to end the active workflow and clear state.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -2557,7 +1740,8 @@
   deprecated_since: null
   description: '[Workflow] Use when activating the Feature Implementation workflow
     for implement a well-defined feature with investigation, planning, implementation,
-    and review.'
+    and review. Also covers TDD/test-first development and spec-driven feature implementation
+    with test specs written before code.'
   has_references: false
   has_scripts: false
   last_reviewed: null
@@ -2569,50 +1753,12 @@
   deprecated_by: null
   deprecated_since: null
   description: '[Workflow] Use when activating the Business Feature Documentation
-    workflow for 17-section feature docs.'
+    workflow for 8-section tech-free feature docs.'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: workflow-feature-docs
-  path: workflow-feature-docs/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Feature with Integration Test workflow
-    for spec-first feature implementation.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-feature-with-integration-test
-  path: workflow-feature-with-integration-test/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Full Feature Lifecycle workflow
-    for complete feature from idea to release with formal role handoffs (PO→BA→Designer→Dev→QA→PO
-    acceptance).'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-full-feature-lifecycle
-  path: workflow-full-feature-lifecycle/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Greenfield Project Init workflow
-    for start a new project from scratch with full inception, implementation, and
-    integration testing.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-greenfield
-  path: workflow-greenfield/SKILL.md
+  name: workflow-feature-spec
+  path: workflow-feature-spec/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2643,103 +1789,6 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Workflow] Use when activating the Code Investigation workflow for
-    codebase exploration and understanding workflow.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-investigation
-  path: workflow-investigation/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Marketing Strategy workflow for
-    market research, positioning, channels, campaigns, and KPIs.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-marketing-strategy
-  path: workflow-marketing-strategy/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Database Migration workflow for
-    schema changes, data migrations, EF migrations with review and testing.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-migration
-  path: workflow-migration/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Package Upgrade workflow for upgrade
-    dependencies, npm update, NuGet upgrade with testing.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-package-upgrade
-  path: workflow-package-upgrade/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the PBI to Tests workflow for qa workflow:
-    generate tdd test specs from pbi, write to feature docs section 15, run quality
-    gate.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-pbi-to-tests
-  path: workflow-pbi-to-tests/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Performance Optimization workflow
-    for investigate bottlenecks, optimize queries, reduce latency.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-performance
-  path: workflow-performance/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the PM Reporting workflow for pm workflow:
-    generate status report and dependency analysis.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-pm-reporting
-  path: workflow-pm-reporting/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Pre-Development Check workflow
-    for quality gate verification before development begins.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-pre-development
-  path: workflow-pre-development/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
   description: '[Workflow] Use when activating the Product Discovery workflow for
     turning raw opportunities into ranked PBIs.'
   has_references: false
@@ -2747,30 +1796,6 @@
   last_reviewed: null
   name: workflow-product-discovery
   path: workflow-product-discovery/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the QA to PO Acceptance workflow for
-    testing complete, qa hands off to po for acceptance and sign-off.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-qa-po-acceptance
-  path: workflow-qa-po-acceptance/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Quality Audit workflow for audit
-    code quality, review for best practices, find flaws and suggest enhancements.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-quality-audit
-  path: workflow-quality-audit/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2785,40 +1810,17 @@
   path: workflow-refactor/SKILL.md
   removal_after: null
   status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Release Preparation workflow for
-    pre-release quality gate with sre review and status verification.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-release-prep
-  path: workflow-release-prep/SKILL.md
-  removal_after: null
-  status: active
 - category: utilities
   deprecated_by: null
   deprecated_since: null
-  description: '[Workflow] Use when activating the Research & Synthesis workflow for
-    research a topic, gather web sources, synthesize into structured report.'
+  description: '[Workflow] Use when activating the Research & Synthesis workflow —
+    research a topic via web sources, then synthesize per --output={synthesis|business-eval|marketing|course}
+    (knowledge report, business evaluation, marketing strategy, or course material).'
   has_references: false
   has_scripts: false
   last_reviewed: null
   name: workflow-research
   path: workflow-research/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Code Review workflow for review,
-    fix, and re-review recursively until all issues resolved.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-review
-  path: workflow-review/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2836,18 +1838,6 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Workflow] Use when activating the Security Audit workflow for security
-    review and vulnerability assessment.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-security-audit
-  path: workflow-security-audit/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
   description: '[Workflow] Use when activating the Seed Test Data workflow for idempotent
     QC happy-path seeders.'
   has_references: false
@@ -2860,74 +1850,13 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Workflow] Use when activating spec-driven development to keep engineering
-    specs and business docs synchronized.'
+  description: '[Workflow] Use when activating spec-driven development to keep the
+    single canonical Feature Spec, implementation, and tests synchronized.'
   has_references: false
   has_scripts: false
-  last_reviewed: '2026-04-21'
+  last_reviewed: '2026-06-10'
   name: workflow-spec-driven-dev
   path: workflow-spec-driven-dev/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Spec to PBI Backlog workflow for
-    convert an existing engineering spec bundle into complete, prioritized, dependency-aware
-    PBIs and stories.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-spec-to-pbi
-  path: workflow-spec-to-pbi/SKILL.md
-  removal_after: null
-  status: active
-- category: utilities
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Sprint Planning workflow for sprint
-    planning ceremony with backlog prioritization and dependency check.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-sprint-planning
-  path: workflow-sprint-planning/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Sprint Retrospective workflow for
-    end of sprint retrospective with feedback and action items.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-sprint-retro
-  path: workflow-sprint-retro/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Skill Management] Use when starting a detected workflow, initializing
-    workflow state, or activating a workflow sequence.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-start
-  path: workflow-start/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the TDD Feature workflow for test-driven
-    development with spec-first approach, write test specs before implementing.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-tdd-feature
-  path: workflow-tdd-feature/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -2939,57 +1868,21 @@
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: workflow-test-spec-update
-  path: workflow-test-spec-update/SKILL.md
+  name: workflow-spec-sync
+  path: workflow-spec-sync/SKILL.md
   removal_after: null
   status: active
 - category: other
   deprecated_by: null
   deprecated_since: null
-  description: '[Workflow] Use when activating the Test Specs to Integration Tests
-    workflow for generate integration tests from existing test specifications in feature
-    docs or specs/.'
+  description: '[Workflow] Use when activating the Spec to PBI Backlog workflow to
+    convert canonical tech-free Feature Specs into complete, prioritized, dependency-aware
+    PBIs and stories.'
   has_references: false
   has_scripts: false
   last_reviewed: null
-  name: workflow-test-to-integration
-  path: workflow-test-to-integration/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Test Verification workflow for
-    quality, failure, traceability, and flake checks.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-test-verify
-  path: workflow-test-verify/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Testing workflow for test creation
-    and execution workflow.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-testing
-  path: workflow-testing/SKILL.md
-  removal_after: null
-  status: active
-- category: other
-  deprecated_by: null
-  deprecated_since: null
-  description: '[Workflow] Use when activating the Verification & Validation workflow
-    for verify, validate, and confirm correctness with investigation and testing.'
-  has_references: false
-  has_scripts: false
-  last_reviewed: null
-  name: workflow-verification
-  path: workflow-verification/SKILL.md
+  name: workflow-spec-to-pbi
+  path: workflow-spec-to-pbi/SKILL.md
   removal_after: null
   status: active
 - category: other
@@ -3008,7 +1901,9 @@
   deprecated_by: null
   deprecated_since: null
   description: '[Workflow] Use when activating the Write Integration Tests workflow
-    for spec-first integration test authoring.'
+    for spec-first integration test authoring. Also covers converting existing test
+    specs into integration test code and verifying integration test stability (repeat-run
+    verification).'
   has_references: false
   has_scripts: false
   last_reviewed: null

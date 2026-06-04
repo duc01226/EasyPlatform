@@ -13,10 +13,14 @@ const INJECTIONS = [
     { trigger: 'Read/Grep/Glob/Bash', context: 'Compact investigative mindset', hook: 'mindset-compact-injector.cjs', color: '#e879f9' },
     { trigger: 'Edit backend file', context: 'Backend patterns doc (~60KB)', hook: 'backend-context.cjs', color: C.blue },
     { trigger: 'Edit frontend file', context: 'Frontend patterns + design tokens', hook: 'frontend-context.cjs', color: C.green },
-    { trigger: 'Edit feature doc', context: '17-section format + TC-{FEATURE}-{NNN} pattern', hook: 'feature-docs-context.cjs', color: C.cyan },
-    { trigger: 'Edit test spec file', context: 'Test spec format + traceability rules', hook: 'test-specs-context.cjs', color: C.cyan },
+    {
+        trigger: 'Edit Feature Spec (docs/specs/)',
+        context: '8-section tech-free format + TC-{FEATURE}-{NNN} pattern + Section 8 TC registry',
+        hook: 'spec-context.cjs',
+        color: C.cyan
+    },
     { trigger: 'Activate code-review', context: 'Code review rules + quality checklist', hook: 'code-review-rules-injector', color: C.amber },
-    { trigger: 'Subagent spawned', context: 'Full project context + lessons (18+ part-hooks)', hook: 'subagent-init-*.cjs', color: C.red }
+    { trigger: 'Subagent spawned', context: 'Full project context + lessons (3 subagent-init hooks)', hook: 'subagent-init*.cjs', color: C.red }
 ];
 
 export const Scene05ContextInjection: React.FC = () => {

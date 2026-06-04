@@ -57,8 +57,8 @@ If MISSING: stop and tell user to run `/graph-build`.
 
 Extract the target from user's question (file path, function name, or class name).
 
-- For files: use relative path (e.g., `src/utils.ts`)
-- For functions/classes: use the name (e.g., `validateInput`) or qualified name (e.g., `src/utils.ts::validateInput`)
+- For files: use relative path (e.g., `{source-root}/utils`)
+- For functions/classes: use the name (e.g., `validateInput`) or qualified name (e.g., `{source-root}/utils::validateInput`)
 
 ### Step 3: Run query
 
@@ -102,7 +102,7 @@ Found {N} result(s).
 
 | Name | Kind | File | Lines |
 |------|------|------|-------|
-| ... | function | src/file.ts | 10-25 |
+| ... | function | {source-root}/file | 10-25 |
 ```
 
 **Composite query output format:**
@@ -130,14 +130,16 @@ Found {N} result(s).
 
 When the user asks about a FLOW or BEHAVIOR (not a specific file), follow this protocol:
 
-### Step 0: Grep/Glob/Search to find entry points
+### Step 0: Grep/Glob/Search to find trace anchors
 
 Use Grep/Glob/Search to find key classes/functions related to the user's query.
-Example: User asks "what happens when X is created" → grep for `CreateX`, `XCommand`, `XHandler`
+
+- Bug/failure symptom: find the final output reader first (renderer, query, assertion, aggregate, log, stored field), then trace upstream.
+- Feature-flow question: find entry points (`CreateX`, `XCommand`, `XHandler`) and trace both directions.
 
 ### Step 1: Use graph to expand
 
-Run `connections` or `batch-query` on the grep-discovered files to find ALL related files.
+Run `connections` or `batch-query` on the grep-discovered files to find ALL related files. For bugs, group results by final reader, storage/projection, writer, consumer/job, and producer/origin.
 
 ### Step 2: Trace full system flow
 
@@ -149,6 +151,13 @@ python .claude/scripts/code_graph trace <entry-file> --direction both --depth 3 
 
 This traces upstream (who calls this?) AND downstream (what does this trigger?) through:
 CALLS → TRIGGERS_EVENT → PRODUCES_EVENT → MESSAGE_BUS → API_ENDPOINT
+
+For bug/failure symptoms, run an upstream-first pass from the final output before expanding the suspected producer:
+
+```bash
+python .claude/scripts/code_graph trace <final-reader-or-output-file> --direction upstream --depth 5 --json
+python .claude/scripts/code_graph batch-query <final-reader> <writer> <producer> --json
+```
 
 ### Step 3: Verify with grep
 
@@ -263,21 +272,37 @@ Returns a multi-level tree of connected nodes grouped by BFS depth, with edge ty
 - **Don't rebuild graph** -- use `/graph-build` for that. This skill only queries.
 - **Don't use for change-driven analysis** -- use `/graph-blast-radius` for git-diff-based impact.
 - **Don't use for bulk export** -- use `/graph-export` for full graph dump.
-- **Don't use for diagrams** -- use `/graph-export-mermaid` for Mermaid visualization.
+- **Don't use for diagrams** -- use `/graph-export --format=mermaid` for Mermaid visualization.
 - **Always use `--json` flag** -- ensures structured parseable output.
 
 ## Related Skills
 
 - `/graph-build` -- Build or update the graph (prerequisite)
 - `/graph-blast-radius` -- Change-driven impact analysis from git diff
-- `/graph-export` -- Export full graph to JSON
-- `/graph-export-mermaid` -- Export file graph as Mermaid diagram
+- `/graph-export` -- Export full graph to JSON (`--format=json`) or a single file as a Mermaid diagram (`--format=mermaid`)
 
 ---
 
 # Graph Query
 
 Query code relationships using the structural knowledge graph. Maps natural language questions to graph CLI queries and formats structured reports.
+
+<!-- SYNC:end-to-start-debugger-trace -->
+
+> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
+>
+> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
+> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
+> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
+> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
+> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
+> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
+>
+> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
+>
+> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+
+<!-- /SYNC:end-to-start-debugger-trace -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -293,6 +318,7 @@ Query code relationships using the structural knowledge graph. Maps natural lang
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -314,6 +340,12 @@ Query code relationships using the structural knowledge graph. Maps natural lang
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:end-to-start-debugger-trace:reminder -->
+
+**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+
+<!-- /SYNC:end-to-start-debugger-trace:reminder -->
 
 ## Closing Reminders
 

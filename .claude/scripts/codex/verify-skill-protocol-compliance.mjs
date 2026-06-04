@@ -19,6 +19,38 @@ const WORKFLOWS_START_MARKER = 'WORKFLOWS:START';
 const WORKFLOWS_END_MARKER = 'WORKFLOWS:END';
 const AGENTS_CONTEXT_MIRROR_START = 'CODEX-CONTEXT-MIRROR:START';
 const AGENTS_CONTEXT_MIRROR_END = 'CODEX-CONTEXT-MIRROR:END';
+const DEBUGGER_TRACE_MARKER = '<!-- SYNC:end-to-start-debugger-trace -->';
+const DEBUGGER_TRACE_REQUIRED_SNIPPETS = [
+    'End-to-Start Debugger Trace',
+    'observed final state',
+    'Enumerate all feeder paths',
+    'hypothesis matrix',
+    'owning fix layer',
+    'forward convergence proof'
+];
+
+const DEBUGGER_TRACE_REQUIRED_SOURCE_PATHS = [
+    '.claude/skills/scout/SKILL.md',
+    '.claude/skills/graph-trace/SKILL.md',
+    '.claude/skills/graph-query/SKILL.md',
+    '.claude/skills/investigate/SKILL.md',
+    '.claude/skills/debug-investigate/SKILL.md',
+    '.claude/skills/fix/SKILL.md',
+    '.claude/skills/prove-fix/SKILL.md',
+    '.claude/skills/code/SKILL.md',
+    '.claude/skills/cook/SKILL.md',
+    '.claude/skills/review-changes/SKILL.md',
+    '.claude/skills/workflow-review-changes/SKILL.md',
+    '.claude/skills/code-review/SKILL.md',
+    '.claude/skills/why-review/skill.md',
+    '.claude/agents/code-reviewer.md',
+    '.claude/skills/workflow-bugfix/SKILL.md',
+    '.claude/skills/workflow-feature/SKILL.md'
+];
+
+const DEBUGGER_TRACE_REQUIRED_GENERATED_SKILLS = DEBUGGER_TRACE_REQUIRED_SOURCE_PATHS
+    .filter(relPath => relPath.startsWith('.claude/skills/'))
+    .map(relPath => relPath.replace('.claude/skills/', '.agents/skills/').replace(/\/skill\.md$/i, '/SKILL.md'));
 
 const REQUIRED_CONTRACT_SNIPPETS = [
     'Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.',
@@ -217,7 +249,7 @@ export function checkMainContentBeforeSyncBlocks(content, relativePath) {
         .slice(0, 3)
         .map(h => `line ${h.line}: ${h.text.slice(0, 60)}`)
         .join('; ');
-    return `${relativePath} layout invalid: ${offendingH2s.length} "## H2" heading(s) appear AFTER first <!-- SYNC:${firstSyncOpenerTag} --> opener at line ${firstSyncOpenerLine}; main content must consolidate ABOVE all SYNC blocks. Examples: ${firstFew}. Re-run \`python .claude/scripts/refactor_skill_layout.py\` then codex-sync.`;
+    return `${relativePath} layout invalid: ${offendingH2s.length} "## H2" heading(s) appear AFTER first <!-- SYNC:${firstSyncOpenerTag} --> opener at line ${firstSyncOpenerLine}; main content must consolidate ABOVE all SYNC blocks. Examples: ${firstFew}. Re-run \`python .claude/scripts/refactor_skill_layout.py\` then /sync-codex.`;
 }
 
 // Orphan-heading hygiene (authoring quality on SOURCE skills; the mirror inherits it).
@@ -275,6 +307,33 @@ export function checkOrphanHeadings(content, relativePath) {
         .map(o => `line ${o.line}: ${o.text.slice(0, 60)}`)
         .join('; ');
     return `${relativePath} has ${orphans.length} orphan heading(s) — a heading immediately followed by a same-or-shallower-level heading with no body (empty section). Add content or remove the heading. Examples: ${firstFew}.`;
+}
+
+export function checkDebuggerTraceCoverage(content, relativePath) {
+    const missing = [];
+    if (!content.includes(DEBUGGER_TRACE_MARKER)) {
+        missing.push(DEBUGGER_TRACE_MARKER);
+    }
+    for (const snippet of DEBUGGER_TRACE_REQUIRED_SNIPPETS) {
+        if (!content.includes(snippet)) {
+            missing.push(snippet);
+        }
+    }
+    if (missing.length === 0) return null;
+    return `${relativePath} missing end-to-start debugger trace gate snippet(s): ${missing.join(' | ')}`;
+}
+
+async function checkRequiredDebuggerTraceFiles(relativePaths, failures) {
+    for (const relPath of relativePaths) {
+        const fullPath = path.join(rootDir, ...relPath.split('/'));
+        if (!(await exists(fullPath))) {
+            failures.push(`${relPath} missing required debugger trace target`);
+            continue;
+        }
+        const content = await fs.readFile(fullPath, 'utf8');
+        const failure = checkDebuggerTraceCoverage(content, relPath);
+        if (failure) failures.push(failure);
+    }
 }
 
 async function main() {
@@ -483,6 +542,9 @@ async function main() {
             }
         }
     }
+
+    await checkRequiredDebuggerTraceFiles(DEBUGGER_TRACE_REQUIRED_SOURCE_PATHS, failures);
+    await checkRequiredDebuggerTraceFiles(DEBUGGER_TRACE_REQUIRED_GENERATED_SKILLS, failures);
 
     if (failures.length > 0) {
         console.error('[codex-skill-compliance] FAIL');

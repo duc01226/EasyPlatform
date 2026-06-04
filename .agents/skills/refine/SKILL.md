@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,7 +56,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Transform raw ideas into actionable PBIs using BA best practices, hypothesis validation, domain research.
+**Goal:** Transform raw ideas into a Definition-of-Ready PBI using BA best practices, hypothesis validation, and domain research — problem-validated, tech-agnostic, with testable acceptance criteria, estimates, and a Dependencies table — so a team can build it without re-asking what or why.
 
 **Workflow:**
 
@@ -89,7 +93,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Greenfield Mode
 
-> **Auto-detected:** No code directories (`src/`, `app/`, `lib/`, `server/`, `packages/`, etc.) and no manifest files (`package.json`/`*.sln`/`go.mod`) found. Planning artifacts (docs/, plans/, .claude/) don't count.
+> **Auto-detected:** No discovered source directories and no manifest files found. Planning artifacts (docs/, plans/, .claude/) don't count.
 
 **When greenfield detected:**
 
@@ -113,7 +117,7 @@ If running in workflow (big-feature, greenfield-init, etc.):
 2. Read `plan.md` — project scope, goals, architecture decisions, domain model
 3. Read existing research — `{plan-dir}/research/*.md` for business evaluation, domain analysis
 4. Read `docs/project-reference/domain-entities-reference.md` (if exists) — existing domain entities
-5. Use plan context — don't re-ask questions already answered in prior steps
+5. Use plan context — don't re-ask questions answered in prior steps
 
 ## Phase 1: Idea Intake & Context Loading
 
@@ -134,7 +138,7 @@ Use WebSearch with domain terms. Summarize in max 3 bullets (market context, com
 
 ## Phase 3: Problem Hypothesis Validation
 
-Validate hypothesis with user via ask the user directly. 42% of startups fail due to no market need — validate before building.
+Validate hypothesis with user via ask the user directly. 42% of startups fail from no market need — validate before building.
 
 **Skip:** `--skip-hypothesis`, validated hypothesis exists, bug fix/tech debt.
 
@@ -213,31 +217,42 @@ Scenario: {Descriptive title}
 ### Example Scenarios
 
 ```gherkin
-Scenario: Employee creates goal with valid data
-  Given employee has permission to create goals
-    And employee is on the goal creation page
-  When employee submits goal form with all required fields
-  Then goal is created with status "Draft"
-    And goal appears in employee's goal list
+Scenario: User creates invoice with valid data
+  Given user has permission to create invoices
+    And user is on the invoice creation page
+  When user submits invoice form with all required fields
+  Then invoice is created with status "Draft"
+    And invoice appears in user's invoice list
 
-Scenario: Goal creation fails with missing required field
-  Given employee is on the goal creation page
-  When employee submits form without title
+Scenario: Invoice creation fails with missing required field
+  Given user is on the invoice creation page
+  When user submits form without title
   Then validation error "Title is required" is displayed
-    And goal is not created
+    And invoice is not created
 
-Scenario: Manager reviews subordinate goal
-  Given manager has direct reports
-    And subordinate has submitted goal for review
-  When manager opens goal review page
-  Then subordinate's goal is visible with "Pending Review" status
+Scenario: Approver reviews a submitted invoice
+  Given approver has invoices awaiting approval
+    And an invoice has been submitted for approval
+  When approver opens the invoice review page
+  Then the invoice is visible with "Pending Review" status
 ```
 
 ### Project Test Case Format
 
 - **Format:** `TC-{FEATURE}-{NNN}` (e.g., TC-GM-001)
-- **Evidence:** `file:line` format
+- **Evidence:** `[Source: namespace/service/id]` abstract-anchor format (never `file:line`)
 - See `business-analyst` skill for detailed patterns
+
+---
+
+### Phase 5.1: AI-SDD Mandate Gate (M1-M5) — BLOCKING
+
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. The generated PBI MUST satisfy M1-M5 or be reworked before Phase 8 writes it:
+
+- **Separate intent from implementation (M1/M2):** Keep a tech-agnostic **Business Intent** narrative (Description, Business Value, Acceptance Criteria) free of framework/product/language/design-pattern names and source identifiers. Put any optional implementation hints in a clearly separated **Implementation Notes** block, and put source references only in evidence carriers (`[Source: namespace/service/id]`, `**Evidence**`). Prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3.
+- **Logical Requirement ID first (M3):** Assign each requirement a logical ID (`FR-`/`BR-`) as the PRIMARY citation spine; keep `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths — those live only in the provenance sidecar) as a SECONDARY carrier in a separate evidence column/section — KEEP it, never remove it.
+- **Testable, observable acceptance criteria (M4):** Every acceptance criterion has ONE valid interpretation, observable completion states, named failure modes, and NO implementation details. Reject vague phrasing ("handle appropriately", "fast", "user-friendly").
+- **Rebuild-from-scratch validation (M5):** Before emitting, confirm a competent team with zero codebase knowledge could re-implement identical business behavior on ANY stack from the PBI alone. If a reader would have to guess a rule, limit, role, or failure mode, add it as a clarification — never guess.
 
 ---
 
@@ -257,12 +272,12 @@ Use a direct user question with 2-3 questions:
 
 For EACH acceptance criterion, generate corresponding test case outline:
 
-| AC   | Test Outline                                            | Priority |
-| ---- | ------------------------------------------------------- | -------- |
-| AC-1 | TC: Create goal with valid data → verify persisted      | P0       |
-| AC-2 | TC: Create goal without title → verify validation error | P1       |
+| AC   | Test Outline                                               | Priority |
+| ---- | ---------------------------------------------------------- | -------- |
+| AC-1 | TC: Create invoice with valid data → verify persisted      | P0       |
+| AC-2 | TC: Create invoice without title → verify validation error | P1       |
 
-Seed for `$tdd-spec` if user chooses TDD-first. Document in PBI under `## Testability Assessment`.
+Seed for `$spec [mode=tests]` if user chooses TDD-first. Document in PBI under `## Testability Assessment`.
 
 ---
 
@@ -406,6 +421,15 @@ source_idea: '{idea artifact path or ID}'
 
 # {PBI Title}
 
+> **Business Intent (tech-agnostic — M1/M2):** Description, Business Value, Business Rules, and Acceptance Criteria below describe observable business behavior only — no framework/product/language/design-pattern names, no source identifiers. Keep implementation hints in `## Implementation Notes` and source references in evidence carriers.
+
+## Requirement IDs (M3 — logical-IDs-first)
+
+| Logical ID   | Statement (tech-agnostic) | Evidence (secondary, re-anchorable)       |
+| ------------ | ------------------------- | ----------------------------------------- |
+| FR-{MOD}-XXX | {functional requirement}  | `[Source: path:line]` or `TBD (pre-impl)` |
+| BR-{MOD}-XXX | {business rule}           | `[Source: path:line]` or `TBD (pre-impl)` |
+
 ## Description
 
 **As a** {user role}
@@ -516,6 +540,10 @@ Then error "{message}"
 **Entities:** {Entity1}, {Entity2}
 **Related Features:** {feature doc paths}
 
+## Implementation Notes
+
+> Optional, clearly separated from Business Intent. Implementation hints / source identifiers may appear here and in evidence carriers only — never in the tech-agnostic sections above. If none: `N/A — no implementation hints; rebuild from Business Intent + Requirement IDs.`
+
 ## UI Layout
 
 ### Wireframe
@@ -599,7 +627,7 @@ Then error "{message}"
 
 ## Project Integration
 
-For domain PBIs: detect module from `docs/business-features/` directory names, extract business rules from `docs/business-features/{module}/`, load entity context from feature doc. Target 8-12K tokens for feature context.
+For domain PBIs: detect module from `docs/specs/` directory names, extract business rules from `docs/specs/{module}/`, load entity context from feature doc. Target 8-12K tokens for feature context.
 
 ---
 
@@ -607,7 +635,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 - **Role Skill:** `business-analyst` (detailed patterns)
 - **Input:** `$idea` output
-- **Next Step:** `$story`, `$tdd-spec` (Recommended for TDD), `$design-spec`
+- **Next Step:** `$story`, `$spec [mode=tests]` (Recommended for TDD), `$design-spec`
 - **Prioritization:** `$prioritize`
 
 ---
@@ -620,7 +648,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 - **"$domain-analysis"** — If PBI creates/modifies domain entities, model bounded contexts before writing stories
 - **"$story"** — Break PBI into implementable user stories
 - **"$pbi-mockup"** — Generate HTML mockup from PBI
-- **"$tdd-spec"** — If using TDD approach
+- **"$spec [mode=tests]"** — If using TDD approach
 - **"Skip, continue manually"** — user decides
 
 ---
@@ -645,6 +673,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -885,14 +914,14 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-    <!-- /SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:ui-system-context:reminder -->
 
@@ -943,10 +972,11 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 ## Closing Reminders
 
+- **IMPORTANT MUST ATTENTION Goal:** emit a Definition-of-Ready PBI — problem-validated, tech-agnostic, with testable acceptance criteria, estimates, and a Dependencies table — so a team can build it without re-asking what or why
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small tasks via task tracking BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via a direct user question — NEVER auto-decide
 - **MANDATORY IMPORTANT MUST ATTENTION** add final review task to verify work quality
-- **MANDATORY IMPORTANT MUST ATTENTION** add task: run `$why-review` — validate PBI design rationale before `$story` or `$tdd-spec`
+- **MANDATORY IMPORTANT MUST ATTENTION** add task: run `$why-review` — validate PBI design rationale before `$story` or `$spec [mode=tests]`
 - **MANDATORY IMPORTANT MUST ATTENTION** add task: run `$pbi-challenge` — Dev BA PIC review before `$dor-gate` or `$story`
 
 **Anti-Rationalization:**
@@ -969,17 +999,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -997,7 +1024,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

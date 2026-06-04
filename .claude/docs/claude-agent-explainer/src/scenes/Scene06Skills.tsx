@@ -3,7 +3,7 @@ import { C, ProgressBar, ChapterBadge, CodeBlock, ScriptBar } from '../component
 import { easeOut, staggeredEaseOut } from '../utils/animations';
 
 const SCRIPT_LINES = [
-    'A skill is a Markdown file with YAML frontmatter that declares its name, version, and allowed tools — restricting what Claude can do while that skill runs. 256 skills across 12 categories cover every development stage, from planning and research to architecture review and release documentation.',
+    'A skill is a Markdown file with YAML frontmatter that declares its name, version, and allowed tools — restricting what Claude can do while that skill runs. 173 skills cover every development stage, from planning and research to architecture review and release documentation.',
     'The confidence gate is what prevents hallucination at the skill level. Every skill enforces: 95%+ = recommend freely, 80-94% = recommend with caveats, 60-79% = proceed cautiously, under 60% = STOP and gather more evidence before acting. This threshold is a protocol, not a suggestion.',
     'Shared protocols are physically inlined into each skill file via SYNC:tag blocks. This is a deliberate architectural choice: protocols behind file references get skipped when context is tight, but inlined protocols are always present. AI compliance increases ~40% compared to file references.'
 ];
@@ -11,10 +11,10 @@ const SCRIPT_LINES = [
 const CATEGORIES = [
     { label: 'Quality & Verification', skills: 'code-review · prove-fix · quality-gate · sre-review', color: C.green },
     { label: 'Planning & Research', skills: 'plan · investigate · scout · research', color: C.blue },
-    { label: 'Implementation', skills: 'cook · fix · refactoring · api-design', color: C.purple },
-    { label: 'Testing & TDD', skills: 'tdd-spec · integration-test · e2e-test · test', color: C.amber },
+    { label: 'Implementation', skills: 'cook · fix · refactoring', color: C.purple },
+    { label: 'Testing & TDD', skills: 'spec [mode=tests] · integration-test · e2e-test · test', color: C.amber },
     { label: 'Requirements & Ideas', skills: 'idea · refine · story · business-evaluation', color: C.cyan },
-    { label: 'Architecture', skills: 'arch-security-review · domain-analysis · scaffold', color: C.red }
+    { label: 'Architecture', skills: 'security-review · domain-analysis · scaffold', color: C.red }
 ];
 
 const CONFIDENCE = [
@@ -35,7 +35,7 @@ export const Scene06Skills: React.FC = () => {
                 {/* Left */}
                 <div style={{ width: 380, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
                     <div style={{ opacity: easeOut(frame, 0, 14), fontSize: 14, fontWeight: 700, color: C.purple, letterSpacing: 3 }}>
-                        SKILL SYSTEM · 270 SKILLS
+                        SKILL SYSTEM · 173 SKILLS
                     </div>
                     <div style={{ opacity: easeOut(frame, 8, 20), fontSize: 44, fontWeight: 800, color: C.text, lineHeight: 1.1 }}>
                         Markdown protocols,

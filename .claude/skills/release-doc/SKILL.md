@@ -303,8 +303,8 @@ For projects with custom directory structures, override the category map via `pr
 {
     "releaseDoc": {
         "categoryMap": {
-            "src/api/**": "API Layer",
-            "src/ui/**": "Frontend",
+            "{api-source-root}/**": "API Layer",
+            "{ui-source-root}/**": "Frontend",
             "migrations/**": "Database Schema"
         },
         "outputDir": "docs/release",
@@ -338,7 +338,7 @@ git log --format="%ad" --date=short | head -5
 
 ### Non-easy-claude project structure
 
-The skill auto-derives categories from file paths. For projects without `.claude/`, group by `src/`, `tests/`, `docs/`, `scripts/`, `config/` instead.
+The skill auto-derives categories from file paths. For repositories without `.claude/`, group by discovered source roots, tests, docs, scripts, and config paths instead.
 
 ---
 
@@ -347,7 +347,7 @@ The skill auto-derives categories from file paths. For projects without `.claude
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
 >
 > 1. **Execute `/release-doc` directly (Recommended)** — Standalone analysis and doc generation
-> 2. **Activate `workflow-release-prep`** — Full pre-release quality gate + release doc
+> 2. **Run `/sre-review` + `/quality-gate` first** — Pre-release quality gate, then release doc
 
 ---
 
@@ -382,6 +382,7 @@ The skill auto-derives categories from file paths. For projects without `.claude
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

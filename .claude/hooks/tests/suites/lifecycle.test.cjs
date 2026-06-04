@@ -5,7 +5,9 @@
  * - session-init.cjs: Session initialization and project detection
  * - session-resume.cjs: Checkpoint restoration
  * - session-end.cjs: Session cleanup
- * - subagent-init-identity.cjs: Subagent context injection (1 of 8 — replaces removed subagent-init.cjs)
+ * - subagent-init.cjs: SubagentStart dispatcher 1/3 (identity + patterns + dev-rules + code-review-rules + lessons)
+ * - subagent-init-2.cjs: SubagentStart dispatcher 2/3 (ai-mistakes)
+ * - subagent-init-3.cjs: SubagentStart dispatcher 3/3 (context-guard + parent todos)
  */
 
 const path = require('path');
@@ -36,11 +38,16 @@ const SESSION_INIT = getHookPath('session-init.cjs');
 const SESSION_RESUME = getHookPath('session-resume.cjs');
 const POST_AGENT_VALIDATOR = getHookPath('post-agent-validator.cjs');
 const SESSION_END = getHookPath('session-end.cjs');
-const SUBAGENT_INIT = getHookPath('subagent-init-identity.cjs');
+// Dispatcher 1/3 (subagent-init.cjs) folds in identity + patterns + dev-rules +
+// code-review-rules + lessons builders — the former 5 standalone hooks. The PATTERNS
+// and DEV_RULES aliases below route through the same dispatcher; their tests assert
+// builder-gating via heading presence/absence (not stdout presence) since the dispatcher
+// always emits the universal identity + lessons blocks.
+const SUBAGENT_INIT = getHookPath('subagent-init.cjs');
 
-// Subagent-init hook paths (for TC-SUBCTX-044+)
-const SUBAGENT_PATTERNS = getHookPath('subagent-init-patterns.cjs');
-const SUBAGENT_DEV_RULES = getHookPath('subagent-init-dev-rules.cjs');
+// Subagent-init dispatcher 1 aliases (for TC-SUBCTX-044+)
+const SUBAGENT_PATTERNS = getHookPath('subagent-init.cjs');
+const SUBAGENT_DEV_RULES = getHookPath('subagent-init.cjs');
 
 // ============================================================================
 // session-init.cjs Tests
@@ -295,7 +302,7 @@ const sessionEndTests = [
 ];
 
 // ============================================================================
-// subagent-init-identity.cjs Tests (Part 1 of 8 — replaces removed subagent-init.cjs)
+// subagent-init.cjs Tests (dispatcher 1/3 — identity block is the universal first builder)
 // ============================================================================
 
 const subagentInitTests = [
@@ -429,8 +436,10 @@ const subagentInitTests = [
         }
     },
     {
-        // TC-SUBCTX-045: identity hook output stays under 9000 chars after H5 fix (todos moved to hook 18)
-        name: 'TC-SUBCTX-045: subagent-init-identity output < 9000 chars (H5 fix)',
+        // TC-SUBCTX-045: dispatcher 1 block (identity + patterns + dev-rules + code-review-rules
+        // + lessons for code-reviewer — the measured worst case ≈6551) must stay ≤8500, the hard
+        // per-block cap the consolidation must never exceed.
+        name: 'TC-SUBCTX-045: subagent-init dispatcher-1 block ≤8500 chars (worst-case code-reviewer)',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
@@ -441,7 +450,7 @@ const subagentInitTests = [
                 if (output) {
                     const parsed = JSON.parse(output);
                     const contextLen = (parsed.hookSpecificOutput?.additionalContext || '').length;
-                    assertTrue(contextLen < 9000, `Output length ${contextLen} must be < 9000`);
+                    assertTrue(contextLen <= 8500, `Dispatcher-1 block length ${contextLen} must be ≤8500`);
                 }
             } finally {
                 cleanupTempDir(tmpDir);
@@ -730,7 +739,10 @@ const partialProgressScannerTests = [
 
 // TC-SUBCTX-030 to TC-SUBCTX-034 — Concurrency & session isolation
 const { buildContextGuardContext } = require('../../lib/subagent-context-builders.cjs');
-const SUBAGENT_CONTEXT_GUARD = getHookPath('subagent-init-context-guard.cjs');
+// context-guard is builder 7 of dispatcher 3/3 (subagent-init-3.cjs). With no parent-session
+// todo state in the test harness, the parent-todo builder (8) is empty, so dispatcher 3 emits
+// the context-guard block alone — the legacy context-guard assertions hold unchanged.
+const SUBAGENT_CONTEXT_GUARD = getHookPath('subagent-init-3.cjs');
 
 const concurrencyTests = [
     {
@@ -1048,8 +1060,11 @@ const { getTodoState, setTodoState } = require('../../lib/todo-state.cjs');
 
 const newConcurrencyTests = [
     {
-        // Non-pattern-aware agent → patterns exits 0 silently (no JSON output)
-        name: 'TC-SUBCTX-044: patterns exits silently for non-PATTERN_AWARE agent (researcher)',
+        // Non-pattern-aware agent → the patterns builder contributes nothing. Dispatcher 1
+        // still emits the universal identity + lessons blocks, so we assert HEADING ABSENCE
+        // (equivalence-preserving reframe of the legacy stdout-empty check): the test still
+        // fails if the patterns builder wrongly fires for an excluded agent.
+        name: 'TC-SUBCTX-044: dispatcher-1 omits patterns guidance for non-PATTERN_AWARE agent (researcher)',
         async fn() {
             const tmpDir = createTempDir();
             try {
@@ -1060,7 +1075,11 @@ const newConcurrencyTests = [
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 });
                 assertEqual(result.code, 0, 'Should exit 0');
-                assertEqual(result.stdout.trim(), '', 'Should produce no stdout for excluded agent type');
+                const out = result.stdout.trim();
+                if (out) {
+                    const ctx = JSON.parse(out).hookSpecificOutput?.additionalContext || '';
+                    assertNotContains(ctx, '## Coding Patterns & Reference Docs', 'researcher (non-PATTERN_AWARE) must NOT receive patterns guidance');
+                }
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -1089,8 +1108,9 @@ const newConcurrencyTests = [
         }
     },
     {
-        // Non-DEV_RULES agent → dev-rules exits 0 silently
-        name: 'TC-SUBCTX-046: dev-rules exits silently for non-DEV_RULES agent (researcher)',
+        // Non-DEV_RULES agent → the dev-rules builder contributes nothing. Heading-absence
+        // reframe (see TC-SUBCTX-044): dispatcher 1 still emits universal identity + lessons.
+        name: 'TC-SUBCTX-046: dispatcher-1 omits development rules for non-DEV_RULES agent (researcher)',
         async fn() {
             const tmpDir = createTempDir();
             try {
@@ -1101,7 +1121,11 @@ const newConcurrencyTests = [
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 });
                 assertEqual(result.code, 0, 'Should exit 0');
-                assertEqual(result.stdout.trim(), '', 'Should produce no stdout for excluded agent type');
+                const out = result.stdout.trim();
+                if (out) {
+                    const ctx = JSON.parse(out).hookSpecificOutput?.additionalContext || '';
+                    assertNotContains(ctx, '## Development Rules', 'researcher (non-DEV_RULES) must NOT receive development rules');
+                }
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -1201,23 +1225,20 @@ const newConcurrencyTests = [
         }
     },
     {
-        // All subagent-init hooks fire in sequence → each exits 0, no duplicate section headers
-        name: 'TC-SUBCTX-054: all 8 subagent-init hooks exit 0 with no duplicate section headers',
+        // All 3 subagent-init dispatchers fire in sequence → each exits 0, no duplicate section headers
+        name: 'TC-SUBCTX-054: all 3 subagent-init dispatchers exit 0 with no duplicate section headers',
         async fn() {
             const tmpDir = createTempDir();
             try {
                 // Small CLAUDE.md so hooks have predictable output
                 fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), '# Project\nTest instructions.\n');
 
+                // The 8 legacy subagent-init-*.cjs hooks consolidated into 3 cap-bounded dispatchers
+                // (builders 1-5 | 6 | 7-8). Firing all 3 reproduces the full former injection chain.
                 const hookNames = [
-                    'subagent-init-identity.cjs',
-                    'subagent-init-patterns.cjs',
-                    'subagent-init-dev-rules.cjs',
-                    'subagent-init-code-review-rules.cjs',
-                    'subagent-init-lessons.cjs',
-                    'subagent-init-ai-mistakes.cjs',
-                    'subagent-init-context-guard.cjs',
-                    'subagent-init-todos.cjs'
+                    'subagent-init.cjs',
+                    'subagent-init-2.cjs',
+                    'subagent-init-3.cjs'
                 ];
 
                 const input = createSubagentStartInput('fullstack-developer', '', 'sess-054', 'r-054');
@@ -1306,12 +1327,14 @@ const newConcurrencyTests = [
         }
     },
     {
-        // TC-SUBCTX-057: subagent-init-todos with 60 pending todos →
-        // output stays under 9000 chars (semantic trim caps at MAX_TODOS=30)
-        name: 'TC-SUBCTX-057: subagent-init-todos caps output at 30 todos (< 9000 chars)',
+        // TC-SUBCTX-057: dispatcher 3 (subagent-init-3.cjs) with 60 pending todos →
+        // block stays ≤8500 chars (the parent-todo builder's semantic trim caps at MAX_TODOS=30).
+        // Dispatcher 3 also emits the context-guard block here (payload carries session_id), so the
+        // measured length covers guard + capped todos — both must fit the per-block cap.
+        name: 'TC-SUBCTX-057: subagent-init-3 caps parent todos at 30 (block ≤8500 chars)',
         async fn() {
             const sessionId = 'sess-057-todos-cap';
-            const SUBAGENT_TODOS = getHookPath('subagent-init-todos.cjs');
+            const SUBAGENT_TODOS = getHookPath('subagent-init-3.cjs');
             try {
                 // Set up 60 pending todos in session state
                 const lastTodos = Array.from({ length: 60 }, (_, i) => ({
@@ -1338,8 +1361,8 @@ const newConcurrencyTests = [
                 if (output) {
                     const parsed = JSON.parse(output);
                     const ctx = parsed.hookSpecificOutput?.additionalContext || '';
-                    assertTrue(ctx.length < 9000,
-                        `Output length ${ctx.length} must be < 9000 chars (semantic trim enforced)`);
+                    assertTrue(ctx.length <= 8500,
+                        `Block length ${ctx.length} must be ≤8500 chars (semantic trim enforced)`);
                     assertContains(ctx, 'more todos (truncated',
                         'Overflow line must appear when > MAX_TODOS=30 items present');
                 }
@@ -1377,8 +1400,8 @@ const newConcurrencyTests = [
         }
     },
     {
-        // identity hook must NOT contain Context Guard after BUG 1 fix (removed buildContextGuardContext call)
-        name: 'TC-DEDUP-001: identity hook output contains no Context Guard block',
+        // dispatcher 1 must NOT contain Context Guard — context-guard is isolated in dispatcher 3
+        name: 'TC-DEDUP-001: dispatcher-1 (identity) output contains no Context Guard block',
         async fn() {
             const tmpDir = createTempDir();
             try {
@@ -1394,8 +1417,8 @@ const newConcurrencyTests = [
         }
     },
     {
-        // context-guard hook must emit exactly ONE Context Guard block (single authoritative injection)
-        name: 'TC-DEDUP-002: context-guard hook output contains exactly one Context Guard block',
+        // dispatcher 3 must emit exactly ONE Context Guard block (single authoritative injection)
+        name: 'TC-DEDUP-002: dispatcher-3 (context-guard) output contains exactly one Context Guard block',
         async fn() {
             const tmpDir = createTempDir();
             try {
@@ -1412,8 +1435,8 @@ const newConcurrencyTests = [
         }
     },
     {
-        // identity hook must start with [CRITICAL-THINKING-MINDSET] after BUG 2 fix (moved from deleted claude-md-p1)
-        name: 'TC-DEDUP-003: identity hook output starts with [CRITICAL-THINKING-MINDSET]',
+        // dispatcher 1 must start with [CRITICAL-THINKING-MINDSET] (identity is the first builder)
+        name: 'TC-DEDUP-003: dispatcher-1 (identity) output starts with [CRITICAL-THINKING-MINDSET]',
         async fn() {
             const tmpDir = createTempDir();
             try {
@@ -1431,8 +1454,8 @@ const newConcurrencyTests = [
         }
     },
     {
-        // identity hook must still emit the ## Subagent: block after Context Guard removal
-        name: 'TC-DEDUP-004: identity hook still outputs ## Subagent: identity block',
+        // dispatcher 1 must still emit the ## Subagent: identity block
+        name: 'TC-DEDUP-004: dispatcher-1 (identity) still outputs ## Subagent: identity block',
         async fn() {
             const tmpDir = createTempDir();
             try {
@@ -1448,15 +1471,15 @@ const newConcurrencyTests = [
         }
     },
     {
-        // settings.json must have exactly 8 SubagentStart hooks:
-        // identity + patterns + dev-rules + code-review-rules + lessons + ai-mistakes + context-guard + todos
-        name: 'TC-DEDUP-005: settings.json SubagentStart has exactly 8 hook commands',
+        // settings.json must have exactly 3 SubagentStart dispatchers after the 8→3 consolidation:
+        // subagent-init.cjs (builders 1-5) + subagent-init-2.cjs (builder 6) + subagent-init-3.cjs (builders 7-8)
+        name: 'TC-DEDUP-005: settings.json SubagentStart has exactly 3 dispatcher commands',
         fn() {
             const settingsPath = path.resolve(__dirname, '../../../..', '.claude', 'settings.json');
             const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
             const hookCount = settings.hooks.SubagentStart[0].hooks.length;
-            assertEqual(hookCount, 8,
-                `SubagentStart must have 8 hooks (identity + patterns + dev-rules + code-review-rules + lessons + ai-mistakes + context-guard + todos) (got ${hookCount})`);
+            assertEqual(hookCount, 3,
+                `SubagentStart must have 3 dispatchers (subagent-init + subagent-init-2 + subagent-init-3) (got ${hookCount})`);
         }
     },
     {
@@ -1497,6 +1520,29 @@ const newConcurrencyTests = [
                 const hookPath = getHookPath(hookName);
                 assertTrue(!fs.existsSync(hookPath),
                     `${hookName} must be deleted after guidance-pointer refactor (still exists at ${hookPath})`);
+            }
+        }
+    },
+    {
+        // The 8 standalone subagent-init-*.cjs hooks were consolidated into 3 dispatchers
+        // (subagent-init.cjs | subagent-init-2.cjs | subagent-init-3.cjs). Their source files
+        // must be gone — a lingering file would silently re-register or mislead future readers.
+        name: 'TC-DEDUP-008: 8 legacy standalone subagent-init hooks deleted after 8→3 consolidation',
+        fn() {
+            const deleted = [
+                'subagent-init-identity.cjs',
+                'subagent-init-patterns.cjs',
+                'subagent-init-dev-rules.cjs',
+                'subagent-init-code-review-rules.cjs',
+                'subagent-init-lessons.cjs',
+                'subagent-init-ai-mistakes.cjs',
+                'subagent-init-context-guard.cjs',
+                'subagent-init-todos.cjs'
+            ];
+            for (const hookName of deleted) {
+                const hookPath = getHookPath(hookName);
+                assertTrue(!fs.existsSync(hookPath),
+                    `${hookName} must be deleted after 8→3 dispatcher consolidation (still exists at ${hookPath})`);
             }
         }
     }

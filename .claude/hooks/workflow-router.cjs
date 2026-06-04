@@ -12,8 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
-const { loadConfig } = require('./lib/ck-config-loader.cjs');
-const { WORKFLOW_CATALOG: WORKFLOW_CATALOG_MARKER, DEDUP_LINES, TOP_DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+const { WORKFLOW_CATALOG: WORKFLOW_CATALOG_MARKER, WORKFLOW_CATALOG_P2, WORKFLOW_CATALOG_P3, DEDUP_LINES, TOP_DEDUP_LINES } = require('./lib/dedup-constants.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CATALOG GENERATION
@@ -40,8 +39,7 @@ function buildWorkflowCatalog(config, sliceStart = 0, sliceEnd) {
     const lines = [];
     for (const [id, wf] of entries) {
         const sequence = wf.sequence.map(step => commandMapping[step]?.claude || `/${step}`).join(' \u2192 ');
-        const confirm = wf.confirmFirst ? ' | \u26a0\ufe0f Confirm' : '';
-        lines.push(`**${id}** \u2014 ${wf.name}${confirm}`);
+        lines.push(`**${id}** \u2014 ${wf.name}`);
         lines.push(`  Use: ${wf.whenToUse} | Not for: ${wf.whenNotToUse || 'N/A'} | Steps: ${sequence}`);
     }
 
@@ -54,10 +52,9 @@ function buildWorkflowCatalog(config, sliceStart = 0, sliceEnd) {
  * as separate hooks, keeping each hook's output under the harness per-hook size limit.
  * Detection instructions are included here (primacy position) and reference parts 2 and 3.
  * @param {Object} config - Workflow configuration
- * @param {boolean} quickMode - Whether quick mode is active
  * @returns {string} Full injection text (part 1)
  */
-function buildCatalogInjection(config, quickMode) {
+function buildCatalogInjection(config) {
     const allEntries = Object.entries(config.workflows)
         .filter(([, wf]) => wf.whenToUse)
         .sort(([a], [b]) => a.localeCompare(b));
@@ -66,14 +63,14 @@ function buildCatalogInjection(config, quickMode) {
     const lines = [];
 
     lines.push('');
-    lines.push('## Workflow Catalog');
+    lines.push(WORKFLOW_CATALOG_MARKER);
     lines.push('');
     lines.push('> **MANDATORY:** You MUST ATTENTION check every prompt against this catalog before responding.');
-    lines.push('> Detect the best-match workflow AND evaluate if a custom step combination fits better. Use `AskUserQuestion` to');
-    lines.push('> present all options (standard workflow, custom workflow, execute directly) with your recommendation.');
+    lines.push('> Detect the best-match workflow AND evaluate if direct execution, a skill, a standard workflow, or a custom step combination fits better.');
+    lines.push('> Auto-select the best option yourself; do not ask the user to choose between workflow/direct/skill/custom paths.');
     lines.push('');
     lines.push('> **IMPORTANT:** MUST ATTENTION create todo tasks for ALL steps. Do NOT skip any steps in the selected workflow.');
-    lines.push(`> **NOTE:** This is part 1 of 3. See "## Workflow Catalog (continued)" and "## Workflow Catalog (part 3)" below for the remaining ${allEntries.length - thirdCount} workflows.`);
+    lines.push(`> **NOTE:** This is part 1 of 3. See "${WORKFLOW_CATALOG_P2}" and "${WORKFLOW_CATALOG_P3}" below for the remaining ${allEntries.length - thirdCount} workflows.`);
     lines.push('');
 
     lines.push(buildWorkflowCatalog(config, 0, thirdCount));
@@ -81,25 +78,13 @@ function buildCatalogInjection(config, quickMode) {
 
     lines.push('## Workflow Detection Instructions');
     lines.push('');
-    if (quickMode) {
-        lines.push('> **Quick mode active** - Skip confirmation, execute best-match or custom workflow directly.');
-        lines.push('');
-    }
     lines.push('1. **MATCH:** Compare the user\'s prompt against EVERY "Use" field across ALL THREE catalog parts. Match semantics, not exact keywords.');
-    lines.push('2. **ANALYZE:** Identify the best-matching workflow. Then assess: would a custom step combination fit the prompt better? A custom workflow is appropriate when no single workflow fits cleanly, the task spans multiple workflow boundaries, or trimming/reordering standard steps improves fit.');
-    lines.push('3. **COMPOSE (if custom):** Select steps from existing workflow step libraries. Propose the sequence with a 1-line rationale (e.g. `scout → plan → fix → test → docs-update — skipping cook since plan is already defined`).');
-    lines.push('4. **ASK:** Use `AskUserQuestion` to present ALL options with your recommendation:');
-    lines.push('   - "Activate **[BestMatch Workflow]** (Recommended)" — if a clear standard match exists');
-    lines.push('   - "Activate custom workflow: **[step1 → step2 → ...]**" — AI-composed hybrid; include 1-line rationale');
-    lines.push('   - "Execute directly (no workflow)"');
-    lines.push('5. **ACTIVATE (if confirmed):** Call `/workflow-start <workflowId>` for standard; sequence custom steps manually');
-    lines.push('6. **TaskCreate:** Create `[Workflow]` tasks for each step BEFORE any other action');
+    lines.push('2. **ANALYZE:** Identify the best path: execute directly, invoke a skill, activate a standard workflow, or compose a custom workflow. A custom workflow is appropriate when no single workflow fits cleanly, the task spans multiple workflow boundaries, or trimming/reordering standard steps improves fit.');
+    lines.push('3. **AUTO-SELECT:** Choose the best path yourself. Explicit `/skill`, `/workflow-*`, or `/start-workflow <id>` prompts count as the user choosing that path and should execute directly.');
+    lines.push('4. **COMPOSE (if custom):** Select steps from existing workflow step libraries. Use a 1-line rationale internally (e.g. `scout → plan → fix → test → docs-update — skipping cook since plan is already defined`).');
+    lines.push('5. **ACTIVATE:** Call `/start-workflow <workflowId>` for a selected standard workflow; invoke the selected skill; sequence custom steps manually; or execute directly when that is the best fit.');
+    lines.push('6. **TaskCreate:** Create `[Workflow]` tasks for each workflow/custom step BEFORE any other action');
     lines.push('');
-
-    if (config.settings.allowOverride && config.settings.overridePrefix) {
-        lines.push(`*To skip confirmation, prefix your message with "${config.settings.overridePrefix}"*`);
-        lines.push('');
-    }
 
     return lines.join('\n');
 }
@@ -109,22 +94,21 @@ function buildCatalogInjection(config, quickMode) {
  * Injects full catalog + active workflow summary (allows auto-switch).
  * @param {Object} state - Current workflow state (uses workflowSteps, currentStepIndex)
  * @param {Object} config - Workflow configuration
- * @param {boolean} quickMode - Whether quick mode is active
  * @returns {string} Injection text with active workflow context
  */
-function buildActiveWorkflowContext(state, config, quickMode) {
+function buildActiveWorkflowContext(state, config) {
     const currentStep = state.workflowSteps?.[state.currentStepIndex] || null;
 
     const lines = [];
     lines.push(`> **Active workflow:** ${state.workflowType} (step: ${currentStep || 'unknown'})`);
-    lines.push('> To switch workflows, call `/workflow-start <newId>` (auto-switches).');
+    lines.push('> To switch workflows, call `/start-workflow <newId>` (auto-switches).');
     lines.push('');
-    lines.push(buildCatalogInjection(config, quickMode));
+    lines.push(buildCatalogInjection(config));
     return lines.join('\n');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// POST-ACTIVATION OUTPUT (used by step-tracker after /workflow-start)
+// POST-ACTIVATION OUTPUT (used by step-tracker after /start-workflow)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
@@ -159,13 +143,8 @@ function getStepDescription(step) {
         story: 'Break into user stories',
         prioritize: 'Prioritize backlog items',
         dependency: 'Analyze dependencies',
-        'team-sync': 'Generate team sync agenda',
         'quality-gate': 'Run quality gate checklist',
         'design-spec': 'Create design specification',
-        status: 'Generate status report',
-        handoff: 'Create role-to-role handoff record',
-        acceptance: 'PO acceptance decision and sign-off',
-        retro: 'Sprint retrospective with action items',
         'review-artifact': 'Review artifact quality before handoff',
         'workflow-end': 'End workflow and clear state'
     };
@@ -174,7 +153,7 @@ function getStepDescription(step) {
 
 /**
  * Build post-activation workflow instructions (preActions + sequence + TaskCreate template).
- * Used by step-tracker after /workflow-start creates state.
+ * Used by step-tracker after /start-workflow creates state.
  * @param {string} workflowId - Workflow identifier
  * @param {Object} workflow - Workflow definition
  * @param {Object} config - Full workflow configuration
@@ -269,16 +248,6 @@ async function main() {
         // Skip prompt check for SessionStart (no prompt field — inject catalog for context recovery)
         if (!isSessionStart && !userPrompt.trim()) process.exit(0);
 
-        // Read user config (.ck.json) for workflow.confirmationMode
-        const ckConfig = loadConfig({
-            includeProject: false,
-            includeAssertions: false
-        });
-        const confirmationMode = ckConfig.workflow?.confirmationMode || 'always';
-
-        // "off" mode: disable workflow catalog injection entirely (plain Claude, no overhead)
-        if (confirmationMode === 'off') process.exit(0);
-
         const config = loadWorkflowConfig();
         if (!config.settings?.enabled) process.exit(0);
 
@@ -287,18 +256,6 @@ async function main() {
         if (isSessionStart) process.exit(0);
 
         if (wasCatalogRecentlyInjected(payload.transcript_path)) process.exit(0);
-
-        // Parse quick mode:
-        // - "never" confirmationMode forces quickMode globally (auto-execute without asking)
-        // - per-prompt override via prefix (e.g. "quick:")
-        let quickMode = confirmationMode === 'never';
-
-        if (!quickMode && config.settings.allowOverride && config.settings.overridePrefix) {
-            const lowerPrompt = userPrompt.toLowerCase().trim();
-            if (lowerPrompt.startsWith(config.settings.overridePrefix.toLowerCase())) {
-                quickMode = true;
-            }
-        }
 
         // Check for active workflow state
         const { loadState, getCurrentStepInfo, isWorkflowStale, clearState } = require('./lib/workflow-state.cjs');
@@ -314,11 +271,11 @@ async function main() {
 
         if (isActive) {
             // Active workflow: differentiated injection
-            const output = buildActiveWorkflowContext(state, config, quickMode);
+            const output = buildActiveWorkflowContext(state, config);
             if (output) console.log(output);
         } else {
             // No active workflow: inject full catalog
-            const output = buildCatalogInjection(config, quickMode);
+            const output = buildCatalogInjection(config);
             console.log(output);
         }
 

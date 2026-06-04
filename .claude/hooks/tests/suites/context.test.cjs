@@ -1,28 +1,66 @@
 /**
- * Context Injection Hooks Test Suite
+ * Context Builders Test Suite  (Phase 04 migration)
  *
- * Tests for:
- * - design-system-context.cjs: Design system documentation injection
- * - backend-context.cjs: Backend context guide injection
- * - frontend-context.cjs: Frontend context guide injection
- * - scss-styling-context.cjs: Styling guide injection
+ * Tests for the live successors to the (now consolidated) per-domain context
+ * inject hooks. The legacy modules are UNREGISTERED; the dispatchers
+ * pretooluse-ctx-edit / pretooluse-ctx-edit-tail invoke these builders:
+ * - buildDesignSystemContext(payload, preloadedLines) ← design-system-context.cjs
+ * - buildBackendContext(payload, preloadedLines)       ← backend-context.cjs
+ * - buildFrontendContext(payload, preloadedLines)      ← frontend-context.cjs
+ * - buildScssStylingContext(payload, preloadedLines)   ← scss-styling-context.cjs
+ *
+ * Each builder returns the legacy hook's TRIMMED stdout block as a string, or
+ * '' when the legacy hook would have emitted nothing. The legacy inject hooks
+ * always exited 0, so the former `assertAllowed(result.code)` becomes
+ * `assertTrue(typeof out === 'string')` (builder returns a string without
+ * throwing). The runner sets CLAUDE_PROJECT_DIR to the repo root before this
+ * suite loads, so the builders' module-load PROJECT_DIR / PROJECT_CONFIG bind
+ * to the real repo — identical to how the legacy hooks (spawned with the same
+ * inherited env) resolved their config and docs.
+ *
+ * EXCEPTION — i18n sync tests: buildFrontendContext binds PROJECT_CONFIG at
+ * module load to the repo config (no localization). It therefore cannot reflect
+ * a per-test multilingual config in-process. The faithful live successor for
+ * those two cases is the dispatcher pretooluse-ctx-edit-tail.cjs (which carries
+ * buildFrontendContext and loads project-config per fresh process). Those two
+ * tests spawn that dispatcher with CLAUDE_PROJECT_DIR pointed at the tmpDir,
+ * exactly as the legacy frontend-context spawn did — assertions unchanged.
  */
 
 const path = require('path');
 const fs = require('fs');
 const { runHook, getHookPath, createPreToolUseInput } = require('../lib/hook-runner.cjs');
 const { assertEqual, assertContains, assertAllowed, assertTrue } = require('../lib/assertions.cjs');
-const { createTempDir, cleanupTempDir, createMockFile } = require('../lib/test-utils.cjs');
+const { createTempDir, cleanupTempDir } = require('../lib/test-utils.cjs');
 const { generateTestFixtures } = require('../../lib/test-fixture-generator.cjs');
+
+// Builders under test (replace the spawned legacy per-domain context hooks)
+const {
+    buildDesignSystemContext,
+    buildBackendContext,
+    buildFrontendContext,
+    buildScssStylingContext,
+} = require('../../lib/pretooluse-context-builders.cjs');
 
 // Get project-agnostic test fixtures
 const f = generateTestFixtures();
 
-// Hook paths
-const DESIGN_SYSTEM_CONTEXT = getHookPath('design-system-context.cjs');
-const BACKEND_CONTEXT = getHookPath('backend-context.cjs');
-const FRONTEND_CONTEXT = getHookPath('frontend-context.cjs');
-const STYLING_CONTEXT = getHookPath('scss-styling-context.cjs');
+// Direct builder invocation helpers: return the legacy hook's trimmed stdout
+// block (or ''). preloadedLines=null disables dedup, matching a fresh spawn.
+function buildDS(payload) { return buildDesignSystemContext(payload, null); }
+function buildBE(payload) { return buildBackendContext(payload, null); }
+function buildFE(payload) { return buildFrontendContext(payload, null); }
+function buildSC(payload) { return buildScssStylingContext(payload, null); }
+
+// Build a PreToolUse payload (mirrors createPreToolUseInput's shape, but as the
+// already-parsed payload object the builders consume).
+function payload(tool, toolInput) {
+    return { tool_name: tool, tool_input: toolInput, transcript_path: '' };
+}
+
+// Dispatcher carrying buildFrontendContext, used only for the per-process
+// config-dependent i18n cases.
+const FRONTEND_DISPATCHER = getHookPath('pretooluse-ctx-edit-tail.cjs');
 
 function writeProjectConfig(tmpDir, localizationOverride) {
     const docsDir = path.join(tmpDir, 'docs');
@@ -54,342 +92,224 @@ function writeProjectConfig(tmpDir, localizationOverride) {
 }
 
 // ============================================================================
-// design-system-context.cjs Tests
+// design-system context builder Tests  (← design-system-context.cjs)
 // ============================================================================
 
 const designSystemContextTests = [
     {
         name: '[design-system-context] injects for modern frontend .scss file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.modernAppBase}/components/button.scss`,
-                    old_string: 'a',
-                    new_string: 'b'
-                });
-                const result = await runHook(DESIGN_SYSTEM_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                const output = result.stdout;
-                assertTrue(output.includes('Design System') || output === '', 'May inject design system context');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildDS(payload('Edit', {
+                file_path: `${f.modernAppBase}/components/button.scss`,
+                old_string: 'a',
+                new_string: 'b'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertTrue(out.includes('Design System') || out === '', 'May inject design system context');
         }
     },
     {
         name: '[design-system-context] injects for frontend .html file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.modernAppBase}/app/component.html`,
-                    old_string: '<div>',
-                    new_string: '<div class="x">'
-                });
-                const result = await runHook(DESIGN_SYSTEM_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildDS(payload('Edit', {
+                file_path: `${f.modernAppBase}/app/component.html`,
+                old_string: '<div>',
+                new_string: '<div class="x">'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
         }
     },
     {
         name: '[design-system-context] skips non-frontend files',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: f.backendControllerCs,
-                    old_string: 'x',
-                    new_string: 'y'
-                });
-                const result = await runHook(DESIGN_SYSTEM_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                // Should not inject for .cs file
-                const output = result.stdout;
-                assertTrue(!output.includes('Design System') || output === '', 'Should not inject for non-frontend file');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildDS(payload('Edit', {
+                file_path: f.backendControllerCs,
+                old_string: 'x',
+                new_string: 'y'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertTrue(!out.includes('Design System') || out === '', 'Should not inject for non-frontend file');
         }
     },
     {
         name: '[design-system-context] skips Read tool',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Read', {
-                    file_path: `${f.modernAppBase}/app.scss`
-                });
-                const result = await runHook(DESIGN_SYSTEM_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                // Read tool should be ignored
-                assertEqual(result.stdout, '', 'Should not inject for Read tool');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildDS(payload('Read', {
+                file_path: `${f.modernAppBase}/app.scss`
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertEqual(out, '', 'Should not inject for Read tool');
         }
     },
     {
         name: '[design-system-context] handles empty input',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const result = await runHook(DESIGN_SYSTEM_CONTEXT, {}, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should fail-open');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildDS({});
+            assertTrue(typeof out === 'string', 'Should fail-open (return a string)');
         }
     },
     {
         name: '[design-system-context] handles Write tool',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Write', {
-                    file_path: 'src/Frontend/apps/playground-text-snippet/new.scss',
-                    content: '.btn { }'
-                });
-                const result = await runHook(DESIGN_SYSTEM_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildDS(payload('Write', {
+                file_path: 'src/Frontend/apps/playground-text-snippet/new.scss',
+                content: '.btn { }'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
         }
     }
 ];
 
 // ============================================================================
-// backend-context.cjs Tests
+// backend context builder Tests  (← backend-context.cjs)
 // ============================================================================
 
 const backendCsharpContextTests = [
     {
         name: '[backend-csharp-context] injects for .cs file in backend service',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: f.backendControllerCs,
-                    old_string: 'void',
-                    new_string: 'Task'
-                });
-                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                const output = result.stdout;
-                assertTrue(output.includes('Backend') || output === '', 'May inject backend context');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildBE(payload('Edit', {
+                file_path: f.backendControllerCs,
+                old_string: 'void',
+                new_string: 'Task'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertTrue(out.includes('Backend') || out === '', 'May inject backend context');
         }
     },
     {
         name: '[backend-csharp-context] injects for framework file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: f.frameworkRepositoryCs,
-                    old_string: 'x',
-                    new_string: 'y'
-                });
-                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                const output = result.stdout;
-                assertTrue(output.includes('Platform') || output.includes('Backend') || output === '', 'May inject platform context');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildBE(payload('Edit', {
+                file_path: f.frameworkRepositoryCs,
+                old_string: 'x',
+                new_string: 'y'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertTrue(out.includes('Platform') || out.includes('Backend') || out === '', 'May inject platform context');
         }
     },
     {
         name: '[backend-csharp-context] injects for example app file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: f.exampleCs,
-                    old_string: 'a',
-                    new_string: 'b'
-                });
-                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildBE(payload('Edit', {
+                file_path: f.exampleCs,
+                old_string: 'a',
+                new_string: 'b'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
         }
     },
     {
         name: '[backend-csharp-context] skips non-.cs files',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: f.backendConfigJson,
-                    old_string: '"x"',
-                    new_string: '"y"'
-                });
-                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                assertEqual(result.stdout, '', 'Should not inject for non-.cs file');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildBE(payload('Edit', {
+                file_path: f.backendConfigJson,
+                old_string: '"x"',
+                new_string: '"y"'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertEqual(out, '', 'Should not inject for non-.cs file');
         }
     },
     {
         name: '[backend-csharp-context] skips frontend .cs files',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                // .cs file outside backend patterns
-                const input = createPreToolUseInput('Edit', {
-                    file_path: 'other/random.cs',
-                    old_string: 'x',
-                    new_string: 'y'
-                });
-                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                assertEqual(result.stdout, '', 'Should not inject for non-backend .cs');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            // .cs file outside backend patterns
+            const out = buildBE(payload('Edit', {
+                file_path: 'other/random.cs',
+                old_string: 'x',
+                new_string: 'y'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertEqual(out, '', 'Should not inject for non-backend .cs');
         }
     },
     {
         name: '[backend-csharp-context] handles empty input',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const result = await runHook(BACKEND_CONTEXT, {}, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should fail-open');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildBE({});
+            assertTrue(typeof out === 'string', 'Should fail-open (return a string)');
         }
     }
 ];
 
 // ============================================================================
-// frontend-context.cjs Tests
+// frontend context builder Tests  (← frontend-context.cjs)
 // ============================================================================
 
 const frontendTypescriptContextTests = [
     {
         name: '[frontend-typescript-context] injects for modern frontend .ts file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.modernAppBase}/app/component.ts`,
-                    old_string: 'x',
-                    new_string: 'y'
-                });
-                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                const output = result.stdout;
-                assertTrue(output.includes('Frontend') || output === '', 'May inject frontend context');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildFE(payload('Edit', {
+                file_path: `${f.modernAppBase}/app/component.ts`,
+                old_string: 'x',
+                new_string: 'y'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertTrue(out.includes('Frontend') || out === '', 'May inject frontend context');
         }
     },
     {
         name: '[frontend-typescript-context] injects for platform-core .ts file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.coreLibBase}/src/component.ts`,
-                    old_string: 'a',
-                    new_string: 'b'
-                });
-                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                const output = result.stdout;
-                assertTrue(output.includes('Platform') || output.includes('Frontend') || output === '', 'May inject platform-core context');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildFE(payload('Edit', {
+                file_path: `${f.coreLibBase}/src/component.ts`,
+                old_string: 'a',
+                new_string: 'b'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertTrue(out.includes('Platform') || out.includes('Frontend') || out === '', 'May inject platform-core context');
         }
     },
     {
         name: '[frontend-typescript-context] injects for .tsx file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.modernAppBase}/app/page.tsx`,
-                    old_string: 'div',
-                    new_string: 'section'
-                });
-                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildFE(payload('Edit', {
+                file_path: `${f.modernAppBase}/app/page.tsx`,
+                old_string: 'div',
+                new_string: 'section'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
         }
     },
     {
         name: '[frontend-typescript-context] skips backend .cs files',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: f.backendControllerCs,
-                    old_string: 'x',
-                    new_string: 'y'
-                });
-                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                assertEqual(result.stdout, '', 'Should not inject for .cs file');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildFE(payload('Edit', {
+                file_path: f.backendControllerCs,
+                old_string: 'x',
+                new_string: 'y'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertEqual(out, '', 'Should not inject for .cs file');
         }
     },
     {
         name: '[frontend-typescript-context] skips Read tool',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Read', {
-                    file_path: `${f.modernAppBase}/app.ts`
-                });
-                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                assertEqual(result.stdout, '', 'Should not inject for Read tool');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildFE(payload('Read', {
+                file_path: `${f.modernAppBase}/app.ts`
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertEqual(out, '', 'Should not inject for Read tool');
         }
     },
     {
         name: '[frontend-typescript-context] handles empty input',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const result = await runHook(FRONTEND_CONTEXT, {}, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should fail-open');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildFE({});
+            assertTrue(typeof out === 'string', 'Should fail-open (return a string)');
         }
     },
     {
+        // CONFIG-PER-PROCESS: buildFrontendContext binds PROJECT_CONFIG at module
+        // load (repo config, no localization) and cannot reflect this tmpDir
+        // multilingual config in-process. The faithful live successor is the
+        // dispatcher pretooluse-ctx-edit-tail.cjs, spawned with CLAUDE_PROJECT_DIR
+        // pointed at the tmpDir so it loads the multilingual config per process —
+        // exactly as the legacy frontend-context spawn did. Assertions unchanged.
         name: '[frontend-typescript-context] multilingual config injects i18n sync check',
         fn: async () => {
             const tmpDir = createTempDir();
@@ -406,7 +326,7 @@ const frontendTypescriptContextTests = [
                     old_string: 'title = "Old";',
                     new_string: 'title = "New";'
                 });
-                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir, env: { CLAUDE_PROJECT_DIR: tmpDir } });
+                const result = await runHook(FRONTEND_DISPATCHER, input, { cwd: tmpDir, env: { CLAUDE_PROJECT_DIR: tmpDir } });
                 assertAllowed(result.code);
                 assertContains(result.stdout, '**I18N:**', 'Should include i18n notice for multilingual projects');
                 assertContains(result.stdout, 'translation resources', 'Should include translation sync guidance');
@@ -416,6 +336,8 @@ const frontendTypescriptContextTests = [
         }
     },
     {
+        // CONFIG-PER-PROCESS: see note above. Single-locale config must NOT emit
+        // the i18n notice. Spawned via the dispatcher with the tmpDir config.
         name: '[frontend-typescript-context] single-locale config does not inject i18n sync check',
         fn: async () => {
             const tmpDir = createTempDir();
@@ -431,7 +353,7 @@ const frontendTypescriptContextTests = [
                     old_string: 'title = "Old";',
                     new_string: 'title = "New";'
                 });
-                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir, env: { CLAUDE_PROJECT_DIR: tmpDir } });
+                const result = await runHook(FRONTEND_DISPATCHER, input, { cwd: tmpDir, env: { CLAUDE_PROJECT_DIR: tmpDir } });
                 assertAllowed(result.code);
                 assertTrue(!result.stdout.includes('**I18N:**'), 'Should not include i18n notice for single-locale projects');
             } finally {
@@ -442,109 +364,71 @@ const frontendTypescriptContextTests = [
 ];
 
 // ============================================================================
-// scss-styling-context.cjs Tests
+// scss styling context builder Tests  (← scss-styling-context.cjs)
 // ============================================================================
 
 const scssContextTests = [
     {
         name: '[scss-styling-context] injects for modern frontend .scss file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.modernAppBase}/styles/app.scss`,
-                    old_string: 'color:',
-                    new_string: 'background:'
-                });
-                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                const output = result.stdout;
-                assertTrue(output.includes('Styling') || output === '', 'May inject styling context');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildSC(payload('Edit', {
+                file_path: `${f.modernAppBase}/styles/app.scss`,
+                old_string: 'color:',
+                new_string: 'background:'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertTrue(out.includes('Styling') || out === '', 'May inject styling context');
         }
     },
     {
         name: '[scss-styling-context] injects for legacy frontend .css file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.legacyAppBase}/styles/global.css`,
-                    old_string: 'a',
-                    new_string: 'b'
-                });
-                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildSC(payload('Edit', {
+                file_path: `${f.legacyAppBase}/styles/global.css`,
+                old_string: 'a',
+                new_string: 'b'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
         }
     },
     {
         name: '[scss-styling-context] injects for platform-core .scss file',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.coreLibBase}/styles/theme.scss`,
-                    old_string: 'x',
-                    new_string: 'y'
-                });
-                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildSC(payload('Edit', {
+                file_path: `${f.coreLibBase}/styles/theme.scss`,
+                old_string: 'x',
+                new_string: 'y'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
         }
     },
     {
         name: '[scss-styling-context] skips .ts files',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', {
-                    file_path: `${f.modernAppBase}/app.ts`,
-                    old_string: 'x',
-                    new_string: 'y'
-                });
-                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                assertEqual(result.stdout, '', 'Should not inject for .ts file');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildSC(payload('Edit', {
+                file_path: `${f.modernAppBase}/app.ts`,
+                old_string: 'x',
+                new_string: 'y'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
+            assertEqual(out, '', 'Should not inject for .ts file');
         }
     },
     {
         name: '[scss-styling-context] handles Write tool for new .scss',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Write', {
-                    file_path: `${f.coreLibBase}/new-style.scss`,
-                    content: '.btn { display: flex; }'
-                });
-                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildSC(payload('Write', {
+                file_path: `${f.coreLibBase}/new-style.scss`,
+                content: '.btn { display: flex; }'
+            }));
+            assertTrue(typeof out === 'string', 'builder returns a string (legacy exited 0)');
         }
     },
     {
         name: '[scss-styling-context] handles empty input',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const result = await runHook(STYLING_CONTEXT, {}, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should fail-open');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
+        fn: () => {
+            const out = buildSC({});
+            assertTrue(typeof out === 'string', 'Should fail-open (return a string)');
         }
     }
 ];
@@ -581,6 +465,6 @@ const contextGuardBuilderTests = [
 
 // Export test suite
 module.exports = {
-    name: 'Context Injection Hooks',
+    name: 'Context Builders (Phase 04)',
     tests: [...designSystemContextTests, ...backendCsharpContextTests, ...frontendTypescriptContextTests, ...scssContextTests, ...contextGuardBuilderTests]
 };

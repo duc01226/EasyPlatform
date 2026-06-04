@@ -1,7 +1,7 @@
 ---
 name: web-research
 version: 1.0.0
-description: '[Research] Use when starting any research task.'
+description: '[Research] Use when starting a web research task — discover, gather, and triage candidate sources on a topic to feed deeper investigation.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,7 +15,7 @@ description: '[Research] Use when starting any research task.'
 
 ## Quick Summary
 
-**Goal:** Execute broad web search on a topic, collect and classify sources, build a structured source map.
+**Goal:** Execute broad web search on a topic, collect and classify sources, and produce a tiered, deduplicated source map plus a gap list — the triaged candidate-source feedstock that `deep-research` dives into next — NOT a final research report.
 
 **Workflow:**
 
@@ -37,7 +37,7 @@ description: '[Research] Use when starting any research task.'
 
 ## Step 1: Define Search Scope
 
-Parse the user's topic and generate 5-10 search queries that cover:
+Parse user's topic, generate 5-10 search queries covering:
 
 - **Definition/overview** — "what is {topic}"
 - **Current state** — "{topic} 2026" or "{topic} latest"
@@ -63,7 +63,7 @@ For each result, classify by Tier:
 - **Tier 3:** Established blogs, verified experts, Wikipedia
 - **Tier 4:** Forums, personal blogs, social media
 
-Filter out duplicates (same URL or same content from syndication).
+Filter out duplicates (same URL or syndicated content).
 
 ## Step 4: Build Source Map
 
@@ -104,7 +104,7 @@ Note gaps for the `deep-research` step.
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `research` workflow** (Recommended) — web-research → deep-research → synthesis → review
+> 1. **Activate `workflow-research` workflow** (Recommended) — web-research → deep-research → synthesis → review
 > 2. **Execute `/web-research` directly** — run this skill standalone
 
 ---
@@ -137,6 +137,7 @@ Note gaps for the `deep-research` step.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -172,6 +173,8 @@ Note gaps for the `deep-research` step.
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Produce a tiered, deduplicated source map plus a gap list — the triaged candidate-source feedstock that `deep-research` dives into next — NOT a final research report.
+**IMPORTANT MUST ATTENTION** cap WebSearch at 10 calls per invocation, and rank sources by tier (1 official > 4 forums) — why: bounded fan-out + tier ranking keep the feedstock high-signal for deep-research.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

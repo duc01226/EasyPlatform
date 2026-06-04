@@ -165,7 +165,12 @@ function extractMatches(regex, text, filter = () => true) {
     const results = [];
     let match;
     while ((match = regex.exec(text)) !== null) {
-        if (match[1] && filter(match[1])) results.push(match[1]);
+        // Coalesce alternative capture groups. Path rules expose the operand
+        // via one of three alternatives ("quoted with spaces" | 'quoted' |
+        // unquoted) so a quoted path containing spaces is not truncated at the
+        // first space. Single-group rules still resolve to match[1].
+        const value = match.slice(1).find(g => g != null);
+        if (value && filter(value)) results.push(value);
     }
     return results;
 }
@@ -272,6 +277,28 @@ function stripGrepPatterns(cmd) {
 }
 
 /**
+ * Strip cd/pushd/chdir navigation targets before path extraction.
+ * Changing the shell's working directory is navigation, not file-content
+ * access, and the hook cannot track cwd changes to re-scope later relative
+ * paths — so blocking a cross-drive `cd /d D:\Other` is a false positive.
+ * Replace only the target operand with `.`, preserving the command head
+ * (cd /d) and any chained commands after `&&`/`;`/`|` so they stay scanned:
+ * `cd /d D:\Other && type D:\Other\secret` still blocks the `type` read.
+ *
+ * Anchored to command-start (^, ;, &, |) so `cd` as another command's
+ * argument (e.g. `echo cd D:\x`) is NOT treated as a navigation target.
+ *
+ * @param {string} cmd - Shell command string
+ * @returns {string} Command with cd/pushd/chdir targets neutralized
+ */
+function stripCdTargets(cmd) {
+    return cmd.replace(
+        /(^|[;&|]\s*)(cd|chdir|pushd)\b((?:\s+\/[dD])?)\s+(?:"[^"]*"|'[^']*'|[^\s"'&|;<>]+)/gi,
+        '$1$2$3 .'
+    );
+}
+
+/**
  * Extract file paths from tool input
  * @param {Object} toolInput - Tool input object
  * @param {string} toolName - Name of the tool being used
@@ -298,6 +325,7 @@ function extractPaths(toolInput, toolName) {
         cmd = stripPowerShellHereStrings(cmd);
         cmd = stripSedAwkPatterns(cmd);
         cmd = stripGrepPatterns(cmd);
+        cmd = stripCdTargets(cmd);
 
         // Skip path extraction for commands running inside containers
         // (docker exec, docker run, kubectl exec, etc.) — paths are container-internal
@@ -306,7 +334,9 @@ function extractPaths(toolInput, toolName) {
         }
 
         // File operation patterns (cat, head, etc.)
-        extractMatches(/(?:cat|head|tail|less|more|vim|nano|code|notepad|type)\s+["']?([^\s"'|><&;]+)/gi, cmd, m => !m.startsWith('-')).forEach(p =>
+        // Quoted alternatives allow spaces so quoted paths under a space-containing
+        // project root (e.g. "D:/New folder/file") are not truncated at the space.
+        extractMatches(/(?:cat|head|tail|less|more|vim|nano|code|notepad|type)\s+(?:"([^"]+)"|'([^']+)'|([^\s"'|><&;]+))/gi, cmd, m => !m.startsWith('-')).forEach(p =>
             addPath(p, 'command')
         );
 
@@ -314,7 +344,7 @@ function extractPaths(toolInput, toolName) {
         // Anchor `>` to whitespace/start/`>` to avoid matching `>` inside `=>`,
         // `->`, `|>`, etc. (regex/code fragments quoted in args). `>>` still
         // matches because the second `>` is preceded by the first.
-        extractMatches(/(?:^|[\s>])>\s*["']?([^\s"'|><&;]+)/g, cmd, m => !/^\/(?:dev|proc|sys)(\/|$)/.test(m)).forEach(p =>
+        extractMatches(/(?:^|[\s>])>\s*(?:"([^"]+)"|'([^']+)'|([^\s"'|><&;]+))/g, cmd, m => !/^\/(?:dev|proc|sys)(\/|$)/.test(m)).forEach(p =>
             addPath(p, 'command')
         );
 
@@ -325,13 +355,16 @@ function extractPaths(toolInput, toolName) {
         const isWin = (process.env.CLAUDE_TEST_PLATFORM || process.platform) === 'win32';
         const winToolRe = /\b(?:findstr|cmd|xcopy|robocopy|reg|sc|net|tasklist|taskkill|where|attrib|cd|dir|md|mkdir|rd|rmdir|del|erase|copy|move|ren|rename|type|mklink|chkdsk|chcp|pushd|popd|setx|start|call|forfiles|fc|comp|tree|cls|ver|vol|systeminfo|wmic|powershell|pwsh)\b/i;
         const cmdHasWinTool = isWin && winToolRe.test(cmd);
-        extractMatches(/(?:^|\s)["']?([A-Za-z]:[/\\][^\s"'|><&;]+|\/[^\s"'|><&;]+)/g, cmd, m => {
+        extractMatches(/(?:^|\s)(?:"([A-Za-z]:[/\\][^"]+|\/[^"]+)"|'([A-Za-z]:[/\\][^']+|\/[^']+)'|([A-Za-z]:[/\\][^\s"'|><&;]+|\/[^\s"'|><&;]+))/g, cmd, m => {
             if (/^\/(?:dev|proc|sys)\//.test(m)) return false;
             // Windows command flags: /Letter, /Word, or /Word:value — no nested path separators.
+            // Also //Flag: Git Bash (MSYS) requires doubling the leading slash so the flag
+            // survives MSYS path conversion (`cmd //c` reaches cmd.exe as `/c`). UNC paths
+            // (//server/share/...) contain a nested separator so they never match this skip.
             // Skip ONLY on Windows AND when the command line contains a Windows-only tool token
             // (findstr, cmd, xcopy, etc.). This prevents Linux paths /etc, /var, /home from
             // being misclassified as flags.
-            if (cmdHasWinTool && /^\/[A-Za-z][A-Za-z0-9_-]*(?::[^\s/\\]*)?$/.test(m)) return false;
+            if (cmdHasWinTool && /^\/{1,2}[A-Za-z][A-Za-z0-9_-]*(?::[^\s/\\]*)?$/.test(m)) return false;
             return true;
         }).forEach(p => addPath(p, 'command'));
     }
@@ -427,5 +460,6 @@ module.exports = {
     stripInlineCode,
     stripPowerShellHereStrings,
     stripSedAwkPatterns,
-    stripGrepPatterns
+    stripGrepPatterns,
+    stripCdTargets
 };

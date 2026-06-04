@@ -23,32 +23,27 @@ function getDefaultConfig() {
   return {
     settings: {
       enabled: true,
-      confirmHighImpact: true,
-      showDetection: true,
-      allowOverride: true,
-      overridePrefix: 'quick:'
+      showDetection: true
     },
     workflows: {
       feature: {
         name: 'Feature Implementation',
         whenToUse: 'User wants to implement new functionality, add a feature, create a component, build a capability',
         whenNotToUse: 'Bug fixes, documentation, test-only tasks, feature requests/ideas',
-        sequence: ['plan', 'cook', 'test', 'code-review'],
-        confirmFirst: true
+        sequence: ['plan', 'cook', 'test', 'code-review']
       },
       bugfix: {
         name: 'Bug Fix',
-        whenToUse: 'User reports a bug, error, crash, or something not working; wants to fix/debug',
+        whenToUse: 'User reports a bug, error, crash, stale/incorrect final output, regression, or something not working; wants to fix/debug with end-to-start trace',
         whenNotToUse: 'New feature implementation, code improvement, investigation-only',
         sequence: ['scout', 'investigate', 'debug', 'plan', 'fix', 'code-review', 'test'],
-        confirmFirst: false
+        requiredGate: 'End-to-start debugger trace: observed final output -> reader -> storage/projection -> writer -> consumer/job -> producer/origin; include feeder paths, hypothesis matrix, owning fix layer, and forward convergence proof before fix'
       },
       documentation: {
         name: 'Documentation',
         whenToUse: 'User wants to create, update, or improve documentation, READMEs, or code comments',
         whenNotToUse: 'Feature implementation, bug fixes, test writing',
-        sequence: ['scout', 'investigate', 'docs-update', 'watzup'],
-        confirmFirst: false
+        sequence: ['scout', 'investigate', 'docs-update', 'watzup']
       }
     },
     commandMapping: {

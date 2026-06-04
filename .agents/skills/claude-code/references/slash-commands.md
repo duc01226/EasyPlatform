@@ -31,7 +31,7 @@ Research, analyze, and create implementation plans.
 
 ```bash
 $plan implement OAuth2 authentication
-$plan migrate from SQLite to PostgreSQL
+$plan migrate from one database engine to another
 ```
 
 **When to use**: Before starting complex implementations
@@ -285,52 +285,52 @@ Conversion rate optimization for content.
 
 ## Design Commands
 
-### /design:fast [task]
+### $design:fast [task]
 
 Quick design implementation.
 
 ```bash
-/design:fast create dashboard layout
+$design:fast create dashboard layout
 ```
 
 **When to use**: Rapid prototyping
 
-### /design:good [task]
+### $design:good [task]
 
 High-quality, polished design.
 
 ```bash
-/design:good create landing page for SaaS product
+$design:good create landing page for SaaS product
 ```
 
 **When to use**: Production-ready designs
 
-### /design:3d [task]
+### $design:3d [task]
 
 Create 3D designs with Three.js.
 
 ```bash
-/design:3d create interactive 3D product viewer
+$design:3d create interactive 3D product viewer
 ```
 
 **When to use**: 3D visualization needs
 
-### /design:screenshot [path]
+### $design:screenshot [path]
 
 Create design based on screenshot.
 
 ```bash
-/design:screenshot screenshot.png
+$design:screenshot screenshot.png
 ```
 
 **When to use**: Recreating designs from images
 
-### /design:video [path]
+### $design:video [path]
 
 Create design based on video.
 
 ```bash
-/design:video demo-video.mp4
+$design:video demo-video.mp4
 ```
 
 **When to use**: Implementing designs from video demos

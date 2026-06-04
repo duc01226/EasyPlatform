@@ -2,8 +2,34 @@
 /**
  * Workflow Step Tracker - PostToolUse Hook for Skill Tool
  *
- * Automatically tracks skill execution and advances workflow state when
- * a workflow step skill completes execution.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ACCELERATOR ONLY — NOT the source of truth for workflow advancement.       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * Advancement is MODEL-DRIVEN per the universal "Workflow Step Advancement &
+ * Parallel Phases" rule (CLAUDE.md / AGENTS.md / .github/copilot-instructions.md,
+ * mirrored by the `SYNC:parallel-phase-advancement` skill block). A step is
+ * complete when its work returns — whether run inline via the Skill tool OR
+ * dispatched as a sub-agent via the Agent tool; a sub-agent completion advances
+ * the step IDENTICALLY to an inline call. The model advances by judgment against
+ * its TaskList, never by waiting on this hook.
+ *
+ * What this hook does: on a *Skill* tool completion (Claude only), it emits a
+ * convenience "next step" hint and a sub-agent-vs-inline advisory. That is ALL.
+ * Correctness MUST NOT depend on it. Codex and Copilot run with NO hooks and
+ * advance entirely by the universal rule — this hook is a Claude-only optimization.
+ *
+ * STALE-HINT CAVEAT (by design, W7): this hook advances its `currentStepIndex`
+ * state file ONLY on Skill completions (the `toolName !== 'Skill'` guard below).
+ * Steps dispatched via the Agent tool — notably the parallel reviewer batch in
+ * the review-changes workflow — do NOT advance this index (`post-agent-validator.cjs`
+ * is truncation-only and never advances state). So after ANY Agent-run step the
+ * index is STALE, and the next Skill completion may print a WRONG "next step" hint
+ * (e.g. naming a reviewer that already ran). This desync between the hook's state
+ * file and the model's TaskList is EXPECTED, not a bug. The hint is advisory-only;
+ * the model's TaskList is authoritative. No fix is attempted: auto-advancing on the
+ * Agent path would make a hook load-bearing for the parallel barrier — forbidden by
+ * the hookless-portability constraint (see plan phase-04, alt 3 rejected).
  *
  * Triggers on: Skill tool completion
  *
@@ -20,7 +46,6 @@ const { buildWorkflowInstructions } = require('./workflow-router.cjs');
 // Only step IDs that appear in workflow sequences AND activate their own multi-step workflow
 const WORKFLOW_IN_WORKFLOW_STEPS = new Set([
     'workflow-review-changes', // activates review-changes workflow (16 steps)
-    'workflow-review',         // activates review workflow (14 steps)
 ]);
 
 // Read skill front matter fields (context-budget, execution-mode) for advisory output
@@ -71,8 +96,8 @@ async function main() {
         // Get session ID
         const sessionId = getSessionId();
 
-        // Handle /workflow-start <id> invocations
-        if (skillName === 'workflow-start') {
+        // Handle /start-workflow <id> invocations
+        if (skillName === 'start-workflow') {
             const workflowId = (toolInput.args || '').trim();
             const config = loadWorkflowConfig();
 

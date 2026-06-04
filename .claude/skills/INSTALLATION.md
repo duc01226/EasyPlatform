@@ -19,6 +19,7 @@ chmod +x install.sh
 ```
 
 The script will:
+
 - Detect your OS (Linux or macOS)
 - Install package managers (Homebrew for macOS, apt-get for Linux)
 - Install system dependencies (FFmpeg, ImageMagick)
@@ -39,6 +40,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 ```
 
 Options:
+
 ```powershell
 # Skip Chocolatey installation if already installed
 .\install.ps1 -SkipChocolatey
@@ -48,6 +50,7 @@ Options:
 ```
 
 The script will:
+
 - Install Chocolatey package manager (if needed)
 - Install system dependencies (FFmpeg, ImageMagick)
 - Install Node.js and global packages
@@ -58,16 +61,19 @@ The script will:
 ### What Gets Installed
 
 **System Tools:**
+
 - FFmpeg (video/audio processing)
 - ImageMagick (image processing)
 
 **Node.js Packages (global):**
+
 - rmbg-cli (AI background removal)
 - pnpm (package manager)
 - wrangler (Cloudflare CLI)
 - repomix (repository packaging)
 
 **Python Packages:**
+
 - google-genai (Gemini API)
 - pypdf, python-docx (document processing)
 - Pillow (image processing)
@@ -87,7 +93,7 @@ python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install all skill dependencies
-pip install -r .claude/skills/ai-multimodal/scripts/requirements.txt
+pip install -r .claude/skills/visual analysis tooling/scripts/requirements.txt
 
 # Install test dependencies for development
 pip install pytest pytest-cov pytest-mock
@@ -98,7 +104,7 @@ pip install pytest pytest-cov pytest-mock
 Navigate to specific skill and install:
 
 ```bash
-cd .claude/skills/ai-multimodal/scripts
+cd .claude/skills/visual analysis tooling/scripts
 pip install -r requirements.txt
 ```
 
@@ -106,9 +112,10 @@ pip install -r requirements.txt
 
 ### Python Package Dependencies
 
-Most skills use only Python standard library. Only **ai-multimodal** requires external packages:
+Most skills use only Python standard library. Only **visual analysis tooling** requires external packages:
 
-**ai-multimodal** (`.claude/skills/ai-multimodal/scripts/requirements.txt`):
+**visual analysis tooling** (`.claude/skills/visual analysis tooling/scripts/requirements.txt`):
+
 - `google-genai>=0.1.0` - Google Gemini API
 - `pypdf>=4.0.0` - PDF processing
 - `python-docx>=1.0.0` - DOCX conversion
@@ -121,40 +128,43 @@ Most skills use only Python standard library. Only **ai-multimodal** requires ex
 
 Several skills require external CLI tools:
 
-#### media-processing
+#### media processing tooling
+
 - **FFmpeg**: Video/audio processing
-  - Ubuntu/Debian: `sudo apt-get install ffmpeg`
-  - macOS: `brew install ffmpeg`
-  - Windows: `choco install ffmpeg`
+    - Ubuntu/Debian: `sudo apt-get install ffmpeg`
+    - macOS: `brew install ffmpeg`
+    - Windows: `choco install ffmpeg`
 - **ImageMagick**: Image processing
-  - Ubuntu/Debian: `sudo apt-get install imagemagick`
-  - macOS: `brew install imagemagick`
-  - Windows: `choco install imagemagick`
+    - Ubuntu/Debian: `sudo apt-get install imagemagick`
+    - macOS: `brew install imagemagick`
+    - Windows: `choco install imagemagick`
 - **RMBG CLI**: AI background removal
-  - All platforms: `npm install -g rmbg-cli`
+    - All platforms: `npm install -g rmbg-cli`
 
 #### devops
+
 - **Cloudflare Wrangler**: `npm install -g wrangler`
 - **Docker**: https://docs.docker.com/get-docker/
 - **Google Cloud CLI**: https://cloud.google.com/sdk/docs/install
 
 #### better-auth, repomix, shopify
+
 - **Node.js 18+**: https://nodejs.org/
 - **Better Auth**: `npm install better-auth`
 - **Repomix**: `npm install -g repomix`
 - **Shopify CLI**: `npm install -g @shopify/cli @shopify/theme`
 
 #### databases
-- **PostgreSQL client**: `sudo apt-get install postgresql-client` (Linux)
-- **MongoDB Shell**: https://www.mongodb.com/try/download/shell
-- **MongoDB Tools**: https://www.mongodb.com/try/download/database-tools
+
+- **Database client(s)**: install the clients required by the configured repository databases
 
 #### web-frameworks, shadcn-tailwind
+
 - **Node.js 18+**: https://nodejs.org/
 - **pnpm**: `npm install -g pnpm`
 - **yarn**: `npm install -g yarn`
 
-## Installation by Platform
+## Installation by OS
 
 ### Linux (Ubuntu/Debian)
 
@@ -163,13 +173,13 @@ Several skills require external CLI tools:
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Python packages (ai-multimodal only)
-cd .claude/skills/ai-multimodal/scripts
+# Python packages (visual analysis tooling only)
+cd .claude/skills/visual analysis tooling/scripts
 pip install -r requirements.txt
 
 # System tools
 sudo apt-get update
-sudo apt-get install -y ffmpeg imagemagick postgresql-client
+sudo apt-get install -y ffmpeg imagemagick {configured-database-client}
 
 # Node.js and tools
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -184,12 +194,12 @@ npm install -g pnpm wrangler repomix rmbg-cli @shopify/cli
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Python packages (ai-multimodal only)
-cd .claude/skills/ai-multimodal/scripts
+# Python packages (visual analysis tooling only)
+cd .claude/skills/visual analysis tooling/scripts
 pip install -r requirements.txt
 
 # System tools via Homebrew
-brew install ffmpeg imagemagick postgresql
+brew install ffmpeg imagemagick {configured-database-client}
 
 # Node.js and tools
 brew install node
@@ -203,8 +213,8 @@ npm install -g pnpm wrangler repomix rmbg-cli @shopify/cli
 python -m venv .venv
 .venv\Scripts\activate
 
-# Python packages (ai-multimodal only)
-cd .claude\skills\ai-multimodal\scripts
+# Python packages (visual analysis tooling only)
+cd .claude\skills\visual analysis tooling\scripts
 pip install -r requirements.txt
 
 # System tools via Chocolatey
@@ -286,12 +296,14 @@ chmod +x .claude/skills/*/scripts/*.py
 
 If you only want to use specific skills:
 
-**For ai-multimodal only:**
+**For visual analysis tooling only:**
+
 ```bash
 pip install google-genai pypdf python-docx markdown Pillow python-dotenv
 ```
 
-**For media-processing only:**
+**For media processing tooling only:**
+
 ```bash
 # macOS
 brew install ffmpeg imagemagick
@@ -329,23 +341,27 @@ pytest .claude/skills/*/scripts/tests/ --cov=.claude/skills --cov-report=html
 
 ## Skill-Specific Notes
 
-### ai-multimodal
+### visual analysis tooling
+
 - Requires `GEMINI_API_KEY` in environment
 - Get API key: https://aistudio.google.com/app/apikey
 - Windows users: `docx2pdf` requires Microsoft Word installed
 
-### media-processing
+### media processing tooling
+
 - FFmpeg must be in PATH
 - ImageMagick must be in PATH
 - RMBG CLI must be installed globally
 - Test with: `ffmpeg -version`, `convert -version`, and `rmbg --version`
 
 ### devops
+
 - Cloudflare: Requires `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
 - GCloud: Requires `GOOGLE_APPLICATION_CREDENTIALS` path to service account JSON
 - Docker: Must have Docker daemon running
 
 ### shopify
+
 - Requires Shopify CLI authentication: `shopify auth login`
 - Partner account needed for app development
 

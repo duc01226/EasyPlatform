@@ -1,7 +1,7 @@
 ---
 name: dor-gate
 version: 1.0.0
-description: '[Code Quality] Use when you need validate PBI against Definition of Ready before grooming.'
+description: '[Code Quality] Use when you need to validate a PBI against Definition of Ready before grooming.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,7 +15,7 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 ## Quick Summary
 
-**Goal:** Validate a PBI artifact against the Definition of Ready (DoR) checklist. Block PBIs that fail required criteria from entering grooming.
+**Goal:** Validate a PBI artifact against the Definition of Ready (DoR/M1-M6) checklist so that only grooming-ready PBIs pass the gate — every failure is caught with its concrete section/line citation, blocking ambiguous, untestable, or unimplementable stories from reaching the team.
 
 **Key distinction:** Automated quality gate (not collaborative review — use `/pbi-challenge` for that).
 
@@ -42,13 +42,27 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 ### Required (ALL must pass)
 
-- [ ] **User story template** — "As a {role}, I want {goal}, so that {benefit}" present
-- [ ] **AC testable** — All AC use GIVEN/WHEN/THEN, no vague language, min 3 scenarios
-- [ ] **Wireframes/mockups** — Present or explicit "N/A" for backend-only
-- [ ] **UI design ready** — Completed or "N/A" for backend-only
-- [ ] **AI pre-review** — `/refine-review` or `/pbi-challenge` result is PASS or WARN
-- [ ] **Story points** — Valid Fibonacci (1-21) + complexity (Low/Medium/High)
-- [ ] **Dependencies table** — Complete with Type column (must-before/can-parallel/blocked-by/independent)
+- MUST ATTENTION verify **User story template** — "As a {role}, I want {goal}, so that {benefit}" present
+- MUST ATTENTION verify **AC testable** — All AC use GIVEN/WHEN/THEN, no vague language, min 3 scenarios
+- MUST ATTENTION verify **Wireframes/mockups** — Present or explicit "N/A" for backend-only
+- MUST ATTENTION verify **UI design ready** — Completed or "N/A" for backend-only
+- MUST ATTENTION verify **AI pre-review** — `/review-artifact --type=pbi` or `/pbi-challenge` result is PASS or WARN
+- MUST ATTENTION verify **Story points** — Valid Fibonacci (1-21) + complexity (Low/Medium/High)
+- MUST ATTENTION verify **Dependencies table** — Complete with Type column (must-before/can-parallel/blocked-by/independent)
+
+### M1-M6 Compliance Gate (BLOCKING — each check FAILs the gate)
+
+> **Contract:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)". DoR enforces M6: a PBI that violates any of M1-M5 is NOT ready for grooming — return FAIL and name the violated mandate ID with its concrete PBI section + line/AC citation. A DoR PASS over an M1-M5 violation is itself defective.
+>
+> Carriers are EXEMPT from M1/M2 — source identifiers are CORRECT inside `[Source: ...]`, `**Evidence**`, `**IntegrationTest**` fields, YAML frontmatter, and ` ```mermaid ``` ` blocks. Only flag leakage in PBI narrative prose (problem statement, AC text, scope, rule descriptions). Banned prose token list: `spec-principles.md` §3.2.
+
+- MUST ATTENTION verify **M1 — Tech-agnostic prose** — FAIL if problem statement, AC, or rule prose names a framework/product, language-native type, or product/design-pattern class name (banned list in `spec-principles.md` §3.2). Cite section + token.
+- MUST ATTENTION verify **M2 — No source code in prose** — FAIL if a requirement is expressed as a class/method/file-path/namespace instead of a business operation. Source identifiers belong only in evidence carriers. Cite section + line.
+- MUST ATTENTION verify **M3 — Abstract-IDs-first** — FAIL if a requirement/rule lacks a logical ID (`FR-/BR-/OP-`), has a logical ID but no `[Source: namespace/service/id]` abstract-anchor evidence, uses physical code coordinates or repository-root paths instead of an abstract anchor, or makes the anchor its primary citation. Evidence is REQUIRED and KEPT, but SECONDARY to the logical ID (physical coordinates live only in the provenance sidecar).
+- MUST ATTENTION verify **M4 — Unambiguous AC** — FAIL if any AC uses vague language ("handle appropriately", "process normally", "as needed"), two engineers could implement it differently while both claiming conformance, or no observable completion state / named error condition exists. (Reinforces the "AC testable" required criterion above.)
+- MUST ATTENTION verify **M5 — Implementable from artifact alone** — FAIL if a competent team with ZERO codebase knowledge could not implement the PBI on a different stack from the PBI alone (relies on reading source to understand it). Cite section + missing detail.
+
+If ANY box fails → DoR result is FAIL; list each violated mandate ID with its concrete section/line citation in the Blocking Items.
 
 ## Output
 
@@ -93,7 +107,7 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/handoff (Recommended)"** — If PASS: hand off to grooming presentation
+- **"/prioritize (Recommended)"** — If PASS: PBI is grooming-ready; prioritize into the backlog
 - **"/refine"** — If FAIL: revise PBI
 - **"/pbi-challenge"** — If collaborative review needed before re-checking DoR
 - **"Skip, continue manually"** — user decides
@@ -116,6 +130,7 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -320,6 +335,8 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Only grooming-ready PBIs pass the gate — every DoR/M1-M6 failure is caught with its concrete section/line citation, so no ambiguous, untestable, or unimplementable story reaches the team.
+**MANDATORY IMPORTANT MUST ATTENTION** FAIL blocks grooming — ANY required criterion or M1-M5 mandate fails → return FAIL with the violated ID + concrete PBI section/line citation. NEVER PASS over an M1-M5 violation.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

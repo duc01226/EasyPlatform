@@ -37,7 +37,9 @@ Set your coding experience level for tailored explanations and output format.
 | 2     | Mid-Level | 3-5 years - design patterns, system thinking                |
 | 3     | Senior    | 5-8 years - trade-offs, business context, architecture      |
 | 4     | Tech Lead | 8-10 years - risk assessment, business impact, strategy     |
-| 5     | God Mode  | Expert - default behavior, maximum efficiency (default)     |
+| 5     | God Mode  | Expert - maximum efficiency, minimal explanation            |
+
+> **Default when unset:** `-1` (disabled — no style injection, saves tokens). Levels 0–5 are opt-in via `codingLevel` in `.claude/.ck.json`. (Canonical default `-1` — matches `ck-config-loader.cjs:284`; full settings reference: `/ck-help config`.)
 
 ## How It Works
 
@@ -92,6 +94,7 @@ For finer control, you can also use `/output-style` with these styles:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

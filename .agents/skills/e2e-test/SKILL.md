@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,17 +56,17 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** [Testing] Use when generating, updating, or maintaining E2E tests from recordings, specs, or code changes. Supports Playwright, Selenium, Cypress, and other frameworks.
+**Goal:** Produce maintainable, spec-traceable E2E tests (TC-{MODULE}-E2E-{NNN}) from recordings, specs, or code changes that protect business behavior using the project's configured framework (Playwright, Selenium, Cypress, others) — so future UI changes break tests only when intended behavior breaks.
 
 **Workflow:**
 
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
+1. **Detect** — classify request scope, target artifacts, framework.
+2. **Execute** — apply required steps, evidence-backed actions.
+3. **Verify** — confirm constraints, output quality, completion evidence.
 
 **Key Rules:**
 
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
+- MUST ATTENTION keep claims evidence-based (`file:line`), confidence >80% to act.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
 - NEVER skip mandatory workflow or skill gates.
 
@@ -78,7 +82,7 @@ head -100 docs/project-reference/e2e-test-reference.md
 grep -A 50 '"e2eTesting"' docs/project-config.json
 
 # 3. Find TC codes you need to implement
-grep -r "TC-.*-E2E-" docs/specs/ docs/business-features/
+grep -r "TC-.*-E2E-" docs/specs/ docs/specs/
 ```
 
 **The `e2eTesting` section in `docs/project-config.json` contains:**
@@ -97,20 +101,14 @@ grep -r "TC-.*-E2E-" docs/specs/ docs/business-features/
 Detect the project's E2E stack before generating tests:
 
 ```bash
-# TypeScript/JavaScript
-grep -l "playwright\|cypress\|selenium\|webdriver" package.json 2>/dev/null
-ls playwright.config.* cypress.config.* wdio.conf.* 2>/dev/null
-
-# C# .NET
-grep -r "Selenium.WebDriver\|Microsoft.Playwright" **/*.csproj 2>/dev/null
+# Use project config, project-reference docs, and existing test config files as the source of truth
+rg "playwright|cypress|selenium|webdriver|e2e" docs/project-config.json docs/project-reference/ . 2>/dev/null
+rg --files | rg "(playwright|cypress|webdriver|selenium|e2e|test).*config|manifest|project"
 ```
 
-| Framework    | Config File          | Test Extension | Run Command           |
-| ------------ | -------------------- | -------------- | --------------------- |
-| Playwright   | playwright.config.ts | \*.spec.ts     | `npx playwright test` |
-| Cypress      | cypress.config.ts    | \*.cy.ts       | `npx cypress run`     |
-| WebdriverIO  | wdio.conf.js         | \*.e2e.ts      | `npx wdio run`        |
-| Selenium.NET | \*.csproj            | \*Tests.cs     | `dotnet test`         |
+| Framework                | Config Source                 | Test Naming             | Run Command             |
+| ------------------------ | ----------------------------- | ----------------------- | ----------------------- |
+| Configured E2E framework | project config/reference docs | existing local examples | configured test command |
 
 ---
 
@@ -131,18 +129,14 @@ grep -r "Selenium.WebDriver\|Microsoft.Playwright" **/*.csproj 2>/dev/null
 > DRY, SRP, abstraction, design patterns, naming, layering, tests — every
 > technique exists to serve one goal: **making the next change cheaper**.
 
-When evaluating code, a refactor, a test, or an abstraction, ask:
-**does this make the next change cheaper or more expensive?**
+Evaluating code, refactor, test, abstraction, ask:
+**does this make next change cheaper or more expensive?**
 
-- Reject "best practices" that raise change cost (premature abstraction,
-  speculative generality, leaky indirection, ceremony without payoff).
-- Name the real enemies in findings: **coupling, hidden state, duplicated
-  knowledge, unclear intent, irreversible decisions exposed too early**.
-- A simpler design that is easy to change beats a sophisticated design that
-  isn't.
+- Reject "best practices" raising change cost (premature abstraction, speculative generality, leaky indirection, ceremony without payoff).
+- Name real enemies in findings: **coupling, hidden state, duplicated knowledge, unclear intent, irreversible decisions exposed too early**.
+- Simpler design easy to change beats sophisticated design that isn't.
 
-Apply this lens **before** invoking any specific rule, pattern, or checklist
-below — if a downstream rule would raise change cost, this principle wins.
+Apply this lens **before** invoking any specific rule, pattern, checklist below — if downstream rule would raise change cost, this principle wins.
 
 ---
 
@@ -153,24 +147,19 @@ below — if a downstream rule would raise change cost, this principle wins.
 **Every E2E test MUST ATTENTION have:**
 
 - TC code in test name: `TC-{MODULE}-E2E-{NNN}`
-- Tag/trait linking to spec
+- Tag/annotation linking to spec
 - Comment linking to feature doc
 
 ```typescript
 // TypeScript
-test('TC-LR-E2E-001: Submit leave request', async () => { ... });
+test('TC-RT-E2E-001: Submit return request', async () => { ... });
 ```
 
-```csharp
-// C# .NET
-[Fact]
-[Trait("TC", "TC-LR-E2E-001")]
-public async Task SubmitLeaveRequest() { ... }
-```
+Use repository's configured test-case annotation mechanism for non-TypeScript E2E tests; NEVER invent a framework-specific marker.
 
 ### 2. Page Object Model
 
-All frameworks should use Page Object pattern:
+All frameworks use Page Object pattern:
 
 - Encapsulate page locators in page class
 - Methods represent user actions
@@ -187,11 +176,11 @@ All frameworks should use Page Object pattern:
 
 ### 4. Unique Test Data
 
-Tests must generate unique data to be repeatable:
+Tests MUST generate unique data to be repeatable:
 
 - Append GUIDs/timestamps to test data
-- Make each test self-sufficient with its own generated data, never depend on specific pre-existing database state
-- Leave seeded data in place after the run, never clean up — why: teardown across shared runs creates side effects for parallel/repeat tests
+- Make each test self-sufficient with own generated data; NEVER depend on specific pre-existing database state
+- Leave seeded data in place after run, NEVER clean up — why: teardown across shared runs creates side effects for parallel/repeat tests
 
 ### 5. Preconditions Documentation
 
@@ -242,7 +231,7 @@ Spawn `e2e-runner` sub-agent for:
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `e2e-from-changes` workflow** (Recommended) — scout → e2e-test → test → watzup
+> 1. **Activate `e2e --source=changes` workflow** (Recommended) — scout → e2e-test → test → watzup
 > 2. **Execute `$e2e-test` directly** — run this skill standalone
 
 ---
@@ -252,7 +241,7 @@ Spawn `e2e-runner` sub-agent for:
 **Category:** [Testing]
 **Trigger:** e2e test, e2e from recording, generate e2e, playwright test, cypress test, selenium test, webdriver, puppeteer
 
-Generate and maintain E2E tests using the project's configured testing framework.
+Generate and maintain E2E tests using project's configured testing framework.
 
 - `docs/specs/` — Test specifications by module (read existing TCs for E2E scenario coverage; match TC codes to E2E test implementations)
 
@@ -269,9 +258,10 @@ Generate and maintain E2E tests using the project's configured testing framework
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -286,6 +276,7 @@ Generate and maintain E2E tests using the project's configured testing framework
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -321,9 +312,12 @@ Generate and maintain E2E tests using the project's configured testing framework
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Produce maintainable, spec-traceable E2E tests (TC-{MODULE}-E2E-{NNN}) that protect business behavior using the project's configured framework — so future UI changes break tests only when intended behavior breaks.
+
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MANDATORY IMPORTANT MUST ATTENTION** every E2E test carries its TC code; NEVER use generated/positional selectors — prefer semantic > data-attr > ARIA > text
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
@@ -346,17 +340,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -374,7 +365,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

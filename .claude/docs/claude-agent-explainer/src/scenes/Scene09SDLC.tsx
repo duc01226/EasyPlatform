@@ -12,13 +12,13 @@ const PHASES = [
     { num: '0', label: 'Inception', skills: 'greenfield-init · solution-architect · domain-analysis', color: C.cyan, icon: '🌱' },
     { num: '1', label: 'Ideation', skills: 'idea (interactive) · product-owner · idea-to-pbi', color: C.blue, icon: '💡' },
     { num: '2', label: 'Requirements', skills: 'refine · story · prioritize · design-spec', color: C.blue, icon: '📋' },
-    { num: '3', label: 'Test Specs', skills: 'tdd-spec (3 modes) · tdd-spec-review · idea-to-pbi', color: C.purple, icon: '🧪' },
+    { num: '3', label: 'Test Specs', skills: 'spec [mode=tests] · review-artifact --type=spec-tests · idea-to-pbi', color: C.purple, icon: '🧪' },
     { num: '4', label: 'Planning', skills: 'plan · plan-review · plan-validate · why-review', color: C.purple, icon: '📐' },
     { num: '5', label: 'Implementation', skills: 'cook · fix · refactoring · feature workflow', color: C.green, icon: '⚙️' },
     { num: '6', label: 'Testing', skills: 'integration-test → review → verify · test · webapp-testing', color: C.green, icon: '✅' },
     { num: '7', label: 'Code Review', skills: 'code-review · review-changes · prove-fix · sre-review', color: C.amber, icon: '🔍' },
-    { num: '8', label: 'Documentation', skills: 'docs-update · feature-docs · changelog · release-notes', color: C.amber, icon: '📝' },
-    { num: '9', label: 'Handoff & Ops', skills: 'handoff · acceptance · deployment · devops', color: C.red, icon: '🚀' }
+    { num: '8', label: 'Documentation', skills: 'docs-update · spec · changelog · release-notes', color: C.amber, icon: '📝' },
+    { num: '9', label: 'Handoff & Ops', skills: 'quality-gate · deployment · devops', color: C.red, icon: '🚀' }
 ];
 
 export const Scene09SDLC: React.FC = () => {

@@ -40,16 +40,15 @@ The tool auto-creates `.code-graph/.gitignore` with `*` content (prevents commit
 
 ## Usage
 
-| Command                 | Description                                        |
-| ----------------------- | -------------------------------------------------- |
-| `/graph-build`          | Build or update the knowledge graph                |
-| `/graph-blast-radius`   | Analyze impact of current changes                  |
-| `/graph-export`         | Export full graph to JSON file                     |
-| `/graph-export-mermaid` | Export single-file graph as Mermaid diagram        |
-| `/graph-query`          | Natural language queries (callers, imports, tests) |
-| `/graph-connect-api`    | Detect frontend-backend API connections            |
-| `/graph-trace`          | Trace full system flow (upstream/downstream/both)  |
-| `/graph-sync`           | Sync graph with git state after pull/checkout      |
+| Command                     | Description                                                                                     |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| `/graph-build`              | Build or update the knowledge graph                                                             |
+| `/graph-blast-radius`       | Analyze impact of current changes                                                               |
+| `/graph-export`             | Export full graph to JSON (`--format=json`) or single-file Mermaid diagram (`--format=mermaid`) |
+| `/graph-query`              | Natural language queries (callers, imports, tests)                                              |
+| `/graph-connect-api`        | Detect frontend-backend API connections                                                         |
+| `/graph-trace`              | Trace full system flow (upstream/downstream/both)                                               |
+| `/graph-build --scope=sync` | Sync graph with git state after pull/checkout                                                   |
 
 ### CLI Commands
 
@@ -122,13 +121,13 @@ These are defined in the init schema and auto-create in any project on first `gr
 
 The graph maintains itself through 3 automatic mechanisms:
 
-| Trigger                  | Hook                                      | What happens                                                                                                         |
-| ------------------------ | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **Claude edits a file**  | `graph-auto-update.cjs` (PostToolUse)     | Re-parses the edited file, updates nodes/edges. 3s debounce + atomic lock prevents duplicates.                       |
-| **New session starts**   | `graph-session-init.cjs` (SessionStart)   | Diffs `last_synced_commit` vs current HEAD. Re-parses all files changed since last sync (git pull, checkout, merge). |
-| **Review/Agent invoked** | `graph-context-injector.cjs` (PreToolUse) | Injects blast radius + trace CLI hints when skills or agents (including Explore) are invoked.                        |
-| **Grep finds key files** | `graph-grep-suggester.cjs` (PostToolUse)  | Suggests graph queries when grep finds entity/command/handler/consumer files.                                        |
-| **Manual rebuild**       | `/graph-build`                            | Full rebuild from scratch. Safety net if graph gets out of sync.                                                     |
+| Trigger                  | Hook                                                       | What happens                                                                                                         |
+| ------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Claude edits a file**  | `graph-auto-update.cjs` (PostToolUse)                      | Re-parses the edited file, updates nodes/edges. 3s debounce + atomic lock prevents duplicates.                       |
+| **New session starts**   | `graph-session-init.cjs` (SessionStart)                    | Diffs `last_synced_commit` vs current HEAD. Re-parses all files changed since last sync (git pull, checkout, merge). |
+| **Review/Agent invoked** | `pretooluse-ctx-graph.cjs` (buildGraphContext, PreToolUse) | Injects blast radius + trace CLI hints when skills or agents (including Explore) are invoked.                        |
+| **Grep finds key files** | `graph-grep-suggester.cjs` (PostToolUse)                   | Suggests graph queries when grep finds entity/command/handler/consumer files.                                        |
+| **Manual rebuild**       | `/graph-build`                                             | Full rebuild from scratch. Safety net if graph gets out of sync.                                                     |
 
 **After `git pull`:** The next Claude session automatically syncs. No manual action needed.
 

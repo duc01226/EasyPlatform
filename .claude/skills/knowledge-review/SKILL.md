@@ -6,7 +6,7 @@ description: '[Research] Use when you need to review knowledge artifacts for com
 
 ## Quick Summary
 
-**Goal:** Review knowledge artifacts for quality, completeness, and protocol compliance.
+**Goal:** Ensure knowledge artifacts are evidence-backed, complete, protocol-compliant, and safe to use for decisions — reviewing for quality, completeness, citation accuracy, and template compliance.
 
 **Workflow:**
 
@@ -27,50 +27,44 @@ description: '[Research] Use when you need to review knowledge artifacts for com
 
 ## First Principle — Easy to Change
 
-> **The success metric of every coding decision is _future change cost_.**
-> DRY, SRP, abstraction, design patterns, naming, layering, tests — every
-> technique exists to serve one goal: **making the next change cheaper**.
+> **Success metric of every coding decision: _future change cost_.**
+> DRY, SRP, abstraction, design patterns, naming, layering, tests — every technique serves one goal: **making next change cheaper**.
 
-When evaluating code, a refactor, a test, or an abstraction, ask:
-**does this make the next change cheaper or more expensive?**
+When evaluating code, refactor, test, or abstraction, ask: **does this make next change cheaper or more expensive?**
 
-- Reject "best practices" that raise change cost (premature abstraction,
-  speculative generality, leaky indirection, ceremony without payoff).
-- Name the real enemies in findings: **coupling, hidden state, duplicated
-  knowledge, unclear intent, irreversible decisions exposed too early**.
-- A simpler design that is easy to change beats a sophisticated design that
-  isn't.
+- Reject "best practices" raising change cost (premature abstraction, speculative generality, leaky indirection, ceremony without payoff).
+- Name real enemies in findings: **coupling, hidden state, duplicated knowledge, unclear intent, irreversible decisions exposed too early**.
+- Simpler design that is easy to change beats sophisticated design that isn't.
 
-Apply this lens **before** invoking any specific rule, pattern, or checklist
-below — if a downstream rule would raise change cost, this principle wins.
+Apply this lens **before** invoking any specific rule, pattern, or checklist below — if downstream rule would raise change cost, this principle wins.
 
 ---
 
 ## Adversarial Review Mindset (NON-NEGOTIABLE)
 
-**Default stance: SKEPTIC challenging research quality, not confirming research completeness.**
+**Default stance: SKEPTIC challenging research quality, NOT confirming research completeness.**
 
-> **Source confirmation bias trap:** AI naturally gravitates toward sources that confirm its working hypothesis. The knowledge artifact was built iteratively — by the time it's complete, the framing is locked in. This section forces challenge of both the sources AND the framing.
+> **Source confirmation bias trap:** AI gravitates toward sources confirming its working hypothesis. Knowledge artifact built iteratively — by completion, framing is locked in. This section forces challenge of both sources AND framing.
 
 ### Adversarial Techniques (apply ALL before concluding)
 
 **1. Source Bias Detection**
-For the top 3 claims in the artifact: "What sources CONTRADICT this claim?" If no contradicting source is cited — either the reviewer didn't look, or the evidence is truly one-sided. Ask: "What would a skeptic of this conclusion cite?" If no counterevidence is addressed, the confidence score is inflated.
+Top 3 claims: "What sources CONTRADICT this claim?" No contradicting source cited → either reviewer didn't look, or evidence truly one-sided. Ask: "What would skeptic of this conclusion cite?" No counterevidence addressed → confidence score inflated.
 
 **2. Confidence Calibration Challenge**
-For each confidence score ≥ 80%: "What would need to be true for this confidence to be wrong?" High confidence is only warranted when: (a) multiple independent sources agree, (b) contradicting evidence is addressed, (c) the methodology is sound. Challenge any score that rests on a single source or on undisclosed assumptions.
+Each confidence score ≥ 80%: "What would need to be true for this confidence to be wrong?" High confidence warranted ONLY when: (a) multiple independent sources agree, (b) contradicting evidence addressed, (c) methodology sound. Challenge any score resting on single source or undisclosed assumptions.
 
 **3. Alternative Conclusion Check**
-Given the same evidence, what DIFFERENT conclusion could a reasonable expert reach? If the artifact does not address at least one credible alternative interpretation, the analysis is incomplete. State the strongest alternative conclusion.
+Given same evidence, what DIFFERENT conclusion could reasonable expert reach? Artifact not addressing 1+ credible alternative interpretation → analysis incomplete. State strongest alternative conclusion.
 
 **4. Cherry-Picking Detection**
-Count the sources that support the main conclusion vs. sources that challenge it. If the ratio is > 3:1 in favor of supporting sources without explicit explanation of why contradicting sources were discounted — flag cherry-picking.
+Count sources supporting main conclusion vs. sources challenging it. Ratio > 3:1 favoring supporting sources without explicit explanation of why contradicting sources discounted → flag cherry-picking.
 
 **5. Pre-Mortem**
-Assume the recommendation in this artifact is implemented and fails. Write the most plausible failure scenario given the research limitations. If the artifact doesn't acknowledge this failure mode — it's missing a risk section.
+Assume artifact's recommendation implemented and fails. Write most plausible failure scenario given research limitations. Artifact not acknowledging this failure mode → missing a risk section.
 
 **6. Contrarian Pass**
-Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion about the artifact's quality. Then decide which argument is stronger.
+Before writing any verdict, generate 2+ sentences arguing OPPOSITE conclusion about artifact's quality. Then decide which argument is stronger.
 
 ### Forbidden Patterns
 
@@ -82,14 +76,14 @@ Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE c
 
 ### Anti-Bias Gate (MANDATORY before finalizing verdict)
 
-- [ ] Found at least 1 contradicting source per major claim (or flagged its absence)
-- [ ] Challenged at least 1 confidence score ≥ 80% with a stress test
-- [ ] Stated the strongest alternative conclusion from the same evidence
-- [ ] Checked source balance (supporting vs. contradicting ratio)
-- [ ] Ran pre-mortem on the main recommendation
-- [ ] Generated at least 2 sentences arguing the opposite verdict
+- MUST ATTENTION found 1+ contradicting source per major claim (or flagged its absence)
+- MUST ATTENTION challenged 1+ confidence score ≥ 80% with a stress test
+- MUST ATTENTION stated strongest alternative conclusion from same evidence
+- MUST ATTENTION checked source balance (supporting vs. contradicting ratio)
+- MUST ATTENTION ran pre-mortem on main recommendation
+- MUST ATTENTION generated 2+ sentences arguing opposite verdict
 
-If any box is unchecked → adversarial review incomplete. Go back.
+Any item unmet → adversarial review incomplete. Go back. — why: skipping the gate ships confirmation-biased verdicts as fact.
 
 # Knowledge Review
 
@@ -215,21 +209,22 @@ After completing Round 1 evaluation, execute a **second full review round**:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
+> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
 > **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
 > **Decision after Round 1:**
 >
 > - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
+> - **Issues found (FAIL, or any non-zero findings)** → run the active review skill's findings-validation gate first; for review skills the default gate is `/why-review --validate-findings <report-path>`, fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
 >
-> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `Agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
+> **Fresh full re-review after every fix cycle:** Re-run the whole review protocol over the current full target. When sub-agents are part of that protocol, spawn NEW `Agent` calls — never reuse prior agents. Reviewers re-read ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh full review must catch:
 >
 > - Cross-cutting concerns missed in the prior round
 > - Interaction bugs between changed files
@@ -238,16 +233,17 @@ After completing Round 1 evaluation, execute a **second full review round**:
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
+> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via `AskUserQuestion`.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
-> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
+> - NEVER fix unvalidated findings; validate first using the caller's validation gate
+> - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
+> - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via `AskUserQuestion` (do NOT silently loop)
-> - Track round count in conversation context (session-scoped)
+> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
+> - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
 > **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
@@ -256,15 +252,15 @@ After completing Round 1 evaluation, execute a **second full review round**:
 
 <!-- SYNC:fresh-context-review -->
 
-> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
+> **Fresh Context Re-Review** — Eliminate orchestrator confirmation bias after fixes by restarting the full review with isolated sub-agents where applicable.
 >
 > **Why:** The main agent knows what it (or `/cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
 >
-> **When:** ONLY after a fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: fix → fresh sub-agent re-review.
+> **When:** ONLY after a validated-finding fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: validate findings → fix → full review restart from the first phase.
 >
 > **How:**
 >
-> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 1. Start a NEW full review invocation/task breakdown; when that protocol calls for agents, spawn NEW `Agent` tool calls — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
 > 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
 > 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
 > 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
@@ -272,11 +268,11 @@ After completing Round 1 evaluation, execute a **second full review round**:
 >
 > **Rules:**
 >
-> - SKIP fresh sub-agent when the prior round found zero issues (no fixes = nothing new to verify)
-> - NEVER skip fresh sub-agent after a fix cycle — every fix invalidates the prior verdict
+> - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
+> - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
-> - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
-> - Track iteration count in conversation context (session-scoped, no persistent files)
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via `AskUserQuestion`
+> - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
 
@@ -295,9 +291,9 @@ After completing Round 1 evaluation, execute a **second full review round**:
 
 ```
 Agent({
-description: "Fresh Round {N} review",
-subagent_type: "code-reviewer",
-prompt: `
+  description: "Fresh Round {N} review",
+  subagent_type: "code-reviewer",
+  prompt: `
 ## Task
 {review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
 
@@ -323,7 +319,7 @@ MUST check categories 1-4 for EVERY review. Never skip.
 3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
 4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
 5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
-6. Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
+6. Stack-Specific: Check the configured language/runtime pitfalls and framework-specific failure modes discovered from local code.
 Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
 
 ### Design Patterns Quality
@@ -341,17 +337,32 @@ Verify WHAT code does matches WHY it was changed.
 2. Happy Path Trace: Walk through one complete success scenario through changed code.
 3. Error Path Trace: Walk through one failure/edge case scenario through changed code.
 4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
+5. Tests Verify Intent: For test/spec changes, verify tests name the protected business rule or invariant and would fail if that intent breaks.
+6. Migration Test Exclusion: Do not write tests for migration code. Schema/data migrations are one-time execution paths, not core application logic.
 NEVER mark review PASS without completing both traces (happy + error path).
 
 ### Test Spec Verification
 Map changed code to test specifications.
-1. From changed files → find TC-{FEATURE}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
-2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
+1. Identify the project's test/spec format from existing docs, test-case files, BDD feature files, or spec folders.
+2. Every changed code path MUST map to a corresponding test case/spec (or flag as "needs test case").
 3. New functions/endpoints/handlers → flag for test spec creation.
-4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEATURE}-02x exist? Data changes → TC-{FEATURE}-01x exist?
-6. If no specs exist → log gap and recommend /tdd-spec.
+4. Migration files are excluded from test/spec creation; schema/data migrations are one-time execution paths, not core application logic.
+5. If spec evidence fields exist, verify they point to actual code (file:line, not stale references).
+6. Verify each meaningful test case names the business intent/invariant; flag behavior-only cases that only mirror implementation details.
+7. Auth/data changes → verify corresponding authorization and data-state test cases exist.
+8. If no specs exist for a changed path → log the gap and recommend the project's test-spec workflow.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
+
+### Behavioral Delta Matrix
+MANDATORY for any bugfix review. Produce input-state × pre-fix × post-fix × delta table BEFORE writing verdict.
+- Minimum 3 rows; include at least one row OUTSIDE the original bug report.
+- Any "REGRESSION" delta → review returns FAIL until a preservation test is added.
+- Narrative descriptions do NOT substitute for the matrix.
+Example rows (external-record sync fix):
+| Input                 | Pre-fix | Post-fix                  | Delta      |
+| --------------------- | ------- | ------------------------- | ---------- |
+| Record exists (valid) | Reused  | Always recreated → orphan | REGRESSION |
+| Record missing (404)  | Error   | Recreated                 | Fixed      |
 
 ### Fix-Layer Accountability
 NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
@@ -449,11 +460,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -494,8 +505,8 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:double-round-trip-review:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. A round that finds zero issues ENDS the review.
-    <!-- /SYNC:double-round-trip-review:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review.
+  <!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:web-research:reminder -->
 
@@ -526,6 +537,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -538,11 +550,12 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Ensure knowledge artifacts are evidence-backed, complete, protocol-compliant, and safe to use for decisions.
 **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-**IMPORTANT MUST ATTENTION** execute the review loop: review → if issues → fix → fresh sub-agent re-review. If a round finds no issues, the review ENDS.
+**IMPORTANT MUST ATTENTION** execute the review loop: review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review.
 **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
@@ -554,3 +567,10 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > the next change cheaper or more expensive?_ If it doesn't reduce future
 > change cost, reject it. Coupling, hidden state, duplicated knowledge, and
 > unclear intent are the real enemies — call them out by name.
+> **Anti-Rationalization:**
+
+| Evasion                          | Rebuttal                                                                      |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| "Purpose obvious"                | Anchor it anyway — primacy/recency keeps outcome active through long prompts. |
+| "Existing reminders enough"      | Echo Goal in Closing Reminders — bottom anchor prevents drift.                |
+| "Skip evidence for prompt edits" | Cite changed file evidence and verify no stale protocol text remains.         |

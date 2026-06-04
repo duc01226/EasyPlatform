@@ -15,7 +15,7 @@ description: '[Research] Use when deeply researching top sources from web-resear
 
 ## Quick Summary
 
-**Goal:** Deep-dive into top sources, extract key findings, cross-validate claims, build structured evidence base.
+**Goal:** Deep-dive into top sources to produce a cross-validated, source-cited evidence base (`_evidence-{slug}.md`) where every finding carries a confidence score, traces to specific sources, and flags discrepancies — never an unverified single-source claim presented as fact.
 
 **Workflow:**
 
@@ -104,7 +104,7 @@ Write to `.claude/tmp/_evidence-{slug}.md`:
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `research` workflow** (Recommended) — web-research → deep-research → synthesis → review
+> 1. **Activate `workflow-research` workflow** (Recommended) — web-research → deep-research → synthesis → review
 > 2. **Execute `/deep-research` directly** — run this skill standalone
 
 ---
@@ -137,6 +137,7 @@ Write to `.claude/tmp/_evidence-{slug}.md`:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -172,6 +173,9 @@ Write to `.claude/tmp/_evidence-{slug}.md`:
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Produce a cross-validated, source-cited evidence base (`_evidence-{slug}.md`) where every finding carries a confidence score, traces to specific sources, and flags discrepancies — never an unverified single-source claim presented as fact.
+**MANDATORY IMPORTANT MUST ATTENTION** every finding cites a specific source; conflicting claims → present both, flag discrepancy; single-source → mark "unverified".
+**MANDATORY IMPORTANT MUST ATTENTION** max 8 WebFetch calls per invocation.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

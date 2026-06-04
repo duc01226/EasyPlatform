@@ -376,7 +376,7 @@
         "fixturesPath": "src/Frontend/e2e/fixtures/",
         "guideDoc": "docs/project-reference/e2e-test-reference.md",
         "testSpecsDocs": [],
-        "searchPatterns": ["test\\(['\"]TC-", "\\.spec\\.ts$"],
+        "searchPatterns": ["test\\(['\"]", "\\.spec\\.ts$"],
         "runCommands": {
             "all": "cd src/Frontend/e2e && npx playwright test",
             "headed": "cd src/Frontend/e2e && npx playwright test --headed",
@@ -384,7 +384,20 @@
             "smoke": "cd src/Frontend/e2e && npx playwright test --grep @P0",
             "debug": "cd src/Frontend/e2e && npx playwright test --debug"
         },
-        "tcCodeFormat": "TC-{MODULE}-{AREA}-{NNN}",
+        "tcCodeFormat": "UNSTANDARDIZED: TS-{MODULE}-{Pn}-{NNN} (dominant) and TC-{MODULE}-{AREA}-{NNN} coexist",
+        "stats": {
+            "specFilesGrepExpr": "find src/Frontend/e2e/tests -name '*.spec.ts'",
+            "testBlocksGrepExpr": "grep -rE \"\\btest\\(['\\\"]\" src/Frontend/e2e/tests",
+            "describeBlocksGrepExpr": "grep -rE \"test\\.describe\\(\" src/Frontend/e2e/tests",
+            "pageObjectsGrepExpr": "grep -rE 'extends BasePage' src/Frontend/e2e/page-objects",
+            "priorityTagsGrepExpr": "grep -roE '@P[0-3]' src/Frontend/e2e/tests",
+            "tcIdsGrepExpr": "grep -rnoE 'T[CS]-[A-Z]+-[A-Z0-9]+-[0-9]+' src/Frontend/e2e/tests"
+        },
+        "architecture": {
+            "summary": "Self-contained Playwright project; single chromium project; POM root BasePage; custom test/expect fixture (utils/test-helpers.ts) with passive ConsoleErrorTracker; ApiHelpers for API arrange/cleanup.",
+            "webServer": "auto-starts frontend (4001) only; backend (5001) must run independently",
+            "bddFramework": null
+        },
         "bestPractices": [],
         "entryPoints": ["src/Frontend/e2e/playwright.config.ts", "src/Frontend/e2e/fixtures/test-data.ts", "src/Frontend/e2e/page-objects/base.page.ts"]
     },

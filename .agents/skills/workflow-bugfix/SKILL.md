@@ -29,11 +29,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -76,37 +80,58 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
 
-**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $debug-investigate -> $plan -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $fix -> $prove-fix -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $changelog -> $test -> $docs-update -> $watzup -> $workflow-end
+**IMPORTANT MANDATORY Steps:** $scout -> $feature-investigation -> $debug-investigate -> $spec [mode=amend] -> $plan -> $plan-review -> $plan-validate -> $why-review -> $spec [mode=tests] -> $why-review -> $review-artifact --type=spec-tests -> $integration-test -> $fix -> $prove-fix -> $integration-test -> $integration-test-review -> $integration-test-verify -> $spec [mode=sync] -> $workflow-review-changes -> $changelog -> $test -> $docs-update -> $workflow-end -> $watzup
 
 ---
 
-**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $debug-investigate -> $plan -> $why-review -> $plan-review -> $why-review -> $plan-validate -> $why-review -> $tdd-spec -> $why-review -> $tdd-spec-review -> $integration-test -> $fix -> $prove-fix -> $integration-test -> $integration-test-review -> $integration-test-verify -> $tdd-spec [direction=sync] -> $workflow-review-changes -> $changelog -> $test -> $docs-update -> $watzup -> $workflow-end
+**IMPORTANT MANDATORY Steps:** $scout -> $feature-investigation -> $debug-investigate -> $spec [mode=amend] -> $plan -> $plan-review -> $plan-validate -> $why-review -> $spec [mode=tests] -> $why-review -> $review-artifact --type=spec-tests -> $integration-test -> $fix -> $prove-fix -> $integration-test -> $integration-test-review -> $integration-test-verify -> $spec [mode=sync] -> $workflow-review-changes -> $changelog -> $test -> $docs-update -> $workflow-end -> $watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 > **[CRITICAL] Plan Before Fix Gate:** The `$plan → $plan-review → $plan-validate` steps are MANDATORY before `$fix`. You MUST ATTENTION create todo tasks for these plan steps AND complete them before proceeding to fix. Never skip planning — fixes without validated plans lead to incomplete root cause analysis and regressions.
 
-Activate the `bugfix` workflow. Run `$workflow-start bugfix` with the user's prompt as context.
+Activate the `workflow-bugfix` workflow. Run `$start-workflow workflow-bugfix` with the user's prompt as context.
 
 > **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
 
-> **[BLOCKING] Code Bug vs Spec Bug Gate:** Before writing regression TCs, classify the issue:
+> **[BLOCKING] Code Bug vs Spec Bug Gate** (the bugfix-specialized instance of `SYNC:spec-drift-adjudication` / `shared/sdd-artifact-contract.md` → Drift Gates — same model, bugfix vocabulary): Before writing regression TCs, classify the issue:
 >
-> - **Code Bug** — the canonical spec describes intended behavior, but code diverged. Write regression TCs for the intended behavior before fixing code.
-> - **Spec Bug** — the spec documents wrong behavior and code faithfully implements it. Update canonical spec/docs first, then write TCs for the corrected behavior.
+> - **Code Bug** (= CODE-WRONG) — the canonical spec describes intended behavior, but code diverged. Write regression TCs for the intended behavior before fixing code.
+> - **Spec Bug** (= SPEC-STALE) — the spec documents wrong behavior and code faithfully implements it. Update canonical spec/docs first via `$spec [mode=amend]`, then write TCs for the corrected behavior.
 > - **Ambiguous** — ask the user or product owner which behavior is intended before writing TCs.
 >
-> Include a behavior preservation note: `current behavior -> expected behavior -> unchanged behavior to preserve -> regression TC/test evidence`.
+> Include a behavior preservation note: `current behavior -> expected behavior -> unchanged behavior to preserve -> regression TC/test evidence`. Never normalize the divergence to whichever side currently passes — reconcile to canonical intent.
 
-**Steps:** $scout → $investigate → $debug-investigate → $plan → $why-review → $plan-review → $why-review → $plan-validate → $why-review → $tdd-spec → $why-review → $tdd-spec-review → $integration-test → $fix → $prove-fix → $integration-test → $integration-test-review → $integration-test-verify → $tdd-spec [direction=sync] → $workflow-review-changes → $changelog → $test → $docs-update → $watzup → $workflow-end
+> **[BLOCKING] End-to-start trace before fix plan:** Before `$plan`, `$spec [mode=tests]`, or `$fix`, the investigation must include observed final state, final reader/query/renderer/assertion, backward hops through storage/projection/writer/consumer/producer, all feeder paths, hypothesis matrix, owning fix layer, and forward convergence proof. Missing trace evidence blocks the fix path.
 
-> **[PERFORMANCE-SDD ROUTE]** If this bug fix is performance-related (latency, throughput, memory, query speed, load behavior), activate `$workflow-performance` and require SLA/benchmark evidence: target metric, baseline, measurement command, and acceptable regression budget. Do not use performance scope to bypass functional no-regression checks: run `$test` and any relevant functional checks when behavior can change. Update docs/specs for changed SLA, performance constraints, or behavior boundaries.
+> **Goal Contract propagation (workflow-owned):** At workflow start, resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the bug report). Map root cause, regression-test evidence (RED fail + GREEN pass), and `$prove-fix` proof to the saved success criteria — each criterion gets `file:line`/command/report evidence in the Iteration Log. Pass the same goal file reference to every child step. Before `$workflow-end`, emit the final Goal Satisfaction matrix (PASS/FAIL/BLOCKED); workflow completion requires every required criterion PASS or BLOCKED with a user-facing escalation.
+
+**Steps:** $scout → $feature-investigation → $debug-investigate → $spec [mode=amend] → $plan → $plan-review → $plan-validate → $why-review → $spec [mode=tests] → $why-review → $review-artifact --type=spec-tests → $integration-test → $fix → $prove-fix → $integration-test → $integration-test-review → $integration-test-verify → $spec [mode=sync] → $workflow-review-changes → $changelog → $test → $docs-update → $workflow-end → $watzup
+
+> **[PERFORMANCE-SDD ROUTE]** If this bug fix is performance-related (latency, throughput, memory, query speed, load behavior), run `$performance-review` and require SLA/benchmark evidence: target metric, baseline, measurement command, and acceptable regression budget. Do not use performance scope to bypass functional no-regression checks: run `$test` and any relevant functional checks when behavior can change. Update docs/specs for changed SLA, performance constraints, or behavior boundaries.
 
 > **[TDD-FIRST BUG FIX]** The two `$integration-test` occurrences are intentional and serve distinct purposes:
 >
 > **First `$integration-test` (RED phase):** Write a regression test that REPRODUCES the bug. Run it — it MUST FAIL. If it passes, the test does not catch the bug. Proceed to fix only after the test fails — never start the fix while the test still passes.
 > **Second `$integration-test` (GREEN phase):** Re-run integration tests after the fix — expect all to PASS. Confirms the fix works AND the regression guard is in place.
 > **`$integration-test-review`:** Verify tests have real assertion value (not smoke/existence-only checks).
+
+<!-- SYNC:end-to-start-debugger-trace -->
+
+> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
+>
+> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
+> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
+> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
+> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
+> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
+> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
+>
+> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
+>
+> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+
+<!-- /SYNC:end-to-start-debugger-trace -->
 
 <!-- SYNC:nested-task-creation -->
 
@@ -144,6 +169,7 @@ Activate the `bugfix` workflow. Run `$workflow-start bugfix` with the user's pro
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -192,12 +218,25 @@ Activate the `bugfix` workflow. Run `$workflow-start bugfix` with the user's pro
 
 <!-- /SYNC:subagent-return-contract -->
 
+<!-- SYNC:end-to-start-debugger-trace:reminder -->
+
+**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+
+<!-- /SYNC:end-to-start-debugger-trace:reminder -->
+
 <!-- SYNC:nested-task-creation:reminder -->
 
 - **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
 ## Closing Reminders
 
@@ -214,17 +253,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -242,7 +278,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

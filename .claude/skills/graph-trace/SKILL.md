@@ -38,16 +38,19 @@ Graph must exist (`.code-graph/graph.db`). If missing, run `/graph-build` first.
 
 If the user specifies a file path, use it directly. If the query is semantic:
 
-1. **Grep first** to find entry point files related to the user's query
-2. Use the discovered file as the trace target
+1. **For bug/failure symptoms:** grep for the observed final output first (reader, renderer, assertion, query, aggregate, log, stored field), then use that file as the first trace target.
+2. **For feature-flow questions:** grep for entry point files related to the user's query.
+3. Use the discovered file as the trace target.
 
 ### Step 2: Choose direction
 
 | Direction              | When to Use                         | Example                                   |
 | ---------------------- | ----------------------------------- | ----------------------------------------- |
-| `downstream` (default) | What does this code trigger?        | "What happens after employee is created?" |
+| `downstream` (default) | What does this code trigger?        | "What happens after an order is created?" |
 | `upstream`             | What calls this code?               | "What triggers this event handler?"       |
 | `both`                 | Full picture through a middle point | "Show full flow through this controller"  |
+
+**Bug/failure rule:** start with `upstream` or `both` from the final reader/output file before tracing producers downstream. This prevents starting from a guessed origin path and missing alternate writers.
 
 ### Step 3: Run trace
 
@@ -60,6 +63,10 @@ python .claude/scripts/code_graph trace <target> --direction upstream --json
 
 # Bidirectional — full flow through this point
 python .claude/scripts/code_graph trace <target> --direction both --json
+
+# End-to-start bug trace — begin at final reader/output, then enumerate upstream producers
+python .claude/scripts/code_graph trace <final-reader-or-output-file> --direction upstream --depth 5 --json
+python .claude/scripts/code_graph trace <writer-or-consumer-file> --direction both --depth 5 --json
 
 # Custom depth (default: 3)
 python .claude/scripts/code_graph trace <target> --direction both --depth 5 --json
@@ -124,17 +131,17 @@ trace <target> [--direction downstream|upstream|both] [--depth N] [--edge-kinds 
 ## Examples
 
 ```bash
-# What happens when a user is created? (trace from command handler downstream)
-python .claude/scripts/code_graph trace src/Services/Accounts/Commands/CreateUser/CreateUserCommandHandler.cs --json
+# What happens when a user is created? (trace from command handler downstream — substitute paths from project config)
+python .claude/scripts/code_graph trace {path/to/command-handler-file} --json
 
 # What calls this API controller? (trace upstream to find frontend callers)
-python .claude/scripts/code_graph trace src/Services/Growth/Controllers/GoalController.cs --direction upstream --json
+python .claude/scripts/code_graph trace {path/to/controller-file} --direction upstream --json
 
 # Full flow through an entity event handler (upstream triggers + downstream consumers)
-python .claude/scripts/code_graph trace src/Services/Employee/UseCaseEvents/EmployeeCreatedEventHandler.cs --direction both --json
+python .claude/scripts/code_graph trace {path/to/event-handler-file} --direction both --json
 
 # File-level overview (10-30x less noise — great first pass before drilling into functions)
-python .claude/scripts/code_graph trace src/Services/Growth/Controllers/GoalController.cs --direction both --node-mode file --json
+python .claude/scripts/code_graph trace {path/to/controller-file} --direction both --node-mode file --json
 ```
 
 ## Anti-Patterns
@@ -157,6 +164,23 @@ python .claude/scripts/code_graph trace src/Services/Growth/Controllers/GoalCont
 
 Trace connections from a target node through multiple edge types using BFS. Shows the complete chain: API endpoints → commands → entity events → bus messages → cross-service consumers.
 
+<!-- SYNC:end-to-start-debugger-trace -->
+
+> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
+>
+> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
+> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
+> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
+> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
+> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
+> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
+>
+> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
+>
+> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+
+<!-- /SYNC:end-to-start-debugger-trace -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -171,6 +195,7 @@ Trace connections from a target node through multiple edge types using BFS. Show
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -192,6 +217,12 @@ Trace connections from a target node through multiple edge types using BFS. Show
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:end-to-start-debugger-trace:reminder -->
+
+**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+
+<!-- /SYNC:end-to-start-debugger-trace:reminder -->
 
 ## Closing Reminders
 

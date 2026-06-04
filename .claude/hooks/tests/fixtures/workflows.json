@@ -1,8 +1,7 @@
 {
     "settings": {
         "enabled": true,
-        "showDetection": true,
-        "quickPrefix": "quick:"
+        "showDetection": true
     },
     "workflows": [
         {

@@ -189,14 +189,19 @@ function buildDocIndex(config, projectDir) {
 
 function buildDocLookup(config) {
     const modules = config.modules || [];
-    if (modules.length === 0) return null;
+    const featureRoot = 'docs/specs';
 
     const rows = modules
         .filter(m => m.meta?.domain)
         .map(m => {
-            const docPath = `docs/business-features/${m.name}/`;
+            const docPath = `${featureRoot}/${m.name}/`;
             return `| ${m.meta.domain} | \`${docPath}\` |`;
         });
+
+    rows.push(`| Feature specs, capability behavior, business rules, test cases | \`${featureRoot}/\` + \`docs/project-reference/feature-spec-reference.md\` |`);
+    rows.push('| Spec paths, TC format, canonical vs derived spec artifacts | `docs/project-reference/spec-system-reference.md` |');
+    rows.push('| Spec quality, AI-implementability, tech-agnostic prose | `docs/project-reference/spec-principles.md` |');
+    rows.push('| Behavior or public contract changes, spec-test-code sync | `docs/project-reference/workflow-spec-test-code-cycle-reference.md` |');
 
     // Add framework docs
     if (config.framework?.backendPatternsDoc) {
@@ -206,7 +211,6 @@ function buildDocLookup(config) {
         rows.push(`| Frontend patterns, components, stores | \`${config.framework.frontendPatternsDoc}\` |`);
     }
 
-    if (rows.length === 0) return null;
     return `| If user prompt mentions... | Read first |\n|---|---|\n${rows.join('\n')}`;
 }
 

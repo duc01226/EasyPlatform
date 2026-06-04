@@ -93,6 +93,21 @@ function countTopLevelHooks() {
         .length;
 }
 
+function countWorkflows() {
+    const workflowsFile = path.join(REPO_ROOT, '.claude', 'workflows.json');
+    const parsed = JSON.parse(fs.readFileSync(workflowsFile, 'utf8'));
+    // `.workflows` is the id→definition map (same key TC-WFPROTO-006 reads); other top-level
+    // keys (commandMapping, etc.) are NOT workflows and must not be counted.
+    return Object.keys(parsed.workflows || {}).length;
+}
+
+function countSubagentInitHooks() {
+    const hooksDir = path.join(REPO_ROOT, '.claude', 'hooks');
+    return fs.readdirSync(hooksDir, { withFileTypes: true })
+        .filter((entry) => entry.isFile() && /^subagent-init.*\.cjs$/.test(entry.name))
+        .length;
+}
+
 function assertMatches(file, text, pattern, description) {
     if (!pattern.test(text)) {
         throw new Error(`${file} is missing current ${description} count matching ${pattern}`);
@@ -135,8 +150,18 @@ const tests = [
         fn: () => {
             const skillCount = countDirectSkillFiles();
             const hookCount = countTopLevelHooks();
+            const workflowCount = countWorkflows();
+            const subagentInitHookCount = countSubagentInitHooks();
             const docsReadme = fs.readFileSync(
                 path.join(REPO_ROOT, '.claude', 'docs', 'README.md'),
+                'utf8'
+            );
+            const frameworkGuide = fs.readFileSync(
+                path.join(REPO_ROOT, '.claude', 'docs', 'claude-ai-agent-framework-guide.md'),
+                'utf8'
+            );
+            const explainerScene = fs.readFileSync(
+                path.join(REPO_ROOT, '.claude', 'docs', 'claude-agent-explainer', 'src', 'scenes', 'Scene05ContextInjection.tsx'),
                 'utf8'
             );
 
@@ -151,6 +176,24 @@ const tests = [
                 docsReadme,
                 new RegExp(`\\|\\s*Hook files \\(top-level\\)\\s*\\|\\s*${hookCount}\\s*\\|`),
                 'top-level hook'
+            );
+            assertMatches(
+                '.claude/docs/README.md',
+                docsReadme,
+                new RegExp(`\\|\\s*Workflows\\s*\\|\\s*${workflowCount}\\s*\\|`),
+                'workflow'
+            );
+            assertMatches(
+                '.claude/docs/claude-ai-agent-framework-guide.md',
+                frameworkGuide,
+                new RegExp(`${workflowCount}\\s+registered workflows`),
+                'workflow'
+            );
+            assertMatches(
+                '.claude/docs/claude-agent-explainer/src/scenes/Scene05ContextInjection.tsx',
+                explainerScene,
+                new RegExp(`${subagentInitHookCount}\\s+subagent-init hooks`),
+                'subagent init hook'
             );
         }
     }

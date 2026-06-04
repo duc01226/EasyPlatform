@@ -95,7 +95,17 @@ description: '[Code Quality] Use when you need to run quality gate checklist.'
 
 ### Blocking Items (if FAIL)
 1. [Specific item that must be resolved]
+
+### Goal Satisfaction (when an active Goal Contract exists)
+
+| Success Criterion | Evidence | Status |
+| --- | --- | --- |
+| {saved criterion} | {file:line, command output, report path} | PASS/FAIL/BLOCKED |
+
+Goal status: PASS | FAIL | BLOCKED — {escalation reason for any BLOCKED criterion}
 ```
+
+**Goal Satisfaction audit (MANDATORY when an active Goal Contract exists):** Resolve the active goal per the goal-contract-satisfaction-loop protocol (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md`). The gate verdict reports the Goal Satisfaction matrix above against the SAVED criteria: gate PASS requires every required criterion PASS; any BLOCKED criterion carries a user-facing escalation reason. Sync the verdict back to the goal file (Iteration Log + matrix). Record `No active goal — checklist verdict only.` when none exists.
 
 ## IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)
 
@@ -108,7 +118,7 @@ description: '[Code Quality] Use when you need to run quality gate checklist.'
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `pre-development` workflow** (Recommended) — quality-gate → plan → plan-review → plan-validate
+> 1. **Continue into planning** (Recommended) — quality-gate → `/plan` → `/plan-review` → `/plan-validate`
 > 2. **Execute `/quality-gate` directly** — run this skill standalone
 
 ---
@@ -162,9 +172,10 @@ description: '[Code Quality] Use when you need to run quality gate checklist.'
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -179,6 +190,7 @@ description: '[Code Quality] Use when you need to run quality gate checklist.'
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -211,6 +223,13 @@ description: '[Code Quality] Use when you need to run quality gate checklist.'
 **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 

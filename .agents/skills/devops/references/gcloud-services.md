@@ -58,7 +58,7 @@ gcloud container clusters delete my-cluster --zone=us-central1-a
 # Deploy container
 gcloud run deploy my-service \
   --image=gcr.io/PROJECT_ID/my-image:tag \
-  --platform=managed \
+  {configured-run-mode-flag} \
   --region=us-central1 \
   --allow-unauthenticated
 

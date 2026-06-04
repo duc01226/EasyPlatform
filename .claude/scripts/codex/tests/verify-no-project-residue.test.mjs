@@ -5,9 +5,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const verifierPath = path.resolve(thisDir, '..', 'verify-no-project-residue.mjs');
-const { findProjectSymbolViolations, projectSymbolDenylist, projectSymbolAllowlist } = await import(
-    pathToFileURL(verifierPath).href
-);
+const { findProjectSymbolViolations, genericSourceRoots, projectSymbolDenylist, projectSymbolAllowlist, projectSymbolScanRoots } =
+    await import(pathToFileURL(verifierPath).href);
 
 // TC-SKILLFIX-010 — a denylisted project symbol in a NON-allowlisted generic skill is flagged.
 test('TC-SKILLFIX-010: flags a denylisted project symbol in a non-allowlisted file', () => {
@@ -64,4 +63,17 @@ test('TC-SKILLFIX-013b: every allowlisted symbol is a member of the denylist', (
 test('TC-SKILLFIX-013c: default scan does NOT skip managed blocks', () => {
     const content = '`AppBaseComponent` sits in plain prose.';
     assert.equal(findProjectSymbolViolations(content, '.claude/skills/some-generic/SKILL.md').length, 1);
+});
+
+// TC-SKILLFIX-013d — the project-symbol scan MUST cover generic hooks, not just skills. Guards the E2
+// decision: a generic hook must not bake this project's base-class names into injected guidance, which
+// would mislead an agent on a non-.NET/Angular copy. Regression guard against silently dropping
+// '.claude/hooks' from the scan roots.
+test('TC-SKILLFIX-013d: project-symbol scan covers both skills and hooks', () => {
+    assert.ok(projectSymbolScanRoots.includes('.claude/skills'), 'skills must be a symbol-scan root');
+    assert.ok(projectSymbolScanRoots.includes('.claude/hooks'), 'hooks must be a symbol-scan root');
+});
+
+test('TC-SKILLFIX-013e: forbidden-term scan covers portable hook config', () => {
+    assert.ok(genericSourceRoots.includes('.claude/hooks/config'), 'generic hook config must be scanned for project residue');
 });

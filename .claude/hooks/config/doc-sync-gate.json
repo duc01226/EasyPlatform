@@ -1,0 +1,52 @@
+{
+    "$schema-note": "Generic config for doc-sync-gate.cjs. Commit-time WARN + per-edit WARN (advisory — every path exits 0, never blocks) when a behavioral code change in an ENFORCED area ships without touching its tech-free 8-section Feature Spec. Project-specific enforced areas are loaded from docs/project-config.json -> workflowPatterns.docSyncGate.enforcedAreas. Areas NOT listed there fast-exit (allow) — the gate is opt-in per area.",
+    "enabled": true,
+    "auditLogRelPath": "tmp/claude-temp/doc-sync-override.log",
+    "behavioralCodeExtensions": [".cs", ".ts"],
+    "fastExit": {
+        "comment": "Any staged/edited path matching these is treated as non-behavioral (docs, tooling, tests, generated, migrations) and never triggers the gate.",
+        "pathPrefixes": ["docs/", ".claude/", ".github/", ".vscode/", "plans/", "tmp/", "AutomationTest/"],
+        "pathContains": [
+            "/test/",
+            "/tests/",
+            ".test.",
+            ".spec.",
+            "Tests/",
+            ".Tests/",
+            "IntegrationTests/",
+            "AutomationTest",
+            "/obj/",
+            "/bin/",
+            "/dist/",
+            "/generated/",
+            "/migrations/",
+            "/Migrations/",
+            "node_modules/"
+        ],
+        "extensions": [
+            ".md",
+            ".json",
+            ".yml",
+            ".yaml",
+            ".lock",
+            ".scss",
+            ".css",
+            ".html",
+            ".txt",
+            ".sql",
+            ".csproj",
+            ".sln",
+            ".props",
+            ".targets",
+            ".config",
+            ".gitignore",
+            ".editorconfig",
+            ".sh",
+            ".ps1",
+            ".cmd",
+            ".cjs",
+            ".mjs"
+        ]
+    },
+    "enforcedAreas": []
+}

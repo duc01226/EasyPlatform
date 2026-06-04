@@ -1,3 +1,9 @@
+<!-- CK:UNIVERSAL-GUIDES v3 -->
+
+<!-- The hook-independent Workflow-First Gate (CK:WORKFLOW-GATE block) is stamped here automatically
+     by generate-claude-md.cjs `stampHeader()`, sourced from .claude/skills/shared/workflow-first-gate.md,
+     on every init/update — it is intentionally NOT inlined in this template to avoid drift. -->
+
 # {project-name} - Code Instructions
 
 <!-- SECTION:tldr -->
@@ -10,7 +16,7 @@
 
 <!-- /SECTION:tldr -->
 
-**Sections:** [TL;DR](#tldr--what-you-must-know-before-writing-any-code) | [Search First](#search-existing-code-first) | [Task Planning](#task-planning-rules) | [Code Hierarchy](#code-responsibility-hierarchy) | [Naming](#naming-conventions) | [Key Locations](#key-file-locations) | [Dev Commands](#development-commands) | [Evidence](#evidence-based-reasoning--investigation) | [Graph Intelligence](#graph-intelligence-when-code-graphgraphdb-exists) | [Skill Activation](#automatic-skill-activation)
+**Sections:** [TL;DR](#tldr--what-you-must-know-before-writing-any-code) | [Search First](#search-existing-code-first) | [Workflow Advancement](#workflow-step-advancement--parallel-phases) | [Task Planning](#task-planning-rules) | [Code Hierarchy](#code-responsibility-hierarchy) | [Naming](#naming-conventions) | [Key Locations](#key-file-locations) | [Dev Commands](#development-commands) | [Evidence](#evidence-based-reasoning--investigation) | [Graph Intelligence](#graph-intelligence-when-code-graphgraphdb-exists) | [Skill Activation](#automatic-skill-activation)
 
 ---
 
@@ -32,7 +38,7 @@
 
 1. **Understanding > Output** — Never ship code you can't explain. AI generates candidates; humans validate intent.
 2. **Design Before Mechanics** — Document WHY before WHAT. A 3-sentence rationale prevents 3-day debugging sessions.
-3. **Own Your Abstractions** — Every dependency, framework, and platform decision is YOUR responsibility.
+3. **Own Your Abstractions** — Every dependency, framework, and runtime/provider decision is YOUR responsibility.
 4. **Operational Awareness** — Code that works but can't be debugged, monitored, or rolled back is technical debt in disguise.
 5. **Depth Over Breadth** — One well-understood solution beats ten AI-generated variants.
 
@@ -63,12 +69,25 @@ Before writing code, you MUST grep/glob for 3+ similar examples and follow the l
 
 ## First Action Decision (before any tool call)
 
-1. Explicit slash command — the message starts with `/command-name` as the first token (e.g. `$plan do X`). Skill names referenced as nouns (e.g. "update /skill-a") are NOT slash commands; workflow detection still required.
-2. Workflow Catalog has a matching workflow → ask via a direct user question whether to activate the workflow or run the underlying skill directly.
-3. No matching workflow AND prompt would modify files → MUST invoke `$plan <prompt>` first.
-4. No matching workflow AND prompt is read-only/conversational → answer directly.
+1. Explicit slash command — the message starts with `/command-name` as the first token (e.g. `$plan do X`). Execute that skill/workflow directly. Skill names referenced as nouns (e.g. "update /skill-a") are NOT slash commands; workflow detection still required.
+2. For ordinary prompts, evaluate the best path: execute directly, invoke a skill, activate a standard workflow, or compose a custom workflow. Auto-select the best option yourself; do not ask the user to choose the execution path.
+3. If the selected path is a workflow, call `$start-workflow <workflowId>`; if it is a skill, invoke that skill; if it is custom, sequence the steps manually; if direct is best, answer or implement directly.
+4. Create task tracking for multi-step selected paths before execution and keep it synchronized.
 
 **Modification beats research.** When a prompt mixes research and modification intent, treat it as modification (investigation is a substep of `$plan`).
+
+---
+
+## Workflow Step Advancement & Parallel Phases
+
+<!-- Universal portable rule shipped by claude-md-init into every project — model-driven workflow progression, identical across Claude, Codex (AGENTS.md whole-file mirror), and Copilot (baked common-protocol), none of which depend on a hook. The runtime workflow-protocol injector and any step-tracker hook are accelerators only. -->
+
+Workflow progression is **model-driven** — your responsibility, not a tool/hook/harness signal:
+
+1. **Advancement.** A step is complete when its work returns — whether run **inline** (a skill/step call) OR dispatched as a **sub-agent** (Agent / Task tool). A sub-agent completion advances the step **identically** to an inline call. Do not wait for any hook or tool event to advance; advance by judgment and your task list.
+2. **Parallel phase = all-return barrier.** When steps are declared a parallel-phase group, spawn **ALL** members together (one message), then advance **only after EVERY member returns**. Never start the next step — and never start any code-mutating step (e.g. `code-simplifier`) — until the whole group has returned. A conditional member whose trigger is absent counts as "returned."
+3. **Workflow-in-workflow → sub-agent.** A step that itself activates a multi-step workflow MUST run as a sub-agent; it returns only a summary and writes full findings to `plans/reports/`. This preserves context containment.
+4. **Hooks/trackers are accelerators only.** Any step-tracking hook (e.g. Claude's `workflow-step-tracker.cjs`) is an optimization that may emit "next step" hints; correctness MUST NOT depend on it. Codex and Copilot run with no hooks and advance entirely by this rule.
 
 ---
 
@@ -107,7 +126,7 @@ Entity/Model (Lowest)  >  Service  >  Component/Handler (Highest)
 | ----------- | ---------------- | -------------------------------------- |
 | Constants   | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT`                      |
 | Booleans    | Prefix with verb | `isActive`, `hasPermission`, `canEdit` |
-| Collections | Plural           | `users`, `items`, `employees`          |
+| Collections | Plural           | `users`, `items`, `orders`             |
 
 ---
 
@@ -225,6 +244,8 @@ These skills auto-activate before file edits in their path patterns:
 | {path-pattern} | {skill}              | {pre-read-files} |
 
 <!-- /SECTION:skill-activation -->
+
+**Spec-driven docs routing:** before writing or reviewing Feature Specs, test cases, derived spec indexes, or behavior-changing work, read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the local spec docs: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. Use fixed spec root `docs/specs/`.
 
 ---
 

@@ -97,7 +97,7 @@ Focus on essential information, avoid duplication:
 **Good:**
 
 ```
-1. Create component file in src/components/
+1. Create component file in `{source-root}/components/`
 2. Use TypeScript interfaces for props
 3. Apply Tailwind classes for styling
 ```
@@ -133,7 +133,7 @@ Show concrete input/output examples:
 ## Examples
 
 Input: "Create button component"
-Output: Creates src/components/Button.tsx with props interface
+Output: Creates `{source-root}/components/Button` with props interface
 ```
 
 ### Scope Limitation

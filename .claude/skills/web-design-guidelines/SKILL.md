@@ -40,7 +40,6 @@ Review UI code for compliance with WCAG 2.2, Core Web Vitals, and modern web des
 
 - **Building** UI -- use `frontend-design`
 - **Creating** design specs -- use `design-spec`
-- **Full UX design** process -- use `ux-designer`
 - **Workflow-wired UI review gate** -- use `/review-ui` (the project UI review gate that runs in the `review-changes` parallel batch on frontend changes: long-content overflow, responsive flex, flex-vs-fixed sizing, z-index discipline, SCSS/BEM). This skill is the generic, framework-agnostic a11y/UX checklist that `/review-ui` cross-references — not a duplicate.
 - Project SCSS review -- also check `docs/project-reference/scss-styling-guide.md`
 
@@ -74,19 +73,19 @@ Review UI code for compliance with WCAG 2.2, Core Web Vitals, and modern web des
 Group by file. Use `file:line` format. Terse findings. No preamble.
 
 ```text
-## src/components/Button.tsx
+## {ui-source-root}/components/Button
 
-src/components/Button.tsx:42 - icon button missing aria-label
-src/components/Button.tsx:55 - animation missing prefers-reduced-motion check
-src/components/Button.tsx:67 - transition: all -> list specific properties
-src/components/Button.tsx:89 - div with onClick -> use <button>
+{ui-source-root}/components/Button:42 - icon button missing aria-label
+{ui-source-root}/components/Button:55 - animation missing prefers-reduced-motion check
+{ui-source-root}/components/Button:67 - transition: all -> list specific properties
+{ui-source-root}/components/Button:89 - div with onClick -> use <button>
 
-## src/components/Modal.tsx
+## {ui-source-root}/components/Modal
 
-src/components/Modal.tsx:12 - missing overscroll-behavior: contain
-src/components/Modal.tsx:78 - no focus trap for modal dialog
+{ui-source-root}/components/Modal:12 - missing overscroll-behavior: contain
+{ui-source-root}/components/Modal:78 - no focus trap for modal dialog
 
-## src/components/Card.tsx
+## {ui-source-root}/components/Card
 
 [check] No issues found
 
@@ -118,7 +117,6 @@ src/components/Modal.tsx:78 - no focus trap for modal dialog
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `frontend-design` | Building UI (not reviewing)                                                                                               |
 | `design-spec`     | Creating design specifications                                                                                            |
-| `ux-designer`     | Full UX design process                                                                                                    |
 | `/review-ui`      | Project UI review gate (overflow, responsive flex, z-index, SCSS/BEM); runs in `review-changes` batch on frontend changes |
 
 ---
@@ -139,6 +137,7 @@ src/components/Modal.tsx:78 - no focus trap for modal dialog
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

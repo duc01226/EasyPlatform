@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -54,7 +58,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Key Rules:**
 
-- Always reference existing business rules from `docs/business-features/` before creating new ones
+- Always reference existing business rules from `docs/specs/` before creating new ones
 - User stories must pass INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 - Include entity context and related domain model in every story
 - MUST ATTENTION include `story_points` and `complexity` in all PBI/story outputs
@@ -78,8 +82,8 @@ When refining domain-related PBIs, automatically extract and reference existing 
 
 **Dynamic Discovery:**
 
-1. Run: `Glob("docs/business-features/{module}/detailed-features/*.md")` for feature docs
-2. Or: `Glob("docs/business-features/{module}/detailed-features/**/*.md")` for nested features
+1. Run: `Glob("docs/specs/{module}/*.md")` for feature docs
+2. Or: `Glob("docs/specs/{module}/**/*.md")` for nested features
 
 From PBI frontmatter or module detection:
 
@@ -133,7 +137,7 @@ When refining domain-related PBIs, investigate related entities using feature do
 ### Step 1: Load Feature Doc
 
 ```
-Glob("docs/business-features/{module}/detailed-features/*.md")
+Glob("docs/specs/{module}/*.md")
 ```
 
 Select file matching feature from PBI context.
@@ -222,14 +226,14 @@ Scenario: {Descriptive title}
 
 1. Reference existing test case patterns from feature docs
 2. Use TC-{FEATURE}-{NNN} format (e.g., TC-GM-001)
-3. Include Evidence field: `file:line` format
-4. Example from GoalManagement feature:
+3. Include Evidence field: `[Source: namespace/service/id]` abstract-anchor format — never physical code coordinates or repository-root paths (stack-portable; see `shared/tc-format.md`)
+4. Example from InvoiceManagement feature:
     ```
-    TC-GRO-GOAL-001: Create goal with valid data
-    GIVEN employee has permission to create goals
-    WHEN employee submits goal form with all required fields
-    THEN goal is created and appears in goal list
-    Evidence: goal.service.ts:87, goal.component.ts:142
+    TC-INV-001: Create invoice with valid data
+    GIVEN user has permission to create invoices
+    WHEN user submits invoice form with all required fields
+    THEN invoice is created and appears in invoice list
+    Evidence: [Source: operation/sales/CreateInvoice], [Source: component/sales/Invoice]
     ```
 
 ### 4. Business Rules Documentation
@@ -241,7 +245,7 @@ BR-{MOD}-{NNN}: {Rule name}
 IF {condition}
 THEN {action/result}
 ELSE {alternative}
-Evidence: {file}:{line}
+Evidence: [Source: rule/{service}/{RuleName}]
 ```
 
 ### 5. Gap Analysis
@@ -261,7 +265,7 @@ Before finalizing user story:
 - [ ] Business rules don't conflict with existing BR-{MOD}-XXX rules
 - [ ] Test case format matches existing TC-{FEATURE}-{NNN} patterns
 - [ ] Entity names match those in feature docs
-- [ ] Evidence format follows file:line convention
+- [ ] Evidence format follows the abstract-anchor convention (`[Source: namespace/service/id]`) — no physical code coordinates or repository-root paths
 
 ### Documentation Links
 
@@ -270,9 +274,9 @@ Add to user story:
 ```markdown
 ## Reference Documentation
 
-- Feature Doc: `docs/business-features/{module}/detailed-features/{feature}.md`
-- Related Entities: `docs/business-features/{module}/detailed-features/*.md`
-- Existing Test Cases: See feature doc Section 15 (Test Specifications)
+- Feature Doc: `docs/specs/{module}/{feature}.md`
+- Related Entities: `docs/specs/{module}/*.md`
+- Existing Test Cases: See feature doc Section 8 (Test Specifications)
 ```
 
 If conflicts found, note in "Unresolved Questions" section.
@@ -507,6 +511,7 @@ Add to user story/PBI:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -537,7 +542,7 @@ Add to user story/PBI:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -576,17 +581,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -604,7 +606,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

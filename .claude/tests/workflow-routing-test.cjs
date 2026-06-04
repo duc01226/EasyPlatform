@@ -74,7 +74,6 @@ for (const [id, wf] of Object.entries(workflows)) {
         `whenNotToUse: ${wf.whenNotToUse ? wf.whenNotToUse.substring(0, 50) + '...' : 'MISSING'}`
     );
     assert(`${id}: has sequence array`, Array.isArray(wf.sequence) && wf.sequence.length > 0, `sequence: [${wf.sequence?.join(', ') || 'MISSING'}]`);
-    assert(`${id}: has confirmFirst boolean`, typeof wf.confirmFirst === 'boolean', `confirmFirst: ${wf.confirmFirst}`);
 }
 
 // ============================================================
@@ -153,21 +152,22 @@ assert(
     injection.includes('Workflow Detection Instructions'),
     'Missing Workflow Detection Instructions header'
 );
-assert('Injection references workflow-start', injection.includes('workflow-start'), 'Should reference /workflow-start for activation');
+assert('Injection references start-workflow', injection.includes('start-workflow'), 'Should reference /start-workflow for activation');
 assert(
     'Injection contains TaskCreate enforcement',
     injection.includes('TaskCreate') && injection.includes('MANDATORY'),
     'Should include TaskCreate enforcement'
 );
 assert(
-    'Injection contains MATCH/ANALYZE/ASK/ACTIVATE steps',
-    injection.includes('MATCH') && injection.includes('ANALYZE') && injection.includes('ASK') && injection.includes('ACTIVATE'),
+    'Injection contains MATCH/ANALYZE/AUTO-SELECT/ACTIVATE steps',
+    injection.includes('MATCH') && injection.includes('ANALYZE') && injection.includes('AUTO-SELECT') && injection.includes('ACTIVATE'),
     'Should include current detection steps'
 );
 
-// Quick mode injection
-const quickInjection = buildCatalogInjection(workflowConfig, true);
-assert('Quick mode injection contains quick notice', quickInjection.includes('Quick mode'), 'Quick mode should show notice');
+// Auto-selection injection
+const autoSelectInjection = buildCatalogInjection(workflowConfig);
+assert('Auto-select injection contains no quick notice', !autoSelectInjection.includes('Quick mode'), 'Quick mode notice should be absent');
+assert('Auto-select injection contains auto-select guidance', autoSelectInjection.includes('Auto-select the best option yourself'), 'Auto-select guidance should be present');
 
 // ============================================================
 // SECTION 6: getStepDescription Tests
@@ -218,14 +218,6 @@ if (featureWf) {
     assert('Feature instructions contains sequence', instructions.includes('### Sequence'), 'Should have Sequence section');
     assert('Feature instructions contains TaskCreate template', instructions.includes('TaskCreate'), 'Should have TaskCreate template');
     assert('Feature instructions contains workflow name', instructions.includes(featureWf.name), `Should contain "${featureWf.name}"`);
-    if (featureWf.confirmFirst) {
-        assert(
-            'Feature instructions contains confirmation notice',
-            instructions.includes('Confirmation required'),
-            'confirmFirst workflow should have confirmation notice'
-        );
-    }
-
     // Verify preActions section if present
     if (featureWf.preActions) {
         if (featureWf.preActions.injectContext) {
@@ -284,20 +276,13 @@ for (const [id, wf] of Object.entries(defaultConfig.workflows)) {
 console.log('\n--- Section 9: Review Workflow Guidance ---');
 
 assert(
-    'review workflow injectContext includes multilingual UI sync check',
-    workflows.review?.preActions?.injectContext?.includes('MULTILINGUAL UI SYNC CHECK'),
-    'review.preActions.injectContext should include multilingual UI sync guidance'
-);
-assert(
     'review-changes workflow injectContext includes multilingual UI sync check',
     workflows['review-changes']?.preActions?.injectContext?.includes('MULTILINGUAL UI SYNC CHECK'),
     'review-changes.preActions.injectContext should include multilingual UI sync guidance'
 );
-assert(
-    'quality-audit workflow injectContext includes multilingual UI text guidance',
-    workflows['quality-audit']?.preActions?.injectContext?.includes('multilingual UI text changes'),
-    'quality-audit.preActions.injectContext should include multilingual UI guidance'
-);
+// quality-audit workflow was removed in the catalog consolidation;
+// its multilingual guidance now lives only in review-changes (asserted above).
+// (Live workflow count is asserted dynamically via workflowIds.length, not hardcoded here.)
 
 // ============================================================
 // SECTION 10: Workflow Coverage Summary
@@ -308,7 +293,7 @@ console.log('\n--- Section 10: Coverage Summary ---');
 assert('All workflows tested', workflowIds.length > 0, `Tested ${workflowIds.length} workflows`);
 
 // Check that high-value workflows exist
-const expectedWorkflows = ['feature', 'bugfix', 'documentation', 'investigation'];
+const expectedWorkflows = ['feature', 'bugfix', 'documentation', 'review-changes'];
 for (const expected of expectedWorkflows) {
     assert(`Expected workflow "${expected}" exists`, workflows[expected] !== undefined, `Workflow "${expected}" should exist`);
 }

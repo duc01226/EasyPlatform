@@ -50,10 +50,10 @@ Read `docs/project-config.json` for project-specific module paths. Check `module
 
 ```bash
 # Find backend service directories
-find src/ -name "*.csproj" -maxdepth 4 | head -20
+find . -path "*/node_modules" -prune -o -name "*.csproj" -maxdepth 5 -print | head -20
 
 # Find frontend app directories
-find src/ -name "package.json" -maxdepth 3 | head -10
+find . -path "*/node_modules" -prune -o -name "package.json" -maxdepth 5 -print | head -10
 
 # Find shared libraries
 find . -path "*/libs/*" -name "package.json" -maxdepth 4 | head -10
@@ -92,6 +92,7 @@ Summarize the current state to help with subsequent tasks.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

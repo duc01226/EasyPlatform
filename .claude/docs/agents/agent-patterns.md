@@ -89,7 +89,7 @@ Task({
 // Quick exploration
 Task({
     subagent_type: 'Explore',
-    prompt: 'quick: Find the main entry points for user authentication'
+    prompt: 'Find the main entry points for user authentication'
 });
 
 // Medium exploration

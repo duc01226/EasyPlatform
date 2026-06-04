@@ -3,8 +3,8 @@ import { C, ProgressBar, ChapterBadge, ScriptBar } from '../components/Shared';
 import { easeOut, staggeredEaseOut } from '../utils/animations';
 
 const SCRIPT_LINES = [
-    "The unified TC-{FEATURE}-{NNN} format makes test-driven development scalable. TC-GM-001 is Goal Management test 1, TC-CI-025 is Check-In test 25. These IDs appear in Feature Doc Section 15, in the QA dashboard at docs/specs/, and as [Trait('TestSpec', 'TC-...')] attributes in integration test code — creating a complete bidirectional traceability chain.",
-    'The /tdd-spec skill has 3 modes: Mode 1 generates specs from a PBI before any code exists, Mode 2 traces existing code paths to reverse-engineer specs from implementation, Mode 3 diffs existing TCs against code changes to find coverage gaps. All three produce the same TC format — making the spec system language and framework agnostic.'
+    "The unified TC-{FEATURE}-{NNN} format makes test-driven development scalable. TC-GM-001 is Goal Management test 1, TC-CI-025 is Check-In test 25. These IDs appear in Feature Spec Section 8 (Test Specifications) and as [Trait('TestSpec', 'TC-...')] attributes in integration test code — each TC also carrying a hidden [Source: ns/service/id] anchor, creating a complete bidirectional traceability chain.",
+    "The /spec skill's tests mode covers three behaviors: it generates specs from a PBI before any code exists, traces existing code paths to reverse-engineer specs from implementation, and diffs existing TCs against code changes to find coverage gaps — while its sync mode reconciles those TCs against integration test code. All produce the same TC format — making the spec system language and framework agnostic."
 ];
 
 const MODES = [
@@ -32,10 +32,10 @@ const MODES = [
 ];
 
 const TDD_WORKFLOWS = [
-    { name: 'idea-to-pbi', seq: '/idea → /refine → /story → /tdd-spec', use: 'Idea → PBI + test specs' },
-    { name: 'tdd-feature', seq: '/scout → /tdd-spec → /plan → /cook → /integration-test → /test', use: 'Full TDD cycle' },
-    { name: 'pbi-to-tests', seq: '/tdd-spec → /quality-gate', use: 'PBI → test specs fast' },
-    { name: 'e2e-from-recording', seq: '/scout → /e2e-test → /test → /watzup', use: 'Chrome recording → Playwright' }
+    { name: 'idea-to-pbi', seq: '/idea → /refine → /story → /spec [mode=tests]', use: 'Idea → PBI + test specs' },
+    { name: 'feature', seq: '/scout → /spec → /plan → /spec [mode=tests] → /cook → /integration-test → /test', use: 'Spec-driven TDD cycle' },
+    { name: 'write-integration-test', seq: '/scout → /spec [mode=tests] → /integration-test → verify', use: 'Spec-first integration tests' },
+    { name: 'e2e --source=recording', seq: '/scout → /e2e-test → /test → /docs-update → /workflow-end → /watzup', use: 'Chrome recording → Playwright' }
 ];
 
 export const Scene10TDD: React.FC = () => {
@@ -92,8 +92,8 @@ export const Scene10TDD: React.FC = () => {
                     <div style={{ opacity: easeOut(frame, 36, 16), display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: C.dim, letterSpacing: 2 }}>TRACEABILITY CHAIN</div>
                         {[
-                            { node: 'Feature Doc Section 15', color: C.blue, arrow: true },
-                            { node: 'docs/specs/ dashboard', color: C.cyan, arrow: true },
+                            { node: 'Feature Spec Section 8', color: C.blue, arrow: true },
+                            { node: '[Source: ns/service/id] anchor', color: C.cyan, arrow: true },
                             { node: 'Integration test code', color: C.green, arrow: false }
                         ].map((n, i) => (
                             <div key={n.node} style={{ opacity: easeOut(frame, 40 + i * 8, 12) }}>
@@ -119,7 +119,9 @@ export const Scene10TDD: React.FC = () => {
 
                 {/* Right: modes + workflows */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ opacity: easeOut(frame, 16, 14), fontSize: 13, fontWeight: 700, color: C.dim, letterSpacing: 2 }}>/tdd-spec · 3 MODES</div>
+                    <div style={{ opacity: easeOut(frame, 16, 14), fontSize: 13, fontWeight: 700, color: C.dim, letterSpacing: 2 }}>
+                        /spec [mode=tests] · 3 BEHAVIORS
+                    </div>
                     {MODES.map((m, i) => {
                         const p = staggeredEaseOut(frame, i, 20, 14, 16);
                         const x = interpolate(p, [0, 1], [24, 0]);

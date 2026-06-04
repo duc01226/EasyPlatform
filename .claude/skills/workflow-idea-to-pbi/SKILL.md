@@ -1,13 +1,13 @@
 ---
 name: workflow-idea-to-pbi
-version: 2.0.0
+version: 2.1.0
 description: '[Workflow] Use when activating the Idea to PBI workflow for turning ideas into prioritized PBIs and stories.'
 disable-model-invocation: true
 ---
 
 ## Quick Summary
 
-**Goal:** [Workflow] Trigger Idea to PBI workflow — capture or review idea/artifact, optional handoff, refine to PBI, validate design rationale, create stories, generate TDD test specs, challenge review, DoR gate, mockup, prioritize.
+**Goal:** [Workflow] Trigger Idea to PBI workflow — capture or review idea/artifact, refine, generate TDD test specs from the idea, model the domain, plan, derive the PBI and stories, challenge review, DoR gate, mockup, prioritize (idea → specs → from specs to PBI).
 
 **Workflow:**
 
@@ -36,10 +36,10 @@ disable-model-invocation: true
 
 ## When NOT to Use
 
-- Multiple opportunities from a discovery sprint → use `product-discovery`
-- Full feature lifecycle including implementation → use `full-feature-lifecycle`
-- Implementation-only (PBI already exists and is DoR-ready) → use `feature` or `big-feature`
-- Bug fixes → use `bugfix`
+- Multiple opportunities from a discovery sprint → use `workflow-product-discovery`
+- Already have canonical Feature Specs and only need the backlog → use `workflow-spec-to-pbi` (spec-first entry)
+- Implementation-only (PBI already exists and is DoR-ready) → use `workflow-feature` or `workflow-big-feature`
+- Bug fixes → use `workflow-bugfix`
 
 ## Key Mechanics
 
@@ -53,14 +53,19 @@ After confirming the workflow, present the full step list and let the user desel
 - [ ] PO → BA handoff (handoff)                    — CONDITIONAL
 - [x] Refine to PBI (refine)
 - [x] Refinement rationale review (why-review)
-- [x] PBI review (refine-review)
-- [x] Reviewed-PBI rationale review (why-review)
+- [x] Test specifications (spec [mode=tests])       — idea → specs
+- [x] Test-spec rationale review (why-review)
+- [x] Test specification review (review-artifact --type=spec-tests)
+- [ ] Domain analysis (domain-analysis)            — CONDITIONAL
+- [x] Domain rationale review (why-review)
+- [x] Implementation plan (plan)
+- [x] Plan review (plan-review)
+- [x] Plan validation (plan-validate)
+- [x] Plan rationale review (why-review)
+- [x] PBI review (review-artifact --type=pbi)       — from specs to PBI
 - [x] User stories (story)
 - [x] Story rationale review (why-review)
-- [x] Story review (story-review)
-- [x] Test specifications (tdd-spec)
-- [x] Test-spec rationale review (why-review)
-- [x] Test specification review (tdd-spec-review)
+- [x] Story review (review-artifact --type=story)
 - [x] Dev BA PIC challenge (pbi-challenge)
 - [x] Definition of Ready gate (dor-gate)
 - [x] PBI HTML mock-up (pbi-mockup)                — CONDITIONAL
@@ -78,14 +83,19 @@ Mark skipped steps as completed immediately.
 TaskCreate: "Idea capture"
 TaskCreate: "Refine to PBI"
 TaskCreate: "Refinement rationale review (why-review after refine)"
-TaskCreate: "PBI review (refine-review)"
-TaskCreate: "Reviewed-PBI rationale review (why-review after refine-review)"
+TaskCreate: "Test specifications (spec [mode=tests])"
+TaskCreate: "Test-spec rationale review (why-review after spec [mode=tests])"
+TaskCreate: "Test specification review (review-artifact --type=spec-tests)"
+TaskCreate: "Domain analysis (domain-analysis)" [if domain entities change]
+TaskCreate: "Domain rationale review (why-review after domain-analysis)"
+TaskCreate: "Implementation plan (plan)"
+TaskCreate: "Plan review (plan-review)"
+TaskCreate: "Plan validation (plan-validate)"
+TaskCreate: "Plan rationale review (why-review after plan-validate)"
+TaskCreate: "PBI review (review-artifact --type=pbi)"
 TaskCreate: "User stories (story)"
 TaskCreate: "Story rationale review (why-review after story)"
 TaskCreate: "Story review"
-TaskCreate: "Test specifications (tdd-spec)"
-TaskCreate: "Test-spec rationale review (why-review after tdd-spec)"
-TaskCreate: "Test specification review (tdd-spec-review)"
 TaskCreate: "Dev BA PIC challenge"
 TaskCreate: "Definition of Ready gate"
 TaskCreate: "PBI HTML mock-up" [if UI]
@@ -96,11 +106,13 @@ TaskCreate: "Session summary (watzup)"
 
 One task per step. Mark each completed immediately when done — never batch.
 
-### 3. Why-Review Gate (After refine-review, Before story)
+### 3. Why-Review Gates (Purpose-Specific, Repeated)
 
-This is the adversarial design rationale check. Purpose: validate the **WHY** of this PBI before investing in stories.
+This is the adversarial design rationale check. Purpose: validate the **WHY** of each artifact before investing in the next.
 
-The workflow contains repeated `/why-review` gates. Use purpose-specific labels in sequence: refinement rationale, reviewed-PBI rationale, story rationale, and test-spec rationale. Do not deduplicate them.
+The workflow contains repeated `/why-review` gates after the non-review artifact steps. Use purpose-specific labels in sequence: refinement rationale (after refine), test-spec rationale (after spec [mode=tests]), domain rationale (after domain-analysis), plan rationale (after plan-validate), and story rationale (after story). Do not deduplicate them.
+
+> The standalone gate after `review-artifact --type=pbi` is intentionally omitted: `review-artifact --type=pbi` (like every review skill) already self-invokes `/why-review --validate-findings` as an internal Findings Validation Gate, so a separate why-review step right after it would be duplicate work.
 
 **Challenge prompts:**
 
@@ -114,22 +126,22 @@ The workflow contains repeated `/why-review` gates. Use purpose-specific labels 
 
 | Result | Action                                          |
 | ------ | ----------------------------------------------- |
-| PASS   | Proceed to `/story`                             |
+| PASS   | Proceed to the next artifact step               |
 | WARN   | Document risk, proceed with user acknowledgment |
 | FAIL   | Revise PBI in `/refine` before continuing       |
 
-### 4. TDD-Spec Gate (After story-review, Before pbi-challenge)
+### 4. TDD-Spec Gate (After refine, Before the PBI is drafted)
 
-Generate and review test specifications before challenge and DoR gates so reviewers evaluate a testable PBI.
+Generate and review test specifications right after refine — BEFORE the PBI is drafted — so the PBI, stories, and plan are derived FROM the test specs (idea → specs → from specs to PBI).
 
-AI-generated TC drafts are reference-only until `/tdd-spec-review`, `/pbi-challenge`, and `/dor-gate` accept them for delivery planning.
+AI-generated TC drafts are reference-only until `/review-artifact --type=spec-tests`, `/pbi-challenge`, and `/dor-gate` accept them for delivery planning.
 
 **Output requirements:**
 
 - Map material acceptance criteria and user stories to TC IDs
-- Route planned TC IDs to Feature doc Section 15 through `/tdd-spec`; `/docs-update` later verifies feature docs and dashboard sync.
+- Route planned TC IDs to Feature doc Section 8 through `/spec [mode=tests]`; `/docs-update` later verifies feature docs and §8 TC ↔ integration test code sync.
 - Cover happy path, validation failure, authorization/permission, and important edge cases where applicable
-- Run `/tdd-spec-review` before `/pbi-challenge`
+- Run `/review-artifact --type=spec-tests` before `/pbi-challenge`
 
 ### 5. PBI Output Format
 
@@ -154,7 +166,7 @@ Each PBI artifact must contain:
 | Idea           | `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md` |
 | PBI            | `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md`          |
 | Stories        | Added to PBI artifact                                 |
-| Test specs     | Feature doc Section 15 / docs/specs dashboard sync    |
+| Test specs     | Feature doc Section 8 (canonical TC registry)         |
 | DoR result     | Added to PBI artifact                                 |
 | Mockup         | HTML mock-up file saved beside PBI artifact           |
 | Prioritization | `team-artifacts/backlog/{YYMMDD}-backlog-update.md`   |
@@ -166,42 +178,42 @@ Write output IMMEDIATELY after each step — never batch across steps.
 
 ### 7. Conditional Skip Rules
 
-| Step               | Skip When                             |
-| ------------------ | ------------------------------------- |
-| `/review-artifact` | No existing artifact — raw idea input |
-| `/handoff`         | No formal PO→BA handoff needed        |
-| `/pbi-mockup`      | Backend-only PBI — no UI changes      |
+| Step               | Skip When                                      |
+| ------------------ | ---------------------------------------------- |
+| `/review-artifact` | No existing artifact — raw idea input          |
+| `/domain-analysis` | Idea introduces no new/changed domain entities |
+| `/pbi-mockup`      | Backend-only PBI — no UI changes               |
 
 ---
 
 ### 8. Near-Final Documentation Synchronization
 
-Run `/docs-update` after `/prioritize` and before `/watzup`.
+Run `/docs-update` after `/prioritize` and before `/workflow-end`.
 
 Purpose:
 
 - Sync refined PBI/story outputs into business feature docs where applicable.
-- Sync feature doc Section 15 test specifications and `docs/specs/` dashboards after `/tdd-spec-review`.
+- Sync feature doc Section 8 test specifications and `docs/specs/` dashboards after `/review-artifact --type=spec-tests`.
 - Verify specs, feature docs, and TDD/spec docs do not drift before workflow closure.
 - Record skipped sub-phases explicitly when no impacted docs exist.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /handoff -> /refine -> /why-review -> /refine-review -> /why-review -> /story -> /why-review -> /story-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /refine -> /why-review -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /domain-analysis -> /why-review -> /plan -> /plan-review -> /plan-validate -> /why-review -> /review-artifact --type=pbi -> /story -> /why-review -> /review-artifact --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /workflow-end -> /watzup
 
-**IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /handoff -> /refine -> /why-review -> /refine-review -> /why-review -> /story -> /why-review -> /story-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /idea -> /review-artifact -> /refine -> /why-review -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /domain-analysis -> /why-review -> /plan -> /plan-review -> /plan-validate -> /why-review -> /review-artifact --type=pbi -> /story -> /why-review -> /review-artifact --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /prioritize -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
-Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
+Activate the `workflow-idea-to-pbi` workflow. Run `/start-workflow workflow-idea-to-pbi` with the user's prompt as context.
 
 **Steps:**
-/idea → /review-artifact (conditional) → /handoff (conditional) → /refine → /why-review → /refine-review → /why-review → /story → /why-review → /story-review → /tdd-spec → /why-review → /tdd-spec-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /docs-update → /watzup → /workflow-end
+/idea → /review-artifact (conditional) → /refine → /why-review → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /domain-analysis (conditional) → /why-review → /plan → /plan-review → /plan-validate → /why-review → /review-artifact --type=pbi → /story → /why-review → /review-artifact --type=story → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /docs-update → /workflow-end → /watzup
 
 > **Conditional steps:**
 >
 > - `/review-artifact` — skip if no existing artifact/ticket/PRD; proceed straight to `/refine`
-> - `/handoff` — skip if no formal PO→BA handoff needed
+> - `/domain-analysis` — skip if the idea introduces no new/changed domain entities
 > - `/pbi-mockup` — skip if PBI is backend-only (no UI changes)
 
 ---
@@ -220,6 +232,7 @@ Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the 
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -312,12 +325,12 @@ Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the 
 ## Closing Reminders
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — one task per step
-- **MANDATORY IMPORTANT MUST ATTENTION** run all four purpose-specific why-review gates: after refine, after refine-review, after story, and after tdd-spec; FAIL blocks the next artifact step, WARN requires user acknowledgment
-- **MANDATORY IMPORTANT MUST ATTENTION** tdd-spec and tdd-spec-review run after story-review and before pbi-challenge
+- **MANDATORY IMPORTANT MUST ATTENTION** run all five purpose-specific why-review gates: after refine, after spec [mode=tests], after domain-analysis, after plan-validate, and after story; FAIL blocks the next artifact step, WARN requires user acknowledgment
+- **MANDATORY IMPORTANT MUST ATTENTION** spec [mode=tests] and review-artifact --type=spec-tests run right after refine and before the PBI is drafted (idea → specs → from specs to PBI)
 - **MANDATORY IMPORTANT MUST ATTENTION** pbi-challenge must be run by a reviewer different from the drafter
 - **MANDATORY IMPORTANT MUST ATTENTION** dor-gate must pass (PASS or WARN) before pbi-mockup is finalized
 - **MANDATORY IMPORTANT MUST ATTENTION** write each artifact immediately — never batch output across steps
-- **MANDATORY IMPORTANT MUST ATTENTION** docs-update runs after prioritize and before watzup to sync specs, feature docs, and TDD/spec dashboards
+- **MANDATORY IMPORTANT MUST ATTENTION** docs-update runs after prioritize and before workflow-end to sync specs, feature docs, and TDD/spec dashboards
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final watzup summary: PBI title, DoR result, any blocking items, recommended next step
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

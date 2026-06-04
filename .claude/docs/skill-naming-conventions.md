@@ -24,9 +24,10 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 **Project Examples:**
 | Skill | Purpose |
 | -------------------------------- | ------------------------------- |
-| `arch-security-review` | Security vulnerability analysis |
-| `arch-performance-optimization` | System-wide performance |
-| `arch-cross-service-integration` | Service boundary design |
+| `security-review` | Security & threat analysis |
+| `performance-review` | Performance & scalability |
+
+> Note: `arch-security-review` was consolidated into the single `security-review` skill, and `arch-performance-optimization` into the single `performance-review` skill (no `arch-` prefix — each covers all scopes; `performance-review` additionally carries an architecture-altitude section for design reviews, not only architecture).
 
 **When to Use:**
 
@@ -36,7 +37,7 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 
 ### Frontend Patterns (via docs + hooks)
 
-**Approach:** Frontend patterns are handled via `docs/project-reference/frontend-patterns-reference.md` (auto-injected by `frontend-context.cjs` hook). No tech-stack-specific skill needed — keeps the skill catalog generic.
+**Approach:** Frontend patterns are handled via `docs/project-reference/frontend-patterns-reference.md` (auto-injected by the `buildFrontendContext` builder, dispatched by `pretooluse-ctx-edit-tail.cjs`). No tech-stack-specific skill needed — keeps the skill catalog generic.
 
 **When to Use:**
 
@@ -76,7 +77,7 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 
 1. Edit `.claude/skills/shared/sync-inline-versions.md` (canonical source)
 2. Run `grep SYNC:protocol-name` to find all consuming skills
-3. Update all copies (or use `/sync-protocols` skill to automate)
+3. Update all copies (or use `/sync-skills-shared-protocols` skill to automate)
 
 ### `references/` Subdirectory
 
@@ -98,11 +99,11 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 **Example:**
 
 ```
-.claude/skills/databases/
-|-- SKILL.md              # Core patterns (~100 lines)
+.claude/skills/media processing tooling/
+|-- SKILL.md                 # Core patterns (~100 lines)
 +-- references/
-    |-- mongodb-guide.md   # MongoDB deep-dive
-    +-- sql-patterns.md    # SQL optimization guide
+    |-- ffmpeg-filters.md    # FFmpeg filter deep-dive
+    +-- imagemagick-batch.md # ImageMagick batch operations
 ```
 
 ## Anti-Patterns

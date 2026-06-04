@@ -16,7 +16,7 @@ disable-model-invocation: false
 1. **Discover** — Browse target URL, discover all pages, components, endpoints
 2. **Plan Tests** — Create test plan covering accessibility, responsiveness, performance, security, SEO
 3. **Execute** — Run parallel tester subagents; capture screenshots for each test area
-4. **Analyze** — Use ai-multimodal to review screenshots and visual elements
+4. **Analyze** — Use visual analysis tooling to review screenshots and visual elements
 5. **Report** — Generate Markdown report with embedded screenshots and recommendations
 
 **Key Rules:**
@@ -29,7 +29,7 @@ disable-model-invocation: false
 
 **Pre-read (design system):** Load `designSystem.canonicalDoc` + `tokenFiles` from `docs/project-config.json` so visual/style assertions reference real token names (`--brand-*`, `$brand-*`) instead of guesses.
 
-Activate the chrome-devtools skill.
+Activate the browser automation tooling.
 
 ## Purpose
 
@@ -62,35 +62,26 @@ Ask the user to provide one of:
 
 ### Step 3: Inject Authentication
 
-Use the `inject-auth.js` script to inject credentials before testing:
+Use the available browser automation runner to inject credentials before testing:
 
 ```bash
-cd $SKILL_DIR  # .claude/skills/chrome-devtools/scripts
+# Cookies
+# Add cookies before navigating to protected pages.
 
-# Option A: Inject cookies
-node inject-auth.js --url https://example.com --cookies '[{"name":"session","value":"abc123","domain":".example.com"}]'
+# Bearer token
+# Set the Authorization header or localStorage token key before navigation.
 
-# Option B: Inject Bearer token
-node inject-auth.js --url https://example.com --token "Bearer eyJhbGciOi..." --header Authorization --token-key access_token
-
-# Option C: Inject localStorage
-node inject-auth.js --url https://example.com --local-storage '{"auth_token":"xyz","user_id":"123"}'
-
-# Combined (cookies + localStorage)
-node inject-auth.js --url https://example.com --cookies '[{"name":"session","value":"abc"}]' --local-storage '{"user":"data"}'
+# Local/session storage
+# Populate the required storage keys, then reload the page.
 ```
 
 ### Step 4: Run Tests
 
-After auth injection, the browser session persists. Run tests normally:
+After auth injection, the browser session persists. Run tests normally with the available browser automation runner:
 
 ```bash
-# Navigate and screenshot protected pages
-node navigate.js --url https://example.com/dashboard
-node screenshot.js --url https://example.com/profile --output profile.png
-
-# The auth session persists until --close true is used
-node screenshot.js --url https://example.com/settings --output settings.png --close true
+# Navigate and screenshot protected pages.
+# Save outputs in the report directory for later analysis.
 ```
 
 ### Auth Script Options
@@ -106,12 +97,12 @@ node screenshot.js --url https://example.com/settings --output settings.png --cl
 
 ## Workflow
 
-- Use `planning` skill to organize the test plan & report in the current project directory.
+- Use `plan` skill to organize the test plan & report in the current project directory.
 - All the screenshots should be saved in the same report directory.
 - Browse $URL with the specified $OPTIONS, discover all pages, components, and endpoints.
 - Create a test plan based on the discovered structure
 - Use multiple `tester` subagents or tool calls in parallel to test all pages, forms, navigation, user flows, accessibility, functionalities, usability, responsive layouts, cross-browser compatibility, performance, security, seo, etc.
-- Use `ai-multimodal` to analyze all screenshots and visual elements.
+- Use `visual analysis tooling` to analyze all screenshots and visual elements.
 - Generate a comprehensive report in Markdown format, embedding all screenshots directly in the report.
 - Finally respond to the user with a concise summary of findings and recommendations.
 - Use `AskUserQuestion` tool to ask if user wants to preview the report with `/preview` slash command.
@@ -160,9 +151,10 @@ How to write reports:
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -177,6 +169,7 @@ How to write reports:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

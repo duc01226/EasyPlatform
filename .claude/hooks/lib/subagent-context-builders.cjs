@@ -6,15 +6,23 @@
  * All content-injection (readAndInjectDoc) replaced with read-guidance pointers —
  * agents read files themselves as needed rather than receiving pre-loaded content.
  *
- * Hook execution order (8 hooks):
- *    1. subagent-init-identity.cjs         — identity, config, rules, plan context, critical thinking
- *    2. subagent-init-patterns.cjs      — read-guidance: patterns + agent-specific docs
- *    3. subagent-init-dev-rules.cjs     — read-guidance: development-rules.md (dev agents only)
- *    4. subagent-init-code-review-rules.cjs — read-guidance: code-review-rules.md (review agents only)
- *    5. subagent-init-lessons.cjs          — lessons learned
- *    6. subagent-init-ai-mistakes.cjs      — AI mistake prevention bullets
- *    7. subagent-init-context-guard.cjs    — context-overflow guard reminder
- *    8. subagent-init-todos.cjs            — active task state (fires last)
+ * These builders are now invoked by 3 cap-bounded dispatchers (down from 8
+ * single-builder hooks). The builder FIRING ORDER below is load-bearing —
+ * dispatchers call them in this exact sequence so the concatenated
+ * additionalContext is byte-equivalent to the legacy ordered concat
+ * (each block <=8500 chars; see plans/.../reports/p01-equivalence-proof.txt):
+ *
+ *    subagent-init.cjs    (dispatcher 1/3) — builders 1-5:
+ *      1. identity            — identity, config, rules, plan context, critical thinking
+ *      2. patterns            — read-guidance: patterns + agent-specific docs
+ *      3. dev-rules           — read-guidance: development-rules.md (dev agents only)
+ *      4. code-review-rules   — read-guidance: code-review-rules.md (review agents only)
+ *      5. lessons             — lessons learned
+ *    subagent-init-2.cjs  (dispatcher 2/3) — builder 6:
+ *      6. ai-mistakes         — AI mistake prevention bullets
+ *    subagent-init-3.cjs  (dispatcher 3/3) — builders 7-8:
+ *      7. context-guard       — context-overflow guard reminder
+ *      8. todos               — active task state (fires last)
  */
 
 const fs = require('fs');
@@ -52,24 +60,37 @@ const AGENT_DOC_MAP = {
     'solution-architect': ['docs/project-reference/project-structure-reference.md', 'docs/project-reference/domain-entities-reference.md'],
     scout: ['docs/project-reference/project-structure-reference.md'],
 
-    // Review agents: code-review-rules.md guidance pointer emitted via subagent-init-code-review-rules.cjs
-    // (kept out of AGENT_DOC_MAP — the dedicated hook is the single source of truth)
+    // Review agents: code-review-rules.md guidance pointer emitted by the dedicated
+    // code-review-rules builder (dispatcher 1/3) — kept out of AGENT_DOC_MAP so that
+    // builder remains the single source of truth.
 
     // Test agents need test references
     'integration-tester': ['docs/project-reference/integration-test-reference.md'],
     tester: ['docs/project-reference/integration-test-reference.md'],
     'e2e-runner': ['docs/project-reference/e2e-test-reference.md'],
 
-    // Docs agents need feature docs + index
-    'docs-manager': ['docs/project-reference/feature-docs-reference.md', 'docs/project-reference/docs-index-reference.md'],
-    'business-analyst': ['docs/project-reference/feature-docs-reference.md', 'docs/project-reference/docs-index-reference.md']
+    // Docs agents need the full local spec routing set + index.
+    'docs-manager': [
+        'docs/project-reference/feature-spec-reference.md',
+        'docs/project-reference/spec-system-reference.md',
+        'docs/project-reference/spec-principles.md',
+        'docs/project-reference/workflow-spec-test-code-cycle-reference.md',
+        'docs/project-reference/docs-index-reference.md'
+    ],
+    'business-analyst': [
+        'docs/project-reference/feature-spec-reference.md',
+        'docs/project-reference/spec-system-reference.md',
+        'docs/project-reference/spec-principles.md',
+        'docs/project-reference/workflow-spec-test-code-cycle-reference.md',
+        'docs/project-reference/docs-index-reference.md'
+    ]
 };
 
 /**
  * Agent types that receive code-review-rules.md injection via dedicated hooks.
  * Separated from AGENT_DOC_MAP/patterns pipeline because backend+frontend patterns
  * exhaust all 5 × 8,500-char pattern pages, silently dropping code-review-rules.md.
- * Injected by subagent-init-code-review-rules.cjs (after dev-rules hook).
+ * Injected by the code-review-rules builder in dispatcher 1/3 (after the dev-rules builder).
  */
 const CODE_REVIEW_RULES_AGENT_TYPES = new Set([
     'code-reviewer',
@@ -80,7 +101,7 @@ const CODE_REVIEW_RULES_AGENT_TYPES = new Set([
 /**
  * Agent types that receive development-rules.md injection.
  * These agents produce or review code and need full dev rules for quality enforcement.
- * Injected by subagent-init-dev-rules.cjs (3rd of 8 SubagentStart hooks).
+ * Injected by the dev-rules builder (3rd builder, dispatcher 1/3).
  */
 const DEV_RULES_AGENT_TYPES = new Set([
     'code-reviewer',
@@ -312,7 +333,7 @@ function buildPatternsGuidance(agentType) {
             lines.push(
                 'Read before implementing:',
                 `- \`${bp}\` — CQRS commands/queries, validation, repositories, entity events, v1/v2 patterns`,
-                `- \`${fp}\` — base classes, PlatformVmStore, effectSimple(), BEM, API service pattern`,
+                `- \`${fp}\` — base classes, state-management store, reactive effects, component styling, API service pattern`,
             );
             const stylingDoc = projConfig.contextGroups?.find(g => g.stylingDoc)?.stylingDoc;
             const designSystemDoc = projConfig.contextGroups?.find(g => g.designSystemDoc)?.designSystemDoc;

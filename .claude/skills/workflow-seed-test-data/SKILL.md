@@ -23,15 +23,15 @@ disable-model-invocation: true
 - MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
 - NEVER skip mandatory workflow or skill gates.
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 > **[CRITICAL] Read Project Config Gate:** The `/seed-test-data` step MUST read `docs/project-config.json` → 'Data Seeders' context group and `docs/project-reference/seed-test-data-reference.md` BEFORE writing any seeder code. Seeder written without reading the project base class and DI scope pattern is guaranteed to be wrong.
 
-Activate the `workflow-seed-test-data` workflow. Run `/workflow-start workflow-seed-test-data` with the user's prompt as context.
+Activate the `workflow-seed-test-data` workflow. Run `/start-workflow workflow-seed-test-data` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /seed-test-data → /review-changes → /code-simplifier → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /feature-investigation → /seed-test-data → /review-changes → /code-simplifier → /docs-update → /workflow-end → /watzup
 
 > **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
 >
@@ -41,11 +41,11 @@ Activate the `workflow-seed-test-data` workflow. Run `/workflow-start workflow-s
 > **`/review-changes`** — Full compliance review: environment gate present, count read from config key, idempotency correct (loop from `existing` not from `0`), no direct DB writes for domain entities, project's scoped DI mechanism used per iteration.
 > **`/code-simplifier`** — DRY and simplify the seeder without changing behavior. Merge duplication, extract reusable builders, remove unnecessary scaffolding.
 > **`/docs-update`** — Triage doc impact from changed seeder files. Update feature docs if dev-data coverage changed materially.
-> **`/watzup`** + **`/workflow-end`** — Summary report and close workflow.
+> **`/workflow-end`** + **`/watzup`** — Close workflow state, then summarize and run the final `/understand` handoff.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /workflow-end -> /watzup
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -61,6 +61,7 @@ Activate the `workflow-seed-test-data` workflow. Run `/workflow-start workflow-s
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

@@ -34,6 +34,7 @@ const PROJECT_TMP_DIR = path.join(PROJECT_DIR, 'tmp', 'claude-temp');
 
 // Project-scoped runtime file paths (dismiss flags, markers, warnings)
 const INIT_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.init-dismissed');
+const AGENT_FILES_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.agent-files-dismissed');
 const SCAN_STALE_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.scan-stale-dismissed');
 const GRAPH_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.graph-dismissed');
 const SCAN_STALE_PATH = path.join(PROJECT_TMP_DIR, '.scan-stale');
@@ -179,6 +180,7 @@ module.exports = {
 
     // Files (project-scoped runtime)
     INIT_DISMISSED_PATH,
+    AGENT_FILES_DISMISSED_PATH,
     SCAN_STALE_DISMISSED_PATH,
     GRAPH_DISMISSED_PATH,
     SCAN_STALE_PATH,

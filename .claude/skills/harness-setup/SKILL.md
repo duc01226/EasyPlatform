@@ -15,38 +15,38 @@ description: '[Quality] Use when setting up an agent quality harness with feedfo
 
 ## Quick Summary
 
-**Goal:** Set up the complete outer agent harness for a greenfield project so all subsequent AI coding agents operate with maximum guidance and earliest-possible quality feedback.
+**Goal:** Wire every feedforward guide and feedback sensor into the greenfield project so all later AI coding agents operate with maximum guidance and self-correct against quality gates BEFORE human review — raising first-attempt quality and catching defects at the earliest, cheapest stage.
 
-**What this produces:**
+**Produces:**
 
 - Feedforward guides: CLAUDE.md/AGENTS.md conventions, architecture docs, pattern catalogs, skill activation rules
 - Computational feedback sensors: configured via `/linter-setup` (linters, formatters, pre-commit hooks, CI gates)
 - Inferential feedback sensors: AI review skills wired to lifecycle stages
 - Harness inventory: `.ai/workspace/harness/harness-inventory.md`
 
-**When invoked:** After `/scaffold` and `/linter-setup` in the greenfield workflow. Assumes scaffolding is complete.
+**When invoked:** After `/scaffold` + `/linter-setup` in greenfield workflow. Assumes scaffolding complete.
 
-**What it does NOT do:** Install linters or configure formatters — that is `/linter-setup`'s responsibility.
+**Does NOT do:** Install linters or configure formatters — that is `/linter-setup`'s responsibility.
 
 ---
 
 ## Activation Guards
 
 **Check 1 — Linter-setup prerequisite (BLOCK if missing):**
-Before running any phases, verify `/linter-setup` has completed by checking for:
+Before running any phases, verify `/linter-setup` completed by checking for:
 
 - Linter config file at project root (e.g., `.eslintrc`, `pyproject.toml`, `.editorconfig`)
 - Pre-commit hook config (e.g., `.husky/`, `.pre-commit-config.yaml`)
 - CI quality gate definition
 
-If any of these are missing → `AskUserQuestion`: "/linter-setup appears incomplete. Computational feedback sensors must be in place before harness setup. Run /linter-setup first, then return here?"
+If any missing → `AskUserQuestion`: "/linter-setup appears incomplete. Computational feedback sensors must be in place before harness setup. Run /linter-setup first, then return here?"
 **BLOCK** Phase A/B/C/D/E until linter-setup verification passes.
 
 **Check 2 — Existing harness inventory:**
 Check for `.ai/workspace/harness/harness-inventory.md`
 
 - If found → `AskUserQuestion`: "Harness inventory already exists — re-run to enhance existing harness, or skip?"
-- Proceed even when `CLAUDE.md`/`AGENTS.md` are present — those are feedforward guides this skill may enhance, never signals to skip
+- Proceed even when `CLAUDE.md`/`AGENTS.md` present — those are feedforward guides this skill may enhance, NEVER signals to skip
 
 ---
 
@@ -58,7 +58,7 @@ Extract:
 
 - Primary language(s) and framework(s)
 - Test framework and test runner
-- CI platform (GitHub Actions, GitLab CI, Azure Pipelines, etc.)
+- CI provider/tooling
 - Package manager and monorepo structure (if any)
 - Module system and build tooling
 
@@ -76,7 +76,7 @@ For each guide type, check if it exists; if not, create or enhance:
 
 - Add section: "Architecture Patterns" — document the patterns chosen in `/architecture-design` (e.g., Clean Architecture, CQRS, Repository)
 - Add section: "Anti-Patterns" — explicit list of patterns to avoid for this stack
-- Add section: "Naming Conventions" — language-idiomatic conventions for this project
+- Add section: "Naming Conventions" — language-idiomatic conventions for this repository
 - Add section: "Module Boundaries" — which layers may import which; dependency direction rules
 
 **2. Skill activation rules**
@@ -119,7 +119,7 @@ Output: confirmation that computational sensors are in place, with file paths li
 ## Phase D — Inferential Feedback Sensors
 
 Configure which AI review skills fire at each lifecycle stage. Present to user via `AskUserQuestion`:
-"Which inferential sensors should be mandatory vs optional for this project?"
+"Which inferential sensors should be mandatory vs optional for this repository?"
 
 **Pre-implementation (planning gate):**
 
@@ -136,7 +136,7 @@ Configure which AI review skills fire at each lifecycle stage. Present to user v
 **Pre-release (mandatory gates):**
 
 - `/sre-review` — reliability and operational readiness
-- `/security` — security review before production release
+- `/security-review` — security review before production release
 
 **Recurring drift detection:**
 
@@ -152,8 +152,8 @@ Define the project's behaviour harness plan:
 
 **Functional spec format:**
 
-- `AskUserQuestion`: "Feature documentation format?" Options: feature-docs (17-section), TDD specs only, lightweight ADRs
-- Establish `docs/business-features/` or equivalent spec home
+- `AskUserQuestion`: "Feature documentation format?" Options: feature-spec (8-section tech-free), TDD specs only, lightweight ADRs
+- Establish `docs/specs/` or equivalent spec home
 
 **Test strategy pyramid:**
 
@@ -211,7 +211,7 @@ Stack: {detected stack from Phase A}
 | Pre-commit          | /code-review            | Convention drift, logic errors |
 | Post-implementation | /review-domain-entities | Domain model quality           |
 | Pre-release         | /sre-review             | Operational readiness          |
-| Pre-release         | /security               | Security vulnerabilities       |
+| Pre-release         | /security-review        | Security vulnerabilities       |
 
 ## Open Gaps
 
@@ -257,6 +257,7 @@ Present inventory to user for review via `AskUserQuestion`.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -271,7 +272,7 @@ Present inventory to user for review via `AskUserQuestion`.
 > | Feedforward | Computational | `.editorconfig`, strict compiler flags, enforced module boundaries            | Always-on        |
 > | Feedforward | Inferential   | `CLAUDE.md` conventions, skill prompts, architecture notes, pattern catalogs  | Always-on        |
 > | Feedback    | Computational | Linters, type checks, pre-commit hooks, ArchUnit/arch-fitness tests, CI gates | Pre-commit → CI  |
-> | Feedback    | Inferential   | `/code-review` skill, `/sre-review`, `/security`, LLM-as-judge passes         | Post-commit → CI |
+> | Feedback    | Inferential   | `/code-review` skill, `/sre-review`, `/security-review`, LLM-as-judge passes  | Post-commit → CI |
 >
 > **Three harness types:**
 >
@@ -300,9 +301,11 @@ Present inventory to user for review via `AskUserQuestion`.
 
 ## Closing Reminders
 
-**MUST ATTENTION** never auto-decide feedforward guide content — present draft and confirm with `AskUserQuestion`
-**MUST ATTENTION** verify `/linter-setup` completed before Phase C passes
-**MUST ATTENTION** write harness-inventory.md incrementally (append after each phase) — never hold in memory
-**MUST ATTENTION** harness is a living document — update inventory when new sensors are added later
+**IMPORTANT MUST ATTENTION Goal:** Wire every feedforward guide and feedback sensor into the project so all later AI agents self-correct against quality gates BEFORE human review — raising first-attempt quality and catching defects at the earliest, cheapest stage.
+**IMPORTANT MUST ATTENTION** NEVER auto-decide feedforward guide content — present draft and confirm with `AskUserQuestion` — why: harness conventions bind every future agent; silent choices propagate
+**IMPORTANT MUST ATTENTION** ALWAYS verify `/linter-setup` completed before Phase C passes — computational sensors must precede inferential ones — why: keep quality left, cheapest gates fire first
+**IMPORTANT MUST ATTENTION** write harness-inventory.md incrementally (append after each phase) — NEVER hold in memory — why: context loss drops findings
+**IMPORTANT MUST ATTENTION** harness is a living document — update inventory when new sensors added later
+**IMPORTANT MUST ATTENTION** NEVER skip phases A-F — each phase BLOCKS the next until its guard passes
 
 **[TASK-PLANNING]** Before acting, analyze task scope and break it into small todo tasks using `TaskCreate`.

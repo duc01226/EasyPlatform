@@ -1,13 +1,15 @@
 ---
 name: workflow-write-integration-test
 version: 1.0.0
-description: '[Workflow] Use when activating the Write Integration Tests workflow for spec-first integration test authoring.'
+description: '[Workflow] Use when activating the Write Integration Tests workflow for spec-first integration test authoring. Also covers converting existing test specs into integration test code and verifying integration test stability (repeat-run verification).'
 disable-model-invocation: true
 ---
 
 ## Quick Summary
 
-**Goal:** [Workflow] Trigger Write Integration Tests workflow — spec-first test authoring: investigate domain logic → write/update specs → generate test code → 6-gate review → run and verify.
+**Goal:** [Workflow] Trigger Write Integration Tests workflow — spec-first test authoring: investigate domain logic → write/update specs → generate test code → 7-gate review (incl. change coverage) → run and verify.
+
+**Absorbed use cases:** converting existing TC specs into integration test code (former test-to-integration — specs already exist, so `/spec [mode=tests]` runs in UPDATE/verify mode instead of authoring from scratch) and stability verification of existing suites (former test-verify — the `/integration-test-verify` step's 3-consecutive-run gate). For spec-only authoring with no test code, use the `/spec [mode=tests]` skill directly.
 
 **Workflow:**
 
@@ -26,32 +28,34 @@ disable-model-invocation: true
 - MUST ATTENTION verify integration suites with 3 consecutive passing runs without DB reset before declaring done.
 - NEVER skip mandatory workflow or skill gates.
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
-> **[CRITICAL] Understand Domain First Gate:** The `/investigate` step is MANDATORY before `/tdd-spec` and `/integration-test`. You MUST read the handler/entity/event source to understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assertions written without reading the handler source are guaranteed to be wrong or smoke-only.
+> **[CRITICAL] Understand Domain First Gate:** The `/investigate` step is MANDATORY before `/spec [mode=tests]` and `/integration-test`. You MUST read the handler/entity/event source to understand WHAT fields change, WHAT entities are created/updated/deleted, WHAT event handlers fire. Assertions written without reading the handler source are guaranteed to be wrong or smoke-only.
 
-Activate the `write-integration-test` workflow. Run `/workflow-start write-integration-test` with the user's prompt as context.
+> **Goal Contract propagation (workflow-owned):** At workflow start, resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the test request). Each generated test maps to a saved goal invariant/criterion — a test protecting NO saved invariant needs a recorded justification. After `/integration-test-verify`, append the verification evidence (pass/fail counts, runner command, report path) to the goal file's Iteration Log and emit the Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before `/workflow-end`.
 
-**Steps:** /scout → /investigate → /tdd-spec → /why-review → /tdd-spec-review → /integration-test → /integration-test-review → /integration-test-verify → /tdd-spec [direction=sync] → /docs-update → /watzup → /workflow-end
+Activate the `workflow-write-integration-test` workflow. Run `/start-workflow workflow-write-integration-test` with the user's prompt as context.
+
+**Steps:** /scout → /feature-investigation → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /integration-test → /integration-test-review → /integration-test-verify → /spec [mode=sync] → /docs-update → /workflow-end → /watzup
 
 > **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
 >
 > **`/scout`** — Find target command/handler files; locate existing integration tests in the same service for pattern matching. Output: list of target files + existing test examples.
 > **`/investigate`** — Read handler/entity/event source. Map: fields written, entities created/updated/deleted, event handlers fired, validation rules. Output: domain logic summary to use as assertion blueprint.
-> **`/tdd-spec`** — Write/update `TC-{FEATURE}-{NNN}` specs in feature doc Section 15. CREATE mode for new tests, UPDATE mode for changed behavior. Output: TC mapping list (TC code → test method name).
-> **`/tdd-spec-review`** — Validate spec quality: GIVEN/WHEN/THEN completeness, happy path + validation failure + auth paths covered, no collisions with existing TC codes.
+> **`/spec [mode=tests]`** — Write/update `TC-{FEATURE}-{NNN}` specs in feature doc Section 8. CREATE mode for new tests, UPDATE mode for changed behavior. Output: TC mapping list (TC code -> covering test method name(s) or annotation filter).
+> **`/review-artifact --type=spec-tests`** — Validate spec quality: GIVEN/WHEN/THEN completeness, happy path + validation failure + auth paths covered, no collisions with existing TC codes.
 > **`/integration-test`** — Generate test files from TC specs using FROM-PROMPT or FROM-CHANGES mode. Non-negotiable: real use-case/valid-seeder data setup, async polling/retry for all DB assertions, unique data generators for all test data, test-spec annotation on every test method (adapt annotation syntax to your framework).
-> **`/integration-test-review`** — 6-gate quality check (assertion value, data state, repeatability, domain logic, traceability, three-way sync). Mandatory fix loop + fresh sub-agent re-check. NEVER proceed with CRITICAL/HIGH issues outstanding.
+> **`/integration-test-review`** — 7-gate quality check (assertion value, data state, repeatability, domain logic, traceability, three-way sync, change coverage). Gate 7: every behavior-changing production file in the change set maps to a covering test (integration-first; unit fallback needs justification) AND a spec TC. Validate findings, fix only validated issues, then restart the full integration-test review after fixes. NEVER proceed with CRITICAL/HIGH issues outstanding.
 > **`/integration-test-verify`** — Run tests via `quickRunCommand` from `docs/project-config.json` for 3 consecutive runs without DB reset. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.
-> **`/tdd-spec [direction=sync]`** — Sync the cross-module spec dashboard (`docs/specs/`). Update `IntegrationTest` fields with `{File}::{MethodName}` traceability links.
+> **`/spec [mode=sync]`** — Sync §8 TCs ↔ integration test code (`docs/specs/`). Update each TC's `IntegrationTest` field with **all** covering `{File}::{MethodName}` links (one TC → many tests, 1:N; a test-filter expression when the set is large). Coverage = ≥1 annotation-tagged test; never force one test per TC.
 > **`/docs-update`** — Update feature doc evidence fields, version history, and changelog if test coverage changed materially.
-> **`/watzup`** + **`/workflow-end`** — Summary report and close.
+> **`/workflow-end`** + **`/watzup`** — Close workflow state, then summarize and run the final `/understand` handoff.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /tdd-spec -> /why-review -> /tdd-spec-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /tdd-spec [direction=sync] -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /docs-update -> /workflow-end -> /watzup
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -67,6 +71,7 @@ Activate the `write-integration-test` workflow. Run `/workflow-start write-integ
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -90,11 +95,11 @@ Activate the `write-integration-test` workflow. Run `/workflow-start write-integ
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -187,6 +192,7 @@ Activate the `write-integration-test` workflow. Run `/workflow-start write-integ
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -196,6 +202,13 @@ Activate the `write-integration-test` workflow. Run `/workflow-start write-integ
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
 ## Closing Reminders
 

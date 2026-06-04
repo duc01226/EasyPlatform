@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,7 +56,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Break Product Backlog Items into implementable user stories using vertical slicing, SPIDR splitting, and INVEST criteria.
+**Goal:** Produce sprint-ready, INVEST-valid user stories — tech-agnostic, testable GWT criteria, evidence-cited estimates, dependency-mapped — by breaking Product Backlog Items into implementable stories via vertical slicing and SPIDR splitting, so a team with zero codebase knowledge can implement on any stack.
 
 > **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
@@ -249,7 +253,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Greenfield Mode
 
-> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+> **Auto-detected:** If no existing codebase is found (no discovered source directories, no manifest files, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the repository must have actual code directories with content.
 
 **When greenfield is detected:**
 
@@ -314,7 +318,7 @@ If running within a workflow (big-feature, greenfield-init, etc.):
 6. Create user stories with GIVEN/WHEN/THEN (min 3 scenarios)
 7. Save to `team-artifacts/pbis/stories/`
 8. **Validate stories** (MANDATORY) - Interview user to confirm slicing, acceptance criteria, and effort
-9. Suggest next: `$tdd-spec` or `$design-spec`
+9. Suggest next: `$spec [mode=tests]` or `$design-spec`
 
 ### Output
 
@@ -332,12 +336,12 @@ When slicing domain-related PBIs, automatically load business context.
 **From PBI frontmatter:**
 
 1. Check `module` field
-2. If missing, detect module from `docs/business-features/` directory names
+2. If missing, detect module from `docs/specs/` directory names
 
 ### Step 2: Load Feature Context
 
 ```
-Glob("docs/business-features/{module}/detailed-features/*.md")
+Glob("docs/specs/{module}/*.md")
 ```
 
 1. Read module README (first 200 lines)
@@ -347,7 +351,7 @@ Glob("docs/business-features/{module}/detailed-features/*.md")
 
 ### Step 3: Apply Domain Vocabulary
 
-Read `docs/project-config.json` modules[] and `docs/business-features/` to detect domain vocabulary per module. Use entity names from feature docs — avoid ambiguous synonyms.
+Read `docs/project-config.json` modules[] and `docs/specs/` to detect domain vocabulary per module. Use entity names from feature docs — avoid ambiguous synonyms.
 
 ### Step 4: Include in Story
 
@@ -459,6 +463,25 @@ Scenario: Unauthorized user cannot {perform action}
 
 ---
 
+## AI-SDD Mandate Gate (M1-M5) — BLOCKING
+
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Every generated story MUST satisfy M1-M5:
+
+- **Separate intent from implementation (M1/M2):** The story narrative and acceptance criteria stay tech-agnostic — describe observable business behavior, no framework/product/language/design-pattern names, no source identifiers. Keep optional hints in `## Technical Notes` and source references in evidence carriers as stack-portable abstract anchors (`[Source: namespace/service/id]`, never `file:line`). Prose follows `docs/project-reference/spec-principles.md` §3.
+- **Logical Requirement ID (M3):** Each story carries a logical requirement ID (`FR-`/`BR-`) inherited from its parent PBI as the PRIMARY citation spine; keep the `[Source: namespace/service/id]` abstract anchor as a SECONDARY, stack-portable carrier — KEEP it, never remove it and never replace it with `file:line` (physical coordinates live only in the provenance sidecar).
+- **Testable GWT/EARS criteria (M4):** Every Given/When/Then or EARS criterion has ONE valid interpretation, observable completion states, and named failure modes — no vague phrasing ("fast", "user-friendly", "handle appropriately") and no implementation details.
+- **Rebuild-from-scratch (M5):** A team with zero codebase knowledge can implement identical behavior on ANY stack from the story alone.
+
+> **[STOP — rework before emitting]** Reject and rework a story when ANY of these failure conditions holds:
+>
+> 1. Tech-specific prose — narrative/criteria name a framework, product, language type, or design-pattern class.
+> 2. Source code reference in prose — a class/method name, file path, or namespace appears outside an evidence carrier.
+> 3. Missing logical ID or evidence — no `FR-`/`BR-` ID, OR a requirement/rule with no `[Source: namespace/service/id]` abstract-anchor evidence (or explicit `TBD (pre-implementation)` marker).
+> 4. Vague acceptance criteria — non-testable, non-observable, or more than one valid interpretation.
+> 5. Not implementable from the artifact alone — a reader would have to read source or guess a rule, limit, role, or failure mode.
+
+---
+
 ## Story Artifact Template
 
 ````markdown
@@ -538,7 +561,9 @@ Then error "{message}"
 **Module:** {module}
 **Related Feature:** {feature doc path}
 **Entities:** {Entity1}, {Entity2}
+**Requirement IDs (M3 — inherited from PBI):** {FR-XXX / BR-XXX — primary citation spine}
 **Business Rules:** {BR-XXX references}
+**Evidence (secondary, stack-portable):** {`[Source: namespace/service/id]` abstract anchor per requirement, or `TBD (pre-implementation)`}
 
 ## UI Wireframe
 
@@ -622,7 +647,7 @@ When the PBI includes a "Production Readiness Concerns" table with "Required" it
 | Solution-speak     | "Use Redis cache" constrains team                 | Outcome: "Results return within 200ms"        |
 | Effort >8          | Won't fit sprint, hard to estimate                | Apply SPIDR, split until ≤8                   |
 | No error scenario  | Missing negative test coverage                    | Always include invalid input handling         |
-| Generic persona    | "As a user" too vague                             | Specific: "As a hiring manager"               |
+| Generic persona    | "As a user" too vague                             | Specific: "As a warehouse operator"           |
 
 ---
 
@@ -686,7 +711,7 @@ After creating user stories, validate with user.
 | **Role Skill** | `business-analyst`                          |
 | **Command**    | `$story`                                    |
 | **Input**      | `$refine` output (PBI)                      |
-| **Next Steps** | `$tdd-spec`, `$design-spec`, `$prioritize` |
+| **Next Steps** | `$spec [mode=tests]`, `$design-spec`, `$prioritize` |
 
 ---
 
@@ -709,29 +734,29 @@ After creating user stories, validate with user.
 
 ```
 
-Example for a "Create Goal" story:
+Example for a "Create Invoice" story:
 ```
 
-[Story US-001] Entity: Create Goal entity with validation rules
-[Story US-001] Command: CreateGoalCommand + Handler
-[Story US-001] DTO: GoalDto with mapping
-[Story US-001] API: POST /api/goals endpoint
-[Story US-001] Component: GoalCreateFormComponent
-[Story US-001] Store: GoalVmStore with create action
-[Story US-001] Test: Integration test for CreateGoalCommand
-[Story US-001] Test: E2E test for goal creation flow
+[Story US-001] Entity: Create Invoice entity with validation rules
+[Story US-001] Command: CreateInvoiceCommand + Handler
+[Story US-001] DTO: InvoiceDto with mapping
+[Story US-001] API: POST /api/invoices endpoint
+[Story US-001] Component: InvoiceCreateFormComponent
+[Story US-001] Store: InvoiceVmStore with create action
+[Story US-001] Test: Integration test for CreateInvoiceCommand
+[Story US-001] Test: E2E test for invoice creation flow
 [Story US-001] Review: Verify against AC scenarios
 
 ```
 
-**Why:** Without systematic task breakdown, stories become monolithic — leading to missed edge cases, incomplete specs, and context loss during implementation.
+**Why:** Without systematic task breakdown, stories become monolithic — missed edge cases, incomplete specs, context loss during implementation.
 
 ---
 
 ## Next Steps
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-- **"$tdd-spec (Recommended)"** — Generate test specifications from stories
+- **"$spec [mode=tests] (Recommended)"** — Generate test specifications from stories
 - **"$pbi-mockup"** — Generate HTML mockup report from PBI and stories
 - **"$plan-validate"** — If stories need validation against plan
 - **"Skip, continue manually"** — user decides
@@ -789,23 +814,25 @@ Example for a "Create Goal" story:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -849,7 +876,11 @@ Example for a "Create Goal" story:
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** produce sprint-ready, INVEST-valid user stories — tech-agnostic, testable GWT criteria, evidence-cited estimates, dependency-mapped — that a team with zero codebase knowledge can implement on any stack.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** every story MUST satisfy AI-SDD mandates M1-M5 — tech-agnostic prose, `FR-`/`BR-` logical ID, testable GWT criteria, rebuild-from-scratch — reject and rework on any failure condition — why: stories drive implementation on any stack.
+**MANDATORY IMPORTANT MUST ATTENTION** every story set includes a Story Dependencies table with no orphan stories; SP >8 MUST split, >5 SHOULD split — why: ordering feeds `$prioritize` and `$plan`.
+**MANDATORY IMPORTANT MUST ATTENTION** estimation is bottom-up — phase hours drive `man_days_traditional`, SP DERIVED; compute test_count explicitly, never hand-wave "+tests".
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via a direct user question — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 ````
@@ -868,17 +899,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -896,7 +924,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

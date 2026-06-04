@@ -13,6 +13,12 @@
  * 3. Per-group instruction files: .github/instructions/{group}.instructions.md
  *    - Enhanced with registry summaries + READ prompts per doc
  *
+ * NAME NOTE: despite the name, this generates the ENTIRE Copilot instruction set
+ * (project-specific + common-protocol + all per-group instruction files), not just
+ * the workflow catalog. The "workflows" in the filename is historical/back-compat —
+ * the /sync-to-copilot skill invokes this script (its --fast mode is the script-only
+ * path; the former /sync-copilot-workflows skill was absorbed into that mode).
+ *
  * Usage:
  *   node .claude/scripts/sync-copilot-workflows.cjs           # Apply changes
  *   node .claude/scripts/sync-copilot-workflows.cjs --dry-run  # Preview only
@@ -32,6 +38,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
+const { buildWorkflowSkillsCatalog } = require('./lib/workflow-skills-catalog.cjs');
 const WORKFLOWS_PATH = path.join(ROOT, '.claude', 'workflows.json');
 const DEV_RULES_PATH = path.join(ROOT, '.claude', 'docs', 'development-rules.md');
 const PROJECT_CONFIG_PATH = path.join(ROOT, 'docs', 'project-config.json');
@@ -40,6 +47,26 @@ const COPILOT_MAIN_PATH = path.join(ROOT, '.github', 'copilot-instructions.md');
 const INSTRUCTIONS_DIR = path.join(ROOT, '.github', 'instructions');
 // Old file path — removed during migration
 const OLD_COPILOT_PATH = path.join(ROOT, '.github', 'common.copilot-instructions.md');
+// Universal rules the Claude hooks inject per-prompt — baked into the Copilot mirror (Copilot has no hooks).
+const PROMPT_INJECTIONS_PATH = path.join(ROOT, '.claude', 'hooks', 'lib', 'prompt-injections.cjs');
+// Canonical hook-independent Workflow-First Gate — baked at the top of copilot-instructions.md so
+// Copilot (no hooks, no runtime injection) gets the same routing rule as Claude/Codex.
+const WORKFLOW_GATE_PATH = path.join(ROOT, '.claude', 'skills', 'shared', 'workflow-first-gate.md');
+
+/**
+ * Load the marker-delimited Workflow-First Gate block from the shared canonical file.
+ * Returns null when unavailable so the generator simply omits it rather than failing the sync.
+ * @returns {string|null}
+ */
+function loadWorkflowGate() {
+    try {
+        const raw = fs.readFileSync(WORKFLOW_GATE_PATH, 'utf8');
+        const m = raw.match(/<!-- CK:WORKFLOW-GATE -->[\s\S]*?<!-- \/CK:WORKFLOW-GATE -->/);
+        return m ? m[0] : null;
+    } catch {
+        return null;
+    }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // REGISTRY
@@ -94,15 +121,25 @@ function loadProjectConfig() {
 /**
  * Extract keywords from whenToUse field — condensed keyword string.
  */
-function extractKeywords(whenToUse) {
+function extractKeywords(whenToUse, { maxClauses = 3, wordsPerClause = 6, maxLen = 130 } = {}) {
     if (!whenToUse) return '';
-    return whenToUse
+    const clauses = whenToUse
         .split(/[,;]/)
         .map(clause => clause.trim().toLowerCase())
-        .map(c => c.replace(/^(user wants to |user reports |user has |user wants |wants to )/i, ''))
-        .map(c => c.split(/\s+/).slice(0, 6).join(' '))
-        .filter(c => c.length > 2)
-        .join(', ');
+        .map(c => c.replace(/^(?:user (?:wants to|reports|has)|wants to|po(?:\/| or )ba wants to|generate|create|after)\s+/i, ''))
+        .map(c => c.split(/\s+/).slice(0, wordsPerClause).join(' '))
+        .filter(c => c.length > 2);
+    const picked = [];
+    const seen = new Set();
+    for (const clause of clauses) {
+        if (seen.has(clause)) continue;
+        seen.add(clause);
+        picked.push(clause);
+        if (picked.length >= maxClauses) break;
+    }
+    let out = picked.join(', ');
+    if (out.length > maxLen) out = `${out.slice(0, maxLen).replace(/[\s,]+\S*$/, '')}…`;
+    return out.replace(/\|/g, '\\|');
 }
 
 /**
@@ -110,25 +147,59 @@ function extractKeywords(whenToUse) {
  * @param {Object} config - Parsed workflows.json
  * @returns {string} Workflow catalog markdown (no top-level heading)
  */
+// TWIN: keep byte-identical with the same-named helpers in
+// .claude/scripts/codex/sync-context-workflows.mjs — the rendered `[parallel ⇉ all-return barrier: ...]`
+// token MUST be identical across the Copilot and Codex mirrors (cross-mirror parity is the portability proof).
+// Renders `sequence` collapsing every declared parallelGroup's members into one barrier token at the
+// position of the group's first-encountered member; other members are skipped. Non-grouped steps render
+// via renderStep unchanged, so workflows without parallelGroups are byte-identical to the old flat join.
+function renderBarrierToken(group) {
+    const members = Array.isArray(group?.members) ? group.members : [];
+    const conditional = new Set(Array.isArray(group?.conditionalMembers) ? group.conditionalMembers : []);
+    const rendered = members.map((m) => (conditional.has(m) ? `${m}*` : m)).join(', ');
+    return `[parallel ⇉ all-return barrier: ${rendered}]`;
+}
+
+function renderSequenceWithBarriers(sequence, parallelGroups, separator, renderStep) {
+    const steps = Array.isArray(sequence) ? sequence : [];
+    const groups = Array.isArray(parallelGroups) ? parallelGroups : [];
+    if (groups.length === 0) {
+        return steps.map(renderStep).join(separator);
+    }
+    const memberToGroup = new Map();
+    for (const group of groups) {
+        const members = Array.isArray(group?.members) ? group.members : [];
+        for (const member of members) memberToGroup.set(member, group);
+    }
+    const emittedGroupIds = new Set();
+    const parts = [];
+    for (const step of steps) {
+        const group = memberToGroup.get(step);
+        if (!group) {
+            parts.push(renderStep(step));
+            continue;
+        }
+        if (emittedGroupIds.has(group.id)) continue;
+        emittedGroupIds.add(group.id);
+        parts.push(renderBarrierToken(group));
+    }
+    return parts.join(separator);
+}
+
 function buildWorkflowCatalog(config) {
     const { workflows, commandMapping, settings } = config;
     const lines = [];
 
-    const handoffIds = new Set(['ba-dev-handoff', 'dev-qa-handoff', 'qa-po-acceptance', 'design-dev-handoff', 'sprint-retro']);
-
     const standardEntries = [];
-    const handoffEntries = [];
 
     for (const [id, wf] of Object.entries(workflows)) {
         const keywords = extractKeywords(wf.whenToUse);
         if (!keywords) continue;
-        const entry = { id, name: wf.name, keywords };
-        if (handoffIds.has(id)) handoffEntries.push(entry);
-        else standardEntries.push(entry);
+        const entry = { id, name: String(wf.name).replace(/\|/g, '\\|'), keywords };
+        standardEntries.push(entry);
     }
 
     standardEntries.sort((a, b) => a.name.localeCompare(b.name));
-    handoffEntries.sort((a, b) => a.name.localeCompare(b.name));
 
     // Keyword lookup table
     lines.push('### Quick Keyword Lookup');
@@ -149,23 +220,14 @@ function buildWorkflowCatalog(config) {
         .sort(([a], [b]) => a.localeCompare(b));
 
     for (const [id, wf] of allEntries) {
-        const sequence = wf.sequence.map(step => commandMapping[step]?.copilot || step).join(' \u2192 ');
-        const confirm = wf.confirmFirst ? ' | Confirm first' : '';
-        lines.push(`**${id}** \u2014 ${wf.name}${confirm}`);
+        const parallelGroups = Array.isArray(wf.parallelGroups) ? wf.parallelGroups : [];
+        const sequence = renderSequenceWithBarriers(wf.sequence, parallelGroups, ' \u2192 ', step => commandMapping[step]?.copilot || step);
+        lines.push(`**${id}** \u2014 ${wf.name}`);
         lines.push(`  Use: ${wf.whenToUse}`);
         if (wf.whenNotToUse) lines.push(`  Not for: ${wf.whenNotToUse}`);
         lines.push(`  Steps: ${sequence}`);
-        lines.push('');
-    }
-
-    // Role handoffs
-    if (handoffEntries.length > 0) {
-        lines.push('### Role Handoff Workflows');
-        lines.push('');
-        lines.push('| Handoff | Workflow ID |');
-        lines.push('| ------- | ----------- |');
-        for (const entry of handoffEntries) {
-            lines.push(`| ${entry.name} | \`${entry.id}\` |`);
+        if (parallelGroups.length > 0) {
+            lines.push(`  Parallel phase = all-return barrier: spawn ALL members together (one message); advance only after EVERY member returns (a skipped conditional member, marked *, counts as returned). A sub-agent completion advances the step identically to an inline call.`);
         }
         lines.push('');
     }
@@ -174,14 +236,11 @@ function buildWorkflowCatalog(config) {
     lines.push('### Workflow Execution Protocol');
     lines.push('');
     lines.push('1. **DETECT:** Match prompt against keyword table above');
-    lines.push('2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better');
-    lines.push('3. **ASK (REQUIRED FORMAT):** Ask the user directly unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:');
-    lines.push('   - Question: "Which workflow do you want to activate?"');
-    lines.push('   - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"');
-    lines.push('   - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)');
-    lines.push('4. **ACTIVATE (if confirmed):** Start the standard workflow or sequence custom steps manually');
+    lines.push('2. **ANALYZE:** Choose the best path: execute directly, use a skill, start a standard workflow, or compose a custom step combination');
+    lines.push('3. **AUTO-SELECT:** Pick the best path yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow. Explicit workflow/skill prompts count as user-selected and should execute directly.');
+    lines.push('4. **ACTIVATE:** Start the selected workflow, invoke the selected skill, sequence custom steps manually, or execute directly');
     lines.push('5. **CREATE TASKS:** Use task tracking for ALL workflow steps BEFORE starting');
-    lines.push('6. **EXECUTE:** Follow each step in sequence, updating status as you progress');
+    lines.push('6. **EXECUTE:** Advance per the "Workflow Step Advancement & Parallel Phases" rule below — model-driven; a sub-agent completion advances a step IDENTICALLY to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it). Update status as you progress.');
     lines.push('');
     lines.push('> **IMPORTANT:** MUST ATTENTION create todo tasks for ALL steps. Do NOT skip any steps in the selected workflow.');
     lines.push('');
@@ -208,6 +267,31 @@ function buildDevRulesContent() {
         '- After modularization, continue with main task',
         '- When not to modularize: Markdown files, plain text files, bash scripts, configuration files'
     ].join('\n');
+}
+
+/**
+ * Bake the universal rules the Claude hooks inject at runtime — critical-thinking mindset,
+ * AI-mistake-prevention system lessons, and learned lessons. Copilot has no hooks, so these
+ * must be statically baked into the common protocol. skipDedup=true forces the full block;
+ * the transcript-dedup argument is irrelevant at sync time.
+ * @returns {string|null} Markdown block, or null if the injector module is unavailable.
+ */
+function buildUniversalRulesContent() {
+    let injectors;
+    try {
+        injectors = require(PROMPT_INJECTIONS_PATH);
+    } catch (e) {
+        console.warn(`Warning: prompt-injections not loadable (${e.message}); skipping universal-rule bake`);
+        return null;
+    }
+    const blocks = [];
+    const mindset = injectors.injectCriticalContext?.(null, true);
+    if (mindset) blocks.push(['## Critical Thinking & Anti-Hallucination', '', mindset.trim()].join('\n'));
+    const aiMistakes = injectors.injectAiMistakePrevention?.(null, true);
+    if (aiMistakes) blocks.push(aiMistakes.trim()); // already starts with its own ## heading
+    const lessons = injectors.injectLessons?.(null, true);
+    if (lessons) blocks.push(lessons.trim()); // already starts with its own ## heading
+    return blocks.length ? blocks.join('\n\n---\n\n') : null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -239,6 +323,13 @@ function generateProjectSpecificFile(registry, projectInstructions, projectConfi
 
     if (projDesc) {
         lines.push(`> ${projDesc}`);
+        lines.push('');
+    }
+
+    // Workflow-First Gate — primacy anchor, before any other instruction (Copilot has no hooks).
+    const workflowGate = loadWorkflowGate();
+    if (workflowGate) {
+        lines.push(workflowGate);
         lines.push('');
     }
 
@@ -323,7 +414,7 @@ function generateProjectSpecificFile(registry, projectInstructions, projectConfi
             '> **How to use:** When your task matches a "READ When" trigger above, **read the full file** before writing code. These docs contain project-specific patterns that differ from generic framework defaults.'
         );
     } else {
-        lines.push('_No project reference docs registered. Run /scan-project-structure to populate._');
+        lines.push('_No project reference docs registered. Run /scan --target=project-structure to populate._');
     }
 
     // Dev commands (from config)
@@ -368,7 +459,7 @@ function generateCommonProtocolFile(workflowConfig) {
         '---',
         '',
         '<!-- AUTO-GENERATED by .claude/scripts/sync-copilot-workflows.cjs — DO NOT EDIT MANUALLY -->',
-        '<!-- Sources: .claude/workflows.json, .claude/docs/development-rules.md -->',
+        '<!-- Sources: .claude/workflows.json, .claude/docs/development-rules.md, .claude/hooks/lib/prompt-injections.cjs -->',
         '',
         '# Common Development Protocol',
         '',
@@ -378,9 +469,15 @@ function generateCommonProtocolFile(workflowConfig) {
         '',
         '## PROMPT PROTOCOL (MANDATORY)',
         '',
-        '**Confirm Before Execute:** If the user prompt could be complex or vague, you **MANDATORY IMPORTANT MUST ATTENTION** first confirm your understanding and clarify intent before executing. Restate what you understood, ask clarifying questions if ambiguous, and only proceed after confirmation.',
+        '**Auto-Select Before Execute:** Evaluate whether direct execution, a skill, a standard workflow, or a custom workflow is the best fit. If the prompt starts with an explicit skill/workflow command, execute it directly. Do not ask the user to choose the execution path.',
         '',
-        '**Workflow Detection:** DETECT matching workflow from catalog below -> ANALYZE standard vs custom fit -> ASK "Which workflow do you want to activate?" with standard recommended and custom workflow options. Preserve the explicit-invocation exception when the user already named a workflow/skill.',
+        '**Workflow Detection:** DETECT matching workflow from catalog below -> ANALYZE direct vs skill vs standard workflow vs custom fit -> AUTO-SELECT the best path without asking for workflow-selection confirmation. Preserve the explicit-invocation exception when the user already named a workflow/skill.',
+        '',
+        '---',
+        '',
+        '## PROJECT CONTEXT BOOTSTRAP (HOOKLESS)',
+        '',
+        'Copilot has no Claude hooks. If `docs/project-config.json`, `docs/project-reference/docs-index-reference.md`, `docs/project-reference/lessons.md`, `CLAUDE.md`, `AGENTS.md`, or a task-required reference doc is missing or stale, auto-run the suitable setup route before ordinary project-specific work: `/project-init` for broad setup, or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) when the missing artifact is obvious. For spec, test-case, `docs/specs/`, behavior-change, or public-contract work, read `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` through the project-reference instructions. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.',
         '',
         '---',
         '',
@@ -394,9 +491,27 @@ function generateCommonProtocolFile(workflowConfig) {
         '',
         '---',
         '',
+        '## Workflow Step Advancement & Parallel Phases (MANDATORY)',
+        '',
+        'Workflow progression is **model-driven** — your responsibility, not a tool/hook signal (Copilot has no hooks):',
+        '',
+        '1. **Advancement:** a step is complete when its work returns — whether run inline (a skill/step call) or dispatched as a sub-agent. A sub-agent completion advances the step IDENTICALLY to an inline call. Do not wait for any tool event; advance by judgment and your task list.',
+        '2. **Parallel phase = all-return barrier:** when steps are declared a parallel-phase group, spawn ALL members together (one message), then advance ONLY after EVERY member returns. Never start the next step — or any code-mutating step (e.g. `code-simplifier`) — until the whole group has returned. A conditional member whose trigger is absent counts as "returned."',
+        '3. **Workflow-in-workflow -> sub-agent:** a step that itself activates a multi-step workflow MUST run as a sub-agent, returning only a summary (full findings to `plans/reports/`). This preserves context containment.',
+        '4. **Trackers are accelerators only:** correctness MUST NOT depend on any step-tracking hook; Codex and Copilot advance entirely by this rule.',
+        '',
+        '---',
+        '',
         `## Workflow Catalog (${workflowCount} workflows)`,
         '',
         catalog,
+        '',
+        '---',
+        '',
+        // Composable step-skills index only — the Workflow Catalog above already lists
+        // workflows/steps/when-to-use, and the PROMPT PROTOCOL covers routing. This adds
+        // the missing piece: the distinct step-skills an AI can compose into a custom workflow.
+        buildWorkflowSkillsCatalog({ rootDir: ROOT, sections: ['skills'] }),
         '',
         '---'
     ];
@@ -415,20 +530,31 @@ function generateCommonProtocolFile(workflowConfig) {
         lines.push('---');
     }
 
+    // Universal rules (mindset + AI-mistake-prevention + lessons) — hook-parity bake.
+    const universalRules = buildUniversalRulesContent();
+    if (universalRules) {
+        lines.push('');
+        lines.push(universalRules);
+        lines.push('');
+        lines.push('---');
+    }
+
     lines.push('');
 
     return lines.join('\n');
 }
 
 /**
- * Generate per-group .github/instructions/*.instructions.md files.
- * Enhanced with READ prompts per doc for on-demand context loading.
- * @param {boolean} dryRun - If true, log but don't write
- * @returns {number} Number of files written
+ * Build per-group instruction file content WITHOUT touching the filesystem.
+ * Pure function: same inputs (registry + instructionFileConfig) → same output.
+ * This is the oracle the divergence verifier imports so "expected" output can
+ * never drift from what the writer actually emits.
+ * @returns {Map<string,string>} filename → file content (filename relative to INSTRUCTIONS_DIR)
  */
-function generateInstructionFiles(dryRun = false) {
+function buildInstructionFiles() {
     const { registry, instructionFileConfig } = loadCopilotRegistry();
-    if (registry.length === 0) return 0;
+    const files = new Map();
+    if (registry.length === 0) return files;
 
     // Group entries (skip "common" — handled separately)
     const groups = {};
@@ -438,9 +564,6 @@ function generateInstructionFiles(dryRun = false) {
         groups[entry.group].push(entry);
     }
 
-    if (!dryRun) fs.mkdirSync(INSTRUCTIONS_DIR, { recursive: true });
-
-    let count = 0;
     for (const [group, entries] of Object.entries(groups)) {
         const config = instructionFileConfig[group];
         if (!config) {
@@ -474,15 +597,33 @@ function generateInstructionFiles(dryRun = false) {
             lines.push('');
         }
 
-        const content = lines.join('\n');
-        const filePath = path.join(INSTRUCTIONS_DIR, config.filename);
+        files.set(config.filename, lines.join('\n'));
+    }
+    return files;
+}
 
+/**
+ * Generate per-group .github/instructions/*.instructions.md files.
+ * Thin writer around buildInstructionFiles() — content is identical; this only
+ * handles dry-run logging and filesystem writes.
+ * @param {boolean} dryRun - If true, log but don't write
+ * @returns {number} Number of files written
+ */
+function generateInstructionFiles(dryRun = false) {
+    const files = buildInstructionFiles();
+    if (files.size === 0) return 0;
+
+    if (!dryRun) fs.mkdirSync(INSTRUCTIONS_DIR, { recursive: true });
+
+    let count = 0;
+    for (const [filename, content] of files) {
+        const filePath = path.join(INSTRUCTIONS_DIR, filename);
         if (dryRun) {
-            console.log(`\n--- Would write: ${config.filename} (${entries.length} entries) ---`);
+            console.log(`\n--- Would write: ${filename} ---`);
             console.log(content);
         } else {
             fs.writeFileSync(filePath, content, 'utf8');
-            console.log(`  Generated: .github/instructions/${config.filename} (${entries.length} entries)`);
+            console.log(`  Generated: .github/instructions/${filename}`);
         }
         count++;
     }
@@ -562,11 +703,15 @@ module.exports = {
     buildWorkflowCatalog,
     extractKeywords,
     buildDevRulesContent,
+    buildUniversalRulesContent,
     generateProjectSpecificFile,
     generateCommonProtocolFile,
+    buildInstructionFiles,
     generateInstructionFiles,
     loadCopilotRegistry,
-    loadProjectConfig
+    loadProjectConfig,
+    renderSequenceWithBarriers,
+    renderBarrierToken
 };
 
 if (require.main === module) {

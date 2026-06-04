@@ -1,6 +1,6 @@
 ---
 name: checkpoint
-description: '[Utilities] Use when you need to save analysis context to checkpoint file for recovery.'
+description: '[Utilities] Use when you need to save analysis context to a checkpoint file for recovery (user-facing alias for memory-management Part 1 CHECKPOINT_CREATE).'
 disable-model-invocation: false
 ---
 
@@ -29,11 +29,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -46,23 +50,25 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** Save current analysis context and progress to an external file for recovery after context loss.
 
+> **Thin alias.** `$checkpoint` is the user-facing entry point to the **CHECKPOINT_CREATE** protocol owned by `memory-management` (Part 1: File-Based External Memory). `memory-management` is `disable-model-invocation: true` (not directly user-invocable), so this command is the canonical way to create a manual checkpoint. The checkpoint **file structure is defined once** in `.claude/skills/memory-management/SKILL.md` (Part 1); this skill is the command surface that invokes it.
+
 **Workflow:**
 
-1. **Gather Context** — Collect task state, findings, files analyzed, decisions made
-2. **Write Checkpoint** — Save structured markdown to `plans/reports/checkpoint-{timestamp}-{slug}.md`
-3. **Update Todos** — Reflect checkpoint creation in task tracking
+1. **Gather Context** — task state, key findings (with `file:line`), files analyzed/modified, progress, decisions, next steps, open questions
+2. **Write Checkpoint** — save to `plans/reports/checkpoint-{timestamp}-{slug}.md` following the CHECKPOINT_CREATE structure in `memory-management` Part 1
+3. **Update Todos** — reflect checkpoint creation in task tracking
 
 **Key Rules:**
 
-- Save checkpoints every 30-60 minutes during complex tasks
-- Include file paths, line numbers, and recovery instructions
-- Document decisions with rationale for future reference
+- Canonical protocol + file template live in `memory-management` Part 1 (CHECKPOINT_CREATE) — do not duplicate the structure here; this skill is the command surface only
+- Save checkpoints every 30-60 minutes during complex tasks and before expected context compaction
+- Always include Recovery Instructions (which file to read, which line to resume from)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Save Memory Checkpoint
 
-Save current analysis, findings, and progress to an external memory file to prevent context loss during long-running tasks.
+Save current analysis, findings, and progress to an external memory file to prevent context loss during long-running tasks. This is the user-invocable alias for `memory-management`'s checkpoint-create path.
 
 ## Usage
 
@@ -75,148 +81,15 @@ Use this command when:
 
 ## Checkpoint File Location
 
-Files are saved to: `plans/reports/checkpoint-{timestamp}-{slug}.md`
+Files are saved to: `plans/reports/checkpoint-{YYYYMMDD}-{HHMMSS}-{slug}.md` (unified checkpoint grammar — the resume/recover readers glob `checkpoint-*` and parse this timestamp).
 
 ## Instructions
 
-**Create a checkpoint file with the following structure:**
+1. **Determine location** — stamp the filename via `date +%Y%m%d-%H%M%S`; path `plans/reports/checkpoint-{YYYYMMDD}-{HHMMSS}-{slug}.md`.
+2. **Gather + write** — follow the **CHECKPOINT_CREATE Protocol** template in `.claude/skills/memory-management/SKILL.md` (Part 1 — the single canonical owner of the checkpoint structure). Required sections: Task Context, Key Findings (with `file:line`), Files Analyzed, Progress, Important Context, Next Steps, Recovery Instructions.
+3. **Update todo list** — add `- [x] Create memory checkpoint at {timestamp}`.
 
-### Step 1: Determine Checkpoint Location
-
-```bash
-# Get current date for filename
-date +%y%m%d-%H%M
-```
-
-### Step 2: Gather Context
-
-Collect and document:
-
-1. **Current Task** - What are you working on?
-2. **Key Findings** - What have you discovered?
-3. **Files Analyzed** - Which files have been read/modified?
-4. **Progress Summary** - What's completed vs remaining?
-5. **Important Context** - Critical information to preserve
-6. **Next Steps** - What should be done next?
-7. **Open Questions** - Unresolved issues
-
-### Step 3: Write Checkpoint File
-
-Create a markdown file at `plans/reports/checkpoint-YYMMDD-HHMM-{task-slug}.md` with:
-
-```markdown
-# Memory Checkpoint: [Task Description]
-
-> Checkpoint created to preserve analysis context during [task type].
-
-## Session Info
-
-- **Created:** [timestamp]
-- **Task:** [description]
-- **Branch:** [git branch]
-- **Phase:** [current phase]
-
-## Current Task Summary
-
-[Brief description of what you're working on]
-
-## Key Findings
-
-### Analysis Results
-
-- [Finding 1]
-- [Finding 2]
-- [Finding N]
-
-### Patterns Discovered
-
-- [Pattern 1]
-- [Pattern 2]
-
-### Dependencies Identified
-
-- [Dependency 1]
-- [Dependency 2]
-
-## Files Context
-
-### Analyzed Files
-
-| File            | Purpose   | Relevance       |
-| --------------- | --------- | --------------- |
-| path/to/file.cs | [purpose] | High/Medium/Low |
-
-### Modified Files
-
-- `path/to/modified.ts` - [change description]
-
-### Pending Files
-
-- `path/to/pending.cs` - [why pending]
-
-## Progress Summary
-
-### Completed
-
-- [x] [Completed item 1]
-- [x] [Completed item 2]
-
-### In Progress
-
-- [ ] [Current item]
-
-### Remaining
-
-- [ ] [Remaining item 1]
-- [ ] [Remaining item 2]
-
-## Important Context
-
-### Critical Information
-
-[Information that must not be lost]
-
-### Assumptions Made
-
-- [Assumption 1]
-- [Assumption 2]
-
-### Decisions Made
-
-- [Decision 1] - [rationale]
-- [Decision 2] - [rationale]
-
-## Next Steps
-
-1. [Immediate next action]
-2. [Following action]
-3. [Subsequent action]
-
-## Open Questions
-
-- [ ] [Question 1]
-- [ ] [Question 2]
-
-## Recovery Instructions
-
-To resume this task after context reset:
-
-1. Read this checkpoint file
-2. Review [specific files] for context
-3. Continue from [specific point]
-
----
-
-_Checkpoint saved by Claude Code at [timestamp]_
-```
-
-### Step 4: Update Todo List
-
-Update your todo list to reflect checkpoint was created:
-
-```
-- [x] Create memory checkpoint at [timestamp]
-```
+To **recover** from a checkpoint, use `$recover` (CHECKPOINT_RECOVER protocol).
 
 ## Best Practices
 
@@ -228,6 +101,7 @@ Update your todo list to reflect checkpoint was created:
 
 ## Related Commands
 
+- `$recover` - Restore workflow context from the latest checkpoint (CHECKPOINT_RECOVER)
 - `$context` - Load project context
 - `$compact` - Manually trigger context compaction
 - `$watzup` - Generate progress summary
@@ -250,6 +124,7 @@ Update your todo list to reflect checkpoint was created:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -289,17 +164,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -317,7 +189,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

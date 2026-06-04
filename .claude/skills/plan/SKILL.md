@@ -1,7 +1,7 @@
 ---
 name: plan
 version: 1.0.0
-description: '[Planning] Use when you need intelligent plan creation with prompt enhancement.'
+description: '[Planning] Use when you need intelligent plan creation with prompt enhancement. Flag: --mode={ci|cro} (default none — standard planning); --mode=ci plans a fix from a GitHub Actions CI run/log, --mode=cro plans conversion-rate optimization (25-item CRO framework).'
 disable-model-invocation: false
 ---
 
@@ -16,7 +16,7 @@ disable-model-invocation: false
 
 ## Quick Summary
 
-**Goal:** Research codebase, analyze, create detailed phased implementation plan with user collaboration.
+**Goal:** Research the codebase and collaborate with the user to deliver a validated, implementation-ready phased plan — every phase startable immediately (exact file paths, zero open decisions, mapped TC IDs) — so coding proceeds without rework at minimum future change cost.
 
 **Workflow:**
 
@@ -39,18 +39,17 @@ disable-model-invocation: false
 > DRY, SRP, abstraction, design patterns, naming, layering, tests — every
 > technique exists to serve one goal: **making the next change cheaper**.
 
-When evaluating code, a refactor, a test, or an abstraction, ask:
-**does this make the next change cheaper or more expensive?**
+Evaluating code, refactor, test, abstraction, ask:
+**does this make next change cheaper or more expensive?**
 
-- Reject "best practices" that raise change cost (premature abstraction,
+- Reject "best practices" raising change cost (premature abstraction,
   speculative generality, leaky indirection, ceremony without payoff).
-- Name the real enemies in findings: **coupling, hidden state, duplicated
+- Name real enemies in findings: **coupling, hidden state, duplicated
   knowledge, unclear intent, irreversible decisions exposed too early**.
-- A simpler design that is easy to change beats a sophisticated design that
-  isn't.
+- Simpler design easy to change beats sophisticated design that isn't.
 
 Apply this lens **before** invoking any specific rule, pattern, or checklist
-below — if a downstream rule would raise change cost, this principle wins.
+below — if a downstream rule raises change cost, this principle wins.
 
 ---
 
@@ -76,12 +75,12 @@ below — if a downstream rule would raise change cost, this principle wins.
 
 ## Greenfield Mode
 
-> **Auto-detected:** If no existing codebase found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), skill auto-switches to greenfield mode. Planning artifacts (docs/, plans/, .claude/) don't count — project must have actual code directories with content.
+> **Auto-detected:** No existing codebase found (no discovered source directories, no manifest files, no populated `project-config.json`) → skill auto-switches to greenfield mode. Planning artifacts (docs/, plans/, .claude/) don't count — repository must have actual code directories with content.
 
 **When greenfield detected:**
 
-1. Skip codebase analysis phase (researcher subagents that grep code)
-2. **Replace with:** market research + business evaluation phase using WebSearch + WebFetch
+1. Skip codebase analysis phase (researcher subagents grepping code)
+2. **Replace with:** market research + business evaluation phase via WebSearch + WebFetch
 3. Delegate architecture decisions to `solution-architect` agent
 4. Output: `plans/{id}/plan.md` with greenfield-specific phases (domain model, tech stack, project structure)
 5. Skip reading project reference docs (won't exist in greenfield)
@@ -92,13 +91,30 @@ below — if a downstream rule would raise change cost, this principle wins.
 - Research reports <=150 lines; plan.md <=80 lines
 - **External Memory:** Write all research and analysis to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE analysis file before generating plan.
 
-Activate `planning` skill.
+Run the planning methodology engine. Load the relevant `references/engine-*.md` for each phase (skip a phase per its own skip rule):
+
+- `references/engine-research.md` — Research & Analysis (skip if given researcher reports)
+- `references/engine-figma.md` — Design Context Extraction (skip if no Figma URLs / backend-only)
+- `references/engine-codebase-understanding.md` — Codebase Understanding (skip if given scout reports)
+- `references/engine-solution-design.md` — Solution Design (trade-offs, security, performance, edge cases, architecture)
+- `references/engine-plan-organization.md` — Plan Creation, Organization & Output Standards
+
+## Mode Dispatch (`--mode={ci|cro}`)
+
+> **Default (no `--mode` flag): IGNORE this section — run the standard plan flow below, byte-for-byte unchanged.** `--mode` only adds a domain-specific reference load + intake convention on top of the SAME engine, the SAME mandatory `/plan-review` gate, and the SAME `planner` agent. It never replaces the engine.
+
+| Flag         | Positional `$ARGUMENTS`                               | Load before planning                                                             | Plan frontmatter overrides                |
+| ------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------- |
+| `--mode=ci`  | a GitHub Actions run/log URL                          | `references/mode-ci.md` (CI failure classes: build/test/env/Docker/dependencies) | `priority: P1`, `tags: [ci, bugfix]`      |
+| `--mode=cro` | content/issues to optimize (optional screenshots/URL) | `references/mode-cro.md` (25-item CRO framework + multimodal intake)             | `priority: P2`, `tags: [cro, conversion]` |
+
+When a `--mode` is present: (1) read the matching `references/mode-*.md`; (2) apply its intake + domain focus to `$ARGUMENTS`; (3) run the standard plan workflow below — same `planner` subagent, same phase-file structure, same mandatory `/plan-review`. The mode adds a reference payload only.
 
 ## Scaffolding-First Protocol (Conditional)
 
 **Activation conditions (ALL must be true):**
 
-1. Active workflow is `greenfield-init` OR `big-feature`
+1. Active workflow is `workflow-greenfield-init` OR `workflow-big-feature`
 2. AI MUST ATTENTION self-investigate for existing base/foundational abstractions using these patterns:
     - Abstract/base classes: `abstract class.*Base|Base[A-Z]\w+|Abstract[A-Z]\w+`
     - Generic interfaces: `interface I\w+<|IGeneric|IBase`
@@ -142,13 +158,14 @@ Check `## Plan Context` section in injected context:
 1. If creating new: Create directory using `Plan dir:` from `## Naming` section, then run `node .claude/scripts/set-active-plan.cjs {plan-dir}`.
    If reusing: Use active plan path from Plan Context.
    Pass directory path to every subagent during process.
-2. Follow strictly the "Plan Creation & Organization" rules of `planning` skill.
-3. Use `researcher` agents (max 2) in parallel:
+2. **Goal Contract bootstrap (BEFORE investigation and phase writing):** resolve the active goal per `SYNC:goal-contract-satisfaction-loop` — create or update `{plan-dir}/goal.md` from `.claude/templates/goal-contract-template.md`, recording original request, purpose, success criteria, constraints, and required evidence. Every plan phase's success criteria must map to a saved goal criterion. Redact secrets.
+3. Follow strictly the "Plan Creation & Organization" rules in `references/engine-plan-organization.md`.
+4. Use `researcher` agents (max 2) in parallel:
    Each agent researches a different aspect; max 5 tool calls per agent.
-4. Analyze codebase: search for project reference docs (`patterns-reference`, `project-structure`, `architecture`, `adr`); read those found.
+5. Analyze codebase: search for project reference docs (`patterns-reference`, `project-structure`, `architecture`, `adr`); read those found.
    **ONLY IF docs not found or older than 3 days:** Use `/scout <instructions>` to search codebase for needed files.
-5. Main agent gathers research/scout report filepaths; pass to `planner` subagent with prompt to create implementation plan.
-6. Main agent receives implementation plan from `planner` subagent; ask user to review.
+6. Main agent gathers research/scout report filepaths; pass to `planner` subagent with prompt to create implementation plan.
+7. Main agent receives implementation plan from `planner` subagent; ask user to review.
 
 ## Post-Plan Validation (Optional)
 
@@ -224,7 +241,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these final tasks:
-    1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEATURE}-{NNN} IDs to every phase file. Use `/tdd-spec` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
+    1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEATURE}-{NNN} IDs to every phase file. Use `/spec [mode=tests]` if feature docs exist. Use `Evidence: TBD` for TDD-first mode.
     2. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview user with critical questions and validate plan assumptions
     3. **Task: "Run /plan-review"** — Trigger `/plan-review` skill with deep 3-round protocol (R1: checklist, R2: code-proof trace, R3: adversarial simulation). Review depth based on SP: ≤3 → 2 rounds min, 4-8 → 3 rounds, >8 → 3 rounds + code-proof mandatory.
     4. **Task: "Run /why-review (standalone only)"** — If NOT inside a workflow, trigger `/why-review` to validate design rationale, alternatives considered, and risk assessment in plan. Skip if a workflow already includes `/why-review` in its sequence.
@@ -242,7 +259,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 > **MANDATORY IMPORTANT MUST ATTENTION:** If skill is called **outside a workflow** (standalone `/plan`), generated plan MUST ATTENTION include `/review-changes` as a **final phase/task** in plan. Ensures all implementation changes get reviewed before commit even without a workflow enforcing it.
 >
-> If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — workflow sequence handles `/review-changes` at appropriate step.
+> If already running inside a workflow (e.g., `workflow-feature`, `workflow-bugfix`), skip this — workflow sequence handles `/review-changes` at appropriate step.
 
 ## Next Steps (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
@@ -321,11 +338,11 @@ After creating all phase files, run **recursive decomposition loop**:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -370,7 +387,7 @@ After creating all phase files, run **recursive decomposition loop**:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -584,7 +601,7 @@ After creating all phase files, run **recursive decomposition loop**:
 > 5. On context compaction: call `TaskList` FIRST — never create duplicate tasks
 > 6. Verify TC satisfaction per phase before marking complete (evidence must be `file:line`, not TBD)
 >
-> **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/tdd-spec` fills after.
+> **Mode:** TDD-first → reference existing TCs with `Evidence: TBD`. Implement-first → use TBD → `/spec [mode=tests]` fills after.
 
 <!-- /SYNC:plan-quality -->
 
@@ -641,13 +658,14 @@ After creating all phase files, run **recursive decomposition loop**:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-    <!-- /SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:plan-quality:reminder -->
 
@@ -714,6 +732,7 @@ After creating all phase files, run **recursive decomposition loop**:
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -724,14 +743,31 @@ After creating all phase files, run **recursive decomposition loop**:
 
 <!-- /SYNC:nested-task-creation:reminder -->
 
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
+
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** deliver a validated, implementation-ready plan — every phase startable immediately (file paths, zero open decisions, mapped TCs) — so coding runs without rework at minimum future change cost
 **MANDATORY IMPORTANT MUST ATTENTION** default mode HARD — opt out to fast mode ONLY when ALL trivial-task conditions met
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks via `TaskCreate` BEFORE starting
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide
 **MANDATORY IMPORTANT MUST ATTENTION** every phase passes 5-point granularity check — failing phases → sub-plan
 **MANDATORY IMPORTANT MUST ATTENTION** NEVER skip `/plan-review` after plan creation
 **MANDATORY IMPORTANT MUST ATTENTION** add final review todo task to verify work quality
+
+**Anti-Rationalization:**
+
+| Evasion                        | Rebuttal                                                         |
+| ------------------------------ | ---------------------------------------------------------------- |
+| "Task too simple to plan"      | Default mode HARD. Opt out ONLY when ALL trivial conditions met. |
+| "I already know the codebase"  | Show `file:line` from 3+ patterns. No proof = not read.          |
+| "Phase is clear enough"        | Run 5-point granularity check: "Can I start coding RIGHT NOW?"   |
+| "Plan looks good, skip review" | NEVER skip `/plan-review` — fresh eyes catch author blind spots. |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break into small todo tasks and sub-tasks via TaskCreate.
 

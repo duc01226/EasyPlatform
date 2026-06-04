@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,7 +56,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Fast, parallel codebase file discovery to locate all files relevant to a task.
+**Goal:** Deliver a complete, prioritized map of every file relevant to the task via fast, parallel codebase discovery — grep + graph combined — so downstream work starts with full coverage and zero blind spots.
 
 **Workflow:**
 
@@ -68,6 +72,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - Speed over depth — return file paths only, no content analysis
 - Target 3-5 minutes total; 3-minute timeout per agent
 - NEVER skip graph expansion when `.code-graph/graph.db` exists
+- `--ext` / `--engine=external` switches the search engine to the `scout-external` agent (gemini/opencode CLIs); default is internal subagents
 
 # Scout — Fast Codebase File Discovery
 
@@ -75,16 +80,16 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Phase 0: Classify Search Scope
 
-**Before spawning agents**, classify the request:
+**Before spawning agents**, classify request:
 
-| Scope         | Detection                                     | Agent Strategy           |
-| ------------- | --------------------------------------------- | ------------------------ |
-| Backend-only  | C# class names, domain entities, API handlers | Agents 1+2, skip Agent 3 |
-| Frontend-only | Component names, TypeScript, Angular features | Agent 3 only             |
-| Full-stack    | Feature name spanning both layers             | All 3 agents             |
-| Unknown       | Ambiguous prompt                              | Default to all 3 agents  |
+| Scope         | Detection                                              | Agent Strategy           |
+| ------------- | ------------------------------------------------------ | ------------------------ |
+| Backend-only  | server-side class names, domain entities, API handlers | Agents 1+2, skip Agent 3 |
+| Frontend-only | component names, client-side source, UI features       | Agent 3 only             |
+| Full-stack    | Feature name spanning both layers                      | All 3 agents             |
+| Unknown       | Ambiguous prompt                                       | Default all 3 agents     |
 
-**Think:** Does prompt mention a specific layer? Does entity exist in backend, frontend, or both? Adjust agent count — avoid spawning unnecessary agents.
+**Think:** Prompt mention specific layer? Entity exist in backend, frontend, or both? Adjust agent count — avoid spawning unnecessary agents.
 
 ---
 
@@ -95,7 +100,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - Before changes affecting multiple parts
 - Mapping file landscape before investigation or implementation
 
-**NOT for:** Deep code analysis (→ `feature-investigation`), debugging (→ `debug-investigate`), implementation (→ `feature-implementation`).
+**NOT for:** Deep code analysis (use `feature-investigation`), debugging (use `debug-investigate`), implementation (use `workflow-feature`).
 
 ---
 
@@ -115,10 +120,19 @@ Spawn SCALE number of `scout` subagents in parallel via `spawn_agent` tool (`age
 
 **WHY `scout` not `Explore`:** Custom `scout` agents read `.claude/agents/scout.md` — includes graph CLI knowledge + Bash access. Built-in `Explore` agents have NO graph awareness.
 
+#### Engine Selection (`--ext` / `--engine=external`)
+
+Detect the engine flag in args (default: **internal**):
+
+- **Internal (default):** spawn `agent_type: "scout"` — the parallel grep/glob/graph search described below.
+- **External (`--ext` or `--engine=external`):** spawn `agent_type: "scout-external"` instead. That agent (`.claude/agents/scout-external.md`) owns the `gemini`/`opencode` CLI dispatch, the Explore fallback, and the install prompt when those CLIs are absent.
+
+Flag only switches **which subagent runs**. Orchestration identical for both engines: Phase 0 classify, Step 3 graph-expand (run by you, main agent), low-result check, synthesize. Output contract (numbered, prioritized file list) same.
+
 #### Agent Distribution
 
-- **Agent 1 - Backend Core**: `src/Services/*/Domain/`, `src/Services/*/UseCaseCommands/`, `src/Services/*/UseCaseQueries/`
-- **Agent 2 - Backend Infra**: `src/Services/*/UseCaseEvents/`, `src/Services/*/Controllers/`, `src/Services/*/BackgroundJobs/`
+- **Agent 1 - Backend Core**: `{module-source-root}/` domain folder + command folder + query folder (per the project's structure reference)
+- **Agent 2 - Backend Infra**: `{module-source-root}/` event-handler folder + controllers + background-jobs folder (per the project's structure reference)
 - **Agent 3 - Frontend**: `{frontend-apps-dir}/`, `{frontend-libs-dir}/{domain-lib}/`, `{frontend-libs-dir}/{common-lib}/`
 
 Per agent: 3-minute timeout. Return file paths only — no content analysis. Use Glob (patterns), Grep (content), Bash (graph CLI).
@@ -181,25 +195,27 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 ## Search Patterns by Priority
 
+> Substitute folder names + file globs from the project's structure reference / `docs/project-config.json`. `{backend-source-glob}` / `{frontend-source-glob}` are the per-stack source extensions.
+
 ```
 # HIGH PRIORITY - Core Logic
-**/Domain/Entities/**/*{keyword}*.cs
-**/UseCaseCommands/**/*{keyword}*.cs
-**/UseCaseQueries/**/*{keyword}*.cs
-**/UseCaseEvents/**/*{keyword}*.cs
-**/*{keyword}*.component.ts
-**/*{keyword}*.store.ts
+**/{entity-folder}/**/*{keyword}*.{backend-source-glob}
+**/{command-folder}/**/*{keyword}*.{backend-source-glob}
+**/{query-folder}/**/*{keyword}*.{backend-source-glob}
+**/{event-handler-folder}/**/*{keyword}*.{backend-source-glob}
+**/*{keyword}*{component-suffix}.{frontend-source-glob}
+**/*{keyword}*{store-suffix}.{frontend-source-glob}
 
 # MEDIUM PRIORITY - Infrastructure
-**/Controllers/**/*{keyword}*.cs
-**/BackgroundJobs/**/*{keyword}*.cs
-**/*Consumer*{keyword}*.cs
-**/*{keyword}*-api.service.ts
+**/{controllers-folder}/**/*{keyword}*.{backend-source-glob}
+**/{background-jobs-folder}/**/*{keyword}*.{backend-source-glob}
+**/*Consumer*{keyword}*.{backend-source-glob}
+**/*{keyword}*{api-service-suffix}.{frontend-source-glob}
 
 # LOW PRIORITY - Supporting
-**/*{keyword}*Helper*.cs
-**/*{keyword}*Service*.cs
-**/*{keyword}*.html
+**/*{keyword}*Helper*.{backend-source-glob}
+**/*{keyword}*Service*.{backend-source-glob}
+**/*{keyword}*{markup-glob}
 ```
 
 ---
@@ -215,24 +231,24 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 ### High Priority - Core Logic
 
-1. `src/Services/{Service}/Domain/Entities/{Entity}.cs`
-2. `src/Services/{Service}/UseCaseCommands/{Feature}/Save{Entity}Command.cs`
+1. `{module-source-root}/{entity-folder}/{Entity}` — domain entity
+2. `{module-source-root}/{command-folder}/{Feature}/Save{Entity}Command` — mutating command
    ...
 
 ### Medium Priority - Infrastructure
 
-10. `src/Services/{Service}/Controllers/{Entity}Controller.cs`
-11. `src/Services/{Service}/UseCaseEvents/{Feature}/SendNotificationOn{Entity}CreatedEventHandler.cs`
+10. `{module-source-root}/{controllers-folder}/{Entity}Controller` — endpoint
+11. `{module-source-root}/{event-handler-folder}/{Feature}/SendNotificationOn{Entity}CreatedEventHandler` — event handler
     ...
 
 ### Low Priority - Supporting
 
-20. `src/Services/{Service}/Helpers/{Entity}Helper.cs`
+20. `{module-source-root}/{helpers-folder}/{Entity}Helper` — supporting helper
     ...
 
 ### Frontend Files
 
-30. `{frontend-libs-dir}/{domain-lib}/src/lib/{feature}/{feature}-list.component.ts`
+30. `{frontend-libs-dir}/{domain-lib}/{configured-feature-path}/{feature}-list.component`
     ...
 
 **Total Files Found:** {count}
@@ -242,6 +258,18 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 1. `{most relevant file}` - {reason}
 2. `{second most relevant}` - {reason}
+
+### End-to-Start Trace Candidates
+
+| Role                           | Candidate files | Why relevant                                           | Evidence                         |
+| ------------------------------ | --------------- | ------------------------------------------------------ | -------------------------------- |
+| Observed final output / reader | `{files}`       | `{reader, renderer, assertion, query, aggregate, log}` | `{file:line or search evidence}` |
+| Storage / projection / cache   | `{files}`       | `{state consumed by reader}`                           | `{file:line or search evidence}` |
+| Writer / updater               | `{files}`       | `{writes final state}`                                 | `{file:line or search evidence}` |
+| Consumer / handler / job       | `{files}`       | `{transforms or schedules writes}`                     | `{file:line or search evidence}` |
+| Producer / origin trigger      | `{files}`       | `{upstream source of input}`                           | `{file:line or search evidence}` |
+
+**Feeder-path scan:** list every producer/caller/event/job candidate that may write the same final state. Mark unknown paths explicitly instead of hiding them.
 
 ### Unresolved Questions
 
@@ -288,6 +316,23 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 > **External Memory:** Complex/lengthy work → write findings incrementally to `plans/reports/`. Prevents context loss.
 
 > **Evidence Gate:** MANDATORY MUST ATTENTION — every claim, finding, recommendation requires `file:line` proof with confidence % (>80% act, <80% verify first).
+
+<!-- SYNC:end-to-start-debugger-trace -->
+
+> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
+>
+> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
+> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
+> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
+> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
+> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
+> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
+>
+> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
+>
+> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+
+<!-- /SYNC:end-to-start-debugger-trace -->
 
 <!-- SYNC:graph-assisted-investigation -->
 
@@ -374,11 +419,11 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -491,6 +536,7 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -541,8 +587,15 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `$project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:end-to-start-debugger-trace:reminder -->
+
+**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+
+<!-- /SYNC:end-to-start-debugger-trace:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
@@ -564,6 +617,7 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Deliver a complete, prioritized map of every file relevant to the task — grep + graph combined — so downstream work starts with full coverage and zero blind spots.
 **MUST ATTENTION** run Phase 0 classification BEFORE spawning agents — scope determines agent count
 **MUST ATTENTION** graph expand is NOT optional — run at least ONE graph command on key files when `.code-graph/graph.db` exists
 **MUST ATTENTION** if <5 files found, re-check keywords and run second pass with alternates
@@ -592,17 +646,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -620,7 +671,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

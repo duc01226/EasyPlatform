@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const verifierPath = path.resolve(thisDir, '..', 'verify-skill-protocol-compliance.mjs');
-const { checkOrphanHeadings } = await import(pathToFileURL(verifierPath).href);
+const { checkDebuggerTraceCoverage, checkOrphanHeadings } = await import(pathToFileURL(verifierPath).href);
 
 const joinLines = (...lines) => lines.join('\n');
 
@@ -93,4 +93,28 @@ test('TC-SKILLFIX-001c: reports count when several orphans exist', () => {
     const result = checkOrphanHeadings(content, 'SKILL.md');
     assert.ok(result);
     assert.match(result, /2 orphan heading\(s\)/);
+});
+
+test('TC-DEBUGTRACE-001: passes required end-to-start debugger trace coverage', () => {
+    const content = joinLines(
+        '<!-- SYNC:end-to-start-debugger-trace -->',
+        '',
+        '> **End-to-Start Debugger Trace**',
+        '> observed final state',
+        '> Enumerate all feeder paths',
+        '> hypothesis matrix',
+        '> owning fix layer',
+        '> forward convergence proof',
+        '',
+        '<!-- /SYNC:end-to-start-debugger-trace -->'
+    );
+    assert.equal(checkDebuggerTraceCoverage(content, '.claude/skills/fix/SKILL.md'), null);
+});
+
+test('TC-DEBUGTRACE-002: fails when end-to-start debugger trace gate is missing', () => {
+    const content = joinLines('## Debug', '', 'Trace one path from input to error.');
+    const result = checkDebuggerTraceCoverage(content, '.claude/skills/fix/SKILL.md');
+    assert.ok(result);
+    assert.match(result, /missing end-to-start debugger trace gate/);
+    assert.match(result, /SYNC:end-to-start-debugger-trace/);
 });

@@ -547,9 +547,6 @@ async function main() {
         "  \u2022 `generate_catalogs.py` \u2014 Skills/commands catalog generation",
       );
       console.log("  \u2022 `ck-help.py` \u2014 /ck-help skill");
-      console.log(
-        "  \u2022 `ai-multimodal` \u2014 Image/video/doc processing (Gemini)",
-      );
       console.log("  \u2022 `resolve_env.py` \u2014 API key resolution");
       console.log("  \u2022 `webapp-testing` \u2014 Playwright Python tests");
       console.log("");
@@ -600,7 +597,7 @@ async function main() {
               }
               console.log("");
               console.log(
-                "Run `/easy-claude-help` for valid settings reference.",
+                "Run `/ck-help config` for valid settings reference.",
               );
               console.log("");
             }

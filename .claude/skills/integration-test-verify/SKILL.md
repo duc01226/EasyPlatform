@@ -14,7 +14,7 @@ description: '[Testing] Use when you need to verify integration tests pass after
 
 ## Quick Summary
 
-**Goal:** Run integration tests after `/integration-test` writes them and `/integration-test-review` reviews them. Confirm all pass and remain repeatable.
+**Goal:** Prove the reviewed integration tests (written by `/integration-test`, reviewed by `/integration-test-review`) pass repeatably — 3 consecutive green runs without DB reset, using project-configured run commands — with every pass/fail claim backed by actual test-runner output, never assumption.
 
 **Workflow:**
 
@@ -45,18 +45,17 @@ description: '[Testing] Use when you need to verify integration tests pass after
 > DRY, SRP, abstraction, design patterns, naming, layering, tests — every
 > technique exists to serve one goal: **making the next change cheaper**.
 
-When evaluating code, a refactor, a test, or an abstraction, ask:
-**does this make the next change cheaper or more expensive?**
+When evaluating code, refactor, test, or abstraction, ask:
+**does this make next change cheaper or more expensive?**
 
-- Reject "best practices" that raise change cost (premature abstraction,
+- Reject "best practices" raising change cost (premature abstraction,
   speculative generality, leaky indirection, ceremony without payoff).
-- Name the real enemies in findings: **coupling, hidden state, duplicated
+- Name real enemies in findings: **coupling, hidden state, duplicated
   knowledge, unclear intent, irreversible decisions exposed too early**.
-- A simpler design that is easy to change beats a sophisticated design that
-  isn't.
+- Simpler design easy to change beats sophisticated design that isn't.
 
 Apply this lens **before** invoking any specific rule, pattern, or checklist
-below — if a downstream rule would raise change cost, this principle wins.
+below — if downstream rule would raise change cost, this principle wins.
 
 ---
 
@@ -68,10 +67,10 @@ Read `docs/project-config.json` and extract the `integrationTestVerify` section.
 Expected config shape:
 {
   "integrationTestVerify": {
-    "guidance":             string   — instructions for this project's test run approach
+    "guidance":             string   — instructions for the project's test run approach
     "referenceDocs":        string[] — project docs that explain integration-test setup/run prerequisites
     "quickRunCommand":      string   — test runner command (e.g., "dotnet test --no-build", "npm test", "pytest")
-    "testProjectPattern":   string   — glob pattern to discover test projects (e.g., "src/Services/**/*.IntegrationTests.csproj")
+    "testProjectPattern":   string   — glob pattern to discover test projects (e.g., "**/*.IntegrationTests.csproj", "**/*.integration.spec.ts")
     "testProjects":         string[] — explicit list of test project paths (fallback if no pattern)
     "systemCheckCommand":   string   — shell command to check system readiness
     "runScript":            string   — path to CI-style full run script (reference only)
@@ -127,7 +126,7 @@ Evaluate output:
 Discover test projects by running a glob search for the pattern:
 
 ```bash
-# Example for .NET projects (pattern: "src/Services/**/*.IntegrationTests.csproj")
+# Example (testProjectPattern from project config, e.g. "**/*.IntegrationTests.csproj")
 find . -path "{testProjectPattern}" -type f
 # or use language-appropriate glob tool
 ```
@@ -159,7 +158,7 @@ Execute using `quickRunCommand` from config. Run each relevant suite/project 3 c
 
 **Three-run idempotency gate:** If any run fails, verification fails. Fix the root cause, then restart the 3-run sequence from run 1.
 
-Example for a.NET project:
+Example for a configured integration-test suite:
 
 ```bash
 # Run each test project individually for clear per-project results
@@ -174,7 +173,7 @@ Or run all at once using the solution filter if supported:
 {quickRunCommand} --filter "Category=integration"
 ```
 
-**Capture output for every run**: count Passed, Failed, Skipped. Note: skipped tests (tests marked with a framework-specific skip annotation, e.g., `[Fact(Skip=...)]` in xUnit, `@Disabled` in JUnit) are expected and not a failure.
+**Capture output for every run**: count Passed, Failed, Skipped. Note: skipped tests marked with the configured framework's skip annotation are expected and not a failure.
 
 ---
 
@@ -207,6 +206,8 @@ Status: ✅ ALL PASS | ❌ {N} FAILURES
 3. If test bug → fix in the test file (do NOT weaken assertions — fix setup/data)
 4. If service bug → report as finding, do NOT silently fix without telling user
 5. After fixing → re-run the full 3-run verify sequence
+
+**Goal Contract evidence (after verify run):** Resolve the active Goal Contract per the goal-contract-satisfaction-loop protocol (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md`). When one exists, append the verification evidence to the goal file's Iteration Log — run command, per-run pass/fail counts, report path — mapped to the saved success criteria these tests verify, and update the matching Goal Satisfaction matrix rows (PASS on 3/3 green, FAIL with the failing-test list, BLOCKED with a user-facing reason). Record `No active goal — results reported inline only.` when none exists. Never copy raw sensitive fixture data into the goal file.
 
 ---
 
@@ -247,7 +248,7 @@ This script typically: creates networks → removes stale containers → builds 
 **NEVER** do these to make failures go away:
 
 - ❌ Remove or weaken assertions
-- ❌ Add skip annotations (e.g., `[Fact(Skip=...)]` in xUnit, `@Disabled` in JUnit) to hide failures
+- ❌ Add skip annotations to hide failures
 - ❌ Create or mutate domain data through repositories to bypass real use-case paths
 - ❌ Mark passing by ignoring error output
 - ❌ Report "all passed" without showing actual runner output
@@ -268,7 +269,7 @@ If a test fails because the system is unavailable → report as "system not read
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `test-to-integration` workflow** (Recommended) — scout → integration-test → integration-test-review → integration-test-verify → test → docs-update → watzup → workflow-end
+> 1. **Activate `workflow-write-integration-test` workflow** (Recommended) — scout → investigate → spec-tests → why-review → review-artifact --type=spec-tests → integration-test → integration-test-review → integration-test-verify → spec-tests [direction=sync] → docs-update → workflow-end → watzup
 > 2. **Execute `/integration-test-verify` directly** — run this skill standalone
 
 ---
@@ -288,9 +289,10 @@ If a test fails because the system is unavailable → report as "system not read
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -305,6 +307,7 @@ If a test fails because the system is unavailable → report as "system not read
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -349,11 +352,11 @@ If a test fails because the system is unavailable → report as "system not read
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -380,6 +383,7 @@ If a test fails because the system is unavailable → report as "system not read
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -389,6 +393,13 @@ If a test fails because the system is unavailable → report as "system not read
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
@@ -402,6 +413,8 @@ If a test fails because the system is unavailable → report as "system not read
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION Goal:** Prove the reviewed integration tests pass repeatably — 3 consecutive green runs without DB reset, using project-configured run commands — with every pass/fail claim backed by actual test-runner output, never assumption.
 
 - **MANDATORY IMPORTANT MUST ATTENTION** read `docs/project-config.json` → `integrationTestVerify` FIRST — project-specific guidance overrides defaults
 - **MANDATORY IMPORTANT MUST ATTENTION** read project-specific integration-test reference docs/scripts from config before any test command — Codex has no hook injection

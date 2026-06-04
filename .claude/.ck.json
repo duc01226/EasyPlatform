@@ -74,8 +74,5 @@
     "trust": {
         "enabled": false,
         "passphrase": null
-    },
-    "workflow": {
-        "confirmationMode": "always"
     }
 }

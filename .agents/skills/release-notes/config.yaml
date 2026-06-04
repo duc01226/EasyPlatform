@@ -52,7 +52,10 @@ breaking:
           location: 'footer'
           description: 'BREAKING-CHANGE footer'
 
-# Service boundary detection based on file paths
+# Service boundary detection based on file paths.
+# EXAMPLE LAYOUT — customize these path globs + labels to your repository's structure
+# (or source them from docs/project-config.json). The entries below are illustrative defaults,
+# not a canonical structure any project must adopt.
 services:
     backend-api:
         patterns:
@@ -78,10 +81,10 @@ services:
         label: 'Persistence'
         impact: 'medium'
 
-    platform-core:
+    framework-core:
         patterns:
-            - 'src/Platform/**'
-        label: 'Platform Core'
+            - 'src/Framework/**'
+        label: 'Framework Core'
         impact: 'critical'
 
     frontend-apps:

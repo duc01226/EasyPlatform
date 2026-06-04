@@ -1,7 +1,7 @@
 ---
 name: pbi-challenge
 version: 1.0.0
-description: '[Code Quality] Use when you need aI-assisted Dev BA PIC review of PBI drafts.'
+description: '[Code Quality] Use when you need an AI-assisted Dev BA PIC review of PBI drafts.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,23 +15,23 @@ description: '[Code Quality] Use when you need aI-assisted Dev BA PIC review of 
 
 ## Quick Summary
 
-**Goal:** Help **Dev BA PIC** (Person In Charge — the development Business Analyst responsible for technical review sign-off per squad) review BA drafters' PBI drafts by generating specific, actionable challenge prompts. AI provides analysis; human makes the decision.
+**Goal:** Break drafter confirmation bias before grooming — by helping **Dev BA PIC** (Person In Charge — development Business Analyst responsible for technical review sign-off per squad) review BA drafters' PBI drafts with specific, actionable challenge prompts, surface every architectural-feasibility, vague-AC, missing-auth, cross-service, and M1-M6 gap so an INFEASIBLE or under-specified PBI never reaches grooming with a false APPROVE. AI provides analysis; human makes decision.
 
-**Key distinction:** Collaborative review tool (drafter → reviewer flow), NOT self-review (use `/refine-review` for AI self-review).
+**Key distinction:** Collaborative review tool (drafter → reviewer flow), NOT self-review (use `/review-artifact --type=pbi` for AI self-review).
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Why This Skill Exists
 
-PBI drafts routinely pass informal review without being challenged on architectural feasibility, vague AC, missing auth scenarios, or cross-service impact. The `/refine` skill generates PBIs but does not adversarially challenge them — it is a creation tool, not a review tool. The `/refine-review` skill provides AI self-review for the drafter, but the drafter has inherent blind spots about their own assumptions. A separate reviewer (Dev BA PIC) applying AI-assisted challenge prompts breaks the drafter's confirmation bias before grooming. This skill exists to catch gaps the drafter cannot catch themselves.
+PBI drafts routinely pass informal review unchallenged on architectural feasibility, vague AC, missing auth scenarios, cross-service impact. `/refine` generates PBIs but does not adversarially challenge them — creation tool, not review tool. `/review-artifact --type=pbi` provides AI self-review for drafter, but drafter has inherent blind spots about own assumptions. Separate reviewer (Dev BA PIC) applying AI-assisted challenge prompts breaks drafter confirmation bias before grooming — catches gaps drafter cannot catch themselves.
 
-**Why not just use `/refine-review`?** `/refine-review` is run by the drafter on their own work. Even with adversarial prompts, the drafter rationalizes their own choices. `pbi-challenge` is invoked by a different person with a different mandate — external skepticism requires a different author, not a different tool on the same author.
+**Why not just `/review-artifact --type=pbi`?** Drafter runs it on own work; even with adversarial prompts, drafter rationalizes own choices. `pbi-challenge` invoked by different person with different mandate — external skepticism requires different author, not different tool on same author.
 
 ## Alternatives Considered
 
 | Approach                                                                      | Pros                                                                     | Cons                                                                                                                | Decision                                                                                         |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Extend `/refine-review` with a reviewer-role flag                             | No new skill, single codebase                                            | Drafter runs it themselves in practice; role separation breaks down without enforcement                             | Rejected — role separation requires a distinct invocation point owned by a different person      |
+| Extend `/review-artifact --type=pbi` with a reviewer-role flag                | No new skill, single codebase                                            | Drafter runs it themselves in practice; role separation breaks down without enforcement                             | Rejected — role separation requires a distinct invocation point owned by a different person      |
 | Fully autonomous AI verdict (no human decision)                               | Faster, no Dev BA PIC scheduling needed                                  | Automation bias: AI wrong on domain specifics propagates unchecked; no human accountability for false APPROVE       | Rejected — cost of false APPROVE on infeasible PBIs exceeds review time saved                    |
 | Static DoR checklist given to Dev BA PIC (no AI)                              | Simple, no AI dependency                                                 | No domain entity context loading, no AC vagueness flagging; manual effort is high and inconsistent across reviewers | Rejected — AI domain lookup provides non-trivial value for cross-service entity detection        |
 | Async comment-thread model (AI generates questions posted as ticket comments) | Eliminates scheduling bottleneck; drafter can research before responding | Slower feedback loop; requires external ticket integration                                                          | Valid alternative for async teams; prefer if Dev BA PIC availability is chronically a bottleneck |
@@ -59,7 +59,7 @@ PBI drafts routinely pass informal review without being challenged on architectu
 1. **Locate PBI draft** — Find BA drafters' draft PBI in `team-artifacts/pbis/` or path provided by user
 2. **Load domain context** — Auto-detect module from PBI content. **MANDATORY: Use `AskUserQuestion` to confirm detected module with Dev BA PIC before loading domain docs.** Wrong module = wrong entity context = false APPROVE risk. Then load:
     - `docs/project-reference/domain-entities-reference.md` (entity definitions)
-    - Relevant feature docs from `docs/business-features/{App}/`
+    - Relevant feature docs from `docs/specs/{App}/`
     - Existing business rules (BR-{MOD}-XXX) from feature docs
 3. **Technical Feasibility Analysis:**
     - Can described features be built with the project's architecture?
@@ -84,6 +84,22 @@ PBI drafts routinely pass informal review without being challenged on architectu
     - **Technical decisions** (feasibility, dependencies, cross-service impact, security): Dev BA PIC has unilateral veto power — no 2/3 vote needed
     - **Non-technical decisions** (UI/UX design, visual design, business value): 2/3 majority vote required (Dev BA PIC + UX BA + Designer BA per `ba-team-decision-model`)
 8. **AskUserQuestion** — Dev BA PIC records their FINAL decision (APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD) in the Decision Record. This is the human decision step — NOT the workflow routing step (handled separately in Next Steps)
+
+## M1-M6 Compliance Gate (BLOCKING — drives the AI Verdict)
+
+> **Contract:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)". This challenge enforces M6: a PBI draft that violates any of M1-M5 MUST produce an AI Verdict of REQUEST_REVISION with a challenge prompt that names the violated mandate ID and cites the exact PBI section + line/AC. An APPROVE over an M1-M5 violation is itself defective. (AI provides the analysis; the human still records the final decision.)
+>
+> Carriers are EXEMPT from M1/M2 — source identifiers are CORRECT inside `[Source: ...]`, `**Evidence**`, `**IntegrationTest**` fields, YAML frontmatter, and ` ```mermaid ``` ` blocks. Only challenge leakage in PBI narrative prose (problem statement, AC text, scope, rule descriptions). Banned prose token list: `docs/project-reference/spec-principles.md` §3.2.
+
+Run these five checks as part of Step 4 (AC Quality) and Step 5 (Cross-Cutting Concerns); any failure becomes a specific challenge prompt and forces REQUEST_REVISION:
+
+- **MUST ATTENTION M1 — Tech-agnostic prose.** FAIL if problem statement, AC, or rule prose names framework/product, language-native type, or product/design-pattern class name (banned list `spec-principles.md` §3.2). Challenge: cite section + leaked token + business-term replacement. — why: stack-named prose locks the PBI to one implementation.
+- **MUST ATTENTION M2 — No source code in prose.** FAIL if requirement expressed as class/method/file-path/namespace instead of business operation. Source identifiers belong only in evidence carriers. Challenge: cite section + line.
+- **MUST ATTENTION M3 — Abstract-IDs-first.** FAIL if requirement/rule lacks logical ID (`FR-/BR-/OP-`), has logical ID but no `[Source: namespace/service/id]` abstract-anchor evidence, uses physical code coordinates or repository-root paths instead of abstract anchor, or makes anchor its primary citation. Evidence REQUIRED and KEPT, but SECONDARY to logical ID (physical coordinates live only in provenance sidecar).
+- **MUST ATTENTION M4 — Unambiguous AC.** FAIL if any AC uses vague language ("should", "might", "appropriate", "various", "as needed"), two engineers could implement it differently while both claiming conformance, or no observable completion state / named error condition exists. (Extends Step-4 vagueness detector to M4 verdict.)
+- **MUST ATTENTION M5 — Implementable from artifact alone.** FAIL if competent team with ZERO codebase knowledge could not build PBI on different stack from PBI alone (relies on reading source to understand it). Challenge: cite section + missing detail.
+
+If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate ID with its concrete section/line citation in the Challenge Prompts and the AI Verdict Reason.
 
 ## Output
 
@@ -177,6 +193,7 @@ PBI drafts routinely pass informal review without being challenged on architectu
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -214,7 +231,7 @@ PBI drafts routinely pass informal review without being challenged on architectu
 > 2. **AC testable & unambiguous** — GIVEN/WHEN/THEN. No "should/might/TBD/various/appropriate". Min 3 scenarios (happy, edge, error) + 1 auth scenario
 > 3. **Wireframes attached** — UI features: `## UI Layout` with wireframe + components + states + tokens. Backend-only: explicit "N/A"
 > 4. **UI design ready** — Visual design + component decomposition tree. Backend-only: "N/A"
-> 5. **AI pre-review passed** — `/refine-review` or `/pbi-challenge` returned PASS or WARN (not FAIL)
+> 5. **AI pre-review passed** — `/review-artifact --type=pbi` or `/pbi-challenge` returned PASS or WARN (not FAIL)
 > 6. **Story points estimated** — Fibonacci 1-21 + complexity (Low/Medium/High). >13 SP → recommend split
 > 7. **Dependencies table complete** — Dependency, Type (must-before/can-parallel/blocked-by/independent), Status
 >
@@ -413,7 +430,7 @@ PBI drafts routinely pass informal review without being challenged on architectu
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -458,6 +475,7 @@ PBI drafts routinely pass informal review without being challenged on architectu
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Break drafter confirmation bias before grooming — surface every architectural-feasibility, vague-AC, missing-auth, cross-service, and M1-M6 gap as a specific challenge prompt so an INFEASIBLE or under-specified PBI never reaches grooming with a false APPROVE.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.

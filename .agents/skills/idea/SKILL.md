@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,7 +56,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Capture raw product ideas as structured backlog artifacts with project module context.
+**Goal:** Turn a vague product idea into a validated, tech-agnostic, module-anchored backlog artifact ready for `$refine` to convert into a PBI — preserving problem intent without leaking solution or stack choices.
 
 > **MANDATORY IMPORTANT MUST ATTENTION** task tracking task to READ project-specific reference doc:
 > `project-structure-reference.md` — project patterns and structure. Not found → search: project documentation, coding standards, architecture docs.
@@ -72,11 +76,12 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - Validation NEVER optional — MANDATORY step
 - Auto-detect module silently; prompt only when ambiguous
 - MUST ATTENTION include `t_shirt_size` (XS/S/M/L/XL) in artifact for early sizing
-- **[BLOCKING] Tech-agnostic output:** the problem statement stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 (all modes, not only greenfield) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase.
+- **[BLOCKING] Tech-agnostic output (M1):** the problem statement stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 (all modes, not only greenfield) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase.
+- **M3 Logical-ID Assignment (forward to PBI):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. An idea is a tech-agnostic business-intent definition only — do NOT assign logical IDs yet. When the idea advances to a PBI (via `$refine`), the PBI assigns logical IDs (`FR-`/`BR-`) as the PRIMARY citation spine and tracks `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths) in a SEPARATE carrier from the business-intent prose. Keep the idea's problem/value narrative free of source identifiers so the PBI can inherit it cleanly.
 
 ## Greenfield Mode
 
-> **Auto-detected:** No codebase found (no `src/`, `app/`, `lib/`, `server/`, `packages/` dirs; no `package.json`/`*.sln`/`go.mod`; no `project-config.json`) → greenfield mode. Planning artifacts (`docs/`, `plans/`, `.claude/`) don't count — project must have actual code dirs with content.
+> **Auto-detected:** No codebase found (no discovered source directories, no manifest files, no populated `project-config.json`) → greenfield mode. Planning artifacts (`docs/`, `plans/`, `.claude/`) don't count — repository must have actual code directories with content.
 
 **When greenfield detected:**
 
@@ -111,7 +116,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Dynamic Discovery:**
 
-1. Run: `Glob("docs/business-features/*/README.md")`
+1. Run: `Glob("docs/specs/*/README.md")`
 2. Extract module names from paths
 3. Match idea keywords against module keywords
 
@@ -123,7 +128,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **If module detected:**
 
-1. Read `docs/business-features/{module}/README.md` (first 200 lines)
+1. Read `docs/specs/{module}/README.md` (first 200 lines)
 2. Extract feature list from Quick Navigation section
 3. Add to frontmatter: `module: {detected_module}`, `related_features: [Feature1, Feature2]`
 
@@ -197,7 +202,7 @@ Document under `## Validation Summary`. Update artifact based on answers.
 a direct user question after capture:
 
 1. `$refine` — Refine into PBI (Recommended)
-2. `$tdd-spec` — Jump straight to test spec
+2. `$spec [mode=tests]` — Jump straight to test spec
 3. `$plan` — Start implementation planning
 
 Output: "Idea captured! To refine into a PBI, run: `$refine {filename}`"
@@ -262,7 +267,7 @@ $idea "Add goal progress tracking notification"
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** Not already in workflow → MUST ATTENTION use a direct user question:
 >
-> 1. **Activate `idea-to-pbi` workflow** (Recommended) — idea → refine → refine-review → story → story-review → prioritize
+> 1. **Activate `workflow-idea-to-pbi` workflow** (Recommended) — idea → refine → review-artifact --type=pbi → story → review-artifact --type=story → prioritize
 > 2. **Execute `$idea` directly** — run standalone
 
 ---
@@ -303,6 +308,7 @@ $idea "Add goal progress tracking notification"
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -333,7 +339,7 @@ $idea "Add goal progress tracking notification"
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -368,10 +374,12 @@ $idea "Add goal progress tracking notification"
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Turn a vague product idea into a validated, tech-agnostic, module-anchored backlog artifact ready for `$refine` to convert into a PBI — preserving problem intent without leaking solution or stack choices.
 **IMPORTANT MUST ATTENTION** task tracking break ALL work into small tasks BEFORE starting
 **IMPORTANT MUST ATTENTION** validate all decisions with user via a direct user question — NEVER auto-decide
 **IMPORTANT MUST ATTENTION** Discovery Interview + Validation NEVER optional — MANDATORY steps
-**IMPORTANT MUST ATTENTION** NEVER ask about tech stack in greenfield mode — defer to business-evaluation phase
+**IMPORTANT MUST ATTENTION** NEVER ask about tech stack in greenfield mode — defer to business-evaluation phase — why: stack is a research-driven decision after business analysis, not a capture-time guess
+**IMPORTANT MUST ATTENTION** ALWAYS keep problem statement tech-agnostic (M1) — name no framework/product/language/pattern — why: PBI inherits the narrative cleanly downstream
 **IMPORTANT MUST ATTENTION** auto-detect module silently — prompt only when ambiguous
 **IMPORTANT MUST ATTENTION** add final review task to verify work quality
 
@@ -394,17 +402,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -422,7 +427,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

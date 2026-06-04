@@ -11,6 +11,33 @@ memory: project
 > **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+>
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
 <!-- SYNC:critical-thinking-mindset -->
 
 > **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
@@ -38,7 +65,7 @@ memory: project
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -56,6 +83,7 @@ memory: project
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -68,15 +96,15 @@ memory: project
 1. **Understand source** — read idea/PBI, identify stakeholders, note constraints
 2. **Analyze requirements** — break into vertical slices, identify acceptance criteria, document business rules
 3. **Write stories** — "As a... I want... So that..." with INVEST criteria and 3+ scenarios each
-   3b. **Collaborative Review** — If PBI was drafted by BA Drafters (UX BA + Designer BA), use `/pbi-challenge` for Dev BA PIC review. If drafted by Dev BA PIC, use `/refine-review` for AI self-review.
-4. **Validate** — check completeness, hand off to `tdd-spec` for test generation
+   3b. **Collaborative Review** — If PBI was drafted by BA Drafters (UX BA + Designer BA), use `/pbi-challenge` for Dev BA PIC review. If drafted by Dev BA PIC, use `/review-artifact --type=pbi` for AI self-review.
+4. **Validate** — check completeness, hand off to `spec [mode=tests]` for test generation
 
 **Key Rules:**
 
 - NEVER write requirements without understanding the existing system
 - NEVER skip acceptance criteria
 - ALWAYS run `/dor-gate` before considering a PBI grooming-ready
-- ALWAYS use `/pbi-challenge` for collaborative review (not just `/refine-review`)
+- ALWAYS use `/pbi-challenge` for collaborative review (not just `/review-artifact --type=pbi`)
 - Acceptance criteria always GIVEN/WHEN/THEN — minimum 3 scenarios (happy path, edge case, error case)
 
 ## Project Context
@@ -157,5 +185,18 @@ Report path: `plans/reports/` with naming from `## Naming` hook injection. Conci
 **IMPORTANT MUST ATTENTION** NEVER skip acceptance criteria — every story needs GIVEN/WHEN/THEN with 3+ scenarios
 **IMPORTANT MUST ATTENTION** NEVER write requirements without understanding the existing system — investigate first
 **IMPORTANT MUST ATTENTION** ALWAYS run `/dor-gate` before considering a PBI grooming-ready
-**IMPORTANT MUST ATTENTION** ALWAYS use `/pbi-challenge` for collaborative review — not just `/refine-review`
+**IMPORTANT MUST ATTENTION** ALWAYS use `/pbi-challenge` for collaborative review — not just `/review-artifact --type=pbi`
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim about existing code (confidence >80% to act)
+
+  <!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+      <!-- /SYNC:task-tracking-external-report:reminder -->
+      <!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->

@@ -592,7 +592,7 @@ const workflowRouterTests = [
 
 const catalogStructureTests = [
     {
-        name: '[workflow-router] catalog includes workflow-start activation instruction',
+        name: '[workflow-router] catalog includes start-workflow activation instruction',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
@@ -600,7 +600,7 @@ const catalogStructureTests = [
                 const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should not block');
                 const output = result.stdout;
-                assertContains(output, 'workflow-start', 'Should reference /workflow-start activation');
+                assertContains(output, 'start-workflow', 'Should reference /start-workflow activation');
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -623,26 +623,26 @@ const catalogStructureTests = [
         }
     },
     {
-        name: '[workflow-router] catalog shows confirm marker for confirmFirst workflows',
+        name: '[workflow-router] catalog does not show confirmation markers',
         fn: async () => {
             const input = createUserPromptInput('how does the authentication system work?');
             const result = await runHook(WORKFLOW_ROUTER, input, { cwd: PROJECT_ROOT });
             assertAllowed(result.code, 'Should not block');
             const output = result.stdout;
-            // big-feature has confirmFirst: true and is at index 1 (part 1) in real workflows.json
-            assertContains(output, 'Confirm', 'Should show confirm marker for confirmFirst workflows');
+            assertNotContains(output, 'Confirm', 'Should not show workflow confirmation markers');
         }
     },
     {
-        name: '[workflow-router] quick: prefix adds quick mode notice',
+        name: '[workflow-router] prompt includes auto-select guidance without quick mode',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                const input = createUserPromptInput('quick: implement a new feature');
+                const input = createUserPromptInput('implement a new feature');
                 const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should not block');
                 const output = result.stdout;
-                assertContains(output, 'Quick mode', 'Should include quick mode notice');
+                assertContains(output, 'Auto-select the best option yourself', 'Should include auto-select guidance');
+                assertNotContains(output, 'Quick mode', 'Should not include quick mode notice');
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -768,20 +768,11 @@ const deadModuleVerificationTests = [
         }
     },
     {
-        name: '[review-guidance] review workflow injectContext includes multilingual UI sync check',
-        fn: async () => {
-            const configPath = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
-            const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            const text = data.workflows?.review?.preActions?.injectContext || '';
-            assertContains(text, 'MULTILINGUAL UI SYNC CHECK', 'review workflow should include multilingual UI sync guidance');
-        }
-    },
-    {
         name: '[review-guidance] review-changes workflow injectContext includes multilingual UI sync check',
         fn: async () => {
             const configPath = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
             const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            const text = data.workflows?.['review-changes']?.preActions?.injectContext || '';
+            const text = data.workflows?.['workflow-review-changes']?.preActions?.injectContext || '';
             assertContains(text, 'MULTILINGUAL UI SYNC CHECK', 'review-changes workflow should include multilingual UI sync guidance');
         }
     }

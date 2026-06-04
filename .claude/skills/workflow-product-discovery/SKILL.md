@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 ## Quick Summary
 
-**Goal:** [Workflow] Trigger Product Discovery workflow — raw vision or problem → structured brainstorm → prioritized opportunity map → N PBIs with stories, challenge review, DoR gate, and HTML mock-ups → cross-PBI ranked backlog ready for sprint planning.
+**Goal:** [Workflow] Trigger the Product Discovery workflow to convert raw opportunities — a raw vision or problem → structured brainstorm → prioritized opportunity map → N PBIs with stories, challenge review, DoR gate, and HTML mock-ups → cross-PBI ranked backlog — into reviewed, prioritized PBIs ready for sprint planning.
 
 **Workflow:**
 
@@ -32,9 +32,9 @@ disable-model-invocation: true
 
 ## When NOT to Use
 
-- Single well-defined feature → use `feature` or `idea-to-pbi`
-- Implementation work (code writing) → use `feature` or `big-feature`
-- Bug fixes → use `bugfix`
+- Single well-defined feature → use `workflow-feature` or `workflow-idea-to-pbi`
+- Implementation work (code writing) → use `workflow-feature` or `workflow-big-feature`
+- Bug fixes → use `workflow-bugfix`
 - Research only, no PBI output needed → use `investigation` or `deep-research`
 
 ## Key Mechanics
@@ -90,7 +90,7 @@ Before committing to the per-PBI loop, validate the opportunity map rationale wi
 - Are the top-ranked opportunities truly the right problems to solve? What was deprioritized and why?
 - Are RICE scores well-founded or speculative? Challenge Reach and Impact estimates independently.
 - Pre-mortem: if these opportunities are built and miss in 6 months, what was the root cause?
-- Are there systemic alternatives (platform change, process change) that make these opportunities unnecessary?
+- Are there systemic alternatives (infrastructure change, process change) that make these opportunities unnecessary?
 
 | Result                          | Action                                              |
 | ------------------------------- | --------------------------------------------------- |
@@ -102,16 +102,16 @@ Before committing to the per-PBI loop, validate the opportunity map rationale wi
 
 For **each selected opportunity**, the following steps run in sequence:
 
-| Step             | Purpose                                                                     | Output                                          |
-| ---------------- | --------------------------------------------------------------------------- | ----------------------------------------------- |
-| `/idea`          | Capture as structured artifact                                              | `team-artifacts/ideas/{date}-po-idea-{slug}.md` |
-| `/refine`        | PBI with hypothesis, AC (GIVEN/WHEN/THEN), RICE                             | `team-artifacts/pbis/{date}-pbi-{slug}.md`      |
-| `/refine-review` | BA quality check on PBI                                                     | Reviewed PBI                                    |
-| `/story`         | User stories per PBI                                                        | Stories in PBI artifact                         |
-| `/story-review`  | Story quality and completeness check                                        | Reviewed stories                                |
-| `/pbi-challenge` | Dev BA PIC review — challenge prompts, AC quality, feasibility              | Challenge log                                   |
-| `/dor-gate`      | INVEST check — PASS/WARN/FAIL                                               | DoR result                                      |
-| `/pbi-mockup`    | HTML mock-up based on project reference design docs (skip for backend-only) | HTML mock-up file beside PBI artifact           |
+| Step                            | Purpose                                                                     | Output                                          |
+| ------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------- |
+| `/idea`                         | Capture as structured artifact                                              | `team-artifacts/ideas/{date}-po-idea-{slug}.md` |
+| `/refine`                       | PBI with hypothesis, AC (GIVEN/WHEN/THEN), RICE                             | `team-artifacts/pbis/{date}-pbi-{slug}.md`      |
+| `/review-artifact --type=pbi`   | BA quality check on PBI                                                     | Reviewed PBI                                    |
+| `/story`                        | User stories per PBI                                                        | Stories in PBI artifact                         |
+| `/review-artifact --type=story` | Story quality and completeness check                                        | Reviewed stories                                |
+| `/pbi-challenge`                | Dev BA PIC review — challenge prompts, AC quality, feasibility              | Challenge log                                   |
+| `/dor-gate`                     | INVEST check — PASS/WARN/FAIL                                               | DoR result                                      |
+| `/pbi-mockup`                   | HTML mock-up based on project reference design docs (skip for backend-only) | HTML mock-up file beside PBI artifact           |
 
 **Track progress:** After each opportunity loop, AI updates a session summary table in the plan dir.
 
@@ -130,7 +130,7 @@ At `/workflow-end`, AI presents:
 
 - Session summary: N PBIs created, X passed DoR, Y need rework
 - Ranked backlog with RICE scores
-- Recommended next step: `/sprint-planning` (backlog ready) or `/big-feature` (single large PBI needs deep research + implementation)
+- Recommended next step: `/workflow-feature` (implement a delivery-ready PBI) or `/big-feature` (single large PBI needs deep research + implementation)
 - Blocked PBIs: list DoR failures with specific blocking items
 
 ## Conditional Skip Rules
@@ -144,19 +144,19 @@ At `/workflow-end`, AI presents:
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /brainstorm -> /web-research -> /domain-analysis -> /why-review -> /idea -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /review-changes -> /prioritize -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /brainstorm -> /web-research -> /domain-analysis -> /why-review -> /idea -> /refine -> /why-review -> /review-artifact --type=pbi -> /story -> /why-review -> /review-artifact --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /review-changes -> /prioritize -> /workflow-end -> /watzup
 
-**IMPORTANT MANDATORY Steps:** /brainstorm -> /web-research -> /domain-analysis -> /why-review -> /idea -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /review-changes -> /prioritize -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /brainstorm -> /web-research -> /domain-analysis -> /why-review -> /idea -> /refine -> /why-review -> /review-artifact --type=pbi -> /story -> /why-review -> /review-artifact --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /review-changes -> /prioritize -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
-Activate the `product-discovery` workflow. Run `/workflow-start product-discovery` with the user's prompt as context.
+Activate the `workflow-product-discovery` workflow. Run `/start-workflow workflow-product-discovery` with the user's prompt as context.
 
 **Steps:**
 /brainstorm → /web-research → /domain-analysis → /why-review
 → **[TASK DECOMPOSITION GATE]** Create TaskCreate for every opportunity × step BEFORE looping
-→ [**loop per opportunity**] /idea → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup
-→ /review-changes → /prioritize → /watzup → /workflow-end
+→ [**loop per opportunity**] /idea → /refine → /review-artifact --type=pbi → /story → /review-artifact --type=story → /pbi-challenge → /dor-gate → /pbi-mockup
+→ /review-changes → /prioritize → /workflow-end → /watzup
 
 > **Scale awareness:** This workflow can generate 8 opportunities × 8 steps = 64 artifact units plus a ranked backlog. Use the Task Decomposition Gate and incremental-write patterns to prevent context overrun. For 6+ opportunities, use sub-agent parallel processing (one sub-agent per opportunity, main context assembles at /prioritize).
 
@@ -174,6 +174,7 @@ Activate the `product-discovery` workflow. Run `/workflow-start product-discover
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -265,6 +266,8 @@ Activate the `product-discovery` workflow. Run `/workflow-start product-discover
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Ensure product discovery converts raw opportunities into reviewed, prioritized PBIs ready for sprint planning.
+
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting — one task per opportunity × step
 - **MANDATORY IMPORTANT MUST ATTENTION** brainstorm output MUST produce a scored opportunity map before any /idea step
 - **MANDATORY IMPORTANT MUST ATTENTION** why-review runs after domain-analysis — FAIL removes opportunity from selection, WARN requires user acknowledgment
@@ -276,3 +279,10 @@ Activate the `product-discovery` workflow. Run `/workflow-start product-discover
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+> **Anti-Rationalization:**
+
+| Evasion                          | Rebuttal                                                                      |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| "Purpose obvious"                | Anchor it anyway — primacy/recency keeps outcome active through long prompts. |
+| "Existing reminders enough"      | Echo Goal in Closing Reminders — bottom anchor prevents drift.                |
+| "Skip evidence for prompt edits" | Cite changed file evidence and verify no stale protocol text remains.         |

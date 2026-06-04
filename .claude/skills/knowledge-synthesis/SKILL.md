@@ -1,12 +1,12 @@
 ---
 name: knowledge-synthesis
 version: 1.0.0
-description: '[Research] Use when you need synthesize research findings into structured report using template.'
+description: '[Research] Use when you need to synthesize research findings into structured report using template.'
 ---
 
 ## Quick Summary
 
-**Goal:** Synthesize evidence base into final structured report using enforced template.
+**Goal:** Produce a fully-cited, template-compliant research report by synthesizing the evidence base using the enforced template — whose confidence scores and gaps are honest enough to trust for decisions.
 
 **Workflow:**
 
@@ -38,15 +38,13 @@ Inventory:
 
 ## Step 2: Load Template
 
-Read the enforced template: `.claude/templates/research-report-template.md`
+Read enforced template: `.claude/templates/research-report-template.md`
 
-Every section in the template MUST ATTENTION appear in the final report.
+Every template section MUST ATTENTION appear in final report.
 
 ## Step 3: Synthesize Report
 
-Write to `docs/knowledge/research/{slug}.md`:
-
-For each template section:
+Write to `docs/knowledge/research/{slug}.md`. For each template section:
 
 1. Map relevant findings from evidence base
 2. Write content with inline citations `[N]`
@@ -57,8 +55,8 @@ For each template section:
 
 Verify:
 
-- Every factual claim has at least one `[N]` citation
-- Every source in the Sources table is referenced at least once
+- Every factual claim has 1+ `[N]` citation
+- Every source in Sources table referenced 1+ time
 - No orphan citations (referencing non-existent source)
 
 ## Step 5: Confidence Summary
@@ -93,6 +91,7 @@ Clean up working files from `.claude/tmp/` after successful synthesis.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -117,8 +116,10 @@ Clean up working files from `.claude/tmp/` after successful synthesis.
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Produce a fully-cited, template-compliant research report whose confidence scores and gaps are honest enough to trust for decisions.
 **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-**IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
+**IMPORTANT MUST ATTENTION** use enforced template structure — every section required, NEVER omit Knowledge Gaps — why: a missing gaps section creates false confidence in incomplete research
+**IMPORTANT MUST ATTENTION** inline-cite every factual claim with `[N]`; verify no orphan citations and no orphan sources — why: uncited claims are assertions, not findings
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
 

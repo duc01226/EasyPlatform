@@ -95,7 +95,7 @@ CATEGORY_GUIDES = {
         "title": "Testing",
         "workflow": [
             ("Run tests", "`/test`"),
-            ("Fix failures", "`/fix-test`"),
+            ("Fix failures", "`/fix --target=test`"),
         ],
         "tip": "Run tests frequently during development",
     },
@@ -111,7 +111,7 @@ CATEGORY_GUIDES = {
         "title": "Git Workflow",
         "workflow": [
             ("Commit", "`/commit`"),
-            ("Push", "`/git-cp`"),
+            ("Push", "`/commit --push`"),
             ("PR", "`/pr`"),
         ],
         "tip": "Commit often with clear messages",
@@ -119,8 +119,8 @@ CATEGORY_GUIDES = {
     "design": {
         "title": "Design",
         "workflow": [
-            ("Quick design", "`/design-fast` \"description\""),
-            ("From screenshot", "`/design-screenshot` <path>"),
+            ("Quick design", "`/design --mode=fast` \"description\""),
+            ("From screenshot", "`/design --mode=screenshot` <path>"),
             ("3D design", "`/design-3d` \"description\""),
         ],
         "tip": "Reference existing designs for consistency",
@@ -151,16 +151,17 @@ CATEGORY_GUIDES = {
     "skill": {
         "title": "Skill Management",
         "workflow": [
-            ("Create", "`/skill-create`"),
-            ("Optimize", "`/skill-optimize`"),
+            ("Create", "`/skill-creator`"),
+            ("Optimize", "`/skill-creator` (Mode 5)"),
+            ("Fix from logs", "`/skill-creator` (Mode 6)"),
         ],
-        "tip": "Skills extend agent capabilities",
+        "tip": "Skills extend agent capabilities — optimize/fix-logs are skill-creator modes",
     },
     "scout": {
         "title": "Codebase Exploration",
         "workflow": [
             ("Find files", "`/scout` \"what to find\""),
-            ("External tools", "`/scout-ext` \"query\""),
+            ("External tools", "`/scout --ext` \"query\""),
         ],
         "tip": "Be specific about what you're looking for",
     },
@@ -499,13 +500,14 @@ def show_config_guide() -> None:
     print("# ClaudeKit Configuration (.ck.json)")
     print()
     print("**Locations (cascading resolution):**")
-    print("- Global: `~/.claude/.ck.json` (user preferences)")
-    print("- Local: `./.claude/.ck.json` (project overrides)")
+    print("- Global: `~/.claude/.ck.json` (user preferences, all projects)")
+    print("- Project: `./.claude/.ck.json` (shared, committed to git)")
+    print("- Personal: `./.claude/.ck.local.json` (gitignored, per-developer override)")
     print()
-    print("**Resolution Order:** `DEFAULT → global → local`")
-    print("- Global config sets user defaults")
-    print("- Local config overrides for specific projects")
-    print("- Deep merge: nested objects merge recursively")
+    print("**Resolution Order:** `DEFAULT → global → project → personal`")
+    print("- Each layer deep-merges over the previous — set only the values you override")
+    print("- Use `.ck.local.json` for personal prefs (e.g. your own codingLevel) without affecting teammates")
+    print("- **AI config-update default target:** `.ck.local.json` unless the user says \"update project config\" / \"share with team\"")
     print()
     print("**Purpose:** Customize plan naming, paths, locale, and hook behavior.")
     print()
@@ -571,6 +573,10 @@ def show_config_guide() -> None:
     print('    "packageManager": "auto", // "npm", "pnpm", "yarn", "auto"')
     print('    "framework": "auto"       // "next", "react", "vue", "auto"')
     print('  },')
+    print('  "assertions": [],          // Custom instructions injected every session (array of strings)')
+    print('  "referenceDocs": {')
+    print('    "staleDays": 60           // Warn/block when reference docs exceed this age (1-365)')
+    print('  },')
     print('  "codingLevel": -1  // Adaptive communication (-1 to 5)')
     print('}')
     print("```")
@@ -613,6 +619,45 @@ def show_config_guide() -> None:
     print("- `5` = God Mode - code first, minimal prose, no hand-holding")
     print()
     print("Guidelines auto-inject on session start. Commands like `/brainstorm` respect them.")
+    print()
+    print("---")
+    print()
+    print("## Assertions (Custom Session Reminders)")
+    print()
+    print("`assertions` is an array of strings injected into every session as standing reminders.")
+    print("```json")
+    print('{')
+    print('  "assertions": [')
+    print('    "Always use TypeScript strict mode",')
+    print('    "Prefer functional components over class components"')
+    print('  ]')
+    print('}')
+    print("```")
+    print("Validated as an array of strings; invalid entries warn but never block.")
+    print()
+    print("---")
+    print()
+    print("## Reference Docs Staleness (`referenceDocs.staleDays`)")
+    print()
+    print("Controls how old reference docs may be before the staleness gate activates.")
+    print("- `60` (default): warn after 60 days, block prompts until scanned or dismissed")
+    print("- `1-365`: custom threshold in days")
+    print()
+    print("**How it works:**")
+    print("1. On session start, checks `<!-- Last scanned: YYYY-MM-DD -->` in each reference doc")
+    print("2. If any doc exceeds `staleDays`, a warning lists the stale docs")
+    print("3. The next prompt blocks until you run `/scan-all` (or a `/scan-*`) or type `skip scan`")
+    print("4. `skip scan` dismisses the gate for 24 hours")
+    print()
+    print("---")
+    print()
+    print("## Code Review Graph (optional)")
+    print()
+    print("Builds a knowledge graph of the codebase for blast-radius analysis and smarter reviews.")
+    print("- **Setup:** `pip install tree-sitter tree-sitter-language-pack networkx`, then `/graph-build`")
+    print("- **Skills:** `/graph-build`, `/graph-blast-radius`, `/graph-export`, `/graph-connect-api`, `/graph-query`")
+    print("- **Config:** `codeReview` in `.ck.json`; frontend->backend detection via `graphConnectors` in `docs/project-config.json`")
+    print("- Docs: `.claude/docs/code-graph-mechanism.md`")
     print()
     print("---")
     print()

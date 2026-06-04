@@ -17,9 +17,7 @@
 
 const fs = require('fs');
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
-const { loadConfig } = require('./lib/ck-config-loader.cjs');
-
-const CATALOG_P3_MARKER = '## Workflow Catalog (part 3)';
+const { WORKFLOW_CATALOG_P3: CATALOG_P3_MARKER } = require('./lib/dedup-constants.cjs');
 const DEDUP_BOTTOM_LINES = 150;
 const DEDUP_TOP_LINES = 50;
 
@@ -43,7 +41,7 @@ function wasCatalogP3RecentlyInjected(transcriptPath) {
 // CATALOG GENERATION (third part)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function buildCatalogPart3(config, quickMode) {
+function buildCatalogPart3(config) {
     const { workflows, commandMapping } = config;
 
     const allEntries = Object.entries(workflows)
@@ -59,17 +57,11 @@ function buildCatalogPart3(config, quickMode) {
 
     for (const [id, wf] of lastThird) {
         const sequence = wf.sequence.map(step => commandMapping[step]?.claude || `/${step}`).join(' \u2192 ');
-        const confirm = wf.confirmFirst ? ' | \u26a0\ufe0f Confirm' : '';
-        lines.push(`**${id}** \u2014 ${wf.name}${confirm}`);
+        lines.push(`**${id}** \u2014 ${wf.name}`);
         lines.push(`  Use: ${wf.whenToUse} | Not for: ${wf.whenNotToUse || 'N/A'} | Steps: ${sequence}`);
     }
 
     lines.push('');
-
-    if (quickMode) {
-        lines.push('> **Quick mode active** - Skip confirmation, execute workflow directly.');
-        lines.push('');
-    }
 
     return lines.join('\n');
 }
@@ -92,22 +84,13 @@ async function main() {
 
         if (!userPrompt.trim()) process.exit(0);
 
-        // Read user config for workflow.confirmationMode
-        const ckConfig = loadConfig({ includeProject: false, includeAssertions: false });
-        const confirmationMode = ckConfig.workflow?.confirmationMode || 'always';
-        if (confirmationMode === 'off') process.exit(0);
-
         const config = loadWorkflowConfig();
         if (!config.settings?.enabled) process.exit(0);
 
         // Transcript dedup — skip if part 3 already in context
         if (wasCatalogP3RecentlyInjected(payload.transcript_path)) process.exit(0);
 
-        const quickMode = confirmationMode === 'never' ||
-            (config.settings.allowOverride && config.settings.overridePrefix &&
-             userPrompt.toLowerCase().trim().startsWith(config.settings.overridePrefix.toLowerCase()));
-
-        const output = buildCatalogPart3(config, quickMode);
+        const output = buildCatalogPart3(config);
         console.log(output);
 
         process.exit(0);

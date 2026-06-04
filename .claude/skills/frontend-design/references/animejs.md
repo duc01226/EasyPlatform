@@ -2,10 +2,10 @@
 
 ## 🚨 CRITICAL: ALWAYS USE ANIME.JS V4 SYNTAX 🚨
 
-**This project uses Anime.js v4.x.x - DO NOT use v3 syntax under any circumstances**
+**Use the configured Anime.js major version from package metadata - DO NOT mix syntax across major versions**
 
 **If you're about to write `import anime from 'animejs'` - STOP!**
-**That's v3. This project uses v4. Use the correct import below.**
+**That syntax belongs to an older major version. Use the configured major version's import style below.**
 
 ## 🚀 Quick Start - Essential Setup
 

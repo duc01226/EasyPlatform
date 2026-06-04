@@ -47,7 +47,7 @@ const CATEGORIES = [
         count: 12,
         color: C.purple,
         why: 'Silently prepends 50–100 KB of domain knowledge (patterns, tokens, spec rules) before each relevant tool call — the AI never has to ask "what conventions does this project use?"',
-        items: ['backend-context', 'frontend-context', 'feature-docs-context', 'test-specs-context']
+        items: ['backend-context', 'frontend-context', 'spec-context', 'design-system-context']
     },
     {
         icon: '🔧',

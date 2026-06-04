@@ -1,7 +1,7 @@
 # Team-wide Codex defaults for this repository.
 # Applied when the project is trusted by Codex.
 model = "gpt-5.5"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "high"
 
 # Shared completion notifications. Codex passes a JSON payload to this command.
 notify = ["node", ".codex/scripts/codex/codex-notify.mjs"]

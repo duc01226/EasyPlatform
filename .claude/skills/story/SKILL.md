@@ -15,12 +15,12 @@ description: '[Project Management] Use when creating user stories from PBIs, sli
 
 ## Quick Summary
 
-**Goal:** Break Product Backlog Items into implementable user stories using vertical slicing, SPIDR splitting, and INVEST criteria.
+**Goal:** Produce sprint-ready, INVEST-valid user stories — tech-agnostic, testable GWT criteria, evidence-cited estimates, dependency-mapped — by breaking Product Backlog Items into implementable stories via vertical slicing and SPIDR splitting, so a team with zero codebase knowledge can implement on any stack.
 
 > **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `project-structure-reference.md` -- project patterns and structure
->       <!-- SYNC:estimation-framework -->
+>     <!-- SYNC:estimation-framework -->
 
 > **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
 >
@@ -212,7 +212,7 @@ description: '[Project Management] Use when creating user stories from PBIs, sli
 
 ## Greenfield Mode
 
-> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+> **Auto-detected:** If no existing codebase is found (no discovered source directories, no manifest files, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the repository must have actual code directories with content.
 
 **When greenfield is detected:**
 
@@ -277,7 +277,7 @@ If running within a workflow (big-feature, greenfield-init, etc.):
 6. Create user stories with GIVEN/WHEN/THEN (min 3 scenarios)
 7. Save to `team-artifacts/pbis/stories/`
 8. **Validate stories** (MANDATORY) - Interview user to confirm slicing, acceptance criteria, and effort
-9. Suggest next: `/tdd-spec` or `/design-spec`
+9. Suggest next: `/spec [mode=tests]` or `/design-spec`
 
 ### Output
 
@@ -295,12 +295,12 @@ When slicing domain-related PBIs, automatically load business context.
 **From PBI frontmatter:**
 
 1. Check `module` field
-2. If missing, detect module from `docs/business-features/` directory names
+2. If missing, detect module from `docs/specs/` directory names
 
 ### Step 2: Load Feature Context
 
 ```
-Glob("docs/business-features/{module}/detailed-features/*.md")
+Glob("docs/specs/{module}/*.md")
 ```
 
 1. Read module README (first 200 lines)
@@ -310,7 +310,7 @@ Glob("docs/business-features/{module}/detailed-features/*.md")
 
 ### Step 3: Apply Domain Vocabulary
 
-Read `docs/project-config.json` modules[] and `docs/business-features/` to detect domain vocabulary per module. Use entity names from feature docs — avoid ambiguous synonyms.
+Read `docs/project-config.json` modules[] and `docs/specs/` to detect domain vocabulary per module. Use entity names from feature docs — avoid ambiguous synonyms.
 
 ### Step 4: Include in Story
 
@@ -422,6 +422,25 @@ Scenario: Unauthorized user cannot {perform action}
 
 ---
 
+## AI-SDD Mandate Gate (M1-M5) — BLOCKING
+
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Every generated story MUST satisfy M1-M5:
+
+- **Separate intent from implementation (M1/M2):** The story narrative and acceptance criteria stay tech-agnostic — describe observable business behavior, no framework/product/language/design-pattern names, no source identifiers. Keep optional hints in `## Technical Notes` and source references in evidence carriers as stack-portable abstract anchors (`[Source: namespace/service/id]`, never `file:line`). Prose follows `docs/project-reference/spec-principles.md` §3.
+- **Logical Requirement ID (M3):** Each story carries a logical requirement ID (`FR-`/`BR-`) inherited from its parent PBI as the PRIMARY citation spine; keep the `[Source: namespace/service/id]` abstract anchor as a SECONDARY, stack-portable carrier — KEEP it, never remove it and never replace it with `file:line` (physical coordinates live only in the provenance sidecar).
+- **Testable GWT/EARS criteria (M4):** Every Given/When/Then or EARS criterion has ONE valid interpretation, observable completion states, and named failure modes — no vague phrasing ("fast", "user-friendly", "handle appropriately") and no implementation details.
+- **Rebuild-from-scratch (M5):** A team with zero codebase knowledge can implement identical behavior on ANY stack from the story alone.
+
+> **[STOP — rework before emitting]** Reject and rework a story when ANY of these failure conditions holds:
+>
+> 1. Tech-specific prose — narrative/criteria name a framework, product, language type, or design-pattern class.
+> 2. Source code reference in prose — a class/method name, file path, or namespace appears outside an evidence carrier.
+> 3. Missing logical ID or evidence — no `FR-`/`BR-` ID, OR a requirement/rule with no `[Source: namespace/service/id]` abstract-anchor evidence (or explicit `TBD (pre-implementation)` marker).
+> 4. Vague acceptance criteria — non-testable, non-observable, or more than one valid interpretation.
+> 5. Not implementable from the artifact alone — a reader would have to read source or guess a rule, limit, role, or failure mode.
+
+---
+
 ## Story Artifact Template
 
 ````markdown
@@ -501,7 +520,9 @@ Then error "{message}"
 **Module:** {module}
 **Related Feature:** {feature doc path}
 **Entities:** {Entity1}, {Entity2}
+**Requirement IDs (M3 — inherited from PBI):** {FR-XXX / BR-XXX — primary citation spine}
 **Business Rules:** {BR-XXX references}
+**Evidence (secondary, stack-portable):** {`[Source: namespace/service/id]` abstract anchor per requirement, or `TBD (pre-implementation)`}
 
 ## UI Wireframe
 
@@ -585,7 +606,7 @@ When the PBI includes a "Production Readiness Concerns" table with "Required" it
 | Solution-speak     | "Use Redis cache" constrains team                 | Outcome: "Results return within 200ms"        |
 | Effort >8          | Won't fit sprint, hard to estimate                | Apply SPIDR, split until ≤8                   |
 | No error scenario  | Missing negative test coverage                    | Always include invalid input handling         |
-| Generic persona    | "As a user" too vague                             | Specific: "As a hiring manager"               |
+| Generic persona    | "As a user" too vague                             | Specific: "As a warehouse operator"           |
 
 ---
 
@@ -649,7 +670,7 @@ After creating user stories, validate with user.
 | **Role Skill** | `business-analyst`                          |
 | **Command**    | `/story`                                    |
 | **Input**      | `/refine` output (PBI)                      |
-| **Next Steps** | `/tdd-spec`, `/design-spec`, `/prioritize` |
+| **Next Steps** | `/spec [mode=tests]`, `/design-spec`, `/prioritize` |
 
 ---
 
@@ -672,29 +693,29 @@ After creating user stories, validate with user.
 
 ```
 
-Example for a "Create Goal" story:
+Example for a "Create Invoice" story:
 ```
 
-[Story US-001] Entity: Create Goal entity with validation rules
-[Story US-001] Command: CreateGoalCommand + Handler
-[Story US-001] DTO: GoalDto with mapping
-[Story US-001] API: POST /api/goals endpoint
-[Story US-001] Component: GoalCreateFormComponent
-[Story US-001] Store: GoalVmStore with create action
-[Story US-001] Test: Integration test for CreateGoalCommand
-[Story US-001] Test: E2E test for goal creation flow
+[Story US-001] Entity: Create Invoice entity with validation rules
+[Story US-001] Command: CreateInvoiceCommand + Handler
+[Story US-001] DTO: InvoiceDto with mapping
+[Story US-001] API: POST /api/invoices endpoint
+[Story US-001] Component: InvoiceCreateFormComponent
+[Story US-001] Store: InvoiceVmStore with create action
+[Story US-001] Test: Integration test for CreateInvoiceCommand
+[Story US-001] Test: E2E test for invoice creation flow
 [Story US-001] Review: Verify against AC scenarios
 
 ```
 
-**Why:** Without systematic task breakdown, stories become monolithic — leading to missed edge cases, incomplete specs, and context loss during implementation.
+**Why:** Without systematic task breakdown, stories become monolithic — missed edge cases, incomplete specs, context loss during implementation.
 
 ---
 
 ## Next Steps
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
-- **"/tdd-spec (Recommended)"** — Generate test specifications from stories
+- **"/spec [mode=tests] (Recommended)"** — Generate test specifications from stories
 - **"/pbi-mockup"** — Generate HTML mockup report from PBI and stories
 - **"/plan-validate"** — If stories need validation against plan
 - **"Skip, continue manually"** — user decides
@@ -752,23 +773,25 @@ Example for a "Create Goal" story:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -812,7 +835,11 @@ Example for a "Create Goal" story:
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** produce sprint-ready, INVEST-valid user stories — tech-agnostic, testable GWT criteria, evidence-cited estimates, dependency-mapped — that a team with zero codebase knowledge can implement on any stack.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST ATTENTION** every story MUST satisfy AI-SDD mandates M1-M5 — tech-agnostic prose, `FR-`/`BR-` logical ID, testable GWT criteria, rebuild-from-scratch — reject and rework on any failure condition — why: stories drive implementation on any stack.
+**MANDATORY IMPORTANT MUST ATTENTION** every story set includes a Story Dependencies table with no orphan stories; SP >8 MUST split, >5 SHOULD split — why: ordering feeds `/prioritize` and `/plan`.
+**MANDATORY IMPORTANT MUST ATTENTION** estimation is bottom-up — phase hours drive `man_days_traditional`, SP DERIVED; compute test_count explicitly, never hand-wave "+tests".
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 ````

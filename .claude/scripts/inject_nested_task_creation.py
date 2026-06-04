@@ -26,51 +26,46 @@ SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
 SKILL_NAMES = [
     # ---- Child skills (multi-phase work that nests under workflow steps) ----
     # Plan family
-    "plan", "plan-analysis", "plan-archive", "plan-ci", "plan-cro",
-    "plan-review", "plan-validate", "planning",
+    "plan", "plan-analysis",
+    "plan-review", "plan-validate",
     # Review family
-    "arch-security-review", "code-review", "integration-test-review",
-    "knowledge-review", "refine-review", "review-architecture",
+    "security-review", "code-review", "integration-test-review",
+    "knowledge-review", "review-architecture",
     "review-artifact", "review-changes", "review-domain-entities",
-    "review-post-task", "sre-review", "story-review", "tdd-spec-review",
+    "review-post-task", "sre-review",
     "why-review",
     # Cook family
     "cook",
     # Code family
-    "code", "code-auto", "code-no-test", "code-parallel",
-    # Feature family
-    "feature", "feature-implementation", "create-feature",
-    # Fix family
-    "fix", "fix-ci", "fix-issue", "fix-logs",
-    "fix-test", "fix-types", "fix-ui",
+    "code",
+    # Fix family (ci/issue/logs/test/ui folded into /fix --target=*)
+    "fix",
     # Investigate / scout family
     "investigate", "debug-investigate", "feature-investigation",
-    "scout", "scout-ext",
+    "scout",
     # Refactor / migration / scaffold
-    "refactoring", "migration", "db-migrate", "scaffold",
+    "refactoring", "db-migrate", "scaffold",
     # Workflow step skills (inner phases)
-    "tdd-spec", "integration-test", "integration-test-verify",
+    # NOTE: `spec` (merged feature-spec router) is intentionally NOT a target —
+    # it carries task-tracking via STEP-TASK-ANCHOR and inherits feature-spec's
+    # lean SYNC set; injecting here would duplicate existing coverage.
+    "integration-test", "integration-test-verify",
     "docs-update", "watzup",
     # ---- Orchestrator skills (workflow-*) ----
-    "workflow-ba-dev-handoff", "workflow-batch-operation", "workflow-big-feature",
-    "workflow-bugfix", "workflow-business-evaluation", "workflow-course-building",
-    "workflow-deployment", "workflow-design", "workflow-design-dev-handoff",
-    "workflow-dev-qa-handoff", "workflow-documentation", "workflow-e2e-from-changes",
-    "workflow-e2e-from-recording", "workflow-e2e-update-ui", "workflow-feature",
-    "workflow-feature-docs", "workflow-feature-with-integration-test",
-    "workflow-full-feature-lifecycle", "workflow-greenfield", "workflow-greenfield-init",
-    "workflow-idea-to-pbi", "workflow-investigation", "workflow-marketing-strategy",
-    "workflow-migration", "workflow-package-upgrade", "workflow-pbi-to-tests",
-    "workflow-performance", "workflow-pm-reporting", "workflow-pre-development",
-    "workflow-product-discovery", "workflow-qa-po-acceptance", "workflow-quality-audit",
-    "workflow-refactor", "workflow-release-prep", "workflow-research",
-    "workflow-review", "workflow-review-changes", "workflow-security-audit",
+    "workflow-big-feature",
+    "workflow-bugfix",
+    "workflow-e2e", "workflow-feature",
+    "workflow-feature-spec",
+    "workflow-greenfield-init",
+    "workflow-idea-to-pbi",
+    "workflow-product-discovery",
+    "workflow-refactor", "workflow-research",
+    "workflow-review-changes",
     "workflow-seed-test-data", "workflow-spec-driven-dev", "workflow-spec-to-pbi",
-    "workflow-sprint-planning", "workflow-sprint-retro", "workflow-tdd-feature",
-    "workflow-test-spec-update", "workflow-test-to-integration", "workflow-test-verify",
-    "workflow-testing", "workflow-verification", "workflow-visualize",
+    "workflow-spec-sync",
+    "workflow-visualize",
     "workflow-write-integration-test",
-    # workflow-end + workflow-start intentionally excluded — they are state-only,
+    # workflow-end + start-workflow intentionally excluded — they are state-only,
     # no multi-phase internal work.
 ]
 

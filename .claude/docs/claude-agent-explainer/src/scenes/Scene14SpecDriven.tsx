@@ -3,59 +3,52 @@ import { C, ProgressBar, ChapterBadge, ScriptBar } from '../components/Shared';
 import { easeOut, staggeredEaseOut } from '../utils/animations';
 
 const SCRIPT_LINES = [
-    'The spec-driven loop completes 6 steps in a single PR: code fix → spec bundle updates with extraction_mode=update → integration tests written for TC IDs → Feature Doc Section 15 updated with CHANGELOG → QA dashboard PRIORITY-INDEX synced → SPEC-CHANGELOG entry creates an auditable record. All in one branch, zero orphaned artifacts.',
-    "The bidirectional traceability is the key lesson: when a developer asks Claude 'what values does EmployeeClassification have?', the AI reads the spec bundle A-domain-model.md — not the source code. If the spec says 2 values but the enum has 3, every future session generates code missing the ExternalWorkforce case. This is why spec-driven development is mandatory, not optional."
+    'The spec-driven loop completes in a single PR: code fix → integration tests written for the TC IDs → Feature Spec Section 8 (Test Specifications) updated, each TC carrying a hidden [Source: ns/service/id] anchor plus an IntegrationTest pointer → Change History entry creates an auditable record. The spec stays tech-free; the code stays canonical. One branch, zero orphaned artifacts.',
+    "The key lesson is the division of truth: a tech-free Feature Spec captures WHY and WHAT — business rules, user stories, acceptance criteria — while code remains the single source of technical truth for HOW. When a developer asks Claude 'what values does EmployeeClassification have?', the answer is the enum in code, never a hand-copied list in a doc that silently drifts. Section 8's TC IDs bind intent to its proving test without duplicating one technical fact. This is why specs are tech-free, not exhaustive."
 ];
 
 const CHAIN = [
     {
         step: '1',
         label: 'Code fix',
-        detail: 'AccountInviteUsersToCompanyRequestResultEventBusConsumer\nEmployeeClassification: Employee / ExternalUser / ExternalWorkforce',
+        detail: 'AccountInviteUsersToCompanyRequestResultEventBusConsumer\nEmployeeClassification enum (3 values) — code is canonical',
         color: C.blue,
         icon: '🐛'
     },
     {
         step: '2',
-        label: 'Spec bundle updated',
-        detail: 'A-domain-model.md  ·  B-business-rules.md\nlast_extracted: 2026-04-21  ·  extraction_mode: update',
-        color: C.purple,
-        icon: '📐'
-    },
-    {
-        step: '3',
         label: 'Integration tests written',
         detail: 'TC-BUSCON-001..005\nP0: EmployeeClassification · gender crash\nP1: case-insensitive gender · CountryCallingCode',
         color: C.green,
         icon: '🧪'
     },
     {
-        step: '4',
-        label: 'Feature doc Section 15 updated',
-        detail: 'README.EmployeeInvite.md §15  ·  CHANGELOG v1.1.0\n[Trait("TestSpec", "TC-BUSCON-001")] bidirectional link',
+        step: '3',
+        label: 'Feature Spec §8 updated',
+        detail: 'README.EmployeeInvite.md §8 — Test Specifications (tech-free)\nTC-BUSCON-001: [Source: event/employee-invite/classification]\nIntegrationTest: EmployeeInviteTests::ClassifiesExternalWorkforce',
         color: C.amber,
         icon: '📋'
     },
     {
-        step: '5',
-        label: 'QA dashboard synced',
-        detail: 'PRIORITY-INDEX.md v1.6 → v1.7\nP0 section + P1 section  ·  evidence → test method name',
-        color: C.cyan,
-        icon: '📊'
+        step: '4',
+        label: 'Change History entry',
+        detail: 'README.EmployeeInvite.md ## Change History\nauditable record  ·  business-fact delta only',
+        color: C.purple,
+        icon: '📝'
     },
     {
-        step: '6',
-        label: 'SPEC-CHANGELOG.md entry',
-        detail: 'Wave 3 entry  ·  auditable record\nfuture /spec-discovery runs use incremental diff',
-        color: C.blue,
-        icon: '📝'
+        step: '5',
+        label: 'One branch — zero orphans',
+        detail: 'code + tests + Spec §8 + Change History move together\nno stale spec · no phantom test · no undocumented consumer',
+        color: C.cyan,
+        icon: '🔗'
     }
 ];
 
 const BIDIRECTIONAL = [
-    { left: 'Feature Doc §15', arrow: '→', right: 'TC-BUSCON-001 (spec)', color: C.purple },
-    { left: '[Trait("TestSpec", "TC-BUSCON-001")]', arrow: '→', right: 'Integration test file', color: C.green },
-    { left: 'PRIORITY-INDEX.md', arrow: '→', right: 'evidence: MethodName', color: C.amber }
+    { left: 'Feature Spec §8 · TC-BUSCON-001', arrow: '→', right: 'IntegrationTest: File::Method', color: C.purple },
+    { left: '[Source: ns/service/id] anchor', arrow: '→', right: 'code = technical truth', color: C.green },
+    { left: 'Integration test (Trait TC-ID)', arrow: '→', right: 'proves the business rule', color: C.amber }
 ];
 
 export const Scene14SpecDriven: React.FC = () => {
@@ -143,9 +136,9 @@ export const Scene14SpecDriven: React.FC = () => {
                             BIDIRECTIONAL TRACEABILITY
                         </div>
                         <div style={{ opacity: easeOut(frame, 18, 18), fontSize: 26, fontWeight: 800, color: C.text, lineHeight: 1.2, marginTop: 6 }}>
-                            AI reads the spec,
+                            Tech-free spec.
                             <br />
-                            not the source code.
+                            Canonical code.
                         </div>
                     </div>
 
@@ -186,27 +179,30 @@ export const Scene14SpecDriven: React.FC = () => {
                     >
                         <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, marginBottom: 8 }}>Why this matters for AI accuracy</div>
                         <div style={{ fontSize: 13, color: C.dim, lineHeight: 1.6 }}>
-                            When a developer asks "what values does EmployeeClassification have?", the AI reads{' '}
-                            <span style={{ color: C.text, fontFamily: "'Courier New', monospace" }}>A-domain-model.md</span> — not the source code.
+                            When a developer asks "what values does EmployeeClassification have?", the answer is the{' '}
+                            <span style={{ color: C.text, fontFamily: "'Courier New', monospace" }}>enum in code</span> — the single source of technical truth.
+                            The Feature Spec captures the business <em>rule</em> about classifications, never the literal members.
                         </div>
                         <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, marginTop: 8, fontStyle: 'italic' }}>
-                            A 2-value spec when the enum has 3 values → incorrect code generation, missing ExternalWorkforce handling in every future session.
+                            A doc that hand-copies enum values drifts: 2 listed when code has 3 → every future session misses ExternalWorkforce. Tech-free specs
+                            can't drift — they point at code, they don't duplicate it.
                         </div>
                     </div>
 
                     {/* Without / With comparison */}
                     <div style={{ opacity: easeOut(frame, 96, 18), display: 'flex', gap: 10 }}>
                         <div style={{ flex: 1, background: '#2d0a0a', borderRadius: 10, padding: '12px 14px', borderLeft: `3px solid ${C.red}` }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: C.red, marginBottom: 6 }}>WITHOUT PRIORITY-INDEX</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: C.red, marginBottom: 6 }}>WITHOUT TECH-FREE §8</div>
                             <div style={{ fontSize: 11, color: C.dim, lineHeight: 1.6 }}>
-                                Tests exist in EmployeeHR.IntegrationTests but invisible to harness. /integration-test-review flags "no tests found" — false
-                                negative.
+                                Technical facts copied into prose. Doc and code diverge silently; the spec becomes a second, stale source of truth nobody
+                                trusts.
                             </div>
                         </div>
                         <div style={{ flex: 1, background: `${C.green}0d`, borderRadius: 10, padding: '12px 14px', borderLeft: `3px solid ${C.green}` }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: C.green, marginBottom: 6 }}>WITH PRIORITY-INDEX</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: C.green, marginBottom: 6 }}>WITH TECH-FREE §8</div>
                             <div style={{ fontSize: 11, color: C.dim, lineHeight: 1.6 }}>
-                                TC-BUSCON-001..005 cross-referenceable. P0 coverage verified. Future sessions modifying the bus consumer find tests instantly.
+                                TC-BUSCON-001..005 carry [Source: ns/service/id] + IntegrationTest pointers. Section 8 is canonical, not derived. Code stays the
+                                one technical truth.
                             </div>
                         </div>
                     </div>

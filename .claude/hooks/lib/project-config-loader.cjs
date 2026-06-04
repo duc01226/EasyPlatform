@@ -68,46 +68,66 @@ function loadProjectConfig() {
     return _cache;
 }
 
-// Portability path tokens emitted in workflows.json (description + injectContext).
-// Resolved to concrete project roots at each runtime's load boundary so the AI
-// never receives a literal `{configured-...}` token.
-const SPEC_ROOT_TOKEN = /\{configured-engineering-spec-root\}/g;
-const FEATURE_ROOT_TOKEN = /\{configured-feature-doc-root\}/g;
-
-/**
- * Strip trailing slashes from a configured root path.
- * Tokens are always authored as `{configured-...-root}/...` (the slash follows the
- * token), and config values carry a trailing slash (e.g. "docs/specs/"), so the
- * resolved value MUST drop its trailing slash — otherwise `docs/specs//{system}`.
- * @param {string} p
- * @returns {string}
- */
-function stripTrailingSlash(p) {
-    return typeof p === 'string' ? p.replace(/\/+$/, '') : p;
-}
-
 /**
  * Resolve portability path tokens in workflow text destined for the AI.
- * Substitutes `{configured-engineering-spec-root}` and `{configured-feature-doc-root}`
- * with the project's configured roots (workflowPatterns.engineeringSpecRoot /
- * .featureDocPath), trailing slash stripped.
+ * Spec artifacts have a fixed portable home: docs/specs/.
  *
  * Single source of truth — the Codex mirror generator
  * (.claude/scripts/codex/sync-context-workflows.mjs) requires THIS function so both
- * runtimes resolve identically. Keep token set changes here only.
+ * runtimes resolve identically.
  *
  * @param {string} text - raw workflow text (description / injectContext)
  * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
- * @returns {string} text with tokens resolved (input returned unchanged when non-string)
+ * @returns {string} input text unchanged when string; input returned unchanged otherwise
  */
 function resolvePortabilityTokens(text, config) {
     if (typeof text !== 'string' || !text) return text;
-    const wp = (config || loadProjectConfig()).workflowPatterns || {};
-    const specRoot = stripTrailingSlash(wp.engineeringSpecRoot || 'docs/specs');
-    const featureRoot = stripTrailingSlash(wp.featureDocPath || 'docs/business-features');
-    return text
-        .replace(SPEC_ROOT_TOKEN, () => specRoot)
-        .replace(FEATURE_ROOT_TOKEN, () => featureRoot);
+    void config;
+    return text;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Spec path accessors (fixed portable root)
+//
+// Runtime gates use this helper instead of per-project configuration. The fixed
+// root keeps copied frameworks predictable across projects.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SPEC_DOCS_PATH = 'docs/specs/';
+const DEFAULT_FEATURE_DOC_TEMPLATE = 'docs/templates/detailed-feature-spec-template.md';
+
+function ensureTrailingSlash(p) {
+    return p.endsWith('/') ? p : p + '/';
+}
+
+/**
+ * Fixed feature/spec single-home root, trailing slash GUARANTEED.
+ * @returns {string} e.g. 'docs/specs/'
+ */
+function getSpecDocsPath() {
+    return ensureTrailingSlash(SPEC_DOCS_PATH);
+}
+
+/**
+ * Configured master feature-doc template path (relative repo path).
+ * @returns {string}
+ */
+function getFeatureDocTemplate() {
+    const wp = loadProjectConfig().workflowPatterns || {};
+    return (typeof wp.featureDocTemplate === 'string' && wp.featureDocTemplate.trim()) || DEFAULT_FEATURE_DOC_TEMPLATE;
+}
+
+/**
+ * Case-insensitive RegExp matching the fixed spec root with EITHER path
+ * separator (Windows '\\' or POSIX '/').
+ * @returns {RegExp}
+ */
+function getSpecDocsPathRegex() {
+    const root = getSpecDocsPath().replace(/\/+$/, '');             // 'docs/specs'
+    const escaped = root
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')                     // escape regex metachars (no '/' among them)
+        .replace(/\//g, '[\\\\/]');                                 // each '/' matches either separator
+    return new RegExp(escaped + '[\\\\/]', 'i');
 }
 
 /**
@@ -502,7 +522,7 @@ function generateProjectSummary(config) {
             lines.push('**Workflow Patterns:**');
             for (const p of wpParts) lines.push(`  ${p}`);
         }
-        if (wp.featureDocPath) lines.push(`**Feature Docs:** ${wp.featureDocPath}${wp.featureDocTemplate ? ` (template: ${wp.featureDocTemplate})` : ''}`);
+        if (wp.featureDocTemplate) lines.push(`**Feature Specs:** ${getSpecDocsPath()} (template: ${wp.featureDocTemplate})`);
         if (wp.reviewRulesDoc) lines.push(`**Review Rules:** ${wp.reviewRulesDoc}`);
     }
 
@@ -526,5 +546,8 @@ module.exports = {
     isConfigPopulated,
     isKnowledgePath,
     generateProjectSummary,
-    resolvePortabilityTokens
+    resolvePortabilityTokens,
+    getSpecDocsPath,
+    getFeatureDocTemplate,
+    getSpecDocsPathRegex
 };

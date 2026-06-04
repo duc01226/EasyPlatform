@@ -289,7 +289,7 @@ const winFlagAllowTests = [
     },
     {
         name: 'cd /d D:\\path - should allow (cross-drive change flag)',
-        input: { tool_input: { command: 'cd /d D:\\GitSources\\BravoSuite' } },
+        input: { tool_input: { command: 'cd /d D:\\GitSources\\SampleRepo' } },
         expectBlock: false
     },
     {
@@ -301,7 +301,7 @@ const winFlagAllowTests = [
         name: 'cd /d + dir /b /s chained - should allow (regression: real user report)',
         input: {
             tool_input: {
-                command: 'cd /d D:\\GitSources\\BravoSuite && dir /b /s src\\Services\\Dockerfile & dir /b Bravo-DevStarts\\StartDocker'
+                command: 'cd /d D:\\GitSources\\SampleRepo && dir /b /s src\\Services\\Dockerfile & dir /b Sample-DevStarts\\StartDocker'
             }
         },
         expectBlock: false
@@ -320,6 +320,57 @@ const winFlagAllowTests = [
         name: 'powershell -Command - should allow',
         input: { tool_input: { command: 'powershell /c "Get-ChildItem"' } },
         expectBlock: false
+    },
+    {
+        // Git Bash (MSYS) doubles the leading slash so cmd.exe receives /c.
+        // Regression: real user report — `cmd //c start ...` blocked as path "//c".
+        name: 'cmd //c start (Git Bash doubled-slash flag) - should allow',
+        input: {
+            tool_input: {
+                command: 'cmd //c start "Claude xhigh" pwsh -NoExit -ExecutionPolicy Bypass -File ".ai\\workspace\\dual-ai\\launch-claude.ps1"'
+            }
+        },
+        expectBlock: false
+    },
+    {
+        name: 'cmd //c dir (Git Bash doubled-slash flag) - should allow',
+        input: { tool_input: { command: 'cmd //c dir' } },
+        expectBlock: false
+    }
+];
+
+// =====================================================================
+// cd/pushd navigation exemption — the target of a working-directory change
+// is navigation, not content access, so it is exempt from boundary checks
+// (completes intent of the winToolRe cd/pushd entries). These tests lock the
+// security invariant: ONLY the cd target is exempt; chained content-access
+// commands and `cd` appearing as an argument are still scanned.
+// =====================================================================
+const cdNavigationTests = [
+    {
+        name: 'cd /d to outside drive then read outside file - should block (access not exempt)',
+        input: { tool_input: { command: 'cd /d D:\\Other && type "D:\\Other\\secret.txt"' } },
+        expectBlock: true
+    },
+    {
+        name: 'cd /d to outside then cat /etc/passwd - should block (chained access scanned)',
+        input: { tool_input: { command: 'cd /d D:\\Other; cat /etc/passwd' } },
+        expectBlock: true
+    },
+    {
+        name: 'cd /d quoted space-path target - should allow (navigation exempt)',
+        input: { tool_input: { command: 'cd /d "D:\\New folder\\proj"' } },
+        expectBlock: false
+    },
+    {
+        name: 'pushd outside target - should allow (navigation exempt)',
+        input: { tool_input: { command: 'pushd D:\\GitSources\\SampleRepo' } },
+        expectBlock: false
+    },
+    {
+        name: 'cd as echo argument - should still block (not a real navigation)',
+        input: { tool_input: { command: 'echo cd D:\\Secret\\path' } },
+        expectBlock: true
     }
 ];
 
@@ -356,6 +407,18 @@ const fuzzNonFlagWordPathTests = [
     {
         name: 'cat /foobar (arbitrary, no Win tool) - should block',
         input: { tool_input: { command: 'cat /foobar' } },
+        expectBlock: true
+    },
+    {
+        // Doubled-slash flag skip must NOT exempt //word when no Win tool is present.
+        name: 'cat //foobar (doubled slash, no Win tool) - should block',
+        input: { tool_input: { command: 'cat //foobar' } },
+        expectBlock: true
+    },
+    {
+        // UNC paths have a nested separator → never match the //Flag skip, even with a Win tool.
+        name: 'type //server/share/secret.txt (UNC with Win tool) - should block',
+        input: { tool_input: { command: 'type //server/share/secret.txt' } },
         expectBlock: true
     }
 ];
@@ -607,6 +670,53 @@ const psHereStringTests = [
     }
 ];
 
+// =====================================================================
+// Space-in-project-root regression tests
+// Source: real user report — project at "D:\GitSources\New folder" (space
+// in root). Path-extraction regexes consumed an opening quote but their body
+// class excluded whitespace, truncating "D:/New folder" -> "D:/New". The
+// truncated prefix failed the boundary check -> false-positive BLOCK on every
+// legitimate command. Run with the space-containing root as CLAUDE_PROJECT_DIR.
+// =====================================================================
+const SPACE_ROOT = 'D:/GitSources/New folder';
+const spaceInRootTests = [
+    {
+        name: 'cd into space-containing root (backslash) - should allow',
+        input: { tool_input: { command: 'cd "D:\\GitSources\\New folder"; echo hi' } },
+        expectBlock: false
+    },
+    {
+        name: 'quoted forward-slash space root operand - should allow',
+        input: { tool_input: { command: 'Get-ChildItem -Force -LiteralPath "D:/GitSources/New folder"' } },
+        expectBlock: false
+    },
+    {
+        name: 'cat quoted subdir under space root - should allow',
+        input: { tool_input: { command: 'cat "D:/GitSources/New folder/src/file.txt"' } },
+        expectBlock: false
+    },
+    {
+        name: 'single-quoted subdir under space root - should allow',
+        input: { tool_input: { command: "cat 'D:/GitSources/New folder/a.txt'" } },
+        expectBlock: false
+    },
+    {
+        name: 'redirect to quoted path inside space root - should allow',
+        input: { tool_input: { command: 'echo data > "D:/GitSources/New folder/out.log"' } },
+        expectBlock: false
+    },
+    {
+        name: 'quoted outside path WITH space - should still block',
+        input: { tool_input: { command: 'cat "D:/Other Project/secret.txt"' } },
+        expectBlock: true
+    },
+    {
+        name: 'quoted outside redirect WITH space - should still block',
+        input: { tool_input: { command: 'echo data > "D:/Other Folder/test"' } },
+        expectBlock: true
+    }
+];
+
 // Tests for MCP filesystem tools
 const mcpTests = [
     {
@@ -777,6 +887,7 @@ async function main() {
         ['Block Tests (outside project)', blockTests],
         ['Path Traversal Tests', traversalTests],
         ['Bash Command Tests', bashTests],
+        ['Space-in-Project-Root Regression', spaceInRootTests, { projectDir: SPACE_ROOT }],
         ['Inline Code Tests', inlineCodeTests],
         ['Sed/Awk Pattern Tests', sedAwkTests],
         ['Grep Pattern Tests', grepTests],
@@ -788,6 +899,7 @@ async function main() {
         ['Edge Cases', edgeCaseTests],
         ['Linux Regression (boundary cannot bypass on Linux)', linuxRegressionTests, { env: { CLAUDE_TEST_PLATFORM: 'linux' } }],
         ['Windows Flag Allow (findstr /I, cmd /C, etc.)', winFlagAllowTests, { env: { CLAUDE_TEST_PLATFORM: 'win32' } }],
+        ['cd/pushd Navigation Exemption (navigation-only, access still scanned)', cdNavigationTests, { env: { CLAUDE_TEST_PLATFORM: 'win32' } }],
         ['findstr Pattern Strip', findstrPatternStripTests, { env: { CLAUDE_TEST_PLATFORM: 'win32' } }],
         ['Fuzz: /Word without Win-tool token must block', fuzzNonFlagWordPathTests, { env: { CLAUDE_TEST_PLATFORM: 'win32' } }]
     ];

@@ -184,7 +184,7 @@ Scripts are **optional tooling** - the methodology can be applied without them.
 
 ## Source
 
-Converted from: https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking
+Converted from the upstream Model Context Protocol sequential-thinking server.
 
 Original MCP server by Anthropic (MIT License).
 Skill conversion:

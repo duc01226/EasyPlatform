@@ -19,7 +19,7 @@ description: '[Code Quality] Use when the user asks to enhance documentation, ad
 
 - Proceed only after explicit user approval of the documentation plan — never without it
 - Verify every documented feature against actual code (no assumptions)
-- For business feature docs, use `feature-docs` skill instead
+- For business feature docs, use `spec` skill instead
 - Include practical examples and copy-pasteable code snippets
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -28,7 +28,7 @@ description: '[Code Quality] Use when the user asks to enhance documentation, ad
 
 ## Disambiguation
 
-- For **business feature docs** → use `feature-docs`
+- For **business feature docs** → use `spec`
 - This skill covers **code documentation** and **README files**
 
 # Documentation Enhancement
@@ -70,7 +70,7 @@ Brief description of the project.
 ## Prerequisites
 
 - Node.js >= 18
-- .NET 9 SDK
+- Configured runtime SDK
 
 ## Installation
 
@@ -266,7 +266,7 @@ Every 10 operations:
 
 ## Related
 
-- `feature-docs`
+- `spec`
 - `changelog`
 - `release-notes`
 
@@ -295,6 +295,7 @@ Every 10 operations:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -324,7 +325,7 @@ Every 10 operations:
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-      <!-- /SYNC:evidence-based-reasoning:reminder -->
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 

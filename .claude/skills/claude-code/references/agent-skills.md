@@ -5,6 +5,7 @@ Create, manage, and share Skills to extend Claude's capabilities in Claude Code.
 ## What Are Agent Skills?
 
 Agent Skills are modular capabilities that extend Claude's functionality. Each Skill packages:
+
 - Instructions and procedural knowledge
 - Metadata (name, description)
 - Optional resources (scripts, templates, references)
@@ -14,6 +15,7 @@ Skills are automatically discovered and used by Claude when relevant to the task
 ## Skill Structure
 
 ### Basic Structure
+
 ```
 .claude/skills/
 └── my-skill/
@@ -21,6 +23,7 @@ Skills are automatically discovered and used by Claude when relevant to the task
 ```
 
 ### With Resources
+
 ```
 .claude/skills/
 └── my-skill/
@@ -33,9 +36,11 @@ Skills are automatically discovered and used by Claude when relevant to the task
 ## Creating Skills
 
 ### SKILL.md
+
 Metadata and configuration:
 
 **Metadata's fields:**
+
 - `name`: Unique identifier (kebab-case)
 - `description`: When Claude should activate this skill
 - `version`: Semantic version
@@ -70,70 +75,84 @@ Concrete examples of skill usage.
 ## Best Practices
 
 ### Clear Activation Criteria
+
 Define exactly when the skill should be used:
 
 **Good:**
+
 ```
 Use when creating React components with TypeScript and Tailwind CSS.
 ```
 
 **Bad:**
+
 ```
 Use for frontend development.
 ```
 
 ### Concise Instructions
+
 Focus on essential information, avoid duplication:
 
 **Good:**
+
 ```
-1. Create component file in src/components/
+1. Create component file in `{source-root}/components/`
 2. Use TypeScript interfaces for props
 3. Apply Tailwind classes for styling
 ```
 
 **Bad:**
+
 ```
 First you need to think about creating a component,
 then maybe you should consider...
 ```
 
 ### Actionable Guidance
+
 Provide clear steps Claude can follow:
 
 **Good:**
+
 ```
 Run `npm test` to validate implementation.
 ```
 
 **Bad:**
+
 ```
 You might want to test things.
 ```
 
 ### Include Examples
+
 Show concrete input/output examples:
 
 ```markdown
 ## Examples
 
 Input: "Create button component"
-Output: Creates src/components/Button.tsx with props interface
+Output: Creates `{source-root}/components/Button` with props interface
 ```
 
 ### Scope Limitation
+
 Keep skills focused on specific domains:
 
 **Good:**
+
 - `api-testing` - Testing REST APIs
 - `db-migrations` - Database schema changes
 
 **Bad:**
+
 - `general-development` - Everything
 
 ## Resource Types
 
 ### Scripts (`scripts/`)
+
 Executable code for deterministic tasks:
 
 ```
@@ -144,11 +163,13 @@ scripts/
 ```
 
 **When to use:**
+
 - Repeated code generation
 - Deterministic transformations
 - External tool integrations
 
 ### References (`references/`)
+
 Documentation loaded into context as needed:
 
 ```
@@ -159,12 +180,14 @@ references/
 ```
 
 **When to use:**
+
 - API documentation
 - Database schemas
 - Domain knowledge
 - Detailed workflows
 
 ### Assets (`assets/`)
+
 Files used in output:
 
 ```
@@ -176,6 +199,7 @@ assets/
 ```
 
 **When to use:**
+
 - Templates
 - Boilerplate code
 - Images, icons
@@ -184,34 +208,38 @@ assets/
 ## Using Skills via API
 
 ### TypeScript Example
+
 ```typescript
 import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
+    apiKey: process.env.ANTHROPIC_API_KEY
 });
 
 const response = await client.messages.create({
-  model: 'sonnet',
-  max_tokens: 4096,
-  skills: [
-    {
-      type: 'custom',
-      custom: {
-        name: 'document-creator',
-        description: 'Creates professional documents',
-        instructions: 'Follow corporate style guide...'
-      }
-    }
-  ],
-  messages: [{
-    role: 'user',
-    content: 'Create a project proposal'
-  }]
+    model: 'sonnet',
+    max_tokens: 4096,
+    skills: [
+        {
+            type: 'custom',
+            custom: {
+                name: 'document-creator',
+                description: 'Creates professional documents',
+                instructions: 'Follow corporate style guide...'
+            }
+        }
+    ],
+    messages: [
+        {
+            role: 'user',
+            content: 'Create a project proposal'
+        }
+    ]
 });
 ```
 
 ### Python Example
+
 ```python
 from anthropic import Anthropic
 
@@ -246,6 +274,7 @@ Claude automatically discovers skills:
 3. **Plugin skills**: From installed plugins
 
 Skills are activated when:
+
 - Task matches skill description
 - User explicitly invokes skill
 - Context suggests skill is relevant
@@ -253,16 +282,19 @@ Skills are activated when:
 ## Managing Skills
 
 ### List Skills
+
 ```bash
 claude skills list
 ```
 
 ### Test Skill
+
 ```bash
 claude --skill my-skill "test task"
 ```
 
 ### Share Skill
+
 ```bash
 # Package skill
 cd .claude/skills/my-skill
@@ -273,6 +305,7 @@ tar -czf my-skill.tar.gz .
 ```
 
 ### Install Skill
+
 ```bash
 # Manual installation
 cd .claude/skills/
@@ -284,12 +317,14 @@ tar -xzf my-skill.tar.gz
 ### API Testing Skill
 
 **SKILL.md:**
+
 ```markdown
 ---
 name: api-testing
 description: Test REST APIs with automated requests
 version: 1.0.0
 ---
+
 # API Testing
 
 Test REST APIs with comprehensive validation.
@@ -310,6 +345,7 @@ creating API test suites.
 
 Request: "Test the /users endpoint"
 Actions:
+
 - Read references/api-docs.md for endpoint spec
 - Run scripts/test-api.py --endpoint /users
 - Validate response matches schema
@@ -319,6 +355,7 @@ Actions:
 ### Database Migration Skill
 
 **SKILL.md:**
+
 ```markdown
 ---
 name: db-migrations
@@ -358,6 +395,7 @@ Keep `SKILL.md` concise (<100 lines) by:
 4. **Templates** in assets/
 
 Example structure:
+
 ```markdown
 # My Skill
 
@@ -370,6 +408,7 @@ Clear activation criteria.
 ## Instructions
 
 High-level steps that reference:
+
 - references/detailed-workflow.md
 - scripts/automation.py
 - assets/template.tsx
@@ -378,15 +417,18 @@ High-level steps that reference:
 ## Troubleshooting
 
 ### Skill Not Activating
+
 - Check description specificity
 - Ensure `SKILL.md` has clear activation criteria
 
 ### Resource Not Found
+
 - Verify file paths in `SKILL.md`
 - Check directory structure
 - Use relative paths from skill root
 
 ### Conflicting Skills
+
 - Make descriptions more specific
 - Use unique names
 - Scope skills narrowly

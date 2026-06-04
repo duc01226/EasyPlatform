@@ -38,16 +38,19 @@ Current development workflows, system constraints, scale requirements, and busin
 
 ```
 ./docs
-├── project-structure-reference.md
-├── backend-patterns-reference.md
-├── frontend-patterns-reference.md
-├── code-review-rules.md
-├── integration-test-reference.md
-├── e2e-test-reference.md
-├── scss-styling-guide.md
-├── feature-docs-reference.md
-├── design-system/
-└── business-features/
+├── project-reference/                  # reference docs (patterns, specs system, conventions)
+│   ├── project-structure-reference.md
+│   ├── backend-patterns-reference.md
+│   ├── frontend-patterns-reference.md
+│   ├── code-review-rules.md
+│   ├── integration-test-reference.md
+│   ├── e2e-test-reference.md
+│   ├── scss-styling-guide.md
+│   └── feature-spec-reference.md
+├── adr/                                # architecture decision records
+├── specs/                              # feature specs + test cases
+├── release/
+└── templates/
 ```
 
 ## Your Role
@@ -104,6 +107,7 @@ This command focuses on architectural consultation and strategic guidance. Do no
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

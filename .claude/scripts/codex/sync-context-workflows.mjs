@@ -12,6 +12,25 @@ import {
 
 const rootDir = process.cwd();
 const require = createRequire(import.meta.url);
+
+// CK markers for the Workflow & Skills catalog block. Declared locally (not imported
+// from the builder) so the dedup regex in main() still works when the builder module
+// is absent in a stripped portable Codex tree. TWIN: keep byte-identical with the
+// exports in .claude/scripts/lib/workflow-skills-catalog.cjs.
+const CK_SKILLS_START = "<!-- CK:WORKFLOW-SKILLS -->";
+const CK_SKILLS_END = "<!-- /CK:WORKFLOW-SKILLS -->";
+
+// Resolve the shared catalog builder at RUNTIME from the consuming repo root — never a
+// file-relative `../lib` require, which would escape the portable Codex tree (only
+// .claude/scripts/codex/*.mjs travel). Guarded like prompt-injections.cjs below: if the
+// builder is absent (stripped portable consumer), the skills block is simply omitted.
+function loadCatalogBuilder() {
+  try {
+    return require(path.join(rootDir, ".claude", "scripts", "lib", "workflow-skills-catalog.cjs"));
+  } catch {
+    return null;
+  }
+}
 const workflowsPath = path.join(rootDir, ".claude", "workflows.json");
 const ckConfigPath = path.join(rootDir, ".claude", ".ck.json");
 const claudeInstructionsPath = path.join(rootDir, "CLAUDE.md");
@@ -20,21 +39,10 @@ const agentsPath = path.join(rootDir, "AGENTS.md");
 const sharedSyncInlinePath = path.join(rootDir, ".claude", "skills", "shared", "sync-inline-versions.md");
 const sharedAiSddSyncTags = ["ai-sdd-artifact-contract", "ai-sdd-artifact-contract:reminder"];
 
-const SPEC_ROOT_TOKEN = /\{configured-engineering-spec-root\}/g;
-const FEATURE_ROOT_TOKEN = /\{configured-feature-doc-root\}/g;
-
-function stripTrailingSlash(value) {
-  return typeof value === "string" ? value.replace(/\/+$/, "") : value;
-}
-
 function resolvePortabilityTokensFallback(text, config) {
   if (typeof text !== "string" || !text) return text;
-  const wp = config?.workflowPatterns || {};
-  const specRoot = stripTrailingSlash(wp.engineeringSpecRoot || "docs/specs");
-  const featureRoot = stripTrailingSlash(wp.featureDocPath || "docs/business-features");
-  return text
-    .replace(SPEC_ROOT_TOKEN, () => specRoot)
-    .replace(FEATURE_ROOT_TOKEN, () => featureRoot);
+  void config;
+  return text;
 }
 
 function loadResolvePortabilityTokens() {
@@ -66,8 +74,12 @@ const PROJECT_REFERENCE_GATE_BODY_LINES = [
   "- Read `docs/project-config.json` for project-specific commands, module paths, workflow settings, and doc paths.",
   "- Read `docs/project-reference/docs-index-reference.md` to route to the right project-reference files.",
   "- Read `docs/project-reference/lessons.md` for always-on project guardrails.",
+  "- For spec, test-case, `docs/specs/`, behavior-change, or public-contract work, read the spec routing set named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized.",
+  "- If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.",
   "- For situation-specific work, open the referenced project doc directly; do not rely on prior conversation text as proof that the doc is loaded.",
 ];
+const PROJECT_REFERENCE_GATE_BODY_START = PROJECT_REFERENCE_GATE_BODY_LINES[0];
+const PROJECT_REFERENCE_GATE_BODY_END = PROJECT_REFERENCE_GATE_BODY_LINES.at(-1);
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -135,7 +147,7 @@ function stripProjectReferenceGateSection(contextMd) {
   }
 
   const orphanBodyPattern = new RegExp(
-    `(?:^|\\n)${escapeRegExp(PROJECT_REFERENCE_GATE_BODY_LINES.join("\n"))}(?=\\n(?:## |<!-- [A-Z-]+:START -->)|\\n\\n(?:## |<!-- [A-Z-]+:START -->)|$)`,
+    `(?:^|\\n)${escapeRegExp(PROJECT_REFERENCE_GATE_BODY_START)}\\n[\\s\\S]*?${escapeRegExp(PROJECT_REFERENCE_GATE_BODY_END)}(?=\\n(?:## |<!-- [A-Z-]+:START -->)|\\n\\n(?:## |<!-- [A-Z-]+:START -->)|$)`,
     "g"
   );
   nextText = nextText.replace(orphanBodyPattern, "");
@@ -237,6 +249,31 @@ function safeLine(value) {
   return value.replace(/\r?\n/g, " ").trim();
 }
 
+// Condense a workflow's whenToUse into a short, scannable trigger hint for the
+// Quick Keyword Lookup table. Caps to the first few distinctive clauses so the
+// decision index stays "enough to choose, not a wall of text".
+function extractKeywords(whenToUse, { maxClauses = 3, wordsPerClause = 6, maxLen = 130 } = {}) {
+  if (!whenToUse || typeof whenToUse !== "string") return "";
+  const clauses = whenToUse
+    .split(/[,;]/)
+    .map((c) => c.trim().toLowerCase())
+    .map((c) => c.replace(/^(?:user (?:wants to|reports|has)|wants to|po(?:\/| or )ba wants to|generate|create|after)\s+/i, ""))
+    .map((c) => c.split(/\s+/).slice(0, wordsPerClause).join(" "))
+    .filter((c) => c.length > 2);
+  const picked = [];
+  const seen = new Set();
+  for (const clause of clauses) {
+    if (seen.has(clause)) continue;
+    seen.add(clause);
+    picked.push(clause);
+    if (picked.length >= maxClauses) break;
+  }
+  let out = picked.join(", ");
+  if (out.length > maxLen) out = `${out.slice(0, maxLen).replace(/[\s,]+\S*$/, "")}…`;
+  // Keep table cells single-line and pipe-safe.
+  return out.replace(/\|/g, "\\|");
+}
+
 function toWorkflowEntries(workflows) {
   if (!workflows) return [];
   if (Array.isArray(workflows)) {
@@ -255,17 +292,39 @@ function buildWorkflowSection(workflowEntries) {
   lines.push("## Workflow Protocol (Hookless)");
   lines.push("");
   lines.push("Use this protocol for workflow execution in Codex (no hook dependency):");
-  lines.push("1. Detect: match request against workflow catalog.");
-  lines.push("2. Analyze: choose best-fit workflow and evaluate custom combination if needed.");
-  lines.push('3. Ask: when a workflow match is detected, ask "Which workflow do you want to activate?" with the recommended standard workflow and a custom option before activation.');
-  lines.push("4. Activate: execute selected workflow sequence.");
-  lines.push("5. Tasking: create tasks for each workflow step.");
+  lines.push("1. Detect: execute explicit `$skill`, `$workflow-*`, or `$start-workflow <id>` prompts directly; otherwise match request against workflow catalog and skill list.");
+  lines.push("2. Analyze: choose the best path: direct execution, skill, standard workflow, or custom step combination.");
+  lines.push("3. Auto-select: pick the best path yourself without asking the user to choose between direct/skill/workflow/custom options.");
+  lines.push("4. Activate: execute direct work, invoke the selected skill, start the selected workflow sequence, or run the custom sequence.");
+  lines.push("5. Tasking: create tasks for each workflow/custom/skill step when the selected path has multiple steps.");
   lines.push("6. Execute: run steps in order, validate outputs, and report completion.");
   lines.push("");
   lines.push(`Workflow source: \`.claude/workflows.json\` (${sorted.length} workflows).`);
   lines.push("");
   lines.push("## Workflow Catalog");
   lines.push("");
+
+  // Quick Keyword Lookup — decision-first index so the AI can pick a workflow
+  // without reading every full detail block below. Mirrors the Copilot mirror.
+  const lookupRows = sorted
+    .map(([workflowId, workflow]) => {
+      const hint = extractKeywords(safeLine(workflow?.whenToUse));
+      if (!hint) return null;
+      const name = (safeLine(workflow?.name) || workflowId).replace(/\|/g, "\\|");
+      return `| ${hint} | \`${workflowId}\` | ${name} |`;
+    })
+    .filter(Boolean);
+
+  if (lookupRows.length > 0) {
+    lines.push("### Quick Keyword Lookup (match prompt -> workflow)");
+    lines.push("");
+    lines.push("| If prompt mentions... | Workflow ID | Workflow Name |");
+    lines.push("| --- | --- | --- |");
+    lines.push(...lookupRows);
+    lines.push("");
+    lines.push("### Workflow Details (full sequence + protocol)");
+    lines.push("");
+  }
 
   for (const [workflowId, workflow] of sorted) {
     const name = safeLine(workflow?.name) || workflowId;
@@ -275,11 +334,16 @@ function buildWorkflowSection(workflowEntries) {
     const sequence = Array.isArray(workflow?.sequence) ? workflow.sequence : [];
     const protocol = resolvePortabilityTokens(workflow?.preActions?.injectContext);
 
+    const parallelGroups = Array.isArray(workflow?.parallelGroups) ? workflow.parallelGroups : [];
+
     lines.push(`### ${workflowId} — ${name}`);
     if (description) lines.push(`- Description: ${description}`);
     if (whenToUse) lines.push(`- When To Use: ${whenToUse}`);
     if (whenNotToUse) lines.push(`- When Not To Use: ${whenNotToUse}`);
-    lines.push(`- Sequence: ${sequence.length > 0 ? `\`${sequence.join(" -> ")}\`` : "_none_"}`);
+    lines.push(`- Sequence: ${sequence.length > 0 ? `\`${renderSequenceWithBarriers(sequence, parallelGroups, " -> ", (s) => s)}\`` : "_none_"}`);
+    if (parallelGroups.length > 0) {
+      lines.push(`- Parallel phase = all-return barrier: spawn ALL members together (one message); advance only after EVERY member returns (a skipped conditional member, marked \`*\`, counts as returned). A sub-agent completion advances the step identically to an inline call.`);
+    }
     lines.push("");
     lines.push("Protocol:");
     lines.push("```text");
@@ -288,7 +352,58 @@ function buildWorkflowSection(workflowEntries) {
     lines.push("");
   }
 
+  // Composable step-skills index. Only the skills section is emitted here — the Quick
+  // Keyword Lookup + Workflow Details above already cover workflows/steps/routing, so a
+  // second workflow index would duplicate. Emitted with CK markers so the CLAUDE.md
+  // mirror copy can strip it in main() (avoids AGENTS.md double-bake).
+  const catalog = loadCatalogBuilder();
+  if (catalog) {
+    lines.push(CK_SKILLS_START);
+    lines.push(catalog.buildWorkflowSkillsCatalog({ rootDir, sections: ["skills"] }));
+    lines.push(CK_SKILLS_END);
+    lines.push("");
+  }
+
   return lines.join("\n");
+}
+
+// TWIN: keep byte-identical with the same-named helpers in
+// .claude/scripts/sync-copilot-workflows.cjs — the rendered `[parallel ⇉ all-return barrier: ...]`
+// token MUST be identical across the Codex and Copilot mirrors (cross-mirror parity is the portability proof).
+// Renders `sequence` collapsing every declared parallelGroup's members into one barrier token at the
+// position of the group's first-encountered member; other members are skipped. Non-grouped steps render
+// via renderStep unchanged, so workflows without parallelGroups are byte-identical to the old flat join.
+function renderBarrierToken(group) {
+  const members = Array.isArray(group?.members) ? group.members : [];
+  const conditional = new Set(Array.isArray(group?.conditionalMembers) ? group.conditionalMembers : []);
+  const rendered = members.map((m) => (conditional.has(m) ? `${m}*` : m)).join(", ");
+  return `[parallel ⇉ all-return barrier: ${rendered}]`;
+}
+
+function renderSequenceWithBarriers(sequence, parallelGroups, separator, renderStep) {
+  const steps = Array.isArray(sequence) ? sequence : [];
+  const groups = Array.isArray(parallelGroups) ? parallelGroups : [];
+  if (groups.length === 0) {
+    return steps.map(renderStep).join(separator);
+  }
+  const memberToGroup = new Map();
+  for (const group of groups) {
+    const members = Array.isArray(group?.members) ? group.members : [];
+    for (const member of members) memberToGroup.set(member, group);
+  }
+  const emittedGroupIds = new Set();
+  const parts = [];
+  for (const step of steps) {
+    const group = memberToGroup.get(step);
+    if (!group) {
+      parts.push(renderStep(step));
+      continue;
+    }
+    if (emittedGroupIds.has(group.id)) continue;
+    emittedGroupIds.add(group.id);
+    parts.push(renderBarrierToken(group));
+  }
+  return parts.join(separator);
 }
 
 function normalizePromptProtocolText(text) {
@@ -339,17 +454,21 @@ async function buildPromptProtocolMirrorSection(headingSuffix = "Auto-Synced") {
   try {
     const promptInjections = require(promptInjectionsPath);
     const ckConfig = await loadCkConfig();
-    const mode = ckConfig?.workflow?.confirmationMode;
-    const confirmationMode = mode === "never" ? "never" : "always";
     const portability = ckConfig?.portability ?? {};
     const sections = [
       normalizePromptProtocolText(
-        promptInjections.injectWorkflowProtocol?.("", confirmationMode, portability)
+        promptInjections.injectWorkflowProtocol?.("", portability)
       ),
       normalizePromptProtocolText(await buildSharedAiSddMarkerSection()),
       normalizePromptProtocolText(
         "**[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes."
       ),
+      // Universal rules the Claude hooks inject at runtime (mindset, system-lesson mistake
+      // prevention, learned lessons). Baked here because Codex has no hooks. skipDedup=true
+      // forces the full block; the runtime transcript-dedup arg is irrelevant at sync time.
+      normalizePromptProtocolText(promptInjections.injectCriticalContext?.("", true)),
+      normalizePromptProtocolText(promptInjections.injectAiMistakePrevention?.("", true)),
+      normalizePromptProtocolText(promptInjections.injectLessons?.("", true)),
     ].filter(Boolean);
 
     if (sections.length === 0) {
@@ -426,9 +545,19 @@ async function main() {
   );
   contextMd = `${contextMd.trimEnd()}\n`;
 
-  const claudeInstructionsMd = claudeInstructionsRaw
+  // Strip the workflow-skills catalog from the CLAUDE.md mirror copy: the Codex
+  // context block (above) already carries it, and AGENTS.md = claudeMirror + contextMirror.
+  // Without this strip the catalog would appear twice in AGENTS.md.
+  const claudeInstructionsDeduped =
+    typeof claudeInstructionsRaw === "string"
+      ? claudeInstructionsRaw.replace(
+          new RegExp(`${CK_SKILLS_START}[\\s\\S]*?${CK_SKILLS_END}\\n?`, "m"),
+          ""
+        )
+      : claudeInstructionsRaw;
+  const claudeInstructionsMd = claudeInstructionsDeduped
     ? rewriteClaudeToolTermsForCodex(
-        rewriteSkillMentionsForCodex(claudeInstructionsRaw, skillReferenceMap)
+        rewriteSkillMentionsForCodex(claudeInstructionsDeduped, skillReferenceMap)
       )
     : null;
 

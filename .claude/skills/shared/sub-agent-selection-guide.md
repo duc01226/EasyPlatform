@@ -18,8 +18,8 @@
 | E2E tests                     | `e2e-runner`               | Test generation, visual baselines, TC spec traceability       |
 | Integration tests             | `integration-tester`       | Microservice test gen, TC traceability, CQRS test patterns    |
 | Frontend UI/UX                | `ui-ux-designer`           | Component design, accessibility, responsive, design tokens    |
-| Backend feature               | `backend-developer`        | .NET/backend implementation (CQRS, repos, events)             |
-| Frontend feature              | `frontend-developer`       | Angular/React/Vue implementation                              |
+| Backend feature               | `backend-developer`        | Configured backend implementation (CQRS, repos, events)       |
+| Frontend feature              | `frontend-developer`       | Configured frontend implementation                            |
 | Parallel fullstack            | `fullstack-developer`      | Multi-file parallel phases with file ownership boundaries     |
 | Git operations                | `git-manager`              | Commit, push, PR — conventional commits, hook enforcement     |
 | Research                      | `researcher`               | Web research, library docs, technology evaluation             |
@@ -30,7 +30,6 @@
 | Journal/retro                 | `journal-writer`           | Lessons, retrospectives, post-mortem logging                  |
 | Product/backlog               | `product-owner`            | PBI, prioritization, sprint planning                          |
 | Project status                | `project-manager`          | Progress tracking, cross-agent consolidation                  |
-| QC/compliance                 | `qc-specialist`            | Quality gates, audit trails, compliance checklists            |
 | Spec compliance               | `spec-compliance-reviewer` | Verify implementation matches spec (before code-reviewer)     |
 | Codebase exploration          | `Explore`                  | Fast file/symbol search across large codebases                |
 | Business analysis             | `business-analyst`         | Requirements, user stories, acceptance criteria               |

@@ -312,4 +312,4 @@ wrangler rollback [version-id]
 
 - Advanced Patterns: https://developers.cloudflare.com/workers/examples/
 - Durable Objects: https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-- Performance: https://developers.cloudflare.com/workers/platform/limits/
+- Performance limits: consult the current Cloudflare Workers limits documentation.

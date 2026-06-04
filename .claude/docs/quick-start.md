@@ -168,7 +168,7 @@ For more troubleshooting, see [troubleshooting.md](./troubleshooting.md).
 The system that learns from your interactions:
 
 1. **`/learn` skill**: Appends lessons to `docs/project-reference/lessons.md`
-2. **`lessons-injector.cjs` hook**: Injects lessons on prompts and edits
+2. **Lessons injection**: `prompt-context-assembler.cjs` injects lessons on prompts; `buildLessons` (via `pretooluse-ctx-edit-tail.cjs`) injects them on edits
 
 ### Workflow Detection
 

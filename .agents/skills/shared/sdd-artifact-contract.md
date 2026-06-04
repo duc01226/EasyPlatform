@@ -23,6 +23,7 @@ Project-neutral shared contract for AI spec-driven development. This is the home
 - MUST ATTENTION require traceability from requirement -> design decision -> task -> TC/test -> code evidence -> docs/spec update.
 - MUST ATTENTION mark unknowns explicitly; never let AI guess missing acceptance criteria, invariants, auth rules, or failure behavior.
 - MUST ATTENTION treat tests as intent guards: each TC names the business intent/invariant and fails when that intent breaks.
+- MUST ATTENTION exclude migration code from test-writing scope: schema/data migrations are one-time execution paths, not core application logic.
 - MUST ATTENTION allow any supported AI tool to plan, implement, review, or verify when it has this contract, synced context, and local project docs.
 - NEVER edit generated agent mirrors directly; update `.claude` source and sync later.
 
@@ -55,6 +56,28 @@ Common maturity levels:
 
 Move toward spec-as-source only after drift metrics, traceability, and verification are consistently healthy.
 
+## AI-SDD Mandates (M1-M6) — BLOCKING
+
+Every AI-SDD artifact (feature doc, engineering spec, test spec, PBI/story, idea) MUST satisfy mandates M1-M6 or be REJECTED and reworked. These are hard gates, not guidance. Create/update skills MUST NOT emit violations; review/gate skills MUST FAIL on them (M6). Each mandate points to the detailed gate/section that defines its full checklist, so this block stays a stable named anchor rather than a duplicate of the gates below.
+
+| ID     | Mandate                      | Rule (one line)                                                                                                                                                                                                                                                                     | Full checklist in            |
+| ------ | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **M1** | Tech-agnostic prose          | Narrative, headings, summaries, tables, glossaries MUST NOT name frameworks, products, language-native types, or product/design-pattern class names.                                                                                                                                | Tech-Agnostic Spec Writing   |
+| **M2** | No source code in prose      | Prose MUST NOT contain class/method names, file paths, namespaces, or language constructs; use business operation names. Source identifiers live only inside evidence carriers.                                                                                                     | Tech-Agnostic Spec Writing   |
+| **M3** | Abstract-IDs-first trace     | Logical IDs (FR-/BR-/OP-/TC-) are the PRIMARY citation spine in prose; evidence rides on stack-portable abstract anchors (`[Source: namespace/service/id]`), NEVER physical `file:line`. Physical coordinates live only in the provenance sidecar. Taxonomy: `shared/tc-format.md`. | Traceability Schema          |
+| **M4** | AI-implementability          | One valid interpretation per requirement; observable completion states; named failure modes; no hallucination bait.                                                                                                                                                                 | AI-Implementability Gate     |
+| **M5** | Rebuild-from-scratch purpose | A competent team with zero codebase knowledge can re-implement identical business behavior on ANY stack from the artifact alone.                                                                                                                                                    | Implementation-Complete Gate |
+| **M6** | Review enforces M1-M5        | Every review/gate skill MUST check M1-M5 and FAIL with the specific mandate ID(s) violated and a concrete reason.                                                                                                                                                                   | Enforcement Roles            |
+
+**Carrier carve-outs (NOT M1/M2 violations):** `[Source: ...]`, `**Evidence**`, `**IntegrationTest**` fields; YAML frontmatter keys; ` ```mermaid ``` ` blocks; and dedicated rebuild/reimplementation guides. Source identifiers are permitted ONLY inside these carriers — never in narrative prose. — why: quarantining real references keeps prose stack-portable while preserving an auditable code link.
+
+### Enforcement Roles
+
+- **Create/update skills** (feature docs, engineering specs, test specs, PBIs/stories, ideas, doc sync) MUST enforce M1-M5 at authoring time. If an artifact would violate any mandate, STOP and rework before emitting it.
+- **Review/gate skills** (feature-doc review, spec review, story/PBI review, challenge, artifact review, change review, definition-of-ready gate) MUST CHECK M1-M5 and FAIL with the violated mandate ID(s) and a specific reason. A review that passes an M1-M5 violation is itself defective (M6).
+
+> Project repositories MAY extend these mandates with local banned-token lists, evidence formats, and ID namespaces in `docs/project-reference/**`, but MUST NOT weaken M1-M6.
+
 ## Core Cycle
 
 Every non-trivial code-changing workflow follows:
@@ -67,16 +90,16 @@ Bugfix workflows use the same cycle with a root-cause gate before regression tes
 
 ## Required Artifacts
 
-| Artifact                     | Required For                       | Minimum Content                                                                             |
-| ---------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
-| Requirements or bug analysis | Feature, PBI, bugfix               | User/business intent, scope, explicit non-goals, assumptions, unresolved clarifications     |
-| Acceptance criteria          | Feature, PBI, bugfix               | Given/When/Then, EARS, or equivalent testable conditions                                    |
-| Design/plan                  | Code-changing work                 | chosen approach, rejected alternatives, risk, affected files, verification strategy         |
-| Task graph                   | Multi-step work                    | independently verifiable tasks, dependencies, safe parallelization notes                    |
-| Test specs                   | Behavior change                    | TC IDs, intent/invariant guarded, priority, evidence, expected failure mode                 |
-| Implementation evidence      | Code changes                       | files changed, source references, verification output                                       |
-| Docs/spec sync               | Behavior or public contract change | updated canonical spec/docs, dashboard sync if applicable, skipped reason if not applicable |
-| Handoff/closeout             | All workflows                      | remaining risks, commands run, artifacts updated                                            |
+| Artifact                     | Required For                       | Minimum Content                                                                                     |
+| ---------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Requirements or bug analysis | Feature, PBI, bugfix               | User/business intent, scope, explicit non-goals, assumptions, unresolved clarifications             |
+| Acceptance criteria          | Feature, PBI, bugfix               | Given/When/Then, EARS, or equivalent testable conditions                                            |
+| Design/plan                  | Code-changing work                 | chosen approach, rejected alternatives, risk, affected files, verification strategy                 |
+| Task graph                   | Multi-step work                    | independently verifiable tasks, dependencies, safe parallelization notes                            |
+| Test specs                   | Behavior change                    | TC IDs, intent/invariant guarded, priority, evidence, expected failure mode                         |
+| Implementation evidence      | Code changes                       | files changed, source references, verification output                                               |
+| Docs/spec sync               | Behavior or public contract change | updated canonical spec/docs, §8 TC ↔ test-code sync if applicable, skipped reason if not applicable |
+| Handoff/closeout             | All workflows                      | remaining risks, commands run, artifacts updated                                                    |
 
 ## Requirement Quality
 
@@ -122,6 +145,7 @@ Minimum checklist:
 - every integration event maps to a publish/consume/idempotency TC where applicable
 - bugfix specs include preservation TCs for behavior that must not regress
 - every test names the business intent or invariant it protects and would fail if that intent breaks
+- migration code is excluded from test-writing scope because schema/data migrations are one-time execution paths, not core application logic
 
 ## AI-Implementability Gate
 
@@ -143,22 +167,24 @@ Ambiguity test: Could two engineers produce different implementations while both
 
 ## Tech-Agnostic Spec Writing
 
-Specs intended to survive stack migration should describe business behavior, not implementation mechanics.
+**[BLOCKING — M1/M2]** Specs MUST describe business behavior, not implementation mechanics. Narrative prose MUST NOT leak implementation identifiers; framework/product names, language-native types, and class/method/file-path references are permitted ONLY inside evidence carriers (`[Source: ...]`, `**Evidence**`, `**IntegrationTest**`), YAML frontmatter, and ` ```mermaid ``` ` blocks. Authoring tools FAIL the artifact on any prose leak; review tools FAIL the review (M6).
 
 Avoid implementation leakage:
 
-| Avoid                                         | Prefer                                                                  |
-| --------------------------------------------- | ----------------------------------------------------------------------- |
-| language-native types                         | business-level primitive types and constraints                          |
-| ORM, repository, framework, or mediator names | persistence layer, operation handler, or project-approved business term |
-| message-broker product names                  | message bus or event bus                                                |
-| auth-provider product names                   | identity provider, authentication token, role, or permission            |
-| class names and file paths in prose           | business operation names; file paths only in evidence fields            |
-| caller-specific exceptions                    | caller-agnostic business rules                                          |
+| Avoid                                         | Prefer                                                                                   |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| language-native types                         | business-level primitive types and constraints                                           |
+| ORM, repository, framework, or mediator names | persistence layer, operation handler, or project-approved business term                  |
+| message-broker product names                  | message bus or event bus                                                                 |
+| auth-provider product names                   | identity provider, authentication token, role, or permission                             |
+| class names and file paths in prose           | business operation names; abstract anchors (`namespace/service/id`) in evidence carriers |
+| caller-specific exceptions                    | caller-agnostic business rules                                                           |
 
 Public API paths, product-specific role names, domain terms, or externally visible contract names are acceptable when they are part of the product contract.
 
 ## Traceability Schema
+
+**[M3 — Abstract-IDs-first]** Logical identifiers (`RequirementId`/`Invariant`, `TC`) are the PRIMARY citation spine and MUST appear in requirement and rule statements. `Source` evidence uses stack-portable abstract anchors (`[Source: namespace/service/id]`), NEVER physical `file:line` — an anchor names WHICH logical artifact implements/verifies behavior, never WHAT the requirement is, and stays out of narrative prose. Physical coordinates are recoverable only via the provenance sidecar (`docs/specs/.sdd-provenance-map.jsonl`, created on demand; anchor taxonomy in `shared/tc-format.md`). Keeping the logical spine + abstract anchors stable lets specs survive a stack migration with zero re-pointing.
 
 Each requirement or bugfix invariant should trace through this chain:
 
@@ -175,9 +201,11 @@ Minimum trace fields:
 - `Docs`
 - `Status`
 
+**TC ↔ Test cardinality is one-to-many.** A `TC` is a business / user-story acceptance scenario written tech-agnostic; it is verified by **one or more** `Test` methods (integration and/or unit, across many components and services), all joined to the TC by the test-spec annotation. The `Test` trace field therefore holds a SET, and a TC is covered when ≥1 annotation-tagged test passes. NEVER split, narrow, or technicalize a business TC to force a 1:1 map to a single test method or production class — that breaks M1 (tech-agnostic) and M5 (rebuild-from-business-intent) and turns the spec into a code mirror instead of a business contract. Conversely, each test maps to exactly one primary TC. (Canonical cardinality contract: `shared/tc-format.md` → TC ↔ Test Code Cardinality.)
+
 Use `N/A` only with evidence:
 
-`N/A - <reason>; Evidence: <file:line or command output>`
+`N/A - <reason>; Evidence: <command output or [Source: namespace/service/id]>`
 
 ## Code-To-Spec And Spec-To-Code
 
@@ -259,7 +287,7 @@ This contract defines generic artifact mechanics. Before applying it in a reposi
 2. Read `docs/project-reference/docs-index-reference.md` to discover the relevant reference docs.
 3. Read only the reference docs needed for the active task.
 4. Follow the target repository's canonical spec/test/doc owners.
-5. If the repository has no initialized project config/docs, run the local init/config workflow or ask the user to initialize it before applying project-specific rules.
+5. If `docs/project-config.json` or a required project-reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before applying project-specific rules.
 
 ## Source Practices
 
@@ -279,5 +307,5 @@ Useful external references to re-check when changing the contract:
 - MUST ATTENTION shared reusable principles live in `.claude` and sync to generated agent mirrors; project-reference docs only add local repository extensions.
 - MUST ATTENTION core cycle is `spec -> plan -> tasks -> implement -> verify -> update spec/docs`.
 - MUST ATTENTION specs, tests, and code stay traceable through requirements, decisions, tasks, TCs, evidence, and docs.
-- MUST ATTENTION when adapting this contract, read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`; do not hardcode project rules here.
+- MUST ATTENTION when adapting this contract, read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`; if either file or a required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route before ordinary project-specific work.
 - NEVER edit `.agents`, `.codex`, or `AGENTS.md` mirrors directly; source change belongs in `.claude`, sync happens later.

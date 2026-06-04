@@ -22,50 +22,34 @@ SKILL_NAMES = [
     # Plan family
     "plan",
     "plan-analysis",
-    "plan-archive",
-    "plan-ci",
-    "plan-cro",
     "plan-review",
     "plan-validate",
-    "planning",
     # Review family
-    "arch-security-review",
+    "security-review",
     "code-review",
     "integration-test-review",
     "knowledge-review",
-    "refine-review",
     "review-architecture",
     "review-artifact",
     "review-changes",
     "review-domain-entities",
     "review-post-task",
     "sre-review",
-    "story-review",
-    "tdd-spec-review",
     "why-review",
-    "workflow-review",
     "workflow-review-changes",
     # Cook family
     "cook",
-    # Feature family
-    "feature",
-    "feature-implementation",
-    # Bugfix / fix family
+    # Bugfix / fix family (ci/issue/logs/test/ui folded into /fix --target=*)
     "fix",
-    "fix-ci",
-    "fix-issue",
-    "fix-logs",
-    "fix-test",
-    "fix-types",
-    "fix-ui",
     # Investigate / scout family
     "investigate",
     "debug-investigate",
     "feature-investigation",
     "scout",
-    "scout-ext",
     # workflow-write-integration-test step skills (those not already listed)
-    "tdd-spec",
+    # NOTE: `spec` (merged feature-spec router) is intentionally NOT a target —
+    # it carries task-tracking via STEP-TASK-ANCHOR and writes its TC registry
+    # to docs/specs/; the external-report block would duplicate that contract.
     "integration-test",
     "integration-test-verify",
     "docs-update",

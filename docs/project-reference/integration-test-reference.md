@@ -1,18 +1,20 @@
-<!-- Last scanned: 2026-04-03 -->
+<!-- Last scanned: 2026-06-12 -->
 
 # Integration Test Reference
 
-**CRITICAL: Subcutaneous CQRS tests through real DI (no HTTP), against live infrastructure. MUST extend `TextSnippetIntegrationTestBase` (or service-specific equivalent). MUST use `[Collection]` attribute. MUST use `IntegrationTestHelper.UniqueName()` for test data.**
+**CRITICAL: Two test styles — (1) DEFAULT subcutaneous CQRS through real DI (no HTTP), and (2) HTTP-level via `WebApplicationFactory<Program>` (for Autofac-DI services or full-pipeline assertions). Subcutaneous tests MUST extend `TextSnippetIntegrationTestBase` (or service-specific equivalent). ALL tests MUST use a `[Collection]` attribute and `IntegrationTestHelper.UniqueName()` for test data.**
+
+**Purpose:** Let any AI/dev write a correct, isolated, repeatable integration test on the first try — pick the right base class + style, assert real DB state via polling (not smoke), and keep tests collision-free across runs. — why: integration tests run against live infra with no DB reset; wrong base class, missing `[Collection]`, or non-unique data silently corrupts other tests.
 
 ## Test Architecture
 
-| Aspect      | Value                                                                                    |
-| ----------- | ---------------------------------------------------------------------------------------- |
-| Framework   | xUnit 2.9.3 + FluentAssertions 7.0.0 + Xunit.DependencyInjection 9.7.0                   |
-| Approach    | Subcutaneous — real CQRS pipeline, real DI, real database, NO HTTP                       |
-| Module init | Mirrors production: `module.InitializeAsync()` in fixture `InitializeAsync()`            |
-| Isolation   | xUnit `[Collection]` ensures sequential execution per service fixture                    |
-| Config      | `appsettings.json` in test project — separate DB name (`TextSnippetApi_IntegrationTest`) |
+| Aspect      | Value                                                                                                                                                                            |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework   | xUnit 2.9.3 + FluentAssertions 7.0.0 + Microsoft.AspNetCore.Mvc.Testing 9.0.4 (`Xunit.DependencyInjection` 9.7.0 transitive via Easy.Platform.AutomationTest)                    |
+| Approach    | Subcutaneous — real CQRS pipeline, real DI, real database, NO HTTP (default). HTTP-level path available via `WebApplicationFactory<Program>` (see WebApplicationFactory Testing) |
+| Module init | Mirrors production: `module.InitializeAsync()` in fixture `InitializeAsync()`                                                                                                    |
+| Isolation   | xUnit `[Collection]` — sequential within a collection; 3 independent collections (CQRS / WebAppFactory / CrossService) run in parallel across, serial within                     |
+| Config      | `appsettings.json` in test project — separate DB name (`TextSnippetApi_IntegrationTest`)                                                                                         |
 
 **Infrastructure MUST be running:**
 
@@ -63,7 +65,7 @@ await ExecuteWithServicesAsync(async sp => {
 // Simple background job (same file :328)
 await ExecuteBackgroundJobAsync<TestRecurringBackgroundJobExecutor>();
 
-// Parameterized background job (same file :346)
+// Parameterized background job (same file :347)
 await ExecuteBackgroundJobWithParamAsync<DemoBatchScrollingBackgroundJobExecutor>(batchParam);
 
 // Validation failure assertion (same file :370)
@@ -86,14 +88,14 @@ MUST override in service-specific base class, NEVER in individual test classes:
 ### Fixture Setup Pattern
 
 ```csharp
-// 1. Fixture class (src/Backend/.../TextSnippetIntegrationTestFixture.cs:14)
+// 1. Fixture class (src/Backend/.../TextSnippetIntegrationTestFixture.cs:13)
 public class TextSnippetIntegrationTestFixture
-    : PlatformServiceIntegrationTestFixture<TextSnippetApiAspNetCoreModule>
+    : PlatformServiceIntegrationTestFixture<TextSnippetIntegrationTestAspNetCoreModule>
 {
     public override string FallbackAspCoreEnvironmentValue() => "Development";
 }
 
-// 2. Collection definition (same file :27)
+// 2. Collection definition (same file :25)
 [CollectionDefinition(Name)]
 public class TextSnippetIntegrationTestCollection
     : ICollectionFixture<TextSnippetIntegrationTestFixture>
@@ -101,6 +103,8 @@ public class TextSnippetIntegrationTestCollection
     public const string Name = "TextSnippet Integration Tests";
 }
 ```
+
+The fixture uses `TextSnippetIntegrationTestAspNetCoreModule` (`TextSnippetIntegrationTestAspNetCoreModule.cs:10`), a test subclass of `TextSnippetApiAspNetCoreModule` that overrides `EnableAutomaticDataSeedingOnInit => false` (`:15`) so fixture init does not run the slow production data-seeding pass. A no-op `Startup` class (`Startup.cs:15`) satisfies the `Xunit.DependencyInjection` `[assembly: StartupType]` requirement without registering services — tests use the `ICollectionFixture` pattern instead.
 
 ### User Context Factory
 
@@ -117,15 +121,55 @@ var result = await ExecuteCommandAsync(command, userContext: admin);
 
 ### Cross-Service Fixture
 
+`PlatformCrossServiceFixture` (`src/Platform/.../PlatformCrossServiceFixture.cs:42`) composes multiple service fixtures. A subclass overrides `GetFixtureTypes()` (`:69`); the ctor instantiates each via `Activator.CreateInstance` after an `IsPlatformServiceFixture` check (`:47,:122`). `InitializeAsync()` (`:96`) inits fixtures sequentially in declared order; `Dispose` (`:110`) disposes in reverse. **Isolation:** `PlatformServiceIntegrationTestBase<TModule>.ServiceProvider` is `static` keyed on the closed generic type, so distinct module subtypes = distinct DI containers.
+
+Concrete POC (`src/Backend/.../CrossService/`): two marker modules `TextSnippetCrossServiceProducerModule` / `TextSnippetCrossServiceConsumerModule` (`TextSnippetCrossServiceModules.cs:17,:27`) — both extend `TextSnippetIntegrationTestAspNetCoreModule` (two containers, same physical DB in the POC).
+
 ```csharp
-// src/Platform/.../PlatformCrossServiceFixture.cs:42
-public class MyCrossServiceFixture : PlatformCrossServiceFixture
+// src/Backend/.../CrossService/TextSnippetCrossServiceFixtures.cs:50
+public class TextSnippetCrossServiceFixture : PlatformCrossServiceFixture
 {
     protected override IReadOnlyList<Type> GetFixtureTypes()
-        => [typeof(AccountsFixture), typeof(GrowthFixture)];
-    public IServiceProvider AccountsProvider => GetFixture<AccountsFixture>().ServiceProvider;
+        => [typeof(TextSnippetCrossServiceProducerFixture), typeof(TextSnippetCrossServiceConsumerFixture)];
+    public IServiceProvider ProducerServiceProvider => /* :58 */ ...;
+    public IServiceProvider ConsumerServiceProvider => /* :64 */ ...;
 }
+
+// Test (TextSnippetCrossServiceIntegrationTests.cs:59, [Trait("Category","CrossService")])
+// Producer writes via its own scope; consumer polls its DB:
+await IntegrationTestHelper.WaitUntilAsync(/* assert consumer-side state */,
+    timeout: TimeSpan.FromSeconds(10), pollingInterval: TimeSpan.FromMilliseconds(500));
+// Isolation invariant (TC-EXAMPLE-030, :113): ProducerSP.Should().NotBeSameAs(ConsumerSP)
 ```
+
+## WebApplicationFactory Testing (HTTP-level)
+
+Use this path when a service registers Autofac-DI services (incompatible with the Microsoft-DI-only subcutaneous fixture) OR when you must assert the full HTTP pipeline (routing, serialization, middleware, exception→status mapping). Files: `src/Backend/.../WebAppFactory/`.
+
+```csharp
+// TextSnippetWebApplicationFactory.cs:40 — boots the REAL Program.cs over in-memory TestServer
+internal sealed class TextSnippetWebApplicationFactory : WebApplicationFactory<Program>
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+        builder.ConfigureAppConfiguration((_, configBuilder) =>  // :46 — WAF forces Postgres
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["UseDbType"] = "Postgres",
+            }));
+        builder.UseUrls();                              // :54 — no port binding (in-memory)
+    }
+}
+
+// Test (TextSnippetWebAppFactoryIntegrationTests.cs:36, [Trait("Category","WebAppFactory")])
+var client = fixture.CreateClient();                    // AllowAutoRedirect=false (:65)
+var response = await client.PostAsync("/api/...", content);
+response.StatusCode.Should().Be(HttpStatusCode.OK);
+// API uses PascalCase JSON (useCamelCaseNaming:false) — set JsonSerializerOptions.PropertyNamingPolicy=null (:41-46)
+```
+
+WAF runs the production module so auto data-seeding stays enabled (accepted as lightweight). It uses its own collection `TextSnippetWebAppFactoryCollection` (`:103`). Contrast: the subcutaneous fixture bypasses HTTP and runs in-process CQRS with seeding disabled.
 
 ## Test Helpers
 
@@ -201,7 +245,17 @@ protected override IPlatformRepository<TEntity, string> ResolveRepository<TEntit
 - MUST use `IntegrationTestHelper.UniqueName()` for all string fields that might collide
 - Use `Ulid.NewUlid().ToString()` for explicit entity IDs when needed for assertions
 - Seed data in fixture's `SeedDataAsync()` with idempotent FirstOrDefault + create-if-missing
-- Test data accumulates across runs (no automatic cleanup)
+- Test data accumulates across runs (no automatic cleanup) — uniqueness-by-guid avoids cross-run collision
+- DEFAULT: create test data via the application command path (`ExecuteCommandAsync(new SaveSnippetTextCommand{...})`) — exercises the real use case; DTOs own mapping
+- EXCEPTION — direct repository create/update as setup is allowed ONLY when the application command cannot produce the required setup state, and the test docstring MUST cite the specific constraint. Observed valid cases: background/paged jobs need pre-existing rows with controlled IDs + empty `FullText` matching the job filter (`BatchScrollingJobIntegrationTests.cs:63`); `TextSnippetEntityDto` has no `CreatedByUserId` so permission tests seed it directly (`UserContextIntegrationTests.cs:106`); `MapToUpdateExistingEntity` skips `CategoryId` so a CategoryId-changed event needs a direct repo update (`SnippetEntityEventHandlerIntegrationTests.cs:118`). These are idempotent real-repository seeds, NOT business-rule bypasses — never use direct setup to create states the use case forbids.
+
+### Validation-Failure Assertions
+
+PREFER the platform helper `AssertValidationFailsAsync(action, expectedMessageSubstring?)` (`PlatformServiceIntegrationTestBase.cs:370`) — it catches any `IPlatformValidationException` (command-level OR domain-level). The narrower `Assert.ThrowsAsync<PlatformValidationException>` (legacy sites `SaveSnippetTextCommandIntegrationTests.cs:69`, `SaveSnippetCategoryCommandIntegrationTests.cs:64`) can false-negative when validation is enforced at the domain layer — migrate to the helper.
+
+### Entity Event Handler Tests
+
+Assert side-effects on the RELATED entity, not just the source command (`SnippetEntityEventHandlerIntegrationTests.cs`, `[Trait("Category","EventHandler")]`): e.g. updating a snippet's CategoryId should touch the Category's `LastUpdatedDate` (`relatedEntity.LastUpdatedDate.Should().BeAfter(before)`). Handlers run synchronously in tests (`EnableInboxEventBusMessage=false`), so no polling is needed for the same-process side-effect — but cross-process effects still use `WaitUntilAsync`.
 
 ## Running Tests
 
@@ -209,14 +263,23 @@ protected override IPlatformRepository<TEntity, string> ResolveRepository<TEntit
 # Run all integration tests
 dotnet test src/Backend/PlatformExampleApp.IntegrationTests/
 
-# Filter by trait
+# Filter by trait — Category values: Authorization, BackgroundJob, Command,
+# CrossService, EventHandler, MessageBus, Query, WebAppFactory
+# (enumerate current set: grep -rhoE '\[Trait\("Category", *"[^"]+"\)\]' --include='*.cs' .)
 dotnet test --filter "Category=Command"
 dotnet test --filter "Category=Query"
 dotnet test --filter "Category=BackgroundJob"
 dotnet test --filter "Category=MessageBus"
+dotnet test --filter "Category=Authorization"
+dotnet test --filter "Category=EventHandler"
+dotnet test --filter "Category=CrossService"
+dotnet test --filter "Category=WebAppFactory"
 
 # Run specific test class
 dotnet test --filter "FullyQualifiedName~SaveSnippetTextCommandIntegrationTests"
+
+# Trace a spec to its test: each test method carries [Trait("TestSpec","TC-EXAMPLE-NNN")]
+dotnet test --filter "TestSpec=TC-EXAMPLE-026"
 ```
 
 ## New Test Quickstart
@@ -250,8 +313,9 @@ public class YourCommandIntegrationTests : TextSnippetIntegrationTestBase
     public async Task YourCommand_WhenInvalid_ShouldFailValidation()
     {
         var command = new YourCommand { Name = "" };
-        await Assert.ThrowsAsync<PlatformValidationException>(
-            () => ExecuteCommandAsync(command));
+        // PREFER the platform helper — catches command- OR domain-level validation
+        await AssertValidationFailsAsync(
+            () => ExecuteCommandAsync(command), "expected message substring");
     }
 }
 ```
@@ -279,4 +343,4 @@ var pagedParam = new PlatformApplicationPagedBackgroundJobParam<DemoPagedParam>
 await ExecuteBackgroundJobWithParamAsync<DemoPagedBackgroundJobExecutor>(pagedParam);
 ```
 
-**CRITICAL: Subcutaneous CQRS tests through real DI. MUST extend service-specific test base. MUST use `[Collection]` attribute. MUST use `IntegrationTestHelper.UniqueName()`. Batch/Paged jobs MUST pass explicit params (master mode silently does nothing in tests).**
+**CRITICAL: DEFAULT path = subcutaneous CQRS through real DI (no HTTP); HTTP-level path = `WebApplicationFactory<Program>` for Autofac-DI services or full-pipeline assertions. MUST extend service-specific test base (subcutaneous). MUST use a `[Collection]` attribute. MUST use `IntegrationTestHelper.UniqueName()`. PREFER `AssertValidationFailsAsync` over raw `Assert.ThrowsAsync<PlatformValidationException>`. Batch/Paged jobs MUST pass explicit params (master mode silently does nothing in tests). Direct repo setup is a documented EXCEPTION — only when the command path cannot produce the state, with a docstring citing the constraint.**

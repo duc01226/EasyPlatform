@@ -26,21 +26,21 @@ disable-model-invocation: true
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /code -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /plan -> /plan-review -> /plan-validate -> /why-review -> /code -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
-Activate the `refactor` workflow. Run `/workflow-start refactor` with the user's prompt as context.
+Activate the `workflow-refactor` workflow. Run `/start-workflow workflow-refactor` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /why-review → /plan-review → /why-review → /plan-validate → /why-review → /code → /tdd-spec → /why-review → /tdd-spec-review → /tdd-spec [direction=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /feature-investigation → /plan → /plan-review → /plan-validate → /why-review → /code → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /spec [mode=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /sre-review → /changelog → /test → /docs-update → /workflow-end → /watzup
 
-> **[PERFORMANCE-SDD ROUTE]** If this refactor is performance-driven (query optimization, caching, reducing allocations, improving throughput), activate `/workflow-performance` for benchmark evidence while preserving observable behavior. Do not use performance/refactor scope to bypass spec, test, or docs sync when behavior, public contract, SLA, performance constraint, state timing boundary, or docs/spec boundary changes. Pure behavior-preserving optimization may skip new TC/integration-test generation only with explicit skip reason and invariant-preservation evidence. `/test` remains mandatory.
+> **[PERFORMANCE-SDD ROUTE]** If this refactor is performance-driven (query optimization, caching, reducing allocations, improving throughput), run `/performance-review` for benchmark evidence while preserving observable behavior. Do not use performance/refactor scope to bypass spec, test, or docs sync when behavior, public contract, SLA, performance constraint, state timing boundary, or docs/spec boundary changes. Pure behavior-preserving optimization may skip new TC/integration-test generation only with explicit skip reason and invariant-preservation evidence. `/test` remains mandatory.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /why-review -> /plan-review -> /why-review -> /plan-validate -> /why-review -> /code -> /tdd-spec -> /why-review -> /tdd-spec-review -> /tdd-spec [direction=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /scout -> /feature-investigation -> /plan -> /plan-review -> /plan-validate -> /why-review -> /code -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /sre-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
 
 <!-- SYNC:nested-task-creation -->
 
@@ -78,6 +78,7 @@ Activate the `refactor` workflow. Run `/workflow-start refactor` with the user's
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

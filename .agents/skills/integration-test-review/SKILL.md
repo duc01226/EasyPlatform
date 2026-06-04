@@ -1,6 +1,6 @@
 ---
 name: integration-test-review
-description: '[Code Quality] Use when you need to review integration tests for assertion quality, bug protection, repeatability, and test-spec traceability.'
+description: '[Code Quality] Use when you need to review integration tests for assertion quality, bug protection, repeatability, and test-spec traceability — AND verify the review target (changed production code) has test coverage (integration-first) with spec↔test↔code alignment.'
 ---
 
 > Codex compatibility note:
@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,14 +56,18 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Review integration tests for real bug-protection value, correct data assertions, infinite repeatability, spec alignment.
+**Goal:** Ensure the review target (changed production code) is covered by tests that protect real business behavior with correct data assertions, infinite repeatability, and spec alignment — verifying every behavior change has test coverage (integration-first, unit fallback) so that specs ↔ tests ↔ code stay aligned (spec-driven development).
 
-**Scope:** All test files in uncommitted changes (default), or user-specified scope.
+**Scope:** The FULL change set — changed production code AND changed test files — from uncommitted changes (default), user-specified files, or a user-specified diff (branch/PR). The review target is never "just the test files".
 
-**Workflow:** Phase 0 Detect → Collect → 6-Gate Review → Spec Cross-Check → Report → Fix issues → Fresh sub-agent re-review → Build & verify → If fail: investigate + fix plan
+**Workflow:** Phase 0 Detect → Collect → Coverage Map (Gate 7) → 7-Gate Review → Spec Cross-Check → Report → validate findings → fix validated issues (including writing missing tests) → full re-review after fixes → Build & verify → If fail: investigate + fix plan
 
 **Non-negotiable rules:**
 
+- MUST collect BOTH changed production code AND changed test files — coverage of the change is part of the review, not an optional extra
+- MUST verify every behavior-changing production change maps to a covering test — integration test FIRST; unit test ONLY with recorded justification (Gate 7)
+- MUST treat an uncovered changed behavior as a HIGH finding minimum — fix by writing the missing test in Phase 5, not just reporting
+- MUST verify spec↔test↔code alignment for changed code, not only for existing tests — a changed behavior with no TC in spec docs is a spec gap finding
 - MUST read handler/service source BEFORE judging any test assertions
 - MUST flag smoke-only tests (no-exception-only checks) as FAIL
 - MUST flag DI-resolution-only tests (resolve + not-null) as FAIL — NOT integration tests
@@ -80,18 +88,17 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 > DRY, SRP, abstraction, design patterns, naming, layering, tests — every
 > technique exists to serve one goal: **making the next change cheaper**.
 
-When evaluating code, a refactor, a test, or an abstraction, ask:
-**does this make the next change cheaper or more expensive?**
+When evaluating code, refactor, test, or abstraction, ask:
+**does this make next change cheaper or more expensive?**
 
-- Reject "best practices" that raise change cost (premature abstraction,
+- Reject "best practices" raising change cost (premature abstraction,
   speculative generality, leaky indirection, ceremony without payoff).
-- Name the real enemies in findings: **coupling, hidden state, duplicated
+- Name real enemies in findings: **coupling, hidden state, duplicated
   knowledge, unclear intent, irreversible decisions exposed too early**.
-- A simpler design that is easy to change beats a sophisticated design that
-  isn't.
+- Simpler design easy to change beats sophisticated design that isn't.
 
 Apply this lens **before** invoking any specific rule, pattern, or checklist
-below — if a downstream rule would raise change cost, this principle wins.
+below — if downstream rule would raise change cost, this principle wins.
 
 ---
 
@@ -99,19 +106,24 @@ below — if a downstream rule would raise change cost, this principle wins.
 
 Classify BEFORE any gate review. Route wrong → waste all effort.
 
-| Signal                  | Classification      | Action                                                              |
-| ----------------------- | ------------------- | ------------------------------------------------------------------- |
-| No user-specified files | Uncommitted changes | Run `git diff --name-only` to collect scope                         |
-| User specifies files    | Explicit scope      | Use provided list directly                                          |
-| 10+ test files          | Large scope         | Parallel sub-agents grouped by module                               |
-| 1-9 test files          | Normal scope        | Single review pass                                                  |
-| 0 test files in changes | No tests            | Report gap — ask user for explicit scope via a direct user question |
+| Signal                                       | Classification      | Action                                                                                                         |
+| -------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| No user-specified files                      | Uncommitted changes | Run `git diff --name-only` (staged + unstaged) to collect scope — BOTH production code AND test files          |
+| User specifies files/diff (branch, PR, etc.) | Explicit scope      | Use provided list/diff directly — still split into production vs test files                                    |
+| 10+ test files                               | Large scope         | Parallel sub-agents grouped by module                                                                          |
+| 1-9 test files                               | Normal scope        | Single review pass                                                                                             |
+| 0 test files BUT production code changed     | Coverage-gap review | Gate 7 IS the review — map every changed behavior to existing tests; uncovered behavior = finding. Do NOT exit |
+| 0 changes at all                             | Empty target        | Ask user for explicit scope via a direct user question                                                         |
+
+**The review target is the CHANGE, not the test files.** Changed test files are reviewed for quality (Gates 1-6); changed production files are checked for coverage and spec alignment (Gate 7). Both halves are mandatory.
 
 **Search for test reference docs** — NEVER hardcode paths. Grep for `integration-test-reference`, `test-patterns`, `integration-test-guide` near changed test files to discover project-specific conventions before starting gate review.
 
 ---
 
-## The 6 Quality Gates
+## The 7 Quality Gates
+
+> Gates 1-6 apply per changed/target TEST file. Gate 7 applies to the CHANGE SET — every behavior-changing production file must map to a covering test and a spec TC.
 
 ### Gate 1: Assertion Value — "Would this catch the bug?"
 
@@ -173,24 +185,24 @@ Classify BEFORE any gate review. Route wrong → waste all effort.
 
 > **Think:** Can I trace TC-XXX-NNN from test annotation → spec docs → feature docs in one unbroken chain?
 
-**PASS:** Test has spec annotation linking to TC ID. TC ID exists in spec docs. Method name matches TC.
+**PASS:** Test has a `TestSpec` annotation linking to a TC ID that exists in spec docs. The test method name need **NOT** match the TC, and **many test methods may legitimately carry the same TC** (one business TC → many tests across components/services — the join key is the test-spec annotation, not the method name; see `tc-format.md` → TC ↔ Test Code Cardinality).
 
-**FAIL (WARN, not BLOCK):** Missing annotation, orphaned TC ID, or spec says "Planned" but test exists.
+**FAIL (WARN, not BLOCK):** Missing annotation, orphaned TC ID (annotation points to a TC absent from spec docs), or spec says "Planned" but test exists. **NOT a finding:** several tests sharing one TC, or a method name that differs from the TC — those are the expected one-to-many shape.
 
 ### Gate 6: Three-Way Sync — "Do test, code, and docs agree?"
 
 > **Think:** Have I read ALL 3 sources? Where exactly do they disagree? Does evidence support a verdict, or must I escalate?
 
-Hardest gate. Identify discrepancy, classify using source-of-truth hierarchy — NEVER silently pick winner.
+Hardest gate. Identify discrepancy, classify using source-of-truth hierarchy — NEVER silently pick winner. Always state the resolved source with `file:line` evidence — why: a winner picked without evidence hides bugs.
 
 #### Source of Truth Hierarchy (highest → lowest)
 
-| Priority    | Source                                                   | Why                                                                |
-| ----------- | -------------------------------------------------------- | ------------------------------------------------------------------ |
-| 1 (Highest) | Feature docs (`docs/business-features/…/Section 15 TCs`) | Business intent — defines WHAT must happen                         |
-| 2           | Test-spec docs (`docs/specs/`)                           | TC scenarios derived from feature docs — defines HOW to verify     |
-| 3           | Implementation code (handler/entity/service)             | What WAS built — may reflect intentional evolution not yet in docs |
-| 4 (Lowest)  | Integration test code                                    | What IS being tested — most likely to be wrong or stale            |
+| Priority    | Source                                       | Why                                                                |
+| ----------- | -------------------------------------------- | ------------------------------------------------------------------ |
+| 1 (Highest) | Feature docs (`docs/specs/…/Section 8 TCs`)  | Business intent — defines WHAT must happen                         |
+| 2           | Test-spec docs (`docs/specs/`)               | TC scenarios derived from feature docs — defines HOW to verify     |
+| 3           | Implementation code (handler/entity/service) | What WAS built — may reflect intentional evolution not yet in docs |
+| 4 (Lowest)  | Integration test code                        | What IS being tested — most likely to be wrong or stale            |
 
 **Rule:** Docs win over code. Code wins over tests. Feature docs win over test-spec docs.
 
@@ -215,7 +227,7 @@ Hardest gate. Identify discrepancy, classify using source-of-truth hierarchy —
 
 #### Verify Each Source
 
-1. **Feature doc:** Read Section 15 — scenario title, preconditions, steps, expected results
+1. **Feature doc:** Read Section 8 — scenario title, preconditions, steps, expected results
 2. **Test-spec doc:** Find same TC — Planned/Implemented status and described scenario
 3. **Implementation code:** Read handler/entity/service — fields written, events fired, validation rules
 4. **Test code:** Read test method — arrange, execute, assert
@@ -224,33 +236,79 @@ Compare each pair with `file:line` evidence for each source.
 
 **PASS:** All three agree. **WARN:** Minor wording, same semantic. **FAIL:** Semantic disagreement on field/rule/outcome. **ESCALATE:** All three differ and evidence cannot resolve.
 
+### Gate 7: Change Coverage — "Is every changed behavior tested AND specced?"
+
+> **Think:** For each behavior-changing production file in the review target, which test would FAIL if this change were broken? If NONE → coverage gap. Which spec TC describes this behavior? If NONE → spec gap.
+
+This gate makes the skill verify the REVIEW TARGET has coverage — not merely review tests that happen to exist.
+
+**Protocol:**
+
+1. **Collect changed production files** from the review target (Phase 0 scope): commands, queries, handlers, entities, services, event handlers, consumers, controllers, frontend services/stores with business logic.
+2. **Filter to behavior-changing files.** Exclude: migrations (one-time execution paths), generated code, pure renames/formatting, config-only, DI registration-only changes. Record each exclusion with reason.
+3. **Find covering tests** per changed behavior — use graph (`query tests_for <fn>`, `trace <file> --direction both`) plus grep for the handler/class name under test directories. A test COVERS a change only if it exercises the changed path and asserts the changed outcome — read the test; name match alone is NOT coverage.
+4. **Apply test-type priority:** integration test FIRST (subcutaneous CQRS through real DI, data-state assertions). Unit test is an acceptable fallback ONLY when integration coverage is infeasible (pure function/calculation logic, no observable data state, no DI path) — record the justification per fallback.
+5. **Check spec alignment for the change:** each changed behavior must map to a TC in spec docs (feature doc Section 8 / test-spec docs). New behavior with no TC, or changed behavior whose TC still describes the OLD behavior → spec gap (spec-driven development violation).
+
+**Coverage Mapping Table (MANDATORY output):**
+
+> Rows are keyed by **changed production behavior**, not by TC. A behavior is COVERED when **≥1** covering test exercises it — list ALL covering tests in the column when several apply. One `Spec TC` may legitimately appear across multiple rows and be covered by many tests (one TC → many tests, 1:N). Do NOT expect or require one test per TC, and do NOT flag a TC reused across rows as a duplicate (see `tc-format.md` → TC ↔ Test Code Cardinality).
+
+| Changed File / Behavior | Spec TC            | Covering Test(s)                          | Test Type                          | Verdict                                 |
+| ----------------------- | ------------------ | ----------------------------------------- | ---------------------------------- | --------------------------------------- |
+| {file:line — behavior}  | TC-X-NNN / MISSING | {test file:method}[, …one or more] / NONE | integration / unit (justified) / — | COVERED / COVERED-UNIT / GAP / SPEC-GAP |
+
+**Verdicts:**
+
+- **COVERED** — integration test exercises the changed path with data-state assertions
+- **COVERED-UNIT** — unit test covers it, integration infeasible, justification recorded
+- **GAP (FAIL)** — no test would fail if the change broke. Severity: HIGH minimum; CRITICAL when the change touches authorization, money, or data integrity. Fix in Phase 5 by WRITING the missing test (integration-first) — reporting alone does not clear this gate
+- **SPEC-GAP (FAIL)** — behavior has no TC or a stale TC in spec docs. Fix via `$spec [mode=tests]` UPDATE (and `$spec` when business rules changed)
+
+**FAIL:**
+
+- Changed handler/command/entity rule with zero covering test
+- Unit test substituted where an integration test is feasible, with no justification
+- Test exists but does not assert the changed outcome (stale coverage counted as coverage)
+- New/changed behavior absent from spec docs, or TC describing superseded behavior
+
+**Explicit user waiver** (recorded verbatim in the report with the user's reason) is the ONLY alternative to closing a GAP.
+
 ---
 
 ## Review Protocol (9 Phases)
 
 Use task tracking for EACH phase before starting.
 
-**Phase 1 — Collect:** Categorize changed files: new (full review), modified (changed methods only), new projects (infra + samples).
+**Phase 1 — Collect:** Split the change set: production files (Gate 7 coverage targets) vs test files. Categorize test files: new (full review), modified (changed methods only), new projects (infra + samples). Categorize production files: behavior-changing vs excluded (with reason).
 
-**Phase 2 — Gate Review:** Per file, apply all 6 gates. Record per-file verdict table:
+**Phase 2 — Gate Review:** Per test file, apply Gates 1-6. Apply Gate 7 once across the change set and produce the Coverage Mapping Table. Record per-file verdict table:
 
-| Gate               | Verdict                 | Evidence    |
-| ------------------ | ----------------------- | ----------- |
-| 1. Assertion Value | PASS/FAIL               | {file:line} |
-| 2. Data State      | PASS/FAIL               | {file:line} |
-| 3. Repeatability   | PASS/FAIL               | {file:line} |
-| 4. Domain Logic    | PASS/FAIL               | {file:line} |
-| 5. Traceability    | PASS/WARN               | {file:line} |
-| 6. Three-Way Sync  | PASS/WARN/FAIL/ESCALATE | {file:line} |
+| Gate                                | Verdict                           | Evidence                 |
+| ----------------------------------- | --------------------------------- | ------------------------ |
+| 1. Assertion Value                  | PASS/FAIL                         | {file:line}              |
+| 2. Data State                       | PASS/FAIL                         | {file:line}              |
+| 3. Repeatability                    | PASS/FAIL                         | {file:line}              |
+| 4. Domain Logic                     | PASS/FAIL                         | {file:line}              |
+| 5. Traceability                     | PASS/WARN                         | {file:line}              |
+| 6. Three-Way Sync                   | PASS/WARN/FAIL/ESCALATE           | {file:line}              |
+| 7. Change Coverage (per change set) | COVERED/COVERED-UNIT/GAP/SPEC-GAP | {coverage mapping table} |
 
-**Phase 3 — Spec Cross-Check + Three-Way Diff:** For each TC ID in code:
+**Phase 3 — Spec Cross-Check + Three-Way Diff:** Two directions — from tests AND from changed code.
 
-1. Verify TC entry exists in both `docs/business-features/` (Section 15) and `docs/specs/`
+For each TC ID in code:
+
+1. Verify TC entry exists in both `docs/specs/` (Section 8) and `docs/specs/`
 2. Read what TC describes in each doc
 3. Read what implementation code actually does
 4. Read what test asserts
 5. Classify conflict pattern (Gate 6 table) and record action
 6. Flag gaps both directions: TC in code but not in docs, or "Implemented" TC in docs but no test found
+
+For each behavior-changing production file in the review target (reverse direction — spec-driven development check):
+
+7. Verify a TC exists describing the changed behavior; if the TC still describes the OLD behavior, flag it as stale (route to `$spec [mode=tests]` UPDATE)
+8. New behavior with no TC anywhere → SPEC-GAP finding (Gate 7); recommend `$spec [mode=tests]` (and `$spec` when business rules changed)
 
 **Phase 4 — Initial Report:** Write to `plans/reports/integration-test-review-{date}-{slug}.md`
 
@@ -258,29 +316,30 @@ Use task tracking for EACH phase before starting.
 
 1. Prioritize: CRITICAL → HIGH → MEDIUM
 2. Per fix: read handler source, understand domain logic, write/fix assertion
-3. NEVER weaken assertions to make tests pass — fix root cause (timing, data, setup) instead
-4. Re-read changed files to verify fix correctness
-5. Record each fix with `file:line` under `## Fixes Applied`
+3. **Gate 7 GAP fixes:** WRITE the missing test — integration test first (route through `$integration-test` patterns); unit test only with recorded justification. SPEC-GAP fixes: run `$spec [mode=tests]` UPDATE to add/correct the TC before or alongside writing the test
+4. NEVER weaken assertions to make tests pass — fix root cause (timing, data, setup) instead
+5. Re-read changed files to verify fix correctness
+6. Record each fix with `file:line` under `## Fixes Applied`
 
-**Phase 6 — Fresh Sub-Agent Re-Review (MANDATORY):**
+**Phase 6 — Validated Fix + Full Re-Review (MANDATORY when fixes are applied):**
 
-After Phase 5 fixes, spawn fresh `code-reviewer` sub-agents (parallel by module for 10+ files; single agent otherwise) using canonical Agent template from `SYNC:review-protocol-injection`. Each sub-agent re-reads ALL target test files from scratch with ZERO memory of Phase 2/5. When constructing Agent call prompt:
+Do not spawn a fresh reviewer to re-review the same findings before validation/fix. After Phase 5 applies validated fixes, run a full fresh review over the current test scope. When that review uses sub-agents, spawn fresh `code-reviewer` sub-agents (parallel by module for 10+ files; single agent otherwise) using canonical Agent template from `SYNC:review-protocol-injection`. Each sub-agent re-reads ALL target test files from scratch with ZERO memory of Phase 2/5. When constructing Agent call prompt:
 
 1. Copy Agent call shape from `SYNC:review-protocol-injection` template verbatim
 2. Set `agent_type: "code-reviewer"`
 3. Embed full verbatim body of 9 SYNC blocks (all present inline in this skill file): `SYNC:evidence-based-reasoning`, `SYNC:bug-detection`, `SYNC:design-patterns-quality`, `SYNC:logic-and-intention-review`, `SYNC:test-spec-verification`, `SYNC:fix-layer-accountability`, `SYNC:rationalization-prevention`, `SYNC:graph-assisted-investigation`, `SYNC:understand-code-first`
-4. Task field: `"Review integration tests in {file-list} against 6 quality gates: assertion value, data state, infinite repeatability, domain logic, test-spec traceability, three-way sync. Read handler source AND feature docs before judging assertions. Flag smoke-only, existence-only, dead assertions, and repository-created invalid test data as FAIL. Source-of-truth hierarchy: feature docs > test-spec docs > implementation code > test code. Classify every disagreement as: wrong test, code bug, stale docs, or escalate (three-way conflict)."`
+4. Task field: `"Run a full fresh integration-test review pass over {file-list} after validated fixes were applied. Review against 7 quality gates: assertion value, data state, infinite repeatability, domain logic, test-spec traceability, three-way sync, change coverage. Read handler source AND feature docs before judging assertions. Flag smoke-only, existence-only, dead assertions, and repository-created invalid test data as FAIL. Gate 7: map every behavior-changing production file in {changed-production-file-list} to a covering test (integration-first; unit fallback requires justification) AND a spec TC — uncovered behavior is a HIGH finding minimum, missing/stale TC is a SPEC-GAP finding. Source-of-truth hierarchy: feature docs > test-spec docs > implementation code > test code. Classify every disagreement as: wrong test, code bug, stale docs, or escalate (three-way conflict)."`
 5. Target Files: explicit file list (never pass inline contents)
 6. Reference Docs: include `docs/project-reference/integration-test-reference.md`
-7. Report path: `plans/reports/integration-test-review-round{N}-{date}.md`
+7. Report path: `plans/reports/integration-test-review-rerun{N}-{date}.md`
 
 After sub-agents return:
 
 1. **Read** each sub-agent's report
-2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` — DO NOT filter or override
-3. **If new CRITICAL/HIGH:** fix → spawn NEW Round N+1 fresh sub-agents (never reuse prior agents)
-4. **Max 3 fresh rounds** — escalate via a direct user question if still failing after 3 rounds
-5. **Exit criteria:** Fresh-round review returns 0 CRITICAL and 0 HIGH issues
+2. **Integrate** findings as `## Re-Review {N} Findings` — DO NOT filter or override
+3. **If new CRITICAL/HIGH:** validate the new finding set before any additional fixes
+4. **Repeat only after another fix cycle:** restart the full review again after validated fixes are applied; if the same blocker repeats across 3 full invocations with no progress, escalate via a direct user question
+5. **Exit criteria:** A complete full review returns 0 CRITICAL and 0 HIGH issues
 
 **Phase 7 — Build & Run Tests (MANDATORY):** Build and run ALL changed/reviewed test files.
 
@@ -298,28 +357,33 @@ After sub-agents return:
 5. **Environment blockers:** Document as `BLOCKED — requires running system`; do NOT mark as test failures
 6. Append under `## Failure Investigation`
 
-**10+ files:** Parallel sub-agents grouped by module. Each gets file list + 6 gates + handler paths + feature doc paths. Consolidate into single report.
+**10+ files:** Parallel sub-agents grouped by module. Each gets file list + 7 gates + handler paths + feature doc paths + the changed-production-file list for its module (Gate 7). Consolidate into single report — the orchestrator merges per-module coverage tables into ONE Coverage Mapping Table covering the whole change set.
 
 ---
 
 ## Common Anti-Patterns
 
-| Anti-Pattern                                                         | Why It's Bad                                         |
-| -------------------------------------------------------------------- | ---------------------------------------------------- |
-| **Smoke-only** (no-exception alone)                                  | Proves no crash, not correctness                     |
-| **Existence-only** (not-null)                                        | Proves data exists, not handler set it correctly     |
-| **Dead assertion** (`count >= 0`, always true)                       | Tests nothing                                        |
-| **Framework testing** (assert auto-set fields)                       | Tests framework, not handler                         |
-| **Copy-paste assertions** (wrong entity fields)                      | Assertions don't match handler                       |
-| **Hardcoded ID** (`Id = "test-001"`)                                 | Fails on second run                                  |
-| **Cleanup dependency** (`finally { Delete(); }`)                     | Fragile, hides pollution                             |
-| **Order dependency** (test B needs A first)                          | Parallel execution breaks                            |
-| **Repository data hacks** (direct create/update bypassing use cases) | Leaves impossible state and hides real workflow bugs |
-| **Missing await** (unchecked async exception)                        | Exception swallowed silently                         |
-| **Event not triggered** (query, never fire)                          | Tests seeder, not handler                            |
-| **Test fixed to match broken code**                                  | Hides the bug — docs still say it's wrong            |
-| **Self-resolved three-way conflict**                                 | AI picked winner without evidence — silent lie       |
-| **Stale docs assumed without two-source proof**                      | Docs may be right; code may be the bug               |
+| Anti-Pattern                                                                                          | Why It's Bad                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Smoke-only** (no-exception alone)                                                                   | Proves no crash, not correctness                                                                                                   |
+| **Existence-only** (not-null)                                                                         | Proves data exists, not handler set it correctly                                                                                   |
+| **Dead assertion** (`count >= 0`, always true)                                                        | Tests nothing                                                                                                                      |
+| **Framework testing** (assert auto-set fields)                                                        | Tests framework, not handler                                                                                                       |
+| **Copy-paste assertions** (wrong entity fields)                                                       | Assertions don't match handler                                                                                                     |
+| **Hardcoded ID** (`Id = "test-001"`)                                                                  | Fails on second run                                                                                                                |
+| **Cleanup dependency** (`finally { Delete(); }`)                                                      | Fragile, hides pollution                                                                                                           |
+| **Order dependency** (test B needs A first)                                                           | Parallel execution breaks                                                                                                          |
+| **Repository data hacks** (direct create/update bypassing use cases)                                  | Leaves impossible state and hides real workflow bugs                                                                               |
+| **Missing await** (unchecked async exception)                                                         | Exception swallowed silently                                                                                                       |
+| **Event not triggered** (query, never fire)                                                           | Tests seeder, not handler                                                                                                          |
+| **Test fixed to match broken code**                                                                   | Hides the bug — docs still say it's wrong                                                                                          |
+| **Self-resolved three-way conflict**                                                                  | AI picked winner without evidence — silent lie                                                                                     |
+| **Stale docs assumed without two-source proof**                                                       | Docs may be right; code may be the bug                                                                                             |
+| **Test-files-only scope** (production changes ignored)                                                | Reviews tests that exist, misses behavior with none                                                                                |
+| **Name-match counted as coverage** (test never reads changed path)                                    | Stale coverage — test passes while change is broken                                                                                |
+| **Unjustified unit-test substitution**                                                                | Skips DI/data-state verification integration gives                                                                                 |
+| **Spec-less change** (no TC for new/changed behavior)                                                 | Breaks spec-driven development — specs drift silently                                                                              |
+| **1:1 TC↔test demanded** (one test per TC, method-name=TC, or many-tests-per-TC flagged as duplicate) | Forces splitting/technicalizing business TCs — breaks §8's business/user-story orientation (M1/M5). One TC → many tests is correct |
 
 ---
 
@@ -327,7 +391,7 @@ After sub-agents return:
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If NOT already in a workflow, MUST use a direct user question to ask user:
 >
-> 1. **Activate `write-integration-test` workflow** (Recommended) — scout → investigate → tdd-spec → tdd-spec-review → integration-test → integration-test-review → integration-test-verify → tdd-spec [direction=sync] → docs-update → watzup → workflow-end
+> 1. **Activate `workflow-write-integration-test` workflow** (Recommended) — scout → investigate → spec [mode=tests] → review-artifact --type=spec-tests → integration-test → integration-test-review → integration-test-verify → spec [mode=sync] → docs-update → workflow-end → watzup
 > 2. **Execute `$integration-test-review` directly** — run standalone
 
 ---
@@ -342,7 +406,7 @@ After sub-agents return:
 
 1. Read own finalized report from `plans/reports/{skill}-{date}-{slug}.md`
 2. Invoke `$why-review` skill with arg: `validate findings in plans/reports/{skill}-{date}-{slug}.md — verify each finding has file:line proof, steel-man each rejected interpretation, and stress-test severity classifications`
-3. Read why-review output from `plans/reports/why-review-{date}.md`
+3. Read the validation verdict path returned by why-review, expected as `plans/reports/why-review-validate-{date}.md`
 4. **If why-review demotes/removes any finding:** UPDATE own finalized report with revised severities, remove false positives, and add a `## Why-Review Validation Notes` section citing what changed and why
 5. **If why-review confirms all findings:** Append `## Why-Review Validation` line to own report stating "All N findings re-validated against actual code; no severity changes."
 
@@ -367,14 +431,14 @@ After sub-agents return:
 
 ## Related Skills
 
-| Skill                      | Relationship                                                           | When to Call                                                                   |
-| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `$integration-test`        | **Producer** — generates tests this skill reviews                      | Always preceded by $integration-test                                           |
-| `$integration-test-verify` | **Successor** — runs tests after review clears                         | Call after review passes all 6 gates                                           |
-| `$tdd-spec`                | **TC source** — Gate 5 checks TCs exist in feature doc Section 15      | If Gate 5 fails (orphaned test) → run $tdd-spec UPDATE                         |
-| `$spec-discovery`          | **Spec authority** — Gate 6 compares test code vs spec bundle          | If Gate 6 finds conflict: spec is authority                                    |
-| `$feature-docs`            | **Business doc** — Gate 6 compares tests vs feature doc business rules | If Gate 6 finds conflict: check feature-docs vs spec-discovery alignment first |
-| `$docs-update`             | **Orchestrator** — includes tdd-spec sync                              | Call when Gate 6 reveals doc staleness                                         |
+| Skill                      | Relationship                                                           | When to Call                                                       |
+| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `$integration-test`        | **Producer** — generates tests this skill reviews                      | Always preceded by $integration-test                               |
+| `$integration-test-verify` | **Successor** — runs tests after review clears                         | Call after review passes all 7 gates                               |
+| `$spec [mode=tests]`       | **TC source** — Gate 5 checks TCs exist in feature doc Section 8       | If Gate 5 fails (orphaned test) → run $spec [mode=tests] UPDATE    |
+| `$spec-index`              | **Spec authority** — Gate 6 compares test code vs spec bundle          | If Gate 6 finds conflict: spec is authority                        |
+| `$spec`                    | **Business doc** — Gate 6 compares tests vs feature doc business rules | If Gate 6 finds conflict: check spec vs spec-index alignment first |
+| `$docs-update`             | **Orchestrator** — includes spec [mode=sync]                           | Call when Gate 6 reveals doc staleness                             |
 
 ## Standalone Chain
 
@@ -383,32 +447,44 @@ After sub-agents return:
 ```
 integration-test-review (you are here)
   │
-  ├─ PREREQUISITE: integration tests must already exist
-  │    [REQUIRED] Verify: IntegrationTests/ directory has test files with [Trait("TestSpec", ...)] annotations
+  ├─ SCOPE: the full change set — changed production code AND changed test files
+  │    Tests may NOT exist yet for changed code — that is a Gate 7 finding, not an exit condition
   │
   ├─ Gate 1-5 findings → fix tests (re-run integration-test if test code needs regeneration)
+  │
+  ├─ Gate 7 (Change Coverage) gap resolution:
+  │    │
+  │    ├─ GAP (changed behavior, no covering test):
+  │    │    → Write the missing test — integration-first via $integration-test
+  │    │    → Unit test fallback ONLY when integration infeasible — record justification
+  │    │    → User waiver (verbatim, with reason) is the only alternative
+  │    │
+  │    └─ SPEC-GAP (changed behavior, no/stale TC in spec docs):
+  │         → $spec [mode=tests] UPDATE to add or correct the TC
+  │         → $spec [update] when business rules changed
+  │         → Then link the new/updated TC to the covering test (Gate 5)
   │
   ├─ Gate 6 (Three-Way Sync) conflict resolution:
   │    │
   │    ├─ Test code ≠ spec (feature doc says behavior A, test asserts behavior B):
   │    │    → Determine: spec authoritative or test authoritative?
   │    │    → If SPEC is correct: fix test → re-run $integration-test
-  │    │    → If TEST reflects correct new behavior (spec stale): $spec-discovery [update] → $feature-docs [update] → $tdd-spec [UPDATE] → update test
+  │    │    → If TEST reflects correct new behavior (spec stale): $spec [update] → $spec [mode=tests] [UPDATE] → update test
   │    │
   │    ├─ Test code ≠ implementation (test asserts X, code does Y):
-  │    │    → If CODE is correct: fix test → $tdd-spec UPDATE (update TC to match code's correct behavior)
+  │    │    → If CODE is correct: fix test → $spec [mode=tests] UPDATE (update TC to match code's correct behavior)
   │    │    → If TEST is correct (code bug): do NOT update test → fix code → $prove-fix → re-run tests
   │    │
-  │    └─ Feature doc ≠ spec bundle (business doc says A, engineering spec says B):
-  │         → Feature doc has higher authority for business rules
-  │         → Run $spec-discovery [update] to reconcile engineering spec with business doc
+  │    └─ Derived index ≠ Feature Spec (the bucket INDEX.md / ERD disagrees with the canonical §1-8):
+  │         → The Feature Spec is canonical; the index is regenerable, never authoritative
+  │         → Run $spec-index to re-derive the index from the specs
   │         → Do NOT self-resolve — escalate to user if ambiguous
   │
   ├─ [REQUIRED] → $integration-test-verify
   │     After all fixes, run actual tests to confirm all gates pass.
   │
-  ├─ [REQUIRED] → $tdd-spec [direction=sync]
-  │     If TCs were updated (Gate 5/6 fix), sync QA dashboard.
+  ├─ [REQUIRED] → $spec [mode=sync]
+  │     If TCs were updated (Gate 5/6 fix), reconcile §8 TCs ↔ integration test code.
   │
   └─ [RECOMMENDED] → $docs-update
         If Gate 6 revealed doc staleness, $docs-update runs full chain to update all layers.
@@ -444,16 +520,16 @@ integration-test-review (you are here)
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
+> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
 > **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
 > **Decision after Round 1:**
 >
 > - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
+> - **Issues found (FAIL, or any non-zero findings)** → run the active review skill's findings-validation gate first; for review skills the default gate is `$why-review --validate-findings <report-path>`, fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
 >
-> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `spawn_agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
+> **Fresh full re-review after every fix cycle:** Re-run the whole review protocol over the current full target. When sub-agents are part of that protocol, spawn NEW `spawn_agent` calls — never reuse prior agents. Reviewers re-read ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh full review must catch:
 >
 > - Cross-cutting concerns missed in the prior round
 > - Interaction bugs between changed files
@@ -462,16 +538,17 @@ integration-test-review (you are here)
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via a direct user question.
+> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via a direct user question.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
-> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
+> - NEVER fix unvalidated findings; validate first using the caller's validation gate
+> - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
+> - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via a direct user question (do NOT silently loop)
-> - Track round count in conversation context (session-scoped)
+> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
+> - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
 > **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
@@ -480,15 +557,15 @@ integration-test-review (you are here)
 
 <!-- SYNC:fresh-context-review -->
 
-> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
+> **Fresh Context Re-Review** — Eliminate orchestrator confirmation bias after fixes by restarting the full review with isolated sub-agents where applicable.
 >
 > **Why:** The main agent knows what it (or `$cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
 >
-> **When:** ONLY after a fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: fix → fresh sub-agent re-review.
+> **When:** ONLY after a validated-finding fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: validate findings → fix → full review restart from the first phase.
 >
 > **How:**
 >
-> 1. Spawn a NEW `spawn_agent` tool call — use `code-reviewer` agent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 1. Start a NEW full review invocation/task breakdown; when that protocol calls for agents, spawn NEW `spawn_agent` tool calls — use `code-reviewer` agent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
 > 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
 > 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
 > 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
@@ -496,11 +573,11 @@ integration-test-review (you are here)
 >
 > **Rules:**
 >
-> - SKIP fresh sub-agent when the prior round found zero issues (no fixes = nothing new to verify)
-> - NEVER skip fresh sub-agent after a fix cycle — every fix invalidates the prior verdict
+> - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
+> - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `spawn_agent` call
-> - Max 3 fresh-subagent rounds per review — escalate via a direct user question if still failing; do NOT silently loop or fall back to any prior protocol
-> - Track iteration count in conversation context (session-scoped, no persistent files)
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via a direct user question
+> - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
 
@@ -519,9 +596,9 @@ integration-test-review (you are here)
 
 ```
 spawn_agent({
-description: "Fresh Round {N} review",
-agent_type: "code-reviewer",
-prompt: `
+  description: "Fresh Round {N} review",
+  agent_type: "code-reviewer",
+  prompt: `
 ## Task
 {review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
 
@@ -547,7 +624,7 @@ MUST check categories 1-4 for EVERY review. Never skip.
 3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
 4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
 5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
-6. Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
+6. Stack-Specific: Check the configured language/runtime pitfalls and framework-specific failure modes discovered from local code.
 Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
 
 ### Design Patterns Quality
@@ -565,17 +642,32 @@ Verify WHAT code does matches WHY it was changed.
 2. Happy Path Trace: Walk through one complete success scenario through changed code.
 3. Error Path Trace: Walk through one failure/edge case scenario through changed code.
 4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
+5. Tests Verify Intent: For test/spec changes, verify tests name the protected business rule or invariant and would fail if that intent breaks.
+6. Migration Test Exclusion: Do not write tests for migration code. Schema/data migrations are one-time execution paths, not core application logic.
 NEVER mark review PASS without completing both traces (happy + error path).
 
 ### Test Spec Verification
 Map changed code to test specifications.
-1. From changed files → find TC-{FEATURE}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15.
-2. Every changed code path MUST map to a corresponding TC (or flag as "needs TC").
+1. Identify the project's test/spec format from existing docs, test-case files, BDD feature files, or spec folders.
+2. Every changed code path MUST map to a corresponding test case/spec (or flag as "needs test case").
 3. New functions/endpoints/handlers → flag for test spec creation.
-4. Verify TC evidence fields point to actual code (file:line, not stale references).
-5. Auth changes → TC-{FEATURE}-02x exist? Data changes → TC-{FEATURE}-01x exist?
-6. If no specs exist → log gap and recommend $tdd-spec.
+4. Migration files are excluded from test/spec creation; schema/data migrations are one-time execution paths, not core application logic.
+5. If spec evidence fields exist, verify they point to actual code (file:line, not stale references).
+6. Verify each meaningful test case names the business intent/invariant; flag behavior-only cases that only mirror implementation details.
+7. Auth/data changes → verify corresponding authorization and data-state test cases exist.
+8. If no specs exist for a changed path → log the gap and recommend the project's test-spec workflow.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
+
+### Behavioral Delta Matrix
+MANDATORY for any bugfix review. Produce input-state × pre-fix × post-fix × delta table BEFORE writing verdict.
+- Minimum 3 rows; include at least one row OUTSIDE the original bug report.
+- Any "REGRESSION" delta → review returns FAIL until a preservation test is added.
+- Narrative descriptions do NOT substitute for the matrix.
+Example rows (external-record sync fix):
+| Input                 | Pre-fix | Post-fix                  | Delta      |
+| --------------------- | ------- | ------------------------- | ---------- |
+| Record exists (valid) | Reused  | Always recreated → orphan | REGRESSION |
+| Record missing (404)  | Error   | Recreated                 | Fixed      |
 
 ### Fix-Layer Accountability
 NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
@@ -655,7 +747,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:repeatable-test-principle -->
 
-> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data. Verification is only PASS after the relevant suite/project passes 3 consecutive runs without DB reset.
+> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data. Verification is only PASS after the relevant suite/project passes 3 consecutive runs without database reset.
 >
 > 1. **Unique data per run:** Use the project's unique ID generator for ALL entity IDs created in tests. NEVER hardcode IDs.
 > 2. **Additive only:** Tests create data, never delete/reset. Prior test runs MUST NOT interfere with current run.
@@ -663,14 +755,16 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > 4. **Idempotent seeders:** Fixture-level seeders use create-if-missing pattern (check existence before insert). Test-level data uses unique IDs per execution.
 > 5. **No cleanup required:** No teardown, no database reset between runs. Each test is isolated by unique seed data, not by cleanup.
 > 6. **Unique names/codes:** When entities require unique names/codes, append a unique suffix using the project's ID generator.
+> 7. **Migration code excluded:** Do not write tests for migration code. Schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:repeatable-test-principle -->
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -685,6 +779,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -708,11 +803,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -753,6 +848,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `$project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -776,7 +872,12 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Ensure the review target (changed production code) has test coverage (integration-first) and that integration tests protect real business behavior with repeatable data-state assertions aligned to specs and implementation.
+
 - **MANDATORY IMPORTANT MUST ATTENTION** use task tracking for ALL phases BEFORE starting
+- **MANDATORY IMPORTANT MUST ATTENTION** scope = the CHANGE SET (production + tests) — never review only the test files; Gate 7 coverage mapping is NOT optional
+- **MANDATORY IMPORTANT MUST ATTENTION** every behavior-changing production change needs a covering test — integration-first; unit fallback requires recorded justification; GAP = HIGH minimum, fixed by WRITING the test
+- **MANDATORY IMPORTANT MUST ATTENTION** spec-driven alignment runs BOTH directions — from TCs in tests AND from changed code back to spec docs; missing/stale TC = SPEC-GAP finding
 - **MANDATORY IMPORTANT MUST ATTENTION** test that cannot fail is decoration — if it can't catch the protected business rule/invariant breaking, delete or fix it
 - **MANDATORY IMPORTANT MUST ATTENTION** read handler source BEFORE judging assertions — cannot review without understanding
 - **MANDATORY IMPORTANT MUST ATTENTION** tests MUST be infinitely repeatable — unique data per run, no cleanup, no rollback
@@ -785,25 +886,29 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY IMPORTANT MUST ATTENTION** flag smoke-only as FAIL unless justified with explicit design comment
 - **MANDATORY IMPORTANT MUST ATTENTION** write findings to report file — never just return text
 - **MANDATORY IMPORTANT MUST ATTENTION** fix ALL CRITICAL and HIGH issues BEFORE running tests — Phase 5 NOT optional
-- **MANDATORY IMPORTANT MUST ATTENTION** spawn fresh sub-agent after fixes — Phase 6 NOT optional; Round 1 alone NEVER declares PASS
+- **MANDATORY IMPORTANT MUST ATTENTION** validate findings before fixes; after validated fixes, rerun a full fresh review before declaring PASS
 - **MANDATORY IMPORTANT MUST ATTENTION** build and run ALL tests after fixes — Phase 7 NOT optional; unverified reviews have zero value
 - **MANDATORY IMPORTANT MUST ATTENTION** if tests fail, classify and investigate root cause — Phase 8 generates fix plan; NEVER retry blindly
 - **MANDATORY IMPORTANT MUST ATTENTION** Gate 6: read ALL three sources before classifying — never classify from two sources alone
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER fix a test to match broken code — hides the bug
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER self-resolve a three-way conflict — escalate via a direct user question
 - **MANDATORY IMPORTANT MUST ATTENTION** "stale docs" requires BOTH impl code AND test to agree — one source never enough
+- **MANDATORY IMPORTANT MUST ATTENTION** validate findings before fixes; after validated fixes, rerun full integration-test review before PASS
 
 **Anti-Rationalization:**
 
-| Evasion                                   | Rebuttal                                                          |
-| ----------------------------------------- | ----------------------------------------------------------------- |
-| "Smoke test is fine for now"              | No smoke test earns its place. Fix or delete.                     |
-| "Handler source too long to read"         | Cannot judge assertion quality without reading. REQUIRED.         |
-| "Fresh sub-agent is overkill"             | Round 1 alone NEVER declares PASS. Non-negotiable.                |
-| "Tests were passing before"               | Passing ≠ correct. Dead assertions always pass.                   |
-| "Conflict is obvious, I can self-resolve" | Three-way conflict requires escalation. NEVER self-resolve.       |
-| "Phase 6/7/8 optional for small fixes"    | No exceptions. Every fix requires re-review + build verification. |
-| "0 test files, nothing to review"         | Report gap and ask user — do NOT silently exit.                   |
+| Evasion                                    | Rebuttal                                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------------------------- |
+| "Smoke test is fine for now"               | No smoke test earns its place. Fix or delete.                                          |
+| "Handler source too long to read"          | Cannot judge assertion quality without reading. REQUIRED.                              |
+| "Re-review after fixes is overkill"        | Fixes changed the target. A full fresh review is required before PASS.                 |
+| "Tests were passing before"                | Passing ≠ correct. Dead assertions always pass.                                        |
+| "Conflict is obvious, I can self-resolve"  | Three-way conflict requires escalation. NEVER self-resolve.                            |
+| "Phase 6/7/8 optional for small fixes"     | No exceptions. Every validated fix requires full re-review + build verification.       |
+| "0 test files, nothing to review"          | Production changes without tests ARE the review — run Gate 7 coverage mapping.         |
+| "A unit test is enough here"               | Integration-first. Unit fallback requires recorded infeasibility justification.        |
+| "Test with matching name exists = covered" | Read it. Coverage means it exercises the changed path and asserts the changed outcome. |
+| "Specs can be updated later"               | Spec-driven development: missing/stale TC is a SPEC-GAP finding, fixed in this review. |
 
 ---
 
@@ -823,17 +928,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -851,7 +953,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

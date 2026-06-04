@@ -11,7 +11,7 @@ disable-model-invocation: false
 
 **Workflow:**
 
-1. **Find Checkpoint** — Locate latest `memory-checkpoint-*.md` in reports directory
+1. **Find Checkpoint** — Locate latest `checkpoint-*.md` in reports directory (legacy `memory-checkpoint-*.md` are also recognized)
 2. **Read Metadata** — Extract JSON block with session ID, active plan, current step, pending todos
 3. **Restore Todos** — Immediately call TaskCreate with pending items from checkpoint
 4. **Resume Workflow** — Continue from the interrupted step using restored context
@@ -44,13 +44,13 @@ Use this command when:
 Look for checkpoint files in the reports directory:
 
 ```bash
-ls -la plans/reports/memory-checkpoint-*.md | tail -5
+ls -la plans/reports/checkpoint-*.md | tail -5
 ```
 
 Or search for all recent checkpoints:
 
 ```bash
-find plans -name "memory-checkpoint-*.md" -mmin -60 | head -5
+find plans -name "checkpoint-*.md" -mmin -60 | head -5
 ```
 
 ### Step 2: Read Checkpoint File
@@ -58,7 +58,7 @@ find plans -name "memory-checkpoint-*.md" -mmin -60 | head -5
 Read the most recent checkpoint to understand the saved state:
 
 ```
-Read the checkpoint file at: plans/reports/memory-checkpoint-YYMMDD-HHMMSS.md
+Read the checkpoint file at: plans/reports/checkpoint-YYYYMMDD-HHMMSS-slug.md
 ```
 
 ### Step 3: Extract Recovery Metadata
@@ -123,8 +123,10 @@ Resume from the `currentStep` identified in the metadata. Execute the remaining 
 
 Checkpoints are saved to different locations based on context:
 
-1. **Active plan exists:** `{plan-path}/reports/memory-checkpoint-*.md`
-2. **No active plan:** `plans/reports/memory-checkpoint-*.md`
+1. **Active plan exists:** `{plan-path}/reports/checkpoint-*.md`
+2. **No active plan:** `plans/reports/checkpoint-*.md`
+
+> Legacy `memory-checkpoint-*.md` files (written before the grammar was unified) are still matched by the resume/recover globs — back-read is preserved, nothing on disk is orphaned.
 
 ## Tips
 
@@ -148,7 +150,7 @@ User: /recover
 Claude: Let me find and restore your workflow context.
 
 1. Finding latest checkpoint...
-   Found: plans/reports/memory-checkpoint-260110-143025.md
+   Found: plans/reports/checkpoint-20260110-143025-new-feature.md
 
 2. Reading checkpoint metadata...
    - Workflow: feature
@@ -184,6 +186,7 @@ Claude: Let me find and restore your workflow context.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

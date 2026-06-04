@@ -84,15 +84,17 @@ node -e "console.log(JSON.parse(require('fs').readFileSync('.claude/.ck.json')))
 
 // Checklist:
 // 1. Check workflows.json settings.enabled = true
-// 2. Verify trigger patterns match your prompt
-// 3. Check pattern priority (lower = higher priority)
+// 2. Detection is semantic + model-driven: the model matches your prompt
+//    against each workflow's whenToUse / whenNotToUse description and
+//    auto-selects the best fit (no regex triggers, no priority numbers)
+// 3. If the wrong workflow activates, sharpen the workflow's whenToUse /
+//    whenNotToUse text in workflows.json
 
-// Example: "add dark mode" should trigger feature workflow
-// Pattern: "\\b(implement|add|create)\\b.*\\b(feature)\\b"
+// Example: "add dark mode" matches the feature workflow's whenToUse
+// ("implement a well-defined feature, add a component, ...")
 
-// Override: Use quick: prefix or explicit /command
-// quick: add dark mode  // Skips confirmation, runs workflow
-// /plan                 // Explicit command
+// Explicit command:
+// /plan add dark mode
 ```
 
 ### Privacy Block Preventing Edits
@@ -133,7 +135,7 @@ npx -y @modelcontextprotocol/server-github --help
 ```javascript
 // Problem: Spawned agents don't have correct context
 
-// Solution: subagent-init-*.cjs hooks (18) inject context
+// Solution: subagent-init-*.cjs hooks (8) inject context
 // Verify hook is registered for SubagentStart event
 
 // Check agent receives:

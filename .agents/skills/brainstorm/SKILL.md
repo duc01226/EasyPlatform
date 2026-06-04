@@ -29,11 +29,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -53,7 +57,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Facilitate a structured PO/BA brainstorming session using the Double Diamond process — diverge to discover problems and opportunities, then converge to validate and prioritize ideas before committing to implementation.
+**Goal:** Facilitate a structured PO/BA brainstorming session via the Double Diamond process (diverge to discover problems and opportunities, then converge to validate and prioritize) to deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list.
 
 **Three Scenarios:**
 
@@ -112,7 +116,7 @@ Ask:
 
 ### 0.2 — Context Loading
 
-- If project codebase exists: read `docs/business-features/` to understand domain
+- If project codebase exists: read `docs/specs/` to understand domain
 - If greenfield: skip codebase reading; rely on user input and web research
 - Load `docs/project-reference/domain-entities-reference.md` if entity context needed
 - Use `WebSearch` for market/competitor context when scenario = New Product or Enhancement
@@ -121,7 +125,7 @@ Ask:
 
 ## Phase 1: Problem Framing — Diamond 1 Diverge
 
-**Goal:** Fully understand the problem space before jumping to solutions. The #1 failure in brainstorming: solving the wrong problem.
+**Goal:** Fully understand problem space before jumping to solutions. #1 brainstorming failure: solving the wrong problem.
 
 **Time-box:** 20–45 minutes of session time.
 
@@ -138,9 +142,9 @@ but [current barrier/friction/failure].
 **Example:**
 
 ```
-HR Managers need to quickly identify top performers for promotion
-because quarterly reviews create promotion backlogs,
-but the current system shows raw scores with no ranking or comparison.
+Operators need to quickly identify high-priority orders for action
+because peak-season backlogs delay fulfillment,
+but the current system shows raw order data with no ranking or comparison.
 ```
 
 Use a direct user question to validate:
@@ -174,9 +178,9 @@ Spine = problem statement. Bones = 6 cause categories:
 
 Replace user stories with job stories to expose real motivation:
 
-**User Story (what):** As a manager, I want to see employee scores, so that I can make decisions.
+**User Story (what):** As an operator, I want to see order totals, so that I can make decisions.
 
-**Job Story (why + context):** When I'm preparing for quarterly reviews with limited time, I want to instantly see who deserves promotion without reading every profile, so I can make fair, defensible decisions before the deadline.
+**Job Story (why + context):** When I'm clearing a peak-season backlog with limited time, I want to instantly see which orders need action without opening every record, so I can make fast, defensible decisions before the cutoff.
 
 **Job Story Formula:**
 
@@ -218,7 +222,7 @@ From the POV statement:
 
 ## Phase 2: Opportunity Framing — Diamond 1 Converge
 
-**Goal:** Narrow problem space to the highest-opportunity focus areas before ideating solutions.
+**Goal:** Narrow problem space to highest-opportunity focus areas before ideating solutions.
 
 ### 2.1 — Opportunity Solution Tree (OST) — for Enhancement
 
@@ -299,7 +303,7 @@ Connects customer profile to product value:
 
 ## Phase 3: Ideation — Diamond 2 Diverge
 
-**Goal:** Generate maximum quantity of solution ideas without judgment. Quality comes in Phase 4.
+**Goal:** Generate maximum quantity of solution ideas without judgment. Quality comes Phase 4.
 
 **Critical rule:** NO evaluation in this phase. Every idea is valid. "Yes, and..." not "Yes, but..."
 
@@ -307,15 +311,15 @@ Connects customer profile to product value:
 
 Apply each lens to the problem/existing product to generate solution directions:
 
-| Letter               | Prompt                     | Example for HR review feature                             |
-| -------------------- | -------------------------- | --------------------------------------------------------- |
-| **S**ubstitute       | What can be replaced?      | Replace manual scoring with AI-assisted ranking           |
-| **C**ombine          | What can be merged?        | Combine performance + feedback + OKR in one view          |
-| **A**dapt            | What can be borrowed?      | Adapt Netflix recommendation to suggest top performers    |
-| **M**odify           | What can be scaled/shrunk? | Minimize review to a weekly pulse check                   |
-| **P**ut to other use | Different context?         | Use review data for learning path recommendations         |
-| **E**liminate        | What can be removed?       | Eliminate annual review — replace with continuous signals |
-| **R**everse          | Flip the process?          | Let employees score managers instead                      |
+| Letter               | Prompt                     | Example for order-prioritization feature                      |
+| -------------------- | -------------------------- | ------------------------------------------------------------- |
+| **S**ubstitute       | What can be replaced?      | Replace manual sorting with AI-assisted ranking               |
+| **C**ombine          | What can be merged?        | Combine status + history + SLA risk in one view               |
+| **A**dapt            | What can be borrowed?      | Adapt Netflix recommendation to surface priority orders       |
+| **M**odify           | What can be scaled/shrunk? | Shrink the review queue to a daily priority check             |
+| **P**ut to other use | Different context?         | Use order history for restocking recommendations              |
+| **E**liminate        | What can be removed?       | Eliminate the nightly batch — replace with continuous signals |
+| **R**everse          | Flip the process?          | Let downstream stages pull orders instead of pushing          |
 
 Generate at least 2 ideas per SCAMPER letter = minimum 14 ideas.
 
@@ -469,7 +473,7 @@ For each idea in the shortlist, assign release priority:
 
 ## Phase 5: Hypothesis Validation
 
-**Goal:** Before committing to build, test your riskiest assumptions. 42% of startups fail because no market need — validate before building.
+**Goal:** Before committing to build, test riskiest assumptions. 42% of startups fail from no market need — validate before building.
 
 ### 5.1 — Problem Hypothesis
 
@@ -483,10 +487,10 @@ For each idea in the shortlist, assign release priority:
 **Example:**
 
 ```
-We believe HR Managers
-Experience frustration identifying top performers during review cycles
-Because scoring data is fragmented across 3 systems with no unified ranking
-We'll know this is true when 3+ managers confirm they spend >2hrs per cycle on manual data aggregation
+We believe Operators
+Experience frustration identifying high-priority orders during peak backlogs
+Because order data is fragmented across 3 systems with no unified ranking
+We'll know this is true when 3+ operators confirm they spend >2hrs per shift on manual data aggregation
 ```
 
 ### 5.2 — Value Hypothesis
@@ -701,7 +705,7 @@ Create markdown summary report:
 - `docs-manager` agent — understand existing feature constraints and domain context
 - `WebSearch` — market/competitor context for new product scenarios
 - `docs-seeker` skill — latest documentation for external plugins/APIs
-- `ai-multimodal` skill — analyze visual mockups, screenshots, competitor UIs
+- `visual analysis tooling` skill — analyze visual mockups, screenshots, competitor UIs
 - `sequential-thinking` skill — complex problem decomposition requiring structured causal chains
 - `web-research` skill — deep market research for greenfield or competitive analysis
 
@@ -797,6 +801,7 @@ After brainstorm session concludes, use a direct user question to present next s
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -827,7 +832,7 @@ After brainstorm session concludes, use a direct user question to present next s
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -862,6 +867,7 @@ After brainstorm session concludes, use a direct user question to present next s
 
 ## Closing Reminders
 
+- **IMPORTANT MUST ATTENTION Goal:** Deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list.
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** detect scenario type FIRST — different scenarios use different technique sequences
 - **MANDATORY IMPORTANT MUST ATTENTION** separate diverge (generate) and converge (evaluate) — NEVER mix them
@@ -883,17 +889,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -911,7 +914,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

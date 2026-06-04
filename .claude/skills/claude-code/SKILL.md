@@ -1,7 +1,7 @@
 ---
 name: claude-code
 version: 2.0.0
-description: '[Utilities] Use when you need claude Code CLI setup, configuration, troubleshooting, and feature guidance.'
+description: '[Utilities] Use when you need Claude Code CLI setup, configuration, troubleshooting, and feature guidance.'
 ---
 
 ## Quick Summary
@@ -16,7 +16,7 @@ description: '[Utilities] Use when you need claude Code CLI setup, configuration
 
 **Key Rules:**
 
-- Not for writing application code -- use feature/fix/refactor skills instead
+- Not for writing application code -- use the feature workflow, fix, or refactoring skills instead
 - Obtain explicit user approval before modifying settings; never change them unilaterally
 - For hooks: check event type, script executability, and JSON output format
 
@@ -39,10 +39,9 @@ Help users install, configure, troubleshoot, and extend Claude Code CLI -- Anthr
 
 ## When NOT to Use
 
-- Writing application code -- use `feature-implementation`, `fix`, or `refactoring` skills
-- Creating MCP servers from scratch -- use `mcp-builder` skill
-- Managing existing MCP server connections -- use `mcp-management` skill
-- AI prompt engineering -- use `ai-artist` skill
+- Writing application code -- use the `workflow-feature` workflow, `fix`, or `refactoring` skills
+- Creating or managing MCP servers -- use MCP documentation and project MCP config directly
+- AI prompt engineering -- use general prompt-engineering guidance directly
 
 ## Prerequisites
 
@@ -162,7 +161,7 @@ Help users install, configure, troubleshoot, and extend Claude Code CLI -- Anthr
 3. Run script directly: `node .claude/hooks/block-large-reads.cjs` -- works
 4. **Found**: Hook command uses `%CLAUDE_PROJECT_DIR%` but runs from wrong CWD
 
-**Fix**: Update hook command to use absolute path or verify `%CLAUDE_PROJECT_DIR%` resolves correctly. Check that the hook entry in settings uses the correct variable syntax for the platform (Windows vs Unix).
+**Fix**: Update hook command to use absolute path or verify `%CLAUDE_PROJECT_DIR%` resolves correctly. Check that the hook entry in settings uses the correct variable syntax for the OS/shell (Windows vs Unix).
 
 ### Example 2: Setting Up a New Slash Command
 
@@ -203,8 +202,6 @@ Load these for detailed guidance on specific topics:
 
 ## Related Skills
 
-- `mcp-builder` -- for creating new MCP servers from scratch
-- `mcp-management` -- for managing existing MCP server connections
 - `skill-creator` -- for creating new agent skills with best practices
 
 ---
@@ -225,6 +222,7 @@ Load these for detailed guidance on specific topics:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

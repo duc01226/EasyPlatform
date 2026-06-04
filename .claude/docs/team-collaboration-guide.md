@@ -2,7 +2,7 @@
 
 > How Product Owners, Business Analysts, QA Engineers, QC Specialists, UX Designers, and Project Managers collaborate through Claude Code's workflow system.
 
-**Version:** 2.0 | **Last Updated:** 2026-03-07
+**Version:** 2.1 | **Last Updated:** 2026-06-11
 
 ---
 
@@ -27,16 +27,16 @@ Claude Code uses a **three-pillar architecture** to assist every role:
 
 | Pillar                        | What It Does                                                     | Count                   |
 | ----------------------------- | ---------------------------------------------------------------- | ----------------------- |
-| **Hooks** (Enforcement)       | Auto-inject context, enforce quality gates, block unsafe actions | 64 top-level hook files |
-| **Skills** (Intelligence)     | Prompt-engineered protocols loaded on demand via `/skill-name`   | 256 skills              |
-| **Workflows** (Orchestration) | Multi-step sequences of skills with progress tracking            | 37 workflows            |
+| **Hooks** (Enforcement)       | Auto-inject context, enforce quality gates, block unsafe actions | 54 top-level hook files |
+| **Skills** (Intelligence)     | Prompt-engineered protocols loaded on demand via `/skill-name`   | 176 skills              |
+| **Workflows** (Orchestration) | Multi-step sequences of skills with progress tracking            | 17 workflows            |
 
 ### Workflow Detection
 
 When you describe what you want to do, Claude automatically:
 
 1. **Detects** the best-matching workflow from the catalog
-2. **Asks you** to confirm activation or execute directly
+2. **Auto-selects** the best path and activates it (no confirmation step)
 3. **Creates tasks** for every step and tracks progress
 4. **Executes** each step in sequence
 
@@ -107,12 +107,6 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
 
     Slices PBI into vertical stories meeting INVEST criteria
 
-3. **Hand off to development**
-    ```
-    /handoff
-    ```
-    Creates structured handoff record with context for developers
-
 **Workflow trigger:** Say "refine this idea" → activates **idea-to-pbi** workflow
 
 ---
@@ -124,7 +118,7 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
 1. **Generate test spec from PBI**
 
     ```
-    /tdd-spec {pbi-or-feature-doc}
+    /spec [mode=tests] {pbi-or-feature-doc}
     ```
 
     Creates test specs with `TC-{FEATURE}-{NNN}` IDs in unified format
@@ -140,7 +134,7 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
     /quality-gate pre-qa
     ```
 
-**Workflow trigger:** Say "test cases from PBI" → activates **pbi-to-tests** workflow
+**Workflow trigger:** Say "test cases from PBI" → runs `/spec [mode=tests]` directly (the former pbi-to-tests workflow was merged into the `spec` skill); for full test authoring with generated test code, use the **write-integration-test** workflow
 
 ---
 
@@ -159,12 +153,7 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
 2. **Review against design system**
    Spec auto-maps to tokens in `docs/project-reference/design-system/`
 
-3. **Hand off to development**
-    ```
-    /handoff
-    ```
-
-**Workflow trigger:** Say "design spec for" → activates **design-workflow**
+**Workflow trigger:** Say "design spec for" → runs **/design-spec** then **/interface-design** (or **/frontend-design**)
 
 ---
 
@@ -185,7 +174,7 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
     /review-artifact {artifact-path}
     ```
 
-**Workflow trigger:** Say "quality check" → activates **qa-po-acceptance** or **pre-development** workflow
+**Workflow trigger:** Say "quality check" → run `/quality-gate` directly
 
 ---
 
@@ -196,27 +185,17 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
 1. **Generate status report**
 
     ```
-    /status sprint
+    /project-manager
     ```
 
-2. **Check dependencies**
+    Aggregates sprint progress, blockers, and velocity using the report templates
 
+2. **Check dependencies**
     ```
     /dependency all
     ```
 
-3. **Prepare team sync**
-
-    ```
-    /team-sync daily
-    ```
-
-4. **Run sprint retrospective**
-    ```
-    /retro
-    ```
-
-**Workflow trigger:** Say "status report" → activates **pm-reporting** workflow
+**Workflow trigger:** Say "track dependencies" → run `/dependency` directly
 
 ---
 
@@ -235,13 +214,13 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
 
 ### Testing & Quality
 
-| Skill               | Purpose                                  | Example                   |
-| ------------------- | ---------------------------------------- | ------------------------- |
-| `/tdd-spec`         | Generate test specs (TC-{FEATURE}-{NNN}) | `/tdd-spec {feature-doc}` |
-| `/integration-test` | Generate integration tests from specs    | `/integration-test`       |
-| `/e2e-test`         | Generate E2E tests                       | `/e2e-test`               |
-| `/quality-gate`     | Run quality checklist                    | `/quality-gate pre-dev`   |
-| `/test`             | Run and analyze tests                    | `/test`                   |
+| Skill                | Purpose                                  | Example                            |
+| -------------------- | ---------------------------------------- | ---------------------------------- |
+| `/spec [mode=tests]` | Generate test specs (TC-{FEATURE}-{NNN}) | `/spec [mode=tests] {feature-doc}` |
+| `/integration-test`  | Generate integration tests from specs    | `/integration-test`                |
+| `/e2e-test`          | Generate E2E tests                       | `/e2e-test`                        |
+| `/quality-gate`      | Run quality checklist                    | `/quality-gate pre-dev`            |
+| `/test`              | Run and analyze tests                    | `/test`                            |
 
 ### Design & Frontend
 
@@ -254,14 +233,10 @@ Hooks automatically inject relevant project knowledge (backend patterns, fronten
 
 ### Process & Collaboration
 
-| Skill         | Purpose                           | Example            |
-| ------------- | --------------------------------- | ------------------ |
-| `/handoff`    | Structured handoff between roles  | `/handoff`         |
-| `/acceptance` | PO acceptance decision flow       | `/acceptance`      |
-| `/retro`      | Sprint retrospective facilitation | `/retro`           |
-| `/status`     | Generate status report            | `/status sprint`   |
-| `/dependency` | Map feature dependencies          | `/dependency all`  |
-| `/team-sync`  | Meeting agenda generation         | `/team-sync daily` |
+| Skill              | Purpose                                    | Example            |
+| ------------------ | ------------------------------------------ | ------------------ |
+| `/dependency`      | Map feature dependencies                   | `/dependency all`  |
+| `/project-manager` | Status reports, dependency & risk tracking | `/project-manager` |
 
 ### Planning & Investigation
 
@@ -290,14 +265,14 @@ BA:             /refine ──→ [PBI with AC] ──→ /story ──→ [user
 
 ---
 
-### Workflow 2: PBI to Tests (`pbi-to-tests`)
+### Workflow 2: PBI to Tests (`/spec [mode=tests]` + `/quality-gate`)
 
 **Trigger:** "test cases from PBI", "qa this"
 **Roles:** QA Engineer, QC Specialist
-**IMPORTANT MANDATORY Steps:** `/tdd-spec` → `/quality-gate`
+**IMPORTANT MANDATORY Steps:** `/spec [mode=tests]` → `/quality-gate` (skill chain — for generated test code, use the **write-integration-test** workflow)
 
 ```
-QA:  [PBI] ──→ /tdd-spec ──→ [test spec with TC-{FEATURE}-{NNN}]
+QA:  [PBI] ──→ /spec [mode=tests] → [test spec with TC-{FEATURE}-{NNN}]
                                         │
 QC:                              /quality-gate ──→ [PASS/FAIL report]
 ```
@@ -306,11 +281,11 @@ QC:                              /quality-gate ──→ [PASS/FAIL report]
 
 - All test cases have `TC-{FEATURE}-{NNN}` IDs
 - At least 3 categories: positive, negative, edge
-- Evidence fields link to code (`file:line`)
+- Evidence fields use `[Source: namespace/service/id]` abstract anchors (stack-portable — never `file:line`)
 
 ---
 
-### Workflow 3: Design Workflow (`design-workflow`)
+### Workflow 3: Design (`/design-spec` → `/interface-design` or `/frontend-design`)
 
 **Trigger:** "ui spec", "component spec", "design the", "landing page", "screenshot"
 **Roles:** UX Designer, Developer
@@ -335,52 +310,25 @@ Dev:                             /code-review ──→ Implementation
 
 ---
 
-### Workflow 4: PM Reporting (`pm-reporting`)
+### Workflow 4: Spec-Driven Feature (`feature`)
 
-**Trigger:** "status report", "sprint update"
-**Roles:** Project Manager
-**IMPORTANT MANDATORY Steps:** `/status` → `/dependency`
-
-```
-PM:  /status sprint ──→ [status report]
-     /dependency all ──→ [dependency map]
-     /team-sync daily ──→ [meeting agenda]
-```
-
-| Report Type   | Command                    |
-| ------------- | -------------------------- |
-| Daily         | `/status sprint`           |
-| Weekly        | `/status project`          |
-| Feature       | `/status feature-{name}`   |
-| Sprint Review | `/team-sync sprint-review` |
-| Retrospective | `/retro`                   |
-
----
-
-### Workflow 5: TDD Feature (`tdd-feature`)
-
-**Trigger:** "test-first", "TDD", "spec-driven"
+**Trigger:** "test-first", "TDD", "spec-driven" (the former tdd-feature workflow was merged into `feature`)
 **Roles:** Developer, QA
-**IMPORTANT MANDATORY Steps:** `/scout` → `/investigate` → `/tdd-spec` → `/plan` → `/cook` → `/integration-test` → `/test` → `/docs-update`
+**IMPORTANT MANDATORY Steps (abridged):** `/scout` → `/investigate` → `/plan` → `/spec [mode=tests]` → `/cook` → `/integration-test` → `/test` → `/docs-update`
 
 Test specs are written **before** implementation, then code is written to satisfy them.
 
 ---
 
-## Role Handoff Workflows
+## Cross-Role Workflows
 
-Claude provides structured handoff workflows to ensure clean transitions between roles:
+Claude provides end-to-end workflows that span multiple roles:
 
-| Workflow                 | From → To | Trigger                 | Steps                                                                                         |
-| ------------------------ | --------- | ----------------------- | --------------------------------------------------------------------------------------------- |
-| `idea-to-pbi` (PO→BA)    | PO → BA   | "hand off to BA"        | `/idea` → `/review-artifact` → `/handoff` → `/refine` → `/story` (conditional first 2 steps)  |
-| `ba-dev-handoff`         | BA → Dev  | "ready for development" | `/review-artifact` → `/quality-gate` → `/handoff` → `/plan` → `/plan-review`                  |
-| `design-dev-handoff`     | UX → Dev  | "design ready for dev"  | `/design-spec` → `/review-artifact` → `/handoff` → `/plan`                                    |
-| `dev-qa-handoff`         | Dev → QA  | "ready for testing"     | `/handoff` → `/tdd-spec`                                                                      |
-| `qa-po-acceptance`       | QA → PO   | "testing complete"      | `/quality-gate` → `/handoff` → `/acceptance`                                                  |
-| `full-feature-lifecycle` | All       | "full lifecycle"        | `/idea` → `/refine` → `/story` → `/design-spec` → `/plan` → `/cook` → `/test` → `/acceptance` |
+| Workflow              | Roles | Trigger          | Steps                                                                        |
+| --------------------- | ----- | ---------------- | ---------------------------------------------------------------------------- |
+| `idea-to-pbi` (PO→BA) | PO→BA | "hand off to BA" | `/idea` → `/review-artifact` → `/refine` → `/story` (conditional first step) |
 
-Each handoff creates a **structured record** with context, status, and next actions so the receiving role has full visibility.
+Each workflow tracks progress across roles so the next role has full visibility into upstream artifacts.
 
 ---
 
@@ -465,7 +413,7 @@ Claude generates component spec with all states (default, hover, dragging, uploa
 **Alex (QA):**
 
 ```
-/tdd-spec {pbi-file}
+/spec [mode=tests] {pbi-file}
 ```
 
 Test cases with unified IDs:
@@ -480,7 +428,7 @@ Test cases with unified IDs:
 | TC-TAL-006 | Cancel mid-upload        | Edge     |
 | TC-TAL-007 | Replace existing photo   | Positive |
 
-Each case includes `Evidence: {file}:{line}` linking to implementation code.
+Each case includes an Evidence field using `[Source: namespace/service/id]` abstract anchors (stack-portable — never `file:line`).
 
 ---
 
@@ -516,7 +464,7 @@ CAPTURE & REQUIREMENTS
   /prioritize [framework]    Order backlog (rice|moscow|value-effort)
 
 TESTING & QUALITY
-  /tdd-spec {source}         Generate test specs (TC-{FEATURE}-{NNN})
+  /spec [mode=tests] {source}  Generate test specs (TC-{FEATURE}-{NNN})
   /integration-test          Generate integration tests
   /e2e-test                  Generate E2E tests
   /quality-gate {type}       Run quality checklist (pre-dev|pre-qa|pre-release)
@@ -526,12 +474,8 @@ DESIGN
   /design-spec {source}      Create design specification
 
 PROCESS
-  /handoff                   Structured role handoff
-  /acceptance                PO acceptance decision
-  /retro                     Sprint retrospective
-  /status [scope]            Status report (sprint|project|feature-*)
   /dependency [target]       Map dependencies
-  /team-sync [type]          Meeting agenda (daily|weekly|sprint-review)
+  /project-manager           Status reports, dependency & risk tracking
 
 PLANNING
   /plan {description}        Create implementation plan
@@ -541,59 +485,48 @@ PLANNING
 
 ### Role Quick Reference
 
-| Role | Primary Skills                                   | Workflow         |
-| ---- | ------------------------------------------------ | ---------------- |
-| PO   | `/idea`, `/prioritize`, `/acceptance`            | idea-to-pbi      |
-| BA   | `/refine`, `/story`, `/handoff`                  | idea-to-pbi      |
-| QA   | `/tdd-spec`, `/integration-test`, `/test`        | pbi-to-tests     |
-| QC   | `/quality-gate`, `/review-artifact`              | qa-po-acceptance |
-| UX   | `/design-spec`, `/frontend-design`               | design-workflow  |
-| PM   | `/status`, `/dependency`, `/team-sync`, `/retro` | pm-reporting     |
+| Role | Primary Skills                                     | Workflow               |
+| ---- | -------------------------------------------------- | ---------------------- |
+| PO   | `/idea`, `/prioritize`                             | idea-to-pbi            |
+| BA   | `/refine`, `/story`                                | idea-to-pbi            |
+| QA   | `/spec [mode=tests]`, `/integration-test`, `/test` | write-integration-test |
+| QC   | `/quality-gate`, `/review-artifact`                | —                      |
+| UX   | `/design-spec`, `/frontend-design`                 | —                      |
+| PM   | `/project-manager`, `/dependency`                  | —                      |
 
 ### Workflow Quick Triggers
 
-| Say This                          | Activates              | Sequence                                            |
-| --------------------------------- | ---------------------- | --------------------------------------------------- |
-| "new idea" / "feature request"    | idea-to-pbi            | /idea → /refine → /story → /prioritize              |
-| "test this PBI" / "test cases"    | pbi-to-tests           | /tdd-spec → /quality-gate                           |
-| "design spec for"                 | design-workflow        | /design-spec → /code-review                         |
-| "status report" / "sprint update" | pm-reporting           | /status → /dependency                               |
-| "ready for dev"                   | ba-dev-handoff         | /review-artifact → /quality-gate → /handoff → /plan |
-| "ready for testing"               | dev-qa-handoff         | /handoff → /tdd-spec                                |
-| "testing complete"                | qa-po-acceptance       | /quality-gate → /handoff → /acceptance              |
-| "TDD" / "test-first"              | tdd-feature            | /tdd-spec → /plan → /cook → /test                   |
-| "full lifecycle"                  | full-feature-lifecycle | /idea → ... → /acceptance                           |
+| Say This                       | Activates                    | Sequence                                   |
+| ------------------------------ | ---------------------------- | ------------------------------------------ |
+| "new idea" / "feature request" | idea-to-pbi                  | /idea → /refine → /story → /prioritize     |
+| "test this PBI" / "test cases" | `/spec [mode=tests]` (skill) | /spec [mode=tests] → /quality-gate         |
+| "design spec for"              | `/design-spec`               | /design-spec → /interface-design           |
+| "TDD" / "test-first"           | feature                      | /plan → /spec [mode=tests] → /cook → /test |
 
 ### Common Patterns
 
 **Feature from scratch:**
 
 ```
-/idea → /refine → /story → /design-spec → /tdd-spec → /plan → /cook → /test
+/idea → /refine → /story → /design-spec → /spec [mode=tests] → /plan → /cook → /test
 ```
 
 **Sprint prep:**
 
 ```
-/prioritize rice → /quality-gate pre-dev → /team-sync sprint-planning
+/prioritize rice → /quality-gate pre-dev
 ```
 
 **End of day:**
 
 ```
-/status sprint → /dependency all
+/project-manager → /dependency all
 ```
 
 **Before demo:**
 
 ```
-/quality-gate pre-release → /team-sync sprint-review
-```
-
-**Sprint close:**
-
-```
-/retro → /status project
+/quality-gate pre-release
 ```
 
 ---
@@ -608,7 +541,7 @@ PLANNING
 
 1. Use explicit skill command: `/idea "..."` instead of natural language
 2. Check `workflows.json`: `cat .claude/workflows.json`
-3. Claude should always detect and ask — if it doesn't, remind it: "Check workflow catalog"
+3. Claude should auto-detect and activate the matching workflow — if it doesn't, remind it: "Check workflow catalog"
 
 ---
 
@@ -643,9 +576,9 @@ PLANNING
 
 **Fix:**
 
-1. Use `/handoff` skill explicitly — it creates structured records
-2. Ensure the sending role's artifacts are complete before handoff
-3. Run `/quality-gate` before handoff to verify completeness
+1. Ensure the sending role's artifacts (idea, PBI, story, design spec, test spec) are complete and saved before the next role picks up
+2. Run `/quality-gate` to verify artifact completeness before the transition
+3. Use `/review-artifact` to validate quality of the upstream artifact
 
 ---
 

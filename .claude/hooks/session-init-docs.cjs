@@ -45,8 +45,16 @@ const { loadConfig } = require('./lib/ck-config-loader.cjs');
 const { SCAN_STALE_PATH, ensureProjectTmpDir } = require('./lib/ck-paths.cjs');
 const {
     getConfiguredProjectConfigPath,
-    getConfiguredDocsIndexPath
+    getConfiguredDocsIndexPath,
+    loadProjectConfig
 } = require('./lib/project-config-loader.cjs');
+
+// Generic source for the feature-doc template (relocated to .claude as the
+// portable source-of-truth). Bootstrapped into the configured featureDocTemplate
+// dest on first SessionStart if absent — same bootstrap-once contract as
+// referenceDocs[].templatePath. See phase-08A.
+const FEATURE_DOC_TEMPLATE_SOURCE = '.claude/templates/detailed-feature-spec-template.md';
+const DEFAULT_FEATURE_DOC_TEMPLATE_DEST = 'docs/templates/detailed-feature-spec-template.md';
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 const CONFIG_PATH = getConfiguredProjectConfigPath();
@@ -139,6 +147,27 @@ function main() {
         // Also initialize design system app-specific docs from project-config.json
         const designSystemCreated = initDesignSystemAppDocs();
         created.push(...designSystemCreated);
+
+        // Bootstrap the configured feature-doc template from the .claude source
+        // (relocated source-of-truth). Copy-once: never overwrites a project's
+        // existing/customized template. Mirrors the referenceDocs templatePath contract.
+        try {
+            const wp = (loadProjectConfig() || {}).workflowPatterns || {};
+            const templateDestRel = (typeof wp.featureDocTemplate === 'string' && wp.featureDocTemplate.trim() !== '')
+                ? wp.featureDocTemplate.trim()
+                : DEFAULT_FEATURE_DOC_TEMPLATE_DEST;
+            const templateDest = path.join(PROJECT_DIR, templateDestRel);
+            const templateSource = path.join(PROJECT_DIR, FEATURE_DOC_TEMPLATE_SOURCE);
+            if (!fs.existsSync(templateDest) && fs.existsSync(templateSource) && fs.statSync(templateSource).isFile()) {
+                const destParent = path.dirname(templateDest);
+                if (!fs.existsSync(destParent)) fs.mkdirSync(destParent, { recursive: true });
+                fs.copyFileSync(templateSource, templateDest);
+                const relDest = path.relative(PROJECT_DIR, templateDest).replace(/\\/g, '/');
+                created.push(`- \`${relDest}\` — Feature Spec template (generated from .claude source)`);
+            }
+        } catch {
+            /* non-blocking: template bootstrap is best-effort */
+        }
 
         // File creation is silent — no output to avoid context noise.
 

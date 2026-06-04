@@ -32,7 +32,7 @@ const SESSION_END = getHookPath('session-end.cjs');
 // ============================================================================
 // v2.0.0: Removed regex-based intent detection (triggerPatterns, excludePatterns,
 // priority). Router now injects a compact workflow catalog on qualifying prompts.
-// AI reads catalog, selects workflow, calls /workflow-start <id>.
+// AI reads catalog, selects workflow, calls /start-workflow <id>.
 
 const workflowCatalogInjectionTests = [
     {
@@ -60,15 +60,13 @@ const workflowCatalogInjectionTests = [
                                 name: 'Feature Implementation',
                                 sequence: ['plan', 'cook'],
                                 whenToUse: 'New features, enhancements, adding functionality',
-                                whenNotToUse: 'Bug fixes, investigations, docs-only changes',
-                                confirmFirst: true
+                                whenNotToUse: 'Bug fixes, investigations, docs-only changes'
                             },
                             bugfix: {
                                 name: 'Bug Fix',
                                 sequence: ['scout', 'debug-investigate', 'fix'],
                                 whenToUse: 'Bug fixes, error corrections, broken behavior',
-                                whenNotToUse: 'New features, refactoring, documentation',
-                                confirmFirst: false
+                                whenNotToUse: 'New features, refactoring, documentation'
                             }
                         }
                     })
@@ -113,8 +111,7 @@ const workflowCatalogInjectionTests = [
                                 name: 'Bug Fix',
                                 sequence: ['scout', 'debug-investigate', 'fix'],
                                 whenToUse: 'Bug fixes, error corrections',
-                                whenNotToUse: 'New features, documentation',
-                                confirmFirst: false
+                                whenNotToUse: 'New features, documentation'
                             }
                         }
                     })
@@ -153,8 +150,7 @@ const workflowCatalogInjectionTests = [
                                 name: 'Bug Fix',
                                 sequence: ['fix'],
                                 whenToUse: 'Bug fixes',
-                                whenNotToUse: 'New features',
-                                confirmFirst: false
+                                whenNotToUse: 'New features'
                             }
                         }
                     })
@@ -172,7 +168,7 @@ const workflowCatalogInjectionTests = [
         }
     },
     {
-        name: '[catalog-injection] quick: prefix enables quick mode notice',
+        name: '[catalog-injection] ordinary prompt gets auto-select workflow guidance',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
@@ -184,8 +180,7 @@ const workflowCatalogInjectionTests = [
                         version: '2.0.0',
                         settings: {
                             enabled: true,
-                            allowOverride: true,
-                            overridePrefix: 'quick:'
+                            showDetection: true
                         },
                         commandMapping: { plan: { claude: '/plan' } },
                         workflows: {
@@ -193,21 +188,20 @@ const workflowCatalogInjectionTests = [
                                 name: 'Feature',
                                 sequence: ['plan'],
                                 whenToUse: 'New features and enhancements',
-                                whenNotToUse: 'Bug fixes',
-                                confirmFirst: true
+                                whenNotToUse: 'Bug fixes'
                             }
                         }
                     })
                 );
 
-                const input = createUserPromptInput('quick: implement a new feature with auth support');
+                const input = createUserPromptInput('implement a new feature with auth support');
                 const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
 
                 assertAllowed(result.code, 'Should not block');
                 const output = result.stdout;
 
-                // Quick mode should inject catalog with quick mode notice
-                assertContains(output, 'Quick mode', 'Should show quick mode notice');
+                assertContains(output, 'Auto-select the best option yourself', 'Should show auto-select workflow guidance');
+                assertNotContains(output, 'Which workflow do you want to activate?', 'Should not ask for workflow selection');
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -693,8 +687,7 @@ const workflowPrefixTests = [
                                 name: 'Feature Implementation',
                                 sequence: ['plan', 'cook', 'test'],
                                 whenToUse: 'New features, enhancements, adding functionality',
-                                whenNotToUse: 'Bug fixes, investigations, docs-only changes',
-                                confirmFirst: false
+                                whenNotToUse: 'Bug fixes, investigations, docs-only changes'
                             }
                         }
                     })
@@ -735,8 +728,7 @@ const workflowPrefixTests = [
                                 name: 'Bug Fix',
                                 sequence: ['scout', 'fix'],
                                 whenToUse: 'Bug fixes, error corrections, broken behavior',
-                                whenNotToUse: 'New features, refactoring, documentation',
-                                confirmFirst: false
+                                whenNotToUse: 'New features, refactoring, documentation'
                             }
                         }
                     })
@@ -873,8 +865,7 @@ const edgeCaseTests = [
                                 name: 'Bug Fix',
                                 sequence: ['fix'],
                                 whenToUse: 'Bug fixes, error corrections',
-                                whenNotToUse: 'New features, documentation',
-                                confirmFirst: false
+                                whenNotToUse: 'New features, documentation'
                             }
                         }
                     })

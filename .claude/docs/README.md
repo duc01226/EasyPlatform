@@ -7,10 +7,10 @@
 | Goal                         | Document                                                                                        |
 | ---------------------------- | ----------------------------------------------------------------------------------------------- |
 | **New to Claude Code?**      | [quick-start.md](./quick-start.md) - 5-minute onboarding                                        |
-| **Need a skill?**            | [skills/README.md](./skills/README.md) - 257 skills catalog                                     |
+| **Need a skill?**            | [skills/README.md](./skills/README.md) - 156 skills catalog                                     |
 | **Building a feature?**      | [skills/README.md](./skills/README.md) + `docs/project-reference/` patterns                     |
-| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 64 top-level hook files deep-dive                        |
-| **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 37 workflows                                      |
+| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 54 top-level hook files deep-dive                        |
+| **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 17 workflows                                      |
 | **Configuring Claude?**      | [configuration/README.md](./configuration/README.md)                                            |
 | **Team collaboration?**      | [team-collaboration-guide.md](./team-collaboration-guide.md) - PO, BA, QA, QC, UX, PM workflows |
 | **Graph intelligence?**      | [code-graph-mechanism.md](./code-graph-mechanism.md) - How structural code analysis works       |
@@ -23,11 +23,11 @@
 |-- README.md                 <- You are here (Navigation hub)
 |-- quick-start.md            5-minute onboarding guide
 |
-|-- skills/                   257 skills across 15+ domains
+|-- skills/                   159 skills across 15+ domains
 |   |-- README.md             Skills overview + full catalog
 |   +-- (patterns)           → docs/project-reference/
 |
-|-- hooks/                    64 top-level hook files, 29 lib modules
+|-- hooks/                    54 top-level hook files, 33 lib modules
 |   |-- README.md             Hooks overview, lessons system, session lifecycle
 |   +-- extending-hooks.md    How to create custom hooks
 |
@@ -56,17 +56,17 @@
 | ------------------------ | -------------------------- | ------------------------- |
 | Implement a feature      | `/cook`                    | `feature`                 |
 | Fix a bug                | `/fix`                     | `debug-investigate`       |
-| Create a PR              | `/git/pr`                  | `commit`                  |
+| Create a PR              | `/commit --push`           | `commit`                  |
 | Understand code          | `/scout`                   | `feature-investigation`   |
-| Plan implementation      | `/plan`                    | `planning`                |
-| Run tests                | `/test`                    | `tdd-spec`                |
+| Plan implementation      | `/plan`                    | `plan`                    |
+| Run tests                | `/test`                    | `test`                    |
 | Review code              | `/review`                  | `code-review`             |
 | Debug issues             | `/debug-investigate`       | `debug-investigate`       |
 | Create user story        | `/story`                   | `business-analyst`        |
 | Prioritize backlog       | `/prioritize`              | `product-owner`           |
-| Create test cases        | `/tdd-spec`                | `tdd-spec`                |
-| Quality checkpoint       | `/quality-gate`            | `qc-specialist`           |
-| Create design spec       | `/design-spec`             | `ux-designer`             |
+| Create test cases        | `/spec [mode=tests]`       | `spec [mode=tests]`       |
+| Quality checkpoint       | `/quality-gate`            | `quality-gate`            |
+| Create design spec       | `/design-spec`             | `design-spec`             |
 | Analyze blast radius     | `/graph-blast-radius`      | `graph-blast-radius`      |
 | Build code graph         | `/graph-build`             | `graph-build`             |
 | Review integration tests | `/integration-test-review` | `integration-test-review` |
@@ -76,19 +76,19 @@
 
 ### "I want to learn about..."
 
-| Topic                                       | Start Here                                                                    |
-| ------------------------------------------- | ----------------------------------------------------------------------------- |
-| How skills work                             | [skills/README.md](./skills/README.md)                                        |
-| How skills are activated                    | [skills/README.md](./skills/README.md)                                        |
-| How lessons system works                    | [hooks/README.md](./hooks/README.md) — `/learn` skill + lessons-injector hook |
-| How hooks intercept events                  | [hooks/README.md](./hooks/README.md) — hook catalog + lifecycle               |
-| Hook execution order by event               | [hooks/README.md](./hooks/README.md) — hook catalog + execution order         |
-| Session lifecycle (init → compact → resume) | [hooks/README.md#session-lifecycle](./hooks/README.md#session-lifecycle)      |
-| Workflow detection and routing              | `CLAUDE.md` workflow catalog (project root)                                   |
-| How to create custom hooks                  | [hooks/extending-hooks.md](./hooks/extending-hooks.md)                        |
-| How to configure output                     | [configuration/output-styles.md](./configuration/output-styles.md)            |
-| How team collaboration works                | [team-collaboration-guide.md](./team-collaboration-guide.md)                  |
-| How to update code review rules             | [hooks/README.md#code-review-rules](./hooks/README.md#code-review-rules)      |
+| Topic                                       | Start Here                                                                                        |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| How skills work                             | [skills/README.md](./skills/README.md)                                                            |
+| How skills are activated                    | [skills/README.md](./skills/README.md)                                                            |
+| How lessons system works                    | [hooks/README.md](./hooks/README.md) — `/learn` skill + `buildLessons` (pretooluse-ctx-edit-tail) |
+| How hooks intercept events                  | [hooks/README.md](./hooks/README.md) — hook catalog + lifecycle                                   |
+| Hook execution order by event               | [hooks/README.md](./hooks/README.md) — hook catalog + execution order                             |
+| Session lifecycle (init → compact → resume) | [hooks/README.md#session-lifecycle](./hooks/README.md#session-lifecycle)                          |
+| Workflow detection and routing              | `CLAUDE.md` workflow catalog (project root)                                                       |
+| How to create custom hooks                  | [hooks/extending-hooks.md](./hooks/extending-hooks.md)                                            |
+| How to configure output                     | [configuration/output-styles.md](./configuration/output-styles.md)                                |
+| How team collaboration works                | [team-collaboration-guide.md](./team-collaboration-guide.md)                                      |
+| How to update code review rules             | [hooks/README.md#code-review-rules](./hooks/README.md#code-review-rules)                          |
 
 ## Document Sizes (for context planning)
 
@@ -111,7 +111,7 @@
 | `docs/project-reference/backend-patterns-reference.md`       | Backend development tasks (project-specific companion doc)  |
 | `docs/project-reference/frontend-patterns-reference.md`      | Frontend development tasks (project-specific companion doc) |
 | `docs/project-reference/integration-test-reference.md`       | Test fixtures, patterns, module abbreviations               |
-| `docs/project-reference/feature-docs-reference.md`           | Feature doc templates, app/service mapping                  |
+| `docs/project-reference/feature-spec-reference.md`           | Feature doc templates, app/service mapping                  |
 | `docs/project-reference/domain-entities-reference.md`        | Domain entity catalog, relationships, cross-service sync    |
 | [skill-naming-conventions.md](./skill-naming-conventions.md) | Skill naming rules and prefix guide                         |
 | [configuration/README.md](./configuration/README.md)         | Settings schema, permissions, hooks config                  |
@@ -128,7 +128,7 @@
 | --------------------------------------- | ------------------------------------- |
 | `CLAUDE.md` (project root)              | Root instructions (always read first) |
 | `docs/project-reference/design-system/` | Frontend design system                |
-| `docs/business-features/`               | Business feature docs                 |
+| `docs/specs/`                           | Tech-free 8-section Feature Specs     |
 
 ## How to Use This Documentation
 
@@ -143,15 +143,15 @@
 
 | Category               | Count |
 | ---------------------- | ----- |
-| Skills                 | 257   |
-| Hook files (top-level) | 64    |
-| Lib Modules            | 29    |
+| Skills                 | 156   |
+| Hook files (top-level) | 54    |
+| Lib Modules            | 33    |
 | Hook Events            | 9     |
-| Agents                 | 28    |
-| Workflows              | 37    |
-| Hook Tests             | 369   |
+| Agents                 | 29    |
+| Workflows              | 17    |
+| Hook Tests             | 362   |
 | Documentation Files    | 28    |
 
 ---
 
-_Last updated: 2026-05-14 | Source: `.claude/` directory analysis_
+_Last updated: 2026-06-11 | Source: `.claude/` directory analysis_

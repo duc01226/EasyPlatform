@@ -1,6 +1,6 @@
 # Asset Generation Workflow
 
-Complete workflow for generating design-aligned visual assets using `ai-multimodal` skill.
+Complete workflow for generating design-aligned visual assets using `visual analysis tooling` skill.
 
 ## Generation Workflow
 
@@ -44,7 +44,7 @@ surfaces, geometric shapes, monumental scale, inspired by
 
 ### Step 3: Generate with Appropriate Model
 
-Use `ai-multimodal` skill's image generation capabilities:
+Use `visual analysis tooling` skill's image generation capabilities:
 
 ```bash
 # Standard quality (most cases)
@@ -87,7 +87,7 @@ python scripts/gemini_batch_process.py \
 
 ### Step 4: Evaluate Against Design Standards
 
-Use `ai-multimodal` to analyze the generated asset (see `visual-analysis.md` for complete workflow):
+Use `visual analysis tooling` to analyze the generated asset (see `visual-analysis.md` for complete workflow):
 
 ```bash
 python scripts/gemini_batch_process.py \
@@ -111,7 +111,7 @@ python scripts/gemini_batch_process.py \
 1. Identify specific issues (color, composition, mood, technical)
 2. Refine prompt with improvements
 3. Regenerate with adjusted parameters
-4. Consider using `media-processing` skill for post-generation adjustments
+4. Consider using media processing tooling for post-generation adjustments
 
 **If meets standards**:
 

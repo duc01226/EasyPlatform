@@ -1,6 +1,6 @@
 ---
 name: fix
-description: '[Implementation] Use when you need to analyze and fix issues [INTELLIGENT ROUTING].'
+description: '[Implementation] Use when you need to analyze and fix issues [INTELLIGENT ROUTING]. Flag: --target={ci|issue|logs|test|types|ui} scopes the fix; --target=types resolves TypeScript errors inline.'
 disable-model-invocation: false
 ---
 
@@ -29,11 +29,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -53,7 +57,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Systematically diagnose and fix complex bugs using parallel subagent investigation.
+**Goal:** Eliminate the root cause of an issue using parallel subagent investigation — traced end-to-start with `file:line` evidence and fixed at the lowest invariant-owning layer (never the crash site) — then prove the fix with `$prove-fix` so the disease is cured, not just the symptom.
 
 **Workflow:**
 
@@ -67,6 +71,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - Debug Mindset: every claim needs `file:line` evidence
 - Use subagents for parallel investigation of multiple hypotheses
 - Always create a plan before implementing complex fixes
+- **Target flag** (see [Target Routing](#target-routing---target)): `--target={ci|issue|logs|test|types|ui}` selects a self-contained inline branch that scopes the fix to that domain. No flag = full diagnose→fix spine below.
 
 ## Default Mode Policy
 
@@ -103,9 +108,171 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 **Ultrathink** plan and start fixing these issues; follow Orchestration Protocol, Core Responsibilities, Subagents Team, Development Rules:
 <issues>$ARGUMENTS</issues>
 
+## Target Routing (`--target=`)
+
+`$fix` is an intelligent router. With no flag it runs the full diagnose→fix spine below. Pass `--target=` to scope the run to a self-contained inline branch:
+
+| `--target` | Behavior                                                        |
+| ---------- | --------------------------------------------------------------- |
+| `types`    | **Inline branch (below)** — TypeScript / type-error resolution. |
+| `ci`       | **Inline branch (below)** — CI / pipeline failure triage.       |
+| `issue`    | **Inline branch (below)** — tracked issue / ticket resolution.  |
+| `logs`     | **Inline branch (below)** — log / stack-trace-driven debugging. |
+| `test`     | **Inline branch (below)** — failing-test repair.                |
+| `ui`       | **Inline branch (below)** — UI / visual-defect fixes.           |
+
+No `--target` (or an unrecognized value) → run the full Workflow spine below; infer the right specialization from `<issues>`.
+
+> **Formerly standalone skills.** `--target=ci|issue|logs|test|ui` were previously the separate skills `/fix-ci`, `/fix-issue`, `/fix-logs`, `/fix-test`, `/fix-ui`; they are now inline branches of `$fix` (folded — the standalone names no longer exist).
+
+### `--target=types` — TypeScript / type-error branch
+
+Run `tsc --noEmit` (or `nx build` / `bun run typecheck` / `npx tsc`) to gather all type errors, then:
+
+1. **Collect** — Capture every type error with `file:line`.
+2. **Classify** — Group by cause: missing types, wrong signatures, import/export issues.
+3. **Fix at root** — Give each value its real, specific type (or `unknown` + a narrowing guard). Do NOT use `any` to silence the checker — `any` ships the underlying type defect. Fix the root cause (wrong interface, missing export), not the symptom site. — why: `any` silences the checker and lets the type defect ship.
+4. **Repeat** until `tsc --noEmit` is clean — zero type errors.
+5. **🛑 Validate Before Fix:** present errors + root cause via a direct user question, get approval before code changes (skip if inside a workflow).
+6. **After fixing, run `$prove-fix`** — build code proof traces per change with confidence scores. Never skip.
+
+The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to this branch unchanged.
+
+### `--target=ci` — CI / pipeline-failure branch
+
+**Goal:** Analyze CI/CD pipeline logs to identify and fix build/test failures in the configured CI provider/tooling.
+
+**Key Rules:**
+
+- **Infrastructure context:** read `docs/project-config.json` → `infrastructure.cicd.tool` to identify the CI provider/tooling (e.g. `azure-devops`, `github-actions`, `gitlab-ci`); target that provider's pipeline config files.
+- Focus on CI-specific issues (env vars, Docker, dependencies, build order).
+- Verify the fix does not break local development.
+
+**Workflow:**
+
+1. Use the `debugger` subagent to read the CI logs via the configured CI tool/API (from `docs/project-config.json`), analyze the final failing log/error **backward** to the root cause, and report back. Write findings to `.ai/workspace/analysis/{ci-issue}.analysis.md`; re-read before implementing.
+2. **🛑 Present root cause + proposed fix → a direct user question → wait for approval.**
+3. Implement the fix from the report.
+4. Use the `tester` subagent to verify; report back.
+5. If tests fail, repeat from step 2.
+6. Report a summary of changes; suggest next steps. Then run `$prove-fix`.
+
+**Notes:** Use the CLI/API for the configured CI provider. If it is GitHub Actions and `gh` is unavailable, instruct the user to install and authorize GitHub CLI first.
+
+The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to this branch unchanged.
+
+### `--target=issue` — tracked-issue / ticket branch
+
+**Goal:** Investigate and fix bugs reported as tracked issues (e.g. GitHub issues) with full traceability.
+
+**Active-goal read (BEFORE root-cause work):** resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the issue). Map the ticket's acceptance criteria to the saved success criteria; after the fix, append proof evidence and remaining gaps to the Iteration Log. Closure is blocked while any required criterion remains FAIL.
+
+**Key Rules:**
+
+- Link the fix back to the issue for traceability.
+- Verify the fix addresses the specific reproduction steps from the issue.
+
+**Workflow:**
+
+1. Activate the `debug-investigate` skill and follow its workflow. See `.claude/docs/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.
+2. Use external memory at `.ai/workspace/analysis/issue-[number].analysis.md` for structured analysis. **Re-read the ENTIRE analysis file before proposing any fix.**
+3. **🛑 Present root cause + proposed fix → a direct user question → wait for approval before implementing.**
+4. Implement, then run `$prove-fix`.
+
+> **Standalone Review Gate (non-workflow only):** if `$fix --target=issue` runs **outside a workflow**, add a `$review-changes` task tracking todo as the **last** task. Inside a workflow, skip — the sequence handles `$review-changes`.
+
+The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to this branch unchanged.
+
+### `--target=logs` — log / stack-trace branch
+
+**Goal:** Analyze application logs to diagnose and fix runtime errors or unexpected behavior.
+
+**Key Rules:**
+
+- Focus on log patterns: stack traces, error codes, timing anomalies.
+- Cross-reference logs with source code to find the actual root cause.
+
+**Workflow:**
+
+1. Check whether `./logs.txt` exists. If missing, set up permanent log piping in the project's script config (`package.json`, `Makefile`, `pyproject.toml`, …): **Bash/Unix** append `2>&1 | tee logs.txt`; **PowerShell** append `*>&1 | Tee-Object logs.txt`. Run the command to generate logs.
+2. Use the `debugger` subagent to analyze `./logs.txt`: read with `Grep` `head_limit: 30` (last 30 lines; increase if needed — avoid loading the whole file). Write analysis to `.ai/workspace/analysis/{issue-name}.analysis.md`; re-read before fixing.
+3. Use the `scout` subagent to locate the exact source of the issue; report back.
+4. Use the `planner` subagent to create an implementation plan; report back.
+5. **🛑 Present root cause + fix plan → a direct user question → wait for approval.**
+6. Implement the fix.
+7. Use the `tester` subagent to verify; report back.
+8. Use the `code-reviewer` subagent to review the changes; report back.
+9. If tests fail, repeat from step 3.
+10. Report a summary; suggest next steps. Then run `$prove-fix`.
+
+The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to this branch unchanged.
+
+### `--target=test` — failing-test branch
+
+**Goal:** Run test suites, analyze failures, and fix the underlying code or test issues.
+
+**Active-goal read (BEFORE fixing):** resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the reported test failure). Map failing-test evidence (before) and passing-test evidence (after) to the saved success criteria in the Iteration Log — a passing suite that misses a saved required criterion does NOT close the loop.
+
+**Key Rules:**
+
+- Distinguish between code bugs and flawed test expectations.
+- Re-run tests after the fix to confirm all pass.
+- Read `docs/project-reference/integration-test-reference.md` before reviewing/writing integration tests; consult `docs/specs/` for expected-behavior context when diagnosing failures.
+
+**Workflow:**
+
+1. Use the `tester` subagent to compile the code and fix any syntax errors.
+2. Use the `tester` subagent to run the tests; report back. Write failure analysis to `.ai/workspace/analysis/{test-issue}.analysis.md`; re-read before fixing.
+3. If tests fail, use the `debugger` subagent to find the root cause; report back.
+4. Use the `planner` subagent to create an implementation plan; report back.
+5. **🛑 Present root cause + fix plan → a direct user question → wait for approval.**
+6. Implement the plan step by step.
+7. Use the `tester` subagent to verify; report back.
+8. Use the `code-reviewer` subagent to review the changes; report back.
+9. If tests fail, repeat from step 2.
+10. Report a summary; suggest next steps. Then run `$prove-fix`.
+
+The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to this branch unchanged.
+
+### `--target=ui` — UI / visual-defect branch
+
+**Goal:** Diagnose and fix UI/UX issues — layout, styling, responsiveness, and visual bugs.
+
+**Key Rules:**
+
+- Always use BEM classes on template elements.
+- Check responsive breakpoints when fixing layout issues.
+- **Pre-read (design system):** load `designSystem.canonicalDoc` + `tokenFiles` from `docs/project-config.json` so fixes use real token names (`--brand-*`, `$brand-*`) and canonical component classes — not invented values.
+
+**Required skills (priority order):** `ui-ux-pro-max` (design-intelligence DB) → `web-design-guidelines` (principles) → `frontend-design` (implementation patterns).
+
+**Workflow:**
+
+**FIRST** — run `ui-ux-pro-max` searches to understand context and common issues:
+
+```bash
+python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<product-type>" --domain product
+python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<style-keywords>" --domain style
+python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "accessibility" --domain ux
+python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "z-index animation" --domain ux
+```
+
+If the user provides screenshots/videos, use the `visual analysis tooling` skill to describe the issue in detail so developers can predict the root causes.
+
+> **🛑 After identifying the UI root cause, present findings + proposed fix → a direct user question → wait for approval before any code change.**
+
+1. Use the `ui-ux-designer` subagent to implement the fix step by step (against the design guideline — `designSystem.canonicalDoc`).
+2. Capture screenshots (at the exact parent container, not the whole page) and analyze with the appropriate Gemini skill (`visual analysis tooling`, `video-analysis`, or `document-extraction`) so the result matches the design guideline and addresses all issues. Repeat until addressed.
+3. Use the browser automation tooling to verify the fix matches the design guideline.
+4. Use the `tester` subagent to compile and test; report back. Repeat until all tests pass.
+5. **If the user approves:** run the `project-manager` and `docs-manager` subagents in parallel to update plan progress and `./docs`; have `project-manager` also create/update a project roadmap at `./docs/project-roadmap.md`.
+6. Report a summary; suggest next steps. Then run `$prove-fix`.
+
+The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to this branch unchanged.
+
 ## Workflow:
 
-If user provides screenshots or videos, use `ai-multimodal` skill to describe issue in detail; ensure developers can predict root causes from description.
+If user provides screenshots or videos, use `visual analysis tooling` skill to describe issue in detail; ensure developers can predict root causes from description.
 
 ### Fulfill the request
 
@@ -116,8 +283,11 @@ If user provides screenshots or videos, use `ai-multimodal` skill to describe is
 - No questions → start next step.
 
 > **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause + plan creation, MUST ATTENTION present findings + proposed fix plan to user via a direct user question and get explicit approval BEFORE any code changes. No silent fixes.
+> **End-to-Start Trace Gate:** For non-trivial bugs, failed verification, stale/incorrect final outputs, or behavior-changing fixes, the root-cause plan MUST ATTENTION include `Debugger Trace: End -> Start`, feeder paths, hypothesis matrix, owning fix layer, and forward convergence proof. If missing, STOP and run `$debug-investigate` or `$investigate` before planning code changes.
 
 ### Fix the issue
+
+**Active-goal read (BEFORE root-cause work):** resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` — active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the reported issue via `.claude/templates/goal-contract-template.md`. The saved success criteria define what "fixed" means — a proven local fix that misses a saved required criterion is NOT complete. After proof, append root cause, proof evidence, and remaining goal gaps to the Iteration Log. Tiny fixes may skip deeper gates ONLY with user-accepted reason recorded in the goal file.
 
 Use `sequential-thinking` skill to break complex problems into sequential thought steps.
 Use `problem-solving` skills to tackle issues.
@@ -125,6 +295,7 @@ Analyze skills catalog and activate other needed skills during the process.
 
 1. Use `debugger` subagent to find root cause and report back to main agent.
    1.5. Write investigation results to `.ai/workspace/analysis/{issue-name}.analysis.md`. Re-read ENTIRE file before planning fix.
+   1.6. Confirm the report contains final symptom -> reader -> storage/projection -> writer -> consumer/job -> producer/origin, all feeder paths, hypothesis matrix, owning fix layer, and forward convergence proof.
 2. Use `researcher` subagent to research root causes on internet (if needed) and report back.
 3. Use `planner` subagent to create implementation plan based on reports; report back.
 4. **🛑 Present root cause + fix plan → a direct user question → wait for user approval.**
@@ -139,9 +310,9 @@ Analyze skills catalog and activate other needed skills during the process.
 
 **REMEMBER:**
 
-- Generate images with `ai-multimodal` skills on the fly for visual assets.
-- Read and analyze generated assets with `ai-multimodal` skills to verify they meet requirements.
-- For image editing (removing background, adjusting, cropping), use `media-processing` skill as needed.
+- Generate images with `visual analysis tooling` skills on the fly for visual assets.
+- Read and analyze generated assets with `visual analysis tooling` skills to verify they meet requirements.
+- For image editing (removing background, adjusting, cropping), use media processing tooling as needed.
 
 - **After fixing, MUST ATTENTION run `$prove-fix`** — build code proof traces per change with confidence scores. Never skip.
 
@@ -161,6 +332,23 @@ Analyze skills catalog and activate other needed skills during the process.
 > **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. Prevents context loss from long files. For simple tasks, MUST ATTENTION ask user whether to skip.
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+
+<!-- SYNC:end-to-start-debugger-trace -->
+
+> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
+>
+> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
+> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
+> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
+> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
+> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
+> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
+>
+> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
+>
+> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+
+<!-- /SYNC:end-to-start-debugger-trace -->
 
 <!-- SYNC:root-cause-debugging -->
 
@@ -197,11 +385,11 @@ Analyze skills catalog and activate other needed skills during the process.
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -283,9 +471,10 @@ Analyze skills catalog and activate other needed skills during the process.
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -300,6 +489,7 @@ Analyze skills catalog and activate other needed skills during the process.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -344,8 +534,15 @@ Analyze skills catalog and activate other needed skills during the process.
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `$project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:end-to-start-debugger-trace:reminder -->
+
+**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+
+<!-- /SYNC:end-to-start-debugger-trace:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
@@ -354,7 +551,16 @@ Analyze skills catalog and activate other needed skills during the process.
 
 <!-- /SYNC:nested-task-creation:reminder -->
 
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
+
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION Goal:** Eliminate the root cause of an issue — traced end-to-start with `file:line` evidence and fixed at the lowest invariant-owning layer (never the crash site) — then prove the fix with `$prove-fix` so the disease is cured, not just the symptom.
 
 **IMPORTANT MUST ATTENTION** default mode HARD — opt out to fast mode ONLY when bug is genuinely trivial (all 5 conditions met)
 **IMPORTANT MUST ATTENTION** break work into small todo tasks via task tracking BEFORE starting
@@ -374,17 +580,14 @@ Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
    **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
    **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
    **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
@@ -402,7 +605,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
    **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 

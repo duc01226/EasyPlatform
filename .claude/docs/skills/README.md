@@ -1,6 +1,6 @@
 # Skills Reference
 
-> 257 skills across 15+ domains + 5 shared reference/protocol files for context-aware AI assistance
+> 159 skills across 15+ domains + 5 shared reference/protocol files for context-aware AI assistance
 
 ## Overview
 
@@ -22,19 +22,21 @@ Skills Activated: fix, feature-investigation
 
 ## Skill Domains
 
+> Curated highlights — the full catalog has 159 skills; the tables below list selected skills per domain, not the complete set.
+
 | Domain                                            | Skills | Description                                          |
 | ------------------------------------------------- | ------ | ---------------------------------------------------- |
-| [Development - Backend](#development---backend)   | 1      | API design patterns                                  |
+| [Development - Backend](#development---backend)   | 0      | Project-specific backend patterns                    |
 | [Development - Frontend](#development---frontend) | 3      | Components, forms, state, styling, design            |
-| [Architecture](#architecture)                     | 5      | Cross-service, performance, security                 |
+| [Architecture](#architecture)                     | 3      | Architecture, performance, security                  |
 | [Debugging/Testing](#debuggingtesting)            | 3      | Test generation, test specs                          |
-| [AI/ML Tools](#aiml-tools)                        | 4      | Prompts, multimodal, agents                          |
+| [AI/ML Tools](#aiml-tools)                        | 1      | Structured reasoning                                 |
 | [Documentation](#documentation)                   | 6      | Docs, feature docs, changelogs, release notes        |
 | [Git/Workflow](#gitworkflow)                      | 6      | Commits, branches, code review, scout, quality gates |
 | [Code Quality](#code-quality)                     | 10     | Graph-based code analysis, blast radius, sync        |
 | [Planning/Research](#planningresearch)            | 6      | Plans, research, implementation, investigation       |
-| [Infrastructure/DevOps](#infrastructuredevops)    | 5      | Cloudflare, Docker, MCP                              |
-| [Context/Memory](#contextmemory)                  | 6      | Optimization, persistence, learning                  |
+| [Infrastructure/DevOps](#infrastructuredevops)    | 1      | Cloudflare, Docker, GCP                              |
+| [Context/Memory](#contextmemory)                  | 4      | Optimization, persistence, learning                  |
 | [Team Collaboration](#team-collaboration)         | 13     | PO, BA, QA, QC, UX, PM roles, prioritization         |
 | [Web/Frameworks](#webframeworks)                  | 2      | Package updates, markdown                            |
 | [Document Processing](#document-processing)       | 4      | PDF, DOCX, Markdown conversions                      |
@@ -45,10 +47,6 @@ Skills Activated: fix, feature-investigation
 ---
 
 ## Development - Backend
-
-| Skill        | Triggers                                | Description                  |
-| ------------ | --------------------------------------- | ---------------------------- |
-| `api-design` | REST, controller, route, HTTP, endpoint | API endpoint design patterns |
 
 See `docs/project-reference/backend-patterns-reference.md` for project-specific backend patterns.
 
@@ -68,25 +66,24 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 ## Architecture
 
-| Skill                            | Triggers                                | Description                |
-| -------------------------------- | --------------------------------------- | -------------------------- |
-| `arch-cross-service-integration` | cross-service, data sync                | Service communication      |
-| `arch-performance-optimization`  | performance, optimization               | Performance tuning         |
-| `arch-security-review`           | security, vulnerabilities               | Security analysis          |
-| `refactoring`                    | refactor, restructure, clean            | Code restructuring         |
-| `dependency`                     | dependency map, blockers, critical path | Feature dependency mapping |
+| Skill                | Triggers                                | Description                                       |
+| -------------------- | --------------------------------------- | ------------------------------------------------- |
+| `performance-review` | performance, optimization, bottleneck   | Performance tuning + architecture-altitude review |
+| `security-review`    | security, vulnerabilities               | Security analysis                                 |
+| `refactoring`        | refactor, restructure, clean            | Code restructuring                                |
+| `dependency`         | dependency map, blockers, critical path | Feature dependency mapping                        |
 
 ---
 
 ## Debugging/Testing
 
-| Skill                       | Triggers                                                              | Description                                                                                                      |
-| --------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `webapp-testing`            | E2E, Playwright, Cypress                                              | End-to-end testing                                                                                               |
-| `tdd-spec`                  | test specification, QA spec, test strategy, TC-IDs, test cases        | Unified test case writer — generates TC-{FEATURE}-{NNN} specs from PBIs and feature docs                         |
-| `tdd-spec [direction=sync]` | sync test specs, update dashboard, reverse sync, sync to feature docs | Dashboard sync mode — syncs TCs from feature docs Section 15 to `docs/specs/`                                    |
-| `integration-test-review`   | integration test review, assertion quality, test gate review, TC gate | Review integration tests against 5 quality gates (assertion value, data state, repeatability, domain logic, TC)  |
-| `integration-test-verify`   | run integration tests, verify tests pass, test runner, dotnet test    | Run integration tests after writing/reviewing them — reads project-config.json for project-specific run guidance |
+| Skill                     | Triggers                                                              | Description                                                                                                                             |
+| ------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `webapp-testing`          | E2E, Playwright, Cypress                                              | End-to-end testing                                                                                                                      |
+| `spec [mode=tests]`       | test specification, QA spec, test strategy, TC-IDs, test cases        | Unified test case writer — generates TC-{FEATURE}-{NNN} specs from PBIs and feature docs                                                |
+| `spec [mode=sync]`        | sync test specs, update dashboard, reverse sync, sync to feature docs | Dashboard sync mode — syncs TCs from feature docs Section 8 to `docs/specs/` (sync mode retires when dashboards are removed in Phase 7) |
+| `integration-test-review` | integration test review, assertion quality, test gate review, TC gate | Review integration tests against 5 quality gates (assertion value, data state, repeatability, domain logic, TC)                         |
+| `integration-test-verify` | run integration tests, verify tests pass, test runner, dotnet test    | Run integration tests after writing/reviewing them — reads project-config.json for project-specific run guidance                        |
 
 ---
 
@@ -94,23 +91,19 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 | Skill                 | Triggers                     | Description          |
 | --------------------- | ---------------------------- | -------------------- |
-| `ai-artist`           | prompts, Midjourney, DALL-E  | AI image generation  |
-| `ai-multimodal`       | Gemini, audio, video, images | Multimodal AI        |
 | `sequential-thinking` | complex problems, multi-step | Structured reasoning |
 
 ---
 
 ## Documentation
 
-| Skill           | Triggers                                                           | Description                                                                      |
-| --------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `documentation` | document, API docs, comments, README                               | General documentation                                                            |
-| `docs-seeker`   | find docs, library docs                                            | Documentation search                                                             |
-| `feature-docs`  | business docs, module docs, feature docs                           | Business documentation (includes feature-docs)                                   |
-| `feature-docs`  | quick feature docs, feature readme                                 | Single-file feature documentation                                                |
-| `changelog`     | changelog, version history, update changelog                       | Changelog generation                                                             |
-| `release-notes` | release notes, git history                                         | Release notes from git commits (tag-to-tag)                                      |
-| `release-doc`   | release doc, what changed in the last N days, changes last 30 days | AI-analyzed release doc from time range or custom prompt — dumps artifacts first |
+| Skill           | Triggers                                                 | Description                                                                |
+| --------------- | -------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `documentation` | document, API docs, comments, README                     | General documentation                                                      |
+| `docs-seeker`   | find docs, library docs                                  | Documentation search                                                       |
+| `spec`          | business docs, module docs, feature docs, feature readme | Business/feature documentation (single canonical Feature Spec per feature) |
+| `changelog`     | changelog, version history, update changelog             | Changelog generation                                                       |
+| `release-notes` | release notes, git history                               | Release notes from git commits (tag-to-tag)                                |
 
 ---
 
@@ -129,43 +122,36 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 ## Code Quality
 
-| Skill                  | Triggers                                                | Description                                                            |
-| ---------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `graph-build`          | build graph, code graph, knowledge graph                | Build or update the code review knowledge graph (Tree-sitter + SQLite) |
-| `graph-blast-radius`   | blast radius, impact analysis, structural impact        | Analyze structural impact of current changes using knowledge graph     |
-| `graph-export`         | export graph, JSON dump                                 | Export full knowledge graph to JSON file                               |
-| `graph-export-mermaid` | mermaid, diagram, visualize                             | Export single-file graph as Mermaid diagram                            |
-| `graph-query`          | graph query, callers, tests_for                         | Natural language graph relationship queries                            |
-| `graph-connect-api`    | connect api, api connections, frontend backend          | Detect frontend-to-backend API connections via knowledge graph         |
-| `graph-sync`           | sync graph, refresh graph, update graph after pull      | Sync knowledge graph with current git state after pull/checkout        |
-| `graph-update`         | update graph, working tree, uncommitted changes         | Update knowledge graph with uncommitted working tree changes           |
-| `linter-setup`         | linter setup, formatter setup, pre-commit, quality gate | Configure stack-appropriate lint/format/type-check quality tooling     |
-| `harness-setup`        | harness setup, quality harness, feedback sensors        | Set up feedforward guides and feedback sensors for coding workflows    |
+| Skill                | Triggers                                                                                                                        | Description                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `graph-build`        | build graph, code graph, knowledge graph, sync graph, update graph, working tree, uncommitted changes, refresh graph after pull | Build, update, or sync the code review knowledge graph via `--scope={full\|update\|sync}` (Tree-sitter + SQLite) |
+| `graph-blast-radius` | blast radius, impact analysis, structural impact                                                                                | Analyze structural impact of current changes using knowledge graph                                               |
+| `graph-export`       | export graph, JSON dump, mermaid, diagram, visualize                                                                            | Export full graph to JSON (`--format=json`) or single-file Mermaid diagram (`--format=mermaid`)                  |
+| `graph-query`        | graph query, callers, tests_for                                                                                                 | Natural language graph relationship queries                                                                      |
+| `graph-connect-api`  | connect api, api connections, frontend backend                                                                                  | Detect frontend-to-backend API connections via knowledge graph                                                   |
+| `linter-setup`       | linter setup, formatter setup, pre-commit, quality gate                                                                         | Configure stack-appropriate lint/format/type-check quality tooling                                               |
+| `harness-setup`      | harness setup, quality harness, feedback sensors                                                                                | Set up feedforward guides and feedback sensors for coding workflows                                              |
 
 ---
 
 ## Planning/Research
 
-| Skill                   | Triggers                           | Description                                 |
-| ----------------------- | ---------------------------------- | ------------------------------------------- |
-| `planning`              | plan, strategy, approach, research | Implementation planning (includes research) |
-| `plan-analysis`         | analyze plan, review plan          | Plan review                                 |
-| `feature`               | implement, add, create, build      | Feature development                         |
-| `feature-investigation` | how does, explain, trace           | Code exploration                            |
-| `problem-solving`       | complex problem, solution          | Problem analysis                            |
-| `planning`              | research, explore, analyze         | Technical research (merged into planning)   |
+| Skill                   | Triggers                           | Description                                                           |
+| ----------------------- | ---------------------------------- | --------------------------------------------------------------------- |
+| `plan`                  | plan, strategy, approach, research | Implementation planning (includes research phase + engine references) |
+| `plan-analysis`         | analyze plan, review plan          | Plan review                                                           |
+| `feature`               | implement, add, create, build      | Feature development                                                   |
+| `feature-investigation` | how does, explain, trace           | Code exploration                                                      |
+| `problem-solving`       | complex problem, solution          | Problem analysis                                                      |
+| `research`              | research, explore, analyze         | Technical research & solution analysis (standalone)                   |
 
 ---
 
 ## Infrastructure/DevOps
 
-| Skill              | Triggers                        | Description         |
-| ------------------ | ------------------------------- | ------------------- |
-| `devops`           | Cloudflare, Docker, GCP, deploy | Cloud deployment    |
-| `chrome-devtools`  | Puppeteer, browser automation   | Browser automation  |
-| `mcp-builder`      | MCP server, tools               | MCP server creation |
-| `mcp-management`   | MCP tools, discover             | MCP tool management |
-| `media-processing` | FFmpeg, ImageMagick, video      | Media handling      |
+| Skill    | Triggers                        | Description      |
+| -------- | ------------------------------- | ---------------- |
+| `devops` | Cloudflare, Docker, GCP, deploy | Cloud deployment |
 
 ---
 
@@ -176,38 +162,31 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 | `context-optimization` | context, tokens, compress                        | Token management             |
 | `memory-management`    | remember, save, persist                          | Pattern persistence          |
 | `code-simplifier`      | simplify, refine, clarity                        | Code cleanup                 |
-| `repomix`              | codebase export, context                         | Context export               |
-| `plans-kanban`         | kanban, task tracking                            | Task management              |
 | `learn`                | remember this, always do, patterns, list learned | Pattern learning and viewing |
 
 ---
 
 ## Team Collaboration
 
-| Skill              | Triggers                                            | Description                            |
-| ------------------ | --------------------------------------------------- | -------------------------------------- |
-| `business-analyst` | requirements, user story, acceptance criteria, BDD  | Requirements analysis, story writing   |
-| `product-owner`    | backlog, prioritize, PBI, feature idea, stakeholder | Backlog management, prioritization     |
-| `project-manager`  | timeline, dependencies, status, milestone, resource | Project tracking, reporting            |
-| `tdd-spec`         | test plan, test cases, coverage, automation         | Test specification and case generation |
-| `qc-specialist`    | quality gate, audit, compliance, standards          | Quality checkpoints, audits            |
-| `ux-designer`      | wireframe, mockup, user flow, design spec           | UX design, specifications              |
-| `design-spec`      | UI specification, component spec, layout spec       | Design specification documents         |
-| `idea`             | capture idea, new idea, add to backlog              | Idea capture and structuring           |
-| `refine`           | refine idea, convert to PBI, acceptance criteria    | Idea-to-PBI transformation             |
-| `story`            | user story, vertical slice, split story             | PBI-to-story breakdown                 |
-| `prioritize`       | RICE score, MoSCoW, value-effort matrix             | Backlog prioritization frameworks      |
-| `status`           | status report, sprint status, progress              | Status report generation               |
-| `team-sync`        | standup, meeting agenda, sprint review              | Meeting facilitation                   |
+| Skill               | Triggers                                                                                         | Description                               |
+| ------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| `business-analyst`  | requirements, user story, acceptance criteria, BDD                                               | Requirements analysis, story writing      |
+| `product-owner`     | backlog, prioritize, PBI, feature idea, stakeholder                                              | Backlog management, prioritization        |
+| `project-manager`   | timeline, dependencies, status, milestone, resource                                              | Project tracking, reporting               |
+| `spec [mode=tests]` | test plan, test cases, coverage, automation                                                      | Test specification and case generation    |
+| `design-spec`       | UI specification, component spec, layout spec, wireframe, mockup, user flow, accessibility audit | Design specification documents, UX design |
+| `idea`              | capture idea, new idea, add to backlog                                                           | Idea capture and structuring              |
+| `refine`            | refine idea, convert to PBI, acceptance criteria                                                 | Idea-to-PBI transformation                |
+| `story`             | user story, vertical slice, split story                                                          | PBI-to-story breakdown                    |
+| `prioritize`        | RICE score, MoSCoW, value-effort matrix                                                          | Backlog prioritization frameworks         |
 
 ---
 
 ## Web/Frameworks
 
-| Skill                   | Triggers              | Description      |
-| ----------------------- | --------------------- | ---------------- |
-| `package-upgrade`       | upgrade, dependencies | Package updates  |
-| `markdown-novel-viewer` | markdown, novel       | Markdown viewing |
+| Skill             | Triggers              | Description     |
+| ----------------- | --------------------- | --------------- |
+| `package-upgrade` | upgrade, dependencies | Package updates |
 
 ---
 
@@ -237,7 +216,7 @@ All shared protocols are now **inlined** into consuming skills via `<!-- SYNC:ta
 
 **Why inline?** AI compliance drops ~40% when protocols are behind file-read indirection. Inline SYNC blocks are always present in the skill's context window.
 
-**To update a protocol:** Edit `sync-inline-versions.md` first, then `grep SYNC:protocol-name` and update all copies. Use `/sync-protocols` skill to automate.
+**To update a protocol:** Edit `sync-inline-versions.md` first, then `grep SYNC:protocol-name` and update all copies. Use `/sync-skills-shared-protocols` skill to automate.
 
 ---
 
@@ -265,9 +244,9 @@ Each skill is located at `.claude/skills/{skill-name}/`:
 ```markdown
 ---
 name: skill-name
-version: 2.0.0
-description: Brief description
-triggers: [keyword1, keyword2, keyword3]
+version: 1.0.0
+description: '[Domain] Use when... (semantic trigger keywords belong in this description)'
+disable-model-invocation: false
 ---
 
 ## Overview
@@ -293,32 +272,31 @@ triggers: [keyword1, keyword2, keyword3]
 
 Skills are often activated alongside commands:
 
-| Command         | Primary Skills Activated          |
-| --------------- | --------------------------------- |
-| `/cook`         | `feature`, `planning`, `tdd-spec` |
-| `/fix`          | `debug-investigate`               |
-| `/plan`         | `planning`, `plan-analysis`       |
-| `/review`       | `code-review`                     |
-| `/scout`        | `scout`, `feature-investigation`  |
-| `/test`         | `tdd-spec`, `webapp-testing`      |
-| `/idea`         | `idea`, `product-owner`           |
-| `/refine`       | `refine`, `business-analyst`      |
-| `/story`        | `story`, `business-analyst`       |
-| `/design-spec`  | `design-spec`, `ux-designer`      |
-| `/tdd-spec`     | `tdd-spec`                        |
-| `/quality-gate` | `qc-specialist`                   |
-| `/status`       | `status`, `project-manager`       |
-| `/dependency`   | `dependency`, `project-manager`   |
-| `/prioritize`   | `prioritize`, `product-owner`     |
+| Command              | Primary Skills Activated               |
+| -------------------- | -------------------------------------- |
+| `/cook`              | `feature`, `plan`, `spec [mode=tests]` |
+| `/fix`               | `debug-investigate`                    |
+| `/plan`              | `plan`, `plan-analysis`                |
+| `/review`            | `code-review`                          |
+| `/scout`             | `scout`, `feature-investigation`       |
+| `/test`              | `spec [mode=tests]`, `webapp-testing`  |
+| `/idea`              | `idea`, `product-owner`                |
+| `/refine`            | `refine`, `business-analyst`           |
+| `/story`             | `story`, `business-analyst`            |
+| `/design-spec`       | `design-spec`                          |
+| `/spec [mode=tests]` | `spec [mode=tests]`                    |
+| `/quality-gate`      | `quality-gate`                         |
+| `/dependency`        | `dependency`, `project-manager`        |
+| `/prioritize`        | `prioritize`, `product-owner`          |
 
 ---
 
 ## Creating Custom Skills
 
-Use `/skill/create` to create a new skill:
+Use `/skill-creator` to create a new skill:
 
 ```bash
-/skill/create "my-custom-skill" "Description of what it does"
+/skill-creator "my-custom-skill" "Description of what it does"
 ```
 
 ---
@@ -333,4 +311,4 @@ Use `/skill/create` to create a new skill:
 
 ---
 
-_Source: `.claude/skills/` | 257 skills across 15+ domains + 5 shared reference/protocol files_
+_Source: `.claude/skills/` | 159 skills across 15+ domains + 5 shared reference/protocol files_

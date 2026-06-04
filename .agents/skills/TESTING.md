@@ -23,11 +23,11 @@ $debug-investigate
 Inference test prompts:
 
 ```
-"I'm getting a NullReferenceException in SaveEmployeeCommandHandler"
+"I'm getting a NullReferenceException in SaveOrderCommandHandler"
 "This feature stopped working after the last deployment"
 "Fix the error: Cannot read property 'name' of undefined"
-"Debug why the employee list is showing duplicate records"
-"The API returns 500 error when saving a new leave request"
+"Debug why the order list is showing duplicate records"
+"The API returns 500 error when saving a new return request"
 ```
 
 Expected behavior:
@@ -52,8 +52,8 @@ Inference test prompts:
 ```
 "Review this command handler for anti-patterns"
 "Check if this code follows SOLID principles"
-"Analyze the code quality of EmployeeService.cs"
-"Look for code smells in this Angular component"
+"Analyze the code quality of OrderService.cs"
+"Look for code smells in this frontend component"
 "Refactor this method to improve readability"
 ```
 
@@ -66,21 +66,21 @@ Expected behavior:
 
 ---
 
-### feature-implementation
+### workflow-feature
 
 Direct invocation:
 
 ```
-$feature-implementation
+$start-workflow workflow-feature
 ```
 
 Inference test prompts:
 
 ```
-"Implement a new employee export feature"
-"Add a notification system for leave approvals"
+"Implement a new order export feature"
+"Add a notification system for return approvals"
 "Build a dashboard widget for team metrics"
-"Create a bulk import feature for employee data"
+"Create a bulk import feature for order data"
 "Develop an integration with external HR system"
 ```
 
@@ -106,7 +106,7 @@ Inference test prompts:
 ```
 "Extract this validation logic into a separate method"
 "Move the mapping code from handler to DTO"
-"Rename getUserData to getEmployeeProfile across the codebase"
+"Rename getRawData to getOrderDetails across the codebase"
 "Decompose this large command handler"
 "Inline this helper method that's only used once"
 ```
@@ -117,33 +117,6 @@ Expected behavior:
 - Maps all usages before changing
 - Creates step-by-step plan
 - Verifies no behavior change
-
----
-
-### api-design
-
-Direct invocation:
-
-```
-$api-design
-```
-
-Inference test prompts:
-
-```
-"Design a new REST endpoint for employee search"
-"Create an API for bulk leave request processing"
-"What's the best route pattern for nested resources?"
-"Add a file upload endpoint to the document controller"
-"Review this controller for REST best practices"
-```
-
-Expected behavior:
-
-- Follows REST conventions
-- Uses platform controller patterns
-- Proper route naming
-- Authorization attributes included
 
 ---
 
@@ -159,9 +132,9 @@ Inference test prompts:
 
 ```
 "This query is taking 30 seconds to execute"
-"I think there's an N+1 problem in GetEmployeeList"
+"I think there's an N+1 problem in GetOrderList"
 "Add an index to improve search performance"
-"Optimize the employee list query with filtering"
+"Optimize the order list query with filtering"
 "The dashboard is slow because of too many database calls"
 ```
 
@@ -187,9 +160,9 @@ Direct invocation:
 Test prompts:
 
 ```
-"Create a SaveLeaveRequestCommand"
-"Add a DeleteEmployeeCommand with soft delete"
-"Implement bulk update for employee status"
+"Create a SaveReturnCommand"
+"Add a DeleteOrderCommand with soft delete"
+"Implement bulk update for order status"
 ```
 
 Expected: Command + Result + Handler in ONE file
@@ -207,8 +180,8 @@ Direct invocation:
 Test prompts:
 
 ```
-"Create GetEmployeeListQuery with search and pagination"
-"Add a query to get employee by email"
+"Create GetOrderListQuery with search and pagination"
+"Add a query to get order by reference"
 "Implement a dashboard statistics query"
 ```
 
@@ -227,8 +200,8 @@ Direct invocation:
 Test prompts:
 
 ```
-"Create an entity for TimeOffRequest"
-"Add static expressions to Employee entity"
+"Create an entity for ReturnRequest"
+"Add static expressions to Order entity"
 "Implement computed properties for FullName"
 ```
 
@@ -247,9 +220,9 @@ Direct invocation:
 Test prompts:
 
 ```
-"Send notification when leave request is approved"
-"Sync employee data to external system on create"
-"Update search index when employee is modified"
+"Send notification when return is approved"
+"Sync order data to external system on create"
+"Update search index when order is modified"
 ```
 
 Expected: Side effects in event handler, not command handler
@@ -258,58 +231,39 @@ Expected: Side effects in event handler, not command handler
 
 ## Frontend Skills
 
-_(frontend-angular skill removed — frontend patterns handled by `docs/project-reference/frontend-patterns-reference.md` + auto-injected by `frontend-context.cjs` hook)_
+_(framework-specific frontend skill removed — frontend patterns handled by `docs/project-reference/frontend-patterns-reference.md` + auto-injected by frontend context)_
 
 ---
 
 ## Architecture Skills
 
-### arch-cross-service-integration
+### performance-review
 
 Direct invocation:
 
 ```
-$arch-cross-service-integration
-```
-
-Test prompts:
-
-```
-"How should ServiceA communicate with ServiceB?"
-"Design event bus messages for employee sync"
-"Plan cross-service data consistency"
-```
-
-Expected: Message bus patterns, event-driven architecture
-
----
-
-### arch-performance-optimization
-
-Direct invocation:
-
-```
-$arch-performance-optimization
+$performance-review
 ```
 
 Test prompts:
 
 ```
 "Analyze performance bottlenecks in the dashboard"
-"Optimize the employee search feature"
+"Optimize the order search feature"
 "Review API response times"
+"Review this service design for performance at architecture altitude"
 ```
 
-Expected: Profiling, caching strategies, query optimization
+Expected: Profiling, caching strategies, query optimization, architecture-altitude layer review
 
 ---
 
-### arch-security-review
+### security-review
 
 Direct invocation:
 
 ```
-$arch-security-review
+$security-review
 ```
 
 Test prompts:

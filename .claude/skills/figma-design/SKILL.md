@@ -58,12 +58,12 @@ If `FIGMA_ACCESS_TOKEN` environment variable exists:
 2. Parse response for: component names, styles, layout properties
 3. Limited — no screenshot, no Code Connect
 
-### Level 4: Screenshot + ai-multimodal (Always Available)
+### Level 4: Screenshot + visual analysis tooling (Always Available)
 
 If no MCP and no API token:
 
 1. Ask user via `AskUserQuestion`: "Please screenshot the Figma frame and paste here"
-2. Analyze via `ai-multimodal` skill with design extraction prompts
+2. Analyze via `visual analysis tooling` skill with design extraction prompts
 3. Extract: approximate colors, fonts, spacing, layout, components
 
 ## Output Format
@@ -103,18 +103,18 @@ Save to `team-artifacts/design-specs/{YYMMDD}-figma-extract-{slug}.md`:
 
 - Figma URL detected in PBI, design-spec, or user prompt
 - Called by `design-spec` when Figma URL is present
-- Called by `planning` skill during Design Context Extraction step
+- Called by `plan` skill during Design Context Extraction step
 
 ## When NOT to Use
 
 - No Figma URL present — skip, proceed to `design-spec` directly
-- Hand-drawn wireframe — use `wireframe-to-spec` instead
-- Screenshot of existing app — use `design-screenshot` instead
+- Hand-drawn wireframe — use `design-spec --mode=wireframe` instead
+- Screenshot of existing app — use `design --mode=screenshot` instead
 
 ## See Also
 
 - `references/figma-mcp-setup.md` — MCP server setup guide (created in Phase 09)
-- `.claude/skills/planning/references/figma-integration.md` — integration protocol
+- `.claude/skills/plan/references/engine-figma.md` — integration protocol
 - `.claude/hooks/figma-context-extractor.cjs` — URL detection hook
 
 ---
@@ -144,17 +144,19 @@ Save to `team-artifacts/design-specs/{YYMMDD}-figma-extract-{slug}.md`:
 
 <!-- SYNC:ai-mistake-prevention -->
 
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

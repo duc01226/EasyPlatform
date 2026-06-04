@@ -27,8 +27,8 @@ Generate or update release notes for project features.
 ## Usage
 
 ```bash
-/release-notes feature-name --source=docs/business-features/{Module}/detailed-features/README.{Feature}.md
-/release-notes employee-export --compare=develop:main
+/release-notes feature-name --source=docs/specs/{Bucket}/README.{Feature}.md
+/release-notes order-export --compare=develop:main
 /release-notes authentication --investigate
 ```
 
@@ -44,20 +44,20 @@ Generate or update release notes for project features.
 
 ## Commit Type Mapping
 
-| Commit Type     | Category     |
-| --------------- | ------------ |
-| `feat`          | features     |
-| `fix`           | fixes        |
-| `refactor`      | improvements |
-| `perf`          | improvements |
-| `feature`       | features     |
-| `platform`      | features     |
-| `candidate_app` | fixes        |
-| `growth`        | features     |
-| `talents`       | features     |
-| `surveys`       | features     |
-| `insights`      | features     |
-| `accounts`      | features     |
+| Commit Type      | Category     |
+| ---------------- | ------------ |
+| `feat`           | features     |
+| `fix`            | fixes        |
+| `refactor`       | improvements |
+| `perf`           | improvements |
+| `feature`        | features     |
+| `infrastructure` | features     |
+| `candidate_app`  | fixes        |
+| `growth`         | features     |
+| `talents`        | features     |
+| `surveys`        | features     |
+| `insights`       | features     |
+| `accounts`       | features     |
 
 `docs`, `chore`, `style`, `test`, `ci`, `build`, `devtools` map to `null` (excluded from release notes).
 

@@ -194,7 +194,7 @@ REPLACEMENTS = [
     (
         r'\| "Round 2 not needed for documentation scan" \| Main agent rationalizes own section extractions\. Fresh-eyes mandatory\.\s+\|',
         '| "Skip Round 2 even when Round 1 found issues" | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — main agent rationalizes own section extractions. |',
-        "scan-feature-docs row",
+        "scan-feature-spec row",
     ),
     (
         r'\| "Examples look right, skip Round 2"\s+\| NEVER declare PASS after Round 1\. Main agent rationalizes fabricated examples\. \|',

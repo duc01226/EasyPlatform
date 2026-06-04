@@ -16,7 +16,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TaskCreate, Agent
 
 ## Quick Summary
 
-**Goal:** Implement or enhance test data seeders — simulate QC happy-path scenarios via application-layer commands; NEVER direct DB writes.
+**Goal:** Implement or enhance test data seeders that create realistic, idempotent, valid test data through application-layer commands (NEVER direct DB writes) — simulating QC happy-path scenarios without corrupting domain state.
 
 **Workflow:**
 
@@ -49,7 +49,7 @@ Before any other step, classify request:
 | Unknown          | Request ambiguous                              | Ask user — NEVER assume                        |
 
 ```bash
-grep -r "{Feature}Seeder\|{Feature}SeedData\|{Feature}TestData" src/ -l
+rg "{Feature}Seeder|{Feature}SeedData|{Feature}TestData" {configured-source-roots} -l
 ```
 
 ## Universal Seed Data Rules
@@ -68,11 +68,8 @@ grep -r "{Feature}Seeder\|{Feature}SeedData\|{Feature}TestData" src/ -l
 Search for project seeder conventions:
 
 ```bash
-# .NET
-grep -r "IDataSeeder\|ISeedDataHandler\|ApplicationDataSeeder\|CanSeedTestingData\|SeedingMinimumDummyItemsCount" src/ --include="*.cs" -l
-
-# TypeScript
-grep -r "seeder\|SeedData\|DataSeed" src/ --include="*.ts" -l
+# Search configured source roots using the repository's discovered seed-data naming conventions
+rg "{configured-seeder-interface-or-base-patterns}|seeder|SeedData|DataSeed" {configured-source-roots} -l
 ```
 
 Record with `file:line` evidence:
@@ -84,14 +81,14 @@ Record with `file:line` evidence:
 
 ### Step 1.5: Verify Dev Config Keys
 
-Confirm dev config has both env gate key and count key. If absent, add following project's dev config convention.
+Confirm dev config has both env gate key and count key. If absent, add following project's dev config convention. — why: missing keys silently disable the gate or count, producing no-op or unbounded seeding.
 
 ### Step 2: Feature Scope Analysis
 
 Identify before writing any code:
 
 1. **Feature area** — domain entity/aggregate being seeded
-2. **Application commands** — `grep -r "{Feature}*Command" src/ --include="*.cs" -l`
+2. **Application commands** — `rg "{Feature}.*Command|{configured-command-handler-patterns}" {configured-source-roots} -l`
 3. **Dependencies** — data must exist (users, orgs, prerequisite records)
 4. **Scenarios** — 3–5 realistic variations (standard, boundary, multi-actor)
 5. **Target count** — clarify: 1 scenario or N repetitions per scenario
@@ -99,7 +96,7 @@ Identify before writing any code:
 ### Step 3: Find or Create Seeder
 
 ```bash
-grep -r "{Feature}TestSeeder\|{Feature}SeedingHelper\|{Feature}TestDataSeeder" src/ -l
+rg "{Feature}TestSeeder|{Feature}SeedingHelper|{Feature}TestDataSeeder" {configured-source-roots} -l
 ```
 
 - **Exists** → enhance with new scenarios, do NOT break existing ones
@@ -183,8 +180,8 @@ Review seeder at [file:path]. Verify with file:line evidence for each:
 Report: PASS or FAIL with file:line for each finding.
 ```
 
-**Round 2:** If FAIL → fix → new fresh sub-agent. Max 3 rounds → escalate to user.
-NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with issues triggers fix → fresh sub-agent re-review.
+**Fix loop:** If FAIL → validate findings → fix validated findings → restart full review from first phase. When restarted review uses sub-agents, NEVER reuse them across rounds. If same blocker repeats across 3 full invocations with no progress, escalate to user.
+NEVER fix unvalidated findings. Do not spawn a fresh sub-agent only to re-review known findings before validation/fix.
 
 ---
 
@@ -262,6 +259,7 @@ NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -302,12 +300,13 @@ NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Ensure seeders create realistic, idempotent, valid test data through application paths without corrupting domain state.
 **IMPORTANT MUST ATTENTION** `TaskCreate` — break all work into tasks BEFORE starting
 **IMPORTANT MUST ATTENTION** NEVER call repo/DB directly — use application-layer commands
 **IMPORTANT MUST ATTENTION** ALWAYS gate by environment FIRST; ALWAYS check count before seeding
 **IMPORTANT MUST ATTENTION** loop from `existing_count` to `target_count` — NEVER from 0
 **IMPORTANT MUST ATTENTION** scoped DI per iteration — shared DI scope = silent DbContext corruption
-**IMPORTANT MUST ATTENTION** fresh sub-agent re-review required ONLY after a fix cycle. Clean Round 1 ENDS the review.
+**IMPORTANT MUST ATTENTION** full re-review is required ONLY after a validated fix cycle. A clean review pass ENDS the review.
 
 **Anti-Rationalization:**
 

@@ -27,7 +27,7 @@ description: '[Project Management] Use when you need to capture ideas, manage pr
 - Use numeric priority ordering (1-999), never High/Medium/Low categories
 - Always detect project module and load feature context for domain ideas
 - Post-refinement validation interview is NOT optional
-- Use domain-specific entity names (Candidate, Employee, Goal, etc.)
+- Use the project's domain-specific entity names (resolve them from the project's domain/feature docs)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -45,9 +45,9 @@ When working on domain ideas, automatically detect and load business feature con
 
 **Dynamic Discovery:**
 
-1. Run: `Glob("docs/business-features/*/README.md")`
+1. Run: `Glob("docs/specs/*/README.md")`
 2. Extract module names from paths
-3. Match keywords (detect module from docs/business-features/ directory names)
+3. Match keywords (detect module from docs/specs/ directory names)
 
 **Detection Approach (silent auto-detect):**
 
@@ -58,7 +58,7 @@ When working on domain ideas, automatically detect and load business feature con
 
 Once module detected:
 
-1. Read `docs/business-features/{module}/README.md` (first 200 lines for overview)
+1. Read `docs/specs/{module}/README.md` (first 200 lines for overview)
 2. Extract feature list from Quick Navigation
 3. Identify closest matching feature(s)
 4. Note related entities and services
@@ -69,10 +69,10 @@ Once module detected:
 
 Use exact entity names from docs:
 
-- ServiceA: Candidate (not "Applicant"), Job, JobApplication, Interview, CV
-- ServiceB: Order, Feedback, Review, CheckIn, Report
-- Use "Employee" not "User" for staff members
-- Use "Candidate" not "Applicant" for recruitment
+- ServiceA: Order (not "Purchase"), Product, OrderLine, Shipment, Invoice
+- ServiceB: Customer, Feedback, Review, CheckIn, Report
+- Use the project's domain vocabulary for actors (resolve from project-reference) rather than a generic "User"
+- Use the exact term the domain docs use (e.g. "Order" not "Purchase") — never a synonym
 
 ### Token Budget
 
@@ -151,8 +151,8 @@ Include in frontmatter (if project domain):
 ```yaml
 module: ServiceB # Detected module
 related_features: [OrderManagement, Feedback] # From README feature list
-feature_doc_path: docs/business-features/ServiceB/detailed-features/README.GoalManagementFeature.md
-entities: [Goal, Employee, OrganizationalUnit] # From feature doc
+feature_doc_path: docs/specs/ServiceB/README.OrderManagementFeature.md
+entities: [Order, Customer, Region] # From feature doc
 ```
 
 Use domain vocabulary in idea description based on loaded context.
@@ -172,7 +172,7 @@ When user says "new idea" or "feature request":
 
 1. Use `/idea` command workflow
 2. **Detect module** from conversation keywords
-3. **Load feature context** from docs/business-features/
+3. **Load feature context** from docs/specs/
 4. Populate idea-template.md with domain fields
 5. Save to `team-artifacts/ideas/`
 6. Suggest next step: `/refine {idea-file}`
@@ -374,6 +374,7 @@ Add to idea/PBI:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -404,7 +405,7 @@ Add to idea/PBI:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 

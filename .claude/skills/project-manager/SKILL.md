@@ -37,16 +37,13 @@ Help Project Managers generate status reports, track dependencies, manage risks,
 
 | Capability          | Command         | Key Activities                                                            |
 | ------------------- | --------------- | ------------------------------------------------------------------------- |
-| Status Reports      | `/status`       | Aggregate sprint progress, summarize completions/blockers, track velocity |
+| Status Reports      | (this skill)    | Aggregate sprint progress, summarize completions/blockers, track velocity |
 | Dependency Tracking | `/dependency`   | Map inter-feature dependencies, identify critical path, alert on risks    |
 | Risk Management     | Update register | Score probability x impact, define mitigations, escalate critical         |
-| Team Sync           | `/team-sync`    | Generate agendas, track action items, document decisions                  |
 
 ---
 
 ## Status Report Generation
-
-**Command:** `/status`
 
 Generate from:
 
@@ -83,16 +80,6 @@ Maintain risk register with probability x impact scoring (1-9 scale).
 
 ---
 
-## Team Sync Facilitation
-
-**Command:** `/team-sync`
-
-Generate meeting agenda covering: sprint health, role updates, blockers, risks, action items.
-
-**⚠️ MUST ATTENTION READ:** `references/report-templates.md` for agenda template and sprint ceremonies checklists.
-
----
-
 ## Output Conventions
 
 ### File Naming
@@ -116,10 +103,9 @@ Generate meeting agenda covering: sprint health, role updates, blockers, risks, 
 
 | When            | Trigger         | Action                  |
 | --------------- | --------------- | ----------------------- |
-| End of day      | `/status`       | Generate daily status   |
+| End of day      | (this skill)    | Generate daily status   |
 | Sprint start    | `/dependency`   | Map sprint dependencies |
 | Risk identified | Update register | Score and assign        |
-| Before sync     | `/team-sync`    | Generate agenda         |
 
 ---
 
@@ -135,7 +121,7 @@ Generate meeting agenda covering: sprint health, role updates, blockers, risks, 
 ## Related
 
 - `product-owner`
-- `planning`
+- `plan`
 
 ## References
 
@@ -161,6 +147,7 @@ Generate meeting agenda covering: sprint health, role updates, blockers, risks, 
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 

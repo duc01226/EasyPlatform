@@ -125,7 +125,7 @@ class GraphStore:
         ".claude/", ".agents/", ".codex/", ".ai/",
         "src/", "docs/", "scripts/", "plans/",
         "README.md", "CLAUDE.md", "AGENTS.md", "EasyPlatform.README.md",
-        "package.json", "package-lock.json", "nx.json", "BravoSUITE.sln",
+        "package.json", "package-lock.json", "nx.json",
     )
 
     def __init__(self, db_path: str | Path) -> None:

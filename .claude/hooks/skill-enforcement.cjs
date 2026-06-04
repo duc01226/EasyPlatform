@@ -11,8 +11,6 @@
  *   - Implementation skills (cook, code, fix, etc.) require tasks
  *   - Research/planning skills allowed without tasks
  *
- * Bypass: CK_QUICK_MODE=true or prefix message with "quick:"
- *
  * Exit Codes:
  *   0 - Allow
  *   1 - Block with message
@@ -88,10 +86,7 @@ function blockMessage(skill) {
 
 **Skill blocked:** \`${skill}\`
 
-Implementation skills require task tracking. Call \`TaskCreate\` for EACH workflow step BEFORE running implementation skills.
-
-### Bypass
-Prefix your message with \`quick:\` to bypass enforcement.`;
+Implementation skills require task tracking. Call \`TaskCreate\` for EACH workflow step BEFORE running implementation skills.`;
 }
 
 function workflowBlockMessage(skill) {
@@ -109,11 +104,9 @@ function noWorkflowBlockMessage(skill) {
 **Skill blocked:** \`${skill}\`
 
 No workflow has been activated and no tasks exist. You MUST ATTENTION either:
-1. **Detect nearest workflow and ask user via AskUserQuestion:** Present "Activate [Workflow] (Recommended)" vs "Execute directly"
+1. **Detect nearest workflow and auto-select the best path:** execute directly, invoke a skill, activate a workflow, or compose custom steps
 2. **Or create tasks:** Call \`TaskCreate\` to track your work
-
-### Bypass
-Prefix your message with \`quick:\` to bypass enforcement.`;
+`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -138,8 +131,8 @@ function main() {
             process.exit(0);
         }
 
-        // Always allow workflow-start itself
-        if (normalizeSkill(skillName) === 'workflow-start') process.exit(0);
+        // Always allow start-workflow itself
+        if (normalizeSkill(skillName) === 'start-workflow') process.exit(0);
 
         const workflowActive = hasActiveWorkflow(sessionId);
         const todosExist = hasTodos(sessionId);

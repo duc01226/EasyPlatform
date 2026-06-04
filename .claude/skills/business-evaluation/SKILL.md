@@ -15,7 +15,7 @@ description: '[Content] Use when you need to evaluate business idea viability: B
 
 ## Quick Summary
 
-**Goal:** Evaluate business idea viability with BMC, financials, risk matrix, GTM, and execution plan.
+**Goal:** Evaluate business idea viability to deliver an evidence-backed viability verdict — score + confidence + Pursue/Pivot/Pause/Pass recommendation — grounded in a complete 9-block BMC, 3-year financials with stated assumptions, 5+ risks with mitigation, and a phased execution + GTM plan, so the go/no-go decision rests on traced evidence, never optimism.
 
 **Workflow:**
 
@@ -149,6 +149,7 @@ Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -184,8 +185,10 @@ Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Deliver an evidence-backed viability verdict — score + confidence + Pursue/Pivot/Pause/Pass recommendation — grounded in a complete 9-block BMC, 3-year financials with stated assumptions, 5+ risks with mitigation, and a phased execution + GTM plan, so the go/no-go decision rests on traced evidence, never optimism.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** every claim, financial number, and verdict requires evidence + confidence % — NEVER present a guess as fact.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

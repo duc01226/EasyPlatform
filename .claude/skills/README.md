@@ -62,7 +62,7 @@ For manual installation or troubleshooting, see [INSTALLATION.md](INSTALLATION.m
 - **Node.js Packages**: rmbg-cli, pnpm, wrangler, repomix
 - **Python Packages**: google-genai, pypdf, python-docx, Pillow, pytest
 
-See [INSTALLATION.md](INSTALLATION.md) for complete dependency list and platform-specific instructions.
+See [INSTALLATION.md](INSTALLATION.md) for complete dependency list and OS-specific instructions.
 
 # Example Skills
 

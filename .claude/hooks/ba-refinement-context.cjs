@@ -44,7 +44,7 @@ const BA_CONTEXT = `
 - [ ] User story template (As a... I want... So that...)
 - [ ] AC testable (GIVEN/WHEN/THEN, no vague language)
 - [ ] Wireframes attached (UX BA) + UI design ready (Designer BA)
-- [ ] AI pre-review passed (/refine-review or /pbi-challenge)
+- [ ] AI pre-review passed (/review-artifact --type=pbi or /pbi-challenge)
 - [ ] Story points estimated by AI
 - [ ] Dependencies table complete
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 sync-update-blocks.py
-Operation A from sync-protocols: replace SYNC: block contents in all SKILL.md / agent .md
+Operation A from sync-skills-shared-protocols: replace SYNC: block contents in all SKILL.md / agent .md
 files using canonical content from .claude/skills/shared/sync-inline-versions.md.
 
 Usage:

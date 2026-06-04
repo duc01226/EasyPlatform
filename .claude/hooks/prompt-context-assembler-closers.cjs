@@ -22,9 +22,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const { loadConfig } = require('./lib/ck-config-loader.cjs');
 const { injectLessonReminder } = require('./lib/prompt-injections.cjs');
 const { isMarkerInContext, loadTranscriptLines } = require('./lib/transcript-utils.cjs');
+const { getSpecDocsPath } = require('./lib/project-config-loader.cjs');
 
 async function main() {
     try {
@@ -39,10 +39,6 @@ async function main() {
 
         // Load transcript lines once for all dedup checks
         const transcriptLines = loadTranscriptLines(payload.transcript_path);
-
-        // Read confirmation mode for workflow gate
-        const wfConfig = loadConfig({ includeProject: false, includeAssertions: false });
-        const confirmationMode = wfConfig.workflow?.confirmationMode || 'always';
 
         // Resolve graph.db once -- shared by Tier 1 (deduped reference) and Tier 2 (compact reminder).
         let graphDbExists = false;
@@ -87,15 +83,9 @@ async function main() {
         // ═══════════════════════════════════════════════════════════════════════
         // WORKFLOW GATE: Compact mandatory reminder (always, no dedup)
         // ═══════════════════════════════════════════════════════════════════════
-        if (confirmationMode === 'always') {
-            console.log(
-                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Find best-match OR compose custom workflow \u2192 present all options with recommendation \u2192 ask user \u2192 then proceed.**`
-            );
-        } else if (confirmationMode === 'never') {
-            console.log(
-                `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First action: workflow detection. Find best-match or compose custom workflow \u2192 \`/workflow-start\` or custom steps \u2192 then proceed.**`
-            );
-        }
+        console.log(
+            `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First action: workflow detection. If prompt starts with explicit /skill or /workflow command, execute it directly. Otherwise auto-select the best path: direct, skill, standard workflow, or custom workflow — do not ask the user to choose. Then ACTIVATE the route: for a workflow, invoke /start-workflow <id> as a tool call (it loads the canonical step sequence and builds the task list 1:1) — declaring \`Route: ...\` in prose or hand-writing your own task list is NOT activation.**`
+        );
 
         // ═══════════════════════════════════════════════════════════════════════
         // LESSON REMINDER — injected before workflow-detect closer.
@@ -111,27 +101,21 @@ async function main() {
         );
 
         // ═══════════════════════════════════════════════════════════════════════
-        // ENGINEERING SPEC HINT — generic lookup guidance for any project
+        // SPEC LOOKUP HINT — generic lookup guidance for any project
         // ═══════════════════════════════════════════════════════════════════════
+        const specRoot = getSpecDocsPath();
         console.log(
-            `**[SPEC-LOOKUP]** When investigating domain logic, API contracts, or system architecture: check \`docs/specs/\` for engineering reimplementation specs (ERD + rules + API + events + journeys). Run \`ls docs/specs/\` to discover available app buckets, then \`ls docs/specs/{app-bucket}/\` to find the specific system spec. Some projects may keep a flat \`docs/specs/{system-name}/\` layout.`
+            `**[SPEC-LOOKUP]** When investigating domain logic, behavior, API contracts, or test cases: check the fixed Feature Spec root \`${specRoot}\`. Run \`ls ${specRoot}\` to discover app buckets, then \`ls ${specRoot}{app-bucket}/\` to find canonical \`README.{Feature}.md\` Feature Specs and any derived bucket indexes/ERDs. Do not recreate retired A-E/M## engineering spec bundles.`
         );
 
         // ═══════════════════════════════════════════════════════════════════════
         // WORKFLOW DETECT — ABSOLUTE LAST: Ensures workflow selection is always
         // the most recent instruction before Claude acts on the prompt.
-        // Only fires when confirmationMode === 'always'.
         // ═══════════════════════════════════════════════════════════════════════
         if (!isMarkerInContext(transcriptLines, '[WORKFLOW-DETECT]', 10)) {
-            if (confirmationMode === 'always') {
-                console.log(
-                    `**[WORKFLOW-DETECT] Before acting: find best-fit workflow or compose custom step pipeline. Present all options with your recommendation via \`AskUserQuestion\` and await user confirmation.**`
-                );
-            } else if (confirmationMode === 'never') {
-                console.log(
-                    `**[WORKFLOW-DETECT] Auto-detect best-fit workflow or compose custom step pipeline for prompt and activate immediately via \`/workflow-start\` — no confirmation needed.**`
-                );
-            }
+            console.log(
+                `**[WORKFLOW-DETECT] Before acting: execute explicit /skill or /workflow commands directly; otherwise auto-detect and auto-select direct execution, a skill, a standard workflow, or a custom step pipeline. Do not ask for workflow selection confirmation.**`
+            );
         }
 
         process.exit(0);

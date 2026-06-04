@@ -1,8 +1,8 @@
 ---
 name: workflow-spec-driven-dev
-version: 2.1.0
-last_reviewed: 2026-04-21
-description: '[Workflow] Use when activating spec-driven development to keep engineering specs and business docs synchronized.'
+version: 3.0.0
+last_reviewed: 2026-06-10
+description: '[Workflow] Use when activating spec-driven development to keep the single canonical Feature Spec, implementation, and tests synchronized.'
 disable-model-invocation: true
 ---
 
@@ -17,32 +17,39 @@ disable-model-invocation: true
 
 ## Quick Summary
 
-**Goal:** Single entry point for spec-driven doc generation and maintenance. Two output layers, one workflow.
+**Goal:** Keep the Feature Spec, implementation, tests, and project docs synchronized through a governed spec-driven workflow — a single entry point for spec-driven doc generation and maintenance over **ONE canonical artifact**, the tech-free **8-section Feature Spec** at `docs/specs/{Bucket}/README.{Feature}.md` (code is the technical source of truth; there is no parallel engineering tree).
 
-**Output Layers:**
+> **[SINGLE HOME]** There is ONE canonical artifact — the tech-free 8-section Feature Spec authored by `spec` at `docs/specs/{Bucket}/`. There is no parallel A-E "Engineering Spec" bundle and no separate Business Feature Docs tree; `spec-index` only regenerates a DERIVED index/ERD over the Feature Specs. Authority: [`docs/project-reference/spec-system-reference.md`](../../../docs/project-reference/spec-system-reference.md).
 
-| Layer                 | Path                                     | Format                                                       | Audience                         |
-| --------------------- | ---------------------------------------- | ------------------------------------------------------------ | -------------------------------- |
-| Engineering Spec      | `docs/specs/{app-bucket}/{system-name}/` | Tech-agnostic bundle (ERD + rules + API + events + journeys) | Engineers, AI agents, architects |
-| Business Feature Docs | `docs/business-features/{Module}/`       | 17-section stakeholder docs                                  | PO, BA, Dev, QA, UX              |
+### One Canonical Artifact + Derived Aids
+
+| Artifact               | Path                                      | Canonical?                       | Maintained By             |
+| ---------------------- | ----------------------------------------- | -------------------------------- | ------------------------- |
+| **Feature Spec**       | `docs/specs/{Bucket}/README.{Feature}.md` | **Yes — single source of truth** | `spec`                    |
+| Section 8 — Test Specs | Same file, **Section 8**                  | Yes — canonical TC registry      | `spec [mode=tests]`       |
+| Bucket `INDEX.md`      | `docs/specs/{Bucket}/INDEX.md`            | Derived — regenerable            | `spec` / `spec-index`     |
+| System index / ERD     | (generated on demand)                     | Derived — never canonical        | `spec-index` (repurposed) |
+
+### App Bucket Mapping
+
+Resolve service→bucket assignments from the canonical table in [`docs/project-reference/spec-system-reference.md`](../../../docs/project-reference/spec-system-reference.md) → **App Bucket Mapping** — do not inline project-specific bucket names in this skill.
 
 **Mode Routing:**
 
-| Mode        | When to Use                                  | Step Sequence                                                                                                                                                                                                                 |
-| ----------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `init-full` | Zero — no specs, no feature docs             | scout → **size-evaluation** → **plan** → **plan-review** → **plan-validate** → spec-discovery(init) → feature-docs(init) → review-artifact → **docs-update(final sync)** → watzup → workflow-end                              |
-| `update`    | Code changed, new requirement, new PBI       | workflow-review-changes → spec-discovery(update) → feature-docs(update) → **tdd-spec(update)** → **tdd-spec-review** → tdd-spec [direction=sync](sync) → review-changes → **docs-update(final sync)** → watzup → workflow-end |
-| `audit`     | Quarterly health check, verify doc freshness | scout → spec-discovery(audit) → feature-docs(audit) → review-artifact → **docs-update(final sync)** → watzup → workflow-end                                                                                                   |
+| Mode        | When to Use                                  | Step Sequence                                                                                                                                                                                                                           |
+| ----------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `init-full` | Zero — no Feature Spec for target scope      | scout → **size-evaluation** → **plan** → **plan-review** → **plan-validate** → spec [mode=init] → **spec [mode=tests]** → **review-artifact --type=spec-tests** → review-artifact → **docs-update(final sync)** → workflow-end → watzup |
+| `update`    | Code changed, new requirement, new PBI       | workflow-review-changes → spec [mode=update] → **spec [mode=tests]** → **review-artifact --type=spec-tests** → spec [mode=sync] → review-changes → **docs-update(final sync)** → workflow-end → watzup                                  |
+| `audit`     | Quarterly health check, verify doc freshness | scout → spec [mode=audit] → review-artifact → **docs-update(final sync)** → workflow-end → watzup                                                                                                                                       |
 
 **Key Rules:**
 
 - MUST ATTENTION define success criteria before execution and loop until observable verification passes.
 - MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
-
 - Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0
 - Invoke `Skill` tool for EACH step — NEVER batch-complete or mark done without invocation
-- Spawn sub-agents for 4+ modules in ONE message — NEVER sequential
-- NEVER skip Phase A.ERD — mandatory with every Phase A extraction
+- Spawn sub-agents for 4+ capabilities in ONE message — NEVER sequential
+- §1-7 of every Feature Spec are STRICTLY tech-free; the §5 Mermaid ERD is authored **inside** the Feature Spec — there is no separate ERD file
 - Write findings incrementally after each section — NEVER hold in memory
 - If shared skills/workflows/hooks/sync tooling changed, run `npm run codex:sync` before `/workflow-end` or record explicit N/A evidence; verify generated mirrors are current.
 
@@ -50,37 +57,28 @@ disable-model-invocation: true
 
 ## Step 0 — Mode Detection (MANDATORY FIRST)
 
-Use `AskUserQuestion` confirm mode before any action.
+Use `AskUserQuestion` to confirm mode before any action.
 
 **Auto-detection rules:**
 
 ```
-IF docs/specs/{app-bucket}/{system-name}/ NOT found AND docs/business-features/ has NO modules
+IF docs/specs/{Bucket}/ has NO Feature Spec for the target scope
   → Suggest: init-full
 
-IF docs/specs/{app-bucket}/{system-name}/ NOT found AND docs/business-features/ has modules
-  → Suggest: init-specs-only (run spec-discovery init only, feature-docs already has docs)
-
-IF git diff has service/frontend changes
+IF git diff has service/frontend changes touching an already-spec'd capability
   → Suggest: update
 
 IF explicit --audit flag OR user says "audit" / "check freshness" / "are docs stale"
   → Suggest: audit
 ```
 
-**System name confirmation:**
+**Bucket + capability confirmation:**
 
-Check for existing spec dirs:
+- Probe `Glob docs/specs/{Bucket}/README.*.md` to see which capabilities already have a Feature Spec.
+- Map the changed services to a Bucket via the **App Bucket Mapping** table above.
+- Confirm the capability name (PascalCase) with the user — this becomes `README.{Feature}.md`.
 
-```bash
-ls docs/specs/ 2>/dev/null
-```
-
-- Dirs found → each may be an `{app-bucket}` or a flat `{system-name}` depending on the host project. To find a specific `{system-name}`, probe `ls docs/specs/{name}/`.
-- Empty → ask: "System name for spec path? Use the host project's docs/specs layout."
-- **Note:** Prefer the layout already present in the host project. Do not invent an app-bucket level when the project uses flat system directories.
-
-Present detected mode with reasoning. User confirms before proceeding.
+Present the detected mode with reasoning. User confirms before proceeding.
 
 ---
 
@@ -88,140 +86,94 @@ Present detected mode with reasoning. User confirms before proceeding.
 
 ### When to Use
 
-Starting from zero: no `docs/specs/{app-bucket}/{system-name}/`, no `docs/business-features/{Module}/` for target scope.
+Starting from zero: no `docs/specs/{Bucket}/README.{Feature}.md` for the target scope.
 
 ### Step Sequence
 
-```
+````
 ## Step A — Discovery (scout)
 
 /scout
-  → Holistic codebase map — module registry, entry points, integration boundaries
-  → Produce: docs/specs/{app-bucket}/{system-name}/00-module-registry.md
-  → Instruct scout: use spec-discovery Step 1 format (NOT task-file list)
-  → TaskCreate: "scout — produce module registry for {system-name}"
+  → Holistic codebase map — capability registry, entry points, integration boundaries
+  → Identify the set of capabilities in scope (one Feature Spec each)
+  → TaskCreate: "scout — enumerate capabilities + entry points for {Bucket}"
 
 ## Step B — Size Evaluation and Divide-and-Conquer Planning (MANDATORY — runs BEFORE plan)
 
-**[BLOCKING GATE]** Before writing any extraction plan, evaluate scope and recursively decompose until
-each work unit is independently executable.
-
-Evaluation algorithm (run inline after /scout completes):
-
-```
+**[BLOCKING GATE]** Before writing any plan, evaluate scope and recursively decompose until
+each capability is an independently authorable Feature Spec.
 
 ESTIMATE:
-module_count = count dirs in 00-module-registry.md
-phases_per_module = count applicable phases (A, B, C, D, E)
-total_tasks = module_count × phases_per_module
+  capability_count = count of distinct capabilities found in scout
+  IF capability_count > 10:
+    → SPLIT into groups: max 10 capabilities per run, run groups sequentially
+  IF 4 ≤ capability_count ≤ 10:
+    → Sub-agents mandatory (one spec sub-agent per capability)
+  IF capability_count ≤ 3:
+    → Single-session authoring
 
-IF total_tasks > 50 (e.g., 13 modules × 5 phases = 65):
-→ SPLIT into groups: max 10 modules per extraction run
-→ Create one extraction plan per group
-→ Run groups sequentially (one session each)
-→ STOP — do NOT attempt full extraction in one session
+**Recursive decomposition rule:** If a single capability's Feature Spec would exceed the caps
+(body §1-7 >1200 lines OR >40 TCs), split the capability into sibling specs.
 
-IF 15 < total_tasks ≤ 50 (e.g., 4–10 modules):
-→ Sub-agents mandatory (one per module)
-→ Single plan covering all modules — proceed to /plan
+TaskCreate: "size-evaluation — count capabilities, decide split strategy"
 
-IF total_tasks ≤ 15 (1–3 modules):
-→ Single-session extraction — proceed to /plan
-
-```
-
-**Recursive decomposition rule:** If any extraction group still feels too large after splitting, split again.
-Each sub-agent must handle ≤ 3 modules with ≤ 5 phases each = max 15 tasks per agent. This prevents
-high-level shallow output from context dilution.
-
-TaskCreate: "size-evaluation — count modules, estimate total_tasks, decide split strategy"
-
-## Step C — Extraction Plan
+## Step C — Plan
 
 /plan
-  → Decompose into per-module × per-phase tasks (N×M minimum)
-  → Phase A.ERD always included with Phase A (separate task per module)
-  → ONE task per module × phase — 10 modules × 5 phases = 50 tasks minimum
-  → ≤50 files per task — split large modules: "Business Rules: Orders (Part 1: Commands)", "(Part 2: Event Handlers)"
-  → Dependency order: Phase A (domain model) before Phase B (business rules) per module
-  → Priority: core domain modules first, infrastructure last
-  → Verify TaskList count ≥ N×M before proceeding (BLOCKING gate)
-  → If split strategy needed: produce one plan per extraction group
-  → Produce: docs/specs/{app-bucket}/{system-name}/extraction-plan.md
-  → TaskCreate: "plan — produce N×M extraction plan (N modules × M phases)"
+  → ONE task per capability Feature Spec (author §1-7 + §8 placeholder)
+  → Core domain capabilities first, supporting ones last
+  → Verify TaskList count ≥ capability_count before proceeding (BLOCKING gate)
+  → TaskCreate: "plan — produce per-capability authoring plan"
 
 ## Step D — Plan Review
 
 /plan-review
-  → Validate: N×M task count confirmed, module coverage complete, no phase gaps
-  → Verify: no module exceeds 3-module-per-agent limit if sub-agents used
-  → Verify: each extraction group is independently executable (no cross-group deps)
-  → REJECT plan if: any task is vague ("extract everything"), any agent handles >3 modules,
-    any phase missing for a module that has that concern
-  → Verify: every task scoped to ≤50 files — split if larger
-  → TaskCreate: "plan-review — validate N×M count, agent assignments, no phase gaps"
+  → Validate: every in-scope capability has an authoring task, no gaps
+  → Verify: no sub-agent handles >3 capabilities; each capability within caps
+  → TaskCreate: "plan-review — validate capability coverage + caps"
 
 ## Step E — Plan Validation
 
 /plan-validate
-  → User confirms: system-name, scope (full/scoped), module list, phases to extract, split strategy
+  → User confirms: bucket, capability list, scope, split strategy
   → TaskCreate: "plan-validate — user confirms scope and split strategy"
 
-/spec-discovery [mode=init]
-  → Full extraction → docs/specs/{app-bucket}/{system-name}/
-  → Phases: A (domain model + ERD) → B (rules) → C (API) → D (events) → E (journeys)
-  → Phase A.ERD: produces `01-domain-erd.md` — Mermaid erDiagram with ALL entities, relationships,
-    cardinalities, and aggregate boundaries; foundational artifact referenced by phases B–E
-  → Per-task investigation: READ (grep → narrow → read) → TRACE (call chain, validators, triggers)
-    → EXTRACT (this phase/module only) → WRITE ([Source: file:line] every claim)
-    → VERIFY (mark [UNVERIFIED] without source) → COMPLETE
-    NEVER accumulate across tasks — write output after each task immediately
-  → Phase F: bundle assembly + README completeness index + SPEC-CHANGELOG.md
-  → Phase F.5: per-module README.md (17-section summaries)
-  → Sub-agents for 4+ modules (BLOCKING: ONE message spawn)
-  → Each sub-agent prompt MUST include: module name, task list, output path, tech-agnostic contract,
-    SYNC protocols (critical-thinking, evidence-based, incremental-persistence, cross-scope boundary)
+/spec [mode=init]
+  → Author the canonical tech-free 8-section Feature Spec PER capability:
+      §1 Overview · §2 Glossary · §3 User Stories & AC · §4 Business Rules ·
+      §5 Domain Model (Mermaid ERD — MANDATORY, authored INSIDE this file) ·
+      §6 Process Flows · §7 Permissions & Roles · §8 Test Specifications
+  → §1-7 STRICTLY tech-free; identifiers live only in §8 evidence carriers + `[Source: ns/service/id]` + ` ```mermaid ``` ` blocks
+  → Output: docs/specs/{Bucket}/README.{Feature}.md + bucket INDEX.md
+  → Sub-agents for 4+ capabilities (BLOCKING: ONE message spawn); each prompt includes capability name, output path, tech-agnostic contract, SYNC protocols
+  → Caps: body §1-7 ≤1200 lines, whole file ≤1800 (hard) — split when body>1200 OR TCs>40
 
-/feature-docs [mode=init]
-  → Per-module 17-section docs — runs OWN Phase A-E extraction from source code independently
-  → Note: duplicates some source-reading from spec-discovery — ACCEPTED TRADE-OFF
-    (see plans/260420-0337-spec-driven-dev-unified/README.md Decision 3: cohesion > coupling —
-    feature-docs→spec-discovery one-directional; tight coupling would break on schema changes)
-  → spec-discovery output in docs/specs/{app-bucket}/{system-name}/ readable as shortcut reference,
-    but feature-docs does NOT take it as formal input parameter
-  → Output: docs/business-features/{Module}/detailed-features/README.{Feature}.md
-  → Create CHANGELOG.md per module
-  → Sub-agents: one per module for 4+ modules (scale gate applies in workflow context only)
+/spec [mode=tests]
+  → Populate Section 8 with TC-{FEATURE}-{NNN} entries (BDD, Business Intent, abstract Evidence, IntegrationTest field, Status)
+
+/review-artifact --type=spec-tests
+  → Review §8 TCs for invariant coverage, GIVEN/WHEN/THEN completeness, duplicate TC IDs
 
 /review-artifact
-  → Quality check both layers:
-    - Engineering spec: source citations, tech-agnostic, completeness, ERD coverage
-    - Feature docs: 17 sections, YAML frontmatter, max 1500 lines, evidence in Sections 5+6+15
-  → PASS criteria for engineering spec: zero [UNVERIFIED] without exclusion reason + zero tech-specific
-    terms (framework names, language constructs, class names) in any spec file
-  → MANDATORY: compare entity count + rule count between docs/specs/{app-bucket}/{system-name}/ and docs/business-features/
-    for each module. Discrepancy >10% → flag as gap in watzup summary
-  → Engineering spec authoritative for structure; feature-docs authoritative for UI/test sections
-  → Gap found → fix task → re-investigate → fix → spawn fresh code-reviewer sub-agent (max 2 rounds)
-  → NEVER inline re-review — main agent rationalizes its own output
+  → Quality check the Feature Spec(s):
+    - §1-7 strictly tech-free (zero framework/product/language terms in prose)
+    - §5 Mermaid ERD present with entities, relationships, cardinalities
+    - §8 every TC has Business Intent, abstract `[Source: ns/service/id]` anchor, IntegrationTest field, Status
+    - YAML frontmatter present; body ≤1200 / whole file ≤1800 lines
+  → PASS criteria: zero [UNVERIFIED] without exclusion reason + zero tech terms in §1-7
+  → Gap found → validate findings → fix validated gaps → restart full review-artifact pass from the first check
 
 /docs-update
-  → Near-final synchronization sweep across project docs, business feature docs, engineering specs, and TDD/spec dashboards
-  → MUST run after review-artifact fixes and before /watzup
-  → Verify feature docs Section 15, docs/specs dashboards, and module indexes are synchronized
+  → Near-final synchronization sweep across project docs, the Feature Spec(s), and Section 8
+  → MUST run after review-artifact fixes and before /workflow-end
+  → (Optional) regenerate the derived bucket INDEX / ERD via /spec-index
   → Report skipped sub-phases explicitly when no impacted docs exist
 
-/watzup
-  → Session summary:
-    - Spec bundle: N modules, X files, ~Y lines, completeness matrix (module × phase ✅/⚠️/❌)
-    - Feature docs: N modules, X feature docs
-    - Coverage gaps (PARTIAL modules — spec layer vs feature-docs layer)
-    - Open questions (confidence < 80%)
-    - Next recommended actions: /product-discovery (future backlog from spec), /greenfield-init
-      (re-implementation plan), /feature-docs (expand individual features)
-
 /workflow-end
-```
+
+/watzup
+  → Session summary: capabilities authored, files written, ~lines, §8 TC counts, coverage gaps, open questions (confidence < 80%), plus final /understand handoff
+````
 
 ---
 
@@ -229,84 +181,53 @@ TaskCreate: "size-evaluation — count modules, estimate total_tasks, decide spl
 
 ### When to Use
 
-Code changed (new feature, bug fix, refactor, new PBI). Sync both layers incrementally.
+Code changed (new feature, bug fix, refactor, new PBI). Sync the Feature Spec incrementally.
 
 ### Scope Sources
 
 1. Auto-detect from `git diff --name-only HEAD` (default)
-2. Explicit module list from user
-3. New PBI or requirement description (map to affected modules manually)
+2. Explicit capability list from user
+3. New PBI or requirement description (map to affected capabilities manually)
 
 ### Step Sequence
 
 ```
 /workflow-review-changes
-  → Full code review cycle + docs-update (Phase 2 feature-docs + Phase 2.5 spec-discovery lightweight update)
-  → docs-update inside workflow-review-changes does a DIFF-SCOPED lightweight pass:
-      Phase 2: /feature-docs update (impacted sections only)
-      Phase 2.5: /spec-discovery update (impacted modules × phases only, if bundle exists)
-  → Produces: impact map (modules affected, phases impacted, doc sections to update)
-  → NOTE: If docs/specs/ does NOT exist, Phase 2.5 is skipped — proceed to /spec-discovery below to initialize or skip entirely
+  → Full code review cycle + docs-update (Phase 2 spec diff-scoped sync)
+  → Produces: impact map (capabilities affected, Feature Spec sections to update)
 
-/spec-discovery [mode=update]
-  → INTENTIONAL DEEPER RE-EXTRACTION — not a duplicate of docs-update Phase 2.5
-  → docs-update Phase 2.5 = diff-scoped lightweight sync (fast, surface-level)
-  → This call = full phase re-extraction per impacted module (reads ALL source, not just diff)
-  → Use when: significant structural changes, new aggregates/events, or docs-update Phase 2.5 flagged [UNVERIFIED] gaps
-  → SKIP THIS STEP if: docs-update Phase 2.5 completed with zero gaps AND no [UNVERIFIED] items — mark as "Skipped: docs-update Phase 2.5 sufficient"
-  → Input: impact map from workflow-review-changes
-  → Re-extract only impacted modules × phases
-  → Append to SPEC-CHANGELOG.md
-  → Update per-module README.md summaries
-  → Update last_extracted frontmatter on changed spec files
+/spec [mode=update]
+  → Update only the impacted sections of each affected Feature Spec (full 8-section pass with 3-pass verification when restructuring)
+  → SKIP if docs-update Phase 2 completed with zero gaps — mark "Skipped: docs-update Phase 2 sufficient"
 
-/feature-docs [mode=update]
-  → INTENTIONAL DEEPER RE-EXTRACTION — not a duplicate of docs-update Phase 2
-  → docs-update Phase 2 = impacted-sections-only lightweight sync
-  → This call = full 17-section pass with 3-pass verification (evidence audit, domain model, cross-reference)
-  → Use when: new features added, major section restructure, or docs-update Phase 2 reported gaps
-  → SKIP THIS STEP if: docs-update Phase 2 completed with zero gaps — mark as "Skipped: docs-update Phase 2 sufficient"
-  → Input: same impact map from workflow-review-changes
-  → Run section impact mapping (Phase 1.5)
-  → Update only impacted sections in each feature doc
-  → Append to module CHANGELOG.md
+/spec [mode=tests]
+  → **EXPLICIT TC STEP — required when new functionality added**
+  → SKIP if changes are purely cosmetic (CSS, comments, config) — mark "Skipped: no behavioral impact"
+  → Mode detection: new commands/queries/endpoints → implement-first; PBI-driven → TDD-first; TC edits only → update
+  → Write/update TCs in Section 8; grep existing IDs before assigning; never overwrite Tested TCs
 
-/tdd-spec [mode=update]
-  → **EXPLICIT TC STEP — required in update mode when new functionality added**
-  → SKIP THIS STEP if: changes are purely cosmetic (CSS, comments, config only) — mark as "Skipped: no behavioral impact"
-  → Input: impact map from workflow-review-changes + feature-docs update output
-  → Mode detection: If new commands/queries/endpoints added → `implement-first`; if PBI-driven → `TDD-first`; if TC edits only → `update`
-  → Write/update TCs in feature doc Section 15 for all impacted modules
-  → TC ID collision prevention: grep existing IDs before assigning new ones
-  → Do NOT overwrite Tested TCs — append new TCs and mark stale TCs for review
+/review-artifact --type=spec-tests
+  → Review updated/planned TCs for invariant coverage, GIVEN/WHEN/THEN completeness, stale TC handling, duplicate IDs
+  → SKIP if /spec [mode=tests] skipped — mark "Skipped: no TC changes"
+  → BLOCK sync if review finds missing invariants, ambiguous behavior, or TC/code/spec drift
 
-/tdd-spec-review
-  → Review updated/planned TCs for invariant coverage, GIVEN/WHEN/THEN completeness, stale TC handling, and duplicate TC IDs
-  → SKIP THIS STEP if /tdd-spec was skipped because there were no TC changes — mark as "Skipped: no TC changes"
-  → BLOCK sync if review finds missing invariants, ambiguous expected behavior, or TC/code/spec drift
-
-/tdd-spec [direction=sync] [direction=forward]
-  → Forward sync: feature doc Section 15 → docs/specs/ dashboard
-  → SKIP THIS STEP if: no TC changes in this update cycle
-  → Orphan check: quarantine dashboard TCs with no feature-doc source
+/spec [mode=sync]
+  → Refresh the derived bucket INDEX TC counts from Section 8 (Section 8 stays canonical — no separate dashboard)
+  → SKIP if no TC changes in this cycle
 
 /review-changes
-  → Holistic review of changes to both layers
-  → Verify: spec changes match code changes (no over/under documentation)
-  → Verify: feature doc sections updated match impact map
-  → Verify: new TCs cover all new functionality (no coverage gaps)
+  → Holistic review of Feature Spec changes
+  → Verify: spec changes match code changes (no over/under documentation); §8 covers all new functionality
 
 /docs-update
-  → Near-final synchronization sweep across project docs, business feature docs, engineering specs, and TDD/spec dashboards
-  → MUST run after review-changes fixes and before /watzup
-  → Verify feature docs Section 15, docs/specs dashboards, and module indexes are synchronized
+  → Near-final synchronization sweep across project docs, the Feature Spec(s), and Section 8
+  → MUST run after review-changes fixes and before /workflow-end
   → Report skipped sub-phases explicitly when no impacted docs exist
 
-/watzup
-  → Summary: modules updated, spec files changed, feature doc sections changed, TCs added/updated
-  → Any new open questions or UNVERIFIED items introduced
-
 /workflow-end
+
+/watzup
+  → Summary: capabilities updated, Feature Spec sections changed, TCs added/updated, new open questions, plus final /understand handoff
 ```
 
 ### New PBI / Requirement Update Protocol
@@ -316,12 +237,12 @@ Triggering update from new PBI or requirement (not code change):
 ```
 After /workflow-review-changes:
   → User provides PBI text or requirement description
-  → Map requirement → affected domain entities → affected modules
-  → /dor-gate: required when a new/changed PBI is being made implementation-ready; PASS or WARN required before planned specs/TCs become implementation guidance
-  → /pbi-mockup: required when the PBI changes user-facing UI or user journeys; skip with reason for backend-only/non-UI requirements
-  → Treat as "speculative update": add new sections/rules to spec files marked [PLANNED — not yet implemented]
-  → Add corresponding TCs in feature doc Section 15 marked Status: Planned
-  → /tdd-spec-review: review planned TCs before syncing them into docs/specs dashboards
+  → Map requirement → affected domain entities → affected capabilities
+  → /dor-gate: required when a new/changed PBI is being made implementation-ready; PASS or WARN before planned specs/TCs become guidance
+  → /pbi-mockup: required when the PBI changes user-facing UI/journeys; skip with reason for backend-only requirements
+  → Treat as "speculative update": add new rules/sections to the Feature Spec marked [PLANNED — not yet implemented]
+  → Add corresponding TCs in Section 8 marked Status: Planned
+  → /review-artifact --type=spec-tests: review planned TCs before refreshing the derived index
   → These become implementation guidance, not verified spec
 ```
 
@@ -331,15 +252,13 @@ After /workflow-review-changes:
 
 ### When to Use
 
-Periodic health check (quarterly or before major release). Verify both layers current.
+Periodic health check (quarterly or before major release). Verify the Feature Specs are current.
 
 ### Audit Time Estimation
 
-Before starting audit, estimate duration to set expectations:
-
 ```
-audit_effort = module_count × avg_phases_per_module × 5min_per_phase
-example: 8 modules × 4 phases = 160 min ≈ 2.5h (AI-assisted)
+audit_effort = capability_count × 8min_per_capability
+example: 8 capabilities × 8min = ~1h (AI-assisted)
 ```
 
 Budget multiplier: If last audit was >90 days ago → ×1.5 (more drift expected).
@@ -348,95 +267,80 @@ Budget multiplier: If last audit was >90 days ago → ×1.5 (more drift expected
 
 ```
 /scout
-  → Quick codebase scan: current state of entities, commands, controllers
-  → Note: scout in audit mode is lightweight — 30min max, no deep investigation
+  → Quick codebase scan: current state of entities, commands, controllers (lightweight, 30min max)
 
-/spec-discovery [mode=audit]
-  → Compare each spec file's last_extracted vs git log of source files
-  → Produce: docs/specs/{app-bucket}/{system-name}/SPEC-AUDIT-{date}.md
-  → Output: stale modules table with recommended re-extraction scope
-
-/feature-docs [mode=audit]
-  → Compare each feature doc's last_updated vs git log of source files
-  → Produce: docs/business-features/{Module}/AUDIT-{date}.md per module
-  → Output: stale sections table with recommended update scope
+/spec [mode=audit]
+  → Compare each Feature Spec's last_updated vs git log of the source it documents
+  → Output: stale capabilities/sections table with recommended update scope
 
 /review-artifact
-  → Consolidated audit report across both layers
-  → Produce: plans/reports/spec-audit-{date}-{system-name}.md
+  → Consolidated audit report
+  → Produce: plans/reports/spec-audit-{date}-{Bucket}.md
   → Include: total stale coverage %, estimated update effort, priority order
+  → (Optional) /spec-index [mode=audit] — report which DERIVED index/ERD aids lag their source specs
 
 /docs-update
-  → Near-final synchronization sweep across project docs, business feature docs, engineering specs, and TDD/spec dashboards
-  → MUST run after review-artifact audit conclusions and before /watzup
-  → Verify audit outputs, feature docs, specs indexes, and TDD/spec dashboards remain consistent
+  → Near-final synchronization sweep; MUST run after review-artifact conclusions and before /workflow-end
   → Report skipped sub-phases explicitly when no impacted docs exist
 
-/watzup
-  → Present action plan: which modules/features to update first
-  → Recommend: run update mode scoped to stale modules
-
 /workflow-end
+
+/watzup
+  → Present action plan: which capabilities to update first
+  → Recommend: run update mode scoped to stale capabilities
+  → Run final /understand handoff
 ```
 
 ---
 
 ## Conditional Skip Rules
 
-| Step                           | Skip When                                                                                                      |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| Phase A.ERD in init            | Never — ERD mandatory with Phase A                                                                             |
-| `/feature-docs` in init-full   | User explicitly requests spec-only output                                                                      |
-| `/spec-discovery` in update    | `docs/specs/{app-bucket}/{system-name}/` doesn't exist (run init-full instead)                                 |
-| `/dor-gate` in update          | Update source is code diff only, existing PBI is already DoR-ready, or no PBI readiness decision is being made |
-| `/pbi-mockup` in update        | Backend-only/non-UI requirement, code diff only, or existing mockup already covers the change                  |
-| `/tdd-spec-review` in update   | `/tdd-spec` skipped because there were no TC changes                                                           |
-| `/docs-update` near-final sync | Never skip entirely; sub-phases may be skipped only with explicit reason in the docs-update report             |
-| `/review-artifact` audit pass  | No gaps found in both layers AND no UNVERIFIED items                                                           |
-| Phase C (API)                  | Internal library with no public endpoints                                                                      |
-| Phase D (Events)               | No async messaging or background jobs                                                                          |
-| Phase E (Journeys)             | Backend-only scope, no user-facing UI                                                                          |
+| Step                                           | Skip When                                                                                                      |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| §5 Mermaid ERD in init                         | Never — the ERD is a mandatory section of the Feature Spec                                                     |
+| `/spec [mode=tests]` in init                   | User explicitly requests a behavior-doc-only pass (TCs deferred to a later cycle)                              |
+| `/dor-gate` in update                          | Update source is code diff only, existing PBI is already DoR-ready, or no PBI readiness decision is being made |
+| `/pbi-mockup` in update                        | Backend-only/non-UI requirement, code diff only, or existing mockup already covers the change                  |
+| `/review-artifact --type=spec-tests` in update | `/spec [mode=tests]` skipped because there were no TC changes                                                  |
+| `/spec [mode=sync]`                            | No TC changes in this update cycle                                                                             |
+| `/docs-update` near-final sync                 | Never skip entirely; sub-phases may be skipped only with explicit reason in the docs-update report             |
+| `/review-artifact` audit pass                  | No stale specs found AND no UNVERIFIED items                                                                   |
+| `/spec-index` (derived)                        | No derived index/ERD is maintained for this bucket, or it is already current                                   |
 
 ---
 
-## Sub-Agent Coordination Protocol (init-full, 4+ modules)
+## Sub-Agent Coordination Protocol (init-full, 4+ capabilities)
 
-1. `/scout` + `/plan` in main context → module registry + N×M task list
-2. Spawn spec-discovery sub-agents (one per module) in ONE message
-3. Wait for all spec sub-agents to complete
-4. Spawn feature-docs sub-agents (one per module) in ONE message
-5. Main context assembles both layers in `/review-artifact`
+1. `/scout` + `/plan` in main context → capability registry + per-capability task list
+2. Spawn `spec` sub-agents (one per capability) in ONE message
+3. Wait for all sub-agents to complete
+4. Spawn `spec [mode=tests]` sub-agents (one per capability) in ONE message to populate Section 8
+5. Main context assembles + verifies in `/review-artifact`
 
-Each spec-discovery sub-agent receives:
+Each `spec` sub-agent receives:
 
-- Module Registry path
-- Assigned module task list
-- Output path: `docs/specs/{app-bucket}/{system-name}/{module-id}-{module-name}/`
-- Incremental persistence instruction (write after each task)
-
-Each feature-docs sub-agent receives:
-
-- Module name + feature name
-- Output path: `docs/business-features/{Module}/`
-- Incremental persistence instruction
+- Capability name + bucket
+- Output path: `docs/specs/{Bucket}/README.{Feature}.md`
+- Tech-agnostic contract (§1-7 tech-free; §5 ERD mandatory)
+- Incremental persistence instruction (write after each section)
 
 ---
 
 ## Integration with docs-update workflow step
 
-`docs-update` called as workflow step (not standalone) automatically includes spec-discovery update via Phase 2.5:
+`docs-update` called as a workflow step (not standalone) synchronizes the single canonical artifact:
 
 ```
 docs-update (as workflow step):
   Phase 1: Project docs (inline — unchanged)
-  Phase 2: /feature-docs update mode (existing)
-  Phase 2.5: /spec-discovery update mode (NEW — if docs/specs/{app-bucket}/{system-name}/ exists AND spec_discovery_update != false in project-config.json)
-  Phase 3: /tdd-spec (existing)
-  Phase 3.5: /tdd-spec-review (required when Phase 3 changes TCs)
-  Phase 4: /tdd-spec [direction=sync] (existing)
+  Phase 2: /spec update mode (impacted sections of the Feature Spec)
+  Phase 3: /spec [mode=tests] (Section 8 TCs)
+  Phase 3.5: /review-artifact --type=spec-tests (required when Phase 3 changes TCs)
+  Phase 4: /spec [mode=sync] (refresh derived INDEX TC counts)
+  Phase 4.5: /spec-index (OPTIONAL — regenerate derived bucket INDEX / ERD if one is maintained)
 ```
 
-Both layers stay in sync on every feature/bugfix/refactor workflow.
+The Feature Spec stays in sync on every feature/bugfix/refactor workflow.
 
 ---
 
@@ -444,25 +348,24 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 
 ### Use This Workflow
 
-- First-time spec generation for module or full system
+- First-time Feature Spec authoring for a capability or full bucket
 - After significant code changes (new feature, major refactor)
-- Onboarding new team to codebase — spec bundle as knowledge handoff artifact
-- Before tech migration or re-implementation on new stack
+- Onboarding new team to a capability — the Feature Spec as knowledge handoff artifact
+- Before tech migration or re-implementation (pair with a derived reimplementation guide)
 - Quarterly spec health audits
-- After new PBIs groomed for implementation spec
+- After new PBIs groomed for implementation
 - Compliance documentation — prove system behavior in plain language
-- Clone/fork — brief any AI agent for reimplementation
-- Verify design intent — compare spec bundle against original vision
-- Generate future backlog from spec bundle via `/product-discovery`
+- Verify design intent — compare the Feature Spec against original vision
 
 ### Use Standalone Skills Instead
 
-| Goal                                               | Use                        |
-| -------------------------------------------------- | -------------------------- |
-| Update one specific feature doc after small change | `/feature-docs` directly   |
-| Extract spec for one specific module               | `/spec-discovery` directly |
-| Understand one specific feature                    | `/investigation`           |
-| Write integration tests from existing spec         | `/write-integration-test`  |
+| Goal                                                | Use                           |
+| --------------------------------------------------- | ----------------------------- |
+| Update one specific Feature Spec after small change | `/spec` directly              |
+| Add/sync Section 8 TCs                              | `/spec [mode=tests]` directly |
+| Regenerate a derived bucket index / ERD             | `/spec-index` directly        |
+| Understand one specific feature                     | `/investigate`                |
+| Write integration tests from existing Section 8     | `/integration-test`           |
 
 ---
 
@@ -470,15 +373,15 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
-
-**IMPORTANT MANDATORY Steps:** /workflow-spec-driven-dev
+**IMPORTANT MANDATORY Steps:** /scout -> /plan -> /plan-review -> /plan-validate -> /spec -> /spec [mode=tests] -> /review-artifact --type=spec-tests -> /review-artifact -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Invoke `Skill` tool for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
 > **[BLOCKING]** Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0.
-> **[BLOCKING]** Spawn sub-agents for 4+ modules in ONE message — NEVER sequential spawning.
-> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) `TaskList` FIRST — resume existing, NEVER create duplicates; (2) read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table — skip already-extracted modules (✅); (3) NEVER re-run `/scout` or `/plan` in a resumed session.
-> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any extraction/update/audit step — it is the shared spec quality baseline for both engineering spec and feature-doc layers.
+> **[BLOCKING]** Spawn sub-agents for 4+ capabilities in ONE message — NEVER sequential spawning.
+> **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) `TaskList` FIRST — resume existing, NEVER create duplicates; (2) re-glob `docs/specs/{Bucket}/` to see which capabilities already have a Feature Spec — skip those; (3) NEVER re-run `/scout` or `/plan` in a resumed session.
+> **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any author/update/audit step — it is the shared spec quality baseline (tech-agnostic rule + banned-token list).
+
+> **Goal Contract propagation (workflow-owned):** At workflow start, resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the spec request). Map each spec/test/code cycle output (Feature Specs authored, TCs written, audit findings fixed) to the saved success criteria and append the evidence to the goal file's Iteration Log per cycle. Before `/workflow-end`, emit the Goal Satisfaction matrix (PASS/FAIL/BLOCKED); completion requires every required criterion PASS or BLOCKED with a user-facing escalation.
 
 <!-- SYNC:nested-task-creation -->
 
@@ -516,6 +419,7 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -571,6 +475,13 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 
 <!-- /SYNC:nested-task-creation:reminder -->
 
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
+
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
@@ -584,20 +495,29 @@ Both layers stay in sync on every feature/bugfix/refactor workflow.
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Ensure the Feature Spec, implementation, tests, and project docs stay synchronized through a governed spec-driven workflow.
+
 - **[BLOCKING]** Confirm mode via `AskUserQuestion` BEFORE any action — NEVER skip Step 0
 - **[BLOCKING]** Invoke `Skill` tool for EACH step — NEVER batch-complete or mark done without invocation
-- **[BLOCKING]** Spawn sub-agents for 4+ modules in ONE message — NEVER sequential spawning
-- **[BLOCKING]** NEVER skip Phase A.ERD — produces `01-domain-erd.md` Mermaid erDiagram with ALL entities, relationships, cardinalities, and aggregate boundaries; foundational for phases B–E
-- **[BLOCKING]** Scout holistically FIRST — Module Registry MUST exist before plan creation; NEVER re-run scout or plan in resumed session
-- **[BLOCKING]** Plan decomposes big→small — ONE task per module × phase, every task ≤50 files in scope; split large modules with part labels
-- **[BLOCKING]** Dependency order: Phase A (domain model) before Phase B (rules) per module; priority: core domain modules first, infrastructure last
-- **[BLOCKING]** Per-task investigation: READ → TRACE → EXTRACT → WRITE immediately — NEVER accumulate across tasks
-- **[REQUIRED]** Every claim cites `[Source: file:line]` — mark `[UNVERIFIED]` not blank; all output tech-agnostic (no framework names, no language constructs)
-- **[REQUIRED]** Each sub-agent prompt MUST include: module name, task list, output path, tech-agnostic contract, SYNC protocols (critical-thinking, evidence-based, incremental-persistence, cross-scope boundary)
-- **[BLOCKING]** Context compaction / session resume → `TaskList` first, read completeness tracker, skip ✅ modules — NEVER re-run scout or plan
-- **[BLOCKING]** review-artifact: PASS = zero `[UNVERIFIED]` without exclusion reason + zero tech terms; gap found → fresh code-reviewer sub-agent (max 2 rounds) — NEVER inline re-review
-- **[BLOCKING]** Verify TaskList count ≥ N×M before any extraction begins — this is the plan completeness gate
+- **[BLOCKING]** Spawn sub-agents for 4+ capabilities in ONE message — NEVER sequential spawning
+- **[BLOCKING]** ONE canonical artifact — the Feature Spec at `docs/specs/{Bucket}/README.{Feature}.md`; the §5 Mermaid ERD is authored INSIDE it (no separate ERD file, no A-E tree)
+- **[BLOCKING]** Scout holistically FIRST — capability registry MUST exist before plan creation; NEVER re-run scout or plan in a resumed session
+- **[BLOCKING]** Plan decomposes big→small — ONE task per capability Feature Spec; split a capability when body §1-7 >1200 lines OR TCs >40
+- **[BLOCKING]** Per-section authoring: write each section immediately — NEVER accumulate across sections
+- **[REQUIRED]** §1-7 STRICTLY tech-free (no framework names, no language constructs, no class names in prose); identifiers live only in §8 evidence carriers, `[Source: ns/service/id]`, and ` ```mermaid ``` ` blocks — mark `[UNVERIFIED]` not blank
+- **[REQUIRED]** Each sub-agent prompt MUST include: capability name, output path, tech-agnostic contract, SYNC protocols (critical-thinking, evidence-based, incremental-persistence, cross-scope boundary)
+- **[BLOCKING]** Context compaction / session resume → `TaskList` first, re-glob existing Feature Specs, skip done capabilities — NEVER re-run scout or plan
+- **[BLOCKING]** review-artifact: PASS = zero `[UNVERIFIED]` without exclusion reason + zero tech terms in §1-7; gap found → validate findings → fix validated gaps → restart the full review-artifact pass from the first check
+- **[BLOCKING]** Verify TaskList count ≥ capability_count before any authoring begins — this is the plan completeness gate
 - **[REQUIRED]** Apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 - **[REQUIRED]** Apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+> **Anti-Rationalization:**
+
+| Evasion                                 | Rebuttal                                                                                                    |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| "Purpose obvious"                       | Anchor it anyway — primacy/recency keeps outcome active through long prompts.                               |
+| "Existing reminders enough"             | Echo Goal in Closing Reminders — bottom anchor prevents drift.                                              |
+| "Skip evidence for prompt edits"        | Cite changed file evidence and verify no stale protocol text remains.                                       |
+| "Re-extract the A-E engineering bundle" | Not part of the spec model. ONE Feature Spec; the ERD is §5. `spec-index` only regenerates a derived index. |

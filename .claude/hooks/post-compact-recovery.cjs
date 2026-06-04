@@ -76,7 +76,8 @@ function findRecentCheckpoint(reportsPath, maxAgeMinutes = 1440) {
 
         const entries = fs.readdirSync(fullPath, { withFileTypes: true });
         const checkpoints = entries
-            .filter(e => e.isFile() && e.name.startsWith('memory-checkpoint-') && e.name.endsWith('.md'))
+            // Unified grammar `checkpoint-*`; legacy `memory-checkpoint-*` still back-read. Age is taken from mtime below, so this is grammar-independent.
+            .filter(e => e.isFile() && (e.name.startsWith('checkpoint-') || e.name.startsWith('memory-checkpoint-')) && e.name.endsWith('.md'))
             .map(e => ({
                 name: e.name,
                 path: path.join(fullPath, e.name),
@@ -472,4 +473,8 @@ async function main() {
     }
 }
 
-main();
+module.exports = { findRecentCheckpoint };
+
+if (require.main === module) {
+    main();
+}

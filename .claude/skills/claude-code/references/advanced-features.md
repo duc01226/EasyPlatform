@@ -9,23 +9,26 @@ Deep reasoning for complex problems.
 ### Enable Extended Thinking
 
 **Global configuration:**
+
 ```bash
 claude config set thinking.enabled true
 claude config set thinking.budget 15000
 ```
 
 **Project settings (.claude/settings.json):**
+
 ```json
 {
-  "thinking": {
-    "enabled": true,
-    "budget": 10000,
-    "mode": "auto"
-  }
+    "thinking": {
+        "enabled": true,
+        "budget": 10000,
+        "mode": "auto"
+    }
 }
 ```
 
 **Command-line flag:**
+
 ```bash
 claude --thinking "architect microservices system"
 ```
@@ -38,11 +41,11 @@ claude --thinking "architect microservices system"
 
 ```json
 {
-  "thinking": {
-    "mode": "auto",
-    "budget": 10000,
-    "minComplexity": 0.7
-  }
+    "thinking": {
+        "mode": "auto",
+        "budget": 10000,
+        "minComplexity": 0.7
+    }
 }
 ```
 
@@ -52,11 +55,11 @@ Set token budget for thinking:
 
 ```json
 {
-  "thinking": {
-    "budget": 10000,      // Max tokens for thinking
-    "budgetPerRequest": 5000,  // Per-request limit
-    "adaptive": true      // Adjust based on task complexity
-  }
+    "thinking": {
+        "budget": 10000, // Max tokens for thinking
+        "budgetPerRequest": 5000, // Per-request limit
+        "adaptive": true // Adjust based on task complexity
+    }
 }
 ```
 
@@ -86,6 +89,7 @@ Reduce costs by caching repeated context.
 ### Enable Caching
 
 **API usage:**
+
 ```typescript
 const response = await client.messages.create({
   model: 'sonnet',
@@ -101,19 +105,21 @@ const response = await client.messages.create({
 ```
 
 **CLI configuration:**
+
 ```json
 {
-  "caching": {
-    "enabled": true,
-    "ttl": 300,
-    "maxSize": "100MB"
-  }
+    "caching": {
+        "enabled": true,
+        "ttl": 300,
+        "maxSize": "100MB"
+    }
 }
 ```
 
 ### Cache Strategy
 
 **What to cache:**
+
 - Large codebases
 - Documentation
 - API specifications
@@ -121,6 +127,7 @@ const response = await client.messages.create({
 - Project context
 
 **What not to cache:**
+
 - User queries
 - Dynamic content
 - Temporary data
@@ -147,11 +154,13 @@ const response = await client.messages.create({
 ### Cost Savings
 
 With caching:
+
 - First request: Full cost
 - Subsequent requests: ~90% discount on cached tokens
 - Cache TTL: 5 minutes
 
 Example:
+
 ```
 Without caching:
 Request 1: 10,000 tokens @ $3/M = $0.03
@@ -175,14 +184,15 @@ claude config set checkpointing.enabled true
 ```
 
 **Settings:**
+
 ```json
 {
-  "checkpointing": {
-    "enabled": true,
-    "autoSave": true,
-    "interval": 300,
-    "maxCheckpoints": 50
-  }
+    "checkpointing": {
+        "enabled": true,
+        "autoSave": true,
+        "interval": 300,
+        "maxCheckpoints": 50
+    }
 }
 ```
 
@@ -206,7 +216,7 @@ claude checkpoint restore checkpoint-123
 claude checkpoint restore --time "2025-11-06T10:00:00Z"
 
 # Restore specific files
-claude checkpoint restore checkpoint-123 --files src/main.js
+claude checkpoint restore checkpoint-123 --files {source-root}/main
 ```
 
 ### Create Manual Checkpoint
@@ -222,12 +232,14 @@ claude checkpoint create "working state before experiment"
 ### Checkpoint Strategies
 
 **Auto-save checkpoints:**
+
 - Before major changes
 - After successful tests
 - Every N minutes
 - Before destructive operations
 
 **Manual checkpoints:**
+
 - Before risky refactors
 - At working states
 - Before experiments
@@ -271,13 +283,13 @@ claude config set memory.enabled true
 
 ```json
 {
-  "memory": {
-    "enabled": true,
-    "location": "project",
-    "ttl": 86400,
-    "maxSize": "10MB",
-    "autoSummarize": true
-  }
+    "memory": {
+        "enabled": true,
+        "location": "project",
+        "ttl": 86400,
+        "maxSize": "10MB",
+        "autoSummarize": true
+    }
 }
 ```
 
@@ -303,6 +315,7 @@ claude memory clear --project
 ### What Gets Remembered
 
 **Automatically:**
+
 - Project structure
 - Coding patterns
 - Preferences
@@ -310,6 +323,7 @@ claude memory clear --project
 - File locations
 
 **Explicitly stored:**
+
 - Important context
 - Design decisions
 - Architecture notes
@@ -318,18 +332,21 @@ claude memory clear --project
 ### Memory Best Practices
 
 **Project memory:**
+
 - Good for project-specific context
 - Shares across team members
 - Persists in `.claude/memory/`
 - Commit to version control (optional)
 
 **Global memory:**
+
 - Personal preferences
 - General knowledge
 - Common patterns
 - Cross-project learnings
 
 **Disable memory when:**
+
 - Working with sensitive data
 - One-off tasks
 - Testing/experimentation
@@ -339,7 +356,7 @@ claude memory clear --project
 
 ```bash
 # Remember project architecture
-claude "Remember: This project uses Clean Architecture with:
+claude "Remember: This repository uses Clean Architecture with:
 - Domain layer (core business logic)
 - Application layer (use cases)
 - Infrastructure layer (external dependencies)
@@ -357,6 +374,7 @@ Manage large context effectively.
 ### Maximum Context
 
 Model context limits:
+
 - Claude Sonnet: 200k tokens
 - Claude Opus: 200k tokens
 
@@ -364,28 +382,31 @@ Model context limits:
 
 ```json
 {
-  "context": {
-    "maxTokens": 200000,
-    "autoTruncate": true,
-    "prioritize": ["recent", "relevant"],
-    "summarizeLong": true
-  }
+    "context": {
+        "maxTokens": 200000,
+        "autoTruncate": true,
+        "prioritize": ["recent", "relevant"],
+        "summarizeLong": true
+    }
 }
 ```
 
 ### Strategies
 
 **Summarization:**
+
 - Auto-summarize old context
 - Keep summaries of large files
 - Compress conversation history
 
 **Prioritization:**
+
 - Recent messages first
 - Most relevant files
 - Explicit user priorities
 
 **Chunking:**
+
 - Process large codebases in chunks
 - Incremental analysis
 - Parallel processing

@@ -15,7 +15,7 @@ description: '[Architecture] Use when designing solution architecture across bac
 
 ## Quick Summary
 
-**Goal:** Act as a solution architect — research, critically analyze, and recommend the complete technical architecture for a project or feature. Cover ALL architecture concerns: backend, frontend, design patterns, library ecosystem, testing strategy, CI/CD, deployment, monitoring, code quality, and dependency management. Produce a comprehensive comparison report with actionable recommendations.
+**Goal:** Act as solution architect to deliver a complete, evidence-backed, user-validated architecture decision report covering ALL concerns (backend, frontend, design patterns, library ecosystem, testing strategy, CI/CD, deployment, monitoring, code quality, dependency management) — every concern researched with 3+ options, every recommendation carrying confidence % + cited evidence, every decision confirmed by the user — so implementation proceeds on sound, owned architectural choices.
 
 **Workflow (12 steps):**
 
@@ -127,7 +127,7 @@ Evaluate applicability per layer:
 | **Outbox**          | Messaging      | Reliable event publishing with DB transactions    |
 | **Circuit Breaker** | Infrastructure | External service resilience                       |
 
-For each recommended pattern, document: **Apply to**, **Why**, **Example**, **Risk if skipped**.
+Per recommended pattern, document: **Apply to**, **Why**, **Example**, **Risk if skipped**.
 
 ---
 
@@ -137,16 +137,16 @@ For each recommended pattern, document: **Apply to**, **Why**, **Example**, **Ri
 
 WebSearch top 3 frontend architecture styles. Candidates:
 
-| Style                       | Best For                                    | Research Focus                            |
-| --------------------------- | ------------------------------------------- | ----------------------------------------- |
-| **MVVM**                    | Data-binding heavy, forms-over-data apps    | ViewModel responsibility, two-way binding |
-| **MVC**                     | Server-rendered, traditional web apps       | Controller routing, view separation       |
-| **Component Architecture**  | Modern SPA (React, Angular, Vue)            | Component isolation, props/events, reuse  |
-| **Reactive Store (Redux)**  | Complex state, multi-component sync         | Single source of truth, immutable state   |
-| **Signal-based Reactivity** | Fine-grained reactivity (Angular 19, Solid) | Granular updates, no zone.js overhead     |
-| **Micro Frontends**         | Multiple teams, independent deployment      | Module federation, routing, shared state  |
-| **Feature-based Modules**   | Large monolith SPA, lazy loading            | Feature boundaries, route-level splitting |
-| **Server Components (RSC)** | SEO, initial load performance               | Server/client boundary, streaming         |
+| Style                       | Best For                                                   | Research Focus                                  |
+| --------------------------- | ---------------------------------------------------------- | ----------------------------------------------- |
+| **MVVM**                    | Data-binding heavy, forms-over-data apps                   | ViewModel responsibility, two-way binding       |
+| **MVC**                     | Server-rendered, traditional web apps                      | Controller routing, view separation             |
+| **Component Architecture**  | Configured SPA/component framework                         | Component isolation, props/events, reuse        |
+| **Reactive Store (Redux)**  | Complex state, multi-component sync                        | Single source of truth, immutable state         |
+| **Signal-based Reactivity** | Fine-grained reactivity in frameworks that support signals | Granular updates without broad change detection |
+| **Micro Frontends**         | Multiple teams, independent deployment                     | Module federation, routing, shared state        |
+| **Feature-based Modules**   | Large monolith SPA, lazy loading                           | Feature boundaries, route-level splitting       |
+| **Server Components (RSC)** | SEO, initial load performance                              | Server/client boundary, streaming               |
 
 ### 4B: Frontend Design Patterns
 
@@ -214,7 +214,7 @@ WebSearch top 3 styling approaches for the confirmed frontend framework:
 
 ## Step 5: Library Ecosystem Research
 
-For EACH concern below, WebSearch top 3 library options for the confirmed tech stack. Evaluate: maturity, community, bundle size, maintenance activity, license, learning curve.
+Per concern below, WebSearch top 3 library options for confirmed tech stack. Evaluate: maturity, community, bundle size, maintenance activity, license, learning curve.
 
 ### Library Concerns Checklist
 
@@ -259,7 +259,7 @@ Research best testing tools and strategy for the confirmed tech stack:
 
 | Testing Layer           | What to Research                                  | Top Candidates to Compare                    |
 | ----------------------- | ------------------------------------------------- | -------------------------------------------- |
-| **Unit Testing**        | Test runner, assertion library, mocking framework | Jest/Vitest/xUnit/NUnit, mocking             |
+| **Unit Testing**        | Test runner, assertion library, mocking framework | Repository's configured unit-test stack      |
 | **Integration Testing** | API testing, DB testing, service testing          | Supertest, TestContainers, WebAppFactory     |
 | **E2E Testing**         | Browser automation, BDD, visual regression        | Playwright/Cypress/Selenium, SpecFlow        |
 | **Performance Testing** | Load testing, stress testing, benchmarking        | k6/Artillery/JMeter/NBomber, BenchmarkDotNet |
@@ -289,16 +289,16 @@ Research best testing tools and strategy for the confirmed tech stack:
 
 Research deployment architecture and CI/CD tooling:
 
-| Concern                 | What to Research                                     | Top Candidates to Compare                     |
-| ----------------------- | ---------------------------------------------------- | --------------------------------------------- |
-| **CI/CD Platform**      | Pipeline orchestration, parallelism, caching         | GitHub Actions/Azure DevOps/GitLab CI/Jenkins |
-| **Containerization**    | Container runtime, image building, registry          | Docker/Podman, BuildKit, ACR/ECR/GHCR         |
-| **Orchestration**       | Container orchestration, service mesh, scaling       | Kubernetes/Docker Compose/ECS/Nomad           |
-| **IaC (Infra as Code)** | Infrastructure provisioning, drift detection         | Terraform/Pulumi/Bicep/CDK                    |
-| **Artifact Management** | Package registry, versioning, vulnerability scanning | NuGet/npm/Artifactory/GitHub Packages         |
-| **Feature Flags**       | Progressive rollout, A/B testing, kill switches      | LaunchDarkly/Unleash/Flagsmith                |
-| **Secret Management**   | Vault, key rotation, environment variables           | Azure KeyVault/HashiCorp Vault/SOPS           |
-| **Database Migration**  | Schema versioning, rollback, seed data               | EF Migrations/Flyway/Liquibase/dbmate         |
+| Concern                 | What to Research                                     | Top Candidates to Compare             |
+| ----------------------- | ---------------------------------------------------- | ------------------------------------- |
+| **CI/CD Provider**      | Pipeline orchestration, parallelism, caching         | Repository's configured CI/CD tooling |
+| **Containerization**    | Container runtime, image building, registry          | Docker/Podman, BuildKit, ACR/ECR/GHCR |
+| **Orchestration**       | Container orchestration, service mesh, scaling       | Kubernetes/Docker Compose/ECS/Nomad   |
+| **IaC (Infra as Code)** | Infrastructure provisioning, drift detection         | Terraform/Pulumi/Bicep/CDK            |
+| **Artifact Management** | Package registry, versioning, vulnerability scanning | NuGet/npm/Artifactory/GitHub Packages |
+| **Feature Flags**       | Progressive rollout, A/B testing, kill switches      | LaunchDarkly/Unleash/Flagsmith        |
+| **Secret Management**   | Vault, key rotation, environment variables           | Azure KeyVault/HashiCorp Vault/SOPS   |
+| **Database Migration**  | Schema versioning, rollback, seed data               | EF Migrations/Flyway/Liquibase/dbmate |
 
 ### Deployment Strategy Comparison
 
@@ -372,7 +372,7 @@ Research and recommend tooling for automated code quality:
 
 ### Scaffold Handoff (MANDATORY — consumed by `/scaffold`)
 
-After completing code quality research, produce this handoff table in the architecture report. The `/scaffold` skill reads this table to generate actual config files — without it, scaffold cannot auto-configure quality tooling.
+After code quality research, produce this handoff table in architecture report. `/scaffold` reads this table to generate actual config files — without it, scaffold cannot auto-configure quality tooling.
 
 ```markdown
 ### Scaffold Handoff — Tool Choices
@@ -394,7 +394,7 @@ After completing code quality research, produce this handoff table in the archit
 
 ## Step 10: Dependency Risk Assessment
 
-For EVERY recommended library/package, evaluate maintenance and obsolescence risk:
+Per recommended library/package, evaluate maintenance and obsolescence risk:
 
 ### Package Health Scorecard
 
@@ -519,7 +519,7 @@ graph TB
 - "Should we use event sourcing or traditional state-based persistence?"
 - "Monolith-first or start with service boundaries?"
 - "Micro frontends or monolith SPA?"
-- "How important is framework independence for this project?"
+- "How important is framework independence for this repository or system?"
 - "Self-hosted observability or managed SaaS?"
 - "Strict lint rules from day 1 or gradual adoption?"
 
@@ -594,6 +594,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 ## Closing Reminders
 
+**IMPORTANT MUST ATTENTION Goal:** Deliver a complete, evidence-backed, user-validated architecture decision report — every concern researched with 3+ options, every recommendation carrying confidence % + cited evidence, every decision confirmed by the user — so implementation proceeds on sound, owned architectural choices.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
@@ -601,7 +602,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 - **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
+  <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -630,7 +631,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -638,16 +639,17 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -668,7 +670,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
 - **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
+  <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 

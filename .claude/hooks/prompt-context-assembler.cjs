@@ -298,25 +298,16 @@ async function main() {
         //   Tier 1 (compact, no dedup) — always fires, anchors TOP attention
         //   Tier 2 (full protocol, deduped) — fires when not recently injected
         // Bottom bookend mirrors Tier 1 in prompt-context-assembler-closers.cjs.
-        // "always" → ask user via AskUserQuestion before activating
-        // "never"  → auto-execute workflow directly (no confirmation)
-        // "off"    → skip entirely (no workflow detection)
         // ═══════════════════════════════════════════════════════════════════════════
         const wfConfig = loadConfig({
             includeProject: false,
             includeAssertions: false
         });
-        const confirmationMode = wfConfig.workflow?.confirmationMode || 'always';
-        if (confirmationMode !== 'off') {
-            // Tier 1: compact gate — no dedup, always at top (primacy anchor)
-            console.log(confirmationMode === 'never'
-                ? `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First action: workflow detection. Find best-match or compose custom workflow \u2192 \`/workflow-start\` or custom steps \u2192 then proceed.**`
-                : `**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First tool call: \`AskUserQuestion\` for workflow detection. Find best-match OR compose custom workflow \u2192 present all options with recommendation \u2192 ask user \u2192 then proceed.**`
-            );
-            // Tier 2: full protocol — deduped (100-line window)
-            const workflowProtocol = injectWorkflowProtocol(payload.transcript_path, confirmationMode, wfConfig.portability);
-            if (workflowProtocol) console.log(workflowProtocol);
-        }
+        // Tier 1: compact gate — no dedup, always at top (primacy anchor)
+        console.log(`**[BLOCKING] [WORKFLOW-GATE] MANDATORY IMPORTANT MUST ATTENTION CRITICAL \u2014 Do not skip for any reason. First action: workflow detection. If prompt starts with explicit /skill or /workflow command, execute it directly. Otherwise auto-select the best path: direct, skill, standard workflow, or custom workflow — do not ask the user to choose. Then ACTIVATE the route: for a workflow, invoke /start-workflow <id> as a tool call (it loads the canonical step sequence and builds the task list 1:1) — declaring \`Route: ...\` in prose or hand-writing your own task list is NOT activation.**`);
+        // Tier 2: full protocol — deduped (100-line window)
+        const workflowProtocol = injectWorkflowProtocol(payload.transcript_path, wfConfig.portability);
+        if (workflowProtocol) console.log(workflowProtocol);
 
         // ═══════════════════════════════════════════════════════════════════════════
         // POST-COMPACT RE-VERIFY WARNING (fires once per compact event)

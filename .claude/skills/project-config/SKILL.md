@@ -1,6 +1,5 @@
 ---
 name: project-config
-version: 2.2.0
 description: '[Utilities] Use when you need to scan workspace and update docs/project-config JSON to match current project structure.'
 disable-model-invocation: false
 ---
@@ -16,10 +15,12 @@ disable-model-invocation: false
 **Key Rules:**
 
 - MUST ATTENTION run `node .claude/hooks/lib/project-config-schema.cjs --describe` — use field names verbatim
-- MUST ATTENTION one TaskCreate per config section — NEVER scan everything in one pass
+- MUST ATTENTION execute every required config section for every project size; small projects do not skip, defer, or require user approval to combine work
+- MUST ATTENTION one TaskCreate per config section or explicit section group — NEVER scan everything in one pass
 - MUST ATTENTION validate schema after each merge — `validateConfig(config)` returns PASSED or errors
 - MUST ATTENTION review-and-fix after each phase — read back, spot-check paths, self-review
-- Path regexes MUST ATTENTION use `[\\/]` for cross-platform separator matching
+- MUST ATTENTION do not ask the user to choose scan granularity, combination, section ordering, or optional confirmation; auto-select the evidence-backed route and continue
+- Path regexes MUST ATTENTION use `[\\/]` for cross-OS separator matching
 - Schema enforced by `.claude/hooks/lib/project-config-schema.cjs`
 
 ---
@@ -31,27 +32,28 @@ disable-model-invocation: false
 **MUST ATTENTION classify scale FIRST** — drives task granularity for all subsequent phases.
 
 ```bash
-find src/ -name "*.csproj" 2>/dev/null | wc -l
-find src/ -name "package.json" -not -path "*/node_modules/*" 2>/dev/null | wc -l
-find src/ -name "*.cs" 2>/dev/null | wc -l
-ls -d src/*/ 2>/dev/null
+find . -path "*/node_modules" -prune -o -name "*.csproj" -print 2>/dev/null | wc -l
+find . -path "*/node_modules" -prune -o -name "package.json" -print 2>/dev/null | wc -l
+find . -path "*/node_modules" -prune -o -type f -name "{configured-source-file-glob}" -print 2>/dev/null | wc -l
+find . -maxdepth 3 -type d -name "{candidate-source-dir-name}" 2>/dev/null
 ```
 
-| Scale         | Signal              | Task Approach                          |
-| ------------- | ------------------- | -------------------------------------- |
-| Small (<5)    | Few modules         | Combine 2a+2b, 2k+2l+2m — ~8 tasks     |
-| Medium (5–20) | Moderate count      | One task per section — ~15 tasks       |
-| Large (20+)   | Many service groups | Split 2a per service group — 20+ tasks |
+| Scale         | Signal              | Task Approach                                                                                  |
+| ------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
+| Small (<5)    | Few modules         | Execute every section; use compact phase groups only for reporting, not for skipping or asking |
+| Medium (5–20) | Moderate count      | Execute every section with one task per section where practical                                |
+| Large (20+)   | Many service groups | Execute every section; split 2a/2b and other broad scans per service group when needed         |
 
-Small projects: ask user to combine into single pass.
+Project size controls task grouping and split depth only. It does NOT permit skipping required sections, stopping for user approval, or asking whether to combine work. For small projects, auto-select the compact full-pass plan and keep validating after each merge/review phase.
 
 ### Step 2: Create Plan (`/plan`)
 
 Create `plans/{date}-project-config-scan.md`:
 
 1. Record scale classification from Step 1
-2. Group config sections into phases (≤5 tasks each)
+2. Group config sections into phases (≤5 tasks each) while preserving full section coverage
 3. Include review-and-fix cycle after each phase
+4. Include every Phase 2 section (2a–2q) as either its own task or a named task inside a compact group with explicit evidence for each section
 
 **Phase template:**
 
@@ -114,7 +116,7 @@ docs/project-config.json
 │   └── implicitConnections[] — { name, edgeKind, paths[], source{ filePattern, contentPattern, keyGroup }, target{...}, matchBy }
 ├── referenceDocs[] — { filename, purpose, sections[] }
 ├── integrationTestVerify — { guidance, referenceDocs[], quickRunCommand, testProjectPattern, testProjects[], systemCheckCommand, runScript, startupScript }
-├── workflowPatterns — { architectureStyle, codeHierarchy, cssMethodology, stateManagement, crossModuleValidation, featureDocPath, featureDocTemplate, reviewRulesDoc }
+├── workflowPatterns — { architectureStyle, codeHierarchy, cssMethodology, stateManagement, crossModuleValidation, featureDocTemplate, reviewRulesDoc }
 └── DEPRECATED: backendServices, frontendApps, scss, componentFinder, sharedNamespace
 ```
 
@@ -159,15 +161,15 @@ Read `docs/project-config.json`. Note populated vs skeleton sections.
 
 ## Phase 2: Section-by-Section Scans
 
-**Each subsection = one TaskCreate.** Per task: investigate → report → merge → validate.
+**Each subsection = one TaskCreate or an explicit named child inside a compact group.** Per task: investigate → report → merge → validate. Small projects still cover every subsection; compact grouping is an execution convenience, not permission to skip or ask.
 
 ### 2a. Modules — Backend
 
 ```bash
-find src/ -name "*.csproj" -maxdepth 5 | head -50          # .NET
-find . -name "pom.xml" -o -name "build.gradle" | head -50  # Java
-find src/ -name "package.json" -not -path "*/node_modules/*" -maxdepth 4 | head -50  # Node
-find . -name "go.mod" | head -50                            # Go
+find . -path "*/node_modules" -prune -o -name "*.csproj" -print | head -50
+find . -name "pom.xml" -o -name "build.gradle" | head -50
+find . -path "*/node_modules" -prune -o -name "package.json" -print | head -50
+find . -name "go.mod" | head -50
 ```
 
 Build `modules[]` entries: `{ name, kind, pathRegex, description, tags[], meta{} }`
@@ -177,9 +179,8 @@ Build `modules[]` entries: `{ name, kind, pathRegex, description, tags[], meta{}
 ### 2b. Modules — Frontend
 
 ```bash
-find . -name "nx.json" -o -name "angular.json" -o -name "lerna.json" -o -name "turbo.json" 2>/dev/null | head -5
-ls -d src/*/apps/*/ */apps/*/ apps/*/ 2>/dev/null | head -20
-ls -d src/*/libs/*/ */libs/*/ libs/*/ packages/*/ 2>/dev/null | head -30
+find . -name "nx.json" -o -name "{frontend-framework-config}" -o -name "lerna.json" -o -name "turbo.json" 2>/dev/null | head -5
+find . -maxdepth 5 -type d \( -name apps -o -name libs -o -name packages \) 2>/dev/null | head -30
 ```
 
 Build entries: `kind: "frontend-app"` or `kind: "library"`.
@@ -197,7 +198,7 @@ Build `framework { name, searchPatternKeywords[] }` from commonly used base clas
 ### 2e. Context Groups
 
 Build `contextGroups[]` with `pathRegexes[]`, `fileExtensions[]`, `patternsDoc`, `rules[]`.
-Rules MUST ATTENTION be specific: "Use IPlatformRootRepository<TEntity>" not "follow best practices".
+Rules MUST ATTENTION be specific: "Use the service-specific repository (e.g. `OrderRepository`), not the generic repository base" not "follow best practices".
 
 ### 2f–2h. Design System, Styling, Component System
 
@@ -223,14 +224,14 @@ Rules MUST ATTENTION be specific: "Use IPlatformRootRepository<TEntity>" not "fo
 
 Only if project has BOTH frontend AND backend.
 
-| Frontend  | Signal          | Backend   | Signal                             |
-| --------- | --------------- | --------- | ---------------------------------- |
-| `angular` | `@angular/core` | `dotnet`  | `.csproj` + `Microsoft.AspNetCore` |
-| `react`   | `react`         | `spring`  | `spring-boot-starter-web`          |
-| `vue`     | `vue`           | `express` | `express` in package.json          |
-| `generic` | None            | `fastapi` | `fastapi` in requirements.txt      |
+| Frontend                          | Signal                    | Backend                          | Signal                             |
+| --------------------------------- | ------------------------- | -------------------------------- | ---------------------------------- |
+| `{configured-frontend-framework}` | configured package marker | `{configured-backend-framework}` | configured backend manifest marker |
+| `react`                           | `react`                   | `spring`                         | `spring-boot-starter-web`          |
+| `vue`                             | `vue`                     | `express`                        | `express` in package.json          |
+| `generic`                         | None                      | `fastapi`                        | `fastapi` in requirements.txt      |
 
-Route prefix: `"api"` for.NET/Spring, `""` for Express/FastAPI.
+Route prefix: derive from configured backend framework and existing route declarations.
 
 ### 2p. Graph Connectors — Implicit Connections
 
@@ -254,7 +255,7 @@ Algorithm: scan source files → extract keys via `contentPattern` regex capture
 
 #### Detection Heuristics
 
-- **.NET:** `EntityEventApplicationHandler<` → entity-to-handler; `EntityEventBusMessageProducer<` → producer; `PlatformApplicationMessageBusConsumer<` → consumer
+- **Configured runtime:** discover event, handler, publisher, and consumer base types from codebase grep and project-reference docs.
 - **TypeScript:** Redux dispatch→reducer, NgRx createAction→ofType, EventEmitter emit→on
 - **Python:** Celery task.delay→@app.task, Django signal.send→@receiver
 - **Java:** publishEvent→@EventListener, KafkaTemplate→@KafkaListener
@@ -265,14 +266,14 @@ Algorithm: scan source files → extract keys via `contentPattern` regex capture
 {
     "name": "entity-to-event-handlers",
     "edgeKind": "MESSAGE_BUS",
-    "paths": ["src/Backend/MyApp.Domain/", "src/Backend/MyApp.Application/UseCaseEvents/"],
-    "source": { "filePattern": "*.cs", "contentPattern": "class\\s+(\\w+)\\s*:.*PlatformEntity<", "keyGroup": 1 },
-    "target": { "filePattern": "*.cs", "contentPattern": "EntityEventApplicationHandler<(\\w+)", "keyGroup": 1 },
+    "paths": ["{configured-domain-source-root}/", "{configured-application-source-root}/{event-handler-folder}/"],
+    "source": { "filePattern": "{configured-source-file-glob}", "contentPattern": "{configured-entity-pattern}", "keyGroup": 1 },
+    "target": { "filePattern": "{configured-source-file-glob}", "contentPattern": "{configured-event-handler-pattern}", "keyGroup": 1 },
     "matchBy": "key-contains"
 }
 ```
 
-**IMPORTANT MUST ATTENTION** present detected rules to user before writing. **IMPORTANT MUST ATTENTION** scope `paths` to relevant dirs (not repo root).
+**IMPORTANT MUST ATTENTION** record detected rules in the plan/report before writing; do not pause for user approval. **IMPORTANT MUST ATTENTION** scope `paths` to relevant dirs (not repo root).
 
 ### 2q. Reference Docs
 
@@ -292,17 +293,17 @@ Merge section-by-section. Overwrite only with concrete scan findings. Large proj
 
 ## Phase 5: Follow-Up Tasks
 
-| Reference Doc                                                                 | Scan Skill                        |
-| ----------------------------------------------------------------------------- | --------------------------------- |
-| `project-structure-reference.md`                                              | `/scan-project-structure` (FIRST) |
-| `backend-patterns-reference.md`                                               | `/scan-backend-patterns`          |
-| `seed-test-data-reference.md`                                                 | `/scan-seed-test-data`            |
-| `design-system/` + `scss-styling-guide.md` + `frontend-patterns-reference.md` | `/scan-ui-system`                 |
-| `integration-test-reference.md`                                               | `/scan-integration-tests`         |
-| `feature-docs-reference.md`                                                   | `/scan-feature-docs`              |
-| `code-review-rules.md`                                                        | `/scan-code-review-rules`         |
-| `e2e-test-reference.md`                                                       | `/scan-e2e-tests`                 |
-| `domain-entities-reference.md`                                                | `/scan-domain-entities`           |
+| Reference Doc                                                                 | Scan Skill                                 |
+| ----------------------------------------------------------------------------- | ------------------------------------------ |
+| `project-structure-reference.md`                                              | `/scan --target=project-structure` (FIRST) |
+| `backend-patterns-reference.md`                                               | `/scan --target=backend-patterns`          |
+| `seed-test-data-reference.md`                                                 | `/scan --target=seed-test-data`            |
+| `design-system/` + `scss-styling-guide.md` + `frontend-patterns-reference.md` | `/scan --target=ui-system`                 |
+| `integration-test-reference.md`                                               | `/scan --target=integration-tests`         |
+| `feature-spec-reference.md`                                                   | `/scan --target=feature-spec`              |
+| `code-review-rules.md`                                                        | `/scan --target=code-review-rules`         |
+| `e2e-test-reference.md`                                                       | `/scan --target=e2e-tests`                 |
+| `domain-entities-reference.md`                                                | `/scan --target=domain-entities`           |
 
 Then: `/claude-md-init` (LAST). Optionally: `/graph-build`.
 
@@ -317,6 +318,7 @@ Re-invoke skill: `/project-config Self review and verify everything again, ensur
 ## Output
 
 Report: sections updated vs unchanged, new modules discovered, path mismatches, follow-up tasks created.
+Include the project scale, the selected full-coverage task grouping, and confirmation that no required section was skipped because the project was small.
 
 ---
 
@@ -336,6 +338,7 @@ Report: sections updated vs unchanged, new modules discovered, path mismatches, 
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -362,6 +365,7 @@ Report: sections updated vs unchanged, new modules discovered, path mismatches, 
 
 **IMPORTANT MUST ATTENTION** classify project scale FIRST (Step 1) — drives all task granularity decisions.
 **IMPORTANT MUST ATTENTION** plan first — recon → `/plan` → `/plan-review` → execute. NEVER jump to scanning.
+**IMPORTANT MUST ATTENTION** execute all required sections for all project sizes; small projects get compact full-coverage grouping, never a permission question or skipped sections.
 **IMPORTANT MUST ATTENTION** break into phases with review cycles — scan → merge → validate → spot-check → fix per phase.
 **IMPORTANT MUST ATTENTION** use exact schema field names — run `--describe`, copy verbatim. NEVER guess.
 **IMPORTANT MUST ATTENTION** validate after EACH phase — schema errors compound across phases.
@@ -371,12 +375,13 @@ Report: sections updated vs unchanged, new modules discovered, path mismatches, 
 
 **Anti-Rationalization:**
 
-| Evasion                             | Rebuttal                                                                       |
-| ----------------------------------- | ------------------------------------------------------------------------------ |
-| "File looks simple, skip planning"  | Planning catches scale mistakes and regressions. Apply anyway.                 |
-| "Already know the schema"           | Run `--describe` anyway — field names differ from memory. No proof = no check. |
-| "Phase N looks fine, skip validate" | Schema errors compound across phases. Validate every phase, no exceptions.     |
-| "Self-review is redundant"          | Phase 7 catches what every earlier phase missed. Never skip.                   |
-| "Small project, skip task tracking" | Task tracking prevents drift on all project sizes. Always `TaskCreate` first.  |
+| Evasion                               | Rebuttal                                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| "File looks simple, skip planning"    | Planning catches scale mistakes and regressions. Apply anyway.                                   |
+| "Already know the schema"             | Run `--describe` anyway — field names differ from memory. No proof = no check.                   |
+| "Phase N looks fine, skip validate"   | Schema errors compound across phases. Validate every phase, no exceptions.                       |
+| "Self-review is redundant"            | Phase 7 catches what every earlier phase missed. Never skip.                                     |
+| "Small project, skip task tracking"   | Task tracking prevents drift on all project sizes. Always `TaskCreate` first.                    |
+| "Small project, ask before combining" | Do not ask. Auto-select compact full-coverage grouping and execute all sections with validation. |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

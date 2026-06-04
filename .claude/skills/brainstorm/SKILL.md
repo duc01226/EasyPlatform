@@ -16,7 +16,7 @@ disable-model-invocation: false
 
 ## Quick Summary
 
-**Goal:** Facilitate a structured PO/BA brainstorming session using the Double Diamond process — diverge to discover problems and opportunities, then converge to validate and prioritize ideas before committing to implementation.
+**Goal:** Facilitate a structured PO/BA brainstorming session via the Double Diamond process (diverge to discover problems and opportunities, then converge to validate and prioritize) to deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list.
 
 **Three Scenarios:**
 
@@ -75,7 +75,7 @@ Ask:
 
 ### 0.2 — Context Loading
 
-- If project codebase exists: read `docs/business-features/` to understand domain
+- If project codebase exists: read `docs/specs/` to understand domain
 - If greenfield: skip codebase reading; rely on user input and web research
 - Load `docs/project-reference/domain-entities-reference.md` if entity context needed
 - Use `WebSearch` for market/competitor context when scenario = New Product or Enhancement
@@ -84,7 +84,7 @@ Ask:
 
 ## Phase 1: Problem Framing — Diamond 1 Diverge
 
-**Goal:** Fully understand the problem space before jumping to solutions. The #1 failure in brainstorming: solving the wrong problem.
+**Goal:** Fully understand problem space before jumping to solutions. #1 brainstorming failure: solving the wrong problem.
 
 **Time-box:** 20–45 minutes of session time.
 
@@ -101,9 +101,9 @@ but [current barrier/friction/failure].
 **Example:**
 
 ```
-HR Managers need to quickly identify top performers for promotion
-because quarterly reviews create promotion backlogs,
-but the current system shows raw scores with no ranking or comparison.
+Operators need to quickly identify high-priority orders for action
+because peak-season backlogs delay fulfillment,
+but the current system shows raw order data with no ranking or comparison.
 ```
 
 Use `AskUserQuestion` to validate:
@@ -137,9 +137,9 @@ Spine = problem statement. Bones = 6 cause categories:
 
 Replace user stories with job stories to expose real motivation:
 
-**User Story (what):** As a manager, I want to see employee scores, so that I can make decisions.
+**User Story (what):** As an operator, I want to see order totals, so that I can make decisions.
 
-**Job Story (why + context):** When I'm preparing for quarterly reviews with limited time, I want to instantly see who deserves promotion without reading every profile, so I can make fair, defensible decisions before the deadline.
+**Job Story (why + context):** When I'm clearing a peak-season backlog with limited time, I want to instantly see which orders need action without opening every record, so I can make fast, defensible decisions before the cutoff.
 
 **Job Story Formula:**
 
@@ -181,7 +181,7 @@ From the POV statement:
 
 ## Phase 2: Opportunity Framing — Diamond 1 Converge
 
-**Goal:** Narrow problem space to the highest-opportunity focus areas before ideating solutions.
+**Goal:** Narrow problem space to highest-opportunity focus areas before ideating solutions.
 
 ### 2.1 — Opportunity Solution Tree (OST) — for Enhancement
 
@@ -262,7 +262,7 @@ Connects customer profile to product value:
 
 ## Phase 3: Ideation — Diamond 2 Diverge
 
-**Goal:** Generate maximum quantity of solution ideas without judgment. Quality comes in Phase 4.
+**Goal:** Generate maximum quantity of solution ideas without judgment. Quality comes Phase 4.
 
 **Critical rule:** NO evaluation in this phase. Every idea is valid. "Yes, and..." not "Yes, but..."
 
@@ -270,15 +270,15 @@ Connects customer profile to product value:
 
 Apply each lens to the problem/existing product to generate solution directions:
 
-| Letter               | Prompt                     | Example for HR review feature                             |
-| -------------------- | -------------------------- | --------------------------------------------------------- |
-| **S**ubstitute       | What can be replaced?      | Replace manual scoring with AI-assisted ranking           |
-| **C**ombine          | What can be merged?        | Combine performance + feedback + OKR in one view          |
-| **A**dapt            | What can be borrowed?      | Adapt Netflix recommendation to suggest top performers    |
-| **M**odify           | What can be scaled/shrunk? | Minimize review to a weekly pulse check                   |
-| **P**ut to other use | Different context?         | Use review data for learning path recommendations         |
-| **E**liminate        | What can be removed?       | Eliminate annual review — replace with continuous signals |
-| **R**everse          | Flip the process?          | Let employees score managers instead                      |
+| Letter               | Prompt                     | Example for order-prioritization feature                      |
+| -------------------- | -------------------------- | ------------------------------------------------------------- |
+| **S**ubstitute       | What can be replaced?      | Replace manual sorting with AI-assisted ranking               |
+| **C**ombine          | What can be merged?        | Combine status + history + SLA risk in one view               |
+| **A**dapt            | What can be borrowed?      | Adapt Netflix recommendation to surface priority orders       |
+| **M**odify           | What can be scaled/shrunk? | Shrink the review queue to a daily priority check             |
+| **P**ut to other use | Different context?         | Use order history for restocking recommendations              |
+| **E**liminate        | What can be removed?       | Eliminate the nightly batch — replace with continuous signals |
+| **R**everse          | Flip the process?          | Let downstream stages pull orders instead of pushing          |
 
 Generate at least 2 ideas per SCAMPER letter = minimum 14 ideas.
 
@@ -432,7 +432,7 @@ For each idea in the shortlist, assign release priority:
 
 ## Phase 5: Hypothesis Validation
 
-**Goal:** Before committing to build, test your riskiest assumptions. 42% of startups fail because no market need — validate before building.
+**Goal:** Before committing to build, test riskiest assumptions. 42% of startups fail from no market need — validate before building.
 
 ### 5.1 — Problem Hypothesis
 
@@ -446,10 +446,10 @@ For each idea in the shortlist, assign release priority:
 **Example:**
 
 ```
-We believe HR Managers
-Experience frustration identifying top performers during review cycles
-Because scoring data is fragmented across 3 systems with no unified ranking
-We'll know this is true when 3+ managers confirm they spend >2hrs per cycle on manual data aggregation
+We believe Operators
+Experience frustration identifying high-priority orders during peak backlogs
+Because order data is fragmented across 3 systems with no unified ranking
+We'll know this is true when 3+ operators confirm they spend >2hrs per shift on manual data aggregation
 ```
 
 ### 5.2 — Value Hypothesis
@@ -664,7 +664,7 @@ Create markdown summary report:
 - `docs-manager` agent — understand existing feature constraints and domain context
 - `WebSearch` — market/competitor context for new product scenarios
 - `docs-seeker` skill — latest documentation for external plugins/APIs
-- `ai-multimodal` skill — analyze visual mockups, screenshots, competitor UIs
+- `visual analysis tooling` skill — analyze visual mockups, screenshots, competitor UIs
 - `sequential-thinking` skill — complex problem decomposition requiring structured causal chains
 - `web-research` skill — deep market research for greenfield or competitive analysis
 
@@ -760,6 +760,7 @@ After brainstorm session concludes, use `AskUserQuestion` to present next steps:
 > **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
 > **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
 > **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Keep domain concepts out of generic/shared/infrastructure layers.** A reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. The leak compiles and runs, so it passes review silently while coupling the "reusable" layer to one consumer. Push domain fields/logic down into the consumer via subclass or composition.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -790,7 +791,7 @@ After brainstorm session concludes, use `AskUserQuestion` to present next steps:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -825,6 +826,7 @@ After brainstorm session concludes, use `AskUserQuestion` to present next steps:
 
 ## Closing Reminders
 
+- **IMPORTANT MUST ATTENTION Goal:** Deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list.
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** detect scenario type FIRST — different scenarios use different technique sequences
 - **MANDATORY IMPORTANT MUST ATTENTION** separate diverge (generate) and converge (evaluate) — NEVER mix them
