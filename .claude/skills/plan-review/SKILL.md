@@ -1,7 +1,7 @@
 ---
 name: plan-review
-version: 1.1.0
-description: '[Planning] Use when you need auto-review plan for validity, correctness, and best practices — recursive: review, fix issues, re-review until PASS (max 3 iterations).'
+version: 1.2.0
+description: '[Planning] Use when you need to auto-review a plan for validity, correctness, and best practices — recursive: review, validate findings with why-review, fix validated findings, full re-review until no findings.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,7 +15,14 @@ description: '[Planning] Use when you need auto-review plan for validity, correc
 
 ## Quick Summary
 
-**Goal:** Auto-review implementation plans for validity, correctness, and best practices. **Recursive:** on FAIL, fix issues directly in plan files and re-review until PASS (max 3 iterations).
+**Goal:** Block any plan from reaching implementation unless it is hallucination-free (every existing-code claim proven at `file:line`) and implementation-ready (every step concrete, small enough to code from immediately) — by auto-reviewing implementation plans for validity, correctness, and best practices. **Recursive:** when any findings exist, validate findings with `/why-review --validate-findings`, fix only validated findings in plan files, and rerun the full plan review until no findings remain.
+
+**Summary:**
+
+- Review as a SKEPTIC, not a validator: every existing-code claim in the plan needs `file:line` proof (Anti-Hallucination Gate), and every phase must clear the "Detailed & Small Enough" granularity gate (≤5 files, ≤3h, no planning verbs) — too vague → detail it, too big → break it.
+- Detect the plan type FIRST (Phase 0) so the right focus applies — bugfix plans MANDATE the Behavioral Delta Matrix; security/performance/refactor/contract/infra each add their own targeted checks.
+- Findings are never fixed blindly: run the `/why-review --validate-findings` gate BEFORE editing any `plan.md`/`phase-*.md`, fix only validated findings, then restart the FULL review with a fresh, zero-memory sub-agent — loop until a clean pass with zero findings.
+- No arbitrary round cap; a clean pass ends the loop immediately. Escalate via `AskUserQuestion` only when the same blocker survives 3 consecutive full re-reviews with no progress.
 
 **Workflow:**
 
@@ -24,7 +31,7 @@ description: '[Planning] Use when you need auto-review plan for validity, correc
 3. **Evaluate Checklist** — Validity (summary, requirements, steps, files), Correctness (specific, paths, no conflicts), Best Practices (YAGNI/KISS/DRY, architecture), Completeness (risks, testing, success, security)
 4. **Score & Classify** — PASS (all Required + ≥50% Recommended), WARN (all Required + <50% Recommended), FAIL (any Required fails)
 5. **Output Result** — Status, checks passed, issues, recommendations, verdict
-6. **If FAIL** — Fix issues in plan files directly, then re-review (loop back to step 2, max 3 iterations)
+6. **If any findings remain** — Run `/why-review --validate-findings` on the plan-review report first; fix only validated actionable issues in plan files, then re-review (loop back to step 2 until zero findings, unless the repeated-blocker cap applies)
 
 **Core Principle — Detailed & Small Enough:**
 
@@ -37,8 +44,8 @@ description: '[Planning] Use when you need auto-review plan for validity, correc
 - **No hallucination**: Every plan claim about existing source code must have `file:line` proof — unverified paths, class names, or behaviors = FAIL
 - **PASS**: Proceed to implementation
 - **WARN**: Proceed with caution, note gaps
-- **FAIL (iteration < 3)**: Fix plan issues directly, then re-review
-- **FAIL (iteration = 3)**: STOP - escalate to user
+- **FAIL (any findings)**: Validate findings with `/why-review --validate-findings`, fix only validated plan issues, then **re-run the FULL review from the start**. Repeat this self-loop — no maximum round count, no forced minimum — until a complete pass finds ZERO findings.
+- **No-progress safety (not a round cap)**: only if the SAME blocker survives 3 consecutive full re-reviews with no progress, STOP and escalate to user via `AskUserQuestion`. A clean pass ends the loop immediately, even on round 1.
 - **Constructive**: Focus on implementation-blocking issues, not pedantic details
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -49,18 +56,17 @@ description: '[Planning] Use when you need auto-review plan for validity, correc
 > DRY, SRP, abstraction, design patterns, naming, layering, tests — every
 > technique exists to serve one goal: **making the next change cheaper**.
 
-When evaluating code, a refactor, a test, or an abstraction, ask:
-**does this make the next change cheaper or more expensive?**
+Evaluating code, refactor, test, abstraction, ask:
+**does this make next change cheaper or more expensive?**
 
-- Reject "best practices" that raise change cost (premature abstraction,
+- Reject "best practices" raising change cost (premature abstraction,
   speculative generality, leaky indirection, ceremony without payoff).
-- Name the real enemies in findings: **coupling, hidden state, duplicated
+- Name real enemies in findings: **coupling, hidden state, duplicated
   knowledge, unclear intent, irreversible decisions exposed too early**.
-- A simpler design that is easy to change beats a sophisticated design that
-  isn't.
+- Simpler design easy to change beats sophisticated design that isn't.
 
 Apply this lens **before** invoking any specific rule, pattern, or checklist
-below — if a downstream rule would raise change cost, this principle wins.
+below — if a downstream rule raises change cost, this principle wins.
 
 ---
 
@@ -71,6 +77,8 @@ below — if a downstream rule would raise change cost, this principle wins.
 > **Confirmation bias trap:** After reading a well-structured plan, AI naturally finds reasons to agree. This section exists to break that loop before it produces a rubber-stamp approval.
 
 ### Adversarial Techniques (apply ALL before concluding)
+
+> Techniques 1-6 stress **whether the plan can be built** (reality, effort, scope, dependencies). Techniques 7-10 stress **whether the chosen design is the right one** — the decision-quality lens shared with `/why-review`'s rationale review. Apply both groups: a buildable plan built on the wrong decision is still a failed plan.
 
 **1. Implementation Reality Check**
 For every phase, ask: "If a developer started implementing this right now, what is the first thing that would break?" Walk through the critical path concretely. Vague phases ("implement the service layer") that can't be traced to specific files/classes fail this check.
@@ -90,7 +98,19 @@ Identify any task in the plan that is NOT directly required to deliver the state
 **6. Dependency Blindspot**
 List 2-3 external dependencies (other services, APIs, data sources) the plan assumes are stable. For each: "What breaks in this plan if this dependency changes or is unavailable?" If a dependency failure is not addressed anywhere in the plan, it is a risk gap.
 
-**7. Contrarian Pass**
+**7. Steel-Man the Rejected Alternative**
+For each design decision where the plan chose approach X over an alternative, argue FOR the rejected alternative as strongly as you can. Would a 10-year domain senior have chosen it? If yes, the plan's dismissal needs stronger proof than "we picked X." A decision that never names what it rejected has not been made — it has been assumed.
+
+**8. Why NOT?**
+For every "chose X because Y" in the plan, ask what X _sacrifices_. Every choice has a cost; a plan that lists only the upsides of its chosen approach is hiding the trade-off, not avoiding it. Demand the named downside.
+
+**9. Unseen Alternatives**
+Identify 1-2 viable approaches the plan does NOT mention at all. An alternative absent without exclusion reasoning is weak design coverage, not a settled decision. Name them and ask why they were not considered.
+
+**10. Pros/Cons Symmetry**
+Count the chosen approach's stated pros vs cons. Pros outnumbering cons by more than 2:1 signals confirmation bias, not a clean design — demand the missing downsides before accepting the decision.
+
+**11. Contrarian Pass**
 Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE conclusion. If you're about to write PASS — argue for NEEDS WORK. If about to write NEEDS WORK — argue for PASS. Then decide which argument is stronger based on evidence.
 
 ### Forbidden Patterns
@@ -103,16 +123,21 @@ Before writing any verdict, generate at least 2 sentences arguing the OPPOSITE c
 
 ### Anti-Bias Gate (MANDATORY before finalizing verdict)
 
-Complete ALL checks before writing the final verdict:
+Complete ALL checks before writing the final verdict (MUST ATTENTION):
 
-- MUST ATTENTION run Implementation Reality Check on the highest-risk phase
-- MUST ATTENTION identify 3 implicit assumptions and stress-test them
-- MUST ATTENTION check effort estimates against codebase complexity
-- MUST ATTENTION run pre-mortem (one concrete production failure scenario)
-- MUST ATTENTION scan for scope creep (tasks not required for stated feature)
-- MUST ATTENTION verify dependency blindspots are addressed
+- run Implementation Reality Check on the highest-risk phase
+- identify 3 implicit assumptions and stress-test them
+- check effort estimates against codebase complexity
+- run pre-mortem (one concrete production failure scenario)
+- scan for scope creep (tasks not required for stated feature)
+- verify dependency blindspots are addressed
+- steel-man at least one rejected design alternative (argue FOR it)
+- name at least 1 viable alternative the plan does not mention
+- check pros/cons symmetry on the plan's primary design decision
 
 If any check is incomplete → you have NOT completed the adversarial review. Go back.
+
+> **Why-review relationship:** Techniques 7-10 + these gate checks are the _rationale_ lens applied DURING the review pass (does the plan's design hold up?). The separate `/why-review --validate-findings` gate runs AFTER findings exist (are the findings themselves correct before we fix them?). Both stay — they validate different things and must not be collapsed.
 
 ## Plan Dimension Thinking Framework
 
@@ -164,6 +189,7 @@ After plan-type detection (Phase 0), evaluate each dimension below using this re
 - Are there behaviors that are only observable via logs/traces (not unit tests)?
 - Which phase introduces the risk? Does a test exist in that phase?
 - "Tests pass" is NOT a success criterion — name the specific behaviors being tested.
+- **Spec-Loop scheduling (test-quality gate).** The plan MUST schedule the spec-loop, not just "add tests": (1) every `[HARD]` §4 rule / §5 invariant gets a universally-quantified **property test spec** plus a boundary counter-case — not example tests only; (2) changed core logic is gated by a **MUTATION-SCORE** quality bar (a surviving mutant = a missing invariant ⇒ a killing test owed), NOT a line-coverage % target; (3) a **dual-feedback + re-review step** exists so each behavior-changing finding enriches BOTH the spec AND the tests and the package is re-reviewed to zero new gaps. **FAIL** a plan that targets a line-coverage % instead of a mutation-score bar, or that omits property/invariant test specs for its `[HARD]`/§5 rules.
 
 ### Dimension 6: Knowledge Prerequisites
 
@@ -190,9 +216,9 @@ After plan-type detection (Phase 0), evaluate each dimension below using this re
 
 ## Your mission
 
-Perform automatic self-review of an implementation plan to ensure it's valid, correct, follows best practices, and identify anything needing fixes before proceeding.
+Perform automatic self-review of implementation plan — ensure valid, correct, follows best practices; identify anything needing fixes before proceeding.
 
-**Key distinction**: This is AI self-review (automatic), NOT user interview like `/plan-validate`.
+**Key distinction**: AI self-review (automatic), NOT user interview like `/plan-validate`.
 
 ## Plan Resolution
 
@@ -232,8 +258,11 @@ Before applying any checklist, read `plan.md` and classify the plan:
 Read the plan directory:
 
 - `plan.md` - Overview, phases list, frontmatter
+- `goal.md` - Goal Contract (when present): Original Request, Purpose, Success Criteria (required vs optional), Constraints
 - `phase-*.md` - All phase files
 - Extract: requirements, implementation steps, file listings, risks
+
+If `{plan-dir}/goal.md` is missing, resolve `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md`; if no Goal Contract exists at all, record `No active goal — plan reviewed against plan.md requirements only.`
 
 ### Step 2: Evaluate Against Checklist
 
@@ -263,17 +292,19 @@ Phase too big? (>5 files OR >3h effort OR single step is a mini-project)
 
 **5-Point Criteria (all must pass per phase):**
 
-| #   | Criterion                 | PASS example                    | FAIL example                       |
-| --- | ------------------------- | ------------------------------- | ---------------------------------- |
-| 1   | Steps name specific files | "Modify `src/auth/login.ts`"    | "Implement authentication"         |
-| 2   | No planning verbs         | "Add `validateToken()` method"  | "Determine the best auth approach" |
-| 3   | Each step ≤30 min effort  | "Add error handler to endpoint" | "Build the entire auth module"     |
-| 4   | Phase ≤5 files AND ≤3h    | 3 files, 2h                     | 12 files, 8h                       |
-| 5   | No unresolved decisions   | All approaches decided          | "TBD: which library to use"        |
+| #   | Criterion                 | PASS example                        | FAIL example                       |
+| --- | ------------------------- | ----------------------------------- | ---------------------------------- |
+| 1   | Steps name specific files | "Modify `{source-root}/auth/login`" | "Implement authentication"         |
+| 2   | No planning verbs         | "Add `validateToken()` method"      | "Determine the best auth approach" |
+| 3   | Each step ≤30 min effort  | "Add error handler to endpoint"     | "Build the entire auth module"     |
+| 4   | Phase ≤5 files AND ≤3h    | 3 files, 2h                         | 12 files, 8h                       |
+| 5   | No unresolved decisions   | All approaches decided              | "TBD: which library to use"        |
 
 **Planning verbs that trigger FAIL:** "research", "determine", "figure out", "decide", "evaluate", "explore", "investigate" — these belong in investigation, not implementation plans.
 
-**Action on failure:**
+**Action on failure (after Findings Validation Gate passes):**
+
+Do not apply these refinements until `/why-review --validate-findings` returns CLEAN for the current plan-review report.
 
 - **Too vague** → Refine in-place: expand steps with file paths, method names, concrete actions
 - **Too big (≤9 files)** → Split phase into sibling phases (Phase 2A, 2B, 2C)
@@ -281,7 +312,7 @@ Phase too big? (>5 files OR >3h effort OR single step is a mini-project)
 
 **Worked example:**
 FAILS: `"Phase 2: Data Layer — Set up database models, Create repositories, Implement data access patterns. Effort: 4h, Files: ~8"`
-PASSES after split: `"Phase 2A: Database Schema (1h, 3 files) — Create src/models/user.entity.ts, Create src/models/session.entity.ts, Create migrations/001-create-users-sessions.ts"` + `"Phase 2B: Repository Layer (1.5h, 3 files) — Create src/repos/user.repository.ts, Create src/repos/session.repository.ts, Register in src/app.module.ts"`
+PASSES after split: `"Phase 2A: Data Schema (1h, 3 files) — Create {source-root}/models/user-entity, Create {source-root}/models/session-entity, Create {migration-root}/create-users-sessions"` + `"Phase 2B: Repository Layer (1.5h, 3 files) — Create {source-root}/repositories/user-repository, Create {source-root}/repositories/session-repository, Register in {composition-root}"`
 
 - [ ] File paths follow project patterns
 - [ ] No conflicting or duplicate steps
@@ -303,6 +334,7 @@ PASSES after split: `"Phase 2A: Database Schema (1h, 3 files) — Create src/mod
 - [ ] **Behavior preservation** — Behavior-changing phases name expected behavior, unchanged behavior to preserve, and TC/test proof.
 - [ ] **Docs/spec/test sync** — Relevant phases include canonical spec/doc/test updates or explicit N/A evidence.
 - [ ] **Artifact freshness** — AI-extracted specs/TCs are marked reference-only until accepted; generated mirror sync is included for shared workflow/skill/tooling changes.
+- [ ] **Goal Contract mapping** — When an active `goal.md` exists: every saved required success criterion is covered by ≥1 phase, and each phase's success criteria trace to saved criteria (or are marked supporting work with reason). FAIL if a saved required criterion has no covering phase, or the plan delivers work the Goal Contract never asked for without recorded justification. Skip with `No active goal` evidence when no Goal Contract exists.
 
 #### Best Practices (Required - all must pass)
 
@@ -384,7 +416,19 @@ When graph DB is available, verify the plan covers all affected files:
 
 > **Protocol:** `SYNC:double-round-trip-review` + `SYNC:fresh-context-review` + `SYNC:review-protocol-injection` (all inlined above in this file).
 
-When the review results in **FAIL**, plan-review fixes the issues directly in plan files, then spawns a fresh `general-purpose` sub-agent for re-review using the canonical Agent template from `SYNC:review-protocol-injection` above. Each fresh sub-agent re-reads ALL plan files from scratch with ZERO memory of prior fixes, eliminating orchestrator confirmation bias.
+When the review results in **FAIL, WARN, or any non-zero findings**, plan-review MUST run the Findings Validation Gate before editing any plan file. Only findings validated by `/why-review --validate-findings` may be fixed. After fixing validated actionable findings, rerun the full plan-review protocol from the first review step over the current plan. Do not spawn a fresh sub-agent just to re-review known findings before fixing them. If the restarted full review uses a sub-agent, it uses the canonical Agent template from `SYNC:review-protocol-injection` below and re-reads ALL plan files from scratch with ZERO memory of prior fixes.
+
+## Findings Validation Gate (MANDATORY before fixing plan findings)
+
+Trigger this gate whenever the plan-review output contains **any finding**: FAIL, WARN, recommendation requiring a plan edit, missing evidence, unresolved risk, or implementation-blocking ambiguity. Skip this gate only when the completed review pass has zero findings.
+
+1. Finalize the plan-review report with every finding and enough evidence for another reviewer to validate it.
+2. Call `/why-review --validate-findings` against that report in the main review flow before editing plan files.
+3. If why-review returns CLEAN, fix only the validated actionable findings at the smallest responsible plan location.
+4. If why-review challenges, rejects, or narrows findings, reconcile the plan-review report first, then rerun `/why-review --validate-findings` before any fix.
+5. If a finding is valid but needs product/owner judgment, stop and ask the user instead of editing around the uncertainty.
+
+**NEVER edit `plan.md` or `phase-*.md` to fix review findings before this gate passes.** This gate validates findings; the fresh full plan-review happens only after the validated fix cycle.
 
 **When constructing the Agent call prompt for Round N (N≥2):**
 
@@ -398,10 +442,10 @@ When the review results in **FAIL**, plan-review fixes the issues directly in pl
 After the sub-agent returns:
 
 1. **Read** the sub-agent's report
-2. **Integrate** findings as `## Round {N} Findings (Fresh Sub-Agent)` in the main report — DO NOT filter or override
-3. **If FAIL:** fix issues in plan files, then spawn a NEW Round N+1 fresh sub-agent (new Agent call — never reuse Round 2's agent)
-4. **Max 3 fresh rounds** — escalate to user via `AskUserQuestion` if still failing after 3 rounds
-5. **Final verdict** must incorporate findings from ALL rounds
+2. **Integrate** findings as `## Re-Review {N} Findings` in the main report — DO NOT filter or override
+3. **If FAIL, WARN, or any findings remain:** run the Findings Validation Gate, fix only validated actionable findings in plan files, then restart the full plan-review protocol from the first review step
+4. **Repeated blocker cap:** if the same blocker repeats across 3 full invocations with no progress, escalate via `AskUserQuestion`
+5. **Final verdict** must incorporate findings from ALL review passes that actually ran
 
 ### Flow
 
@@ -414,77 +458,85 @@ After the sub-agent returns:
 └──────────────┬───────────────────┘
                │
         ┌──────▼──────┐
-        │ PASS/WARN?  │──YES──→ Proceed to next workflow step
+        │ ZERO        │
+        │ FINDINGS?   │──YES──→ Proceed to next workflow step
         └──────┬──────┘
-               │ FAIL
+               │ NO
+        ┌──────▼──────────────────────────────────┐
+        │  VALIDATE: Run /why-review              │
+        │  --validate-findings on the report.     │
+        │  Only validated findings may be fixed.  │
+        └──────┬──────────────────────────────────┘
+               │
         ┌──────▼──────────────────────────────────┐
         │  FIX: Modify plan files to resolve       │
-        │  all FAIL issues (edit plan.md/phase-*)  │
+        │  validated actionable findings           │
+        │  (plan.md/phase-*)                       │
         └──────┬──────────────────────────────────┘
                │
         ┌──────▼──────────────────────────────────┐
-        │  Round 2+: FRESH SUB-AGENT RE-REVIEW    │
-        │  Spawn NEW Agent (general-purpose) with │
-        │  verbatim SYNC protocol injection.      │
-        │  Sub-agent re-reads ALL plan files      │
-        │  from scratch (zero memory of fixes).   │
+        │  Round 2+: FULL PLAN RE-REVIEW          │
+        │  Re-run the complete plan-review        │
+        │  protocol from the first review step.   │
+        │  If the protocol uses agents, spawn     │
+        │  new agents for that restarted pass.    │
         └──────┬──────────────────────────────────┘
                │
-               └──→ Loop until PASS/WARN (max 3 fresh-subagent rounds)
+               └──→ Loop until zero findings or repeated-blocker cap
 ```
 
 ### Iteration Rules
 
-1. **Max 3 fresh-subagent rounds** — if issues persist after 3 fresh Agent re-review cycles, STOP and escalate to user via `AskUserQuestion`
-2. **Track round count** — log "Plan review Round N/3 (fresh sub-agent)" at the start of each cycle
-3. **PASS/WARN = exit** — when all Required checks pass, proceed (WARN is acceptable)
+1. **Repeated blocker cap** — continue until a complete full review pass has zero findings; if the same blocker repeats across 3 full invocations with no progress, STOP and escalate to user via `AskUserQuestion`
+2. **Track round count** — log "Plan review Round N (full re-review)" at the start of each cycle
+3. **Zero findings = exit** — proceed only when a complete plan-review pass has no findings. WARN remains a finding unless it is explicitly accepted as non-actionable by the user/owner.
 4. **Diminishing scope** — each round should find FEWER issues. If Round N finds MORE than Round N-1, STOP and escalate
-5. **Fix scope** — only fix issues flagged as FAIL (Required check failures). Do NOT rewrite the plan.
+5. **Fix scope** — fix only why-review-validated actionable findings at the smallest responsible plan location. Do NOT rewrite the plan.
 6. **Fix approach:**
     - Vague steps → expand with specific file paths, concrete actions
     - Missing sections → add them (risks, testing strategy, success criteria)
     - Conflicting steps → resolve conflicts, document rationale
     - Over-engineering → simplify, remove unnecessary complexity
     - Missing TC mappings → add TC references or "TBD" with rationale
-7. **After each fix** — spawn a NEW fresh sub-agent for re-review (never reuse a prior agent — each round is a new `Agent` tool call)
-8. **No silent fallback** — if 3 fresh rounds fail, escalate via `AskUserQuestion`. NEVER fall back to any prior protocol.
+7. **After each validated fix cycle** — rerun the full plan-review protocol from the first review step; when that restarted protocol uses agents, spawn NEW Agent calls and never reuse prior agents
+8. **No silent fallback** — if the same blocker repeats across 3 full invocations with no progress, escalate via `AskUserQuestion`. NEVER fall back to any prior protocol.
 
 ## Next Steps
 
-- **If PASS**: Announce "Plan review complete. Proceeding with next workflow step."
-- **If WARN**: Announce "Plan review complete with warnings. Proceeding - consider addressing gaps."
-- **If FAIL (iteration < 3)**: Fix the issues directly in plan files, then re-review (recursive).
-- **If FAIL (iteration = 3)**: List remaining issues. STOP. Ask user to fix or regenerate plan via `AskUserQuestion`.
+- **If PASS with zero findings**: Announce "Plan review complete. Proceeding with next workflow step."
+- **If WARN or other findings remain**: Run the Findings Validation Gate; fix only validated actionable findings in plan files, or ask the user to explicitly accept non-actionable risk before proceeding.
+- **If FAIL**: Run the Findings Validation Gate, fix only validated actionable findings in plan files, then rerun the full plan-review protocol recursively.
+- **If repeated blocker cap is reached**: List remaining issues. STOP. Ask user to fix or regenerate plan via `AskUserQuestion`.
 
 ## Important Notes
 
 - Be constructive, not pedantic — focus on issues that would cause implementation problems
-- WARN is acceptable for missing optional sections
-- FAIL only for genuinely missing required content
-- **NEVER do a quick review** — even "simple" plans had 13 bugs in real testing. Always run all 3 rounds
+- WARN is not an automatic exit condition; fix it when actionable, or document explicit non-actionable acceptance before proceeding.
+- FAIL remains for genuinely missing required content; lower-severity findings still remain tracked until resolved or explicitly accepted.
+- **NEVER do a quick review** — even "simple" plans had 13 bugs in real testing. Always run the complete declared review protocol; do not stop because of an arbitrary round count.
 
 ---
 
 ## Skill Interconnection (Standalone: MUST ATTENTION ask user via `AskUserQuestion`. Skip if inside workflow.)
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY — NO EXCEPTIONS** after completing this skill, you MUST use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan reviewed). This ensures validation, implementation, testing, and docs steps aren't skipped.
 - **"/plan-validate"** — Interview user to confirm plan assumptions
-- **"/cook" or "/code"** — If plan is approved and ready for implementation
+- **"/feature-implement" or "/plan-execute"** — If plan is approved and ready for implementation
 - **"Skip, continue manually"** — user decides
 
 > **[BLOCKING]** This is a validation gate. MUST ATTENTION use `AskUserQuestion` to present review findings and get user confirmation. Completing without asking at least one question is a violation.
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI must ask user whether to skip.
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** MANDATORY — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group (same suffix, same lifecycle, same purpose) MUST ATTENTION share a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+> **OOP & DRY Enforcement:** MANDATORY — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group (same suffix, same lifecycle, same purpose) must share a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 <!-- SYNC:behavioral-delta-matrix -->
 
@@ -494,7 +546,7 @@ After the sub-agent returns:
 > | ----------- | ------------------ | ----------------- | ------------------------------------ |
 > | {condition} | {current behavior} | {fixed behavior}  | Preserved ✓ / Fixed ✓ / REGRESSION ✗ |
 >
-> **Rules:** ≥3 rows · ≥1 row the bug report did NOT mention · REGRESSION delta → FAIL until a preservation test covers it (`tdd-spec-template.md#preservation-tests-mandatory-for-bugfix-specs`)
+> **Rules:** ≥3 rows · ≥1 row the bug report did NOT mention · REGRESSION delta → FAIL until a preservation test covers it (`spec-tests-template.md#preservation-tests-mandatory-for-bugfix-specs`)
 >
 > **BLOCKED until:** ≥3 rows · ≥1 row outside bug report · no unmitigated REGRESSION
 
@@ -541,15 +593,15 @@ After the sub-agent returns:
 
 <!-- SYNC:fresh-context-review -->
 
-> **Fresh Sub-Agent Review** — Eliminate orchestrator confirmation bias via isolated sub-agents.
+> **Fresh Context Re-Review** — Eliminate orchestrator confirmation bias after fixes by restarting the full review with isolated sub-agents where applicable.
 >
-> **Why:** The main agent knows what it (or `/cook`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
+> **Why:** The main agent knows what it (or `/feature-implement`) just fixed and rationalizes findings accordingly. A fresh sub-agent has ZERO memory, re-reads from scratch, and catches what the main agent dismissed. Sub-agent bias is mitigated by (1) fresh context, (2) verbatim protocol injection, (3) main agent not filtering the report.
 >
-> **When:** ONLY after a fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: fix → fresh sub-agent re-review.
+> **When:** ONLY after a validated-finding fix cycle. A review round that finds zero issues ENDS the loop — do NOT spawn a confirmation sub-agent. A review round that finds issues triggers: validate findings → fix → full review restart from the first phase.
 >
 > **How:**
 >
-> 1. Spawn a NEW `Agent` tool call — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
+> 1. Start a NEW full review invocation/task breakdown; when that protocol calls for agents, spawn NEW `Agent` tool calls — use `code-reviewer` subagent_type for code reviews, `general-purpose` for plan/doc/artifact reviews
 > 2. Inject ALL required review protocols VERBATIM into the prompt — see `SYNC:review-protocol-injection` for the full list and template. Never reference protocols by file path; AI compliance drops behind file-read indirection (see `SYNC:shared-protocol-duplication-policy`)
 > 3. Sub-agent re-reads ALL target files from scratch via its own tool calls — never pass file contents inline in the prompt
 > 4. Sub-agent writes structured report to `plans/reports/{review-type}-round{N}-{date}.md`
@@ -557,11 +609,11 @@ After the sub-agent returns:
 >
 > **Rules:**
 >
-> - SKIP fresh sub-agent when the prior round found zero issues (no fixes = nothing new to verify)
-> - NEVER skip fresh sub-agent after a fix cycle — every fix invalidates the prior verdict
+> - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
+> - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
-> - Max 3 fresh-subagent rounds per review — escalate via `AskUserQuestion` if still failing; do NOT silently loop or fall back to any prior protocol
-> - Track iteration count in conversation context (session-scoped, no persistent files)
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via `AskUserQuestion`
+> - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
 
@@ -621,7 +673,7 @@ After the sub-agent returns:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -630,11 +682,11 @@ After the sub-agent returns:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -656,16 +708,16 @@ After the sub-agent returns:
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Fix-Triggered Re-Review Loop** — Re-review is triggered by a FIX CYCLE, not by a round number. Review purpose: `review → if issues → fix → re-review` until a round finds no issues. **A clean review ENDS the loop — no further rounds required.**
+> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
 > **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
 > **Decision after Round 1:**
 >
 > - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → fix the issues, then spawn a fresh sub-agent for Round 2 re-review.
+> - **Issues found (FAIL, or any non-zero findings)** → run the active review skill's findings-validation gate first; for review skills the default gate is `/why-review --validate-findings <report-path>`. Fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
 >
-> **Fresh sub-agent re-review (after every fix cycle):** Spawn a NEW `Agent` tool call — never reuse a prior agent. Sub-agent re-reads ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh round must catch:
+> **Fresh full re-review after every fix cycle:** Re-run the whole review protocol over the current full target. When sub-agents are part of that protocol, spawn NEW `Agent` calls — never reuse prior agents. Reviewers re-read ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh full review must catch:
 >
 > - Cross-cutting concerns missed in the prior round
 > - Interaction bugs between changed files
@@ -674,16 +726,17 @@ After the sub-agent returns:
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each fresh round, repeat the same decision: clean → END; issues → fix → next fresh round. Continue until a round finds zero issues, or **3 fresh-subagent rounds max**, then escalate to user via `AskUserQuestion`.
+> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via `AskUserQuestion`.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
-> - NEVER skip the fresh sub-agent re-review after a fix cycle (every fix invalidates the prior verdict)
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW Agent call
+> - NEVER fix unvalidated findings; validate first using the caller's validation gate
+> - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
+> - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - Max 3 fresh-subagent rounds per review — if still FAIL, escalate via `AskUserQuestion` (do NOT silently loop)
-> - Track round count in conversation context (session-scoped)
+> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
+> - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
 > **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
@@ -692,31 +745,22 @@ After the sub-agent returns:
 
 <!-- SYNC:review-protocol-injection -->
 
-> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 10 protocol blocks VERBATIM. The template below has ALL 10 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
+> **Review Protocol Injection** — Every fresh sub-agent review prompt MUST embed 11 protocol blocks VERBATIM. The template below has ALL 11 bodies already expanded inline. Copy the template wholesale into the Agent call's `prompt` field at runtime, replacing only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific values. Do NOT touch the embedded protocol sections.
 >
-> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 10 protocol bodies pre-embedded.
+> **Why inline expansion:** Placeholder markers would force file-read indirection at runtime. AI compliance drops significantly behind indirection (see `SYNC:shared-protocol-duplication-policy`). Therefore the template carries all 11 protocol bodies pre-embedded.
 
 ### Subagent Type Selection
 
-Choose sub-agent type based on plan type detected in Phase 0:
-
-| Plan type                             | Sub-agent type          | Rationale                                  |
-| ------------------------------------- | ----------------------- | ------------------------------------------ |
-| Code review (source files, git diffs) | `code-reviewer`         | Purpose-built for code analysis            |
-| Feature / Bugfix / Refactor plan      | `general-purpose`       | Plan/doc/artifact review                   |
-| Security-sensitive plan               | `security-auditor`      | Threat modeling, trust boundary analysis   |
-| Performance plan                      | `performance-optimizer` | Baseline, bottleneck, measurement strategy |
-| Infrastructure / CI-CD plan           | `general-purpose`       | Infra plans are doc artifacts              |
-
-**Default:** `general-purpose` for any plan review not matching the above specializations.
+- `code-reviewer` — for code reviews (reviewing source files, git diffs, implementation)
+- `general-purpose` — for plan / doc / artifact reviews (reviewing markdown plans, docs, specs)
 
 ### Canonical Agent Call Template (Copy Verbatim)
 
 ```
 Agent({
-description: "Fresh Round {N} review",
-subagent_type: "code-reviewer",
-prompt: `
+  description: "Fresh Round {N} review",
+  subagent_type: "code-reviewer",
+  prompt: `
 ## Task
 {review-specific task — e.g., "Review all uncommitted changes for code quality" | "Review plan files under {plan-dir}" | "Review integration tests in {path}"}
 
@@ -724,6 +768,17 @@ prompt: `
 Round {N}. You have ZERO memory of prior rounds. Re-read all target files from scratch via your own tool calls. Do NOT trust anything from the main agent beyond this prompt.
 
 ## Protocols (follow VERBATIM — these are non-negotiable)
+
+### Spec ↔ Tests ↔ Code Triangulation
+DO THIS FIRST — before any per-protocol check below. The review target is the WHOLE PACKAGE, not the diff alone: load the behavior's spec (§3 ACs / §4 BRs / §8 TCs), its tests, and the changed code TOGETHER, and reason about their mutual consistency BEFORE judging any one in isolation.
+1. Locate all three faces: the Feature Spec section(s) governing the changed behavior, the tests that guard it, and the production code that implements it. A missing face is itself a finding (SPEC-GAP / TEST-GAP / DEAD-SPEC).
+2. Triangulate pairwise — every disagreement is a finding; classify which face is wrong:
+   - code vs spec: behavior the code does that no §3/§4/§8 rule describes → CODE-EXTRA or SPEC-STALE; a [HARD] §4 rule or §5 invariant with no enforcing code path → CODE-WRONG.
+   - tests vs spec: a §8 TC with no test, or a test asserting behavior no TC/rule names → TEST-GAP or SPEC-SILENT.
+   - tests vs code: a changed code path with no covering test → TEST-GAP; a test that still passes against a deliberately broken invariant → WEAK-TEST (apply the mutation thinking in Bug Detection).
+3. Hidden-rule capture: any invariant the code enforces but the spec never states (SPEC-SILENT) MUST be surfaced as a finding to add into §3/§4/§8 AND guarded with a test — the enrichment loop, never a silent pass.
+4. Only after the three faces agree — or every disagreement is logged as a finding — proceed to the per-protocol checks below; when enrichment adds spec/test content, re-review the package against the enriched spec.
+NEVER mark review PASS while any spec/test/code face disagrees without a logged finding. The diff is the entry point; the package is the unit of judgment.
 
 ### Evidence-Based Reasoning
 Speculation is FORBIDDEN. Every claim needs proof.
@@ -742,12 +797,12 @@ MUST check categories 1-4 for EVERY review. Never skip.
 3. Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
 4. Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
 5. Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
-6. Language-Idiomatic Traps: Based on the languages/runtimes visible in the plan's file list — apply your knowledge of common idiomatic pitfalls for those languages. Do NOT enumerate a fixed list; derive concerns from the actual tech stack present.
+6. Stack-Specific: Check the configured language/runtime pitfalls and framework-specific failure modes discovered from local code.
 Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO.
 
 ### Design Patterns Quality
 Priority checks for every code change:
-1. DRY via OOP: Identify same-purpose classes (same naming pattern, same lifecycle, same data shape). 3+ similar patterns → extract to shared abstraction. Apply your knowledge of the project's language/framework to determine the idiomatic base class / mixin / trait / protocol pattern.
+1. DRY via OOP: Same-suffix classes (*Entity, *Dto, *Service) MUST share base class. 3+ similar patterns → extract to shared abstraction.
 2. Right Responsibility: Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
 3. SOLID: Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
 4. After extraction/move/rename: Grep ENTIRE scope for dangling references. Zero tolerance.
@@ -760,16 +815,32 @@ Verify WHAT code does matches WHY it was changed.
 2. Happy Path Trace: Walk through one complete success scenario through changed code.
 3. Error Path Trace: Walk through one failure/edge case scenario through changed code.
 4. Acceptance Mapping: If plan context available, map every acceptance criterion to a code change.
+5. Tests Verify Intent: For test/spec changes, verify tests name the protected business rule or invariant and would fail if that intent breaks.
+6. Migration Test Exclusion: Do not write tests for migration code. Schema/data migrations are one-time execution paths, not core application logic.
 NEVER mark review PASS without completing both traces (happy + error path).
 
-### Test Coverage Verification
-Map changed code to test coverage.
-1. Identify the project's test spec format and location — search for test files, spec docs, or test catalogs near the changed files.
-2. Every changed code path MUST map to a corresponding test (or flag as "needs test").
-3. New functions/endpoints/handlers → flag for test creation.
-4. Verify test references point to actual code (file:line, not stale).
-5. If no tests exist → log gap and recommend creating tests.
+### Test Spec Verification
+Map changed code to test specifications.
+1. Identify the project's test/spec format from existing docs, test-case files, BDD feature files, or spec folders.
+2. Every changed code path MUST map to a corresponding test case/spec (or flag as "needs test case").
+3. New functions/endpoints/handlers → flag for test spec creation.
+4. Migration files are excluded from test/spec creation; schema/data migrations are one-time execution paths, not core application logic.
+5. If spec evidence fields exist, verify they point to actual code (file:line, not stale references).
+6. Verify each meaningful test case names the business intent/invariant; flag behavior-only cases that only mirror implementation details.
+7. Auth/data changes → verify corresponding authorization and data-state test cases exist.
+8. If no specs exist for a changed path → log the gap and recommend the project's test-spec workflow.
 NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
+
+### Behavioral Delta Matrix
+MANDATORY for any bugfix review. Produce input-state × pre-fix × post-fix × delta table BEFORE writing verdict.
+- Minimum 3 rows; include at least one row OUTSIDE the original bug report.
+- Any "REGRESSION" delta → review returns FAIL until a preservation test is added.
+- Narrative descriptions do NOT substitute for the matrix.
+Example rows (external-record sync fix):
+| Input                 | Pre-fix | Post-fix                  | Delta      |
+| --------------------- | ------- | ------------------------- | ---------- |
+| Record exists (valid) | Reused  | Always recreated → orphan | REGRESSION |
+| Record missing (404)  | Error   | Recreated                 | Fixed      |
 
 ### Fix-Layer Accountability
 NEVER fix at the crash site. Trace the full flow, fix at the owning layer. The crash site is a SYMPTOM, not the cause.
@@ -814,10 +885,9 @@ HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
 BLOCKED until: Read target files; Grep 3+ patterns; Graph trace (if graph.db exists); Assumptions verified with evidence.
 
 ## Reference Docs (READ before reviewing)
-Search the repository for:
-- Project coding standards or review rules docs (search: "code-review-rules", "coding-standards", "style-guide", "contributing")
-- Architecture documentation relevant to the plan's domain (search: "patterns-reference", "architecture", "adr")
-- If none found, rely on your knowledge of the project's tech stack inferred from file extensions and directory structure.
+- `.claude/docs/development-rules.md` — canonical development rules, code-quality guidelines, and pre-commit checklist
+- docs/project-reference/code-review-rules.md
+- {skill-specific reference docs — e.g., integration-test-reference.md for integration-test-review; backend-patterns-reference.md for backend reviews; frontend-patterns-reference.md for frontend reviews}
 
 ## Target Files
 {explicit file list OR "run git diff to see uncommitted changes" OR "read all files under {plan-dir}"}
@@ -839,7 +909,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 ### Rules
 
-- DO copy the template wholesale — including all 10 embedded protocol sections
+- DO copy the template wholesale — including all 11 embedded protocol sections
 - DO replace only the `{placeholders}` in Task / Round / Reference Docs / Target Files / Output sections with context-specific content
 - DO choose `code-reviewer` subagent_type for code reviews and `general-purpose` for plan / doc / artifact reviews
 - DO NOT paraphrase, summarize, or skip any protocol section
@@ -853,18 +923,36 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:severity-rubric -->
+
+> **Severity Rubric** — Classify every finding by consequence, not by how easy it is to fix. One scale across all reviews so a "High" means the same thing everywhere.
+>
+> | Severity | Action      | Definition                                                                |
+> | -------- | ----------- | ------------------------------------------------------------------------- |
+> | CRITICAL | Block merge | Silent runtime failure, data corruption, validation bypass, security hole |
+> | HIGH     | Must fix    | Incorrect behavior, invariant gap, architectural violation                |
+> | MEDIUM   | Should fix  | Design debt, maintainability, likely future bug                           |
+> | LOW      | Nice to fix | Convention, documentation, minor clarity                                  |
+>
+> **Score-based skills** map their numeric scale onto these tiers — do not invent a parallel vocabulary:
+>
+> - **0-2 criterion scoring** (e.g. production-readiness-review): `0` = CRITICAL/HIGH (criterion unmet, blocks production readiness), `1` = MEDIUM (partial, should fix), `2` = pass (no finding).
+> - **Two-axis scoring** (e.g. performance-review, impact × likelihood): map the resulting cell to the nearest tier — high-impact + high-likelihood → CRITICAL/HIGH; low-impact OR low-likelihood → MEDIUM/LOW.
+>
+> A finding's tier drives the gate: CRITICAL/HIGH must be resolved or explicitly accepted by the owner before PASS; MEDIUM/LOW may ship with a tracked follow-up.
+
+<!-- /SYNC:severity-rubric -->
 
 <!-- SYNC:understand-code-first:reminder -->
 
@@ -872,11 +960,15 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:understand-code-first:reminder -->
 
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+
 <!-- SYNC:double-round-trip-review:reminder -->
 
-**IMPORTANT MUST ATTENTION** execute THREE review rounds per deep-plan-review-protocol. R1=checklist, R2=code-proof, R3=adversarial simulation. Never PASS after R1 alone. Note: Round 3 (adversarial simulation) is MANDATORY even on PASS — it is not triggered only by FAIL. The SYNC:double-round-trip-review protocol describes a 2-round minimum; plan-review extends this to 3 rounds. Round 3 = the adversarial sub-agent from the Adversarial Review Mindset section above.
-
-<!-- /SYNC:double-round-trip-review:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review.
+  <!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:graph-assisted-investigation:reminder -->
 
@@ -892,7 +984,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
@@ -904,7 +996,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -919,6 +1011,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -928,6 +1021,13 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
@@ -940,19 +1040,60 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+<!-- SYNC:severity-rubric:reminder -->
+
+- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
+- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
+
+<!-- /SYNC:severity-rubric:reminder -->
+
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** plans must not hallucinate — every claim about existing source code needs `file:line` proof. Unverified paths, class names, or behaviors = FAIL.
-**MANDATORY IMPORTANT MUST ATTENTION** plans must be detailed and small enough — too vague? detail it. Too big? break it. Every step must be implementation-ready.
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** run `/why-review` after completing this skill to validate design rationale, alternatives considered, and risk assessment.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+**IMPORTANT MUST ATTENTION Goal:** Block any plan reaching implementation unless hallucination-free (every existing-code claim proven at `file:line`) AND implementation-ready (every step concrete, small enough to code from immediately) — recursive review until a complete pass finds zero findings.
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+**IMPORTANT MUST ATTENTION** Protocols in force (concise digest of the SYNC/shared blocks this skill carries) — each line is a signpost to its canonical body above; NEVER treat the digest as a substitute for the full block, and ALWAYS apply every protocol below in full:
 
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+- **Behavioral Delta Matrix:** bugfix reviews need input × pre × post × delta table before verdict.
+- **Graph-Assisted Investigation:** run one graph command on key files when graph.db exists.
+- **Cross-Service Check:** scan producers, consumers, sagas, contracts; missing consumer = silent regression.
+- **Fresh Context Review:** spawn zero-memory sub-agent re-reading from scratch after each fix cycle.
+- **Nested Task Creation:** expand child phase tasks; link the parent workflow row when nested.
+- **Task Tracking & External Report:** bootstrap task breakdown; persist findings to `plans/reports/` incrementally.
+- **Critical Thinking:** every claim needs traced `file:line` proof; never present guess as fact.
+- **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS markers and confidence closer.
+- **Project Reference Docs:** read required project-reference docs before target work; conventions override generic defaults.
+- **Understand Code First:** grep 3+ patterns and read code before any modification.
+- **Double Round-Trip Review:** review → validate findings → fix → full re-review until clean.
+- **Review Protocol Injection:** embed all 11 protocol bodies verbatim into every fresh review prompt.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Severity Rubric:** classify Critical/High/Medium/Low by consequence; Critical/High block PASS.
+
+**IMPORTANT MUST ATTENTION** review as SKEPTIC not validator — your job: find what cannot work, not confirm what looks right; run the full Anti-Bias Gate (reality check, assumption stress-test, pre-mortem, steel-man rejected alternative, contrarian pass) BEFORE any verdict — why: confirmation bias rubber-stamps well-structured plans.
+**MANDATORY IMPORTANT MUST ATTENTION** Anti-Hallucination Gate — every plan claim about existing source code needs `file:line` proof (file exists, symbol grepped, behavior code-traced); "should be"/"probably"/"typically" about existing code = FAIL. Greenfield-only plans → PASS.
+**MANDATORY IMPORTANT MUST ATTENTION** Granularity Gate "Detailed & Small Enough" — FAIL any phase >5 files OR >3h OR carrying planning verbs (research/determine/decide/evaluate/explore/investigate); too vague → detail it (file paths, exact method names), too big → break it into sibling phases/sub-plans — why: a plan you can't immediately code from is NOT ready.
+**MANDATORY IMPORTANT MUST ATTENTION** detect plan type FIRST (Phase 0) — bugfix MANDATES the Behavioral Delta Matrix (≥3 rows, ≥1 outside the bug report, any REGRESSION → FAIL until a preservation test covers it); security/perf/refactor/contract/infra each add their own focus.
+**MANDATORY IMPORTANT MUST ATTENTION** spec-loop scheduling — plan must schedule property/invariant test specs for every `[HARD]` §4 rule / §5 invariant + a MUTATION-SCORE quality bar; FAIL a plan targeting a line-coverage % instead of a mutation-score bar.
+**MANDATORY IMPORTANT MUST ATTENTION** when ANY finding exists, run `/why-review --validate-findings` BEFORE editing any `plan.md`/`phase-*.md`; fix ONLY validated findings at the smallest responsible location, then restart the FULL review with a fresh zero-memory sub-agent — loop until a clean pass; NEVER edit plan files before this gate passes — why: unvalidated fixes corrupt the plan and waste review rounds.
+**MANDATORY IMPORTANT MUST ATTENTION** no arbitrary round cap — a clean pass ends the loop immediately; escalate via `AskUserQuestion` ONLY when the SAME blocker survives 3 consecutive full re-reviews with no progress, or a finding needs product/owner judgment.
+**MANDATORY IMPORTANT MUST ATTENTION** bootstrap `TaskCreate` task breakdown BEFORE reads/grep/edits (one task per file read); persist findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally and synthesize from disk; add a final review task — why: long plan files exhaust context, the report file is ground truth.
+**MANDATORY IMPORTANT MUST ATTENTION** run a graph trace on each "files to modify" entry when `.code-graph/graph.db` exists; flag any downstream file NOT listed in the plan as "potentially missed" — why: catches cross-service/event-handler impact the author overlooked.
+**MANDATORY IMPORTANT MUST ATTENTION** standalone runs end with `AskUserQuestion` presenting findings + next-step options; skip ONLY inside a workflow.
+**MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every finding (confidence >80% to act, <60% DO NOT recommend); NEVER mark PASS while any spec/test/code face disagrees without a logged finding.
+**MANDATORY IMPORTANT MUST ATTENTION** READ before reviewing: `.claude/docs/development-rules.md`, `docs/project-reference/code-review-rules.md`, `lessons.md`, plus skill-specific pattern refs (backend/frontend/integration-test).
+
+**Anti-Rationalization:**
+
+| Evasion                        | Rebuttal                                                                                                   |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| "Plan looks reasonable"        | Structure ≠ correctness. Prove every existing-code claim with `file:line`; plausible text is not evidence. |
+| "Phases are well-defined"      | Presence of phases ≠ implementable. Apply the 5-point Granularity Gate per phase.                          |
+| "One review pass enough"       | Re-review only after a validated-finding fix cycle; a clean COMPLETE pass ends the loop.                   |
+| "Implementation can fill gaps" | FAIL vague steps now — implementation executes the plan, it does not invent it.                            |
+| "Alternatives were considered" | Were they real, or strawmen set up to fail? Steel-man the rejected one.                                    |
+| "Risk is managed"              | "Monitor closely" is not a mitigation. Demand action, owner, trigger.                                      |
+| "Already traced the code"      | Show `file:line` / grep evidence. No proof = no trace.                                                     |
+
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using `TaskCreate`; add a final review task.
 
 ---
 
@@ -961,3 +1102,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > the next change cheaper or more expensive?_ If it doesn't reduce future
 > change cost, reject it. Coupling, hidden state, duplicated knowledge, and
 > unclear intent are the real enemies — call them out by name.
+
+**IMPORTANT MUST ATTENTION Goal:** Block any plan reaching implementation unless hallucination-free (`file:line` proof) AND implementation-ready (concrete, small-enough phases) — loop until a clean pass.
+**IMPORTANT MUST ATTENTION** review as SKEPTIC — `file:line` proof for every existing-code claim; FAIL vague/oversized phases; bugfix → Behavioral Delta Matrix.
+**IMPORTANT MUST ATTENTION** validate findings via `/why-review --validate-findings` before editing plan files; fix only validated findings; restart full review until zero findings.

@@ -1,39 +1,28 @@
 'use strict';
 /**
- * Centralized dedup markers for context injection hooks.
+ * Centralized dedup markers — legacy of the context-injection hooks, most of which were removed
+ * in the de-hooking refactor (see "Consumers" below).
  *
- * All hooks that check the transcript for recent injection MUST import from here.
- * Never define marker strings inline in hook files.
+ * Any remaining consumer that references an injection marker MUST import from here.
+ * Never define marker strings inline.
  *
- * IMPORTANT: Changing a marker string affects dedup behavior across all hooks.
+ * IMPORTANT: Changing a marker string affects dedup/parity behavior across all consumers.
  * Run tests after any change: node .claude/hooks/tests/test-all-hooks.cjs
  *
- * Consumers:
- *   CODE_PATTERNS       → code-patterns-injector (guidance only)
- *   BACKEND_CONTEXT     → backend-context (guidance only)
- *   FRONTEND_CONTEXT    → frontend-context (guidance only)
- *   STYLING_CONTEXT     → scss-styling-context (guidance only)
- *   LESSON_LEARNED      → prompt-context-assembler-closers (via lib/prompt-injections)
- *   CODE_REVIEW_RULES   → code-review-rules-injector
- *   DEV_RULES           → dev-rules-injector (PreToolUse: Edit|Write|MultiEdit|Skill)
- *   KNOWLEDGE_CONTEXT   → knowledge-context (guidance only)
- *   E2E_CONTEXT         → code-patterns-injector (guidance only)
- *   LESSONS             → prompt-context-assembler (via lib/prompt-injections), lessons-injector (PreToolUse)
- *   CRITICAL_THINKING   → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
- *   AI_MISTAKE_PREVENTION → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
- *   WORKFLOW_CATALOG    → workflow-router (p1), workflow-router-p2 (p2), workflow-router-p3 (p3)
- *     NOTE: catalog stays inline (not collapsed to a guidance pointer like other refs) because
- *     it drives workflow SELECTION on every prompt — collapsing would force a tool call before
- *     every user message, costing more than the inline payload. Paging is intentional.
- *   INTEGRATION_TEST_CONTEXT → code-patterns-injector (guidance only)
- *   FEATURE_DOCS_CONTEXT     → code-patterns-injector (guidance only)
- *   PROJECT_STRUCTURE    → prompt-context-assembler-docs (guidance only — merged from p1+p2)
- *   CLAUDE_MD            → prompt-context-assembler-claude
- *   PROJECT_CONFIG_SUMMARY → prompt-context-assembler-project-config
- *   DESIGN_SYSTEM        → design-system-context (guidance only)
- *   DESIGN_SYSTEM_CANONICAL_GUIDE → design-system-canonical-guide (UserPromptSubmit + PreToolUse Read/Edit html/css/scss)
- *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
- *   PYTHON_GUIDE         → python-call-guide (PreToolUse: Bash)
+ * Consumers (after the de-hooking refactor):
+ *   LESSONS / CRITICAL_THINKING / AI_MISTAKE_PREVENTION → via lib/prompt-injections, whose
+ *     critical-context output is verified against the canonical SYNC:* blocks by
+ *     tests/suites/protocol-text-parity.test.cjs (the post-compact-recovery SessionStart
+ *     consumer was removed in the de-hooking refactor).
+ *
+ * The remaining markers (WORKFLOW_CATALOG / _P2 / _P3, CODE_PATTERNS,
+ * BACKEND/FRONTEND/STYLING/KNOWLEDGE/DESIGN_SYSTEM context, CODE_REVIEW_RULES, DEV_RULES,
+ * PROJECT_STRUCTURE, CLAUDE_MD, PYTHON_GUIDE, …) fed hooks that have since been removed —
+ * the WORKFLOW_CATALOG markers drove the deleted workflow-router.cjs (the workflow catalog is
+ * now static in CLAUDE.md `## Workflow & Skills Catalog`); the per-context PreToolUse inject
+ * hooks and the prompt-context-assembler family are likewise gone. That guidance now lives
+ * statically in CLAUDE.md / agent / skill files. Constants are retained as the single source
+ * of truth for any future re-use.
  *
  * DEDUP_LINES — dynamically calculated transcript line counts for each marker.
  * Values are computed at runtime based on actual injection content sizes.
@@ -123,7 +112,7 @@ const CONTENT_SOURCES = {
     // Guidance-only injections (no full content) — fixed 100-line dedup window
     CODE_PATTERNS: { type: 'fixed', value: 100 },
     // Note: CODE_REVIEW_RULES is also injected as full content by code-review-rules-injector.cjs;
-    // fixed:100 applies to the guidance-pointer hooks (subagent-init-code-review-rules.cjs).
+    // fixed:100 applies to the guidance-pointer emitted by the code-review-rules builder (dispatcher 1/3).
     CODE_REVIEW_RULES: { type: 'fixed', value: 100 },
     E2E_CONTEXT: { type: 'fixed', value: 100 },
     INTEGRATION_TEST_CONTEXT: { type: 'fixed', value: 100 },
@@ -255,16 +244,9 @@ const DEDUP_LINES = computeDedupLines();
 /** Number of leading transcript lines to check for primacy dedup (top-of-context) */
 const TOP_DEDUP_LINES = 50;
 
-/**
- * Minimum transcript line count before context-recovery injections fire.
- * Fresh sessions already have project instructions at maximum recency — skip.
- */
-const FRESH_SESSION_THRESHOLD = 200;
-
 module.exports = {
     DEDUP_LINES,
     TOP_DEDUP_LINES,
-    FRESH_SESSION_THRESHOLD,
     // Expose internals for testing
     computeDedupLines,
     CONTENT_SOURCES,
@@ -318,8 +300,23 @@ module.exports = {
     /** Marker for lessons injection */
     LESSONS: '## Learned Lessons',
 
-    /** Marker for workflow catalog injection */
+    /**
+     * Workflow catalog dedup markers — LEGACY, retained as stable string constants.
+     *
+     * These drove the dynamic catalog injection emitted by workflow-router.cjs (and the former
+     * 3-part paging across workflow-router-p2/-p3.cjs). All three router hooks have since been
+     * deleted in the de-hooking refactor — the workflow catalog is now STATIC in CLAUDE.md
+     * `## Workflow & Skills Catalog`, so no hook emits or dedups on these markers anymore.
+     * Retained only to keep the string constants stable for any future re-use.
+     */
+    /** Legacy marker (former dynamic catalog) — retained, no longer wired to any hook */
     WORKFLOW_CATALOG: '## Workflow Catalog',
+
+    /** Legacy marker (former part 2) — retained, no longer wired to any hook */
+    WORKFLOW_CATALOG_P2: '## Workflow Catalog (continued)',
+
+    /** Legacy marker (former part 3) — retained, no longer wired to any hook */
+    WORKFLOW_CATALOG_P3: '## Workflow Catalog (part 3)',
 
     /** Marker for workflow execution protocol injection */
     WORKFLOW_PROTOCOL: '[WORKFLOW-EXECUTION-PROTOCOL]',
@@ -330,15 +327,32 @@ module.exports = {
     /** Marker for AI mistake prevention injection */
     AI_MISTAKE_PREVENTION: '## Common AI Mistake Prevention',
 
-    /** Marker for graph-grep-suggester directive */
+    /**
+     * Legacy marker — the graph-grep-suggester hook (deleted in the de-hooking refactor) emitted
+     * this directive. Its post-grep "run a graph trace; grep can't find callers/consumers/events"
+     * mandate now lives statically in the scout skill (drift-locked by content-presence TC-CP-007).
+     * Retained as the source-of-truth string for any future re-use.
+     */
     GRAPH_GREP_SUGGESTER: '[graph] **STOP AND DECIDE',
 
-    /** Marker for python-call-guide PreToolUse injection */
+    /**
+     * Legacy marker — the PreToolUse inject hook that emitted it was removed in the de-hooking
+     * refactor; the Windows `py -3` (never `python3`) guidance now lives statically in CLAUDE.md.
+     * Retained for any future re-use.
+     */
     PYTHON_GUIDE: '[python-guide]',
 
-    /** Marker for design system context guidance injection */
+    /**
+     * Legacy marker — the design-system context PreToolUse inject hook was removed in the de-hooking
+     * refactor; its guidance now lives statically in the design skill. Retained for any future re-use.
+     */
     DESIGN_SYSTEM: '## Design System Context Detected',
 
-    /** Marker for design-system canonical guide (UserPromptSubmit + PreToolUse html/css/scss) */
+    /**
+     * Legacy marker — the design-system-canonical-guide hook (deleted in the de-hooking refactor)
+     * emitted this on UserPromptSubmit + html/css/scss PreToolUse. Its "read the canonical
+     * design-system doc first (tokens/components/BEM)" guidance relocated into the design skill
+     * (drift-locked by content-presence TC-CP-004). Retained for any future re-use.
+     */
     DESIGN_SYSTEM_CANONICAL_GUIDE: '[design-system-canonical-guide]'
 };

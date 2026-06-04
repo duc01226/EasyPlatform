@@ -1,8 +1,10 @@
-<!-- Last scanned: 2026-04-03 -->
+<!-- Last scanned: 2026-06-12 -->
 
 # Domain Entities Reference
 
-**Critical rules:** All entities MUST extend `RootEntity<TEntity, TPrimaryKey>` or `RootAuditedEntity<TEntity, TPrimaryKey, TUserId>`. DTOs MUST own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()`. Value objects MUST extend `PlatformValueObject<T>`. Logic belongs in entity, NOT handler/component.
+**Final Purpose:** Give AI an accurate, evidence-cited map of the TextSnippet domain model (entities, value objects, DTOs, relationships, persistence) so generated code reuses the correct base classes, mapping ownership, and naming — never inventing new patterns.
+
+**Critical rules:** All entities MUST extend `RootEntity<TEntity, TPrimaryKey>` or `RootAuditedEntity<TEntity, TPrimaryKey, TUserId>`. DTOs MUST own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()`. Value objects MUST extend `PlatformValueObject<T>` and override `Validate()`. Logic belongs in entity, NOT handler/component.
 
 ## Entity Base Class Hierarchy
 
@@ -39,6 +41,8 @@ Defined in: `src/Platform/Easy.Platform/Domain/Entities/Entity.cs:759` and `Audi
 | `ExampleAddressValueObject` | Number, Street                                      | Owned entity (EF OwnsOne)       | `src/Backend/.../Domain/ValueObjects/ExampleAddressValueObject.cs:6` |
 | `SubTaskItem`               | Id, Title, IsCompleted, Order, CompletedDate, Notes | JSON in TaskItemEntity.SubTasks | `src/Backend/.../Domain/Entities/TaskItemEntity.cs:529`              |
 
+> `SubTaskItem` extends `PlatformValueObject<SubTaskItem>` and overrides `Validate()` (value objects use `Validate()`, NOT `GetValidator()`). File: `TaskItemEntity.cs:529`, validator `TitleValidator()` at `:562`.
+
 ### Associated Entities (Composite Views)
 
 `TextSnippetAssociatedEntity` extends `TextSnippetEntity` — adds `CreatedByUser` (UserEntity) for joined queries without code duplication. File: `src/Backend/.../Domain/AssociatedEntities/TextSnippetAssociatedEntity.cs:9`
@@ -62,9 +66,11 @@ erDiagram
 | TextSnippetEntity   | UserEntity          | N:1            | CreatedByUserId  | (conceptual, no EF config) |
 | TaskItemEntity      | UserEntity          | N:1            | AssigneeId       | (conceptual, no EF config) |
 
+**Navigation properties** (auto-load helpers, not stored): `TextSnippetEntity.SnippetCategory` (`[PlatformNavigationProperty(nameof(CategoryId))]`, `TextSnippetEntity.cs:67`) and `TaskItemEntity.RelatedSnippet` (`[JsonIgnore]`, `TaskItemEntity.cs:87`).
+
 ## Aggregate Boundaries
 
-Single aggregate root service: **TextSnippet**. All domain entities live in `PlatformExampleApp.TextSnippet.Domain/Entities/`. Each entity is its own aggregate root (extends `RootEntity` or `RootAuditedEntity`). Cross-entity references use FK IDs, not nested aggregates.
+Single service: **TextSnippet**. All domain entities live in `PlatformExampleApp.TextSnippet.Domain/Entities/`. Each entity is its own aggregate root (extends `RootEntity`/`RootAuditedEntity`). Cross-entity references use FK IDs, NOT nested aggregates.
 
 - **TextSnippetEntity** — aggregate root, owns Address (value object), references Category and User by ID
 - **TextSnippetCategory** — aggregate root, self-referencing hierarchy (parent/children)
@@ -103,7 +109,7 @@ public static TextSnippetEntityDto FromEntityWithRelated(
 
 ## Cross-Service Entity Map (Message Bus)
 
-Architecture: single-service (TextSnippet) with RabbitMQ message bus for entity event propagation and free-format messaging. Inbox/Outbox pattern for reliability.
+Architecture: single-service (TextSnippet), RabbitMQ message bus for entity-event propagation + free-format messaging. Inbox/Outbox pattern ensures reliable delivery.
 
 | Message                                | Base Class                                                     | Producer                                   | Consumer                                                   | Purpose                   |
 | -------------------------------------- | -------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------- | ------------------------- |
@@ -136,8 +142,12 @@ Architecture: single-service (TextSnippet) with RabbitMQ message bus for entity 
 Generic repository interfaces per domain boundary. MUST use `ITextSnippetRootRepository<TEntity>` for write operations.
 
 ```csharp
-// src/Backend/.../Domain/Repositories/ITextSnippetRepository.cs:6
-public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRepository<TEntity, string>
+// src/Backend/.../Domain/Repositories/ITextSnippetRepository.cs:6,11
+// Two interfaces: a non-root base + the root repository that composes it.
+public interface ITextSnippetRepository<TEntity> : IPlatformQueryableRepository<TEntity, string>
+    where TEntity : class, IEntity<string>, new() { }
+
+public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRepository<TEntity, string>, ITextSnippetRepository<TEntity>
     where TEntity : class, IRootEntity<string>, new() { }
 ```
 
@@ -189,4 +199,11 @@ public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRep
 | Bus message           | `{EntityName}EntityEventBusMessage`          | `TextSnippetEntityEventBusMessage`               |
 | Frontend data model   | `{EntityName}DataModel`                      | `TextSnippetDataModel`, `TaskItemDataModel`      |
 
-**Critical rules (repeated for AI attention):** Entities MUST extend `RootEntity` or `RootAuditedEntity`. DTOs MUST own mapping via `MapToEntity()`/`MapToObject()`. Business logic MUST live in entity, NOT handler. Value objects MUST extend `PlatformValueObject<T>`. Side effects MUST go in EntityEventHandlers in `UseCaseEvents/`, NEVER in command handlers.
+## Closing Reminders
+
+**IMPORTANT MUST ATTENTION Final Purpose:** accurate evidence-cited domain map so AI reuses correct base classes, mapping ownership, naming — never invents patterns.
+**IMPORTANT MUST ATTENTION** Entities MUST extend `RootEntity` or `RootAuditedEntity`; add `IRowVersionEntity` for optimistic concurrency.
+**IMPORTANT MUST ATTENTION** DTOs MUST own mapping via `MapToEntity()`/`MapToObject()` — NEVER map in handlers.
+**IMPORTANT MUST ATTENTION** Value objects MUST extend `PlatformValueObject<T>` and override `Validate()` (NOT `GetValidator()`) — e.g. `SubTaskItem`, `ExampleAddressValueObject`.
+**IMPORTANT MUST ATTENTION** Business logic MUST live in entity, NOT handler/component.
+**IMPORTANT MUST ATTENTION** Side effects MUST go in EntityEventHandlers under `UseCaseEvents/`, NEVER in command handlers.

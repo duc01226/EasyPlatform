@@ -4,7 +4,6 @@
  *
  * Tests critical lib modules:
  * - workflow-state.cjs: Workflow state management
- * - edit-state.cjs: Edit tracking
  * - todo-state.cjs: Todo state management
  *
  * Usage: node test-lib-modules.cjs [--verbose] [--filter=<module>]
@@ -235,32 +234,6 @@ async function testWorkflowState() {
 async function testAdditionalModules() {
   logSection('Additional Lib Modules');
 
-  // Test edit-state.cjs
-  const editStatePath = path.join(LIB_DIR, 'edit-state.cjs');
-  if (fs.existsSync(editStatePath)) {
-    const editState = require(editStatePath);
-
-    if (editState.trackEdit || editState.recordEdit) {
-      try {
-        const fn = editState.trackEdit || editState.recordEdit;
-        fn({ file: 'test.ts', lines: 10 });
-        logResult('edit-state: tracks edit', true);
-      } catch (e) {
-        logResult('edit-state', true, 'implementation-dependent');
-      }
-    }
-
-    if (editState.getEditCount || editState.getSessionEdits) {
-      try {
-        const fn = editState.getEditCount || editState.getSessionEdits;
-        const count = fn();
-        logResult('edit-state: returns count', typeof count === 'number' || typeof count === 'object');
-      } catch (e) {
-        logResult('edit-state getCount', true, 'implementation-dependent');
-      }
-    }
-  }
-
   // Test todo-state.cjs
   const todoStatePath = path.join(LIB_DIR, 'todo-state.cjs');
   if (fs.existsSync(todoStatePath)) {
@@ -300,7 +273,6 @@ async function testIntegration() {
   {
     const modules = [
       'workflow-state.cjs',
-      'edit-state.cjs',
       'todo-state.cjs'
     ];
 

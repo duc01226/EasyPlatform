@@ -6,19 +6,37 @@ import { fileURLToPath } from 'node:url';
 
 const rootDir = process.cwd();
 const scanRoots = ['.codex', '.agents', '.claude/scripts/codex'];
-const genericSourceRoots = ['.claude/skills'];
+// Forbidden-TERM scan roots (project name leakage). Hook tests are deliberately ABSENT because
+// fixtures may reference this project's service names. Hook config is included because portable
+// .claude config must stay generic; project-specific rollout data belongs in docs/project-config.json.
+export const genericSourceRoots = ['.claude/skills', '.claude/hooks/config'];
 const genericSourceFiles = [
     '.claude/.ck.json',
     '.claude/hooks/lib/prompt-injections.cjs',
-    '.claude/hooks/prompt-context-assembler-project-config.cjs',
     '.claude/hooks/session-init-docs.cjs'
 ];
+// Project-SYMBOL scan roots (base-class leakage). Covers source templates and generated mirrors:
+// portable skills/hooks/agents must not bake this project's base-class names into guidance, and
+// generated Codex/Agents output must not reintroduce them after sync. This is a NARROWER, separate
+// scan from forbiddenTerms above: it matches only the unambiguous denylist symbols, so hook
+// config/test fixtures (which carry service NAMES, not base-CLASS symbols) do not trip it.
+export const projectSymbolScanRoots = ['.claude/skills', '.claude/hooks', '.claude/agents', '.codex', '.agents'];
 const forbiddenTerms = ['br' + 'avo', 'Br' + 'avoSuite'];
 
 // Project-specific framework symbols (this codebase's .NET/Angular base classes) that must NOT
-// leak into portable generic skills. Case-SENSITIVE, word-boundary matched, scanned ONLY within
-// genericSourceRoots (.claude/skills). Generic language idioms are deliberately excluded
-// (e.g. bare `Store`, `Service`, `Component`) — too broad → false positives on framework examples.
+// leak into portable generic skills/hooks as load-bearing rules. Case-SENSITIVE, word-boundary
+// matched, scanned within projectSymbolScanRoots (.claude/skills + .claude/hooks).
+//
+// CALIBRATION (deliberate — do NOT broaden casually). Only NARROW, unambiguous base-class /
+// infrastructure symbols belong here. Two classes are intentionally EXCLUDED:
+//   1. Generic language idioms (bare `Store`, `Service`, `Component`) — too broad → false positives.
+//   2. Symbols that legitimately recur as cross-stack ILLUSTRATIVE examples / doc-pointers across
+//      many generic skills (`effectSimple`, `UseCaseEvents`, `MapToEntity`, `MapToObject`,
+//      `PlatformValidationResult`, `untilDestroyed`) — used as "e.g. on a .NET/Angular project…"
+//      examples in scan/investigate/refactoring/feature/affirmative-rewrite-rubric. A blanket
+//      denylist would force ~10 allowlist entries and fight the framework's example-driven design.
+//      The load-bearing leak (review-architecture asserting them as MUST-rules) is fixed at the
+//      source — rules reframed as project-examples routed through reference docs — not by this gate.
 export const projectSymbolDenylist = [
     'AppBaseComponent',
     'AppBaseVmStoreComponent',
@@ -27,12 +45,18 @@ export const projectSymbolDenylist = [
     'PlatformApiService',
     'IPlatformRootRepository',
     'ExecuteInjectScopedAsync',
-    'ExecuteUowTask'
+    'ExecuteUowTask',
+    // CQRS entity-event / bus-producer base classes — appear ONLY as review-architecture's marked
+// examples today; denylisted as future-proofing so a NEW skill/hook can't introduce them as an
+// unmarked assertion. review-architecture is allowlisted below for its documented examples.
+    'PlatformCqrsEntityEventApplicationHandler',
+    'PlatformCqrsEventBusMessageProducer'
 ];
 
-// Per-file exemptions: skills that legitimately document THIS project's architecture
-// (review-architecture asserts these exact base classes; scan-seed-test-data greps for them in
-// .NET source). Keyed by repo-relative forward-slash path → symbols allowed for that file only.
+// Per-file exemptions: skills that legitimately document THIS project's architecture as marked
+// examples (review-architecture frames these base classes as "e.g. this project" anchors;
+// the seed-test-data scan target greps for them in .NET source). Keyed by repo-relative forward-slash path →
+// symbols allowed for that file only.
 export const projectSymbolAllowlist = {
     '.claude/skills/review-architecture/SKILL.md': [
         'AppBaseComponent',
@@ -40,10 +64,12 @@ export const projectSymbolAllowlist = {
         'AppBaseFormComponent',
         'PlatformVmStore',
         'PlatformApiService',
-        'IPlatformRootRepository'
+        'IPlatformRootRepository',
+        'PlatformCqrsEntityEventApplicationHandler',
+        'PlatformCqrsEventBusMessageProducer'
     ],
     '.claude/skills/project-config/SKILL.md': ['IPlatformRootRepository'],
-    '.claude/skills/scan-seed-test-data/SKILL.md': ['ExecuteInjectScopedAsync', 'ExecuteUowTask'],
+    '.claude/skills/scan/references/targets.md': ['ExecuteInjectScopedAsync', 'ExecuteUowTask'],
     '.claude/skills/shared/affirmative-rewrite-rubric.md': ['PlatformVmStore']
 };
 
@@ -56,9 +82,12 @@ const projectSymbolMatchers = projectSymbolDenylist.map(symbol => ({
 const ignoredParts = new Set(['node_modules', 'plans', '.git', '.venv', '__pycache__', 'tmp']);
 const ignoredExtensions = new Set(['.pyc', '.pyo', '.exe', '.dll', '.png', '.jpg', '.jpeg', '.gif', '.webp']);
 const ignoredFilenamePatterns = [/\.local\.json$/i];
-const managedBlockRanges = [
+export const managedBlockRanges = [
     { start: '<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->', end: '<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->' },
-    { start: '<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->', end: '<!-- CODEX:PROJECT-REFERENCE-LOADING:END -->' }
+    { start: '<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->', end: '<!-- CODEX:PROJECT-REFERENCE-LOADING:END -->' },
+    // Do NOT exempt PROMPT-PROTOCOLS. It is a generated portable mirror and must stay free of
+    // project-specific lesson bodies; otherwise .codex/CODEX_CONTEXT.md can pass while carrying
+    // terms from docs/project-reference/lessons.md.
 ];
 
 async function exists(targetPath) {
@@ -181,7 +210,6 @@ async function main() {
         const absoluteRoot = path.join(rootDir, sourceRoot);
         for await (const filePath of walk(absoluteRoot)) {
             await scanFileForForbiddenTerms(filePath, failures, false);
-            await scanFileForProjectSymbols(filePath, failures);
         }
     }
 
@@ -189,6 +217,13 @@ async function main() {
         const filePath = path.join(rootDir, sourceFile);
         if (!(await exists(filePath))) continue;
         await scanFileForForbiddenTerms(filePath, failures, false);
+    }
+
+    for (const symbolRoot of projectSymbolScanRoots) {
+        const absoluteRoot = path.join(rootDir, symbolRoot);
+        for await (const filePath of walk(absoluteRoot)) {
+            await scanFileForProjectSymbols(filePath, failures);
+        }
     }
 
     if (failures.length > 0) {

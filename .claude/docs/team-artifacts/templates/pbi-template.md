@@ -41,7 +41,7 @@ dependencies: [] # Other PBIs this depends on
 <!-- Auto-extracted by `/refine` or BA skill -->
 
 - **BR-{MOD}-XXX**: {Description of existing rule}
-    - Source: `docs/business-features/{module}/detailed-features/{feature}.md`
+    - Source: `docs/specs/{module}/{feature}.md`
     - Impact: {How this PBI relates to this rule}
 
 - **BR-{MOD}-YYY**: {Description of existing rule}
@@ -80,8 +80,8 @@ THEN {expected outcome}
 Follow test case patterns from related feature docs:
 
 - **Format:** TC-{FEATURE}-{NNN}
-- **Evidence:** file:line format (e.g., component.ts:142)
-- **Reference:** See existing patterns in feature doc Section 15 (Test Cases)
+- **Evidence:** `[Source: namespace/service/id]` abstract anchor (stack-portable — physical `file:line` lives only in the provenance sidecar, never in the PBI body)
+- **Reference:** See existing patterns in feature doc Section 8 (Test Specifications)
 
 ### Acceptance Criteria List
 
@@ -95,10 +95,10 @@ WHEN {action}
 THEN {outcome}
 ```
 
-**Evidence Format:** (will be added during implementation)
+**Evidence Format:** (abstract anchor added during implementation; physical coordinates → provenance sidecar)
 
-- Backend: (file:line)
-- Frontend: (file:line)
+- Backend: `[Source: operation/{service}/{Operation}]` (or `event`/`rule`/`schema` per artifact)
+- Frontend: `[Source: component/{service}/{Component}]`
 
 **Related Business Rules:** BR-{MOD}-XXX, BR-{MOD}-YYY
 
@@ -114,10 +114,10 @@ WHEN {action}
 THEN {outcome}
 ```
 
-**Evidence Format:** (will be added during implementation)
+**Evidence Format:** (abstract anchor added during implementation; physical coordinates → provenance sidecar)
 
-- Backend: (file:line)
-- Frontend: (file:line)
+- Backend: `[Source: operation/{service}/{Operation}]` (or `event`/`rule`/`schema` per artifact)
+- Frontend: `[Source: component/{service}/{Component}]`
 
 ---
 
@@ -146,7 +146,7 @@ THEN {error handling}
 
 - [ ] TC format follows TC-{FEATURE}-{NNN} pattern
 - [ ] All ACs use GIVEN/WHEN/THEN format
-- [ ] Evidence format specified (file:line)
+- [ ] Evidence format specified (`[Source: namespace/service/id]` abstract anchor — never physical `file:line`)
 
 ### Conflict Check
 
@@ -180,7 +180,7 @@ THEN {error handling}
 
 ### Existing Test Cases
 
-See Section 15 (Test Cases & Scenarios) in primary feature doc for patterns:
+See Section 8 (Test Specifications) in primary feature doc for patterns:
 
 - TC-{FEATURE}-{NNN} format
 - GIVEN/WHEN/THEN structure
@@ -248,4 +248,4 @@ Node ID: Use URL format (e.g., 1-3), extraction converts to API format (1:3)
 ---
 
 _To create user stories, run: `/story {this-file}`_
-_To create test spec, run: `/test-spec {this-file}`_
+_To create test spec, run: `/spec [mode=tests] {this-file}`_

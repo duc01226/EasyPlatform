@@ -190,6 +190,7 @@ const SCHEMA = {
             frontendPatternsDoc: { type: 'string', required: false },
             codeReviewDoc: { type: 'string', required: false },
             integrationTestDoc: { type: 'string', required: false },
+            e2eTestDoc: { type: 'string', required: false },
             searchPatternKeywords: { type: 'array', required: false }
         }
     },
@@ -200,6 +201,7 @@ const SCHEMA = {
             frameworks: { type: 'array', required: false },
             filePatterns: { type: 'map', required: false },
             commands: { type: 'map', required: false },
+            commandsNote: { type: 'string', required: false },
             coverageTool: { type: 'string', required: false },
             guideDoc: { type: 'string', required: false },
             integrationRules: { type: 'array', required: false, itemType: 'string' }
@@ -390,9 +392,15 @@ const SCHEMA = {
             cssMethodology: { type: 'string', required: false },
             stateManagement: { type: 'string', required: false },
             crossModuleValidation: { type: 'string', required: false },
-            featureDocPath: { type: 'string', required: false },
             featureDocTemplate: { type: 'string', required: false },
-            reviewRulesDoc: { type: 'string', required: false }
+            reviewRulesDoc: { type: 'string', required: false },
+            docSyncGate: {
+                type: 'object',
+                required: false,
+                properties: {
+                    enforcedAreas: { type: 'array', required: false }
+                }
+            }
         }
     },
     localization: {
@@ -404,6 +412,29 @@ const SCHEMA = {
             defaultLocale: { type: 'string', required: false },
             translationFilePatterns: { type: 'array', required: false, itemsAreRegex: true },
             uiPathPatterns: { type: 'array', required: false, itemsAreRegex: true }
+        }
+    },
+    portability: {
+        type: 'object',
+        required: false,
+        properties: {
+            // false = keep a project-only CLAUDE.md/AGENTS.md; the agent-files bootstrap
+            // gate then checks only existence, not universal-guides completeness. Default true.
+            requireUniversalGuides: { type: 'boolean', required: false }
+        }
+    },
+    // Per-project skill frontmatter conventions consumed by
+    // .claude/skills/skill-creator/scripts/validate-skills.cjs (Scan & Fix mode).
+    // Keeps the reusable validator generic — projects declare their non-official
+    // frontmatter fields here instead of editing the script.
+    skillConventions: {
+        type: 'object',
+        required: false,
+        properties: {
+            _description: { type: 'string', required: false },
+            conventionFields: { type: 'array', required: false, itemType: 'string' },
+            removableFields: { type: 'array', required: false, itemType: 'string' },
+            fieldFixes: { type: 'map', required: false }
         }
     }
 };

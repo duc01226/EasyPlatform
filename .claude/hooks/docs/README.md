@@ -4,14 +4,13 @@ This directory contains hooks for Claude Code sessions.
 
 ## Hooks Overview
 
-| Hook              | Location                       | Description                                                   |
-| ----------------- | ------------------------------ | ------------------------------------------------------------- |
-| **Notifications** | `notifications/`               | Multi-provider notification system (Telegram, Discord, Slack) |
-| **Scout Block**   | `scout-block.cjs`              | Blocks heavy directories (node_modules, .git, etc.)           |
-| **Privacy Block** | `privacy-block.cjs`            | Prevents access to sensitive files                            |
-| **Path Boundary** | `path-boundary-block.cjs`      | Blocks edits outside allowed project paths                    |
-| **Session Init**  | `session-init.cjs`             | Session startup initialization                                |
-| **Dev Rules**     | `prompt-context-assembler.cjs` | Dev rules + lessons + reminders                               |
+| Hook              | Location                  | Description                                                   |
+| ----------------- | ------------------------- | ------------------------------------------------------------- |
+| **Notifications** | `notifications/`          | Multi-provider notification system (Telegram, Discord, Slack) |
+| **Scout Block**   | `scout-block.cjs`         | Blocks heavy directories (node_modules, .git, etc.)           |
+| **Privacy Block** | `privacy-block.cjs`       | Prevents access to sensitive files                            |
+| **Path Boundary** | `path-boundary-block.cjs` | Blocks edits outside allowed project paths                    |
+| **Session Init**  | `session-init.cjs`        | Session startup initialization                                |
 
 ## Notifications
 

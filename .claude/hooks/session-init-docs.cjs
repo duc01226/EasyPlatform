@@ -7,9 +7,8 @@
  *   - init-reference-docs.cjs  (placeholder reference doc creation)
  *
  * Phase 1: Ensure the configured project config exists (create skeleton if missing),
- *          validate schema, output warnings for errors.
- * Phase 2: Create placeholder reference docs for any missing files,
- *          suggest scan skills for unpopulated placeholders.
+ *          validate schema without runtime prompt injection.
+ * Phase 2: Create placeholder reference docs for any missing files.
  *
  * Generic skills rely on this hook as the project-specific extension point:
  * skills stay portable, while local conventions live in configured project
@@ -45,8 +44,16 @@ const { loadConfig } = require('./lib/ck-config-loader.cjs');
 const { SCAN_STALE_PATH, ensureProjectTmpDir } = require('./lib/ck-paths.cjs');
 const {
     getConfiguredProjectConfigPath,
-    getConfiguredDocsIndexPath
+    getConfiguredDocsIndexPath,
+    loadProjectConfig
 } = require('./lib/project-config-loader.cjs');
+
+// Generic source for the feature-doc template (relocated to .claude as the
+// portable source-of-truth). Bootstrapped into the configured featureDocTemplate
+// dest on first SessionStart if absent — same bootstrap-once contract as
+// referenceDocs[].templatePath. See phase-08A.
+const FEATURE_DOC_TEMPLATE_SOURCE = '.claude/templates/detailed-feature-spec-template.md';
+const DEFAULT_FEATURE_DOC_TEMPLATE_DEST = 'docs/templates/detailed-feature-spec-template.md';
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 const CONFIG_PATH = getConfiguredProjectConfigPath();
@@ -54,6 +61,10 @@ const CONFIG_DIR = path.dirname(CONFIG_PATH);
 const CONFIG_DISPLAY_PATH = path.relative(PROJECT_DIR, CONFIG_PATH).replace(/\\/g, '/') || path.basename(CONFIG_PATH);
 const DOCS_INDEX_PATH = getConfiguredDocsIndexPath();
 const REF_DOCS_DIR = path.dirname(DOCS_INDEX_PATH);
+
+function writeSessionStartNotice(_message) {
+    // SessionStart hooks are side-effect-only. Prompt context lives in static files.
+}
 
 // =============================================================================
 // MAIN EXECUTION
@@ -92,9 +103,9 @@ function main() {
                 output.push(`- **ERROR:** ${err}`);
             }
             output.push('', 'Run `/project-config` to fix the config structure.', '');
-            console.log(output.join('\n'));
+            writeSessionStartNotice(output.join('\n'));
         } else if (status.hasSchemaErrors) {
-            console.log(`\n## ⚠️ \`${CONFIG_DISPLAY_PATH}\` contains invalid JSON. Run \`/project-config\` to fix.\n`);
+            writeSessionStartNotice(`\n## ⚠️ \`${CONFIG_DISPLAY_PATH}\` contains invalid JSON. Run \`/project-config\` to fix.\n`);
         }
 
         // Init enforcement is handled by init-prompt-gate.cjs (UserPromptSubmit exit 2).
@@ -140,18 +151,39 @@ function main() {
         const designSystemCreated = initDesignSystemAppDocs();
         created.push(...designSystemCreated);
 
+        // Bootstrap the configured feature-doc template from the .claude source
+        // (relocated source-of-truth). Copy-once: never overwrites a project's
+        // existing/customized template. Mirrors the referenceDocs templatePath contract.
+        try {
+            const wp = (loadProjectConfig() || {}).workflowPatterns || {};
+            const templateDestRel = (typeof wp.featureDocTemplate === 'string' && wp.featureDocTemplate.trim() !== '')
+                ? wp.featureDocTemplate.trim()
+                : DEFAULT_FEATURE_DOC_TEMPLATE_DEST;
+            const templateDest = path.join(PROJECT_DIR, templateDestRel);
+            const templateSource = path.join(PROJECT_DIR, FEATURE_DOC_TEMPLATE_SOURCE);
+            if (!fs.existsSync(templateDest) && fs.existsSync(templateSource) && fs.statSync(templateSource).isFile()) {
+                const destParent = path.dirname(templateDest);
+                if (!fs.existsSync(destParent)) fs.mkdirSync(destParent, { recursive: true });
+                fs.copyFileSync(templateSource, templateDest);
+                const relDest = path.relative(PROJECT_DIR, templateDest).replace(/\\/g, '/');
+                created.push(`- \`${relDest}\` — Feature Spec template (generated from .claude source)`);
+            }
+        } catch {
+            /* non-blocking: template bootstrap is best-effort */
+        }
+
         // File creation is silent — no output to avoid context noise.
 
         // Reference doc enforcement is advisory only (not blocking).
         // Project config enforcement is handled by init-prompt-gate.cjs (exit 2).
-        // Placeholder docs are a soft concern — log a brief note for SessionStart only.
+        // Placeholder docs stay silent here; static docs and prompt gates own guidance.
         const placeholderDocs = referenceDocs
             .filter(doc => SCAN_SKILL_MAP[doc.filename])
             .filter(doc => isPlaceholderFile(path.join(REF_DOCS_DIR, doc.filename)));
 
         if (placeholderDocs.length > 0) {
             const skillList = placeholderDocs.map(d => `/${SCAN_SKILL_MAP[d.filename]}`).join(', ');
-            console.log(`${placeholderDocs.length} reference doc(s) are placeholders. Run: ${skillList}`);
+            writeSessionStartNotice(`${placeholderDocs.length} reference doc(s) are placeholders. Run: ${skillList}`);
         }
 
         // If all files exist and config is populated, output nothing (silent pass-through)
@@ -176,16 +208,16 @@ function main() {
                 ensureProjectTmpDir();
                 fs.writeFileSync(STALE_FLAG, JSON.stringify({ staleDays, docs: staleDocs, checkedAt: new Date().toISOString() }, null, 2) + '\n', 'utf-8');
 
-                // Advisory warning
+                // Advisory warning is persisted for the prompt gate; no SessionStart stdout.
                 const docList = staleDocs.map(d => `  - ${d.filename} (${d.ageDays}d old, last: ${d.lastScanned}) -> /${d.scanSkill}`).join('\n');
-                console.log(
+                writeSessionStartNotice(
                     [
                         '',
                         `${staleDocs.length} reference doc(s) are stale (>${staleDays} days):`,
                         docList,
                         '',
                         'Run /scan-all to refresh all, or individual /scan-* skills.',
-                        'Type "skip scan" to dismiss for 24 hours.',
+                        'Type "skip scan" to dismiss for 7 days.',
                         ''
                     ].join('\n')
                 );

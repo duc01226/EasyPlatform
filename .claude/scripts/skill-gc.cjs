@@ -252,7 +252,7 @@ function formatLocalDate(date) {
 
 function deleteTarget(target, decision) {
     // Per code-reviewer M2: canonical failure aborts the batch; mirror failures
-    // warn but do not block (mirrors are regenerable by codex-sync).
+    // warn but do not block (mirrors are regenerable by sync-codex).
     const removed = [];
     try {
         fs.rmSync(target.dir, { recursive: true, force: true });
@@ -267,7 +267,7 @@ function deleteTarget(target, decision) {
             fs.rmSync(mirror, { recursive: true, force: true });
             removed.push(mirror);
         } catch (err) {
-            console.warn(`  WARN: mirror delete failed (${mirror}): ${err.message} — regenerate via codex-sync`);
+            console.warn(`  WARN: mirror delete failed (${mirror}): ${err.message} — regenerate via sync-codex`);
         }
     }
     return removed;

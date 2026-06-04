@@ -1,6 +1,6 @@
 ---
 name: architecture-design
-version: 2.0.0
+version: 2.1.1
 description: '[Architecture] Use when designing solution architecture across backend, frontend, deployment, monitoring, testing, and code quality.'
 ---
 
@@ -15,7 +15,14 @@ description: '[Architecture] Use when designing solution architecture across bac
 
 ## Quick Summary
 
-**Goal:** Act as a solution architect — research, critically analyze, and recommend the complete technical architecture for a project or feature. Cover ALL architecture concerns: backend, frontend, design patterns, library ecosystem, testing strategy, CI/CD, deployment, monitoring, code quality, and dependency management. Produce a comprehensive comparison report with actionable recommendations.
+**Goal:** Act as solution architect to deliver a complete, evidence-backed, user-validated architecture decision report covering ALL concerns (backend, frontend, design patterns, library ecosystem, testing strategy, CI/CD, deployment, monitoring, code quality, dependency management) — every concern researched with 3+ options, every recommendation carrying confidence % + cited evidence, every decision confirmed by the user — so implementation proceeds on sound, owned architectural choices.
+
+**Summary:**
+
+- Decide mode FIRST (Step 1): greenfield researches every concern from scratch; brownfield reads reference docs + accepted ADRs and constrains research to the existing stack — NEVER re-litigate a settled ADR-recorded decision without a superseding-ADR rationale.
+- Drive the style choice with NUMBERS, not adjectives: quantify Step-2 quality-attribute scenarios (latency p95/p99, throughput, SLO, RPO/RTO, data growth, concurrency); any unknown target becomes an explicit `Unresolved question`, never a silent guess.
+- Every concern needs 3+ researched options with cited evidence (stars, last release, downloads, CVE scan) + a confidence % — familiarity alone is never sufficient grounds for a recommendation.
+- Produce the two binding downstream contracts and you're done; skip either and the chain breaks: emit an ADR per hard-to-reverse decision (`review-architecture` Cat 9 enforces it) and the Scaffold Handoff tool-choices table (`scaffold`/`harness-setup` consume it), then run the MANDATORY Step-12 user-validation interview before confirming.
 
 **Workflow (12 steps):**
 
@@ -45,9 +52,26 @@ description: '[Architecture] Use when designing solution architecture across bac
 
 ---
 
+## Inputs & Handoffs (consume vs produce)
+
+Skill sits mid-workflow — consumes settled upstream decisions, produces artifacts downstream steps build on. Do NOT re-derive what upstream step already owns; do NOT leave downstream consumer without its needed artifact. — why: re-deriving settled decisions wastes effort and risks divergence from the recorded choice.
+
+| Consumes (read, don't re-derive)                 | From                          | Produces (named deliverable)                                 | Consumed by                         |
+| ------------------------------------------------ | ----------------------------- | ------------------------------------------------------------ | ----------------------------------- |
+| Bounded contexts, aggregates, domain events, ERD | `domain-analysis`             | Architecture decision report (`{plan-dir}/research/...`)     | `plan`, `plan-execute`              |
+| Confirmed languages/frameworks/databases         | `tech-stack-research`         | Confirmed decisions (`{plan-dir}/phase-02b-architecture.md`) | `plan`, `scaffold`                  |
+| Expected scale, compliance, budget constraints   | `business-evaluation`         | Scaffold Handoff table (tooling + fitness rules)             | `scaffold`, `harness-setup`         |
+| Existing stack/patterns/ADRs (brownfield)        | reference docs, `docs/adr/**` | ADRs for hard-to-reverse decisions (`docs/adr/`)             | `review-architecture` (conformance) |
+
+If upstream artifact missing, capture minimum needed here and note gap — NEVER silently re-run full upstream analysis. — why: a silent re-run hides the missing-input gap that the owning step should resolve.
+
+---
+
 ## Step 1: Load Context
 
-Read artifacts from prior workflow steps (search in `plans/` and `team-artifacts/`):
+> **Mode (decide first):** **Greenfield** (new project, e.g. via `workflow-greenfield-init`) → research every concern from scratch, full 3-options-per-concern. **Brownfield** (large feature in existing codebase, e.g. `workflow-big-feature`) → FIRST read project reference docs + accepted ADRs, constrain research to existing stack/patterns, propose changes only where new requirement genuinely outgrows them — NEVER re-litigate settled ADR-recorded decision without superseding-ADR rationale. — why: re-deciding a recorded choice churns the codebase and breaks downstream conformance checks.
+
+Read artifacts from prior workflow steps (search `plans/` and `team-artifacts/`):
 
 - Domain model / ERD (complexity, bounded contexts, aggregate count)
 - Tech stack decisions (confirmed languages, frameworks, databases)
@@ -55,7 +79,7 @@ Read artifacts from prior workflow steps (search in `plans/` and `team-artifacts
 - Refined PBI (scope, acceptance criteria)
 - Discovery interview (team skills, experience level)
 
-Extract and summarize:
+Extract, summarize:
 
 | Signal                  | Value        | Source           |
 | ----------------------- | ------------ | ---------------- |
@@ -86,6 +110,23 @@ Map signals to architecture constraints:
 | Compliance                  | Audit trail, immutable events, access control layers      | Must     |
 | Real-time                   | Event sourcing or pub/sub, WebSocket/SSE support          | Should   |
 | High integration complexity | Anti-corruption layers, adapter pattern, API gateway      | Should   |
+
+### Quality-Attribute Scenarios (quantify — these drive the style choice)
+
+Qualitative "Must/Should" cannot decide between, e.g., modular monolith vs microservices. Capture **measurable** targets; ask user for any unknown via `AskUserQuestion` (guess acceptable only when labelled an assumption with confidence %). These targets become ADR-recorded budgets `review-architecture` Category 9 later checks changes against. — why: a style chosen without numbers is a guess, not an enforceable decision.
+
+| Quality attribute     | Scenario (stimulus → measurable response)                      | Target (fill in)   |
+| --------------------- | -------------------------------------------------------------- | ------------------ |
+| Latency               | p95 / p99 response time for the hottest read and write paths   | e.g. p99 < 300ms   |
+| Throughput            | Sustained req/s and peak burst the system must absorb          | e.g. 500 rps peak  |
+| Availability / SLO    | Target uptime and error budget                                 | e.g. 99.9%         |
+| Data durability (RPO) | Max acceptable data loss on failure                            | e.g. ≤ 5 min       |
+| Recovery (RTO)        | Max acceptable time to restore service                         | e.g. ≤ 30 min      |
+| Data-volume growth    | Row/document/event growth → storage, index, partition strategy | e.g. 10M rows/yr   |
+| Concurrency           | Concurrent users/sessions and contention hot spots             | e.g. 2k concurrent |
+| Compliance/retention  | Regulated data, retention window, residency, audit             | e.g. GDPR, 7yr     |
+
+**Rule:** any target left unknown is explicit `Unresolved question` (Step 11), NEVER a silent omission — an architecture chosen without scale numbers is a guess, not a decision.
 
 **MANDATORY IMPORTANT MUST ATTENTION** validate derived requirements with user via `AskUserQuestion` before proceeding.
 
@@ -127,7 +168,7 @@ Evaluate applicability per layer:
 | **Outbox**          | Messaging      | Reliable event publishing with DB transactions    |
 | **Circuit Breaker** | Infrastructure | External service resilience                       |
 
-For each recommended pattern, document: **Apply to**, **Why**, **Example**, **Risk if skipped**.
+Per recommended pattern document: **Apply to**, **Why**, **Example**, **Risk if skipped**.
 
 ---
 
@@ -137,16 +178,16 @@ For each recommended pattern, document: **Apply to**, **Why**, **Example**, **Ri
 
 WebSearch top 3 frontend architecture styles. Candidates:
 
-| Style                       | Best For                                    | Research Focus                            |
-| --------------------------- | ------------------------------------------- | ----------------------------------------- |
-| **MVVM**                    | Data-binding heavy, forms-over-data apps    | ViewModel responsibility, two-way binding |
-| **MVC**                     | Server-rendered, traditional web apps       | Controller routing, view separation       |
-| **Component Architecture**  | Modern SPA (React, Angular, Vue)            | Component isolation, props/events, reuse  |
-| **Reactive Store (Redux)**  | Complex state, multi-component sync         | Single source of truth, immutable state   |
-| **Signal-based Reactivity** | Fine-grained reactivity (Angular 19, Solid) | Granular updates, no zone.js overhead     |
-| **Micro Frontends**         | Multiple teams, independent deployment      | Module federation, routing, shared state  |
-| **Feature-based Modules**   | Large monolith SPA, lazy loading            | Feature boundaries, route-level splitting |
-| **Server Components (RSC)** | SEO, initial load performance               | Server/client boundary, streaming         |
+| Style                       | Best For                                                   | Research Focus                                  |
+| --------------------------- | ---------------------------------------------------------- | ----------------------------------------------- |
+| **MVVM**                    | Data-binding heavy, forms-over-data apps                   | ViewModel responsibility, two-way binding       |
+| **MVC**                     | Server-rendered, traditional web apps                      | Controller routing, view separation             |
+| **Component Architecture**  | Configured SPA/component framework                         | Component isolation, props/events, reuse        |
+| **Reactive Store (Redux)**  | Complex state, multi-component sync                        | Single source of truth, immutable state         |
+| **Signal-based Reactivity** | Fine-grained reactivity in frameworks that support signals | Granular updates without broad change detection |
+| **Micro Frontends**         | Multiple teams, independent deployment                     | Module federation, routing, shared state        |
+| **Feature-based Modules**   | Large monolith SPA, lazy loading                           | Feature boundaries, route-level splitting       |
+| **Server Components (RSC)** | SEO, initial load performance                              | Server/client boundary, streaming               |
 
 ### 4B: Frontend Design Patterns
 
@@ -169,11 +210,11 @@ WebSearch top 3 frontend architecture styles. Candidates:
 
 > **Skip if:** Backend-only project, no frontend component.
 
-Research and recommend the project's design system architecture. Use `AskUserQuestion` for each decision.
+Research, recommend project design system architecture. Use `AskUserQuestion` for each decision.
 
 ### 4B-1: Styling Approach
 
-WebSearch top 3 styling approaches for the confirmed frontend framework:
+WebSearch top 3 styling approaches for confirmed frontend framework:
 
 | Approach                         | Best For                                 | Research Focus                     |
 | -------------------------------- | ---------------------------------------- | ---------------------------------- |
@@ -214,7 +255,9 @@ WebSearch top 3 styling approaches for the confirmed frontend framework:
 
 ## Step 5: Library Ecosystem Research
 
-For EACH concern below, WebSearch top 3 library options for the confirmed tech stack. Evaluate: maturity, community, bundle size, maintenance activity, license, learning curve.
+Per concern below, WebSearch top 3 library options for confirmed tech stack. Evaluate: maturity, community, bundle size, maintenance activity, license, learning curve.
+
+> **MUST ATTENTION** never recommend a library from familiarity alone — every pick needs cited evidence (stars, release date, downloads, CVE scan). — why: familiarity bias ships unmaintained or insecure dependencies.
 
 ### Library Concerns Checklist
 
@@ -255,11 +298,11 @@ For EACH concern below, WebSearch top 3 library options for the confirmed tech s
 
 ## Step 6: Testing Architecture
 
-Research best testing tools and strategy for the confirmed tech stack:
+Research best testing tools, strategy for confirmed tech stack:
 
 | Testing Layer           | What to Research                                  | Top Candidates to Compare                    |
 | ----------------------- | ------------------------------------------------- | -------------------------------------------- |
-| **Unit Testing**        | Test runner, assertion library, mocking framework | Jest/Vitest/xUnit/NUnit, mocking             |
+| **Unit Testing**        | Test runner, assertion library, mocking framework | Repository's configured unit-test stack      |
 | **Integration Testing** | API testing, DB testing, service testing          | Supertest, TestContainers, WebAppFactory     |
 | **E2E Testing**         | Browser automation, BDD, visual regression        | Playwright/Cypress/Selenium, SpecFlow        |
 | **Performance Testing** | Load testing, stress testing, benchmarking        | k6/Artillery/JMeter/NBomber, BenchmarkDotNet |
@@ -277,28 +320,28 @@ Research best testing tools and strategy for the confirmed tech stack:
 - **Integration (20%):** {framework} — {what to test}
 - **E2E (10%):** {framework} — {what to test}
 
-### Coverage Targets
+### Test-Strength Targets
 
-- Unit: {X}% | Integration: {X}% | E2E: critical paths only
-- Enforcement: {tool} in CI pipeline, fail build below threshold
+- Line coverage (diagnostic only — NEVER fail the build on a coverage %): Unit: {X}% | Integration: {X}% | E2E: critical paths only
+- Gate: mutation score ({tool}) in CI pipeline — fail build on surviving mutants / mutation-score regression, not on a line-coverage %
 ```
 
 ---
 
 ## Step 7: CI/CD & Deployment
 
-Research deployment architecture and CI/CD tooling:
+Research deployment architecture, CI/CD tooling:
 
-| Concern                 | What to Research                                     | Top Candidates to Compare                     |
-| ----------------------- | ---------------------------------------------------- | --------------------------------------------- |
-| **CI/CD Platform**      | Pipeline orchestration, parallelism, caching         | GitHub Actions/Azure DevOps/GitLab CI/Jenkins |
-| **Containerization**    | Container runtime, image building, registry          | Docker/Podman, BuildKit, ACR/ECR/GHCR         |
-| **Orchestration**       | Container orchestration, service mesh, scaling       | Kubernetes/Docker Compose/ECS/Nomad           |
-| **IaC (Infra as Code)** | Infrastructure provisioning, drift detection         | Terraform/Pulumi/Bicep/CDK                    |
-| **Artifact Management** | Package registry, versioning, vulnerability scanning | NuGet/npm/Artifactory/GitHub Packages         |
-| **Feature Flags**       | Progressive rollout, A/B testing, kill switches      | LaunchDarkly/Unleash/Flagsmith                |
-| **Secret Management**   | Vault, key rotation, environment variables           | Azure KeyVault/HashiCorp Vault/SOPS           |
-| **Database Migration**  | Schema versioning, rollback, seed data               | EF Migrations/Flyway/Liquibase/dbmate         |
+| Concern                 | What to Research                                     | Top Candidates to Compare             |
+| ----------------------- | ---------------------------------------------------- | ------------------------------------- |
+| **CI/CD Provider**      | Pipeline orchestration, parallelism, caching         | Repository's configured CI/CD tooling |
+| **Containerization**    | Container runtime, image building, registry          | Docker/Podman, BuildKit, ACR/ECR/GHCR |
+| **Orchestration**       | Container orchestration, service mesh, scaling       | Kubernetes/Docker Compose/ECS/Nomad   |
+| **IaC (Infra as Code)** | Infrastructure provisioning, drift detection         | Terraform/Pulumi/Bicep/CDK            |
+| **Artifact Management** | Package registry, versioning, vulnerability scanning | NuGet/npm/Artifactory/GitHub Packages |
+| **Feature Flags**       | Progressive rollout, A/B testing, kill switches      | LaunchDarkly/Unleash/Flagsmith        |
+| **Secret Management**   | Vault, key rotation, environment variables           | Azure KeyVault/HashiCorp Vault/SOPS   |
+| **Database Migration**  | Schema versioning, rollback, seed data               | EF Migrations/Flyway/Liquibase/dbmate |
 
 ### Deployment Strategy Comparison
 
@@ -342,7 +385,7 @@ Research deployment architecture and CI/CD tooling:
 
 ## Step 9: Code Quality & Clean Code Enforcement
 
-Research and recommend tooling for automated code quality:
+Research, recommend tooling for automated code quality:
 
 | Concern                    | What to Research                                   | Top Candidates to Compare                     |
 | -------------------------- | -------------------------------------------------- | --------------------------------------------- |
@@ -362,39 +405,40 @@ Research and recommend tooling for automated code quality:
 ```markdown
 ### Code Quality Gates
 
-| Gate        | Tool   | Trigger        | Fail Criteria         |
-| ----------- | ------ | -------------- | --------------------- |
-| Pre-commit  | {tool} | git commit     | Lint errors, format   |
-| PR Check    | {tool} | Pull request   | Coverage < X%, issues |
-| CI Pipeline | {tool} | Push to branch | Build fail, test fail |
-| Scheduled   | {tool} | Weekly/nightly | Security vulns, debt  |
+| Gate        | Tool   | Trigger        | Fail Criteria                                                                         |
+| ----------- | ------ | -------------- | ------------------------------------------------------------------------------------- |
+| Pre-commit  | {tool} | git commit     | Lint errors, format                                                                   |
+| PR Check    | {tool} | Pull request   | Surviving mutants / mutation-score regression, issues (line-coverage diagnostic only) |
+| CI Pipeline | {tool} | Push to branch | Build fail, test fail                                                                 |
+| Scheduled   | {tool} | Weekly/nightly | Security vulns, debt                                                                  |
 ```
 
 ### Scaffold Handoff (MANDATORY — consumed by `/scaffold`)
 
-After completing code quality research, produce this handoff table in the architecture report. The `/scaffold` skill reads this table to generate actual config files — without it, scaffold cannot auto-configure quality tooling.
+After code quality research, produce this handoff table in architecture report. `/scaffold` reads this table to generate actual config files — without it, scaffold cannot auto-configure quality tooling. — why: the handoff table is the only contract scaffold has for tool choices.
 
 ```markdown
 ### Scaffold Handoff — Tool Choices
 
-| Concern        | Chosen Tool       | Config File | Rationale |
-| -------------- | ----------------- | ----------- | --------- |
-| Linter (FE)    | {tool}            | {filename}  | {why}     |
-| Linter (BE)    | {tool}            | {filename}  | {why}     |
-| Formatter      | {tool}            | {filename}  | {why}     |
-| Pre-commit     | {tool}            | {filename}  | {why}     |
-| Error handling | {pattern}         | {files}     | {why}     |
-| Loading state  | {pattern}         | {files}     | {why}     |
-| Docker         | {compose pattern} | {files}     | {why}     |
+| Concern              | Chosen Tool                                         | Config File | Rationale                                                    |
+| -------------------- | --------------------------------------------------- | ----------- | ------------------------------------------------------------ |
+| Linter (FE)          | {tool}                                              | {filename}  | {why}                                                        |
+| Linter (BE)          | {tool}                                              | {filename}  | {why}                                                        |
+| Formatter            | {tool}                                              | {filename}  | {why}                                                        |
+| Pre-commit           | {tool}                                              | {filename}  | {why}                                                        |
+| Arch rules / fitness | {tool: ArchUnit / NetArchTest / Dependency-Cruiser} | {filename}  | {layer + dependency rules and Step-2 NFR budgets to enforce} |
+| Error handling       | {pattern}                                           | {files}     | {why}                                                        |
+| Loading state        | {pattern}                                           | {files}     | {why}                                                        |
+| Docker               | {compose pattern}                                   | {files}     | {why}                                                        |
 ```
 
-**Also include:** Error handling strategy (4-layer pattern), loading state approach (global vs per-component), and Docker profile structure. Specific tool choices → `docs/project-reference/` or `project-config.json`.
+**Also include:** Error handling strategy (4-layer pattern), loading state approach (global vs per-component), Docker profile structure. Specific tool choices → `docs/project-reference/` or `project-config.json`. The **Arch rules / fitness** row MUST encode Step-2 quality-attribute budgets and layer/dependency rules as executable checks — `harness-setup` wires these into CI so recorded ADR decisions stay enforced, not merely documented. — why: documented-but-unenforced budgets erode silently as code changes.
 
 ---
 
 ## Step 10: Dependency Risk Assessment
 
-For EVERY recommended library/package, evaluate maintenance and obsolescence risk:
+Per recommended library/package, evaluate maintenance, obsolescence risk:
 
 ### Package Health Scorecard
 
@@ -452,6 +496,10 @@ Write report to `{plan-dir}/research/architecture-design.md` with sections:
 12. Risk assessment for overall architecture
 13. Unresolved questions
 
+### Emit ADRs for hard-to-reverse decisions (MANDATORY)
+
+For each decision significant AND costly to reverse — backend/frontend style, persistence/consistency model, messaging approach, a Step-2 quality-attribute budget, a rejected-with-reason alternative — write one ADR to `docs/adr/{NNNN}-{slug}.md` following the repo's existing ADR format (Status, Date, Context, Decision, Consequences [Positive/Negative/Neutral], Alternatives Considered, Related; see `docs/adr/0001-skill-lifecycle.md` for canonical shape). Start `Status: Proposed`; promote to `Accepted` after Step-12 user validation confirms it. These ADRs are the binding record `review-architecture` Category 9 checks changed code against — **a decision not written as an ADR cannot be enforced downstream.** Route ADR authoring through the `architect` sub-agent for cross-service/security/performance impact analysis.
+
 ### Architecture Diagram Template
 
 ````markdown
@@ -499,7 +547,7 @@ graph TB
 
 ## Step 12: User Validation Interview
 
-**MANDATORY IMPORTANT MUST ATTENTION** present findings and ask 8-12 questions via `AskUserQuestion`:
+**MANDATORY IMPORTANT MUST ATTENTION** present findings, ask 8-12 questions via `AskUserQuestion`:
 
 ### Required Questions
 
@@ -519,17 +567,17 @@ graph TB
 - "Should we use event sourcing or traditional state-based persistence?"
 - "Monolith-first or start with service boundaries?"
 - "Micro frontends or monolith SPA?"
-- "How important is framework independence for this project?"
+- "How important is framework independence for this repository or system?"
 - "Self-hosted observability or managed SaaS?"
 - "Strict lint rules from day 1 or gradual adoption?"
 
-After user confirms, update report with final decisions and mark as `status: confirmed`.
+After user confirms, update report with final decisions, mark `status: confirmed`.
 
 ---
 
 ## Best Practices Audit (applied across all steps)
 
-Validate architecture against these principles — flag violations in report:
+Validate architecture against these principles — flag violations in report. — why: an unflagged SOLID/DRY violation compounds into rework once code lands on the flaw.
 
 | Principle                      | Check                                                      | Status |
 | ------------------------------ | ---------------------------------------------------------- | ------ |
@@ -555,6 +603,7 @@ Validate architecture against these principles — flag violations in report:
 ```
 {plan-dir}/research/architecture-design.md     # Full architecture analysis report
 {plan-dir}/phase-02b-architecture.md           # Confirmed architecture decisions
+docs/adr/{NNNN}-{slug}.md                       # One ADR per hard-to-reverse decision (see Step 11)
 ```
 
 ---
@@ -568,7 +617,7 @@ Validate architecture against these principles — flag violations in report:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. NEVER skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/plan (Recommended)"** — Create implementation plan from architecture design
 - **"/refine"** — If need to create PBIs first
@@ -576,7 +625,7 @@ Validate architecture against these principles — flag violations in report:
 
 ### Council escalation (always-offer, second prompt)
 
-After the existing `## Next Steps` prompt above resolves, present a **second**, independent `AskUserQuestion` call (do NOT merge into the first):
+After the existing `## Next Steps` prompt above resolves, present a **second**, independent `AskUserQuestion` call (NEVER merge into the first):
 
 - **"Skip council — proceed (Recommended)"** — Continue with the architecture decision as-is. Recommended default.
 - **"Escalate to /llm-council"** — Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when this architecture pick is hard to reverse and you need adversarial framing. Cheaper alternatives: `/why-review`, `/plan-validate` (run these first if you haven't).
@@ -592,16 +641,52 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+## Anti-Rationalization (reject these excuses)
+
+| Excuse the model tells itself                        | Reality                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| "I know this stack — skip the 3-options research"    | Familiarity ≠ evidence. Research 3+ options with cited proof per concern, every time.             |
+| "The architecture is obvious — skip user validation" | Step 12 is MANDATORY. The user owns hard-to-reverse decisions; never auto-decide.                 |
+| "No scale numbers given, I'll just pick a style"     | Missing target = explicit `Unresolved question`, never a silent guess. Quantify via Step-2 first. |
+| "It's a small feature — skip the ADR"                | If a decision is significant AND costly to reverse, it needs an ADR or it cannot be enforced.     |
+| "Brownfield, but my preferred style is better"       | NEVER re-litigate a settled ADR-recorded decision without a superseding-ADR rationale.            |
+| "I'll document the budget, enforcement is optional"  | Documented-but-unenforced budgets erode. Encode them as executable fitness checks for CI.         |
+
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**IMPORTANT MUST ATTENTION Goal:** Deliver a complete, evidence-backed, user-validated architecture decision report — every concern researched with 3+ options, every recommendation carrying confidence % + cited evidence, every decision confirmed by the user — so implementation proceeds on sound, owned architectural choices.
+
+**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** traced `file:line` proof per claim, confidence >80% to act.
+- **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS, confidence closer.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**MANDATORY IMPORTANT MUST ATTENTION** research min 3 options per architecture concern with cited web evidence (stars, last release, downloads, CVE scan) — NEVER recommend from familiarity alone — why: familiarity bias ships unmaintained or insecure dependencies.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` (Step 12) — NEVER auto-decide a hard-to-reverse choice — why: the user owns hard-to-reverse decisions; the architect proposes, the user confirms.
+**MANDATORY IMPORTANT MUST ATTENTION** quantify Step-2 quality-attribute scenarios (latency p95/p99, throughput, SLO, RPO/RTO, growth, concurrency) — any unknown target becomes an explicit `Unresolved question`, NEVER a silent guess — why: a style chosen without numbers is a guess, not an enforceable decision.
+**MANDATORY IMPORTANT MUST ATTENTION** brownfield: FIRST read project reference docs + accepted ADRs, constrain research to the existing stack, and NEVER re-litigate a settled ADR-recorded decision without a superseding-ADR rationale — why: re-deciding a recorded choice churns the codebase and breaks downstream conformance checks.
+**MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns/ADRs before proposing any new style or pattern; cite `file:line` (or URL/benchmark) evidence and a confidence % for EVERY claim — confidence >80% to recommend, <60% DO NOT recommend — why: speculation without proof is forbidden output.
+**MANDATORY IMPORTANT MUST ATTENTION** evaluate fit before copying a nearby pattern — closest example ≠ matching preconditions; verify the new context shares the same scale, constraints, and boundaries — why: a pattern lifted into a mismatched context fails silently.
+**MANDATORY IMPORTANT MUST ATTENTION** produce the two binding downstream contracts — one ADR per hard-to-reverse decision (`review-architecture` Cat 9 enforces) AND the Scaffold Handoff tool-choices table (`scaffold`/`harness-setup` consume) — a decision not written as an ADR or encoded as an executable fitness check cannot be enforced downstream — why: documented-but-unenforced budgets erode silently as code changes.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; mark one `in_progress`, mark `completed` immediately after evidence lands; add a final review todo — why: external task state survives context compaction; memory does not.
+
+**Anti-Rationalization (Closing — reject these excuses):**
+
+| Excuse the model tells itself                        | Reality                                                                                               |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| "I know this stack — skip the 3-options research"    | Familiarity ≠ evidence. Research 3+ options with cited proof per concern, every time.                 |
+| "The architecture is obvious — skip user validation" | Step 12 is MANDATORY. The user owns hard-to-reverse decisions; never auto-decide.                     |
+| "No scale numbers given, I'll just pick a style"     | Missing target = explicit `Unresolved question`, never a silent guess. Quantify via Step-2 first.     |
+| "Small feature — skip the ADR / fitness check"       | Significant AND costly-to-reverse → needs an ADR + executable fitness rule, or it cannot be enforced. |
+| "Brownfield, but my preferred style is better"       | NEVER re-litigate a settled ADR-recorded decision without a superseding-ADR rationale.                |
+| "Found a nearby pattern, just copy it"               | Evaluate fit first — same scale/constraints/boundaries? Closest ≠ matching. Verify before reusing.    |
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -630,7 +715,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -638,16 +723,14 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -667,8 +750,9 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 

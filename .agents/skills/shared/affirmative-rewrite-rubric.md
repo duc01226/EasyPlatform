@@ -28,10 +28,10 @@ State the destination, then optionally the hazard. The action must be unambiguou
 | ❌ Prohibition-only (B)                   | ✅ Affirmative (+ optional why)                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | "Don't map in handlers."                  | "Map in the DTO via `MapToEntity()` — handlers stay mapping-free. — why: one mapping site, no drift."                                           |
-| "Avoid manual signals."                   | "Use `PlatformVmStore` + `effectSimple()` for state. — why: manual signals bypass lifecycle teardown → leaks."                                  |
+| "Avoid manual signals."                   | "Use the project's view-model store + reactive-effect pattern for state. — why: manual signals bypass lifecycle teardown → leaks."              |
 | "Do not skip reproduction."               | "Reproduce with evidence first (error/stack/screenshot), then isolate. — why: a fix without a repro can't be verified."                         |
 | "Don't work from memory alone."           | "Re-read the analysis file before implementing. — why: memory drifts across long context; the file is ground truth."                            |
-| "Avoid direct DB access across services." | "Cross-service reads go through the RabbitMQ message bus. — why: direct DB access couples services and breaks ownership."                       |
+| "Avoid direct DB access across services." | "Cross-boundary reads go through the configured integration boundary. — why: direct DB access couples services and breaks ownership."           |
 | "Do not assume the first hypothesis."     | "Verify each hypothesis against an actual code trace before acting. — why: the first guess is often the nearest-attention trap, not the cause." |
 
 ## Keep-NEVER criteria (class A — never soften)

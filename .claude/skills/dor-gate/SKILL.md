@@ -1,7 +1,7 @@
 ---
 name: dor-gate
 version: 1.0.0
-description: '[Code Quality] Use when you need validate PBI against Definition of Ready before grooming.'
+description: '[Code Quality] Use when you need to validate a PBI against Definition of Ready before grooming.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,7 +15,14 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 ## Quick Summary
 
-**Goal:** Validate a PBI artifact against the Definition of Ready (DoR) checklist. Block PBIs that fail required criteria from entering grooming.
+**Goal:** Validate a PBI artifact against the Definition of Ready (DoR/M1-M6) checklist so that only grooming-ready PBIs pass the gate — every failure is caught with its concrete section/line citation, blocking ambiguous, untestable, or unimplementable stories from reaching the team.
+
+**Summary:**
+
+- This is an automated quality gate, NOT a collaborative review — it runs two checklists: the 7 Required DoR criteria (story template, testable AC, wireframes, UI design, AI pre-review, story points, dependencies) AND the M1-M6 compliance gate; ANY single failure across either set returns FAIL.
+- The DoR is self-contained here (BA Refinement Context section) — no external protocol file is needed; every verdict must cite the concrete PBI section + line/AC, and a PASS over any M1-M5 violation is itself defective.
+- Verify story-point estimation frontmatter (Fibonacci 1-21 + complexity, man-days range, blast-radius) per the SYNC estimation framework; story points >13 trigger a SHOULD-SPLIT WARN (not a FAIL).
+- Emit the DoR Gate Result template (checklist table + Blocking Items + Verdict), then route via `AskUserQuestion` — never auto-decide the next step.
 
 **Key distinction:** Automated quality gate (not collaborative review — use `/pbi-challenge` for that).
 
@@ -42,13 +49,44 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 ### Required (ALL must pass)
 
-- [ ] **User story template** — "As a {role}, I want {goal}, so that {benefit}" present
-- [ ] **AC testable** — All AC use GIVEN/WHEN/THEN, no vague language, min 3 scenarios
-- [ ] **Wireframes/mockups** — Present or explicit "N/A" for backend-only
-- [ ] **UI design ready** — Completed or "N/A" for backend-only
-- [ ] **AI pre-review** — `/refine-review` or `/pbi-challenge` result is PASS or WARN
-- [ ] **Story points** — Valid Fibonacci (1-21) + complexity (Low/Medium/High)
-- [ ] **Dependencies table** — Complete with Type column (must-before/can-parallel/blocked-by/independent)
+- MUST ATTENTION verify **User story template** — "As a {role}, I want {goal}, so that {benefit}" present
+- MUST ATTENTION verify **AC testable** — All AC use GIVEN/WHEN/THEN, no vague language, min 3 scenarios
+- MUST ATTENTION verify **Wireframes/mockups** — Present or explicit "N/A" for backend-only
+- MUST ATTENTION verify **UI design ready** — Completed or "N/A" for backend-only
+- MUST ATTENTION verify **AI pre-review** — `/review-artifact --type=pbi` or `/pbi-challenge` result is PASS or WARN
+- MUST ATTENTION verify **Story points** — Valid Fibonacci (1-21) + complexity (Low/Medium/High)
+- MUST ATTENTION verify **Dependencies table** — Complete with Type column (must-before/can-parallel/blocked-by/independent)
+
+### M1-M6 Compliance Gate (BLOCKING — each check FAILs the gate)
+
+> **Contract:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)". DoR enforces M6: a PBI that violates any of M1-M5 is NOT ready for grooming — return FAIL and name the violated mandate ID with its concrete PBI section + line/AC citation. A DoR PASS over an M1-M5 violation is itself defective.
+>
+> Carriers are EXEMPT from M1/M2 — source identifiers are CORRECT inside `[Source: ...]`, `**Evidence**`, `**IntegrationTest**` fields, YAML frontmatter, and ` ```mermaid ``` ` blocks. Only flag leakage in PBI narrative prose (problem statement, AC text, scope, rule descriptions). Banned prose token list: `spec-principles.md` §3.2.
+
+- MUST ATTENTION verify **M1 — Tech-agnostic prose** — FAIL if problem statement, AC, or rule prose names a framework/product, language-native type, or product/design-pattern class name (banned list in `spec-principles.md` §3.2). Cite section + token.
+- MUST ATTENTION verify **M2 — No source code in prose** — FAIL if a requirement is expressed as a class/method/file-path/namespace instead of a business operation. Source identifiers belong only in evidence carriers. Cite section + line.
+- MUST ATTENTION verify **M3 — Abstract-IDs-first** — FAIL if a requirement/rule lacks a logical ID (`FR-/BR-/OP-`), has a logical ID but no `[Source: namespace/service/id]` abstract-anchor evidence, uses physical code coordinates or repository-root paths instead of an abstract anchor, or makes the anchor its primary citation. Evidence is REQUIRED and KEPT, but SECONDARY to the logical ID (physical coordinates live only in the provenance sidecar).
+- MUST ATTENTION verify **M4 — Unambiguous AC** — FAIL if any AC uses vague language ("handle appropriately", "process normally", "as needed"), two engineers could implement it differently while both claiming conformance, or no observable completion state / named error condition exists. (Reinforces the "AC testable" required criterion above.)
+- MUST ATTENTION verify **M5 — Implementable from artifact alone** — FAIL if a competent team with ZERO codebase knowledge could not implement the PBI on a different stack from the PBI alone (relies on reading source to understand it). Cite section + missing detail.
+
+If ANY box fails → DoR result is FAIL; list each violated mandate ID with its concrete section/line citation in the Blocking Items.
+
+## BA Refinement Context (canonical DoR)
+
+> Applies to Writes under `team-artifacts/pbis/`. Mirrored for Codex via `SYNC:refinement-dor-checklist` / `SYNC:ba-team-decision-model` in AGENTS.md (do not hand-edit the mirror). This is the self-contained DoR source — no external protocol-file dependency required to run the gate.
+
+**Decision Model:** 2/3 majority vote (UX BA + Designer BA + Dev BA PIC). Dev BA PIC has technical veto. Disagree-and-commit after decision. Grooming override requires >75% remaining-team vote.
+
+**DoR Gate (ALL must pass before grooming):**
+
+- [ ] User story template (As a... I want... So that...)
+- [ ] AC testable (GIVEN/WHEN/THEN, no vague language; min 3 scenarios + 1 auth scenario)
+- [ ] Wireframes attached (UX BA) + UI design ready (Designer BA); backend-only → explicit "N/A"
+- [ ] AI pre-review passed (`/review-artifact --type=pbi` or `/pbi-challenge` returned PASS or WARN)
+- [ ] Story points estimated (Fibonacci 1-21 + complexity); >13 SP → recommend split
+- [ ] Dependencies table complete (Dependency · Type must-before/can-parallel/blocked-by/independent · Status)
+
+**Failure fixes:** Vague AC → specify exact CRUD + roles. Missing auth → add roles × CRUD table. No wireframes → UX BA creates. TBD in AC → replace with decision.
 
 ## Output
 
@@ -93,7 +131,7 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/handoff (Recommended)"** — If PASS: hand off to grooming presentation
+- **"/prioritize (Recommended)"** — If PASS: PBI is grooming-ready; prioritize into the backlog
 - **"/refine"** — If FAIL: revise PBI
 - **"/pbi-challenge"** — If collaborative review needed before re-checking DoR
 - **"Skip, continue manually"** — user decides
@@ -106,16 +144,14 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -297,13 +333,13 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -320,10 +356,38 @@ description: '[Code Quality] Use when you need validate PBI against Definition o
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**IMPORTANT MUST ATTENTION Goal:** Only grooming-ready PBIs pass the gate — every DoR/M1-M6 failure caught with its concrete section/line citation, so no ambiguous, untestable, or unimplementable story reaches the team.
+
+**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries; each is a signpost to its canonical body above, NEVER a replacement):**
+
+- **AI Mistakes:** holistic-first debugging, fix at responsible layer, surgical diff, verify all outputs.
+- **Estimation:** bottom-up phase hours drive man-days; SP derived; >13 SHOULD-SPLIT.
+- **Critical Thinking:** traced proof per claim, confidence >80% to act, never guess.
+
+**MANDATORY IMPORTANT MUST ATTENTION** FAIL blocks grooming — ANY of the 7 required criteria OR any M1-M5 mandate fails → return FAIL, name the violated ID with its concrete PBI section + line/AC citation. NEVER PASS over an M1-M5 violation — a PASS over one is itself defective. — why: an unready story poisons grooming and ships ambiguity downstream.
+**IMPORTANT MUST ATTENTION** automated quality gate, NOT collaborative review — run both checklists (7 required + M1-M6); route `/pbi-challenge` for collaborative review. — why: conflating gate with review lets soft-pass judgments through a hard gate.
+**IMPORTANT MUST ATTENTION** cite `file:line`/section evidence for EVERY verdict (confidence >80% to act, <60% DO NOT decide) — every check references the concrete PBI section + line/AC; NEVER guess a criterion's status. — why: an uncited PASS/FAIL is unauditable and pattern-matched, not verified.
+**IMPORTANT MUST ATTENTION** carriers EXEMPT from M1/M2 — source identifiers are CORRECT inside `[Source: ...]`, `**Evidence**`, `**IntegrationTest**`, YAML frontmatter, ` ```mermaid ``` `; flag leakage ONLY in PBI narrative prose (banned tokens: `spec-principles.md` §3.2). — why: flagging a carrier as a violation is a false FAIL that blocks a ready PBI.
+**IMPORTANT MUST ATTENTION** verify story-point frontmatter per the SYNC estimation framework — Fibonacci 1-21 + complexity, bottom-up `man_days` range, blast-radius; story points >13 → SHOULD-SPLIT WARN, NOT a FAIL. — why: a WARN escalated to a FAIL wrongly blocks a groomable large story.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks via `TaskCreate` BEFORE starting; add a final review todo verifying every verdict cites its PBI section/line.
+**MANDATORY IMPORTANT MUST ATTENTION** emit the DoR Gate Result template (checklist table + Blocking Items + Verdict), then route via `AskUserQuestion` — never auto-decide the next step.
+
+**Anti-Rationalization:**
+
+| Evasion                                          | Rebuttal                                                                                          |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| "AC looks testable enough, pass it"              | Show GIVEN/WHEN/THEN ×3 + 1 auth scenario, no vague tokens. No proof = FAIL.                      |
+| "M1-M5 is minor, the rest passes — PASS overall" | ANY M1-M5 violation = FAIL. A PASS over an M1-M5 violation is itself defective.                   |
+| "Source name in `[Source: ...]` — flag it M1/M2" | Carriers are EXEMPT. Flag leakage ONLY in narrative prose, never in evidence carriers.            |
+| "Story points >13, fail the gate"                | >13 SP = SHOULD-SPLIT WARN, not a FAIL. Do not escalate a WARN to a FAIL.                         |
+| "Skip `AskUserQuestion`, result is obvious"      | NEVER auto-decide. Emit the result template, then route via `AskUserQuestion` — the user decides. |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+
+---
+
+**IMPORTANT MUST ATTENTION** FAIL blocks grooming on ANY required-criterion or M1-M5 failure — name the violated ID + cite PBI section/line; NEVER PASS over an M1-M5 violation.
+**IMPORTANT MUST ATTENTION** cite `file:line`/section for EVERY verdict (>80% confidence to act); NEVER guess a check's status.
+**IMPORTANT MUST ATTENTION** emit the DoR Gate Result template, then route via `AskUserQuestion` — never auto-decide.

@@ -1,0 +1,160 @@
+{
+    "$comment": "Source of truth for Copilot per-group instruction summaries. Curated by /sync-to-copilot. Consumed by .claude/scripts/sync-copilot-workflows.cjs. Do NOT hand-edit the generated .github/**/*.instructions.md files — edit here and re-run the script.",
+    "projectInstructions": {
+        "goldenRules": [
+            "**Repositories** — Use `IPlatformRootRepository<TEntity>` or service-specific repository interfaces",
+            "**Validation** — `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`), NEVER throw exceptions",
+            "**Side Effects** — Entity Event Handlers in `UseCaseEvents/`, NEVER in command handlers",
+            "**DTO Mapping** — DTOs own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()` or `PlatformDto<T>.MapToObject()`, NEVER map in handlers",
+            "**Cross-Service** — RabbitMQ message bus ONLY, NEVER direct database access",
+            "**Frontend State** — `PlatformVmStore` + `effectSimple()`, NEVER manual signals or direct `HttpClient`",
+            "**Base Classes** — Always extend `AppBaseComponent`/`AppBaseVmStoreComponent`/`AppBaseFormComponent` + `.pipe(this.untilDestroyed())` + BEM classes on all template elements. Extend `PlatformApiService` for HTTP calls."
+        ],
+        "decisionQuickRef": [
+            { "task": "New API endpoint", "pattern": "`PlatformBaseController` + CQRS Command" },
+            { "task": "Business logic", "pattern": "Command Handler (Application layer)" },
+            { "task": "Data access", "pattern": "`IPlatformRootRepository<TEntity>` + extensions" },
+            { "task": "Cross-service sync", "pattern": "Entity Event Consumer (message bus)" },
+            { "task": "Scheduled task", "pattern": "`PlatformApplicationBackgroundJob`" },
+            { "task": "Migration", "pattern": "`PlatformDataMigrationExecutor` / EF migrations" },
+            { "task": "Simple component", "pattern": "Extend `AppBaseComponent`" },
+            { "task": "Complex state", "pattern": "`AppBaseVmStoreComponent` + `PlatformVmStore`" },
+            { "task": "Forms", "pattern": "`AppBaseFormComponent` with validation" },
+            { "task": "API calls", "pattern": "Service extending `PlatformApiService`" },
+            { "task": "Complex queries", "pattern": "`RepositoryExtensions` with static expressions" },
+            { "task": "Integration test", "pattern": "Extend `PlatformServiceIntegrationTestWithAssertions<TModule>`" }
+        ],
+        "keyFileLocations": [
+            {
+                "path": "src/Platform/Easy.Platform/",
+                "description": "Core framework library — CQRS, entities, validation, repositories, message bus abstractions"
+            },
+            { "path": "src/Platform/Easy.Platform.AspNetCore/", "description": "ASP.NET Core integration — controllers, middleware, DI" },
+            { "path": "src/Platform/Easy.Platform.MongoDB/", "description": "MongoDB persistence provider" },
+            { "path": "src/Platform/Easy.Platform.EfCore/", "description": "EF Core persistence provider (PostgreSQL, SQL Server)" },
+            { "path": "src/Platform/Easy.Platform.RabbitMQ/", "description": "RabbitMQ message bus implementation" },
+            { "path": "src/Backend/PlatformExampleApp.TextSnippet.Api/", "description": "Example app API host — controllers, DI modules, startup" },
+            {
+                "path": "src/Backend/PlatformExampleApp.TextSnippet.Application/",
+                "description": "Example app application layer — CQRS commands, queries, DTOs, event handlers"
+            },
+            { "path": "src/Backend/PlatformExampleApp.TextSnippet.Domain/", "description": "Example app domain layer — entities, repositories, domain events" },
+            { "path": "src/Backend/PlatformExampleApp.IntegrationTests/", "description": "Integration test suite for example app" },
+            { "path": "src/Frontend/apps/playground-text-snippet/", "description": "Angular frontend app for TextSnippet example" },
+            { "path": "src/Frontend/libs/platform-core/", "description": "Frontend framework core — base components, stores, API services, utilities" }
+        ],
+        "devCommands": {
+            "Backend tests": [
+                "dotnet test src/Backend/PlatformExampleApp.Test/              # backend-unit",
+                "dotnet test src/Backend/PlatformExampleApp.IntegrationTests/  # backend-integration",
+                "dotnet test src/Backend/PlatformExampleApp.Test.BDD/          # backend-bdd"
+            ],
+            "Frontend & E2E tests": ["cd src/Frontend && npm test                   # frontend-unit", "cd src/Frontend/e2e && npx playwright test    # e2e"],
+            "Local startup (Docker)": [
+                "src/start-dev-platform-example-app.cmd                # full system (default MongoDB+SQL)",
+                "src/start-dev-platform-example-app.infrastructure.cmd # infra only"
+            ]
+        }
+    },
+    "instructionFileConfig": {
+        "backend-csharp": {
+            "filename": "backend-csharp.instructions.md",
+            "applyTo": "**/*.cs"
+        },
+        "frontend": {
+            "filename": "frontend.instructions.md",
+            "applyTo": "**/*.ts,**/*.html"
+        },
+        "styling-scss": {
+            "filename": "styling-scss.instructions.md",
+            "applyTo": "**/*.scss,**/*.css"
+        },
+        "testing": {
+            "filename": "testing.instructions.md",
+            "applyTo": "**/*Test*/**,**/*.spec.ts,**/e2e/**,**/IntegrationTests/**"
+        },
+        "project-reference": {
+            "filename": "project-reference.instructions.md",
+            "applyTo": "**/*"
+        }
+    },
+    "registry": [
+        {
+            "file": "backend-patterns-reference.md",
+            "title": "Backend Patterns Reference",
+            "group": "backend-csharp",
+            "summary": "Canonical Easy.Platform backend conventions with `file:line` evidence — entities (`RootAuditedEntity`, `[ComputedEntityProperty]`, static `Expression` filters), repository pattern, CQRS command/query handlers, `PlatformValidationResult` fluent validation (never throw), DTO-owned mapping, entity event handlers for side effects (`UseCaseEvents/`), RabbitMQ message bus, and background jobs.",
+            "whenToRead": "Writing or modifying any backend code — CQRS commands/queries, entities, repositories, validation, DTOs, event handlers, message bus, migrations, or background jobs."
+        },
+        {
+            "file": "domain-entities-reference.md",
+            "title": "Domain Entities Reference",
+            "group": "backend-csharp",
+            "summary": "Evidence-cited map of the TextSnippet domain model — entity base-class hierarchy (`RootEntity`/`RootAuditedEntity`/`IRowVersionEntity`), entity catalog, relationships, aggregate boundaries, DTO mapping ownership (`PlatformEntityDto.MapToEntity()`), value objects (`PlatformValueObject<T>.Validate()`), cross-service entity map via message bus, persistence, and frontend data models.",
+            "whenToRead": "Designing or changing domain entities, value objects, aggregates, DTO mapping, or entity relationships; verifying correct base classes and mapping ownership before generating code."
+        },
+        {
+            "file": "frontend-patterns-reference.md",
+            "title": "Frontend Patterns Reference",
+            "group": "frontend",
+            "summary": "Angular 19 + Nx + NgRx ComponentStore + Material 3 conventions — `AppBase*` component base classes (never extend `Platform*` directly), `PlatformVmStore` state with `effectSimple()`/`tapResponse()`, view-model pattern, `PlatformApiService` HTTP services, DTO patterns, reactive forms, `.pipe(this.untilDestroyed())` subscription cleanup, and BEM on every template element.",
+            "whenToRead": "Creating or modifying Angular components, stores, view models, API services, forms, or templates; ensuring leak-free subscriptions and correct base-class usage."
+        },
+        {
+            "file": "scss-styling-guide.md",
+            "title": "SCSS Styling Guide",
+            "group": "styling-scss",
+            "summary": "BEM + token-driven SCSS rules — `block__element--modifier` naming (with the project's standalone `--modifier` class variant bound via `[class.--modifier]`), two-tier platform-core/`$app-*` tokens, `@use`/`@forward` (never `@import`), `flex-layout-media()` responsive mixin (never raw `@media`), mixins/functions reference, color palette, and theming. NEVER hardcode colors, pixels, font sizes, or z-index.",
+            "whenToRead": "Writing or editing any `.scss`/`.css` — applying BEM classes, using design tokens, responsive layout, or theming."
+        },
+        {
+            "file": "integration-test-reference.md",
+            "title": "Integration Test Reference",
+            "group": "testing",
+            "summary": "Two integration-test styles — DEFAULT subcutaneous CQRS through real DI (no HTTP) extending `TextSnippetIntegrationTestBase`, and HTTP-level via `WebApplicationFactory<Program>`. xUnit + FluentAssertions; ALL tests use a `[Collection]` attribute and `IntegrationTestHelper.UniqueName()` for collision-free data; assert real DB state via polling; live infra with no DB reset. Covers base classes, fixtures/factories, helpers, and running tests.",
+            "whenToRead": "Writing, reviewing, or fixing backend integration tests; choosing the correct base class/style; ensuring isolation, unique test data, and real-state assertions."
+        },
+        {
+            "file": "e2e-test-reference.md",
+            "title": "E2E Test Reference",
+            "group": "testing",
+            "summary": "Resilient Playwright E2E for the `playground-text-snippet` Angular app — Page Object Model on `BasePage`, Angular-aware waits (never `networkidle`), API-level arrange/cleanup via `ApiHelpers` in `afterEach`, `createTestTask()`/`createTestSnippet()` factories, priority tags (`@P0`–`@P3`), import `test`/`expect` from `utils/test-helpers`, and selectors only in page objects.",
+            "whenToRead": "Authoring or maintaining Playwright E2E tests, page objects, fixtures, or wait/assertion patterns for the frontend app."
+        },
+        {
+            "file": "project-structure-reference.md",
+            "title": "Project Structure Reference",
+            "group": "project-reference",
+            "summary": "Authoritative map of services, ports, directory layout, tech-stack versions, and module codes (all `file:line`-cited) — reusable framework set (`src/Platform/`) + layered example app (Api/Application/Domain/Infrastructure/Persistence) + Nx Angular frontend, orchestrated by Docker Compose. Covers service architecture, infra ports, CI/CD, and quick-start commands.",
+            "whenToRead": "Placing code in the correct project, looking up service ports/paths/module codes, tech-stack versions, or local startup commands."
+        },
+        {
+            "file": "code-review-rules.md",
+            "title": "Code Review Rules",
+            "group": "project-reference",
+            "summary": "Repo-specific DO/DON'T review rules with real `file:line` anti-patterns — validation via `PlatformValidationResult` (never throw), side effects in entity event handlers, logic in lowest layer, DTO-owned mapping, RabbitMQ for cross-service, `AppBase*` frontend base classes. Includes backend/frontend/architecture rule sets, anti-patterns, decision trees, and checklists.",
+            "whenToRead": "Reviewing a PR or self-checking changes before commit; verifying repo-specific conventions instead of generic style advice."
+        },
+        {
+            "file": "feature-spec-reference.md",
+            "title": "Feature Spec Reference",
+            "group": "project-reference",
+            "summary": "Conventions for business feature docs — 26-section template, `file:line` evidence for every test case, app-to-service mapping (`playground-text-snippet` → TextSnippet layers + `text-snippet-domain`), backend layer paths, feature-doc structure, templates, and coverage gaps. Docs live under `docs/business-features/{Module}/detailed-features/`.",
+            "whenToRead": "Creating or updating business feature documentation, or locating the backend/frontend layers and doc directory for a feature."
+        },
+        {
+            "file": "docs-index-reference.md",
+            "title": "Documentation Index Reference",
+            "group": "project-reference",
+            "summary": "Navigation map for the Easy.Platform docs (glob-verified counts) — documentation system overview, doc graph, key doc relationships, and a Doc Lookup Guide mapping tasks to the right doc. `docs/project-reference/` holds canonical AI-context docs; `docs/templates/` holds authoring templates.",
+            "whenToRead": "Finding which doc to open for a given task, or understanding the overall documentation structure and relationships."
+        },
+        {
+            "file": "lessons.md",
+            "title": "Lessons",
+            "group": "project-reference",
+            "summary": "Project-specific lessons-learned context referenced by skills and agents. Currently a template placeholder — populate with recurring failure modes and conventions as they are discovered.",
+            "whenToRead": "Checking for prior project-specific lessons before starting non-trivial work, or recording a new lesson learned."
+        }
+    ]
+}

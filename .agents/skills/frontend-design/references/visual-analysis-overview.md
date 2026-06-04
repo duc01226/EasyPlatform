@@ -60,7 +60,7 @@ python scripts/gemini_batch_process.py \
 
 **Actions**:
 
-- Use `media-processing` skill for adjustments (brightness/contrast/saturation)
+- Use media processing tooling for adjustments (brightness/contrast/saturation)
 - Consider selective regeneration of problem areas
 - May proceed with caution if time-constrained
 

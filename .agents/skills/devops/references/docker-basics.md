@@ -75,7 +75,7 @@ docker build -t myapp:1.0 .
 docker build -t myapp:dev --target build .
 
 # Build for multiple platforms
-docker buildx build --platform linux/amd64,linux/arm64 -t myapp:1.0 .
+docker buildx build --tag myapp:1.0 .
 
 # View layers
 docker image history myapp:1.0

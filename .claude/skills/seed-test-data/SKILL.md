@@ -1,6 +1,6 @@
 ---
 name: seed-test-data
-version: 2.0.0
+version: 2.1.0
 description: '[Dev Data] Use when you need to implement or enhance test data seeders that simulate QC happy-path scenarios via application-layer commands.'
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TaskCreate, Agent
 ---
@@ -16,7 +16,14 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TaskCreate, Agent
 
 ## Quick Summary
 
-**Goal:** Implement or enhance test data seeders — simulate QC happy-path scenarios via application-layer commands; NEVER direct DB writes.
+**Goal:** Implement or enhance test data seeders that create realistic, idempotent, valid test data through application-layer commands (NEVER direct DB writes) — simulating QC happy-path scenarios without corrupting domain state.
+
+**Summary:**
+
+- Seeders orchestrate the real app pipeline: invoke application-layer commands (which own validation, domain logic, and event side-effects) — never repo/DB inserts for domain entities, never duplicate command logic in the seeder.
+- Four non-negotiable gates in order: (1) environment gate as the FIRST check, (2) count-before-seed idempotency, (3) loop from `existing_count` to `target_count` (never 0), (4) scoped DI per iteration — a shared scope silently corrupts the DbContext/session.
+- Discover the project's seeder base class, env gate key, and count config key in Step 1 with `file:line` evidence; read the count multiplier from config and never hardcode it (zero → no-op).
+- Always pre-read `docs/project-reference/seed-test-data-reference.md` + project-config `Data Seeders` group, then close with a fresh zero-memory `code-reviewer` round; re-review fully only after a validated fix.
 
 **Workflow:**
 
@@ -39,7 +46,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TaskCreate, Agent
 
 ## Phase 0: Detect Seeder Task Type
 
-Before any other step, classify request:
+Before any other step, classify the request:
 
 | Task Type        | Detection                                      | Action                                         |
 | ---------------- | ---------------------------------------------- | ---------------------------------------------- |
@@ -49,7 +56,7 @@ Before any other step, classify request:
 | Unknown          | Request ambiguous                              | Ask user — NEVER assume                        |
 
 ```bash
-grep -r "{Feature}Seeder\|{Feature}SeedData\|{Feature}TestData" src/ -l
+rg "{Feature}Seeder|{Feature}SeedData|{Feature}TestData" {configured-source-roots} -l
 ```
 
 ## Universal Seed Data Rules
@@ -60,6 +67,7 @@ grep -r "{Feature}Seeder\|{Feature}SeedData\|{Feature}TestData" src/ -l
 4. **Idempotency** — Check existing count → calculate remaining → seed only difference. Running N times converges to target.
 5. **Count-Configurable** — Reads project config key (discovered Step 1). NEVER hardcode count.
 6. **Restart-Safe** — Idempotency handles restarts: existing count found → seeds only missing remainder.
+7. **Spec-Consistent (Spec-Loop Discipline — tailored)** — Seeders are orchestration, NOT business logic, so property/metamorphic generation and the MUTATION-SCORE gate are **N/A here** — do not force them. Apply the dual-feedback half: every seeded scenario MUST stay consistent with the **§5 invariants** (commands own validation; a seeder that produces state violating an invariant is a bug, not a fixture). If a seeder encodes a **domain rule** — a required precondition, a status/relationship the scenario assumes, a business default — that rule belongs in the **spec**, not silently in the seeder: feed it into BOTH the spec (the rule) AND, where it is testable, the tests — never a seeder-only fix.
 
 ## Protocol
 
@@ -68,11 +76,8 @@ grep -r "{Feature}Seeder\|{Feature}SeedData\|{Feature}TestData" src/ -l
 Search for project seeder conventions:
 
 ```bash
-# .NET
-grep -r "IDataSeeder\|ISeedDataHandler\|ApplicationDataSeeder\|CanSeedTestingData\|SeedingMinimumDummyItemsCount" src/ --include="*.cs" -l
-
-# TypeScript
-grep -r "seeder\|SeedData\|DataSeed" src/ --include="*.ts" -l
+# Search configured source roots using the repository's discovered seed-data naming conventions
+rg "{configured-seeder-interface-or-base-patterns}|seeder|SeedData|DataSeed" {configured-source-roots} -l
 ```
 
 Record with `file:line` evidence:
@@ -84,14 +89,14 @@ Record with `file:line` evidence:
 
 ### Step 1.5: Verify Dev Config Keys
 
-Confirm dev config has both env gate key and count key. If absent, add following project's dev config convention.
+Confirm dev config has both env gate key and count key. If absent, add following project's dev config convention. — why: missing keys silently disable the gate or count, producing no-op or unbounded seeding.
 
 ### Step 2: Feature Scope Analysis
 
 Identify before writing any code:
 
 1. **Feature area** — domain entity/aggregate being seeded
-2. **Application commands** — `grep -r "{Feature}*Command" src/ --include="*.cs" -l`
+2. **Application commands** — `rg "{Feature}.*Command|{configured-command-handler-patterns}" {configured-source-roots} -l`
 3. **Dependencies** — data must exist (users, orgs, prerequisite records)
 4. **Scenarios** — 3–5 realistic variations (standard, boundary, multi-actor)
 5. **Target count** — clarify: 1 scenario or N repetitions per scenario
@@ -99,7 +104,7 @@ Identify before writing any code:
 ### Step 3: Find or Create Seeder
 
 ```bash
-grep -r "{Feature}TestSeeder\|{Feature}SeedingHelper\|{Feature}TestDataSeeder" src/ -l
+rg "{Feature}TestSeeder|{Feature}SeedingHelper|{Feature}TestDataSeeder" {configured-source-roots} -l
 ```
 
 - **Exists** → enhance with new scenarios, do NOT break existing ones
@@ -183,8 +188,8 @@ Review seeder at [file:path]. Verify with file:line evidence for each:
 Report: PASS or FAIL with file:line for each finding.
 ```
 
-**Round 2:** If FAIL → fix → new fresh sub-agent. Max 3 rounds → escalate to user.
-NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with issues triggers fix → fresh sub-agent re-review.
+**Fix loop:** If FAIL → validate findings → fix validated findings → restart full review from first phase. When restarted review uses sub-agents, NEVER reuse them across rounds. If same blocker repeats across 3 full invocations with no progress, escalate to user.
+NEVER fix unvalidated findings. Do not spawn a fresh sub-agent only to re-review known findings before validation/fix.
 
 ---
 
@@ -252,16 +257,14 @@ NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -279,13 +282,13 @@ NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -302,22 +305,42 @@ NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION** `TaskCreate` — break all work into tasks BEFORE starting
-**IMPORTANT MUST ATTENTION** NEVER call repo/DB directly — use application-layer commands
-**IMPORTANT MUST ATTENTION** ALWAYS gate by environment FIRST; ALWAYS check count before seeding
-**IMPORTANT MUST ATTENTION** loop from `existing_count` to `target_count` — NEVER from 0
-**IMPORTANT MUST ATTENTION** scoped DI per iteration — shared DI scope = silent DbContext corruption
-**IMPORTANT MUST ATTENTION** fresh sub-agent re-review required ONLY after a fix cycle. Clean Round 1 ENDS the review.
+**IMPORTANT MUST ATTENTION Goal:** Implement/enhance seeders creating realistic, idempotent, valid test data through application-layer commands (NEVER direct DB writes) — simulate QC happy-path scenarios without corrupting domain state.
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** MUST ATTENTION apply critical+sequential thinking; traced proof, confidence >80%.
+- **Understand Code First:** ALWAYS search 3+ patterns and read code before writing.
+- **Evidence:** MUST ATTENTION cite `file:line` per claim; declare confidence; "insufficient evidence" valid.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**IMPORTANT MUST ATTENTION** NEVER call repo/DB directly for domain data — use application-layer commands — why: bypassing the command pipeline skips validation, domain logic, and event side-effects, producing invalid state that passes silently
+**IMPORTANT MUST ATTENTION** ALWAYS gate by environment FIRST, then ALWAYS check count before seeding — why: env gate prevents prod corruption; count gate is the idempotency guarantee
+**IMPORTANT MUST ATTENTION** loop from `existing_count` to `target_count` — NEVER from 0 — why: looping from 0 re-seeds on every restart and breaks restart-safety
+**IMPORTANT MUST ATTENTION** scoped DI per iteration — shared DI scope = silent DbContext/session corruption
+**IMPORTANT MUST ATTENTION** ALWAYS read count multiplier from the discovered config key — NEVER hardcode (zero → no-op, never unbounded loop)
+**IMPORTANT MUST ATTENTION** NEVER duplicate command logic in the seeder — seeder provides realistic inputs, commands own validation/domain/events
+**IMPORTANT MUST ATTENTION** every seeded scenario MUST stay consistent with the §5 universal invariants; if a seeder encodes a domain rule (precondition, status, default) feed it into the spec — and tests where testable — NEVER a seeder-only fix — why: a hidden rule in a seeder drifts from the spec and breaks future readers
+
+**IMPORTANT MUST ATTENTION Evidence gate:** cite `file:line` for the env gate, count gate, loop start, DI scope, and seeder registration — confidence >80% to act, <60% DO NOT recommend; "Insufficient evidence" is valid output
+**IMPORTANT MUST ATTENTION** search 3+ existing seeder patterns and READ them before writing — match the discovered base class / env-gate / count-key conventions exactly; verify the copied pattern shares the same preconditions (base class, scope, lifetime) before reuse
+**IMPORTANT MUST ATTENTION** read `docs/project-reference/seed-test-data-reference.md` + `docs/project-config.json` (`Data Seeders` group) BEFORE any seeder change — project conventions override generic defaults
+**IMPORTANT MUST ATTENTION** `TaskCreate` — break all work into tasks BEFORE starting; transition one task at a time, evidence per completed step
+**IMPORTANT MUST ATTENTION** close with a fresh zero-memory `code-reviewer` round; full re-review is required ONLY after a validated fix cycle — a clean review pass ENDS the review; NEVER fix unvalidated findings
 
 **Anti-Rationalization:**
 
-| Evasion                                      | Rebuttal                                                     |
-| -------------------------------------------- | ------------------------------------------------------------ |
-| "Simple seeder, skip review loop"            | Idempotency bugs are silent. Run Round 1 always.             |
-| "Already know the base class"                | Show `file:line`. No proof = no knowledge.                   |
-| "Environment gate is obvious"                | Verify it's FIRST check with `file:line` evidence.           |
-| "Just hardcode count for now"                | NEVER — config key required. Find it in Step 1.              |
-| "No graph.db, skip trace"                    | Use grep-only trace. Still run 3+ pattern search.            |
-| "Existing scenarios look fine, skip enhance" | Read all scenarios; enhancement may conflict — verify first. |
+| Evasion                                      | Rebuttal                                                              |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| "Simple seeder, skip review loop"            | Idempotency bugs are silent. Run Round 1 always.                      |
+| "Already know the base class"                | Show `file:line`. No proof = no knowledge.                            |
+| "Environment gate is obvious"                | Verify it's FIRST check with `file:line` evidence.                    |
+| "Just hardcode count for now"                | NEVER — config key required. Find it in Step 1.                       |
+| "Seeder can validate this quickly"           | NEVER duplicate logic — command owns validation; seeder feeds inputs. |
+| "Skip the reference docs, I know seeders"    | Project conventions override generic patterns. Read them first.       |
+| "No graph.db, skip trace"                    | Use grep-only trace. Still run 3+ pattern search.                     |
+| "Existing scenarios look fine, skip enhance" | Read all scenarios; enhancement may conflict — verify first.          |
 
 **[TASK-PLANNING]** Before acting, break task into small todo tasks using `TaskCreate`.
+
+**IMPORTANT MUST ATTENTION** NEVER direct repo/DB writes for domain data · ALWAYS env-gate FIRST then count-gate · `file:line` evidence for every gate (confidence >80%).

@@ -5,13 +5,13 @@ Replicate a design including animations/interactions from a provided video.
 ## Prerequisites
 
 - Activate `ui-ux-pro-max` skill first
-- Have `ai-multimodal` skill ready for video analysis
+- Have `visual analysis tooling` skill ready for video analysis
 
 ## Workflow Steps
 
 ### 1. Analyze Video Details
 
-Use `ai-multimodal` skill to describe:
+Use `visual analysis tooling` skill to describe:
 
 - Every visible element and its properties
 - All interactions and user flows
@@ -56,12 +56,12 @@ Use `animejs.md` reference for animation patterns.
 
 ### 5. Generate Assets
 
-Use `ai-multimodal` skill:
+Use `visual analysis tooling` skill:
 
 - Generate static assets
 - Create animated sprites if needed
 - Verify quality matches video
-- Use `media-processing` for processing
+- Use media processing tooling for processing
 
 ### 6. Verify & Report
 

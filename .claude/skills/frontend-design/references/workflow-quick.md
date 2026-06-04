@@ -35,11 +35,11 @@ Use `ui-ux-designer` subagent directly:
 
 ### 3. Generate Assets
 
-Use `ai-multimodal` skill:
+Use `visual analysis tooling` skill:
 
 - Generate required visuals
 - Verify quality quickly
-- Use `media-processing` for adjustments
+- Use media processing tooling for adjustments
 
 ### 4. Report & Approve
 

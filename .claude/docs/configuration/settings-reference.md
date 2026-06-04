@@ -160,6 +160,8 @@ Register hooks for Claude Code lifecycle events.
 | `SubagentStart`    | `*`                                     | Subagent spawning         |
 | `Notification`     | (none)                                  | Waiting for user input    |
 
+> Claude Code supports these events for hook registration. This framework registers no `SubagentStart` hook (sub-agent context is static in `agents/*.md`); it is listed here as an available event only.
+
 ### Tool Matchers
 
 ```json

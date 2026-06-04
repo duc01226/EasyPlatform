@@ -205,7 +205,7 @@ def batch_for(rel_path, sync_tag):
         return "review"
     if any(k in name for k in ("scan", "graph", "skill-", "sync", "codex", "infra", "devops", "docker", "k8s", "gcloud", "cloudflare", "mcp", "git")):
         return "scan"
-    if any(k in name for k in ("api-design", "backend", "frontend", "code", "cook", "plan", "fix", "debug", "refactor", "migration", "database", "implement", "arch")):
+    if any(k in name for k in ("backend", "frontend", "code", "cook", "plan", "fix", "debug", "refactor", "migration", "database", "implement", "arch")):
         return "core"
     return "product"  # catch-all (Phase 9)
 

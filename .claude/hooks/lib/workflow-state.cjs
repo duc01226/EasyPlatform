@@ -279,27 +279,15 @@ function getRecoveryContext(sessionId) {
 }
 
 /**
- * Map a skill name to a workflow step ID using the workflow config's commandMapping.
- * @param {string} skillName - Name of the executed skill
- * @param {Object} config - Workflow config (must have commandMapping)
- * @returns {string|null} Step ID or null
+ * Map a skill name to a workflow step ID. Step IDs are identical to skill
+ * names, so this is identity: strip a leading slash and normalize
+ * case/whitespace.
+ * @param {string} skillName - Name of the executed skill (with or without leading slash)
+ * @returns {string|null} Step ID, or null for empty input
  */
-function mapSkillToStepId(skillName, config) {
-    if (!config?.commandMapping) return null;
-
-    const normalizedSkill = skillName.toLowerCase().trim();
-
-    for (const [stepId, mapping] of Object.entries(config.commandMapping)) {
-        const claudeCmd = mapping.claude || `/${stepId}`;
-        const cmdParts = claudeCmd.replace(/^\//, '').split(/[/:]/);
-        const cmdSkill = cmdParts[0].toLowerCase();
-
-        if (normalizedSkill === cmdSkill || normalizedSkill === stepId.toLowerCase()) {
-            return stepId;
-        }
-    }
-
-    return null;
+function mapSkillToStepId(skillName) {
+    if (!skillName) return null;
+    return skillName.replace(/^\//, '').toLowerCase().trim();
 }
 
 module.exports = {

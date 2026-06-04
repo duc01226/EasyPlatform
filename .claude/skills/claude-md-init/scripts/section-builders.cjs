@@ -9,13 +9,24 @@ const path = require('path');
  * Each function returns a string (markdown content) or null (skip section).
  */
 
+// A runtime backing-service (any datastore/cache/broker, e.g. a DB or message
+// queue) is modeled as a kind:"infrastructure" module carrying a meta.port —
+// exactly the set buildInfraPorts renders in its own ports table. These are
+// runtime dependencies, NOT source-code modules, so they must NOT pollute the
+// "Apps/Services" list (buildTldr) or the "Key File Locations" tree
+// (buildKeyLocations). Infrastructure CODE modules (an orchestrator/IaC project)
+// carry no meta.port and are kept — they ARE real source locations.
+function isInfraBackingService(mod) {
+    return mod?.kind === 'infrastructure' && mod?.meta?.port != null;
+}
+
 function buildTldr(config) {
     const name = config.project?.name || 'Project';
     const desc = config.project?.description || '';
     const langs = config.project?.languages?.join(', ') || '';
     const framework = config.framework?.name || '';
     const modules = config.modules || [];
-    const apps = modules.map(m => m.name).join(', ');
+    const apps = modules.filter(m => !isInfraBackingService(m)).map(m => m.name).join(', ');
 
     const techParts = [langs, framework].filter(Boolean).join(' + ');
     const lines = [
@@ -68,7 +79,7 @@ function buildDecisionQuickRef(config) {
 }
 
 function buildKeyLocations(config) {
-    const modules = config.modules || [];
+    const modules = (config.modules || []).filter(m => !isInfraBackingService(m));
     if (modules.length === 0) return null;
 
     const lines = modules.map(m => {
@@ -81,21 +92,32 @@ function buildKeyLocations(config) {
 
 function buildDevCommands(config) {
     const commands = config.testing?.commands;
-    if (!commands || Object.keys(commands).length === 0) return null;
-
     const lines = [];
-    for (const [key, cmd] of Object.entries(commands)) {
-        if (typeof cmd === 'string') {
-            lines.push(`${cmd.padEnd(45)} # ${key}`);
-        } else if (typeof cmd === 'object') {
-            for (const [subkey, subcmd] of Object.entries(cmd)) {
-                lines.push(`${subcmd.padEnd(45)} # ${key}: ${subkey}`);
+    if (commands && typeof commands === 'object') {
+        for (const [key, cmd] of Object.entries(commands)) {
+            if (typeof cmd === 'string') {
+                lines.push(`${cmd.padEnd(45)} # ${key}`);
+            } else if (typeof cmd === 'object') {
+                for (const [subkey, subcmd] of Object.entries(cmd)) {
+                    lines.push(`${subcmd.padEnd(45)} # ${key}: ${subkey}`);
+                }
             }
         }
     }
 
-    if (lines.length === 0) return null;
-    return '```bash\n' + lines.join('\n') + '\n```';
+    // Optional freetext caveat rendered below the command block (e.g. platform-specific
+    // invocation rules). Config-sourced so it survives every regeneration instead of
+    // being a hand-edit the next `--mode update` silently wipes. Rendered independently of
+    // the command block so a note configured WITHOUT commands is not silently dropped.
+    const note = config.testing?.commandsNote;
+    const hasNote = typeof note === 'string' && note.trim().length > 0;
+
+    if (lines.length === 0 && !hasNote) return null;
+
+    const parts = [];
+    if (lines.length > 0) parts.push('```bash\n' + lines.join('\n') + '\n```');
+    if (hasNote) parts.push(note.trim());
+    return parts.join('\n\n');
 }
 
 function buildInfraPorts(config) {
@@ -139,15 +161,33 @@ function buildIntegrationTesting(config) {
 }
 
 function buildE2eTesting(config) {
-    const doc = config.framework?.e2eTestDoc;
-    // Also check testing config
+    const e2e = config.e2eTesting || {};
+    const doc = config.framework?.e2eTestDoc || e2e.guideDoc;
     const frameworks = config.testing?.frameworks || [];
-    const hasE2e = frameworks.some(f => f.toLowerCase().includes('selenium') || f.toLowerCase().includes('playwright') || f.toLowerCase().includes('cypress'));
+    const hasE2e = frameworks.some(f => /selenium|playwright|cypress|specflow/i.test(f)) || !!e2e.framework;
 
     if (!doc && !hasE2e) return null;
-    if (doc) {
-        return `See [${path.basename(doc)}](${doc}) for E2E test patterns, page objects, and configuration.`;
-    }
+
+    // Compose a stack descriptor from structured e2eTesting.architecture so the
+    // generated line is at least as rich as a hand-authored one (avoids the
+    // info-loss that otherwise forces a section to stay hand-authored).
+    const PRETTY = {
+        selenium: 'Selenium WebDriver',
+        playwright: 'Playwright',
+        cypress: 'Cypress',
+        specflow: 'SpecFlow BDD',
+        'page-object-model': 'Page Object Model'
+    };
+    const arch = e2e.architecture || {};
+    const stack = [arch.webDriverType, arch.bddFramework, arch.pattern]
+        .map(k => PRETTY[k]).filter(Boolean).join(' + ');
+    const docLink = doc
+        ? `Full guide: [${path.basename(doc)}](${doc}) for E2E test patterns, page objects, and configuration.`
+        : '';
+
+    if (stack && docLink) return `${stack}. ${docLink}`;
+    if (stack) return `E2E stack: ${stack}.`;
+    if (docLink) return docLink;
     return `E2E testing framework(s): ${frameworks.join(', ')}`;
 }
 
@@ -164,7 +204,7 @@ function buildSkillActivation(config) {
         });
 
     if (rows.length === 0) return null;
-    return `These skills auto-activate before file edits in their path patterns:\n\n| Path Pattern | Skill / Auto-Context | Pre-Read Files |\n|---|---|---|\n${rows.join('\n')}`;
+    return `When editing files matching these path patterns, pre-read the listed context first:\n\n| Path Pattern | Skill / Auto-Context | Pre-Read Files |\n|---|---|---|\n${rows.join('\n')}`;
 }
 
 function buildDocIndex(config, projectDir) {
@@ -189,14 +229,19 @@ function buildDocIndex(config, projectDir) {
 
 function buildDocLookup(config) {
     const modules = config.modules || [];
-    if (modules.length === 0) return null;
+    const featureRoot = 'docs/specs';
 
     const rows = modules
         .filter(m => m.meta?.domain)
         .map(m => {
-            const docPath = `docs/business-features/${m.name}/`;
+            const docPath = `${featureRoot}/${m.name}/`;
             return `| ${m.meta.domain} | \`${docPath}\` |`;
         });
+
+    rows.push(`| Feature specs, capability behavior, business rules, test cases | \`${featureRoot}/\` + \`docs/project-reference/feature-spec-reference.md\` |`);
+    rows.push('| Spec paths, TC format, canonical vs derived spec artifacts | `docs/project-reference/spec-system-reference.md` |');
+    rows.push('| Spec quality, AI-implementability, tech-agnostic prose | `docs/project-reference/spec-principles.md` |');
+    rows.push('| Behavior or public contract changes, spec-test-code sync | `docs/project-reference/workflow-spec-test-code-cycle-reference.md` |');
 
     // Add framework docs
     if (config.framework?.backendPatternsDoc) {
@@ -206,7 +251,6 @@ function buildDocLookup(config) {
         rows.push(`| Frontend patterns, components, stores | \`${config.framework.frontendPatternsDoc}\` |`);
     }
 
-    if (rows.length === 0) return null;
     return `| If user prompt mentions... | Read first |\n|---|---|\n${rows.join('\n')}`;
 }
 

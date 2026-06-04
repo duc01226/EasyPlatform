@@ -1,8 +1,7 @@
 {
     "settings": {
         "enabled": true,
-        "showDetection": true,
-        "quickPrefix": "quick:"
+        "showDetection": true
     },
     "workflows": [
         {
@@ -11,7 +10,7 @@
             "priority": 1,
             "triggerPatterns": ["\\bimplement\\b", "\\badd\\b.*feature", "\\bcreate\\b.*new", "\\bbuild\\b"],
             "excludePatterns": ["\\bexplain\\b", "\\bhow\\s+does\\b"],
-            "sequence": ["/plan", "/cook", "/test"]
+            "sequence": ["/plan", "/feature-implement", "/test"]
         },
         {
             "id": "bugfix",
@@ -27,7 +26,7 @@
             "priority": 3,
             "triggerPatterns": ["\\brefactor\\b", "\\brestructure\\b", "\\bclean\\s*up\\b"],
             "excludePatterns": [],
-            "sequence": ["/plan", "/code", "/test", "/code-review"]
+            "sequence": ["/plan", "/plan-execute", "/test", "/code-review"]
         },
         {
             "id": "investigation",
@@ -37,15 +36,5 @@
             "excludePatterns": [],
             "sequence": ["/scout", "/investigate"]
         }
-    ],
-    "commandMapping": {
-        "/plan": ["plan"],
-        "/cook": ["cook", "code", "implement"],
-        "/test": ["test"],
-        "/scout": ["scout", "investigate"],
-        "/debug-investigate": ["debug"],
-        "/fix": ["fix"],
-        "/code": ["code"],
-        "/code-review": ["code-review", "review"]
-    }
+    ]
 }

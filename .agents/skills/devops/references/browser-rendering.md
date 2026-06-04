@@ -8,7 +8,7 @@ Headless browser automation with Puppeteer/Playwright on Cloudflare Workers.
 
 ```toml
 name = "browser-worker"
-main = "src/index.ts"
+main = "{source-dir}/index.ts"
 compatibility_date = "2024-01-01"
 
 browser = { binding = "MYBROWSER" }

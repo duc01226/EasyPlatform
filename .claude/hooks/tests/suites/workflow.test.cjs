@@ -1,667 +1,19 @@
 /**
- * Workflow Hooks Test Suite
+ * Workflow Config Schema Guards Test Suite
  *
  * Tests for:
- * - skill-enforcement.cjs: Blocks implementation skills without todos (Skill branch)
- * - todo-tracker.cjs: Records TaskCreate calls
- * - workflow-router.cjs: Injects workflow catalog on qualifying prompts
- * - prompt-context-assembler.cjs: Injects dev rules on prompt submit
+ * - workflows.json schema guards: dead-module removal + framework-rename regression
+ *
+ * (The skill-enforcement.cjs + todo-tracker.cjs hook tests were removed when those
+ *  hooks were deleted — workflow progression is now model-driven, not hook-enforced.)
  */
 
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
-const { runHook, getHookPath, createPreToolUseInput, createPostToolUseInput, createUserPromptInput } = require('../lib/hook-runner.cjs');
-const { assertEqual, assertContains, assertBlocked, assertAllowed, assertNotContains, assertTrue } = require('../lib/assertions.cjs');
-const { createTempDir, cleanupTempDir, setupTodoState, readStateFile } = require('../lib/test-utils.cjs');
+const { assertEqual, assertContains, assertNotContains, assertTrue } = require('../lib/assertions.cjs');
 
 // Project root (4 levels up from suites/)
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
-
-// Hook paths
-const TODO_ENFORCEMENT = getHookPath('skill-enforcement.cjs');
-const TODO_TRACKER = getHookPath('todo-tracker.cjs');
-const WORKFLOW_ROUTER = getHookPath('workflow-router.cjs');
-const PROMPT_CONTEXT_ASSEMBLER = getHookPath('prompt-context-assembler.cjs');
-
-// Helper to create Skill tool input
-function createSkillInput(skill, args = '') {
-    return createPreToolUseInput('Skill', { skill, args });
-}
-
-/**
- * Write todo state to the correct /tmp/ck/todo/ path for a given session ID.
- * skill-enforcement reads from /tmp/ck/todo/todo-state-{sessionId}.json via hasTodos().
- * @param {string} sessionId - Session ID used as CK_SESSION_ID env var
- * @param {object} state - Todo state to write
- * @returns {string} Path to written file
- */
-function setupCkTodoState(sessionId, state) {
-    const todoDir = path.join(os.tmpdir(), 'ck', 'todo');
-    fs.mkdirSync(todoDir, { recursive: true });
-    const stateFile = path.join(todoDir, `todo-state-${sessionId}.json`);
-    fs.writeFileSync(
-        stateFile,
-        JSON.stringify(
-            {
-                hasTodos: false,
-                pendingCount: 0,
-                completedCount: 0,
-                inProgressCount: 0,
-                lastTodos: [],
-                bypasses: [],
-                metadata: {},
-                ...state
-            },
-            null,
-            2
-        )
-    );
-    return stateFile;
-}
-
-/**
- * Cleanup a todo state file for a test session.
- * @param {string} sessionId - Session ID to clean up
- */
-function cleanupCkTodoState(sessionId) {
-    try {
-        const stateFile = path.join(os.tmpdir(), 'ck', 'todo', `todo-state-${sessionId}.json`);
-        if (fs.existsSync(stateFile)) fs.unlinkSync(stateFile);
-    } catch (_) {
-        /* ignore */
-    }
-}
-
-/**
- * Read todo state from the /tmp/ck/todo/ path for a given session ID.
- * todo-tracker.cjs writes to this path — use this instead of readStateFile().
- * @param {string} sessionId - Session ID to read state for
- * @returns {object|null} Parsed state or null if not found
- */
-function readCkTodoState(sessionId) {
-    const stateFile = path.join(os.tmpdir(), 'ck', 'todo', `todo-state-${sessionId}.json`);
-    if (!fs.existsSync(stateFile)) return null;
-    try {
-        return JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
-    } catch (_) {
-        return null;
-    }
-}
-
-// ============================================================================
-// skill-enforcement.cjs Tests
-// ============================================================================
-
-const todoEnforcementTests = [
-    // ALLOW - Meta skills always allowed (no workflow or todos needed)
-    {
-        name: '[skill-enforcement] allows /watzup (meta skill) without todos',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createSkillInput('watzup');
-                const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should allow watzup (meta skill)');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] allows /help (meta skill) without todos',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createSkillInput('help');
-                const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should allow help (meta skill)');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] allows /compact (meta skill) without todos',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createSkillInput('compact');
-                const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should allow compact (meta skill)');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-
-    // ALLOW - Research skills WITH todos (todos bypass workflow requirement)
-    {
-        name: '[skill-enforcement] allows /scout with todos',
-        fn: async () => {
-            const sessionId = `test-scout-${Date.now()}`;
-            try {
-                setupCkTodoState(sessionId, { hasTodos: true, pendingCount: 1 });
-                const input = createSkillInput('scout');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertAllowed(result.code, 'Should allow scout with todos');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] allows /plan with todos',
-        fn: async () => {
-            const sessionId = `test-plan-${Date.now()}`;
-            try {
-                setupCkTodoState(sessionId, { hasTodos: true, pendingCount: 2 });
-                const input = createSkillInput('plan');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertAllowed(result.code, 'Should allow plan with todos');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] allows /investigate with todos',
-        fn: async () => {
-            const sessionId = `test-investigate-${Date.now()}`;
-            try {
-                setupCkTodoState(sessionId, { hasTodos: true, pendingCount: 1 });
-                const input = createSkillInput('investigate');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertAllowed(result.code, 'Should allow investigate with todos');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] allows /explore with todos',
-        fn: async () => {
-            const sessionId = `test-explore-${Date.now()}`;
-            try {
-                setupCkTodoState(sessionId, { hasTodos: true, pendingCount: 1 });
-                const input = createSkillInput('explore');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertAllowed(result.code, 'Should allow explore with todos');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-
-    // BLOCK - All non-meta skills without workflow AND without todos
-    {
-        name: '[skill-enforcement] blocks /scout without workflow or todos',
-        fn: async () => {
-            const sessionId = `test-scout-nostate-${Date.now()}`;
-            try {
-                // No todo state + no workflow state = blocked
-                const input = createSkillInput('scout');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertTrue(result.code === 1, 'Should block scout without workflow or todos (exit 1)');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] blocks /cook without workflow or todos',
-        fn: async () => {
-            const sessionId = `test-cook-nostate-${Date.now()}`;
-            try {
-                const input = createSkillInput('cook');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertTrue(result.code === 1, 'Should block cook without workflow or todos (exit 1)');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] blocks /fix without workflow or todos',
-        fn: async () => {
-            const sessionId = `test-fix-nostate-${Date.now()}`;
-            try {
-                const input = createSkillInput('fix');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertTrue(result.code === 1, 'Should block fix without workflow or todos (exit 1)');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] blocks /code without workflow or todos',
-        fn: async () => {
-            const sessionId = `test-code-nostate-${Date.now()}`;
-            try {
-                const input = createSkillInput('code');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertTrue(result.code === 1, 'Should block code without workflow or todos (exit 1)');
-                const output = result.stdout + result.stderr;
-                assertContains(output, 'Workflow Detection Required', 'Should show workflow required message');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-
-    // ALLOW - Implementation skills WITH todos
-    {
-        name: '[skill-enforcement] allows /cook with todos',
-        fn: async () => {
-            const sessionId = `test-cook-todos-${Date.now()}`;
-            try {
-                setupCkTodoState(sessionId, {
-                    hasTodos: true,
-                    pendingCount: 2,
-                    inProgressCount: 1,
-                    completedCount: 0
-                });
-                const input = createSkillInput('cook');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertAllowed(result.code, 'Should allow cook with todos');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] allows /fix with todos',
-        fn: async () => {
-            const sessionId = `test-fix-todos-${Date.now()}`;
-            try {
-                setupCkTodoState(sessionId, {
-                    hasTodos: true,
-                    pendingCount: 0,
-                    inProgressCount: 1,
-                    completedCount: 0
-                });
-                const input = createSkillInput('fix');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                assertAllowed(result.code, 'Should allow fix with todos');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] allows /cook with all-completed todos',
-        fn: async () => {
-            const sessionId = `test-cook-completed-${Date.now()}`;
-            try {
-                setupCkTodoState(sessionId, {
-                    hasTodos: true,
-                    pendingCount: 0,
-                    inProgressCount: 0,
-                    completedCount: 2
-                });
-                const input = createSkillInput('cook');
-                const result = await runHook(TODO_ENFORCEMENT, input, { env: { CK_SESSION_ID: sessionId } });
-                // hasTodos = true, so hook allows even if all completed
-                assertAllowed(result.code, 'Should allow cook when hasTodos=true');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-
-    // BYPASS - CK_QUICK_MODE env var
-    {
-        name: '[skill-enforcement] bypasses with CK_QUICK_MODE=true',
-        fn: async () => {
-            const sessionId = `test-quick-${Date.now()}`;
-            try {
-                const input = createSkillInput('cook');
-                const result = await runHook(TODO_ENFORCEMENT, input, {
-                    env: { CK_SESSION_ID: sessionId, CK_QUICK_MODE: 'true' }
-                });
-                assertAllowed(result.code, 'Should bypass with CK_QUICK_MODE=true');
-            } finally {
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-
-    // IGNORE - Non-Skill tools
-    {
-        name: '[skill-enforcement] ignores Read tool',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Read', { file_path: 'test.ts' });
-                const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should ignore Read');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] ignores Bash tool',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Bash', { command: 'ls' });
-                const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should ignore Bash');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[skill-enforcement] ignores Edit tool',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPreToolUseInput('Edit', { file_path: 'test.ts' });
-                const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should ignore Edit');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    }
-];
-
-// ============================================================================
-// todo-tracker.cjs Tests
-// ============================================================================
-
-const todoTrackerTests = [
-    {
-        name: '[todo-tracker] records todos on TaskCreate',
-        fn: async () => {
-            const sessionId = `test-tracker-create-${Date.now()}`;
-            const tmpDir = createTempDir();
-            try {
-                const input = createPostToolUseInput('TaskCreate', {
-                    subject: 'Task 1',
-                    description: 'Task description',
-                    activeForm: 'Creating task'
-                });
-                const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir, env: { CK_SESSION_ID: sessionId } });
-                assertAllowed(result.code, 'Should not block');
-
-                const state = readCkTodoState(sessionId);
-                assertTrue(state !== null, 'State file should exist');
-                assertTrue(state.hasTodos, 'Should have todos');
-                assertEqual(state.pendingCount, 1, 'Should have 1 pending task');
-            } finally {
-                cleanupTempDir(tmpDir);
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[todo-tracker] counts statuses correctly',
-        fn: async () => {
-            const sessionId = `test-tracker-counts-${Date.now()}`;
-            const tmpDir = createTempDir();
-            try {
-                const input = createPostToolUseInput('TodoWrite', {
-                    todos: [
-                        { content: 'Task 1', status: 'pending' },
-                        { content: 'Task 2', status: 'pending' },
-                        { content: 'Task 3', status: 'in_progress' },
-                        { content: 'Task 4', status: 'completed' },
-                        { content: 'Task 5', status: 'completed' }
-                    ]
-                });
-                const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir, env: { CK_SESSION_ID: sessionId } });
-                assertAllowed(result.code);
-
-                const state = readCkTodoState(sessionId);
-                assertEqual(state.pendingCount, 2, 'Should have 2 pending');
-                assertEqual(state.inProgressCount, 1, 'Should have 1 in_progress');
-                assertEqual(state.completedCount, 2, 'Should have 2 completed');
-            } finally {
-                cleanupTempDir(tmpDir);
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    },
-    {
-        name: '[todo-tracker] ignores other tools',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPostToolUseInput('Edit', { file_path: 'test.ts' });
-                const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                const state = readStateFile(tmpDir, '.todo-state.json');
-                assertEqual(state, null, 'Should not create state for Edit');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[todo-tracker] handles empty todos array',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createPostToolUseInput('TodoWrite', { todos: [] });
-                const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir });
-                assertAllowed(result.code);
-
-                const state = readStateFile(tmpDir, '.todo-state.json');
-                assertTrue(state === null || !state.hasTodos, 'Should not have todos');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[todo-tracker] updates existing state',
-        fn: async () => {
-            const sessionId = `test-tracker-update-${Date.now()}`;
-            const tmpDir = createTempDir();
-            try {
-                // First write
-                const input1 = createPostToolUseInput('TodoWrite', {
-                    todos: [{ content: 'Task 1', status: 'pending' }]
-                });
-                await runHook(TODO_TRACKER, input1, { cwd: tmpDir, env: { CK_SESSION_ID: sessionId } });
-
-                // Second write with more todos
-                const input2 = createPostToolUseInput('TodoWrite', {
-                    todos: [
-                        { content: 'Task 1', status: 'completed' },
-                        { content: 'Task 2', status: 'pending' }
-                    ]
-                });
-                await runHook(TODO_TRACKER, input2, { cwd: tmpDir, env: { CK_SESSION_ID: sessionId } });
-
-                const state = readCkTodoState(sessionId);
-                assertTrue(state !== null, 'State file should exist after second write');
-                assertEqual(state.pendingCount, 1, 'Should have 1 pending');
-                assertEqual(state.completedCount, 1, 'Should have 1 completed');
-            } finally {
-                cleanupTempDir(tmpDir);
-                cleanupCkTodoState(sessionId);
-            }
-        }
-    }
-];
-
-// ============================================================================
-// workflow-router.cjs Tests
-// ============================================================================
-
-const workflowRouterTests = [
-    {
-        name: '[workflow-router] injects catalog on qualifying prompt',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('fix this bug in the login form');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                const output = result.stdout;
-                assertContains(output, 'Workflow Catalog', 'Should inject workflow catalog');
-                assertContains(output, 'Workflow Detection Instructions', 'Should include detection instructions');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[workflow-router] catalog contains workflow entries with descriptions',
-        fn: async () => {
-            const input = createUserPromptInput('implement a dark mode toggle');
-            const result = await runHook(WORKFLOW_ROUTER, input, { cwd: PROJECT_ROOT });
-            assertAllowed(result.code, 'Should not block');
-            const output = result.stdout;
-            // Real workflows.json: 'feature' (index 9) and 'bugfix' (index 2) are both in part 1
-            assertContains(output, 'Feature Implementation', 'Should list feature workflow');
-            assertContains(output, 'Bug Fix', 'Should list bugfix workflow');
-            assertContains(output, 'Use:', 'Should include whenToUse description');
-            assertContains(output, 'Not for:', 'Should include whenNotToUse description');
-        }
-    },
-    {
-        name: '[workflow-router] catalog contains step sequences',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('document the API changes for the team');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                const output = result.stdout;
-                assertContains(output, 'Steps:', 'Should include sequence steps');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[workflow-router] injects catalog even for short prompts',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('yes');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                // Short-prompt filtering was removed — catalog always injected for non-empty prompts
-                assertContains(result.stdout, 'Workflow Catalog', 'Should inject catalog even for short prompts');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[workflow-router] injects catalog for explicit commands',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('/plan implement dark mode');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                // Slash-command filtering was removed — catalog always injected so user can switch workflows
-                assertContains(result.stdout, 'Workflow Catalog', 'Should inject catalog for explicit commands');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[workflow-router] handles questions gracefully',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('what is the status of the build?');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block questions');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    }
-];
-
-// ============================================================================
-// workflow-router.cjs Catalog Structure Tests
-// ============================================================================
-
-const catalogStructureTests = [
-    {
-        name: '[workflow-router] catalog includes workflow-start activation instruction',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('fix this bug in the login form');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                const output = result.stdout;
-                assertContains(output, 'workflow-start', 'Should reference /workflow-start activation');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[workflow-router] catalog includes TaskCreate enforcement',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('create feature documentation for the recruitment module');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                const output = result.stdout;
-                assertContains(output, 'TaskCreate', 'Should include TaskCreate enforcement');
-                assertContains(output, 'MANDATORY', 'Should mark TaskCreate as mandatory');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[workflow-router] catalog shows confirm marker for confirmFirst workflows',
-        fn: async () => {
-            const input = createUserPromptInput('how does the authentication system work?');
-            const result = await runHook(WORKFLOW_ROUTER, input, { cwd: PROJECT_ROOT });
-            assertAllowed(result.code, 'Should not block');
-            const output = result.stdout;
-            // big-feature has confirmFirst: true and is at index 1 (part 1) in real workflows.json
-            assertContains(output, 'Confirm', 'Should show confirm marker for confirmFirst workflows');
-        }
-    },
-    {
-        name: '[workflow-router] quick: prefix adds quick mode notice',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('quick: implement a new feature');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                const output = result.stdout;
-                assertContains(output, 'Quick mode', 'Should include quick mode notice');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    },
-    {
-        name: '[workflow-router] explicit command skips catalog injection',
-        fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('/some-explicit-command');
-                const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Explicit commands should not block');
-            } finally {
-                cleanupTempDir(tmpDir);
-            }
-        }
-    }
-];
 
 // ============================================================================
 // Dead Module Removal Verification Tests
@@ -758,64 +110,140 @@ const deadModuleVerificationTests = [
         }
     },
     {
-        name: '[dead-module-removal] all workflows have whenNotToUse field',
-        fn: async () => {
-            const fs = require('fs');
-            const configPath = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
-            const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            const missing = Object.entries(data.workflows).filter(([, w]) => !w.whenNotToUse);
-            assertTrue(missing.length === 0, `All workflows should have whenNotToUse, missing: ${missing.map(([id]) => id).join(', ')}`);
-        }
-    },
-    {
-        name: '[review-guidance] review workflow injectContext includes multilingual UI sync check',
-        fn: async () => {
-            const configPath = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
-            const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            const text = data.workflows?.review?.preActions?.injectContext || '';
-            assertContains(text, 'MULTILINGUAL UI SYNC CHECK', 'review workflow should include multilingual UI sync guidance');
-        }
-    },
-    {
         name: '[review-guidance] review-changes workflow injectContext includes multilingual UI sync check',
         fn: async () => {
             const configPath = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
             const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            const text = data.workflows?.['review-changes']?.preActions?.injectContext || '';
+            const text = data.workflows?.['workflow-review-changes']?.preActions?.injectContext || '';
             assertContains(text, 'MULTILINGUAL UI SYNC CHECK', 'review-changes workflow should include multilingual UI sync guidance');
         }
     }
 ];
 
+// prompt-context-assembler.cjs and workflow-router.cjs were both removed in the
+// inject-hook removal (Claude/Codex skill parity) — their prompt-injection / catalog
+// smoke tests were dropped with them. The workflow catalog is now static in CLAUDE.md
+// `## Workflow & Skills Catalog`; no UserPromptSubmit hook remains in this suite.
+
 // ============================================================================
-// prompt-context-assembler.cjs Tests
+// Framework Rename Regression Guards
+//   cook → feature-implement, code → plan-execute,
+//   workflow-build-specs → workflow-code-to-spec,
+//   workflow-product-discovery → workflow-idea-to-spec
+//
+// Ports Guard A from the deleted orphan .claude/tests/workflow-routing-test.cjs:
+//   - Guard A (orphan Section 3): every workflow sequence step resolves to a
+//     real skill dir (steps are invoked as /<step>).
+// Plus the rename-fix workflow-id-set integrity lock (F-5/R-1).
+// (The former Guard B + getStepDescription guard were dropped with
+//  workflow-router.cjs — buildWorkflowCatalog/getStepDescription no longer exist.)
 // ============================================================================
 
-const devRulesReminderTests = [
+const WORKFLOW_CONFIG_PATH = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
+
+// Canonical current workflow-id set — a deliberate rename-lock. Update this list
+// only when a workflow is intentionally added or removed (same discipline as the
+// count-drift inventory guard, which owns doc-count sync but not id-set integrity).
+const EXPECTED_WORKFLOW_IDS = [
+    'workflow-big-feature',
+    'workflow-bugfix',
+    'workflow-e2e',
+    'workflow-feature',
+    'workflow-feature-spec',
+    'workflow-greenfield-init',
+    'workflow-idea-to-pbi',
+    'workflow-idea-to-spec',
+    'workflow-refactor',
+    'workflow-research',
+    'workflow-review-changes',
+    'workflow-code-to-spec',
+    'workflow-spec-to-pbi',
+    'workflow-spec-sync',
+    'workflow-visualize',
+    'workflow-seed-test-data',
+    'workflow-write-integration-test'
+];
+
+// Ids removed by the rename — must never reappear as workflow keys.
+const REMOVED_WORKFLOW_IDS = ['workflow-build-specs', 'workflow-product-discovery'];
+// Step/skill ids renamed away — must never reappear as a sequence step.
+// Checked by EXACT array-element match (NOT substring) so legitimate compound
+// ids (code-review, code-simplifier, code-to-spec) are never false-flagged.
+const REMOVED_STEP_IDS = ['cook', 'code'];
+
+function loadWorkflowConfig() {
+    return JSON.parse(fs.readFileSync(WORKFLOW_CONFIG_PATH, 'utf8'));
+}
+
+// Reusable detector — run against the real config (expect zero hits) AND a
+// mutated in-memory fixture (expect a hit) to prove the guard is not vacuous.
+function findRemovedIds(config) {
+    const ids = Object.keys(config.workflows || {});
+    const hits = [];
+    for (const removed of REMOVED_WORKFLOW_IDS) {
+        if (ids.includes(removed)) hits.push(`workflow-id:${removed}`);
+    }
+    for (const [wfId, wf] of Object.entries(config.workflows || {})) {
+        for (const step of wf.sequence || []) {
+            if (REMOVED_STEP_IDS.includes(step)) hits.push(`${wfId}.sequence:${step}`);
+        }
+    }
+    return hits;
+}
+
+const renameFixGuardTests = [
     {
-        name: '[prompt-context-assembler] injects context on prompt',
+        // TC-RENAMEFIX-030 — F-5 / R-1: workflow-id set integrity + removed-id absence
+        name: '[rename-guard] TC-RENAMEFIX-030 catalog holds exactly the current workflow-id set, no removed ids',
         fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('add a new feature');
-                const result = await runHook(PROMPT_CONTEXT_ASSEMBLER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block');
-                // May or may not have output depending on config
-            } finally {
-                cleanupTempDir(tmpDir);
+            const config = loadWorkflowConfig();
+            const ids = Object.keys(config.workflows);
+
+            // Set equality vs the canonical current set (catches accidental add OR removal).
+            assertEqual(
+                ids.length,
+                EXPECTED_WORKFLOW_IDS.length,
+                `Expected ${EXPECTED_WORKFLOW_IDS.length} workflows, found ${ids.length}: [${ids.join(', ')}]`
+            );
+            for (const expected of EXPECTED_WORKFLOW_IDS) {
+                assertTrue(ids.includes(expected), `Current workflow set must include "${expected}"`);
             }
+            // Renamed-IN ids present (proves the rename actually landed).
+            assertTrue(ids.includes('workflow-code-to-spec'), 'Renamed-in "workflow-code-to-spec" must be present');
+            assertTrue(ids.includes('workflow-idea-to-spec'), 'Renamed-in "workflow-idea-to-spec" must be present');
+
+            // Removed ids absent everywhere (config keys + sequences).
+            const hits = findRemovedIds(config);
+            assertEqual(hits.length, 0, `No removed id may reappear; found: ${hits.join(', ')}`);
+
+            // Non-vacuity proof: a mutated in-memory fixture reintroducing removed ids MUST be detected.
+            const fixture = JSON.parse(JSON.stringify(config));
+            fixture.workflows['workflow-build-specs'] = { name: 'x', whenToUse: 'x', sequence: ['cook'] };
+            const fixtureHits = findRemovedIds(fixture);
+            assertTrue(
+                fixtureHits.length >= 2,
+                `Guard must FAIL (detect) when removed ids are reintroduced; detected: ${fixtureHits.join(', ')}`
+            );
         }
     },
     {
-        name: '[prompt-context-assembler] handles empty prompt',
+        // TC-RENAMEFIX-032 — ported orphan Guard A (every sequence step resolves to a real skill)
+        name: '[rename-guard] TC-RENAMEFIX-032 every sequence step resolves to a real skill',
         fn: async () => {
-            const tmpDir = createTempDir();
-            try {
-                const input = createUserPromptInput('');
-                const result = await runHook(PROMPT_CONTEXT_ASSEMBLER, input, { cwd: tmpDir });
-                assertAllowed(result.code, 'Should not block empty prompt');
-            } finally {
-                cleanupTempDir(tmpDir);
+            const config = loadWorkflowConfig();
+
+            // Guard A: every step is invoked as /<step>, so it must resolve to a real skill.
+            // Assert each sequence step (base skill, sans arg/flag suffix) is a real
+            // skill dir, so /<step> always points at an existing skill.
+            const baseSkill = step => step.split(/[\s[]/)[0];
+            for (const [wfId, wf] of Object.entries(config.workflows)) {
+                for (const step of wf.sequence) {
+                    const skillDir = path.join(PROJECT_ROOT, '.claude', 'skills', baseSkill(step), 'SKILL.md');
+                    assertTrue(
+                        fs.existsSync(skillDir),
+                        `${wfId}: step "${step}" must resolve to a real skill (.claude/skills/${baseSkill(step)}/SKILL.md)`
+                    );
+                }
             }
         }
     }
@@ -823,13 +251,9 @@ const devRulesReminderTests = [
 
 // Export test suite
 module.exports = {
-    name: 'Workflow Hooks',
+    name: 'Workflow Config Schema Guards',
     tests: [
-        ...todoEnforcementTests,
-        ...todoTrackerTests,
-        ...workflowRouterTests,
-        ...catalogStructureTests,
         ...deadModuleVerificationTests,
-        ...devRulesReminderTests
+        ...renameFixGuardTests
     ]
 };

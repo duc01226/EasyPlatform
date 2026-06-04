@@ -20,7 +20,14 @@ triggers:
 
 ## Quick Summary
 
-**Goal:** Generate business-focused changelog entries by systematically reviewing file changes.
+**Goal:** Produce a Keep-a-Changelog entry under `[Unreleased]` by systematically reviewing file changes — telling users, in business terms citing affected logical IDs and flagging breaking changes, what changed and why it matters, NEVER what files/classes were touched.
+
+**Summary:**
+
+- Translate every diff into business impact: name the user-facing capability, never the class/file/enum/migration (the "Business Focus" table is the lens — e.g. "Fixed pipeline loading error", not "Fixed null ref in GetById").
+- Drive the review through a throwaway `.ai/workspace/changelog-notes-*.md` notes file (categorize Added/Changed/Fixed/Deprecated/Removed/Security), then DELETE it in the final cleanup step — a leftover notes file is an anti-pattern.
+- Always write the entry under `[Unreleased]` (create the section if absent), grouped by module/feature rather than per-file, preserving existing entries.
+- Cite affected logical IDs (`FR-`/`BR-`/`TC-`) in `**Refs**` and prefix any breaking change with `**BREAKING:**` plus a one-line migration/impact note; omit the Breaking block when there is none.
 
 **Workflow:**
 
@@ -35,27 +42,28 @@ triggers:
 - Use business-focused language, not technical jargon (e.g., "Added pipeline management" not "Added PipelineController.cs")
 - Group related changes by module/feature, not by file
 - Always insert under the `[Unreleased]` section; create it if missing
+- **Cite logical IDs + flag breaking changes (M3/M1):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Each entry cites the logical IDs it affects (`FR-`/`TC-`, plus `BR-` where relevant) and a business-level change description; keep implementation jargon and class/file names out of entry prose per `docs/project-reference/spec-principles.md` §3. Explicitly flag any breaking change with a `**BREAKING:**` prefix and a one-line migration/impact note.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Changelog Skill
 
-Generate business-focused changelog entries by systematically reviewing file changes.
+Generate business-focused changelog entries by systematically reviewing file changes — name the user-facing capability, NEVER the class/file.
 
 ## Pre-Execution Checklist
 
 1. **Find existing CHANGELOG.md location**
     - Check root: `./CHANGELOG.md` (preferred)
     - Fallback: `./docs/CHANGELOG.md`
-    - If not found: Create at root
+    - Not found: create at root
 
-2. **Read current changelog** to understand format and last entries
+2. **Read current changelog** — understand format + last entries
 
 ## Workflow
 
 ### Step 1: Gather Changes
 
-Determine change scope based on mode:
+Determine change scope by mode:
 
 ```bash
 # PR/Branch-based (default)
@@ -117,25 +125,25 @@ For each changed file:
 
 1. Read file or diff
 2. Identify **business impact** (not just technical change)
-3. Check box and note in temp file
+3. Check box, note in temp file
 4. Categorize into appropriate section
 
 **Business Focus Guidelines**:
 
-| Technical (Avoid)               | Business-Focused (Use)                       |
-| ------------------------------- | -------------------------------------------- |
-| Added `StageCategory` enum      | Added stage categories for pipeline tracking |
-| Created `PipelineController.cs` | Added API endpoints for pipeline management  |
-| Fixed null reference in GetById | Fixed pipeline loading error                 |
-| Added migration file            | Database schema updated for new features     |
+| Technical (Avoid)                  | Business-Focused (Use)                       |
+| ---------------------------------- | -------------------------------------------- |
+| Added `StageCategory` enum         | Added stage categories for pipeline tracking |
+| Created `PipelineController` class | Added API endpoints for pipeline management  |
+| Fixed null reference in GetById    | Fixed pipeline loading error                 |
+| Added migration file               | Database schema updated for new features     |
 
 ### Step 4: Holistic Review
 
 Read temp notes file completely. Ask:
 
-- What's the main feature/fix?
-- Who benefits and how?
-- What can users now do that they couldn't before?
+- Main feature/fix?
+- Who benefits, how?
+- What can users now do they couldn't before?
 
 ### Step 5: Generate Changelog Entry
 
@@ -147,6 +155,7 @@ Format (Keep a Changelog):
 ### {Module}: {Feature Title}
 
 **Feature/Fix**: {One-line business description}
+**Refs**: {FR-/BR-/TC- logical IDs affected}
 
 #### Added
 
@@ -159,13 +168,19 @@ Format (Keep a Changelog):
 #### Fixed
 
 - {What issue was resolved}
+
+#### Breaking
+
+- **BREAKING:** {what changed} — {migration/impact note}
 ```
+
+> If no breaking change: omit the `#### Breaking` block. Cite logical IDs in `**Refs**`; keep class/file names out of all entry prose.
 
 ### Step 6: Update Changelog
 
 1. Read existing CHANGELOG.md
 2. Insert new entry under `[Unreleased]` section
-3. If no `[Unreleased]` section, create it after header
+3. No `[Unreleased]` section → create it after header
 4. Preserve existing entries
 
 ### Step 7: Cleanup
@@ -177,9 +192,9 @@ Delete temp notes file: `.ai/workspace/changelog-notes-*.md`
 Group related changes by module/feature:
 
 ```markdown
-### Your Service: Hiring Process Management
+### Your Service: Order Pipeline Management
 
-**Feature**: Customizable hiring process/pipeline management.
+**Feature**: Customizable order pipeline/stage management.
 
 #### Added
 
@@ -191,7 +206,7 @@ Group related changes by module/feature:
 
 **Frontend**:
 
-- Pages: hiring-process-page
+- Pages: order-pipeline-page
 - Components: pipeline-filter, pipeline-stage-display
 ```
 
@@ -209,21 +224,21 @@ Group related changes by module/feature:
 ### Good Entry
 
 ```markdown
-### Your Service: Hiring Process Management
+### Your Service: Order Pipeline Management
 
-**Feature**: Customizable hiring process/pipeline management for recruitment workflows.
+**Feature**: Customizable order pipeline/stage management for fulfillment workflows.
 
 #### Added
 
 - Drag-and-drop pipeline stage builder with default templates
-- Stage categories (Sourced, Applied, Interviewing, Offered, Hired, Rejected)
+- Stage categories (Created, Confirmed, Packed, Shipped, Delivered, Cancelled)
 - Pipeline duplication for quick setup
 - Multi-language stage names (EN/VI)
 
 #### Changed
 
-- Candidate cards now show current pipeline stage
-- Job creation wizard includes pipeline selection
+- Order cards now show current pipeline stage
+- Order creation wizard includes pipeline selection
 ```
 
 ### Bad Entry (Too Technical)
@@ -256,7 +271,7 @@ See `references/keep-a-changelog-format.md` for format specification.
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → changelog
+> 1. **Activate `workflow-feature` workflow** (Recommended) — scout → investigate → plan → feature-implement → review → changelog
 > 2. **Execute `/changelog` directly** — run this skill standalone
 
 ---
@@ -279,16 +294,14 @@ See `references/keep-a-changelog-format.md` for format specification.
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -304,23 +317,23 @@ See `references/keep-a-changelog-format.md` for format specification.
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -328,6 +341,7 @@ See `references/keep-a-changelog-format.md` for format specification.
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -344,10 +358,36 @@ See `references/keep-a-changelog-format.md` for format specification.
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**IMPORTANT MUST ATTENTION Goal:** Produce a Keep-a-Changelog entry under `[Unreleased]` that tells users — in business terms, citing affected logical IDs and flagging breaking changes — what changed and why it matters, NEVER what files/classes were touched.
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** Traced `file:line` proof per claim, confidence >80% to act.
+- **Project Reference Docs:** Read required project-reference docs (always `lessons.md`) before target work.
+
+**IMPORTANT MUST ATTENTION** use business-focused language, group by module/feature — name the user-facing capability, NEVER the class/file/enum/migration — why: changelog readers track impact, not implementation (see Business Focus table).
+**IMPORTANT MUST ATTENTION** cite `FR-`/`BR-`/`TC-` logical IDs in `**Refs**`; prefix every breaking change with `**BREAKING:**` + one-line migration/impact note; omit the Breaking block when none — why: readers need traceability and a migration signal, not noise.
+**IMPORTANT MUST ATTENTION** always insert under `[Unreleased]` (create it if absent), preserve existing entries; DELETE the temp `.ai/workspace/changelog-notes-*.md` notes file in cleanup — why: a leftover notes file is an anti-pattern and entries belong only under Unreleased.
+
+**IMPORTANT MUST ATTENTION** drive the review through the throwaway notes file: review EVERY changed file, categorize Added/Changed/Fixed/Deprecated/Removed/Security — why: skipping file review silently drops changes.
+**IMPORTANT MUST ATTENTION** verify each business-impact claim against the actual diff (`file:line`), confidence >80% to act, <80% re-read the diff first — NEVER speculate impact from a filename — why: a misread diff ships a wrong user-facing claim.
+**IMPORTANT MUST ATTENTION** find the existing `CHANGELOG.md` before writing — root `./CHANGELOG.md` preferred, fallback `./docs/CHANGELOG.md` — NEVER create a new changelog in `docs/` when root exists — why: a split changelog fragments release history.
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` todos BEFORE starting (one per file read), keep one `in_progress`, mark `completed` immediately, add a final review todo — why: long diffs exhaust context and lose findings.
+**IMPORTANT MUST ATTENTION** validate route/skip decisions with the user via `AskUserQuestion` — never auto-decide a workflow is "too simple to need".
+
+**Anti-Rationalization:**
+
+| Evasion                                   | Rebuttal                                                                               |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| "Diff is small, skip the notes file"      | Still categorize each file — uncategorized changes get silently dropped.               |
+| "Filename says it all, skip the diff"     | Read the diff: a filename names the file, not the business impact. Show `file:line`.   |
+| "Just list the files changed"             | Group by module/feature in business terms — file lists are the bad-entry anti-pattern. |
+| "No existing CHANGELOG, make one in docs" | Search root first; only create at root when truly absent.                              |
+| "Notes file is harmless, leave it"        | Delete it in cleanup — a leftover notes file is an anti-pattern.                       |
+
+**IMPORTANT MUST ATTENTION Goal echo:** business-language Keep-a-Changelog entry under `[Unreleased]`, logical IDs cited, breaking changes flagged, NEVER file/class names — temp notes file deleted.
+**IMPORTANT MUST ATTENTION** group by feature in business terms, cite logical IDs, flag `**BREAKING:**` — why: impact over implementation.
+**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` todos before starting and delete the temp notes file in cleanup.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

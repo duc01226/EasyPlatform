@@ -1,7 +1,7 @@
 ---
 name: checkpoint
-version: 1.0.0
-description: '[Utilities] Use when you need to save analysis context to checkpoint file for recovery.'
+version: 2.0.0
+description: '[Utilities] Use when you need to save analysis context to a checkpoint file for recovery (user-facing alias for memory-management Part 1 CHECKPOINT_CREATE).'
 disable-model-invocation: false
 ---
 
@@ -11,21 +11,21 @@ disable-model-invocation: false
 
 **Workflow:**
 
-1. **Gather Context** — Collect task state, findings, files analyzed, decisions made
-2. **Write Checkpoint** — Save structured markdown to `plans/reports/checkpoint-{timestamp}-{slug}.md`
-3. **Update Todos** — Reflect checkpoint creation in task tracking
+1. **Gather Context** — task state, key findings (with `file:line`), files analyzed/modified, progress, decisions, next steps, open questions
+2. **Write Checkpoint** — save to `plans/reports/checkpoint-{timestamp}-{slug}.md` following the CHECKPOINT_CREATE structure in `memory-management` Part 1
+3. **Update Todos** — reflect checkpoint creation in task tracking
 
 **Key Rules:**
 
-- Save checkpoints every 30-60 minutes during complex tasks
-- Include file paths, line numbers, and recovery instructions
-- Document decisions with rationale for future reference
+- Canonical protocol + file template live in `memory-management` Part 1 (CHECKPOINT_CREATE) — do not duplicate the structure here; this skill is the command surface only
+- Save checkpoints every 30-60 minutes during complex tasks and before expected context compaction
+- Always include Recovery Instructions (which file to read, which line to resume from)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Save Memory Checkpoint
 
-Save current analysis, findings, and progress to an external memory file to prevent context loss during long-running tasks.
+Save current analysis, findings, and progress to an external memory file to prevent context loss during long-running tasks. This is the user-invocable alias for `memory-management`'s checkpoint-create path.
 
 ## Usage
 
@@ -38,148 +38,15 @@ Use this command when:
 
 ## Checkpoint File Location
 
-Files are saved to: `plans/reports/checkpoint-{timestamp}-{slug}.md`
+Files are saved to: `plans/reports/checkpoint-{YYYYMMDD}-{HHMMSS}-{slug}.md` (unified checkpoint grammar — the resume/recover readers glob `checkpoint-*` and parse this timestamp).
 
 ## Instructions
 
-**Create a checkpoint file with the following structure:**
+1. **Determine location** — stamp the filename via `date +%Y%m%d-%H%M%S`; path `plans/reports/checkpoint-{YYYYMMDD}-{HHMMSS}-{slug}.md`.
+2. **Gather + write** — follow the **CHECKPOINT_CREATE Protocol** template in `.claude/skills/memory-management/SKILL.md` (Part 1 — the single canonical owner of the checkpoint structure). Required sections: Task Context, Key Findings (with `file:line`), Files Analyzed, Progress, Important Context, Next Steps, Recovery Instructions.
+3. **Update todo list** — add `- [x] Create memory checkpoint at {timestamp}`.
 
-### Step 1: Determine Checkpoint Location
-
-```bash
-# Get current date for filename
-date +%y%m%d-%H%M
-```
-
-### Step 2: Gather Context
-
-Collect and document:
-
-1. **Current Task** - What are you working on?
-2. **Key Findings** - What have you discovered?
-3. **Files Analyzed** - Which files have been read/modified?
-4. **Progress Summary** - What's completed vs remaining?
-5. **Important Context** - Critical information to preserve
-6. **Next Steps** - What should be done next?
-7. **Open Questions** - Unresolved issues
-
-### Step 3: Write Checkpoint File
-
-Create a markdown file at `plans/reports/checkpoint-YYMMDD-HHMM-{task-slug}.md` with:
-
-```markdown
-# Memory Checkpoint: [Task Description]
-
-> Checkpoint created to preserve analysis context during [task type].
-
-## Session Info
-
-- **Created:** [timestamp]
-- **Task:** [description]
-- **Branch:** [git branch]
-- **Phase:** [current phase]
-
-## Current Task Summary
-
-[Brief description of what you're working on]
-
-## Key Findings
-
-### Analysis Results
-
-- [Finding 1]
-- [Finding 2]
-- [Finding N]
-
-### Patterns Discovered
-
-- [Pattern 1]
-- [Pattern 2]
-
-### Dependencies Identified
-
-- [Dependency 1]
-- [Dependency 2]
-
-## Files Context
-
-### Analyzed Files
-
-| File            | Purpose   | Relevance       |
-| --------------- | --------- | --------------- |
-| path/to/file.cs | [purpose] | High/Medium/Low |
-
-### Modified Files
-
-- `path/to/modified.ts` - [change description]
-
-### Pending Files
-
-- `path/to/pending.cs` - [why pending]
-
-## Progress Summary
-
-### Completed
-
-- [x] [Completed item 1]
-- [x] [Completed item 2]
-
-### In Progress
-
-- [ ] [Current item]
-
-### Remaining
-
-- [ ] [Remaining item 1]
-- [ ] [Remaining item 2]
-
-## Important Context
-
-### Critical Information
-
-[Information that must not be lost]
-
-### Assumptions Made
-
-- [Assumption 1]
-- [Assumption 2]
-
-### Decisions Made
-
-- [Decision 1] - [rationale]
-- [Decision 2] - [rationale]
-
-## Next Steps
-
-1. [Immediate next action]
-2. [Following action]
-3. [Subsequent action]
-
-## Open Questions
-
-- [ ] [Question 1]
-- [ ] [Question 2]
-
-## Recovery Instructions
-
-To resume this task after context reset:
-
-1. Read this checkpoint file
-2. Review [specific files] for context
-3. Continue from [specific point]
-
----
-
-_Checkpoint saved by Claude Code at [timestamp]_
-```
-
-### Step 4: Update Todo List
-
-Update your todo list to reflect checkpoint was created:
-
-```
-- [x] Create memory checkpoint at [timestamp]
-```
+To **recover** from a checkpoint, use `/recover` (CHECKPOINT_RECOVER protocol).
 
 ## Best Practices
 
@@ -191,6 +58,7 @@ Update your todo list to reflect checkpoint was created:
 
 ## Related Commands
 
+- `/recover` - Restore workflow context from the latest checkpoint (CHECKPOINT_RECOVER)
 - `/context` - Load project context
 - `/compact` - Manually trigger context compaction
 - `/watzup` - Generate progress summary
@@ -203,16 +71,14 @@ Update your todo list to reflect checkpoint was created:
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -225,17 +91,22 @@ Update your todo list to reflect checkpoint was created:
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 ## Closing Reminders
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** MUST ATTENTION critical + sequential thinking; every claim traced, confidence >80% to act.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code

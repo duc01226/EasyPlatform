@@ -53,7 +53,7 @@ Generate token: Figma Settings -> Personal Access Tokens
 If neither MCP is configured, the `figma-design` skill falls back to:
 
 1. Ask user to screenshot the Figma frame
-2. Analyze via `ai-multimodal` skill
+2. Analyze via `visual analysis tooling` skill
 3. Extract approximate design context (colors, fonts, spacing, layout)
 
 This always works but produces lower-fidelity results.

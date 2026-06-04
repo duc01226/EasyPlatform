@@ -36,15 +36,15 @@ description: '[User-Invoked] Use when you need create, update, or preview Remoti
 
 **Implementing one of these? Copy from `refs/` — do NOT implement from memory:**
 
-| Implementing...                            | Copy from                                                                                                     |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `src/components/Shared.tsx` (new scaffold) | `refs/Shared.tsx` — C palette, ProgressBar, ChapterBadge, CodeBlock, Pill, AnimRow                            |
-| `src/utils/animations.ts` (new scaffold)   | `refs/animations.ts` — easeOut, easeInOut, pop, staggeredEaseOut, counter                                     |
-| Typewriter or word-highlight text effect   | `refs/text-animations.tsx` — getTypedText, Cursor, TypewriterScene, Highlight                                 |
-| TikTok-style captions with word highlight  | `refs/captions.tsx` — CaptionedVideo, CaptionPage, delayRender, createTikTokStyleCaptions                     |
-| Video/audio duration, dimensions, frames   | `refs/mediabunny-utils.ts` — getVideoDuration, getAudioDuration, getVideoDimensions, canDecode, extractFrames |
-| Mapbox map scene                           | `refs/maps-mapbox.tsx` — MapScene component, interactive:false, camera animation                              |
-| ElevenLabs TTS voiceover generation        | `refs/generate-voiceover.ts` — TTS script + calculateMetadata integration                                     |
+| Implementing...                                      | Copy from                                                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `{source-root}/components/Shared.tsx` (new scaffold) | `refs/Shared.tsx` — C palette, ProgressBar, ChapterBadge, CodeBlock, Pill, AnimRow                            |
+| `{source-root}/utils/animations.ts` (new scaffold)   | `refs/animations.ts` — easeOut, easeInOut, pop, staggeredEaseOut, counter                                     |
+| Typewriter or word-highlight text effect             | `refs/text-animations.tsx` — getTypedText, Cursor, TypewriterScene, Highlight                                 |
+| TikTok-style captions with word highlight            | `refs/captions.tsx` — CaptionedVideo, CaptionPage, delayRender, createTikTokStyleCaptions                     |
+| Video/audio duration, dimensions, frames             | `refs/mediabunny-utils.ts` — getVideoDuration, getAudioDuration, getVideoDimensions, canDecode, extractFrames |
+| Mapbox map scene                                     | `refs/maps-mapbox.tsx` — MapScene component, interactive:false, camera animation                              |
+| ElevenLabs TTS voiceover generation                  | `refs/generate-voiceover.ts` — TTS script + calculateMetadata integration                                     |
 
 ---
 
@@ -111,7 +111,7 @@ cd {PROJECT_PATH} && npm run studio
 
 > Remotion Studio launches at **http://localhost:3000**
 
-Server runs in background. Report URL and composition IDs visible in `src/Root.tsx`.
+Server runs in background. Report URL and composition IDs visible in `{source-root}/Root.tsx`.
 
 ### Step 2.4 — Optional: one-frame render check
 
@@ -146,12 +146,12 @@ cd {PROJECT_PATH}
 npm install @remotion/transitions  # add transitions support
 ```
 
-Replace generated `src/` with project structure below (keep `package.json` and `tsconfig.json` from scaffold).
+Replace generated `{source-root}/` with project structure below (keep `package.json` and `tsconfig.json` from scaffold).
 
 #### Fallback (manual) — when `npx create-video` unavailable
 
 ```bash
-mkdir -p {PROJECT_PATH}/src/compositions {PROJECT_PATH}/src/components {PROJECT_PATH}/src/utils
+mkdir -p {PROJECT_PATH}/{source-root}/compositions {PROJECT_PATH}/{source-root}/components {PROJECT_PATH}/{source-root}/utils
 cd {PROJECT_PATH}
 npm init -y
 npm install remotion @remotion/cli @remotion/transitions react react-dom
@@ -164,7 +164,7 @@ npm install -D @types/react @types/react-dom typescript
 {PROJECT_PATH}/
   package.json          ← scripts: studio, render, still
   tsconfig.json
-  src/
+  {source-root}/
     index.ts            ← registerRoot
     Root.tsx            ← register compositions
     components/
@@ -185,7 +185,7 @@ npm install -D @types/react @types/react-dom typescript
         "still": "remotion still {CompositionId} --frame=0 out/still.png"
     },
     "remotion": {
-        "entryPoint": "src/index.ts"
+        "entryPoint": "{source-root}/index.ts"
     }
 }
 ```
@@ -209,7 +209,7 @@ npm install -D @types/react @types/react-dom typescript
 }
 ```
 
-#### 3.2.5 Create `src/index.ts`
+#### 3.2.5 Create `{source-root}/index.ts`
 
 ```ts
 import { registerRoot } from 'remotion';
@@ -217,11 +217,11 @@ import { Root } from './Root';
 registerRoot(Root);
 ```
 
-#### 3.2.6 Create `src/components/Shared.tsx`
+#### 3.2.6 Create `{source-root}/components/Shared.tsx`
 
 > Copy from `refs/Shared.tsx` — do NOT implement from memory. Exports: `C` (palette), `ProgressBar`, `ChapterBadge`, `CodeBlock`, `Pill`, `AnimRow`. Always create; all scenes import from here.
 
-#### 3.2.7 Create `src/utils/animations.ts`
+#### 3.2.7 Create `{source-root}/utils/animations.ts`
 
 > Copy from `refs/animations.ts` — do NOT implement from memory. Exports: `easeOut`, `easeInOut`, `pop`, `staggeredEaseOut`, `counter`.
 
@@ -259,13 +259,13 @@ When `PROJECT_EXISTS = true`:
 
 ```bash
 # Read composition registry
-cat {PROJECT_PATH}/src/Root.tsx
+cat {PROJECT_PATH}/{source-root}/Root.tsx
 
 # List scene files
-ls {PROJECT_PATH}/src/compositions/ 2>/dev/null || ls {PROJECT_PATH}/src/scenes/ 2>/dev/null
+ls {PROJECT_PATH}/{source-root}/compositions/ 2>/dev/null || ls {PROJECT_PATH}/{source-root}/scenes/ 2>/dev/null
 
 # Read main composition orchestrator
-cat {PROJECT_PATH}/src/ClaudeAgentExplainer.tsx 2>/dev/null  # or equivalent
+cat {PROJECT_PATH}/{source-root}/ClaudeAgentExplainer.tsx 2>/dev/null  # or equivalent
 ```
 
 Identify:
@@ -427,7 +427,7 @@ export const Root: React.FC = () => <Composition id="MyVideo" component={MyScene
 After creating/updating, report changed files and offer launch:
 
 ```
-✅ Created {N} scene files in {PROJECT_PATH}/src/compositions/
+✅ Created {N} scene files in {PROJECT_PATH}/{source-root}/compositions/
    Total duration: ~{X}s ({FRAMES} frames @ 30fps)
 
 To preview: run `/remotion play` — starts Remotion Studio at http://localhost:3000
@@ -458,7 +458,7 @@ To render:  cd {PROJECT_PATH} && npm run render
 
 ### Change visual style / palette
 
-1. Edit `src/components/Shared.tsx` → `C` object
+1. Edit `{source-root}/components/Shared.tsx` → `C` object
 2. Font changes: update `fontFamily` in `AbsoluteFill` style per scene (or add global in Shared)
 
 ---
@@ -1061,7 +1061,34 @@ Use if installed. NEVER use `transition-*` or `animate-*` Tailwind classes — a
 
 ---
 
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 ## Closing Reminders
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** MUST ATTENTION apply critical + sequential thinking; every claim needs traced proof, confidence >80% to act.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
 - **MUST ATTENTION** wait for user approval of scene plan (Step 3.3) — NEVER implement scenes before approval
 - **MUST ATTENTION** read existing project structure (Step 3.4) before modifications — NEVER overwrite blindly
@@ -1075,3 +1102,13 @@ Use if installed. NEVER use `transition-*` or `animate-*` Tailwind classes — a
 - **MUST ATTENTION** use Remotion components `<Img>`, `<Video>`, `<Audio>` — NEVER native HTML elements
 - **MUST ATTENTION** use `staticFile()` for all public/ folder assets — NEVER raw relative paths
 - **MUST ATTENTION** Copy from appropriate `refs/` file — NEVER implement text animations, captions, mediabunny, maps, or voiceover from memory
+  <!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->

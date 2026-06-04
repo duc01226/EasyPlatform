@@ -57,20 +57,6 @@ function setupTodoState(tmpDir, state) {
 }
 
 /**
- * Setup mock edit state file
- * @param {string} tmpDir - Temp directory path
- * @param {object} state - Edit state object
- * @returns {string} Path to the state file
- */
-function setupEditState(tmpDir, state) {
-  const claudeDir = path.join(tmpDir, '.claude');
-  fs.mkdirSync(claudeDir, { recursive: true });
-  const stateFile = path.join(claudeDir, '.edit-state.json');
-  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-  return stateFile;
-}
-
-/**
  * Setup mock checkpoint file
  * @param {string} tmpDir - Temp directory path
  * @param {object} data - Checkpoint data
@@ -303,25 +289,6 @@ function setupWorkflowConfig(tmpDir, config) {
 }
 
 /**
- * Setup mock compact marker for testing
- * @param {string} tmpDir - Temp directory path
- * @param {string} sessionId - Session ID
- * @param {object} data - Marker data
- * @returns {string} Path to the marker file
- */
-function setupCompactMarker(tmpDir, sessionId, data) {
-  const memoryDir = path.join(tmpDir, '.claude', 'memory');
-  fs.mkdirSync(memoryDir, { recursive: true });
-  const markerFile = path.join(memoryDir, `compact-${sessionId}.json`);
-  fs.writeFileSync(markerFile, JSON.stringify({
-    sessionId,
-    timestamp: new Date().toISOString(),
-    ...data
-  }, null, 2));
-  return markerFile;
-}
-
-/**
  * Setup mock metrics data for testing
  * @param {string} tmpDir - Temp directory path
  * @param {object} metrics - Metrics data
@@ -364,7 +331,6 @@ module.exports = {
   cleanupTempDir,
   setupMockConfig,
   setupTodoState,
-  setupEditState,
   setupCheckpoint,
   setupAceLessons,
   setupCkIgnore,
@@ -380,7 +346,6 @@ module.exports = {
   createTimestamp,
   setupWorkflowState,
   setupWorkflowConfig,
-  setupCompactMarker,
   setupMetrics,
   readMetrics,
   createDaysAgoTimestamp

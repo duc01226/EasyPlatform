@@ -118,7 +118,7 @@ async function runHook(hookFile, input, options = {}) {
         const env = { ...process.env, ...options.env };
         const startTime = Date.now();
 
-        const proc = spawn('node', [hookPath], {
+        const proc = spawn('node', [hookPath, ...(options.args || [])], {
             cwd: options.cwd || process.cwd(),
             env,
             stdio: ['pipe', 'pipe', 'pipe']
@@ -270,9 +270,7 @@ async function testSessionInit() {
     {
         const result = await runHook('session-init.cjs', { source: 'startup' });
         logResult('Startup trigger exits 0', result.code === 0);
-        if (result.stdout) {
-            logOutputValidation('Contains system-reminder', containsSystemReminder(result.stdout));
-        }
+        logOutputValidation('No stdout context injection', result.stdout === '');
     }
 
     // Test 2: Resume trigger
@@ -323,42 +321,6 @@ async function testSessionInit() {
     }
 }
 
-async function testPostCompactRecovery() {
-    logSection('SessionStart: post-compact-recovery.cjs');
-
-    // Test 1: Resume trigger
-    {
-        const result = await runHook('post-compact-recovery.cjs', {
-            source: 'resume'
-        });
-        logResult('Resume trigger exits 0', result.code === 0);
-    }
-
-    // Test 2: Compact trigger
-    {
-        const result = await runHook('post-compact-recovery.cjs', {
-            source: 'compact'
-        });
-        logResult('Compact trigger exits 0', result.code === 0);
-    }
-
-    // Test 3: Startup (should skip)
-    {
-        const result = await runHook('post-compact-recovery.cjs', {
-            source: 'startup'
-        });
-        logResult('Startup trigger exits 0 (no recovery needed)', result.code === 0);
-    }
-
-    // Test 4: Clear (should skip)
-    {
-        const result = await runHook('post-compact-recovery.cjs', {
-            source: 'clear'
-        });
-        logResult('Clear trigger exits 0', result.code === 0);
-    }
-}
-
 async function testGraphSessionInit() {
     logSection('SessionStart: graph-session-init.cjs (config guard)');
 
@@ -377,11 +339,15 @@ async function testGraphSessionInit() {
         }
     }
 
-    // Test 2: Config populated → produces graph-related output
+    // Test 2: Config populated → stays silent while preserving side effects
+    // Pin CLAUDE_PROJECT_DIR to the repo root: without it the loader falls back to
+    // process.cwd(), which resolves to the empty tests/docs fixture when the suite
+    // is launched from the tests directory (cwd-sensitive false failure).
     {
-        const result = await runHook('graph-session-init.cjs', { source: 'startup' }, { timeout: 15000 });
+        const repoRoot = path.resolve(__dirname, '..', '..', '..');
+        const result = await runHook('graph-session-init.cjs', { source: 'startup' }, { timeout: 30000, env: { CLAUDE_PROJECT_DIR: repoRoot } });
         logResult('Exits 0 when config populated', result.code === 0);
-        logResult('Produces graph output when config populated', result.stdout.includes('code-graph') || result.stdout.includes('graph'));
+        logResult('No graph output when config populated', result.stdout === '');
     }
 }
 
@@ -599,358 +565,103 @@ async function testSessionEnd() {
 }
 
 // ============================================================================
-// Test Cases: Subagent
+// Test Cases: Subagent — REMOVED
+// SubagentStart context-injection dispatchers (subagent-init.cjs / -2 / -3) were
+// removed in the inject-hook removal (Claude/Codex skill-parity). Their guidance
+// now lives in agent .md SYNC:agent-bootstrap blocks (Phase 03). Genuine lifecycle
+// asserts (state libs, session-end) remain in suites/lifecycle.test.cjs.
 // ============================================================================
-
-async function testSubagentInitIdentity() {
-    logSection('SubagentStart: subagent-init-identity.cjs (identity + config + rules)');
-
-    const subagentTypes = ['scout', 'Explore', 'planner', 'researcher', 'debugger', 'tester', 'code-reviewer', 'fullstack-developer'];
-
-    for (const subagentType of subagentTypes) {
-        const result = await runHook('subagent-init-identity.cjs', {
-            subagent_type: subagentType,
-            prompt: `Test prompt for ${subagentType}`
-        });
-        logResult(`${subagentType} subagent exits 0`, result.code === 0);
-
-        // Validate output format
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            logOutputValidation(`${subagentType} output valid`, parsed.valid || !result.stdout.includes('{'));
-        }
-    }
-
-    // Edge cases
-    logSubsection('Edge Cases');
-
-    // Empty input
-    {
-        const result = await runHook('subagent-init-identity.cjs', null);
-        logResult('Empty input exits 0', result.code === 0);
-    }
-
-    // Unknown subagent type
-    {
-        const result = await runHook('subagent-init-identity.cjs', {
-            subagent_type: 'unknown-type',
-            prompt: 'test'
-        });
-        logResult('Unknown type handled', result.code === 0);
-    }
-
-    // Empty prompt
-    {
-        const result = await runHook('subagent-init-identity.cjs', {
-            subagent_type: 'scout',
-            prompt: ''
-        });
-        logResult('Empty prompt handled', result.code === 0);
-    }
-}
-
-// testSubagentCleanupReminder removed — hook deleted in P1 optimization
-
-async function testSubagentInitPatterns() {
-    logSection('SubagentStart: subagent-init-patterns.cjs (read-guidance pointer — coding patterns + agent docs)');
-
-    // TC-PA-001: p1 fires for code-reviewer with guidance heading, ≤9000 chars
-    {
-        const result = await runHook('subagent-init-patterns.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-PA-001][p1] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-PA-001][p1] Contains Coding Patterns heading', ctx.includes('## Coding Patterns & Reference Docs'));
-                logResult('[TC-PA-001][p1] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-PA-006: p1 fires for planner (backend patterns present)
-    {
-        const result = await runHook('subagent-init-patterns.cjs', { agent_type: 'planner', prompt: 'test' });
-        logResult('[TC-PA-006][p1] planner exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-PA-006][p1] planner has patterns content', ctx.length > 0);
-            }
-        }
-    }
-
-    logSubsection('TC-PA-007..009: Edge Cases');
-
-    // TC-PA-007: p1 silent for general-purpose (not in PATTERN_AWARE or AGENT_DOC_MAP)
-    {
-        const result = await runHook('subagent-init-patterns.cjs', { agent_type: 'general-purpose', prompt: 'test' });
-        logResult('[TC-PA-007][p1] general-purpose exits 0 (silent)', result.code === 0);
-        logResult('[TC-PA-007][p1] general-purpose no stdout', !result.stdout);
-    }
-
-    // TC-PA-008: malformed JSON → exit 0
-    {
-        const result = await runHook('subagent-init-patterns.cjs', 'not-json');
-        logResult('[TC-PA-008][p1] malformed JSON exits 0', result.code === 0);
-    }
-
-    // TC-PA-009: null stdin → exit 0
-    {
-        const result = await runHook('subagent-init-patterns.cjs', null);
-        logResult('[TC-PA-009][p1] null stdin exits 0', result.code === 0);
-    }
-}
-
-async function testSubagentInitDevRules() {
-    logSection('SubagentStart: subagent-init-dev-rules.cjs (read-guidance pointer — development rules)');
-
-    // TC-DR-001: p1 fires for code-reviewer with Development Rules heading, ≤9000 chars
-    {
-        const result = await runHook('subagent-init-dev-rules.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-DR-001][p1] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-DR-001][p1] Contains Development Rules heading', ctx.includes('## Development Rules'));
-                logResult('[TC-DR-001][p1] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-DR-003..004: p1 silent for general-purpose
-    {
-        const result = await runHook('subagent-init-dev-rules.cjs', { agent_type: 'general-purpose', prompt: 'test' });
-        logResult('[TC-DR-003/004][p1] general-purpose exits 0 (silent)', result.code === 0);
-        logResult('[TC-DR-003/004][p1] general-purpose no stdout', !result.stdout);
-    }
-
-    // TC-DR-005: p1 fires for planner (in DEV_RULES_AGENT_TYPES)
-    {
-        const result = await runHook('subagent-init-dev-rules.cjs', { agent_type: 'planner', prompt: 'test' });
-        logResult('[TC-DR-005][p1] planner exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-DR-005][p1] planner has dev-rules content', ctx.includes('## Development Rules'));
-            }
-        }
-    }
-
-    // TC-DR-006: malformed JSON → exit 0
-    {
-        const result = await runHook('subagent-init-dev-rules.cjs', 'not-json');
-        logResult('[TC-DR-006][p1] malformed JSON exits 0', result.code === 0);
-    }
-
-    // TC-DR-007: null stdin → exit 0
-    {
-        const result = await runHook('subagent-init-dev-rules.cjs', null);
-        logResult('[TC-DR-007][p1] null stdin exits 0', result.code === 0);
-    }
-}
-
-async function testSubagentInitCodeReviewRules() {
-    logSection('SubagentStart: subagent-init-code-review-rules.cjs (read-guidance pointer — code review rules)');
-
-    // TC-CRR-001/002/002b: fires for all CODE_REVIEW_RULES_AGENT_TYPES.
-    // Loop over the set so adding a new member auto-extends coverage.
-    const codeReviewAgents = [
-        { type: 'code-reviewer', tc: 'TC-CRR-001' },
-        { type: 'code-simplifier', tc: 'TC-CRR-002' },
-        { type: 'spec-compliance-reviewer', tc: 'TC-CRR-002b' }
-    ];
-    for (const { type, tc } of codeReviewAgents) {
-        const result = await runHook('subagent-init-code-review-rules.cjs', { agent_type: type, prompt: 'test' });
-        logResult(`[${tc}] ${type} exits 0`, result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult(`[${tc}] ${type} contains Code Review Rules heading`, ctx.includes('## Code Review Rules'));
-                logResult(`[${tc}] ${type} references code-review-rules.md`, ctx.includes('code-review-rules.md'));
-                logResult(`[${tc}] ${type} output under 9000 chars`, ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-CRR-003: silent for general-purpose (not in CODE_REVIEW_RULES_AGENT_TYPES)
-    {
-        const result = await runHook('subagent-init-code-review-rules.cjs', { agent_type: 'general-purpose', prompt: 'test' });
-        logResult('[TC-CRR-003] general-purpose exits 0 (silent)', result.code === 0);
-        logResult('[TC-CRR-003] general-purpose no stdout', !result.stdout);
-    }
-
-    // TC-CRR-004: malformed JSON → exit 0
-    {
-        const result = await runHook('subagent-init-code-review-rules.cjs', 'not-json');
-        logResult('[TC-CRR-004] malformed JSON exits 0', result.code === 0);
-    }
-
-    // TC-CRR-005: null stdin → exit 0
-    {
-        const result = await runHook('subagent-init-code-review-rules.cjs', null);
-        logResult('[TC-CRR-005] null stdin exits 0', result.code === 0);
-    }
-}
-
-async function testSubagentInitLessons() {
-    logSection('SubagentStart: subagent-init-lessons.cjs (lessons + AI mistake prevention)');
-
-    // Any agent type produces lessons/AI-mistake output (if lessons.md exists)
-    {
-        const result = await runHook('subagent-init-lessons.cjs', {
-            agent_type: 'general-purpose',
-            prompt: 'test'
-        });
-        logResult('Exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            logOutputValidation('Output valid hookSpecificOutput', parsed.valid || !result.stdout.includes('{'));
-        }
-    }
-
-    logSubsection('Edge Cases');
-
-    {
-        const result = await runHook('subagent-init-lessons.cjs', 'not-json');
-        logResult('Malformed JSON exits 0', result.code === 0);
-    }
-
-    {
-        const result = await runHook('subagent-init-lessons.cjs', null);
-        logResult('Empty input exits 0', result.code === 0);
-    }
-}
-
-async function testSubagentInitAiMistakes() {
-    logSection('SubagentStart: subagent-init-ai-mistakes.cjs (AI mistake prevention)');
-
-    // TC-SUBAGENT-002: fires for code-reviewer, output ≤9000 chars, contains prevention bullet
-    {
-        const result = await runHook('subagent-init-ai-mistakes.cjs', { agent_type: 'code-reviewer', prompt: 'test' });
-        logResult('[TC-SUBAGENT-002] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-SUBAGENT-002] Output under 9000 chars', ctx.length <= 9000);
-                logResult('[TC-SUBAGENT-002] Contains AI mistake prevention bullet', ctx.includes('fabricat') || ctx.includes('invent') || ctx.includes('halluc'));
-            }
-        }
-    }
-
-    // TC-SUBAGENT-002b: general-purpose → also receives ai-mistakes (universal injection)
-    {
-        const result = await runHook('subagent-init-ai-mistakes.cjs', { agent_type: 'general-purpose', prompt: 'test' });
-        logResult('[TC-SUBAGENT-002b] general-purpose exits 0', result.code === 0);
-    }
-
-    logSubsection('Edge Cases');
-
-    {
-        const result = await runHook('subagent-init-ai-mistakes.cjs', 'not-json');
-        logResult('[TC-SUBAGENT-002c] malformed JSON exits 0', result.code === 0);
-    }
-
-    {
-        const result = await runHook('subagent-init-ai-mistakes.cjs', null);
-        logResult('[TC-SUBAGENT-002d] null stdin exits 0', result.code === 0);
-    }
-}
-
-async function testSubagentInitContextGuard() {
-    logSection('SubagentStart: subagent-init-context-guard.cjs (context-overflow guard)');
-
-    // TC-CG-001: code-reviewer → stdout with context-guard content, ≤9000 chars
-    {
-        const result = await runHook('subagent-init-context-guard.cjs', {
-            agent_type: 'code-reviewer',
-            prompt: 'test'
-        });
-        logResult('[TC-CG-001] code-reviewer exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-CG-001] Contains Context Guard', ctx.includes('Context Guard'));
-                logResult('[TC-CG-001] Output under 9000 chars', ctx.length <= 9000);
-            }
-        }
-    }
-
-    // TC-CG-002: general-purpose → stdout present (universal — no agent filtering)
-    {
-        const result = await runHook('subagent-init-context-guard.cjs', {
-            agent_type: 'general-purpose',
-            prompt: 'test'
-        });
-        logResult('[TC-CG-002] general-purpose exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-CG-002] Universal injection — general-purpose gets context-guard', ctx.includes('Context Guard'));
-            }
-        }
-    }
-
-    // TC-CG-003: planner → stdout present
-    {
-        const result = await runHook('subagent-init-context-guard.cjs', {
-            agent_type: 'planner',
-            prompt: 'test'
-        });
-        logResult('[TC-CG-003] planner exits 0', result.code === 0);
-        if (result.stdout) {
-            const parsed = parseSubagentOutput(result.stdout);
-            if (parsed.valid) {
-                const ctx = parsed.additionalContext || '';
-                logResult('[TC-CG-003] Universal injection — planner gets context-guard', ctx.includes('Context Guard'));
-            }
-        }
-    }
-
-    logSubsection('Edge Cases');
-
-    // TC-CG-004: malformed JSON → exit 0 (fail-open)
-    {
-        const result = await runHook('subagent-init-context-guard.cjs', 'not-json');
-        logResult('[TC-CG-004] Malformed JSON exits 0', result.code === 0);
-    }
-
-    // TC-CG-005: empty stdin → exit 0 (fail-open)
-    {
-        const result = await runHook('subagent-init-context-guard.cjs', null);
-        logResult('[TC-CG-005] Empty input exits 0', result.code === 0);
-    }
-}
 
 // ============================================================================
 // Test Cases: User Input
 // ============================================================================
 
 async function testInitPromptGate() {
-    logSection('UserPromptSubmit: init-prompt-gate.cjs (blocking gate)');
+    logSection('UserPromptSubmit: init-prompt-gate.cjs (project-context router)');
+    const completeAgentFileStub = [
+        '<!-- CK:UNIVERSAL-GUIDES v6 -->',
+        '<!-- CK:CRITICAL-THINKING -->',
+        '<!-- CK:AI-MISTAKE-PREVENTION -->',
+        '[CRITICAL-THINKING-MINDSET]',
+        'Common AI Mistake Prevention (System Lessons)',
+        '## First Action Decision',
+        '## Workflow Step Advancement',
+        '## IMPORTANT: Task Planning Rules',
+        '## Code Responsibility Hierarchy',
+        '## Evidence-Based Reasoning',
+        '## Continuous Improvement — Lesson Extraction Gate',
+        '## Git & Version-Control Discipline',
+        ''
+    ].join('\n');
+    const setupPopulatedPromptGateProject = tmpDir => {
+        const docsDir = path.join(tmpDir, 'docs');
+        const srcDir = path.join(tmpDir, 'src');
+        const graphDir = path.join(tmpDir, '.code-graph');
+        fs.mkdirSync(docsDir, { recursive: true });
+        fs.mkdirSync(srcDir, { recursive: true });
+        fs.mkdirSync(graphDir, { recursive: true });
+        fs.writeFileSync(
+            path.join(docsDir, 'project-config.json'),
+            JSON.stringify({
+                project: { name: 'TestProject' },
+                modules: [{ name: 'mod', kind: 'library', pathRegex: 'src/' }]
+            })
+        );
+        fs.writeFileSync(path.join(graphDir, 'graph.db'), 'fake-db');
+        fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), completeAgentFileStub);
+        fs.writeFileSync(path.join(tmpDir, 'AGENTS.md'), completeAgentFileStub);
+        const tmpClaudeDir = path.join(tmpDir, 'tmp', 'claude-temp');
+        fs.mkdirSync(tmpClaudeDir, { recursive: true });
+        return tmpClaudeDir;
+    };
+    const writeScanStaleFlag = tmpClaudeDir => {
+        fs.writeFileSync(
+            path.join(tmpClaudeDir, '.scan-stale'),
+            JSON.stringify({
+                staleDays: 60,
+                docs: [{ filename: 'backend-patterns-reference.md', ageDays: 95, scanSkill: 'scan --target=backend-patterns' }],
+                checkedAt: new Date().toISOString()
+            }, null, 2)
+        );
+    };
 
     // Test 1: Populated config → exit 0 (silent pass-through)
-    {
-        const result = await runHook('init-prompt-gate.cjs', {
-            prompt: 'implement feature X'
-        });
-        logResult('Exit 0 when config populated', result.code === 0);
-        logResult('No stderr when config populated', result.stderr.trim() === '');
-    }
-
-    // Test 2: Unpopulated config → exit 2 (blocked)
     {
         const tmpDir = createTempDir();
         try {
             const docsDir = path.join(tmpDir, 'docs');
+            const srcDir = path.join(tmpDir, 'src');
+            const graphDir = path.join(tmpDir, '.code-graph');
             fs.mkdirSync(docsDir, { recursive: true });
+            fs.mkdirSync(srcDir, { recursive: true }); // hasProjectContent needs a content dir
+            fs.mkdirSync(graphDir, { recursive: true });
+            fs.writeFileSync(
+                path.join(docsDir, 'project-config.json'),
+                JSON.stringify({
+                    project: { name: 'TestProject' },
+                    modules: [{ name: 'mod', kind: 'library', pathRegex: 'src/' }]
+                })
+            );
+            fs.writeFileSync(path.join(graphDir, 'graph.db'), 'fake-db');
+            // Root agent files present and complete so the agent-files gate passes through to the gate under test.
+            fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), completeAgentFileStub);
+            fs.writeFileSync(path.join(tmpDir, 'AGENTS.md'), completeAgentFileStub);
+            const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
+            logResult('Exit 0 when config populated', result.code === 0);
+            logResult('No stderr when config populated', result.stderr.trim() === '');
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
+    }
+
+    // Test 2: Unpopulated config → exit 0 with setup guidance
+    {
+        const tmpDir = createTempDir();
+        try {
+            const docsDir = path.join(tmpDir, 'docs');
+            const srcDir = path.join(tmpDir, 'src');
+            fs.mkdirSync(docsDir, { recursive: true });
+            fs.mkdirSync(srcDir, { recursive: true });
             // Write skeleton config with empty project name
             fs.writeFileSync(
                 path.join(docsDir, 'project-config.json'),
@@ -967,9 +678,11 @@ async function testInitPromptGate() {
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 }
             );
-            logResult('Exit 2 when config unpopulated', result.code === 2);
-            logResult('Block message mentions /project-config', result.stderr.includes('/project-config'));
-            logResult('Block message mentions skip init', result.stderr.includes('skip init'));
+            logResult('Exit 0 when config unpopulated', result.code === 0);
+            logResult('Claude guidance uses plaintext stdout', !result.stdout.trim().startsWith('{'));
+            logResult('Codex guidance avoids JSON-looking stdout', !/^\s*[\[{]/.test(result.stdout));
+            logResult('Guidance mentions /project-init', result.stdout.includes('/project-init'));
+            logResult('Guidance mentions /project-config', result.stdout.includes('/project-config'));
         } finally {
             cleanupTempDir(tmpDir);
         }
@@ -1001,7 +714,7 @@ async function testInitPromptGate() {
         }
     }
 
-    // Test 4: Unpopulated config BUT /scan-backend-patterns → exit 0 (allowlisted)
+    // Test 4: Unpopulated config BUT /scan --target=backend-patterns → exit 0 (allowlisted)
     {
         const tmpDir = createTempDir();
         try {
@@ -1016,12 +729,12 @@ async function testInitPromptGate() {
             );
             const result = await runHook(
                 'init-prompt-gate.cjs',
-                { prompt: '/scan-backend-patterns' },
+                { prompt: '/scan --target=backend-patterns' },
                 {
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 }
             );
-            logResult('Allowlist: /scan-* passes through', result.code === 0);
+            logResult('Allowlist: /scan host passes through', result.code === 0);
         } finally {
             cleanupTempDir(tmpDir);
         }
@@ -1118,17 +831,18 @@ async function testInitPromptGate() {
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 }
             );
-            logResult('Dismiss: expired flag blocks prompt', result.code === 2);
+            logResult('Dismiss: expired flag warns/allows prompt', result.code === 0);
         } finally {
             cleanupTempDir(tmpDir);
         }
     }
 
-    // Test 8: Missing config file entirely → exit 2
+    // Test 8: Missing config file entirely → exit 0 with setup guidance
     {
         const tmpDir = createTempDir();
         try {
             fs.mkdirSync(path.join(tmpDir, 'docs'), { recursive: true });
+            fs.mkdirSync(path.join(tmpDir, 'src'), { recursive: true });
             // No project-config.json at all
             const result = await runHook(
                 'init-prompt-gate.cjs',
@@ -1137,7 +851,8 @@ async function testInitPromptGate() {
                     env: { CLAUDE_PROJECT_DIR: tmpDir }
                 }
             );
-            logResult('Missing config file blocks prompt', result.code === 2);
+            logResult('Missing config file warns/allows prompt', result.code === 0);
+            logResult('Missing config guidance mentions /project-init', result.stdout.includes('/project-init'));
         } finally {
             cleanupTempDir(tmpDir);
         }
@@ -1153,10 +868,70 @@ async function testInitPromptGate() {
         logResult('Malformed input: fail-open exit 0', result.code === 0);
     }
 
+    // ── Reference Doc Scan Gate: Dismissal Tests ──
+    logSubsection('Reference Doc Scan Gate — Dismissal');
+
+    // Test 10: "skip scan" writes a 7-day dismiss flag under tmp/claude-temp
+    {
+        const tmpDir = createTempDir();
+        try {
+            const tmpClaudeDir = setupPopulatedPromptGateProject(tmpDir);
+            writeScanStaleFlag(tmpClaudeDir);
+            const dismissPath = path.join(tmpClaudeDir, '.scan-stale-dismissed');
+            const result = await runHook('init-prompt-gate.cjs', { prompt: 'skip scan' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
+            logResult('Skip scan dismiss exits 0', result.code === 0);
+            logResult('Skip scan reports 7-day dismissal', result.stdout.includes('Gate dismissed for 7 days'));
+            logResult('Skip scan creates temp dismiss file', fs.existsSync(dismissPath));
+            const dismissState = JSON.parse(fs.readFileSync(dismissPath, 'utf-8'));
+            logResult('Skip scan stores ttlDays=7', dismissState.ttlDays === 7);
+            logResult('Skip scan stores dismissedAt timestamp', typeof dismissState.dismissedAt === 'string' && dismissState.dismissedAt.length > 0);
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
+    }
+
+    // Test 11: 6-day-old scan dismiss flag still suppresses stale-doc output
+    {
+        const tmpDir = createTempDir();
+        try {
+            const tmpClaudeDir = setupPopulatedPromptGateProject(tmpDir);
+            writeScanStaleFlag(tmpClaudeDir);
+            const dismissedAt = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
+            fs.writeFileSync(
+                path.join(tmpClaudeDir, '.scan-stale-dismissed'),
+                JSON.stringify({ dismissedAt: dismissedAt.toISOString(), ttlDays: 7 }, null, 2)
+            );
+            const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
+            logResult('Active scan dismiss allows prompt', result.code === 0);
+            logResult('Active scan dismiss suppresses stale-doc warning', !result.stdout.includes('Reference docs are stale'));
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
+    }
+
+    // Test 12: 8-day-old scan dismiss flag expires and stale-doc output returns
+    {
+        const tmpDir = createTempDir();
+        try {
+            const tmpClaudeDir = setupPopulatedPromptGateProject(tmpDir);
+            writeScanStaleFlag(tmpClaudeDir);
+            const dismissedAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+            fs.writeFileSync(
+                path.join(tmpClaudeDir, '.scan-stale-dismissed'),
+                JSON.stringify({ dismissedAt: dismissedAt.toISOString(), ttlDays: 7 }, null, 2)
+            );
+            const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
+            logResult('Expired scan dismiss allows prompt', result.code === 0);
+            logResult('Expired scan dismiss shows stale-doc warning', result.stdout.includes('Reference docs are stale'));
+        } finally {
+            cleanupTempDir(tmpDir);
+        }
+    }
+
     // ── Graph Gate: Config Guard Tests ──
     logSubsection('Graph Gate — Config Guard');
 
-    // Test 10: Config populated + no graph.db + no dismiss → exit 2 (graph gate blocks)
+    // Test 13: Config populated + no graph.db + no dismiss → exit 0 with graph guidance
     {
         const tmpDir = createTempDir();
         try {
@@ -1171,17 +946,20 @@ async function testInitPromptGate() {
                     modules: [{ name: 'mod', kind: 'library', pathRegex: 'src/' }]
                 })
             );
+            // Root agent files present and complete so the agent-files gate passes through to the graph gate under test.
+            fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), completeAgentFileStub);
+            fs.writeFileSync(path.join(tmpDir, 'AGENTS.md'), completeAgentFileStub);
             // No .code-graph/graph.db, no dismiss flag
             const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
-            logResult('Graph gate blocks when config populated + no graph.db', result.code === 2);
-            logResult('Graph block message mentions /graph-build', result.stderr.includes('/graph-build'));
-            logResult('Graph block message mentions skip graph', result.stderr.includes('skip graph'));
+            logResult('Graph gate warns/allows when config populated + no graph.db', result.code === 0);
+            logResult('Graph guidance mentions /graph-build', result.stdout.includes('/graph-build'));
+            logResult('Graph guidance avoids skip prompt', !result.stdout.includes('skip graph'));
         } finally {
             cleanupTempDir(tmpDir);
         }
     }
 
-    // Test 11: Config NOT populated + no graph.db → exit 2 for config (NOT graph)
+    // Test 14: Config NOT populated + no graph.db → exit 0 with config guidance (NOT graph)
     {
         const tmpDir = createTempDir();
         try {
@@ -1191,14 +969,14 @@ async function testInitPromptGate() {
             fs.mkdirSync(srcDir, { recursive: true });
             fs.writeFileSync(path.join(docsDir, 'project-config.json'), JSON.stringify({ project: { name: '' }, modules: [] }));
             const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
-            logResult('Config gate blocks before graph gate', result.code === 2);
-            logResult('Block message is config (not graph)', result.stderr.includes('/project-config') && !result.stderr.includes('/graph-build'));
+            logResult('Config gate warns/allows before graph guidance', result.code === 0);
+            logResult('Guidance message is config (not graph)', result.stdout.includes('/project-config') && !result.stdout.includes('/graph-build'));
         } finally {
             cleanupTempDir(tmpDir);
         }
     }
 
-    // Test 12: Config populated + graph.db exists → exit 0 (both gates pass)
+    // Test 15: Config populated + graph.db exists → exit 0 (both gates pass)
     {
         const tmpDir = createTempDir();
         try {
@@ -1216,6 +994,9 @@ async function testInitPromptGate() {
                 })
             );
             fs.writeFileSync(path.join(graphDir, 'graph.db'), 'fake-db');
+            // Root agent files present and complete so the agent-files gate passes through.
+            fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), completeAgentFileStub);
+            fs.writeFileSync(path.join(tmpDir, 'AGENTS.md'), completeAgentFileStub);
             const result = await runHook('init-prompt-gate.cjs', { prompt: 'implement feature X' }, { env: { CLAUDE_PROJECT_DIR: tmpDir } });
             logResult('Both gates pass when config + graph.db exist', result.code === 0);
         } finally {
@@ -1223,7 +1004,7 @@ async function testInitPromptGate() {
         }
     }
 
-    // Test 13: "skip graph" dismiss → exit 0
+    // Test 16: "skip graph" dismiss → exit 0
     {
         const tmpDir = createTempDir();
         try {
@@ -1246,160 +1027,31 @@ async function testInitPromptGate() {
     }
 }
 
-async function testWorkflowRouter() {
-    logSection('UserPromptSubmit: workflow-router.cjs');
+// Identity invariant: step-id == skill-name == /command. Covers the
+// mapSkillToStepId normalizer in lib/workflow-state.cjs (consumed by the
+// surviving gate hooks). The former resolveCmd half lived in the removed
+// workflow-step-tracker.cjs and its test was dropped with that hook.
+async function testMapSkillToStepId() {
+    logSection('Unit: workflow-state.cjs mapSkillToStepId');
+    const { mapSkillToStepId } = require('../lib/workflow-state.cjs');
 
-    const workflowTriggers = [
-        { prompt: 'implement a new login feature', intent: 'feature' },
-        { prompt: 'add user authentication', intent: 'feature' },
-        { prompt: 'create a new component', intent: 'feature' },
-        { prompt: 'build the search functionality', intent: 'feature' },
-        { prompt: 'fix the bug in authentication', intent: 'bugfix' },
-        { prompt: 'the login is not working', intent: 'bugfix' },
-        { prompt: 'there is an error in the form', intent: 'bugfix' },
-        { prompt: 'update the README documentation', intent: 'docs' },
-        { prompt: 'document the API', intent: 'docs' },
-        { prompt: 'refactor the service layer', intent: 'refactor' },
-        { prompt: 'clean up the code', intent: 'refactor' },
-        { prompt: 'how does the auth system work?', intent: 'investigation' },
-        { prompt: 'explain the caching mechanism', intent: 'investigation' },
-        { prompt: 'where is the config file?', intent: 'investigation' }
-    ];
-
-    for (const { prompt, intent } of workflowTriggers) {
-        const result = await runHook('workflow-router.cjs', { prompt });
-        logResult(`${intent}: "${prompt.slice(0, 30)}..."`, result.code === 0);
-    }
-
-    // No workflow detection
-    logSubsection('No Workflow (Simple Questions)');
-
-    const simpleQuestions = ['what time is it?', 'hello', 'thanks', 'yes', 'no'];
-
-    for (const prompt of simpleQuestions) {
-        const result = await runHook('workflow-router.cjs', { prompt });
-        logResult(`No workflow: "${prompt}"`, result.code === 0);
-    }
-
-    // Quick prefix
-    logSubsection('Quick Prefix');
-    {
-        const result = await runHook('workflow-router.cjs', {
-            prompt: 'quick: add a button'
-        });
-        logResult('Quick prefix handled', result.code === 0);
-    }
-
-    // Slash command
-    {
-        const result = await runHook('workflow-router.cjs', {
-            prompt: '/plan implement feature'
-        });
-        logResult('Slash command handled', result.code === 0);
-    }
+    logResult('[TC-IDENTITY-001] bare name maps to itself', mapSkillToStepId('plan') === 'plan');
+    logResult('[TC-IDENTITY-002] leading slash stripped', mapSkillToStepId('/plan') === 'plan');
+    logResult('[TC-IDENTITY-003] uppercase normalized', mapSkillToStepId('Review-Changes') === 'review-changes');
+    logResult('[TC-IDENTITY-004] trailing whitespace trimmed', mapSkillToStepId('plan-review ') === 'plan-review');
+    logResult('[TC-IDENTITY-004b] leading space before slash is NOT stripped (replace runs before trim)', mapSkillToStepId('  /plan ') === '/plan');
+    logResult('[TC-IDENTITY-005] multi-segment id preserved', mapSkillToStepId('/workflow-review-changes') === 'workflow-review-changes');
+    logResult('[TC-IDENTITY-006] null returns null (fallback)', mapSkillToStepId(null) === null);
+    logResult('[TC-IDENTITY-007] empty string returns null (fallback)', mapSkillToStepId('') === null);
 }
 
-async function testDevRulesReminder() {
-    logSection('UserPromptSubmit: prompt-context-assembler.cjs');
+// testResolveCmd REMOVED — it exercised resolveCmd() in the deleted
+// workflow-step-tracker.cjs (step-hint accelerator). The mapSkillToStepId
+// half of the identity invariant survives in testMapSkillToStepId above.
 
-    // Test 1: Basic prompt
-    {
-        const result = await runHook('prompt-context-assembler.cjs', {
-            prompt: 'help me write a component'
-        });
-        logResult('Basic prompt exits 0', result.code === 0);
-    }
-
-    // Test 2: Empty prompt
-    {
-        const result = await runHook('prompt-context-assembler.cjs', {
-            prompt: ''
-        });
-        logResult('Empty prompt exits 0', result.code === 0);
-    }
-
-    // Test 3: Long prompt
-    {
-        const result = await runHook('prompt-context-assembler.cjs', {
-            prompt: 'a'.repeat(5000)
-        });
-        logResult('Long prompt handled', result.code === 0);
-    }
-
-    // Test 4: Unicode prompt
-    {
-        const result = await runHook('prompt-context-assembler.cjs', {
-            prompt: 'implement 日本語 feature with emoji 🎉'
-        });
-        logResult('Unicode prompt handled', result.code === 0);
-    }
-}
-
-async function testLessonsInjector() {
-    logSection('UserPromptSubmit/PreToolUse: lessons-injector.cjs');
-
-    // Test 1: Empty stdin
-    {
-        const result = await runHook('lessons-injector.cjs', null);
-        logResult('Empty stdin exits 0', result.code === 0);
-    }
-
-    // Test 2: Missing lessons file
-    {
-        const result = await runHook(
-            'lessons-injector.cjs',
-            { prompt: 'test' },
-            {
-                env: { CLAUDE_PROJECT_DIR: os.tmpdir() }
-            }
-        );
-        logResult('Missing lessons file exits 0', result.code === 0);
-    }
-
-    // Test 3: Lessons file with header only (no entries)
-    {
-        const tempDir = createTempDir();
-        const docsDir = path.join(tempDir, 'docs');
-        fs.mkdirSync(path.join(docsDir, 'project-reference'), { recursive: true });
-        fs.writeFileSync(path.join(docsDir, 'project-reference', 'lessons.md'), '# Learned Lessons\n\nNo entries yet.\n');
-        try {
-            const result = await runHook(
-                'lessons-injector.cjs',
-                { prompt: 'test' },
-                {
-                    env: { CLAUDE_PROJECT_DIR: tempDir }
-                }
-            );
-            logResult('Header-only lessons file exits 0, no output', result.code === 0 && !result.stdout.includes('## Learned Lessons'));
-        } finally {
-            cleanupTempDir(tempDir);
-        }
-    }
-
-    // Test 4: Lessons file with entries outputs content
-    {
-        const tempDir = createTempDir();
-        const docsDir = path.join(tempDir, 'docs');
-        fs.mkdirSync(path.join(docsDir, 'project-reference'), { recursive: true });
-        fs.writeFileSync(
-            path.join(docsDir, 'project-reference', 'lessons.md'),
-            '# Learned Lessons\n\n- [backend] Always use repository pattern\n- [frontend] Use BEM classes\n'
-        );
-        try {
-            const result = await runHook(
-                'lessons-injector.cjs',
-                { prompt: 'test' },
-                {
-                    env: { CLAUDE_PROJECT_DIR: tempDir }
-                }
-            );
-            logResult('Lessons with entries outputs content', result.code === 0 && result.stdout.includes('## Learned Lessons'));
-            logResult('Output includes lesson entries', result.stdout.includes('repository pattern'));
-        } finally {
-            cleanupTempDir(tempDir);
-        }
-    }
-}
+// testDevRulesReminder REMOVED — it drove the deleted UserPromptSubmit inject hook
+// prompt-context-assembler.cjs. The lesson-reminder invariant survives via
+// lib/prompt-injections.cjs, covered by testLessonLearnedReminder below.
 
 async function testLessonLearnedReminder() {
     logSection('lib/prompt-injections: injectLessonReminder');
@@ -1409,8 +1061,8 @@ async function testLessonLearnedReminder() {
         const { injectLessonReminder } = require('../lib/prompt-injections.cjs');
         const result = injectLessonReminder(null);
         logResult('Returns reminder with no transcript', result !== null && result.includes('[LESSON-LEARNED-REMINDER]'));
-        logResult('Contains TaskCreate instruction', result.includes('TaskCreate'));
-        logResult('Contains /learn instruction', result.includes('/learn'));
+        logResult('Contains task tracking instruction', result.includes('task tracking'));
+        logResult('Contains $learn instruction', result.includes('$learn'));
     }
 
     // Test 2: Dedup — returns null when marker in recent transcript
@@ -1799,475 +1451,12 @@ async function testPrivacyBlock() {
     }
 }
 
-async function testEditEnforcement() {
-    logSection('PreToolUse: edit-enforcement.cjs');
-
-    // Test 1: Exempt file (.md) - should allow even without tasks
-    {
-        const result = await runHook('edit-enforcement.cjs', {
-            tool_name: 'Edit',
-            tool_input: { file_path: 'README.md', old_string: 'a', new_string: 'b' }
-        });
-        logResult('Exempt .md file allowed', result.code === 0);
-    }
-
-    // Test 2: Exempt file (.json) - should allow
-    {
-        const result = await runHook('edit-enforcement.cjs', {
-            tool_name: 'Write',
-            tool_input: { file_path: 'config.json', content: '{}' }
-        });
-        logResult('Exempt .json file allowed', result.code === 0);
-    }
-
-    // Test 3: Exempt path (.claude/hooks/) - should allow
-    {
-        const result = await runHook('edit-enforcement.cjs', {
-            tool_name: 'Edit',
-            tool_input: {
-                file_path: '.claude/hooks/some-hook.cjs',
-                old_string: 'a',
-                new_string: 'b'
-            }
-        });
-        logResult('Exempt .claude/hooks/ path allowed', result.code === 0);
-    }
-
-    // Test 4: Exempt path (plans/) - should allow
-    {
-        const result = await runHook('edit-enforcement.cjs', {
-            tool_name: 'Write',
-            tool_input: { file_path: 'plans/my-plan.md', content: 'plan' }
-        });
-        logResult('Exempt plans/ path allowed', result.code === 0);
-    }
-
-    // Tests 5-8: Non-exempt file blocking requires a CWD with code directories
-    // (projectHasCode() checks for non-docs folders at CWD root — docs-only projects skip blocking)
-    {
-        const codeProjectDir = createTempDir();
-        fs.mkdirSync(path.join(codeProjectDir, 'src'), { recursive: true });
-        try {
-            // Test 5: Non-exempt .ts file without tasks - should BLOCK (exit 1)
-            {
-                const result = await runHook(
-                    'edit-enforcement.cjs',
-                    {
-                        tool_name: 'Edit',
-                        tool_input: {
-                            file_path: 'src/test.ts',
-                            old_string: 'a',
-                            new_string: 'b'
-                        }
-                    },
-                    {
-                        cwd: codeProjectDir,
-                        env: { CK_SESSION_ID: `test-edit-block-ts-${Date.now()}` }
-                    }
-                );
-                logResult('Non-exempt .ts file without tasks blocked', result.code === 1);
-            }
-
-            // Test 6: Non-exempt .cs file without tasks - should BLOCK (exit 1)
-            {
-                const result = await runHook(
-                    'edit-enforcement.cjs',
-                    {
-                        tool_name: 'Write',
-                        tool_input: {
-                            file_path: 'src/Service/Handler.cs',
-                            content: 'code'
-                        }
-                    },
-                    {
-                        cwd: codeProjectDir,
-                        env: { CK_SESSION_ID: `test-edit-block-cs-${Date.now()}` }
-                    }
-                );
-                logResult('Non-exempt .cs file without tasks blocked', result.code === 1);
-            }
-
-            // Test 7: MultiEdit tool - extracts primaryPath from edits[0].file_path → non-exempt → BLOCK
-            {
-                const result = await runHook(
-                    'edit-enforcement.cjs',
-                    {
-                        tool_name: 'MultiEdit',
-                        tool_input: {
-                            edits: [{ file_path: 'a.ts' }, { file_path: 'b.ts' }]
-                        }
-                    },
-                    {
-                        cwd: codeProjectDir,
-                        env: { CK_SESSION_ID: `test-edit-block-multi-${Date.now()}` }
-                    }
-                );
-                logResult('MultiEdit non-exempt files without tasks blocked', result.code === 1);
-            }
-
-            // Test 8: NotebookEdit tool - non-exempt without tasks → BLOCK
-            {
-                const result = await runHook(
-                    'edit-enforcement.cjs',
-                    {
-                        tool_name: 'NotebookEdit',
-                        tool_input: { notebook_path: 'analysis.ipynb' }
-                    },
-                    {
-                        cwd: codeProjectDir,
-                        env: { CK_SESSION_ID: `test-edit-block-nb-${Date.now()}` }
-                    }
-                );
-                logResult('NotebookEdit non-exempt without tasks blocked', result.code === 1);
-            }
-        } finally {
-            cleanupTempDir(codeProjectDir);
-        }
-    }
-
-    // Test 9: Non-edit tool (should ignore)
-    {
-        const result = await runHook('edit-enforcement.cjs', {
-            tool_name: 'Read',
-            tool_input: { file_path: 'test.ts' }
-        });
-        logResult('Read tool ignored', result.code === 0);
-    }
-
-    // Test 10: Quick mode bypass
-    {
-        const result = await runHook(
-            'edit-enforcement.cjs',
-            {
-                tool_name: 'Edit',
-                tool_input: {
-                    file_path: 'src/test.ts',
-                    old_string: 'a',
-                    new_string: 'b'
-                }
-            },
-            { env: { CK_QUICK_MODE: 'true' } }
-        );
-        logResult('Quick mode bypasses enforcement', result.code === 0);
-    }
-}
-
-async function testSkillEnforcement() {
-    logSection('PreToolUse: skill-enforcement.cjs');
-
-    // Meta skills - always allowed regardless of tasks/workflow (tested with clean session)
-    logSubsection('Meta Skills (always allowed)');
-    const metaSkills = ['help', 'memory', 'checkpoint', 'recover', 'context', 'ck-help', 'watzup', 'compact'];
-    const metaSessionId = `test-skill-meta-${Date.now()}`;
-
-    for (const skill of metaSkills) {
-        const result = await runHook(
-            'skill-enforcement.cjs',
-            {
-                tool_name: 'Skill',
-                tool_input: { skill }
-            },
-            { env: { CK_SESSION_ID: metaSessionId } }
-        );
-        logResult(`${skill} meta skill allowed`, result.code === 0);
-    }
-
-    // Research skills WITH todos — allowed (research phase doesn't need implementation tasks)
-    logSubsection('Research Skills');
-    const researchSkills = ['scout', 'investigate', 'explore', 'plan', 'analyze', 'review', 'debug', 'docs'];
-    const researchSessionId = `test-skill-research-${Date.now()}`;
-
-    // Set up todo state so research skills can pass through the no-todos gate
-    {
-        const { markTodosCalled, clearTodoState } = require('../lib/todo-state.cjs');
-        markTodosCalled(researchSessionId, {
-            pending: 1,
-            completed: 0,
-            inProgress: 0
-        });
-    }
-
-    for (const skill of researchSkills) {
-        const result = await runHook(
-            'skill-enforcement.cjs',
-            {
-                tool_name: 'Skill',
-                tool_input: { skill }
-            },
-            { env: { CK_SESSION_ID: researchSessionId } }
-        );
-        logResult(`${skill} allowed (research)`, result.code === 0);
-    }
-
-    // Clean up todo state
-    {
-        const { clearTodoState } = require('../lib/todo-state.cjs');
-        clearTodoState(researchSessionId);
-    }
-
-    // Research skills WITHOUT todos/workflow — blocked (forces workflow activation first)
-    logSubsection('Research Skills (blocked without tasks/workflow)');
-    {
-        const cleanSessionId = `test-skill-no-todos-${Date.now()}`;
-        const result = await runHook(
-            'skill-enforcement.cjs',
-            {
-                tool_name: 'Skill',
-                tool_input: { skill: 'scout' }
-            },
-            { env: { CK_SESSION_ID: cleanSessionId } }
-        );
-        logResult('scout without tasks/workflow blocked', result.code === 1);
-    }
-
-    // Implementation skills without tasks - should block (exit 1)
-    // Use isolated session IDs with no todo state to ensure blocking
-    logSubsection('Implementation Skills (blocked without tasks)');
-    const implSkills = ['cook', 'code', 'implement', 'fix'];
-
-    for (const skill of implSkills) {
-        const result = await runHook(
-            'skill-enforcement.cjs',
-            {
-                tool_name: 'Skill',
-                tool_input: { skill }
-            },
-            { env: { CK_SESSION_ID: `test-skill-block-${skill}-${Date.now()}` } }
-        );
-        // skill-enforcement blocks with exit code 1 (not 2)
-        logResult(`${skill} without tasks blocked`, result.code === 1);
-    }
-
-    // Quick mode bypass
-    logSubsection('Quick Mode Bypass');
-    {
-        const result = await runHook(
-            'skill-enforcement.cjs',
-            {
-                tool_name: 'Skill',
-                tool_input: { skill: 'cook' }
-            },
-            { env: { CK_QUICK_MODE: 'true' } }
-        );
-        logResult('Quick mode bypasses skill enforcement', result.code === 0);
-    }
-
-    // Non-Skill tool (should ignore)
-    {
-        const result = await runHook('skill-enforcement.cjs', {
-            tool_name: 'Edit',
-            tool_input: { file_path: 'test.ts' }
-        });
-        logResult('Non-Skill tool ignored', result.code === 0);
-    }
-}
-
-async function testContextInjectors() {
-    logSection('PreToolUse: Context Injector Hooks');
-
-    // Load config-driven test fixtures (no hardcoded project-specific paths)
-    const { generateTestFixtures } = require('../lib/test-fixture-generator.cjs');
-    const fixtures = generateTestFixtures();
-
-    // Design System Context
-    logSubsection('design-system-context.cjs');
-    const frontendPaths = fixtures.frontendPaths;
-
-    for (const filePath of frontendPaths) {
-        const result = await runHook('design-system-context.cjs', {
-            tool_name: 'Edit',
-            tool_input: { file_path: filePath }
-        });
-        logResult(`Design system: ${filePath.split('/').pop()}`, result.code === 0);
-        if (result.stdout) {
-            logOutputValidation('Contains design tokens', result.stdout.includes('design') || result.stdout.length < 10);
-        }
-    }
-
-    // Backend Context
-    logSubsection('backend-context.cjs');
-    const backendPaths = [...fixtures.backendPaths, fixtures.frameworkCs];
-
-    for (const filePath of backendPaths) {
-        const result = await runHook('backend-context.cjs', {
-            tool_name: 'Edit',
-            tool_input: { file_path: filePath }
-        });
-        logResult(`Backend context: ${filePath.split('/').pop()}`, result.code === 0);
-    }
-
-    // Frontend Context
-    logSubsection('frontend-context.cjs');
-    const tsPaths = fixtures.tsPaths;
-
-    for (const filePath of tsPaths) {
-        const result = await runHook('frontend-context.cjs', {
-            tool_name: 'Edit',
-            tool_input: { file_path: filePath }
-        });
-        logResult(`Frontend context: ${filePath.split('/').pop()}`, result.code === 0);
-        if (result.stdout && result.stdout.includes('**I18N:**')) {
-            logOutputValidation(
-                'Frontend context i18n sync section is well-formed',
-                result.stdout.includes('translation resources') || result.stdout.includes('Multilingual project')
-            );
-        }
-    }
-
-    // Styling Context
-    logSubsection('scss-styling-context.cjs');
-    const scssPaths = fixtures.scssPaths;
-
-    for (const filePath of scssPaths) {
-        const result = await runHook('scss-styling-context.cjs', {
-            tool_name: 'Edit',
-            tool_input: { file_path: filePath }
-        });
-        logResult(`SCSS context: ${filePath.split('/').pop()}`, result.code === 0);
-    }
-
-    // Non-matching files (should skip without error)
-    logSubsection('Non-Matching Files');
-    const nonMatching = [
-        { hook: 'design-system-context.cjs', file: 'README.md' },
-        { hook: 'backend-context.cjs', file: 'package.json' },
-        { hook: 'frontend-context.cjs', file: 'config.yaml' },
-        { hook: 'scss-styling-context.cjs', file: 'index.html' }
-    ];
-
-    for (const { hook, file } of nonMatching) {
-        const result = await runHook(hook, {
-            tool_name: 'Edit',
-            tool_input: { file_path: file }
-        });
-        logResult(`${hook.replace('.cjs', '')} skips ${file}`, result.code === 0);
-    }
-}
-
-// ============================================================================
-// Test Cases: PreCompact
-// ============================================================================
-
-async function testPreCompactHooks() {
-    logSection('PreCompact Hooks');
-
-    const { getMarkerPath, SESSION_ID_DEFAULT, ensureDir, MARKERS_DIR } = require(path.join(HOOKS_DIR, 'lib', 'ck-paths.cjs'));
-
-    // write-compact-marker.cjs
-    logSubsection('write-compact-marker.cjs');
-    const triggers = ['manual', 'auto', 'forced'];
-
-    for (const trigger of triggers) {
-        const result = await runHook('write-compact-marker.cjs', { trigger });
-        logResult(`write-compact-marker (${trigger})`, result.code === 0);
-    }
-
-    // Test: compactState.gitStatus written to marker file (in git repo)
-    {
-        const testSessionId = `test-compact-state-${Date.now()}`;
-        const result = await runHook('write-compact-marker.cjs', {
-            session_id: testSessionId,
-            trigger: 'manual'
-        });
-        logResult('write-compact-marker exits 0 with session_id', result.code === 0);
-
-        try {
-            const markerPath = getMarkerPath(testSessionId);
-            const marker = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
-            // In a git repo: compactState should be present with non-null gitStatus
-            // In a non-git dir: compactState should be absent (gitStatus === null → truthy guard)
-            const hasValidStructure = (
-                marker.sessionId === testSessionId &&
-                (marker.compactState === undefined ||
-                    (typeof marker.compactState.gitStatus === 'string' &&
-                     marker.compactState.gitStatus.length > 0 &&
-                     marker.compactState.warningShown === false))
-            );
-            logResult('write-compact-marker: marker has valid compactState structure', hasValidStructure);
-        } catch (_e) {
-            logResult('write-compact-marker: marker file readable', false);
-        }
-    }
-
-    // Test: buildPostCompactWarning fires once, deduplicates on second call
-    logSubsection('prompt-context-assembler.cjs — post-compact dedup');
-    {
-        const testSessionId = `test-compact-dedup-${Date.now()}`;
-        ensureDir(MARKERS_DIR);
-        const markerPath = getMarkerPath(testSessionId);
-        // Write a marker with compactState to simulate a post-compact state
-        fs.writeFileSync(markerPath, JSON.stringify({
-            sessionId: testSessionId,
-            trigger: 'manual',
-            timestamp: Date.now(),
-            compactState: { gitStatus: 'M  .claude/hooks/write-compact-marker.cjs', warningShown: false }
-        }));
-
-        // First call: warning should appear
-        const result1 = await runHook('prompt-context-assembler.cjs', {
-            session_id: testSessionId,
-            prompt: 'continue'
-        });
-        logResult('buildPostCompactWarning: warning appears on first call', result1.stdout.includes('CONTEXT COMPACTED'));
-
-        // Second call: warning should be suppressed (warningShown dedup)
-        const result2 = await runHook('prompt-context-assembler.cjs', {
-            session_id: testSessionId,
-            prompt: 'continue'
-        });
-        logResult('buildPostCompactWarning: warning suppressed on second call (dedup)', !result2.stdout.includes('CONTEXT COMPACTED'));
-    }
-
-    // Test: SESSION_ID_DEFAULT fallback — warning fires when session_id absent
-    {
-        ensureDir(MARKERS_DIR);
-        const markerPath = getMarkerPath(SESSION_ID_DEFAULT);
-        // Write marker at 'default' path
-        fs.writeFileSync(markerPath, JSON.stringify({
-            sessionId: SESSION_ID_DEFAULT,
-            trigger: 'manual',
-            timestamp: Date.now(),
-            compactState: { gitStatus: 'M  test.txt', warningShown: false }
-        }));
-
-        // Run without session_id — should fall back to SESSION_ID_DEFAULT
-        const result = await runHook('prompt-context-assembler.cjs', {
-            prompt: 'continue'
-            // no session_id — tests fallback to SESSION_ID_DEFAULT
-        });
-        logResult('buildPostCompactWarning: fires when session_id absent (SESSION_ID_DEFAULT fallback)', result.stdout.includes('CONTEXT COMPACTED'));
-
-        // Clean up 'default' marker to avoid interference with other test runs
-        try { fs.unlinkSync(markerPath); } catch (_e) { /* ignore */ }
-    }
-
-}
-
 // ============================================================================
 // Test Cases: PostToolUse
 // ============================================================================
 
 async function testPostToolUseHooks() {
     logSection('PostToolUse Hooks');
-
-    // bash-cleanup.cjs
-    logSubsection('bash-cleanup.cjs');
-    {
-        const result = await runHook('bash-cleanup.cjs', {
-            tool_name: 'Bash',
-            tool_input: { command: 'echo test' },
-            tool_response: 'test'
-        });
-        logResult('bash-cleanup (success)', result.code === 0);
-    }
-    {
-        const result = await runHook('bash-cleanup.cjs', {
-            tool_name: 'Bash',
-            tool_input: { command: 'exit 1' },
-            tool_response: { exit_code: 1, stderr: 'error' }
-        });
-        logResult('bash-cleanup (failure)', result.code === 0);
-    }
 
     // post-edit-prettier.cjs
     logSubsection('post-edit-prettier.cjs');
@@ -2281,39 +1470,6 @@ async function testPostToolUseHooks() {
         logResult(`post-edit-prettier (${tool})`, result.code === 0);
     }
 
-    // todo-tracker.cjs
-    logSubsection('todo-tracker.cjs');
-    {
-        const result = await runHook('todo-tracker.cjs', {
-            tool_name: 'TaskCreate',
-            tool_input: {
-                subject: 'Test task 1',
-                description: 'Test description',
-                activeForm: 'Testing 1'
-            }
-        });
-        logResult('todo-tracker with TaskCreate', result.code === 0);
-    }
-    {
-        // Test backward compatibility with TodoWrite
-        const result = await runHook('todo-tracker.cjs', {
-            tool_name: 'TodoWrite',
-            tool_input: { todos: [] }
-        });
-        logResult('todo-tracker backward compat TodoWrite', result.code === 0);
-    }
-
-    // workflow-step-tracker.cjs
-    logSubsection('workflow-step-tracker.cjs');
-    const skills = ['plan', 'cook', 'test', 'code-review', 'scout'];
-    for (const skill of skills) {
-        const result = await runHook('workflow-step-tracker.cjs', {
-            tool_name: 'Skill',
-            tool_input: { skill },
-            tool_response: 'completed'
-        });
-        logResult(`workflow-step-tracker (${skill})`, result.code === 0);
-    }
 }
 
 // ============================================================================
@@ -2321,210 +1477,73 @@ async function testPostToolUseHooks() {
 // ============================================================================
 
 async function testNotification() {
-    logSection('Notification: notify-waiting.js');
+    logSection('Notification: notifications/notify.cjs (unified router)');
 
-    // Note: Tests run with CLAUDE_HOOK_TEST_MODE=1 to skip actual OS notifications
+    // Tests run with CLAUDE_HOOK_TEST_MODE=1 to skip actual OS notifications.
+    // notify.cjs is the single notification entry point (notify-waiting.js retired).
+    const ROUTER = 'notifications/notify.cjs';
     const testEnv = { env: { CLAUDE_HOOK_TEST_MODE: '1' } };
 
-    logSubsection('Event Types');
+    logSubsection('Whitelisted Events (routed)');
 
-    // AskUserPrompt - should trigger dialog notification
     {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'AskUserPrompt',
-                cwd: 'D:/Projects/MyProject',
-                session_id: 'test-001'
-            },
-            testEnv
-        );
-        logResult('AskUserPrompt event (dialog)', result.code === 0);
+        const result = await runHook(ROUTER, { hook_event_name: 'Stop', cwd: 'D:/Projects/MyProject', session_id: 'test-001' }, testEnv);
+        logResult('Stop event routed (exit 0)', result.code === 0);
+        logResult('Stop passes whitelist', !result.stderr.includes('not in whitelist'));
     }
 
-    // Stop - should trigger dialog notification
     {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'Stop',
-                cwd: 'D:/Projects/MyProject',
-                session_id: 'test-002'
-            },
-            testEnv
-        );
-        logResult('Stop event (dialog)', result.code === 0);
+        const result = await runHook(ROUTER, { hook_event_name: 'AskUserPrompt', cwd: 'D:/Projects/MyProject', session_id: 'test-002' }, testEnv);
+        logResult('AskUserPrompt event routed (exit 0)', result.code === 0);
+        logResult('AskUserPrompt passes whitelist', !result.stderr.includes('not in whitelist'));
     }
 
-    // SubagentStop - should trigger notification (not dialog)
     {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'SubagentStop',
-                cwd: 'D:/Projects/MyProject',
-                agent_type: 'scout',
-                session_id: 'test-003'
-            },
-            testEnv
-        );
-        logResult('SubagentStop event (notification)', result.code === 0);
+        const result = await runHook(ROUTER, { notification_type: 'idle_prompt', hook_event_name: 'Notification', message: 'Claude is waiting for your input', cwd: 'D:/Projects/MyProject' }, testEnv);
+        logResult('idle_prompt event routed (exit 0)', result.code === 0);
+        logResult('idle_prompt passes whitelist', !result.stderr.includes('not in whitelist'));
     }
 
-    logSubsection('Project Name Extraction');
+    logSubsection('AskUserQuestion Tool Normalization');
 
-    // With Windows path
     {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'Stop',
-                cwd: 'C:\\Projects\\MyProject'
-            },
-            testEnv
-        );
-        logResult('Windows path cwd extraction', result.code === 0);
+        const result = await runHook(ROUTER, { hook_event_name: 'PreToolUse', tool_name: 'AskUserQuestion', cwd: 'D:/Projects/MyProject', session_id: 'test-003' }, testEnv);
+        logResult('AskUserQuestion tool routed (exit 0)', result.code === 0);
+        logResult('AskUserQuestion normalized into whitelist', !result.stderr.includes('not in whitelist'));
     }
 
-    // With Unix path
+    logSubsection('Non-Whitelisted Events (skipped cleanly)');
+
     {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'Stop',
-                cwd: '/home/user/projects/MyProject'
-            },
-            testEnv
-        );
-        logResult('Unix path cwd extraction', result.code === 0);
+        const result = await runHook(ROUTER, { hook_event_name: 'SubagentStop', agent_type: 'scout', cwd: 'D:/Projects/MyProject' }, testEnv);
+        logResult('SubagentStop skipped (exit 0)', result.code === 0);
+        logResult('SubagentStop not in whitelist', result.stderr.includes('not in whitelist'));
+    }
+
+    {
+        const result = await runHook(ROUTER, { hook_event_name: 'UnknownEvent', cwd: 'C:/Projects/TestProject' }, testEnv);
+        logResult('Unknown event skipped (exit 0)', result.code === 0);
+        logResult('Unknown event not in whitelist', result.stderr.includes('not in whitelist'));
+    }
+
+    logSubsection('Permission Prompt Handling');
+
+    {
+        const result = await runHook(ROUTER, { hook_event_name: 'Notification', notification_type: 'permission_prompt', message: 'Claude needs your permission to use Bash', cwd: 'D:/Projects/MyProject' }, testEnv);
+        logResult('permission_prompt routed (exit 0)', result.code === 0);
+        logResult('permission_prompt passes whitelist', !result.stderr.includes('not in whitelist'));
     }
 
     logSubsection('Edge Cases');
 
-    // No cwd - should still work with empty prefix
     {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'AskUserPrompt'
-            },
-            testEnv
-        );
-        logResult('No cwd (empty prefix)', result.code === 0);
+        const result = await runHook(ROUTER, {}, testEnv);
+        logResult('Empty input handled (exit 0)', result.code === 0);
     }
 
-    // No event name - should use default message
     {
-        const result = await runHook('notify-waiting.js', {}, testEnv);
-        logResult('No event name (default)', result.code === 0);
-    }
-
-    // Unknown event name - should use default message
-    {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'UnknownEvent',
-                cwd: 'C:/Projects/TestProject'
-            },
-            testEnv
-        );
-        logResult('Unknown event name', result.code === 0);
-    }
-
-    // Empty object
-    {
-        const result = await runHook('notify-waiting.js', {}, testEnv);
-        logResult('Empty input', result.code === 0);
-    }
-
-    // Legacy type field (backwards compatibility)
-    {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                type: 'waiting_for_input'
-            },
-            testEnv
-        );
-        logResult('Legacy type field', result.code === 0);
-    }
-
-    logSubsection('Permission Prompt Filtering');
-
-    // Permission prompt - should be skipped (no notification sent)
-    {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'Notification',
-                notification_type: 'permission_prompt',
-                message: 'Claude needs your permission to use Bash',
-                cwd: 'D:/Projects/MyProject'
-            },
-            testEnv
-        );
-        logResult('Permission prompt (skipped)', result.code === 0);
-    }
-
-    // Non-permission notification - should trigger notification
-    {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'Notification',
-                notification_type: 'idle_prompt',
-                message: 'Claude is waiting for your input',
-                cwd: 'D:/Projects/MyProject'
-            },
-            testEnv
-        );
-        logResult('Idle prompt (not skipped)', result.code === 0);
-    }
-
-    logSubsection('Message-Based Permission Detection (Bug #11964 Workaround)');
-
-    // Permission prompt via message only (missing notification_type) - should be skipped
-    {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'Notification',
-                message: 'Claude needs your permission to use Bash',
-                cwd: 'D:/Projects/MyProject'
-                // Note: notification_type intentionally omitted to simulate bug #11964
-            },
-            testEnv
-        );
-        logResult('Message-based permission detection (skipped)', result.code === 0);
-    }
-
-    // Permission prompt for Write tool via message only - should be skipped
-    {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'Notification',
-                message: 'Claude needs your permission to use Write',
-                cwd: 'D:/Projects/MyProject'
-            },
-            testEnv
-        );
-        logResult('Write permission message (skipped)', result.code === 0);
-    }
-
-    // Regular message mentioning "permission" but not a permission prompt - should NOT be skipped
-    {
-        const result = await runHook(
-            'notify-waiting.js',
-            {
-                hook_event_name: 'Notification',
-                message: 'Check file permission settings',
-                cwd: 'D:/Projects/MyProject'
-            },
-            testEnv
-        );
-        logResult('Non-permission message with "permission" word (not skipped)', result.code === 0);
+        const result = await runHook(ROUTER, { hook_event_name: 'Stop' }, testEnv);
+        logResult('Stop without cwd handled (exit 0)', result.code === 0);
     }
 }
 
@@ -2535,7 +1554,7 @@ async function testNotification() {
 async function testLibModules() {
     logSection('Lib Module Verification');
 
-    const libFiles = ['workflow-state.cjs', 'ck-config-utils.cjs', 'ck-paths.cjs', 'edit-state.cjs', 'todo-state.cjs'];
+    const libFiles = ['workflow-state.cjs', 'ck-config-utils.cjs', 'ck-paths.cjs', 'todo-state.cjs'];
 
     for (const libFile of libFiles) {
         const libPath = path.join(HOOKS_DIR, 'lib', libFile);
@@ -2572,13 +1591,23 @@ async function testDedupConstants() {
     logResult('Exports CODE_PATTERNS (non-empty string)', typeof constants.CODE_PATTERNS === 'string' && constants.CODE_PATTERNS.length > 0);
     logResult('Exports LESSON_LEARNED (non-empty string)', typeof constants.LESSON_LEARNED === 'string' && constants.LESSON_LEARNED.length > 0);
 
-    // Test 2: All consuming hooks import from dedup-constants (no inline definitions)
-    const hookFiles = ['backend-context.cjs', 'frontend-context.cjs', 'code-patterns-injector.cjs', 'prompt-context-assembler.cjs'];
+    // Test 2: All surviving consumers of the dedup markers import from
+    // dedup-constants (no inline definitions) — the "single source of truth"
+    // invariant for the marker strings.
+    //
+    // The Phase-05 inject-hook removal deleted the former consumers
+    // (pretooluse-context-builders.cjs, prompt-context-assembler.cjs). The
+    // invariant survives in the modules that STILL own dedup-marker usage after
+    // the removal — repointed here so the same "imports dedup-constants" check
+    // guards live code (verified via `grep dedup-constants .claude/hooks/**`).
+    const dedupConsumers = [
+        { label: 'lib/prompt-injections.cjs', file: 'lib/prompt-injections.cjs' },
+    ];
 
-    for (const file of hookFiles) {
+    for (const { label, file } of dedupConsumers) {
         const content = fs.readFileSync(path.join(HOOKS_DIR, file), 'utf-8');
         const usesSharedModule = content.includes('dedup-constants');
-        logResult(`${file} imports dedup-constants`, usesSharedModule);
+        logResult(`${label} imports dedup-constants`, usesSharedModule);
     }
 }
 
@@ -2591,7 +1620,7 @@ async function testEdgeCases() {
 
     // Malformed JSON input
     logSubsection('Malformed JSON');
-    const hooksToTest = ['session-init.cjs', 'workflow-router.cjs', 'windows-command-detector.cjs', 'privacy-block.cjs'];
+    const hooksToTest = ['session-init.cjs', 'init-prompt-gate.cjs', 'windows-command-detector.cjs', 'privacy-block.cjs'];
 
     for (const hook of hooksToTest) {
         const result = await runHook(hook, 'not valid json');
@@ -2612,7 +1641,7 @@ async function testEdgeCases() {
     // Unicode and special characters
     logSubsection('Unicode & Special Characters');
     {
-        const result = await runHook('workflow-router.cjs', {
+        const result = await runHook('init-prompt-gate.cjs', {
             prompt: '実装する feature with 日本語 and emoji 🎉'
         });
         logResult('Unicode in prompt', result.code === 0);
@@ -2628,7 +1657,7 @@ async function testEdgeCases() {
     // Very long inputs
     logSubsection('Long Inputs');
     {
-        const result = await runHook('workflow-router.cjs', {
+        const result = await runHook('init-prompt-gate.cjs', {
             prompt: 'implement '.repeat(1000)
         });
         logResult('Long prompt handled', result.code === 0);
@@ -2650,6 +1679,19 @@ async function testCountDriftSuite() {
     if (VERBOSE && result.stderr) console.error(result.stderr);
     logResult(
         'count-drift suite passes through primary runner',
+        result.code === 0,
+        result.code === 0 ? '' : (result.stderr || result.stdout).trim()
+    );
+}
+
+async function testSubagentRoutingSuite() {
+    logSection('Suite Runner: check-subagent-routing');
+
+    const result = await runNodeScript('run-all-tests.cjs', ['--filter=check-subagent-routing']);
+    if (VERBOSE && result.stdout) console.log(result.stdout);
+    if (VERBOSE && result.stderr) console.error(result.stderr);
+    logResult(
+        'sub-agent routing guard suite passes through primary runner',
         result.code === 0,
         result.code === 0 ? '' : (result.stderr || result.stdout).trim()
     );
@@ -2677,30 +1719,18 @@ async function runAllTests() {
     if (!FILTER || 'session'.includes(FILTER) || 'graph'.includes(FILTER)) {
         await testSessionInit();
         await testGraphSessionInit();
-        await testPostCompactRecovery();
         await testProjectConfigInit();
         await testSessionEnd();
     }
 
-    // Subagent
-    if (!FILTER || 'subagent'.includes(FILTER)) {
-        await testSubagentInitIdentity();
-        await testSubagentInitPatterns();
-        await testSubagentInitDevRules();
-        await testSubagentInitCodeReviewRules();
-        // testSubagentInitClaudeMd removed — hooks deleted (redundant with native claudeMd injection)
-        await testSubagentInitLessons();
-        await testSubagentInitAiMistakes();
-        await testSubagentInitContextGuard();
-        // testSubagentCleanupReminder removed — hook deleted
-    }
+    // SubagentStart context-injection dispatchers (subagent-init*.cjs) were removed
+    // in the inject-hook removal — Codex/Claude skill-parity. Their context now lives
+    // in agent .md SYNC:agent-bootstrap blocks (Phase 03), so no hook tests remain.
 
     // User Input
     if (!FILTER || 'user'.includes(FILTER) || 'prompt'.includes(FILTER) || 'init'.includes(FILTER)) {
         await testInitPromptGate();
-        await testWorkflowRouter();
-        await testDevRulesReminder();
-        await testLessonsInjector();
+        await testMapSkillToStepId();
         await testLessonLearnedReminder();
     }
 
@@ -2709,14 +1739,6 @@ async function runAllTests() {
         await testWindowsCommandDetector();
         await testScoutBlock();
         await testPrivacyBlock();
-        await testEditEnforcement();
-        await testSkillEnforcement();
-        await testContextInjectors();
-    }
-
-    // PreCompact
-    if (!FILTER || 'compact'.includes(FILTER)) {
-        await testPreCompactHooks();
     }
 
     // PostToolUse
@@ -2749,6 +1771,11 @@ async function runAllTests() {
         await testCountDriftSuite();
     }
 
+    // Sub-agent routing anti-drift guard
+    if (!FILTER || 'check-subagent-routing'.includes(FILTER) || 'routing'.includes(FILTER)) {
+        await testSubagentRoutingSuite();
+    }
+
     // Summary
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`\n${'═'.repeat(60)}`);
@@ -2766,13 +1793,74 @@ async function runAllTests() {
     }
 
     console.log(`${COLORS.dim}Duration: ${duration}s${COLORS.reset}`);
+
+    // Hook-test count drift guard (N2). A NON-recursive, post-summary hard assertion —
+    // deliberately NOT a counted test: a counted test reads results.passed before its own
+    // increment (off-by-one), and count-drift.test.cjs cannot assert this row from inside
+    // its own subprocess (it can't see the parent runner's live total). Only meaningful on
+    // a full run — a --filter run executes a subset, so its total is not the canonical figure.
+    let countGuardFailed = false;
+    if (!FILTER) {
+        const liveTotal = results.passed + results.failed + results.skipped;
+        const repoRoot = path.join(HOOKS_DIR, '..', '..');
+        const docsDir = path.join(repoRoot, '.claude', 'docs');
+        const countTargets = [
+            {
+                file: path.join(docsDir, 'README.md'),
+                label: 'docs/README.md "Hook Tests" row',
+                pattern: /\|\s*Hook Tests\s*\|\s*(\d+)\s*\|/
+            },
+            {
+                file: path.join(docsDir, 'hooks', 'README.md'),
+                label: 'docs/hooks/README.md "Primary hook runner" row',
+                pattern: /\|\s*Primary hook runner\s*\|\s*(\d+)\s*\|/
+            },
+            {
+                file: path.join(docsDir, 'hooks', 'README.md'),
+                label: 'docs/hooks/README.md "passes with N tests" prose',
+                pattern: /passes with (\d+) tests/
+            }
+        ];
+
+        const mismatches = [];
+        for (const target of countTargets) {
+            let content;
+            try {
+                content = fs.readFileSync(target.file, 'utf8');
+            } catch (err) {
+                mismatches.push(`${target.label}: cannot read (${err.code || err.message})`);
+                continue;
+            }
+            const match = content.match(target.pattern);
+            if (!match) {
+                mismatches.push(`${target.label}: no count matching ${target.pattern} found`);
+                continue;
+            }
+            const documented = Number(match[1]);
+            if (documented !== liveTotal) {
+                mismatches.push(`${target.label}: documents ${documented}, runner ran ${liveTotal}`);
+            }
+        }
+
+        if (mismatches.length > 0) {
+            countGuardFailed = true;
+            console.log(`${COLORS.red}Hook-test count drift:${COLORS.reset}`);
+            for (const m of mismatches) {
+                console.log(`  ${COLORS.red}✗${COLORS.reset} ${m}`);
+            }
+            console.log(`  ${COLORS.dim}Fix: set the count to ${liveTotal} in the file(s) above.${COLORS.reset}`);
+        } else {
+            console.log(`${COLORS.green}Count guard:${COLORS.reset} docs agree (${liveTotal} tests)`);
+        }
+    }
+
     console.log(`${'═'.repeat(60)}\n`);
 
     // Clean up
     cleanupAllTestDirs();
 
     // Exit with appropriate code
-    process.exit(results.failed > 0 ? 1 : 0);
+    process.exit(results.failed > 0 || countGuardFailed ? 1 : 0);
 }
 
 // Run tests

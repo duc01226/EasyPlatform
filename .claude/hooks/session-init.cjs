@@ -3,7 +3,7 @@
  * SessionStart Hook - Initializes session environment with project detection
  *
  * Fires: Once per session (startup, resume, clear, compact)
- * Purpose: Load config, detect project info, persist to env vars, output context
+ * Purpose: Load config, detect project info, and persist session state silently
  *
  * Exit Codes:
  *   0 - Success (non-blocking, allows continuation)
@@ -26,17 +26,6 @@ const {
   loadState: loadWorkflowState,
   clearState: clearWorkflowState,
 } = require("./lib/workflow-state.cjs");
-const {
-  validateCkConfig,
-  formatCkValidationResult,
-} = require("./lib/ck-config-schema.cjs");
-const {
-  validateConfig: validateProjectConfig,
-  formatResult: formatProjectConfigResult,
-} = require("./lib/project-config-schema.cjs");
-const {
-  getConfiguredProjectConfigPath,
-} = require("./lib/project-config-loader.cjs");
 
 /**
  * Safely execute shell command with optional timeout
@@ -293,60 +282,6 @@ function getCodingLevelStyleName(level) {
 }
 
 /**
- * Get coding level guidelines by reading from output-styles .md files
- * This ensures single source of truth - users can customize the .md files directly
- * @param {number} level - Coding level (-1 to 5)
- * @returns {string|null} Guidelines text (frontmatter stripped) or null if disabled
- */
-function getCodingLevelGuidelines(level) {
-  // -1 = disabled (no injection, saves tokens)
-  // 5 = god mode (still injects minimal guidelines)
-  if (level === -1 || level === null || level === undefined) return null;
-
-  const styleName = getCodingLevelStyleName(level);
-  const stylePath = path.join(
-    __dirname,
-    "..",
-    "output-styles",
-    `${styleName}.md`,
-  );
-
-  try {
-    if (!fs.existsSync(stylePath)) return null;
-
-    const content = fs.readFileSync(stylePath, "utf8");
-    // Strip YAML frontmatter (between --- markers at start of file)
-    const withoutFrontmatter = content.replace(/^---[\s\S]*?---\n*/, "").trim();
-    return withoutFrontmatter;
-  } catch (e) {
-    return null;
-  }
-}
-
-/**
- * Build context summary for output (compact, single line)
- * @param {Object} config - Loaded config
- * @param {Object} detections - Project detections
- * @param {{ path: string|null, resolvedBy: string|null }} resolved - Plan resolution result
- */
-function buildContextOutput(config, detections, resolved) {
-  const lines = [`Project: ${detections.type || "unknown"}`];
-  if (detections.pm) lines.push(`PM: ${detections.pm}`);
-  lines.push(`Plan naming: ${config.plan.namingFormat}`);
-
-  // Show plan status with resolution context
-  if (resolved.path) {
-    if (resolved.resolvedBy === "session") {
-      lines.push(`Plan: ${resolved.path}`);
-    } else {
-      lines.push(`Suggested: ${resolved.path}`);
-    }
-  }
-
-  return lines.join(" | ");
-}
-
-/**
  * Main hook execution
  */
 async function main() {
@@ -525,139 +460,8 @@ async function main() {
       );
     }
 
-    console.log(
-      `Session ${source}. ${buildContextOutput(config, detections, resolved)}`,
-    );
-
-    // Show workflow state preservation notice on resume/compact
-    if (hasActiveWorkflow && (source === "resume" || source === "compact")) {
-      console.log(
-        `\n**Workflow State Preserved:** ${workflowState.workflowType} workflow active (step ${workflowState.currentStepIndex + 1}/${workflowState.workflowSteps.length})`,
-      );
-    }
-
-    // Python prerequisite check (first startup only)
-    if (source === "startup" && !staticEnv.pythonVersion) {
-      console.log("\n## Python Not Found");
-      console.log("");
-      console.log(
-        "\u26a0\ufe0f  **Python not installed or not in PATH.** Skills requiring Python:",
-      );
-      console.log(
-        "  \u2022 `generate_catalogs.py` \u2014 Skills/commands catalog generation",
-      );
-      console.log("  \u2022 `ck-help.py` \u2014 /ck-help skill");
-      console.log(
-        "  \u2022 `ai-multimodal` \u2014 Image/video/doc processing (Gemini)",
-      );
-      console.log("  \u2022 `resolve_env.py` \u2014 API key resolution");
-      console.log("  \u2022 `webapp-testing` \u2014 Playwright Python tests");
-      console.log("");
-      console.log("**Install Python 3.9+:**");
-      if (process.platform === "win32") {
-        console.log(
-          "  `winget install Python.Python.3.12`  or  https://python.org/downloads",
-        );
-      } else if (process.platform === "darwin") {
-        console.log(
-          "  `brew install python3`  or  https://python.org/downloads",
-        );
-      } else {
-        console.log(
-          "  `sudo apt install python3`  or  https://python.org/downloads",
-        );
-      }
-      console.log("");
-      console.log(
-        "**Override:** Set `PYTHON_PATH` env var to Python binary path.",
-      );
-      console.log("");
-    }
-
-    // Validate .ck.json config files on startup — notify user of invalid settings
-    if (source === "startup") {
-      const ckFiles = [
-        { label: ".claude/.ck.json", path: ".claude/.ck.json" },
-        { label: ".claude/.ck.local.json", path: ".claude/.ck.local.json" },
-        {
-          label: "~/.claude/.ck.json",
-          path: path.join(os.homedir(), ".claude", ".ck.json"),
-        },
-      ];
-      for (const ckFile of ckFiles) {
-        if (fs.existsSync(ckFile.path)) {
-          try {
-            const raw = JSON.parse(fs.readFileSync(ckFile.path, "utf-8"));
-            const result = validateCkConfig(raw);
-            if (!result.valid || result.warnings.length > 0) {
-              console.log(`\n## Config Validation: ${ckFile.label}`);
-              console.log("");
-              for (const err of result.errors) {
-                console.log(`  - ERROR: ${err}`);
-              }
-              for (const warn of result.warnings) {
-                console.log(`  - WARN: ${warn}`);
-              }
-              console.log("");
-              console.log(
-                "Run `/easy-claude-help` for valid settings reference.",
-              );
-              console.log("");
-            }
-          } catch (e) {
-            console.log(`\n## Config Validation: ${ckFile.label}`);
-            console.log("");
-            console.log(`  - ERROR: Invalid JSON — ${e.message}`);
-            console.log("");
-          }
-        }
-      }
-    }
-
-    // Validate configured project config on startup — notify user of invalid project config
-    if (source === "startup") {
-      const projectConfigPath = getConfiguredProjectConfigPath();
-      if (fs.existsSync(projectConfigPath)) {
-        try {
-          const raw = JSON.parse(fs.readFileSync(projectConfigPath, "utf-8"));
-          const result = validateProjectConfig(raw);
-          if (!result.valid) {
-            console.log(`\n## Config Validation: ${projectConfigPath}`);
-            console.log("");
-            for (const err of result.errors) {
-              console.log(`  - ERROR: ${err}`);
-            }
-            for (const warn of result.warnings || []) {
-              console.log(`  - WARN: ${warn}`);
-            }
-            console.log("");
-            console.log(
-              "Run `node .claude/hooks/lib/project-config-schema.cjs` for schema reference.",
-            );
-            console.log("");
-          }
-        } catch (e) {
-          console.log(`\n## Config Validation: ${projectConfigPath}`);
-          console.log("");
-          console.log(`  - ERROR: Invalid JSON — ${e.message}`);
-          console.log("");
-        }
-      }
-    }
-
-    // Auto-inject coding level guidelines (if not disabled)
-    const codingLevel = config.codingLevel ?? -1;
-    const guidelines = getCodingLevelGuidelines(codingLevel);
-    if (guidelines) {
-      console.log(`\n${guidelines}`);
-    }
-
-    if (config.assertions?.length > 0) {
-      console.log(`\nUser Assertions:`);
-      config.assertions.forEach((assertion, i) => {
-        console.log(`  ${i + 1}. ${assertion}`);
-      });
-    }
+    // SessionStart hooks are side-effect-only. Runtime prompt/context injection
+    // moved to static carriers generated by project init/sync.
 
     process.exit(0);
   } catch (error) {

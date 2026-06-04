@@ -11,7 +11,7 @@ description: '[Project Management] Use when you need to capture ideas, manage pr
 > **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
-> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 >
 > If file not found, search for: project documentation, coding standards, architecture docs.
 
@@ -27,7 +27,7 @@ description: '[Project Management] Use when you need to capture ideas, manage pr
 - Use numeric priority ordering (1-999), never High/Medium/Low categories
 - Always detect project module and load feature context for domain ideas
 - Post-refinement validation interview is NOT optional
-- Use domain-specific entity names (Candidate, Employee, Goal, etc.)
+- Use the project's domain-specific entity names (resolve them from the project's domain/feature docs)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -45,9 +45,9 @@ When working on domain ideas, automatically detect and load business feature con
 
 **Dynamic Discovery:**
 
-1. Run: `Glob("docs/business-features/*/README.md")`
+1. Run: `Glob("docs/specs/*/README.md")`
 2. Extract module names from paths
-3. Match keywords (detect module from docs/business-features/ directory names)
+3. Match keywords (detect module from docs/specs/ directory names)
 
 **Detection Approach (silent auto-detect):**
 
@@ -58,7 +58,7 @@ When working on domain ideas, automatically detect and load business feature con
 
 Once module detected:
 
-1. Read `docs/business-features/{module}/README.md` (first 200 lines for overview)
+1. Read `docs/specs/{module}/README.md` (first 200 lines for overview)
 2. Extract feature list from Quick Navigation
 3. Identify closest matching feature(s)
 4. Note related entities and services
@@ -69,10 +69,10 @@ Once module detected:
 
 Use exact entity names from docs:
 
-- ServiceA: Candidate (not "Applicant"), Job, JobApplication, Interview, CV
-- ServiceB: Order, Feedback, Review, CheckIn, Report
-- Use "Employee" not "User" for staff members
-- Use "Candidate" not "Applicant" for recruitment
+- ServiceA: Order (not "Purchase"), Product, OrderLine, Shipment, Invoice
+- ServiceB: Customer, Feedback, Review, CheckIn, Report
+- Use the project's domain vocabulary for actors (resolve from project-reference) rather than a generic "User"
+- Use the exact term the domain docs use (e.g. "Order" not "Purchase") — never a synonym
 
 ### Token Budget
 
@@ -151,8 +151,8 @@ Include in frontmatter (if project domain):
 ```yaml
 module: ServiceB # Detected module
 related_features: [OrderManagement, Feedback] # From README feature list
-feature_doc_path: docs/business-features/ServiceB/detailed-features/README.GoalManagementFeature.md
-entities: [Goal, Employee, OrganizationalUnit] # From feature doc
+feature_doc_path: docs/specs/ServiceB/README.OrderManagementFeature.md
+entities: [Order, Customer, Region] # From feature doc
 ```
 
 Use domain vocabulary in idea description based on loaded context.
@@ -172,7 +172,7 @@ When user says "new idea" or "feature request":
 
 1. Use `/idea` command workflow
 2. **Detect module** from conversation keywords
-3. **Load feature context** from docs/business-features/
+3. **Load feature context** from docs/specs/
 4. Populate idea-template.md with domain fields
 5. Save to `team-artifacts/ideas/`
 6. Suggest next step: `/refine {idea-file}`
@@ -187,6 +187,17 @@ When user says "prioritize" or "order backlog":
 4. Update priority field in PBI frontmatter
 
 ---
+
+## Role Context (path→role, canonical)
+
+> Applies to Writes under `team-artifacts/ideas/`.
+
+- **Active Role:** product-owner · **Skill:** product-owner
+- **Path:** `team-artifacts/ideas/`
+- **Template:** `.claude/docs/team-artifacts/templates/idea-template.md`
+- **Naming:** `{YYMMDD}-po-{type}-{slug}.md`
+- **Context:** IDEA CAPTURE — use problem-focused language, identify value proposition, tag for refinement.
+- **Quality checklist:** `- [ ]` Problem statement user-focused · `- [ ]` Value proposition quantified · `- [ ]` Priority numeric (not High/Med/Low) · `- [ ]` Dependencies listed
 
 ## Output Conventions
 
@@ -364,16 +375,14 @@ Add to idea/PBI:
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -404,13 +413,13 @@ Add to idea/PBI:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
@@ -422,11 +431,17 @@ Add to idea/PBI:
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 ## Closing Reminders
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** traced `file:line` proof per claim, confidence >80% to act, never guess as fact.
+- **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS markers, confidence-% closer.
 
 **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code

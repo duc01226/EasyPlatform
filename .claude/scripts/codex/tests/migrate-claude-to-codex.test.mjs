@@ -12,7 +12,7 @@ const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(thisDir, '..', '..', '..', '..');
 const sourceScriptsDir = path.join(repoRoot, '.claude', 'scripts', 'codex');
 const migrateScript = path.join(sourceScriptsDir, 'migrate-claude-to-codex.mjs');
-const runnerScript = path.join(repoRoot, '.claude', 'skills', 'codex-sync', 'scripts', 'run-codex-sync.mjs');
+const runnerScript = path.join(repoRoot, '.claude', 'skills', 'sync-codex', 'scripts', 'run-codex-sync.mjs');
 const subagentAuthorizationSnippet =
     'Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.';
 
@@ -27,11 +27,20 @@ async function pathExists(targetPath) {
 
 async function copyPortableCodexTooling(tempRoot) {
     const targetScriptsDir = path.join(tempRoot, '.claude', 'scripts', 'codex');
+    const targetLibDir = path.join(tempRoot, '.claude', 'scripts', 'lib');
     await fs.mkdir(targetScriptsDir, { recursive: true });
+    await fs.mkdir(targetLibDir, { recursive: true });
     const entries = await fs.readdir(sourceScriptsDir, { withFileTypes: true });
     for (const entry of entries) {
         if (!entry.isFile() || !entry.name.endsWith('.mjs')) continue;
         await fs.copyFile(path.join(sourceScriptsDir, entry.name), path.join(targetScriptsDir, entry.name));
+    }
+
+    const sourceLibDir = path.join(repoRoot, '.claude', 'scripts', 'lib');
+    const libEntries = await fs.readdir(sourceLibDir, { withFileTypes: true });
+    for (const entry of libEntries) {
+        if (!entry.isFile() || !entry.name.endsWith('.cjs')) continue;
+        await fs.copyFile(path.join(sourceLibDir, entry.name), path.join(targetLibDir, entry.name));
     }
 }
 
@@ -41,11 +50,10 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
         const skillDir = path.join(tempRoot, '.claude', 'skills', 'sample-skill');
         const planSkillDir = path.join(tempRoot, '.claude', 'skills', 'plan');
         const codeSimplifierSkillDir = path.join(tempRoot, '.claude', 'skills', 'code-simplifier');
-        const codexSyncSkillDir = path.join(tempRoot, '.claude', 'skills', 'codex-sync');
+        const codexSyncSkillDir = path.join(tempRoot, '.claude', 'skills', 'sync-codex');
         const portableSourceScriptsDir = path.join(tempRoot, '.claude', 'scripts', 'codex');
         const agentsDir = path.join(tempRoot, '.claude', 'agents');
         const codexDir = path.join(tempRoot, '.codex');
-        const hooksDir = path.join(tempRoot, '.claude', 'hooks', 'lib');
         await fs.mkdir(skillDir, { recursive: true });
         await fs.mkdir(planSkillDir, { recursive: true });
         await fs.mkdir(codeSimplifierSkillDir, { recursive: true });
@@ -53,7 +61,6 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
         await fs.mkdir(portableSourceScriptsDir, { recursive: true });
         await fs.mkdir(agentsDir, { recursive: true });
         await fs.mkdir(codexDir, { recursive: true });
-        await fs.mkdir(hooksDir, { recursive: true });
 
         await fs.writeFile(
             path.join(skillDir, 'SKILL.md'),
@@ -94,8 +101,8 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
         );
 
         await fs.writeFile(
-            path.join(tempRoot, '.claude', 'skills', 'codex-sync', 'SKILL.md'),
-            ['---', 'name: codex-sync', 'description: Codex sync', '---', '', '# Codex Sync', ''].join('\n'),
+            path.join(tempRoot, '.claude', 'skills', 'sync-codex', 'SKILL.md'),
+            ['---', 'name: sync-codex', 'description: Codex sync', '---', '', '# Codex Sync', ''].join('\n'),
             'utf8'
         );
 
@@ -111,7 +118,6 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
             path.join(tempRoot, '.claude', '.ck.json'),
             JSON.stringify(
                 {
-                    workflow: { confirmationMode: 'always' },
                     portability: {
                         rule: 'Custom portable rule from local config.',
                         projectConfigPath: 'custom/project-config.json',
@@ -151,21 +157,6 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
             'utf8'
         );
 
-        await fs.writeFile(
-            path.join(hooksDir, 'prompt-injections.cjs'),
-            [
-                'module.exports = {',
-                "  injectWorkflowProtocol: (_transcriptPath, _confirmationMode, portability) => ['## Workflow Protocol Stub', portability.rule, portability.projectConfigPath, portability.docsIndexPath].join('\\n'),",
-                "  injectCriticalContext: () => '## Critical Context Stub',",
-                "  injectAiMistakePrevention: () => '## Mistake Prevention Stub',",
-                "  injectLessons: () => '## Lessons Stub',",
-                "  injectLessonReminder: () => '## Lesson Reminder Stub',",
-                '};',
-                ''
-            ].join('\n'),
-            'utf8'
-        );
-
         await execFileAsync(process.execPath, [migrateScript], { cwd: tempRoot });
 
         const mirroredSkill = await fs.readFile(path.join(tempRoot, '.agents', 'skills', 'sample-skill', 'SKILL.md'), 'utf8');
@@ -183,7 +174,9 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
         assert.match(mirroredSkill, /custom\/project-config\.json/);
         assert.match(mirroredSkill, /custom\/docs-index\.md/);
         assert.doesNotMatch(mirroredSkill, /Lessons Stub/);
-        assert.match(mirroredSkill, /Lesson Reminder Stub/);
+        assert.doesNotMatch(mirroredSkill, /Workflow Protocol Stub|Critical Context Stub|Lesson Reminder Stub/);
+        assert.doesNotMatch(mirroredSkill, /prompt-injections\.cjs/);
+        assert.match(mirroredSkill, /LESSON-LEARNED-REMINDER/);
         assert.match(mirroredSkill, new RegExp(subagentAuthorizationSnippet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
         assert.match(mirroredSkill, /Use \$plan for planning\./);
         assert.match(mirroredSkill, /Plan directory: `\{plan-dir\}\/plan\.md` \+ `\{plan-dir\}\/research\/\*\.md`\./);
@@ -235,23 +228,23 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
     }
 });
 
-test('codex-sync runner works from copied .claude without a root scripts folder', async () => {
+test('sync-codex runner works from copied .claude without a root scripts folder', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-sync-portable-'));
     try {
         await copyPortableCodexTooling(tempRoot);
 
-        const runnerTarget = path.join(tempRoot, '.claude', 'skills', 'codex-sync', 'scripts', 'run-codex-sync.mjs');
+        const runnerTarget = path.join(tempRoot, '.claude', 'skills', 'sync-codex', 'scripts', 'run-codex-sync.mjs');
         await fs.mkdir(path.dirname(runnerTarget), { recursive: true });
         await fs.copyFile(runnerScript, runnerTarget);
 
-        await fs.mkdir(path.join(tempRoot, '.claude', 'skills', 'codex-sync'), { recursive: true });
+        await fs.mkdir(path.join(tempRoot, '.claude', 'skills', 'sync-codex'), { recursive: true });
         await fs.mkdir(path.join(tempRoot, '.claude', 'skills', 'sample-skill'), { recursive: true });
         await fs.mkdir(path.join(tempRoot, '.claude', 'agents'), { recursive: true });
         await fs.mkdir(path.join(tempRoot, '.claude', 'hooks', 'lib'), { recursive: true });
 
         await fs.writeFile(
-            path.join(tempRoot, '.claude', 'skills', 'codex-sync', 'SKILL.md'),
-            ['---', 'name: codex-sync', 'description: Codex sync', '---', '', '# Codex Sync', ''].join('\n'),
+            path.join(tempRoot, '.claude', 'skills', 'sync-codex', 'SKILL.md'),
+            ['---', 'name: sync-codex', 'description: Codex sync', '---', '', '# Codex Sync', ''].join('\n'),
             'utf8'
         );
         await fs.writeFile(
@@ -271,23 +264,9 @@ test('codex-sync runner works from copied .claude without a root scripts folder'
         );
         await fs.writeFile(
             path.join(tempRoot, '.claude', '.ck.json'),
-            `${JSON.stringify({ workflow: { confirmationMode: 'always' } }, null, 2)}\n`,
+            `${JSON.stringify({}, null, 2)}\n`,
             'utf8'
         );
-        await fs.writeFile(
-            path.join(tempRoot, '.claude', 'hooks', 'lib', 'prompt-injections.cjs'),
-            [
-                'module.exports = {',
-                "  injectWorkflowProtocol: () => '## Workflow Protocol Stub',",
-                "  injectCriticalContext: () => '## Critical Context Stub',",
-                "  injectLessons: () => '## Lessons Stub',",
-                "  injectLessonReminder: () => '## Lesson Reminder Stub',",
-                '};',
-                ''
-            ].join('\n'),
-            'utf8'
-        );
-
         await execFileAsync(process.execPath, [runnerTarget, '--only=migrate,hooks,context'], { cwd: tempRoot });
 
         const codexConfig = await fs.readFile(path.join(tempRoot, '.codex', 'config.toml'), 'utf8');
@@ -295,7 +274,8 @@ test('codex-sync runner works from copied .claude without a root scripts folder'
         assert.match(codexConfig, /notify = \["node", "\.codex\/scripts\/codex\/codex-notify\.mjs"\]/);
         assert.match(codexConfig, /status_line = \["model-with-reasoning", "current-dir", "project-root", "context-used", "five-hour-limit", "weekly-limit"\]/);
         assert.doesNotMatch(mirroredSkill, /Lessons Stub/);
-        assert.match(mirroredSkill, /Lesson Reminder Stub/);
+        assert.doesNotMatch(mirroredSkill, /Workflow Protocol Stub|Critical Context Stub|Lesson Reminder Stub|prompt-injections\.cjs/);
+        assert.match(mirroredSkill, /LESSON-LEARNED-REMINDER/);
         assert.equal(await pathExists(path.join(tempRoot, '.codex', 'scripts', 'codex', 'codex-notify.mjs')), true);
         assert.equal(await pathExists(path.join(tempRoot, 'scripts')), false);
         assert.equal(await pathExists(path.join(tempRoot, 'AGENTS.md')), true);
@@ -304,12 +284,12 @@ test('codex-sync runner works from copied .claude without a root scripts folder'
     }
 });
 
-test('codex-sync runner forwards copy-skills to migrate stage', async () => {
+test('sync-codex runner forwards copy-skills to migrate stage', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-sync-copy-skills-'));
     try {
         await copyPortableCodexTooling(tempRoot);
 
-        const runnerTarget = path.join(tempRoot, '.claude', 'skills', 'codex-sync', 'scripts', 'run-codex-sync.mjs');
+        const runnerTarget = path.join(tempRoot, '.claude', 'skills', 'sync-codex', 'scripts', 'run-codex-sync.mjs');
         await fs.mkdir(path.dirname(runnerTarget), { recursive: true });
         await fs.copyFile(runnerScript, runnerTarget);
 

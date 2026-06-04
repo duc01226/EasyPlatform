@@ -80,7 +80,6 @@ const SKELETON = {
         cssMethodology: '',
         stateManagement: '',
         crossModuleValidation: '',
-        featureDocPath: '',
         featureDocTemplate: '',
         reviewRulesDoc: ''
     },
@@ -146,21 +145,21 @@ function checkConfigStatus() {
 // =============================================================================
 
 const SCAN_SKILL_MAP = {
-    'project-structure-reference.md': 'scan-project-structure',
-    'backend-patterns-reference.md': 'scan-backend-patterns',
-    'seed-test-data-reference.md': 'scan-seed-test-data',
-    'frontend-patterns-reference.md': 'scan-frontend-patterns',
-    'integration-test-reference.md': 'scan-integration-tests',
-    'feature-docs-reference.md': 'scan-feature-docs',
-    'code-review-rules.md': 'scan-code-review-rules',
-    'scss-styling-guide.md': 'scan-scss-styling',
-    'design-system/README.md': 'scan-design-system',
-    'design-system/design-system-canonical.md': 'scan-design-system',
-    'design-system/design-tokens.scss': 'scan-design-system',
-    'design-system/design-tokens.css': 'scan-design-system',
-    'e2e-test-reference.md': 'scan-e2e-tests',
-    'domain-entities-reference.md': 'scan-domain-entities',
-    'docs-index-reference.md': 'scan-docs-index'
+    'project-structure-reference.md': 'scan --target=project-structure',
+    'backend-patterns-reference.md': 'scan --target=backend-patterns',
+    'seed-test-data-reference.md': 'scan --target=seed-test-data',
+    'frontend-patterns-reference.md': 'scan --target=frontend-patterns',
+    'integration-test-reference.md': 'scan --target=integration-tests',
+    'feature-spec-reference.md': 'scan --target=feature-spec',
+    'code-review-rules.md': 'scan --target=code-review-rules',
+    'scss-styling-guide.md': 'scan --target=scss-styling',
+    'design-system/README.md': 'scan --target=design-system',
+    'design-system/design-system-canonical.md': 'scan --target=design-system',
+    'design-system/design-tokens.scss': 'scan --target=design-system',
+    'design-system/design-tokens.css': 'scan --target=design-system',
+    'e2e-test-reference.md': 'scan --target=e2e-tests',
+    'domain-entities-reference.md': 'scan --target=domain-entities',
+    'docs-index-reference.md': 'scan --target=docs-index'
     // lessons.md excluded — managed by /learn skill
 };
 
@@ -196,9 +195,16 @@ const DEFAULT_REFERENCE_DOCS = [
         sections: ['Test Architecture', 'Test Base Classes', 'Test Helpers', 'Service-Specific Setup']
     },
     {
-        filename: 'feature-docs-reference.md',
+        filename: 'feature-spec-reference.md',
         purpose: 'Feature documentation patterns: app-to-service mapping, doc structure, templates, and conventions.',
-        sections: ['App-to-Service Mapping', 'Feature Doc Structure', 'Templates', 'Conventions']
+        sections: ['App-to-Service Mapping', 'Feature Doc Structure', 'Templates', 'Conventions'],
+        templatePath: '.claude/templates/reference-docs/feature-spec-reference.md'
+    },
+    {
+        filename: 'spec-system-reference.md',
+        purpose: 'Spec system routing: fixed spec root, canonical Feature Spec ownership, TC registry location, and derived index/ERD rules.',
+        sections: [],
+        templatePath: '.claude/templates/reference-docs/spec-system-reference.md'
     },
     {
         filename: 'spec-principles.md',
@@ -207,13 +213,19 @@ const DEFAULT_REFERENCE_DOCS = [
         templatePath: '.claude/templates/reference-docs/spec-principles.md'
     },
     {
+        filename: 'workflow-spec-test-code-cycle-reference.md',
+        purpose: 'Workflow spec-test-code cycle: local workflow sequence, artifact ownership, verification gates, and generated mirror sync.',
+        sections: [],
+        templatePath: '.claude/templates/reference-docs/workflow-spec-test-code-cycle-reference.md'
+    },
+    {
         filename: 'code-review-rules.md',
         purpose: 'Code review rules, conventions, anti-patterns, decision trees, and checklists.',
         sections: ['Critical Rules', 'Backend Rules', 'Frontend Rules', 'Architecture Rules', 'Anti-Patterns', 'Checklists']
     },
     {
         filename: 'lessons.md',
-        purpose: 'Learned lessons from past sessions — auto-injected via hook, written via /learn skill.',
+        purpose: 'Learned lessons from past sessions — written and managed via the /learn skill (not auto-injected).',
         sections: []
     },
     {
@@ -259,7 +271,7 @@ const PLACEHOLDER_MARKER = "<!-- Fill in your project's details below. -->";
 // Claude-only sentinel for SCSS/CSS placeholders — non-prose so a real authored
 // token file cannot collide with this string by accident. Detection in
 // isPlaceholderFile is LINE-ANCHORED (full-line equality, not substring).
-// MUST be removed by /scan-design-system Phase 3 authoring step.
+// MUST be removed by /scan --target=design-system Phase 3 authoring step.
 const PLACEHOLDER_MARKER_SCSS = "/* @claude:placeholder — do not commit */";
 
 // =============================================================================
@@ -315,15 +327,160 @@ function checkProjectConfig() {
     }
 }
 
+// =============================================================================
+// REFERENCE DOC NORMALIZATION — canonical floor, alias migration, merge
+// =============================================================================
+
 /**
- * Load reference doc definitions from config, falling back to defaults.
+ * Legacy reference-doc filename → canonical filename.
+ *
+ * The framework is canonical; a project's config is brought INTO convention, never
+ * the reverse. When a canonical doc is renamed across framework versions, add the
+ * old→new mapping here (one line) and every layer — runtime merge, config
+ * normalization, and the project-config/project-init repair skills — migrates
+ * automatically. Without this map, legacy projects silently re-diverge.
+ */
+const REFERENCE_DOC_ALIASES = {
+    'feature-docs-reference.md': 'feature-spec-reference.md'
+};
+
+/**
+ * Resolve a (possibly legacy) reference-doc filename to its canonical filename.
+ * @param {string} filename
+ * @returns {string}
+ */
+function resolveReferenceDocAlias(filename) {
+    return Object.prototype.hasOwnProperty.call(REFERENCE_DOC_ALIASES, filename)
+        ? REFERENCE_DOC_ALIASES[filename]
+        : filename;
+}
+
+/**
+ * Merge a project's configured reference docs with the canonical DEFAULT_REFERENCE_DOCS
+ * using canonical-floor union semantics. This is the root-cause fix for silent doc
+ * drift: previously a non-empty config.referenceDocs FULLY overrode the canonical set,
+ * so a partial or legacy-named config permanently suppressed framework docs.
+ *
+ * Semantics:
+ *   - Every canonical doc is ALWAYS present, in canonical order — config can never
+ *     suppress the framework set.
+ *   - Legacy filenames are resolved to canonical (REFERENCE_DOC_ALIASES) and collapsed,
+ *     so a legacy entry never produces a duplicate doc. A canonical-named entry wins
+ *     over a legacy alias targeting the same canonical doc.
+ *   - A config entry matching a canonical doc may override `purpose` (non-empty) and
+ *     `sections` (non-empty). The canonical `templatePath` is authoritative for
+ *     template-backed docs; config may only SUPPLY a templatePath where canonical has
+ *     none — it can never repoint a framework template at a wrong/legacy source.
+ *   - Genuine project-specific docs (filenames not in the canonical set, after alias
+ *     resolution) are preserved and appended after the canonical block, in config order.
+ *
+ * @param {Array<{filename: string, purpose?: string, sections?: string[], templatePath?: string}>} [configDocs]
+ * @returns {Array<{filename: string, purpose: string, sections?: string[], templatePath?: string}>}
+ */
+function mergeReferenceDocs(configDocs) {
+    const canonicalNames = new Set(DEFAULT_REFERENCE_DOCS.map(d => d.filename));
+    const overrides = new Map(); // canonicalName -> config entry
+    const extras = [];           // project-specific docs not in canonical set
+    const seenExtra = new Set();
+
+    if (Array.isArray(configDocs)) {
+        for (const doc of configDocs) {
+            if (!doc || typeof doc.filename !== 'string' || doc.filename.trim() === '') continue;
+            // Normalize the filename ONCE at entry. A human-edited legacy config can carry
+            // trailing whitespace (e.g. "feature-docs-reference.md "); without trimming, the
+            // raw value misses BOTH the alias map and the canonical set and is pushed to
+            // `extras` as a bogus project doc — silently re-importing the exact drift the
+            // alias map exists to kill (and human-edited legacy configs are its whole target
+            // population). Trim only — NEVER case-fold: filesystems are case-sensitive.
+            const filename = doc.filename.trim();
+            const resolved = resolveReferenceDocAlias(filename);
+            if (canonicalNames.has(resolved)) {
+                const isLegacyAlias = filename !== resolved;
+                // Prefer a canonical-named entry over a legacy alias for the same doc.
+                if (!overrides.has(resolved) || !isLegacyAlias) overrides.set(resolved, doc);
+            } else if (!seenExtra.has(resolved)) {
+                seenExtra.add(resolved);
+                extras.push({ ...doc, filename: resolved });
+            }
+        }
+    }
+
+    const merged = DEFAULT_REFERENCE_DOCS.map(canon => {
+        const ov = overrides.get(canon.filename);
+        const out = { ...canon };
+        if (ov) {
+            if (typeof ov.purpose === 'string' && ov.purpose.trim() !== '') out.purpose = ov.purpose;
+            if (Array.isArray(ov.sections) && ov.sections.length > 0) out.sections = ov.sections;
+            // Canonical templatePath is authoritative; config may only fill a gap.
+            if (!out.templatePath && typeof ov.templatePath === 'string' && ov.templatePath.trim() !== '') {
+                out.templatePath = ov.templatePath.trim();
+            }
+        }
+        return out;
+    });
+
+    return merged.concat(extras);
+}
+
+/**
+ * Produce the canonical-shaped referenceDocs array for a project AND a report of what
+ * changed, so config-writing skills (project-config Phase 2q, project-init repair) can
+ * rewrite config + migrate files deterministically instead of re-importing on-disk drift.
+ *
+ * @param {Array} [configDocs] - current config.referenceDocs
+ * @returns {{
+ *   normalized: Array,                                  // what config.referenceDocs SHOULD be
+ *   renames: Array<{from: string, to: string}>,         // legacy→canonical file migrations to apply
+ *   added: string[],                                    // canonical filenames absent from config
+ *   removedLegacy: string[],                            // legacy filenames to drop from config
+ *   changed: boolean                                    // true if config differs from canonical shape
+ * }}
+ */
+function normalizeReferenceDocs(configDocs) {
+    const before = Array.isArray(configDocs) ? configDocs : [];
+    const normalized = mergeReferenceDocs(before);
+
+    // Trim once (never case-fold), mirroring mergeReferenceDocs, so a trailing-space legacy
+    // entry is detected as a rename here too instead of surviving silently in config.
+    // Empty/whitespace-only filenames are dropped.
+    const beforeNames = before
+        .map(d => (d && typeof d.filename === 'string') ? d.filename.trim() : '')
+        .filter(Boolean);
+
+    const renames = [];
+    const removedLegacy = [];
+    const seenLegacy = new Set(); // dedup parity with mergeReferenceDocs' seenExtra: a duplicate
+                                  // legacy entry must not emit duplicate rename/removal instructions.
+    for (const name of beforeNames) {
+        const resolved = resolveReferenceDocAlias(name);
+        if (resolved !== name && !seenLegacy.has(name)) {
+            seenLegacy.add(name);
+            renames.push({ from: name, to: resolved });
+            removedLegacy.push(name);
+        }
+    }
+
+    const satisfied = new Set(beforeNames.map(resolveReferenceDocAlias));
+    const added = DEFAULT_REFERENCE_DOCS
+        .map(d => d.filename)
+        .filter(name => !satisfied.has(name));
+
+    const afterNames = normalized.map(d => d.filename);
+    const changed = renames.length > 0 || added.length > 0 ||
+        beforeNames.length !== afterNames.length ||
+        beforeNames.some((n, i) => n !== afterNames[i]);
+
+    return { normalized, renames, added, removedLegacy, changed };
+}
+
+/**
+ * Load reference doc definitions, merged with the canonical floor.
+ * Drift, partial configs, and legacy filenames can no longer suppress canonical docs.
  * @returns {Array<{filename: string, purpose: string, sections?: string[], templatePath?: string}>}
  */
 function getReferenceDocs() {
     const config = loadProjectConfig();
-    const docs = config.referenceDocs;
-    if (Array.isArray(docs) && docs.length > 0) return docs;
-    return DEFAULT_REFERENCE_DOCS;
+    return mergeReferenceDocs(config && config.referenceDocs);
 }
 
 /**
@@ -664,6 +821,11 @@ module.exports = {
     isPlaceholderFile,
     checkProjectConfig,
     getReferenceDocs,
+    // Reference doc normalization (canonical floor + alias migration)
+    REFERENCE_DOC_ALIASES,
+    resolveReferenceDocAlias,
+    mergeReferenceDocs,
+    normalizeReferenceDocs,
     generatePlaceholderContent,
     initDesignSystemAppDocs,
     // Greenfield detection

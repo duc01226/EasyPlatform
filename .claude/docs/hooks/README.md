@@ -1,32 +1,44 @@
 # Hooks Reference
 
-> 64 top-level hook files + 29 lib modules for context-aware AI behavior (some hooks register on multiple events)
+> 15 top-level `.cjs` hooks and 25 lib modules for context-aware AI behavior (some hooks register on multiple events; the unified notification router lives under `hooks/notifications/notify.cjs`)
 
 ## Overview
 
-Hooks are Node.js scripts (`.cjs`) that execute at specific Claude Code lifecycle events, enabling automated context injection, lessons injection, workflow enforcement, and safety controls.
+Hooks are Node.js scripts (`.cjs`, plus one `.js`) that execute at specific Claude Code lifecycle events, enabling session initialization, safety gates, graph maintenance, and code formatting. Enforcement and lifecycle-recovery behavior is **model-driven static guidance** in `CLAUDE.md` / `SKILL.md` / agent `.md`, not runtime hooks.
 
 ```
 SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool runs] → PostToolUse hooks
        ↓                    ↓                       ↓                                ↓
-  Init state         Route workflows          Validate/block              Track outcomes
-  Load patterns      Capture feedback         Inject context              Learn patterns
-  Inject deltas      Detect corrections       Enforce rules               Format outputs
+  Verify install         Intake gate          Validate/block              Format edits
+  Init state                                  Guard boundaries            Update graph
+  Load docs / graph                           Block unsafe ops            Auto-install npm
 ```
+
+> **Context injection (current architecture).** Per-edit/per-prompt context-injection
+> guidance lives **statically** in `CLAUDE.md`, agent `.md` files, and skill `SKILL.md`
+> files, so a hookless harness (Codex) reads identical instructions; there are
+> no runtime context-injection hooks. The PreToolUse hooks are blocking/advisory **gates**
+> and a few utility hooks; every hook below maps to a real registration in
+> `.claude/settings.json`. Plan/skill/todo enforcement and compaction-state recovery are
+> now **static model-driven guidance** (CLAUDE.md / SKILL.md), not hooks.
 
 ## Hook Events
 
-| Event              | Trigger                      | Hooks | Use Cases                                                                                        |
-| ------------------ | ---------------------------- | ----- | ------------------------------------------------------------------------------------------------ |
-| `SessionStart`     | Session begins/resumes       | 7     | Init state, recover from compaction, resume context, load docs                                   |
-| `SessionEnd`       | Session ends                 | 1     | Save state, cleanup temp/swap files, notifications                                               |
-| `UserPromptSubmit` | Before processing user input | 2     | Route workflows (3 split hooks), gate init, assemble prompt context (6 split hooks)              |
-| `PreToolUse`       | Before tool execution        | 28    | Block sensitive ops, inject context, enforce plans/todos                                         |
-| `PostToolUse`      | After tool completes         | 8     | Externalize outputs, format code, track events                                                   |
-| `PreCompact`       | Before context compaction    | 1     | Write compaction marker; capture git status snapshot for post-compact re-verify warning          |
-| `SubagentStart`    | Subagent spawning            | 8     | Inject project context as 8 lightweight guidance pointers (read-on-demand — no full doc content) |
-| `Notification`     | Idle/waiting events          | 1     | System notifications                                                                             |
-| `Stop`             | Response complete            | 1     | System notifications                                                                             |
+Counts below are registration counts in `.claude/settings.json` (a hook registered on
+two events is counted once per event).
+
+| Event              | Trigger                      | Hooks | Use Cases                                                                                |
+| ------------------ | ---------------------------- | ----- | ---------------------------------------------------------------------------------------- |
+| `SessionStart`     | Session begins/resumes       | 5     | Verify install, init state, auto-install npm, load docs, init graph                      |
+| `SessionEnd`       | Session ends                 | 1     | Save pending-tasks warning, cleanup temp/swap files                                      |
+| `UserPromptSubmit` | Before processing user input | 1     | Warn/route when config, root instructions, docs, or graph need refresh                   |
+| `PreToolUse`       | Before tool execution        | 9     | Block sensitive ops, guard path boundaries, warn on doc⇄code drift, command-syntax guard |
+| `PostToolUse`      | After tool completes         | 2     | Format code, update graph                                                                |
+| `Notification`     | Idle/waiting events          | 1     | System notification (`hooks/notifications/notify.cjs`)                                   |
+| `Stop`             | Response complete            | 1     | System notification (`hooks/notifications/notify.cjs`)                                   |
+
+> There are **no** `SubagentStart` hooks registered; subagent guidance is static in the
+> agent `.md` files.
 
 ---
 
@@ -34,102 +46,82 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 
 ### Session Lifecycle
 
-| Hook                                          | Event                          | Matcher                           | Purpose                                                                                                                                                                               |
-| --------------------------------------------- | ------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session-init.cjs`                            | SessionStart                   | `startup\|resume\|clear\|compact` | Initialize session: detect project, write env vars                                                                                                                                    |
-| `post-compact-recovery.cjs`                   | SessionStart                   | `resume\|compact`                 | Restore workflow state, todos, and swap inventory after compaction; scan tmp/ for [partial] subagent progress files (session-scoped)                                                  |
-| `session-resume.cjs`                          | SessionStart                   | `resume`                          | Inject pending-tasks warning from prev session, restore todos from checkpoint                                                                                                         |
-| `npm-auto-install.cjs`                        | SessionStart                   | `startup`                         | Auto-install missing npm packages from root `package.json`                                                                                                                            |
-| `session-init-docs.cjs`                       | SessionStart                   | `startup`                         | Config skeleton + reference doc placeholder creation                                                                                                                                  |
-| `workflow-router.cjs`                         | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject first third of 37-workflow catalog + detection instructions (part 1 of 3)                                                                                                      |
-| `workflow-router-p2.cjs`                      | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject second third of 37-workflow catalog (part 2 of 3)                                                                                                                              |
-| `workflow-router-p3.cjs`                      | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject final third of 37-workflow catalog (part 3 of 3)                                                                                                                               |
-| `prompt-context-assembler.cjs`                | SessionStart, UserPromptSubmit | `startup`, `*`                    | Assemble session context, rules, modularization guidance, lessons (part 1 of 2)                                                                                                       |
-| `prompt-context-assembler-closers.cjs`        | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject graph protocol tier 1, graph compact reminder, workflow gate, lesson-learned reminder                                                                                          |
-| `prompt-context-assembler-docs.cjs`           | SessionStart, UserPromptSubmit | `startup`, `*`                    | Guidance pointer for project-structure-reference.md (merged from former p1+p2 full-content hooks)                                                                                     |
-| `prompt-context-assembler-claude.cjs`         | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject CLAUDE.md TL;DR key rules (part 1 of 2)                                                                                                                                        |
-| `prompt-context-assembler-project-config.cjs` | SessionStart, UserPromptSubmit | `startup`, `*`                    | Inject project-config-summary (~3.2KB): project modules, framework, context groups                                                                                                    |
-| `pre-compact-snapshot.cjs`                    | UserPromptSubmit               | `*`                               | Capture last 100 readable `[Human]/[Assistant]` transcript lines as JSON snapshot at `/tmp/ck/snapshots/{sessionId}.json`; injected by `post-compact-recovery.cjs` after compact only |
-| `graph-session-init.cjs`                      | SessionStart                   | `startup`                         | Check Python/tree-sitter/graph.db, inject status guidance (skips if config not populated)                                                                                             |
-| `session-end.cjs`                             | SessionEnd                     | `clear\|exit\|compact`            | Write pending-tasks warning, cleanup temp/swap files, delete markers                                                                                                                  |
-| `notify-waiting.js`                           | SessionEnd, Stop, Notification | various                           | System notification when Claude is waiting for input                                                                                                                                  |
-| `subagent-init-identity.cjs`                  | SubagentStart                  | `*`                               | Fires 1st of 8: identity, plan context, language, rules, naming, trust, agent instructions, critical thinking mindset                                                                 |
-| `subagent-init-patterns.cjs`                  | SubagentStart                  | `*`                               | Fires 2nd of 8: read-guidance pointer — patterns + agent-specific docs (merged from former p1-p5 full-content hooks)                                                                  |
-| `subagent-init-dev-rules.cjs`                 | SubagentStart                  | `*`                               | Fires 3rd of 8: read-guidance pointer — development-rules.md (code/review agents only; merged from former p1-p3)                                                                      |
-| `subagent-init-code-review-rules.cjs`         | SubagentStart                  | `*`                               | Fires 4th of 8: read-guidance pointer — code-review-rules.md (code-reviewer/code-simplifier/spec-compliance-reviewer only; merged from former p1-p5)                                  |
-| `subagent-init-lessons.cjs`                   | SubagentStart                  | `*`                               | Fires 5th of 8: lessons learned                                                                                                                                                       |
-| `subagent-init-ai-mistakes.cjs`               | SubagentStart                  | `*`                               | Fires 6th of 8: AI mistake prevention bullets                                                                                                                                         |
-| `subagent-init-context-guard.cjs`             | SubagentStart                  | `*`                               | Fires 7th of 8: context-window-overflow guard; injects session-scoped `ck-agent-<ms>-<rnd>` naming contract + Output Contract + Report Path Declaration                               |
-| `subagent-init-todos.cjs`                     | SubagentStart                  | `*`                               | Fires 8th of 8 (last): parent todo list so subagents know active task context                                                                                                         |
+| Hook                       | Event                          | Matcher                                                  | Purpose                                                                                                                                                                                                                          |
+| -------------------------- | ------------------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify-install.cjs`       | SessionStart                   | `startup\|resume\|clear\|compact`                        | Install integrity preflight (runs first): detect partial `.claude` copy with missing hook `lib/*.cjs` files, emit one actionable message                                                                                         |
+| `session-init.cjs`         | SessionStart                   | `startup\|resume\|clear\|compact`                        | Initialize session: detect project, write env vars, validate config, cleanup temp files                                                                                                                                          |
+| `npm-auto-install.cjs`     | SessionStart                   | `startup`                                                | Auto-install missing npm packages from root `package.json`                                                                                                                                                                       |
+| `session-init-docs.cjs`    | SessionStart                   | `startup`                                                | Config skeleton + reference doc placeholder creation                                                                                                                                                                             |
+| `graph-session-init.cjs`   | SessionStart                   | `startup`                                                | Check Python/tree-sitter/graph.db, inject status guidance (skips if config not populated)                                                                                                                                        |
+| `session-end.cjs`          | SessionEnd                     | `clear\|exit\|compact`                                   | Clean up tmpclaude temp/swap files and stale snapshots on session end                                                                                                                                                            |
+| `notifications/notify.cjs` | Stop, PreToolUse, Notification | –, `AskUserQuestion`, `AskUserPrompt\|permission_prompt` | Unified notification router → desktop dialog + optional Telegram/Discord/Slack; fires on task-complete (Stop), question (AskUserQuestion), and input/permission prompts. Single owner — replaces the retired `notify-waiting.js` |
 
-### Context Injection (PreToolUse)
+### Context Management (PreToolUse / UserPromptSubmit)
 
-| Hook                             | Matcher                                                                           | Purpose                                                                                                                                                                                                                                   |
-| -------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `backend-context.cjs`            | `Edit\|Write\|MultiEdit`                                                          | Inject C#/CQRS patterns when editing backend files                                                                                                                                                                                        |
-| `frontend-context.cjs`           | `Edit\|Write\|MultiEdit`                                                          | Inject Angular/TS patterns when editing frontend files                                                                                                                                                                                    |
-| `design-system-context.cjs`      | `Edit\|Write\|MultiEdit`                                                          | Inject design tokens when editing UI components                                                                                                                                                                                           |
-| `scss-styling-context.cjs`       | `Edit\|Write\|MultiEdit`                                                          | Inject BEM/SCSS patterns when editing style files                                                                                                                                                                                         |
-| `code-patterns-injector.cjs`     | `Edit\|Write\|MultiEdit`                                                          | Inject discovered codebase patterns before edits                                                                                                                                                                                          |
-| `role-context-injector.cjs`      | `Write`                                                                           | Inject role-specific context (PO, BA, QA, etc.)                                                                                                                                                                                           |
-| `figma-context-extractor.cjs`    | `Read`                                                                            | Extract and inject Figma design context                                                                                                                                                                                                   |
-| `code-review-rules-injector.cjs` | `Skill`                                                                           | Inject YourProject code review rules on review skill activation                                                                                                                                                                           |
-| `dev-rules-injector.cjs`         | `Edit\|Write\|MultiEdit`, `Skill`                                                 | Inject development-rules.md before edits and review/coding skills                                                                                                                                                                         |
-| `knowledge-context.cjs`          | `Edit\|Write\|MultiEdit`                                                          | Inject knowledge work guidelines for docs/knowledge/ files                                                                                                                                                                                |
-| `ba-refinement-context.cjs`      | `Write\|Edit`                                                                     | Inject BA team refinement context when editing PBI artifacts                                                                                                                                                                              |
-| `feature-docs-context.cjs`       | `Write\|Edit\|MultiEdit`                                                          | Inject feature-docs reference context when editing business feature docs                                                                                                                                                                  |
-| `test-specs-context.cjs`         | `Write\|Edit\|MultiEdit`                                                          | Inject test-specs reference context when editing test specification files                                                                                                                                                                 |
-| `artifact-path-resolver.cjs`     | `Write`                                                                           | Resolve correct artifact output paths (plans/, reports/)                                                                                                                                                                                  |
-| `graph-context-injector.cjs`     | `Skill`                                                                           | Auto-inject blast radius when review/debug skills invoked                                                                                                                                                                                 |
-| `mindset-injector.cjs`           | `Skill\|Agent\|Edit\|Write\|MultiEdit\|TaskCreate\|TaskUpdate` (in_progress only) | Inject critical thinking mindset + AI mistake prevention reminders; full re-anchor before Agent spawns; compact context on task ops                                                                                                       |
-| `mindset-compact-injector.cjs`   | `Read\|Grep\|Glob\|Bash`                                                          | Lightweight critical-thinking re-anchor on read-only tools; deduped via DEDUP_LINES.CRITICAL_THINKING — no spam on consecutive greps                                                                                                      |
-| `python-call-guide.cjs`          | `Bash`                                                                            | Inject platform-aware Python invocation guide when Bash command matches `/\bpython3?\b/`; highlights current platform's rule (`py`/`python` on Windows, `python3` on macOS/Linux); deduped via DEDUP_LINES.PYTHON_GUIDE (100-line window) |
-| `git-commit-block.cjs`           | `Bash`                                                                            | Block git commit/push unless /commit skill is active                                                                                                                                                                                      |
+The PreToolUse / UserPromptSubmit hooks are gates — not content injectors.
+
+| Hook                   | Event            | Matcher | Purpose                                                                          |
+| ---------------------- | ---------------- | ------- | -------------------------------------------------------------------------------- |
+| `init-prompt-gate.cjs` | UserPromptSubmit | `*`     | Warn/route until project context, root instructions, docs, and graph are current |
+
+### Gates (PreToolUse)
+
+| Hook                           | Matcher                                                               | Purpose                                                                                                                                                                                                                     |
+| ------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `windows-command-detector.cjs` | `Bash`                                                                | Detect/block Windows CMD syntax; auto-rewrite `\!` in `node -e` commands                                                                                                                                                    |
+| `git-commit-block.cjs`         | `Bash`                                                                | Block git commit/push unless the `/commit` skill is active                                                                                                                                                                  |
+| `doc-sync-gate.cjs`            | `Bash` and `Write\|Edit\|MultiEdit`                                   | Doc⇄Code sync gate — WARN-only (every path exits 0): warns when a `git commit` stages behavioral code in an enforced area without touching its Feature Spec, and per-edit when enforced-area code drifts past `last_synced` |
+| `scout-block.cjs`              | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit`                   | Prevent bulk reads outside approved scope                                                                                                                                                                                   |
+| `privacy-block.cjs`            | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit`                   | Block access to sensitive files (.env, keys, credentials)                                                                                                                                                                   |
+| `path-boundary-block.cjs`      | `Bash\|Edit\|Write\|MultiEdit\|NotebookEdit` and `mcp__filesystem__*` | Block file access outside project root (security-critical)                                                                                                                                                                  |
+
+> **Plan/skill/todo enforcement is now static.** The former `edit-enforcement`,
+> `skill-enforcement`, and `workflow-task-guard` gates (block edits/skills/task-completion
+> without a `TaskCreate` item) are now **model-driven rules in `CLAUDE.md`** (Task Planning
+> Rules / WORKFLOW-GATE). The former `agent-files-skill-gate` setup router is replaced by
+> the static project-reference doc gate in `CLAUDE.md` / `SKILL.md`.
 
 ### Lessons Injection
 
-| Hook                   | Event                               | Purpose                                                             |
-| ---------------------- | ----------------------------------- | ------------------------------------------------------------------- |
-| `lessons-injector.cjs` | UserPromptSubmit                    | Inject `docs/project-reference/lessons.md` into prompt (with dedup) |
-| `lessons-injector.cjs` | PreToolUse:`Edit\|Write\|MultiEdit` | Inject lessons before file edits (always)                           |
+The lessons (`docs/project-reference/lessons.md`) reading contract lives statically in
+`CLAUDE.md` / agent / skill instructions; the model re-reads `lessons.md` on demand
+(including after compaction) per that static contract — there is no runtime lessons-inject
+hook.
 
-Lessons are managed via `/learn` skill. See `.claude/skills/learn/SKILL.md`.
+Lessons are managed via the `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 
 ### Workflow Automation
 
-| Hook                                                                     | Event                                             | Purpose                                                             |
-| ------------------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------- |
-| `init-prompt-gate.cjs`                                                   | UserPromptSubmit                                  | Block prompts until config populated + graph built (exit 2 = block) |
-| `workflow-router.cjs` (+ p2, p3)                                         | SessionStart, UserPromptSubmit                    | Inject 37-workflow catalog in three parts (split for size safety)   |
-| `prompt-context-assembler.cjs` (+ closers, docs, claude, project-config) | SessionStart, UserPromptSubmit                    | Assemble all session context in 5 parts (split for size safety)     |
-| `session-init-docs.cjs`                                                  | SessionStart:`startup`                            | Config skeleton + reference doc placeholder creation                |
-| `workflow-step-tracker.cjs`                                              | PostToolUse:`Skill`                               | Track workflow step completion                                      |
-| `edit-enforcement.cjs`                                                   | PreToolUse:`Edit\|Write\|MultiEdit\|NotebookEdit` | Track edits, plan warnings at 4/8 files, block without TaskCreate   |
-| `skill-enforcement.cjs`                                                  | PreToolUse:`Skill`                                | Block implementation skills without TaskCreate                      |
-| `todo-tracker.cjs`                                                       | PostToolUse:`TaskCreate\|TaskUpdate`              | Persist todo state to disk for cross-compaction recovery            |
-| `workflow-task-guard.cjs`                                                | PreToolUse:`TaskUpdate`                           | Block completing workflow tasks without Skill invocation            |
+| Hook                    | Event                  | Purpose                                                                          |
+| ----------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| `init-prompt-gate.cjs`  | UserPromptSubmit       | Warn/route until project context, root instructions, docs, and graph are current |
+| `session-init-docs.cjs` | SessionStart:`startup` | Config skeleton + reference doc placeholder creation                             |
+
+> Plan/skill/todo enforcement and cross-compaction todo persistence are **model-driven
+> static guidance** (`CLAUDE.md` Task Planning Rules + `TaskList` re-read on resume), not
+> hooks.
 
 ### Safety & Privacy
 
-| Hook                           | Matcher                                             | Purpose                                                                  |
-| ------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------ |
-| `path-boundary-block.cjs`      | `Bash\|Edit\|Write\|MultiEdit\|NotebookEdit`        | Block file access outside project root (security-critical)               |
-| `privacy-block.cjs`            | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit` | Block access to sensitive files (.env, keys, credentials)                |
-| `scout-block.cjs`              | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit` | Prevent bulk reads outside approved scope                                |
-| `windows-command-detector.cjs` | `Bash`                                              | Detect/block Windows CMD syntax; auto-rewrite `\!` in `node -e` commands |
+| Hook                           | Matcher                                                            | Purpose                                                                  |
+| ------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `path-boundary-block.cjs`      | `Bash\|Edit\|Write\|MultiEdit\|NotebookEdit`, `mcp__filesystem__*` | Block file access outside project root (security-critical)               |
+| `privacy-block.cjs`            | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit`                | Block access to sensitive files (.env, keys, credentials)                |
+| `scout-block.cjs`              | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit`                | Prevent bulk reads outside approved scope                                |
+| `windows-command-detector.cjs` | `Bash`                                                             | Detect/block Windows CMD syntax; auto-rewrite `\!` in `node -e` commands |
+| `git-commit-block.cjs`         | `Bash`                                                             | Block git commit/push unless `/commit` skill is active                   |
 
 ### Context Management & Utility
 
-| Hook                       | Event                                | Purpose                                                                                                                                                                                                     |
-| -------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tool-output-swap.cjs`     | PostToolUse:`Read\|Grep\|Glob`       | Externalize large outputs to swap files for post-compaction recovery                                                                                                                                        |
-| `write-compact-marker.cjs` | PreCompact                           | Writes compaction marker on `PreCompact`; captures `git status --short` as `compactState.gitStatus` so `prompt-context-assembler.cjs` can emit the post-compact "CONTEXT COMPACTED" re-verify warning       |
-| `pre-compact-snapshot.cjs` | UserPromptSubmit                     | Captures last 100 readable `[Human]/[Assistant]` transcript lines as rolling snapshot (`/tmp/ck/snapshots/{sessionId}.json`); used by `post-compact-recovery.cjs` to restore readable context after compact |
-| `post-edit-prettier.cjs`   | PostToolUse:`Edit\|Write\|MultiEdit` | Auto-run Prettier on edited files                                                                                                                                                                           |
-| `bash-cleanup.cjs`         | PostToolUse:`Bash`                   | Clean up tmpclaude temp files after Bash commands                                                                                                                                                           |
-| `graph-auto-update.cjs`    | PostToolUse:`Edit\|Write\|MultiEdit` | Incremental graph update after file edits (3s debounce)                                                                                                                                                     |
-| `graph-grep-suggester.cjs` | PostToolUse:`Grep`                   | Suggest graph queries when grep finds important entry-point files (entities, commands, handlers)                                                                                                            |
-| `post-agent-validator.cjs` | PostToolUse:`Agent`                  | Detect truncated/incomplete subagent results via 3 heuristics; emit warning if truncated                                                                                                                    |
+| Hook                     | Event                                | Purpose                                               |
+| ------------------------ | ------------------------------------ | ----------------------------------------------------- |
+| `post-edit-prettier.cjs` | PostToolUse:`Edit\|Write\|MultiEdit` | Auto-run Prettier on edited files                     |
+| `graph-auto-update.cjs`  | PostToolUse:`Edit\|Write\|MultiEdit` | Incremental graph update after file edits (debounced) |
+
+> Large-output externalization, compaction snapshots/markers, transcript recovery,
+> temp-file cleanup, and subagent-truncation detection are no longer hooks. Compaction-state
+> recovery is now **static re-anchoring guidance** in `CLAUDE.md` (re-read files / `TaskList`
+> on resume); `session-init.cjs` / `session-end.cjs` handle the remaining temp cleanup.
 
 ---
 
@@ -138,19 +130,22 @@ Lessons are managed via `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 The lessons system is a simple manual learning mechanism:
 
 ```
-USER TEACHING                         INJECTION
-/learn "always use X"                 UserPromptSubmit / PreToolUse(Edit|Write|MultiEdit)
+USER TEACHING                         READ-ON-DEMAND (static contract)
+/learn "always use X"                 CLAUDE.md / agent / skill instructions
          ↓                                    ↓
-/learn skill appends to               lessons-injector.cjs
-docs/project-reference/lessons.md                        reads docs/project-reference/lessons.md
+/learn skill appends to               model re-reads
+docs/project-reference/lessons.md     docs/project-reference/lessons.md
          ↓                                    ↓
-- [YYYY-MM-DD] lesson text             console.log(content) → context
+- [YYYY-MM-DD] lesson text             on demand (incl. after compaction)
 Max 50 entries (FIFO trim)
 ```
 
+> The standing read-lessons contract is delivered **statically** through
+> `CLAUDE.md` / agent / skill instructions; there is no runtime lessons inject hook.
+
 **How to teach:**
 
-- Type `/learn always use IGrowthRootRepository` → lesson saved to `docs/project-reference/lessons.md`
+- Type `/learn always use the project-specific repository interface` → lesson saved to `docs/project-reference/lessons.md`
 - Type `/learn list` → view current lessons
 - Type `/learn remove 3` → remove lesson #3
 - Say "remember this" or "always do X" → auto-inferred, asks confirmation
@@ -160,38 +155,44 @@ Max 50 entries (FIFO trim)
 ## Session Lifecycle
 
 ```
-SESSION START (8 hooks)                         DURING SESSION
-  session-init.cjs ─────────────────────┐         edit-enforcement.cjs (every edit)
-    ├── cleanupAll()                    │         skill-enforcement.cjs (every skill)
-    ├── detectProjectType()             │         tool-output-swap.cjs (large outputs)
-    ├── resolvePlanPath()               │         todo-tracker.cjs (every TaskCreate)
-    └── writeEnv() (25 CK_* vars)      │         lessons-injector.cjs (every edit)
-  post-compact-recovery.cjs ────────────┤         graph-auto-update.cjs (after edits)
-    └── restore workflow + todos        │
-  session-resume.cjs ───────────────────┤       COMPACTION
-    ├── injectPendingTasksWarning()     │         write-compact-marker.cjs
-    ├── restore todos from checkpoint   │
-    └── inject swap inventory           │       SESSION END (2 hooks)
-  npm-auto-install.cjs                  │         session-end.cjs
-  session-init-docs.cjs                 │           ├── write pending-tasks-warning.json
-  workflow-router.cjs (+ p2, p3)         │           ├── cleanupAll()
-  prompt-context-assembler.cjs (+closers,docs,claude,project-config) │ ├── deleteMarker() (on /clear)
-  graph-session-init.cjs ───────────────┘           └── deleteSessionSwap() (on exit/clear)
+SESSION START (5 hooks)                         DURING SESSION
+  verify-install.cjs ───────────────────┐         graph-auto-update.cjs (after edits)
+    └── partial-copy preflight          │         post-edit-prettier.cjs (after edits)
+  session-init.cjs ─────────────────────┤
+    ├── cleanup temp files              │
+    ├── detectProjectType()             │       PROMPT (UserPromptSubmit)
+    ├── resolvePlanPath()               │         init-prompt-gate.cjs (gate)
+    └── writeEnv() (CK_* vars)          │
+  npm-auto-install.cjs                  │       PRETOOLUSE GATES
+  session-init-docs.cjs                 │         windows-command-detector / git-commit-block
+  graph-session-init.cjs ───────────────┘         scout-block / privacy-block / path-boundary-block
+                                                  doc-sync-gate (WARN)
+                                                SESSION END (1 hook)
+                                                    session-end.cjs
+                                                      ├── write pending-tasks-warning.json
+                                                      ├── cleanup temp files
+                                                      └── deleteMarker() (on /clear)
+                                                STOP → notifications/notify.cjs (notification)
 ```
+
+> Plan/skill/todo enforcement and compaction snapshot/recovery are no longer hooks —
+> that behavior is **static model-driven guidance** in `CLAUDE.md` (re-read files /
+> `TaskList` on resume).
 
 ---
 
 ## Lib Modules
 
+25 modules under `.claude/hooks/lib/`.
+
 ### State Management
 
-| Module                 | Purpose                                                                     |
-| ---------------------- | --------------------------------------------------------------------------- |
-| `ck-session-state.cjs` | Session state persistence                                                   |
-| `workflow-state.cjs`   | Workflow progress tracking across compaction                                |
-| `todo-state.cjs`       | Todo list state persistence for enforcement                                 |
-| `edit-state.cjs`       | File edit tracking + plan warning state                                     |
-| `context-tracker.cjs`  | Context usage monitoring, tool call counting, compaction threshold learning |
+| Module                  | Purpose                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| `ck-session-state.cjs`  | Session state persistence                                                        |
+| `workflow-state.cjs`    | Workflow progress tracking across compaction                                     |
+| `todo-state.cjs`        | Todo list state persistence                                                      |
+| `agent-files-state.cjs` | Shared detection of missing root agent-instruction files (CLAUDE.md / AGENTS.md) |
 
 ### External Memory
 
@@ -201,25 +202,25 @@ SESSION START (8 hooks)                         DURING SESSION
 
 ### ClaudeKit (CK) Infrastructure
 
-| Module                 | Purpose                                                        |
-| ---------------------- | -------------------------------------------------------------- |
-| `ck-paths.cjs`         | Centralized path constants (`/tmp/ck/`, swap, edit, todo dirs) |
-| `ck-config-loader.cjs` | Config loading and merging                                     |
-| `ck-config-utils.cjs`  | Facade for config utilities                                    |
-| `ck-env-utils.cjs`     | Environment variable detection                                 |
-| `ck-git-utils.cjs`     | Low-level git utilities                                        |
-| `ck-path-utils.cjs`    | Path resolution and normalization                              |
-| `ck-plan-resolver.cjs` | Resolve active plan from session or branch context             |
+| Module                 | Purpose                                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------- |
+| `ck-paths.cjs`         | Centralized path constants (`/tmp/ck/`, swap, edit, todo dirs)                                  |
+| `ck-config-loader.cjs` | Config loading and merging                                                                      |
+| `ck-config-schema.cjs` | Validate `.claude/.ck.json` against expected schema (warns on typos/unknown keys, never blocks) |
+| `ck-config-utils.cjs`  | Facade for config utilities                                                                     |
+| `ck-env-utils.cjs`     | Environment variable detection                                                                  |
+| `ck-git-utils.cjs`     | Low-level git utilities                                                                         |
+| `ck-path-utils.cjs`    | Path resolution and normalization                                                               |
+| `ck-plan-resolver.cjs` | Resolve active plan from session or branch context                                              |
 
-### Context Injection
+### Context / Prompt Support
 
-| Module                      | Purpose                                                                                                                              |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `context-injector-base.cjs` | Shared base for PreToolUse context injection hooks                                                                                   |
-| `prompt-injections.cjs`     | Shared prompt injection helpers (critical context, AI mistake prevention, lessons, lesson-learned, workflow protocol)                |
-| `session-init-helpers.cjs`  | SessionStart helpers: reference doc placeholders, config init                                                                        |
-| `dedup-constants.cjs`       | Centralized dedup markers and dynamic line count calculation                                                                         |
-| `transcript-utils.cjs`      | Shared transcript helpers: `isMarkerInContext` (dedup check) + `loadTranscriptLines` (safe file read); used by all 6 assembler hooks |
+| Module                     | Purpose                                                                                                                                                                                                                                                                                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prompt-injections.cjs`    | Delegating compat wrapper for legacy injector callers — keeps no protocol body copies; canonical text of critical-context / AI-mistake-prevention / lessons / workflow-protocol blocks is owned by `.claude/skills/shared/sync-inline-versions.md` and composed by `.claude/scripts/lib/hookless-prompt-protocol.cjs` (the codex sync transform reads the composer, not this wrapper) |
+| `dedup-constants.cjs`      | Centralized dedup markers and dynamic line count calculation                                                                                                                                                                                                                                                                                                                          |
+| `session-init-helpers.cjs` | SessionStart helpers: reference doc placeholders, config init                                                                                                                                                                                                                                                                                                                         |
+| `doc-sync-classify.cjs`    | Pure classification shared by both `doc-sync-gate.cjs` matchers (commit-time WARN + per-edit WARN, both advisory exit 0)                                                                                                                                                                                                                                                              |
 
 ### Configuration
 
@@ -237,7 +238,6 @@ SESSION START (8 hooks)                         DURING SESSION
 | `hook-runner.cjs`       | Hook execution wrapper with error handling                         |
 | `stdin-parser.cjs`      | Parse JSON from hook stdin                                         |
 | `temp-file-cleanup.cjs` | tmpclaude file cleanup                                             |
-| `wr-config.cjs`         | Workflow router configuration                                      |
 | `graph-utils.cjs`       | Python detection, graph availability check, CLI invocation wrapper |
 
 ---
@@ -262,7 +262,17 @@ Hooks receive JSON via stdin with event-specific payload:
 
 ### Output (stdout)
 
-Text printed to stdout is injected into conversation context. Hooks use `console.log()` for context injection.
+`UserPromptSubmit` guidance is plaintext stdout by default. Claude and Codex both accept non-JSON
+stdout on this event as prompt context, so `init-prompt-gate.cjs` keeps the same reminder behavior
+on both hosts. JSON `hookSpecificOutput.additionalContext` remains available when a hook needs
+structured control, but the stale-doc/project-init reminder does not need it.
+
+Keep prompt guidance plaintext, but do not let the emitted text start with `{` or `[` after
+trimming. Codex may route JSON-looking stdout through its event-specific JSON parser before
+treating it as plaintext context, which can surface as an invalid `UserPromptSubmit` JSON error.
+
+Do not generalize this rule to every event: Codex `Stop` and `SubagentStop` require JSON output,
+while `UserPromptSubmit` specifically accepts plaintext context.
 
 ### Exit Codes
 
@@ -271,7 +281,7 @@ Text printed to stdout is injected into conversation context. Hooks use `console
 | `0`  | Success, allow operation to proceed            |
 | `2`  | Block operation (with error message on stderr) |
 
-> All hooks exit 0 (non-blocking) except safety hooks (`path-boundary-block`, `privacy-block`, `scout-block`, `init-prompt-gate`) which exit 2 to block.
+> All hooks exit 0 (non-blocking) except blocking safety gates (`path-boundary-block`, `privacy-block`, `scout-block`, `git-commit-block`) which exit 2 to block. `init-prompt-gate.cjs` and `doc-sync-gate.cjs` are WARN-only — every code path exits 0.
 
 ---
 
@@ -311,42 +321,33 @@ Hooks are registered in `settings.json` under `hooks.{EventName}[].hooks[]`. Eac
 }
 ```
 
-### Code Review Rules
-
-`code-review-rules-injector.cjs` auto-injects `docs/project-reference/code-review-rules.md` when code review skills activate. Configure via `.ck.json`:
-
-| Field                       | Default                                                                           | Description                          |
-| --------------------------- | --------------------------------------------------------------------------------- | ------------------------------------ |
-| `codeReview.enabled`        | `true`                                                                            | Enable/disable rule injection        |
-| `codeReview.rulesPath`      | `docs/project-reference/code-review-rules.md`                                     | Path to rules file                   |
-| `codeReview.injectOnSkills` | `["code-review", "review", "review:codebase", "review-changes", "code-reviewer"]` | Skills/agents that trigger injection |
-
 ---
 
 ## Testing
 
-Current primary hook test status: `test-all-hooks.cjs` passes with 369 tests, 0 failures. The suite runner also exposes 16 discoverable suites, including `count-drift`.
+Primary hook test status: `test-all-hooks.cjs` passes with 224 tests, 0 failures (live run 2026-06-18; the in-suite count guard confirms docs agree at 224). The aggregate runner `run-all-tests.cjs` passes 305 tests across all discoverable suites (live run 2026-06-18).
 
-| Test Surface          | Count | File/Location                            |
-| --------------------- | ----- | ---------------------------------------- |
-| Primary hook runner   | 369   | `tests/test-all-hooks.cjs`               |
-| Discoverable suites   | 16    | `tests/suites/*.test.cjs`                |
-| Standalone test files | 13    | `tests/test-*.cjs/.js` excluding runner  |
-| Scout-block tests     | 7     | `scout-block/tests/test-*.js`            |
-| Lib unit tests        | 1     | `lib/__tests__/ck-config-utils.test.cjs` |
+| Test Surface          | Count | File/Location                                                     |
+| --------------------- | ----- | ----------------------------------------------------------------- |
+| Primary hook runner   | 224   | `tests/test-all-hooks.cjs`                                        |
+| Aggregate runner      | 305   | `tests/run-all-tests.cjs` (all suites)                            |
+| Standalone test files | TODO  | `tests/test-*.cjs/.js` excluding runner (re-verify before citing) |
+| Scout-block tests     | TODO  | `scout-block/tests/test-*.js` (re-verify before citing)           |
+| Lib unit tests        | TODO  | `lib/__tests__/*.test.cjs` (re-verify before citing)              |
 
 Run all primary hook tests: `node .claude/hooks/tests/test-all-hooks.cjs`
 
-Run a suite subset: `node .claude/hooks/tests/run-all-tests.cjs --filter=count-drift`
+Run the full aggregate suite: `node .claude/hooks/tests/run-all-tests.cjs`
 
 ---
 
 ## Related Documentation
 
+- [architecture.md](./architecture.md) — Hook runtime contract and layer boundaries
 - [extending-hooks.md](./extending-hooks.md) — Creating custom hooks
 - [../configuration/README.md](../configuration/README.md) — Configuration hierarchy and hooks config
 - [../skills/README.md](../skills/README.md) — Skills catalog
 
 ---
 
-_Source: `.claude/hooks/` | Hooks + lib modules | Lessons via `/learn` skill + `lessons-injector.cjs`_
+_Source: `.claude/settings.json` (authoritative hook registrations) + `.claude/hooks/` | Hooks + lib modules | Lessons via `/learn` skill_

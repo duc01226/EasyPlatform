@@ -120,7 +120,7 @@ function formatBlockWarning(command, match) {
         `- **Unix (use this):** \`${match.unix}\``,
         '',
         `Claude Code runs in Git Bash (MINGW64), not Windows CMD.`,
-        `See CLAUDE.md "Shell Environment" section for full command mapping.`
+        `See CLAUDE.md "Platform (Windows)" section for full command mapping.`
     ].join('\n');
 }
 

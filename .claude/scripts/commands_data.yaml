@@ -298,12 +298,6 @@
   - tasks-or-prompt
   power_level: 3
   category: review
-- name: /ck:scout:ext
-  path: scout/ext.md
-  description: ''
-  argument_hint: ''
-  power_level: 0
-  category: scout
 - name: /ck:scout
   path: scout.md
   description: ''
@@ -325,21 +319,23 @@
   category: skill
 - name: /ck:skill:fix-logs
   path: skill/fix-logs.md
-  description: Fix the agent skill based on `logs.txt` file.
+  description: Fix a skill from its captured `logs.txt` — skill-creator Mode 6.
   argument_hint:
   - prompt-or-path-to-skill
   power_level: 0
   category: skill
 - name: /ck:skill:optimize:auto
   path: skill/optimize/auto.md
-  description: ''
-  argument_hint: ''
+  description: Optimize a skill (auto — skip plan approval) — skill-creator Mode 5.
+  argument_hint:
+  - skill-name-or-glob
   power_level: 0
   category: skill
 - name: /ck:skill:optimize
   path: skill/optimize.md
-  description: ''
-  argument_hint: ''
+  description: Optimize an existing skill for tokens/attention/SYNC — skill-creator Mode 5.
+  argument_hint:
+  - skill-name-or-glob
   power_level: 0
   category: skill
 - name: /ck:test
@@ -347,13 +343,6 @@
   description: Run tests locally and analyze the summary report.
   argument_hint: ''
   power_level: 1
-  category: core
-- name: /ck:use-mcp
-  path: use-mcp.md
-  description: Utilize tools of Model Context Protocol (MCP) servers
-  argument_hint:
-  - task
-  power_level: 0
   category: core
 - name: /ck:watzup
   path: watzup.md

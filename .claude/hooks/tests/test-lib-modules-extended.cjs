@@ -775,7 +775,6 @@ logSection('CK Config Schema — ck-config-schema.cjs');
     // Valid full config
     {
         const r = validateCkConfig({
-            workflow: { confirmationMode: 'never' },
             codingLevel: 3,
             locale: { thinkingLanguage: 'en', responseLanguage: 'vi' },
             assertions: ['Use TypeScript strict mode'],
@@ -790,10 +789,10 @@ logSection('CK Config Schema — ck-config-schema.cjs');
         logResult('ck: valid full config passes', r.valid && r.errors.length === 0);
     }
 
-    // Invalid enum
+    // Removed workflow config → warning (not error)
     {
         const r = validateCkConfig({ workflow: { confirmationMode: 'yes' } });
-        logResult('ck: invalid enum rejected', !r.valid && r.errors.some(e => e.includes('invalid value') && e.includes('yes')));
+        logResult('ck: removed workflow config produces warning', r.valid && r.warnings.some(w => w.includes('workflow') && w.includes('unknown')));
     }
 
     // Out-of-range number (too high)
@@ -820,10 +819,10 @@ logSection('CK Config Schema — ck-config-schema.cjs');
         logResult('ck: unknown key produces warning', r.valid && r.warnings.some(w => w.includes('typo') && w.includes('unknown')));
     }
 
-    // Nested unknown key → warning
+    // Removed workflow config with nested keys → top-level warning
     {
         const r = validateCkConfig({ workflow: { typo: true } });
-        logResult('ck: nested unknown key produces warning', r.valid && r.warnings.some(w => w.includes('workflow.typo')));
+        logResult('ck: removed workflow object produces warning', r.valid && r.warnings.some(w => w.includes('workflow') && w.includes('unknown')));
     }
 
     // Nullable fields accepted

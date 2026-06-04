@@ -36,7 +36,7 @@ description: '[Documentation] Use when you need to detect codebase health issues
 ```json
 {
     "codebaseHealth": {
-        "sourcePaths": ["src/"],
+        "sourcePaths": ["{discovered-source-root}/"],
         "docPaths": ["docs/"],
         "configPatterns": ["**/appsettings*.json", "**/environment*.ts"],
         "excludePaths": ["node_modules", "dist", "bin", "obj"]
@@ -44,7 +44,7 @@ description: '[Documentation] Use when you need to detect codebase health issues
 }
 ```
 
-If `codebaseHealth` section missing, use defaults: `sourcePaths: ["src/"]`, `docPaths: ["docs/"]`.
+If `codebaseHealth` section is missing, discover source roots from project config, manifests, and populated code directories; use `docPaths: ["docs/"]` when docs exist.
 
 2. Detect available tooling to determine which phases to run:
 
@@ -203,8 +203,8 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 
 <!-- SYNC:critical-thinking-mindset -->
 
-> **Critical Thinking Mindset** — Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources, admit uncertainty, self-check output, cross-reference independently. Certainty without evidence = root of all hallucination.
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
 
 <!-- /SYNC:critical-thinking-mindset -->
 
@@ -212,24 +212,28 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 
 > **Output Quality** — Token efficiency without sacrificing quality.
 >
-> 1. No inventories/counts — stale instantly
-> 2. No directory trees — use 1-line path conventions
-> 3. No TOCs — AI reads linearly
-> 4. One example per pattern — only if non-obvious
-> 5. Lead with answer, not reasoning
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
 > 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end
+> 7. Unresolved questions at end, if any
 
 <!-- /SYNC:output-quality-principles -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
-> **AI Mistake Prevention** — Failure modes to avoid:
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Verify AI-generated content against actual code.** AI hallucinates class names/signatures. Grep to confirm existence before documenting.
-> **Trace full dependency chain after edits.** Always trace full chain.
-> **Holistic-first — resist nearest-attention trap.** List EVERY precondition before forming hypothesis.
-> **Surface ambiguity before coding.** NEVER pick silently.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -241,19 +245,26 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per phase
+
+**MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** apply critical+sequential thinking; traced `file:line` proof, >80% to act.
+- **Output Quality:** no counts/trees/TOCs; 1 example per pattern; lead with answer.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
 **IMPORTANT MUST ATTENTION** detect available tooling in Phase 0 — never assume graph.db exists
 **IMPORTANT MUST ATTENTION** NEVER report a finding without `file:line` evidence
 **IMPORTANT MUST ATTENTION** write findings incrementally after each phase — NEVER batch at end

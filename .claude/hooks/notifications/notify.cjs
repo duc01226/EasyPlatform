@@ -15,8 +15,24 @@ const { loadEnv } = require('./lib/env-loader.cjs');
 const PROVIDER_PREFIXES = ['TELEGRAM', 'DISCORD', 'SLACK'];
 
 // Whitelist: only these events trigger notifications (everything else is skipped)
-// Stop = task complete, idle_prompt = Claude waiting for input
-const EVENT_WHITELIST = ['Stop', 'idle_prompt', 'AskUserPrompt', 'permission_prompt'];
+// Stop = task complete, idle_prompt = Claude idle, AskUserQuestion = Claude asks a question
+const EVENT_WHITELIST = ['Stop', 'idle_prompt', 'AskUserPrompt', 'AskUserQuestion', 'permission_prompt'];
+
+/**
+ * Normalize hook input so every provider resolves one canonical event identity.
+ * A PreToolUse for the AskUserQuestion tool arrives as hook_event_name='PreToolUse'
+ * with tool_name='AskUserQuestion'. Rewrite it to a first-class 'AskUserQuestion'
+ * event so the whitelist and all providers (which key off hook_event_name /
+ * notification_type) treat it uniformly. Mutates and returns input.
+ * @param {Object} input - Event data
+ * @returns {Object} Normalized input
+ */
+function normalizeEvent(input) {
+    if (input && input.tool_name === 'AskUserQuestion' && !input.notification_type) {
+        input.hook_event_name = 'AskUserQuestion';
+    }
+    return input;
+}
 
 /**
  * Get the effective event type from input
@@ -113,8 +129,8 @@ function loadProvider(providerName) {
  */
 async function main() {
     try {
-        // Read input from stdin
-        const input = await readStdin();
+        // Read input from stdin, then normalize event identity for all providers
+        const input = normalizeEvent(await readStdin());
 
         // Load environment with cascade
         const cwd = input.cwd || process.cwd();

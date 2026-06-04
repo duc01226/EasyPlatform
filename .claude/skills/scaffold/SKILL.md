@@ -1,6 +1,6 @@
 ---
 name: scaffold
-version: 1.0.0
+version: 1.1.0
 description: '[Architecture] Use when scaffolding reusable OOP/SOLID project foundations before feature implementation.'
 ---
 
@@ -15,11 +15,18 @@ description: '[Architecture] Use when scaffolding reusable OOP/SOLID project fou
 
 ## Quick Summary
 
-**Goal:** Generate and validate the project's architecture scaffolding — all base classes, interfaces, infrastructure abstractions, and reusable foundation code — BEFORE any feature story implementation begins.
+**Goal:** Generate and validate the project's architecture scaffolding — all base classes, interfaces, infrastructure abstractions, and reusable foundation code — BEFORE any feature story implementation begins, producing a copy-ready, OOP/SOLID-compliant architecture foundation with quality-gate tooling that every feature story reuses before implementation starts.
 
-**Purpose:** The scaffolded project should be copy-ready as a starter template for similar projects. All base code, utilities, interfaces, and infrastructure services are created. All setup follows best practices with generic functions any feature story could reuse.
+**Summary:**
 
-**Key distinction:** This is architecture infrastructure creation, NOT feature implementation. Creates the foundation layer that all stories build upon.
+- Gate-first skill: check Activation Guards before any work — proceed ONLY in `workflow-greenfield-init` / `workflow-big-feature` AND when grep finds NO existing base/abstract/infrastructure scaffolding; otherwise SKIP and mark the step completed.
+- Scope is architecture-infrastructure creation (base classes, interfaces, DI, repos, cross-cutting), NOT feature implementation — read the plan, adapt the Backend/Frontend/UI checklists to the detected tech stack, and confirm the final checklist via `AskUserQuestion` before generating code.
+- Stand up the production-readiness foundations (code-quality tooling, error handling, loading state, Docker, integration points) and delegate ALL sensor setup to `/linter-setup` then `/harness-setup` — never hand-configure linters/hooks here.
+- Enforce OOP/SOLID on every base class and HARD-BLOCK the handoff to `/feature-implement` until the Verification Gate passes — all 5 foundations verified plus `/linter-setup` and `/harness-setup` complete.
+
+**Purpose:** Scaffolded project copy-ready as starter template. All base code, utilities, interfaces, infrastructure services created — best-practice setup, generic functions any feature story reuses.
+
+**Key distinction:** Architecture infrastructure creation, NOT feature implementation — the foundation layer all stories build upon.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -27,7 +34,7 @@ description: '[Architecture] Use when scaffolding reusable OOP/SOLID project fou
 
 **ALL conditions must be true to proceed:**
 
-1. **Workflow check:** Active workflow is `greenfield-init` OR `big-feature`. If not → SKIP this skill entirely, mark step as completed.
+1. **Workflow check:** Active workflow is `workflow-greenfield-init` OR `workflow-big-feature`. If not → SKIP this skill entirely, mark step as completed.
 2. **Existing scaffolding check:** AI MUST ATTENTION self-investigate for existing base/foundational abstractions:
     - Abstract/base classes: grep `abstract class.*Base|Base[A-Z]\w+|Abstract[A-Z]\w+`
     - Generic interfaces: grep `interface I\w+<|IGeneric|IBase`
@@ -41,7 +48,7 @@ description: '[Architecture] Use when scaffolding reusable OOP/SOLID project fou
 ## When to Use
 
 - After the second `/plan` + `/plan-review` in greenfield-init or big-feature workflows
-- Before `/cook` begins implementing feature stories
+- Before `/feature-implement` begins implementing feature stories
 - When a new service/module needs its own base architecture within an existing project
 - **NOT** when the project already has established base classes and infrastructure
 
@@ -136,7 +143,7 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 #### Design System Documentation
 
-- [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples (read directly when relevant; do not rely on hook-injected conversation text)
+- [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples
 
 ## Code Quality Gate Tooling (MANDATORY MUST ATTENTION — Setup Before Any Feature Code)
 
@@ -145,7 +152,7 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 ### Static Analysis & Linting
 
 - [ ] **MANDATORY MUST ATTENTION** configure language-appropriate linter with strict ruleset (zero warnings policy on new code)
-- [ ] **MANDATORY MUST ATTENTION** configure static code analyzer with quality gate thresholds (complexity, duplication, coverage)
+- [ ] **MANDATORY MUST ATTENTION** configure static code analyzer with quality gate thresholds (complexity, duplication) — treat line-coverage as a reported DIAGNOSTIC, NOT a build-failing threshold
 - [ ] **MANDATORY MUST ATTENTION** enable compiler/transpiler strict mode and treat warnings as errors on build
 - [ ] **MANDATORY MUST ATTENTION** add code style formatter with shared config (enforce consistent formatting across team)
 
@@ -153,7 +160,7 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 - [ ] **MANDATORY MUST ATTENTION** configure pre-commit hooks to run linter + formatter automatically
 - [ ] **MANDATORY MUST ATTENTION** configure CI pipeline to fail on any linter violation, analyzer warning, or test failure
-- [ ] **MANDATORY MUST ATTENTION** set minimum test coverage threshold in CI (fail build if below)
+- [ ] **MANDATORY MUST ATTENTION** do NOT gate the build on a line-coverage %; report line-coverage as a diagnostic only (low = useful untested-area signal, high ≠ quality). If a test-strength gate is wanted, gate on mutation score (surviving mutant = missing/weak assertion) with line-coverage as the diagnostic. Keep behavior/change-coverage (each behavior-changing file has a test asserting the changed outcome) as the meaningful coverage notion
 - [ ] **MANDATORY MUST ATTENTION** enable security vulnerability scanning in dependency management
 
 ### Code Rules & Standards
@@ -180,13 +187,13 @@ where each control fires at the right lifecycle stage and produces signals the a
 1. `/linter-setup` — computational feedback sensors (deterministic, fast, always-on)
 2. `/harness-setup` — full harness inventory (all feedforward guides + all feedback sensors)
 
-**Do NOT proceed to `/cook` until both complete.** (`/scaffold` verification gate enforces this)
+**Do NOT proceed to `/feature-implement` until both complete.** (`/scaffold` verification gate enforces this)
 
 ## Production Readiness Scaffolding (MANDATORY)
 
 > **Scaffold Production Readiness** — See `<!-- SYNC:scaffold-production-readiness -->` block above for full inline protocol.
 
-Every scaffolded project MUST ATTENTION include these 4 foundations. AI must detect the tech stack from the plan/architecture report and present 2-3 options per concern via `AskUserQuestion`.
+Every scaffolded project MUST ATTENTION include these 5 foundations. AI must detect the tech stack from the plan/architecture report and present 2-3 options per concern via `AskUserQuestion`.
 
 ### 1. Code Quality Tooling
 
@@ -215,6 +222,13 @@ If missing → block scaffold completion, invoke `/linter-setup`.
 - Use 127.0.0.1 binding, health checks on all services, non-root user in prod
 - Run protocol's verification checklist
 
+### 5. Integration Points
+
+- Document each outbound boundary (downstream service, queue, third-party API, shared DB)
+- Configure retry + circuit breaker + timeout per outbound dependency
+- Generate integration tests for both the happy path and the failure path
+- Run protocol's verification checklist
+
 ### Scaffold Handoff from Architecture-Design
 
 If an architecture report exists (from `/architecture-design`), read the "Scaffold Handoff — Tool Choices" table and use those selections instead of re-asking the user.
@@ -238,8 +252,8 @@ If an architecture report exists (from `/architecture-design`), read the "Scaffo
 
 The checklists above are **templates**. Before scaffolding:
 
-1. **Read the plan** — What tech stack was chosen? (e.g., .NET vs Node.js, Angular vs React)
-2. **Adapt naming** — Match target framework conventions (e.g., C# PascalCase, TypeScript camelCase)
+1. **Read the plan** — What tech stack was chosen?
+2. **Adapt naming** — Match target framework and language conventions
 3. **Skip irrelevant items** — Not every project needs every item (e.g., skip IFileStorageService if no file uploads)
 4. **Add project-specific items** — The plan may require additional base classes not in the template
 5. **Use `AskUserQuestion`** — Confirm final checklist with user before generating code
@@ -251,10 +265,10 @@ After scaffolding is complete:
 1. **Scaffolding Report** — List of all created files with brief descriptions
 2. **Build Verification** — Compilation/type-check passes
 3. **Architecture Diagram** — Optional: generate diagram showing the base class hierarchy
-4. **Production Readiness Verification** — All 4 concern areas verified via protocol checklists
+4. **Production Readiness Verification** — All 5 concern areas verified via protocol checklists
 5. **Config Files Generated** — Linter, formatter, pre-commit, Docker configs all created
 
-## Verification Gate (MANDATORY before proceeding to /cook)
+## Verification Gate (MANDATORY before proceeding to /feature-implement)
 
 Run ALL verification checklists from the production readiness protocol:
 
@@ -262,16 +276,17 @@ Run ALL verification checklists from the production readiness protocol:
 - [ ] Error handling foundation verified (Section 2)
 - [ ] Loading state management verified (Section 3)
 - [ ] Docker development environment verified (Section 4)
+- [ ] Integration points verified (Section 5)
 - [ ] `/linter-setup` completed (linter + formatter + pre-commit + CI gate configured)
 - [ ] `/harness-setup` completed (harness-inventory.md produced, feedforward guides in place)
 
-**BLOCK proceeding to `/cook` if ANY verification item fails.** Fix issues first, then re-verify.
+**BLOCK proceeding to `/feature-implement` if ANY verification item fails.** Fix issues first, then re-verify.
 
 ## Next Steps
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
-- **"/cook (Recommended)"** — Begin implementing feature stories on top of the scaffolding
+- **"/feature-implement (Recommended)"** — Begin implementing feature stories on top of the scaffolding
 - **"/workflow-review-changes"** — Review scaffolding code before proceeding
 - **"Skip, continue manually"** — user decides
 
@@ -299,11 +314,11 @@ Run ALL verification checklists from the production readiness protocol:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -340,7 +355,7 @@ Run ALL verification checklists from the production readiness protocol:
 > 4. **Docker Development Environment** — compose profiles (`dev`/`test`/`infra`), multi-stage Dockerfile, health checks on all services, non-root production user.
 > 5. **Integration Points** — document each outbound boundary; configure retry + circuit breaker + timeout; integration tests for happy path and failure path.
 >
-> **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
+> **BLOCK `/feature-implement` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
 
 <!-- /SYNC:scaffold-production-readiness -->
 
@@ -350,18 +365,20 @@ Run ALL verification checklists from the production readiness protocol:
 >
 > **Controls split:**
 >
-> | Axis        | Type          | Examples                                                                      | Frequency        |
-> | ----------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-> | Feedforward | Computational | `.editorconfig`, strict compiler flags, enforced module boundaries            | Always-on        |
-> | Feedforward | Inferential   | `CLAUDE.md` conventions, skill prompts, architecture notes, pattern catalogs  | Always-on        |
-> | Feedback    | Computational | Linters, type checks, pre-commit hooks, ArchUnit/arch-fitness tests, CI gates | Pre-commit → CI  |
-> | Feedback    | Inferential   | `/code-review` skill, `/sre-review`, `/security`, LLM-as-judge passes         | Post-commit → CI |
+> | Axis        | Type          | Examples                                                                                           | Frequency        |
+> | ----------- | ------------- | -------------------------------------------------------------------------------------------------- | ---------------- |
+> | Feedforward | Computational | `.editorconfig`, strict compiler flags, enforced module boundaries                                 | Always-on        |
+> | Feedforward | Inferential   | `CLAUDE.md` conventions, skill prompts, architecture notes, pattern catalogs                       | Always-on        |
+> | Feedback    | Computational | Linters, type checks, pre-commit hooks, ArchUnit/arch-fitness tests, mutation-score gate, CI gates | Pre-commit → CI  |
+> | Feedback    | Inferential   | `/code-review` skill, `/production-readiness-review`, `/security-review`, LLM-as-judge passes      | Post-commit → CI |
+>
+> **Test-strength sensor — gate on mutation score, NOT line coverage.** Line coverage is a DIAGNOSTIC only: low coverage is a useful NEGATIVE signal (something is untested); high coverage is NOT evidence of quality (tests can execute lines without asserting intent) — NEVER fail a build on a line-coverage %. The real test-strength metric is **mutation score** (inject faults into changed code; surviving mutant = a missing/weak assertion = write the killing test); gate the build on it where a mutation tool exists. Add **property coverage** as a second sensor — each [HARD] §4 rule / §5 invariant guarded by ≥1 property/metamorphic test. The property tests themselves are REQUIRED for invariant-owning behaviors (`spec [mode=tests]` + `integration-test` force them, not opt-in); what is optional is only wiring property coverage as an _automated CI sensor_ on top. Keep **behavior/change-coverage** (does each behavior-changing file have a test that asserts the changed outcome) — that notion is meaningful and stays.
 >
 > **Three harness types:**
 >
-> 1. **Maintainability** — Complexity, duplication, coverage, style. Easiest: rich deterministic tooling.
+> 1. **Maintainability** — Complexity, duplication, line-coverage (diagnostic only — never a gate), style. Easiest: rich deterministic tooling.
 > 2. **Architecture fitness** — Module boundaries, dependency direction, performance budgets, observability conventions.
-> 3. **Behaviour** — Functional correctness. Hardest: requires approved fixtures or strong spec-first discipline.
+> 3. **Behaviour** — Functional correctness. Hardest: gate on mutation score + property coverage; line coverage stays a diagnostic.
 >
 > **Keep quality left:** pre-commit sensors fire first (cheap), CI sensors fire second, post-review last (expensive).
 >
@@ -373,17 +390,16 @@ Run ALL verification checklists from the production readiness protocol:
 
 <!-- SYNC:ai-mistake-prevention -->
 
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -393,21 +409,26 @@ Run ALL verification checklists from the production readiness protocol:
 
 <!-- /SYNC:understand-code-first:reminder -->
 
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+
 <!-- SYNC:scaffold-production-readiness:reminder -->
 
-**IMPORTANT MUST ATTENTION** verify all 4 production readiness foundations (quality tooling, error handling, loading state, Docker) before marking scaffold complete.
+**IMPORTANT MUST ATTENTION** verify all 5 production-readiness foundations (code quality, error handling, loading state, Docker, integration points) before marking scaffold complete.
 
 <!-- /SYNC:scaffold-production-readiness:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -415,6 +436,7 @@ Run ALL verification checklists from the production readiness protocol:
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -438,11 +460,42 @@ Run ALL verification checklists from the production readiness protocol:
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+**IMPORTANT MUST ATTENTION Goal:** Produce a copy-ready, OOP/SOLID-compliant architecture foundation — base classes, infrastructure abstractions, and quality-gate tooling — that every feature story reuses before implementation starts.
+
+**MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Nested Task Creation:** Expand child phases; link parent when nested.
+- **Project Reference Docs Guide:** Read required project docs; ALWAYS include `lessons.md`.
+- **Critical Thinking Mindset:** Traced proof per claim; confidence >80% to act.
+- **Understand Code First:** Grep 3+ patterns, read code before modifying.
+- **Scaffold Production Readiness:** Verify 5 foundations before scaffold complete.
+- **Harness Setup:** Gate on mutation score; NEVER gate on line coverage.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**MANDATORY IMPORTANT MUST ATTENTION** check Activation Guards FIRST — proceed ONLY in `workflow-greenfield-init`/`workflow-big-feature` AND when grep finds NO existing base/abstract/infrastructure scaffolding; otherwise SKIP and mark step completed — why: re-scaffolding an established project duplicates foundations and corrupts existing abstractions.
+**MANDATORY IMPORTANT MUST ATTENTION** grep 3+ existing base/abstract/infra patterns (`abstract class.*Base`, `interface I\w+<`, `IRepository`, `base.*component`, DI registration) and cite `file:line` BEFORE generating any scaffolding — existing scaffolding found = SKIP — why: scaffolding over real foundations is the failure the Activation Guards exist to prevent.
+**MANDATORY IMPORTANT MUST ATTENTION** BLOCK `/feature-implement` until the Verification Gate passes — all 5 production-readiness foundations verified AND both `/linter-setup` and `/harness-setup` complete — why: code shipped without quality gates is technical debt from day one.
+**MANDATORY IMPORTANT MUST ATTENTION** delegate ALL sensor setup to `/linter-setup` then `/harness-setup` — NEVER hand-configure linters/formatters/pre-commit hooks in this skill — why: a checklist of installs is not a harness; the harness skills wire each control to its lifecycle stage.
+**MANDATORY IMPORTANT MUST ATTENTION** enforce OOP/SOLID on EVERY base class (SRP per concern, depend on abstractions, small focused interfaces, no unused methods subclasses must override) — why: a god/concrete base class propagates its design flaw into every feature story that inherits it.
+**MANDATORY IMPORTANT MUST ATTENTION** the checklists are TEMPLATES — self-investigate the chosen tech stack, adapt naming to framework conventions, skip irrelevant items, and confirm the final checklist via `AskUserQuestion` before generating code — NEVER auto-decide scope — why: scaffolding the wrong stack's idioms forces a costly rewrite before any feature lands.
+**MANDATORY IMPORTANT MUST ATTENTION** evaluate fit before copying a nearby pattern — closest example ≠ matching preconditions; verify the new context shares the same base classes, scope, and lifetime — why: a foundation lifted from a mismatched context fails silently.
+**MANDATORY IMPORTANT MUST ATTENTION** gate the build on mutation score, NOT a line-coverage % — line coverage is a DIAGNOSTIC only (low = useful untested signal, high ≠ quality) — why: tests can execute lines without asserting intent, so a coverage gate rewards hollow tests.
+**MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` proof + confidence % for EVERY claim (>80% to act, <60% DO NOT recommend) — NEVER present a guess as fact — why: speculation without evidence is the root of hallucinated foundations.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting, mark one `in_progress`, mark `completed` immediately after evidence lands, and add a final review todo — why: external task state survives context compaction; memory does not.
+**MANDATORY IMPORTANT MUST ATTENTION** after scaffold, present `/feature-implement` vs `/workflow-review-changes` vs skip via `AskUserQuestion` — the user decides; do NOT skip because it "seems obvious" — why: the user owns the handoff decision.
+
+**Anti-Rationalization (Closing — reject these excuses):**
+
+| Excuse the model tells itself                          | Reality                                                                                               |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| "It's a new feature, just scaffold it"                 | Check Activation Guards first — wrong workflow OR existing scaffolding = SKIP and mark completed.     |
+| "Already searched for base classes"                    | Show `file:line` grep evidence for all 6 guard patterns. No proof = no search.                        |
+| "I'll just configure the linter inline, it's quick"    | NEVER hand-configure sensors — delegate to `/linter-setup` then `/harness-setup`. Installs ≠ harness. |
+| "Coverage is high, the foundation is well-tested"      | Line coverage is a diagnostic, not a gate. Gate on mutation score; high coverage ≠ asserted intent.   |
+| "The stack is obvious, skip the AskUserQuestion"       | Checklists are templates — confirm the adapted final checklist with the user before generating code.  |
+| "Found a nearby base class, just copy it"              | Evaluate fit first — same base classes/scope/lifetime? Closest ≠ matching. Verify before reusing.     |
+| "Scaffold's done, jump straight to /feature-implement" | BLOCKED until the Verification Gate passes — all 5 foundations + `/linter-setup` + `/harness-setup`.  |
+
+**IMPORTANT MUST ATTENTION** check Activation Guards FIRST (SKIP if existing scaffolding or wrong workflow) · BLOCK `/feature-implement` until the Verification Gate passes · cite `file:line` + confidence >80% for every claim.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

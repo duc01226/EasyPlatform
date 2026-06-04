@@ -1,6 +1,6 @@
 ---
 name: watzup
-version: 1.1.0
+version: 1.2.0
 description: '[Utilities] Use when you need to review recent changes and wrap up the work.'
 ---
 
@@ -15,7 +15,14 @@ description: '[Utilities] Use when you need to review recent changes and wrap up
 
 ## Quick Summary
 
-**Goal:** Review current branch changes, summarize impact/quality, and check for documentation staleness.
+**Goal:** Hand the developer a complete, evidence-backed wrap-up — by reviewing current branch changes and summarizing impact/quality — with a change summary, doc/spec staleness flags, root-cause lessons, and a `/understand` explanation, WITHOUT mutating any file, so they decide the next step from full context.
+
+**Summary:**
+
+- This is a strictly READ-ONLY wrap-up — review/summarize current branch commits and flag findings; NEVER edit, fix, or implement, including never editing the docs/specs you flag.
+- Three required gates after the change summary: doc-staleness check (path→doc mapping table), spec-driven health check (only when business code changed), and root-cause lesson extraction (name the failure mode, not the symptom; universal rule, not project-specific).
+- Lessons go to `/learn` only after user confirmation; surface-level "always check file X" notes are noise, not lessons.
+- `/understand` is the mandatory final handoff and MUST run before the `AskUserQuestion` Next Steps prompt — if `/understand` is unavailable, stop and report the blocker rather than skipping.
 
 **Workflow:**
 
@@ -23,13 +30,15 @@ description: '[Utilities] Use when you need to review recent changes and wrap up
 2. **Summarize** — Provide detailed change summary with quality assessment
 3. **Doc Check** — Cross-reference changed files against docs/ for staleness
 4. **Lesson Learned** — Analyze AI mistakes/issues during the task and capture lessons
+5. **Understand Handoff** — Invoke `/understand` as the final mandatory task so the developer gets a Purpose → How → Why explanation of the completed work
 
 **Key Rules:**
 
 - READ-ONLY: only flag findings, never implement or fix anything
 - Doc staleness check is REQUIRED (see mapping table below)
 - Lesson-learned analysis is REQUIRED (see section below)
-- Final review task MUST ATTENTION include doc-staleness check AND lesson-learned analysis
+- Final review task MUST ATTENTION include doc-staleness check, lesson-learned analysis, AND the final `/understand` handoff
+- MUST ATTENTION call `/understand` after the watzup summary/doc/mistake analysis and before the final Next Steps prompt
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -43,16 +52,16 @@ Analyze the overall impact and quality of the changes.
 
 ## Doc Staleness Check (REQUIRED)
 
-After the change summary, run `git diff --name-only` (against base branch or recent commits) and cross-reference changed files against relevant documentation:
+After change summary, run `git diff --name-only` (against base branch or recent commits), cross-reference changed files against relevant docs:
 
-| Changed file pattern    | Docs to check for staleness                                                                   |
-| ----------------------- | --------------------------------------------------------------------------------------------- |
-| `.claude/hooks/**`      | `.claude/docs/hooks/README.md`, hook count tables in `.claude/docs/hooks/*.md`                |
-| `.claude/skills/**`     | `.claude/docs/skills/README.md`, skill count/catalog tables                                   |
-| `.claude/workflows/**`  | `CLAUDE.md` workflow catalog table, `.claude/docs/` workflow references                       |
-| `src/{services-dir}/**` | `docs/business-features/` doc for the affected service (path from `docs/project-config.json`) |
-| `src/{frontend-dir}/**` | `docs/project-reference/frontend-patterns-reference.md`, relevant business-feature docs       |
-| `CLAUDE.md`             | `.claude/docs/README.md` (navigation hub must stay in sync)                                   |
+| Changed file pattern                   | Docs to check for staleness                                                             |
+| -------------------------------------- | --------------------------------------------------------------------------------------- |
+| `.claude/hooks/**`                     | `.claude/docs/hooks/README.md`, hook count tables in `.claude/docs/hooks/*.md`          |
+| `.claude/skills/**`                    | `.claude/docs/skills/README.md`, skill count/catalog tables                             |
+| `.claude/workflows/**`                 | `CLAUDE.md` workflow catalog table, `.claude/docs/` workflow references                 |
+| `{configured-service-source-root}/**`  | `docs/specs/` doc for the affected service (path from `docs/project-config.json`)       |
+| `{configured-frontend-source-root}/**` | `docs/project-reference/frontend-patterns-reference.md`, relevant business-feature docs |
+| `CLAUDE.md`                            | `.claude/docs/README.md` (navigation hub must stay in sync)                             |
 
 **Output one of:**
 
@@ -65,20 +74,20 @@ After the change summary, run `git diff --name-only` (against base branch or rec
 
 ## Spec-Driven Development Health Check (REQUIRED when business code changed)
 
-Run this check when `git diff --name-only` includes ANY `src/Services/**` or frontend app/domain files.
+Run this check when `git diff --name-only` includes ANY changes under the backend service source paths or frontend app/domain source paths (resolve the concrete paths from the project's structure reference / `docs/project-config.json`).
 
-### Step 1 — Engineering Spec Bundle Check
+### Step 1 — Feature Spec Root Check
 
 ```bash
 ls docs/specs/ 2>/dev/null
 ```
 
-> **Note:** Results may be **app-bucket** names rather than service names. To find a specific service spec, probe `ls docs/specs/{app-bucket}/`; some projects may use flat `docs/specs/{system-name}/` directories.
+> **Note:** Results are **app-bucket** names. To find a specific Feature Spec, probe `ls docs/specs/{app-bucket}/` for canonical `README.{Feature}.md` files and derived bucket indexes/ERDs.
 
-| Result                     | Action                                                                                                                                                                |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Directory missing or empty | ⚠️ Flag: `"No engineering spec bundle found. Consider running /workflow-spec-driven-dev (mode: init-full) to bootstrap spec-driven documentation for this codebase."` |
-| Bundle exists              | Proceed to Step 2                                                                                                                                                     |
+| Result                     | Action                                                                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Directory missing or empty | ⚠️ Flag: `"No Feature Specs found under docs/specs/. Consider running /workflow-code-to-spec (mode: init-full) to bootstrap spec-driven documentation for this codebase."` |
+| Feature Specs exist        | Proceed to Step 2                                                                                                                                                          |
 
 ### Step 2 — Spec Staleness Check (only if bundle exists)
 
@@ -88,15 +97,15 @@ For each spec file in `docs/specs/`:
 git log --since="30 days ago" --name-only -- docs/specs/ | head -10
 ```
 
-| Result                                                               | Action                                                                                                                                                    |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No commits in last 30 days AND business code changed in this session | ⚠️ Flag: `"Engineering spec bundle may be stale (no updates in >30 days). Consider running /workflow-spec-driven-dev (mode: audit) to verify freshness."` |
-| Recent commits found                                                 | ✅ Spec bundle is being maintained                                                                                                                        |
+| Result                                                               | Action                                                                                                                                                 |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| No commits in last 30 days AND business code changed in this session | ⚠️ Flag: `"Engineering spec bundle may be stale (no updates in >30 days). Consider running /workflow-code-to-spec (mode: audit) to verify freshness."` |
+| Recent commits found                                                 | ✅ Spec bundle is being maintained                                                                                                                     |
 
 ### Step 3 — Feature Docs Freshness Check
 
 ```bash
-git log --since="30 days ago" --name-only -- docs/business-features/ | head -10
+git log --since="30 days ago" --name-only -- docs/specs/ | head -10
 ```
 
 | Result                                               | Action                                                                                  |
@@ -110,11 +119,11 @@ git log --since="30 days ago" --name-only -- docs/business-features/ | head -10
 
 ## AI Mistake & Lesson Learned Analysis (REQUIRED)
 
-After the doc staleness check, review the entire session for AI mistakes and lessons learned.
+After doc staleness check, review entire session for AI mistakes and lessons learned.
 
 ### Step 1 — Surface all mistakes
 
-List every error made during this session. For each, note:
+List every error made during session. For each, note:
 
 - What happened (observable symptom — build fail, test fail, wrong output)
 - Where it happened (file:line if applicable)
@@ -143,7 +152,7 @@ For each mistake, apply this 3-step extraction:
 
 **2b. Find the class** — Where else could this SAME failure mode strike?
 
-If the failure mode only applies in one specific file or case → go up one abstraction level until it generalizes. A good lesson applies to ≥3 different contexts.
+If failure mode applies in only one specific file or case → go up one abstraction level until it generalizes. Good lesson applies to ≥3 different contexts.
 
 **2c. Write as a universal rule** — Strip ALL project-specific names:
 
@@ -163,13 +172,15 @@ Wait for user confirmation before invoking `/learn`.
 - A numbered list: failure mode → universal lesson → proposed `/learn` text
 - `No AI mistakes identified in this session` — if genuinely none found
 
-**Be honest and self-critical.** Surface-level symptom fixes ("always check file X") that only apply to this codebase are NOT lessons — they are noise. The purpose is root-cause prevention that compounds across sessions.
+**Be honest and self-critical.** Surface-level symptom fixes ("always check file X") applying only to this codebase are NOT lessons — they are noise. Purpose: root-cause prevention compounding across sessions.
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** before presenting these options, invoke `/understand` as the final mandatory todo task using the watzup summary and current change set as scope. If `/understand` is unavailable, stop and report that blocker instead of silently skipping the handoff.
+
+After `/understand` completes, MUST ATTENTION use `AskUserQuestion` to present these options. NEVER skip because task seems "simple" or "obvious" — the user decides:
 
 - **"/workflow-end (Recommended)"** — Complete and close the active workflow
 - **"/commit"** — Commit changes if not using workflow
@@ -201,11 +212,11 @@ Wait for user confirmation before invoking `/learn`.
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -248,17 +259,16 @@ Wait for user confirmation before invoking `/learn`.
 
 <!-- SYNC:ai-mistake-prevention -->
 
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -270,13 +280,13 @@ Wait for user confirmation before invoking `/learn`.
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -291,6 +301,7 @@ Wait for user confirmation before invoking `/learn`.
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -314,13 +325,37 @@ Wait for user confirmation before invoking `/learn`.
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+**IMPORTANT MUST ATTENTION Goal:** Hand the developer a complete, evidence-backed wrap-up — change summary, doc/spec staleness flags, root-cause lessons, and a `/understand` explanation — WITHOUT mutating any file, so they decide the next step from full context.
 
-**IMPORTANT MUST ATTENTION** READ `CLAUDE.md` before starting
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+- **Nested Task Creation:** Expand child phases, link parent, one task in_progress.
+- **Project Reference Docs Guide:** Read required project-reference docs (always lessons.md) before work.
+- **Task Tracking External Report:** Bootstrap task tracking; persist findings to plans/reports/ incrementally.
+- **Critical Thinking:** Critical + sequential thinking; traced proof, no guess-as-fact.
+- **Evidence:** Cite file:line for every claim; never speculate.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+**IMPORTANT MUST ATTENTION** stay READ-ONLY — only FLAG findings; NEVER edit, fix, implement, or update the docs/specs you flag — why: watzup is a review/handoff, not an edit pass; flagging-then-fixing silently breaks the read-only contract.
+**IMPORTANT MUST ATTENTION** run ALL three required gates after the change summary — doc-staleness (path→doc table), spec-driven health check (only when business code changed), root-cause lesson extraction — NEVER skip a gate because the change "looks small" — why: stale docs and missed lessons compound silently across sessions.
+**IMPORTANT MUST ATTENTION** invoke `/understand` as the FINAL mandatory handoff BEFORE the `AskUserQuestion` Next Steps prompt; if `/understand` is unavailable, STOP and report the blocker — NEVER silently skip the handoff — why: the developer's exit context is the explanation, not the raw diff.
+
+**IMPORTANT MUST ATTENTION** extract lessons by ROOT CAUSE (the reasoning/assumption failure), NOT the symptom; write each as a universal rule that holds on ≥3 codebases; surface-level "always check file X" notes are noise — why: only root-cause prevention compounds across sessions.
+**IMPORTANT MUST ATTENTION** send lessons to `/learn` ONLY after explicit user confirmation — NEVER auto-persist or self-edit instruction files — why: lesson capture is a durable instruction change the user must own.
+**IMPORTANT MUST ATTENTION** use `AskUserQuestion` for the Next Steps decision — NEVER auto-decide the route even when it "seems obvious" — why: the user owns the workflow-end / commit / continue choice.
+**IMPORTANT MUST ATTENTION** break work into small todo tasks with `TaskCreate` BEFORE starting (one task per file read), keep exactly one `in_progress`, and add a final review todo to verify work quality — why: long files exhaust context; granular tasks survive compaction.
+**IMPORTANT MUST ATTENTION** cite `file:line` proof or traced evidence with a confidence % for every claim/finding (>80% to act, <80% verify first) — NEVER present a guess as fact — why: an unverified staleness/lesson flag misleads the developer's next decision.
+**IMPORTANT MUST ATTENTION** grep/glob to verify any referenced doc, path, or API actually exists before flagging it — NEVER hallucinate a doc mapping or count — why: AI invents file paths and method names; the change summary must match the real diff.
+**IMPORTANT MUST ATTENTION** read `CLAUDE.md` and the project-reference docs gate (`lessons.md` always) before the wrap-up — why: project conventions override generic staleness assumptions.
+
+**Anti-Rationalization:**
+
+| Evasion                                            | Rebuttal                                                                                     |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| "Doc looks fine, skip the staleness gate"          | Run the path→doc table anyway — staleness is silent; flag or output `No doc updates needed`. |
+| "No real mistakes this session, skip lessons"      | Still run the gate — output `No AI mistakes identified` only after honest self-review.       |
+| "It's obvious next they want a commit, just do it" | NEVER auto-decide — present the `AskUserQuestion` options; the user owns the route.          |
+| "I can just fix this stale doc while I'm here"     | READ-ONLY — flag only. Fixing here breaks the contract; the user decides.                    |
+| "Small change, skip `/understand`"                 | `/understand` is the mandatory handoff — run it or report the blocker; never skip.           |
+
+**IMPORTANT MUST ATTENTION Goal echo:** evidence-backed READ-ONLY wrap-up — change summary + doc/spec staleness flags + root-cause lessons + mandatory `/understand` handoff, mutating NOTHING, so the user decides the next step.

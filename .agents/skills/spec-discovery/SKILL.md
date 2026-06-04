@@ -1,6 +1,6 @@
 ---
 name: spec-discovery
-description: '[General] Use when you need reverse-engineer a complete, tech-agnostic specification bundle from an existing codebase.'
+description: '[Investigation] Use when about to author a new Feature Spec from an idea — investigate all existing Feature Specs AND related code logic first to surface related/overlapping/affected specs, missing features, missing test cases/user stories, system unknowns, and the invariant landscape, before any spec is drafted.'
 ---
 
 > Codex compatibility note:
@@ -19,7 +19,7 @@ description: '[General] Use when you need reverse-engineer a complete, tech-agno
 
 ## Codex Project-Reference Loading (No Hooks)
 
-Codex does not receive Claude hook-based doc injection.
+Codex uses static project-reference loading instead of runtime-injected project docs.
 When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.
 
 **Always read:**
@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,1128 +56,371 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Reverse-engineer tech-agnostic spec bundle from existing codebase. Stable output at `docs/specs/{app-bucket}/{system-name}/` — change history in SPEC-CHANGELOG.md.
+**Goal:** Before a single line of a new Feature Spec is authored, deliver the pre-spec landscape — every existing Feature Spec the idea relates to / overlaps / depends on / would affect, the related code logic, the missing features and missing test cases / user stories, the system unknowns, and the invariant landscape the new spec must respect — so the author never ships a duplicate, contradicts a [HARD] rule, or specs into a blind spot.
 
-**Modes:**
+**Summary:**
 
-| Mode     | Trigger                                                             | Input                                      | Output                                    |
-| -------- | ------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------- |
-| `init`   | `docs/specs/{app-bucket}/{system-name}/` not found                  | Full codebase                              | Complete spec bundle from scratch         |
-| `update` | `docs/specs/{app-bucket}/{system-name}/` exists + git diff provided | Changed modules                            | Re-extract impacted modules × phases only |
-| `audit`  | Explicit request                                                    | Source timestamps vs spec `last_extracted` | SPEC-AUDIT-{date}.md                      |
+- This is BOTH spec-aware and code-aware: it reads `docs/specs/**` (the canonical Feature Specs) AND delegates to `$scout` + code-graph for the code logic the idea touches. Spec-only or code-only discovery misses half the landscape.
+- It runs BEFORE `spec [mode=draft]` and feeds it. Its job is to decide WHETHER a new standalone spec is even the right move — the alternative is extending an existing spec, which only a spec-corpus scan can reveal.
+- It is INLINE on the main agent (NOT a sub-agent) because step 5 is a BLOCKING a direct user question scope-decision gate that only works inline. It MAY spawn sub-agents for parallel spec reads, but it orchestrates and gates inline.
+- Greenfield short-circuit: when there are no specs AND no code, auto-detect it, record the reason, skip the heavy discovery, and hand off a minimal landscape — never grind through empty discovery.
 
-**Workflow:** `$scout` → `$plan` (operation-group × phase tasks) → `$plan-review` → `$why-review` → `$plan-validate` → `$spec-discovery` (+ Phase F) → `$review-changes` → `$review-artifact` → `$watzup` → `$workflow-end`
+**Workflow:**
+
+0. **Scope** — read the framed capability (brainstorm/idea output); extract keywords, candidate entities/actors, target spec bucket.
+1. **Spec-corpus discovery** — `Glob docs/specs/**/README.*.md`; read §1/§4/§5/§8 of each candidate; classify each as EXTENDS / OVERLAPS / DEPENDS-ON / AFFECTED / UNRELATED.
+2. **Code-logic discovery** — `$scout {keywords}` + MANDATORY graph expansion on key files when `.code-graph/graph.db` exists; bridge code→spec via §8 `[Source:]` anchors.
+3. **Gap & invariant analysis** — missing features, missing test cases / user stories, system unknowns (<80% confidence), and the existing [HARD] rules / §5 invariants the idea must respect.
+4. **Report** — write `plans/{plan-dir}/research/spec-discovery-{slug}.md` incrementally (Related Specs · Related Code · Affected Specs · Gaps · Invariant Landscape · Open Questions).
+5. **Scope-decision gate (BLOCKING a direct user question)** — recommend NEW / EXTEND existing X / SPLIT into N, and confirm which existing specs to cross-reference.
+6. **Handoff** — feed entities, invariants, cross-refs, and gaps into `domain-analysis` + `spec [mode=draft]`.
 
 **Key Rules:**
 
-- **[BLOCKING]** Read `docs/project-reference/spec-principles.md` — shared spec quality standards, completeness checklists, AI-implementability criteria (read Section 4 completeness checklists before any extraction phase)
-- **[BLOCKING]** Run Step 1.5 (Use Case Enumeration) FIRST — then task tracking one task per operation group × phase; verify the current task list count ≥ `sum(operation_groups × phase_count)`
-- 4+ modules → BLOCKING: spawn all sub-agents in ONE message — NEVER inline single-session
-- Context compaction/session resume → the current task list FIRST, read completeness tracker, NEVER re-scout/re-plan
-- All output tech-agnostic — NEVER framework names, language constructs, class names
-- Every claim cites `[Source: file:line]` — mark `[UNVERIFIED]` not blank
-- Output path is STABLE (`docs/specs/{app-bucket}/{system-name}/`) — version history in SPEC-CHANGELOG.md, NOT in folder name
+- Landscape over implementation — surface related/overlapping/affected specs + the invariant landscape fast; this is NOT the spec author and NOT a deep investigation.
+- INLINE execution — the step 5 user gate is BLOCKING and only works inline; spawn sub-agents only for parallel spec reads, never delegate the whole skill.
+- NEVER auto-pick NEW — step 5 is a BLOCKING user gate. OVERLAPS is exactly what the spec scan exists to catch; recommend, then let the user decide scope.
+- NEVER skip graph expansion when `.code-graph/graph.db` exists; when absent, grep + read still bridge code→spec via `[Source:]` anchors.
+
+# Spec-Discovery — Pre-Spec Landscape Investigation
 
 ---
 
-## Step 0 — Scope Gate (MANDATORY FIRST)
+## When to Use
 
-Before reading any code, use a direct user question. **3 required (★) — MUST confirm before proceeding. 4 optional — propose auto-default, user can override:**
+- About to author a NEW Feature Spec from an idea / requirement / brainstorm output, before `spec [mode=draft]` runs.
+- Need to know whether the idea is genuinely new or overlaps an existing spec (duplicate-spec prevention).
+- Need the invariant landscape — the existing [HARD] rules and §5 invariants a new capability must respect or might violate.
 
-| Dimension         | Question                                                                                                                                                      | Auto-Default                       |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| **Scan scope** ★  | Full system (all modules) OR a specific module/service/feature area?                                                                                          | — must confirm                     |
-| **Mode** ★        | Fresh init (no existing specs) OR update (specs exist, re-extract impacted) OR audit (check staleness)?                                                       | — must confirm                     |
-| **System name** ★ | What is the canonical system name? Choose once — this becomes the stable `docs/specs/{app-bucket}/{system-name}/` path (e.g., `myapp/orders`, `myapp/users`). | — must confirm                     |
-| **Output depth**  | Full spec bundle (all 6 phases) OR targeted (select phases)?                                                                                                  | Full bundle (all 6 phases)         |
-| **Focus areas**   | Which of: domain model / business rules / API contracts / events / UI flows?                                                                                  | All phases                         |
-| **Source entry**  | Where to start? (e.g., main entry files, a named module, a specific directory)                                                                                | Top-level service directory        |
-| **Scale hint**    | Approximately how many modules/services does this codebase have? (rough estimate)                                                                             | Scout will determine from registry |
-
-> **Stable Path Contract:** The folder `docs/specs/{app-bucket}/{system-name}/` is the permanent home for this system's spec bundle. NEVER include dates in the path. All change history is captured in `docs/specs/{app-bucket}/{system-name}/SPEC-CHANGELOG.md`. Existing extractions in `specs/{date}-*` folders are legacy — do NOT migrate or delete them; start fresh at the stable path for new runs.
-
-> **Scale routing:** If scope is 1–3 modules → single-session extraction. If scope is 4+ modules → MUST use sub-agent parallel extraction (see Sub-Agent Pattern). If scope is entire large system → MUST use incremental coverage: one module per session.
-
-> **[BLOCKING SCALE GATE]** If `module_count ≥ 4` at the end of Step 2 (Plan): you **MUST** use sub-agent parallel extraction. Attempting single-session inline extraction with 4+ modules is a workflow violation. Do NOT proceed past Step 2 without spawning sub-agents.
+**NOT for:** authoring the spec (use `spec [mode=draft]`), deep root-cause analysis of existing code (use `investigate`), generating Section 8 test cases (use `spec [mode=tests]`), regenerating the derived bucket index/ERD (use `spec-index`).
 
 ---
 
-## Step 0.5 — Update Mode Protocol (skip for init)
+## Phase 0: Classify Corpus & Short-Circuit
 
-When mode = `update`, skip Steps 1-2 (Scout + Plan). Instead:
+**Before any discovery**, classify what landscape exists. This decides which steps run.
 
-### Step 0.5.1: Load Existing Registry
+| Corpus state           | Detection                                                         | Route                                                                        |
+| ---------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Specs + code**       | `docs/specs/**/README.*.md` present AND source files for keywords | Full run — steps 1, 2, 3, 4, 5, 6                                            |
+| **Specs only**         | Specs present, no code yet (provisional/draft-era project)        | Steps 1, 3, 4, 5 — skip step 2 code discovery (record "no code yet")         |
+| **Code only**          | No specs yet, code exists                                         | Steps 2, 3, 4, 5 — step 1 records "no existing specs", bridge gaps from code |
+| **Greenfield (empty)** | No specs AND no source for keywords                               | **Short-circuit** — record reason, skip heavy discovery, minimal handoff     |
 
-1. Read `docs/specs/{app-bucket}/{system-name}/00-module-registry.md` — load module catalog
-2. Read `docs/specs/{app-bucket}/{system-name}/extraction-plan.md` — load phase coverage map
-3. Read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table
+> **Greenfield / empty-corpus short-circuit.** When Phase 0 detects no specs AND no code: record `Corpus: greenfield — no specs, no code for {keywords}` with the `Glob`/grep evidence that proved it, skip steps 1–3, write a minimal landscape report (just the framed scope + open questions), and hand off to `spec [mode=draft]`. Run the step 5 scope gate ONLY if there is something to decide (e.g. two plausible buckets); with nothing to decide, default to NEW and state the assumption in one line.
 
-### Step 0.5.2: Impact Mapping from Git Diff
+---
 
-Map changed source files → impacted modules × phases:
+## Workflow
 
-| Changed File Pattern                      | Impacted Module(s)    | Impacted Phase(s)                                              |
-| ----------------------------------------- | --------------------- | -------------------------------------------------------------- |
-| `{Module}/Domain/Entities/**`             | That module           | Phase A (domain model) + Phase A.ERD                           |
-| `{Module}/Application/UseCaseCommands/**` | That module           | Phase B (business rules — validation), Phase C (API contracts) |
-| `{Module}/Application/UseCaseEvents/**`   | That module           | Phase D (events)                                               |
-| `{Module}/Service/Controllers/**`         | That module           | Phase C (API contracts)                                        |
-| `{Module}/Persistence/**`                 | That module           | Phase B (data constraints)                                     |
-| Frontend `{feature}/**`                   | Mapped module         | Phase E (user journeys)                                        |
-| Bus message files                         | All consuming modules | Phase D (events)                                               |
+### Step 0: Frame the Scope
 
-### Step 0.5.3: Create Update Tasks
+Read the framed capability — the brainstorm / idea / requirement text that triggered this. Extract:
 
-task tracking for each impacted module × phase combination. These replace the full N×M plan for update mode.
+- **Keywords** — domain nouns and verbs the idea names (entities, actions, features).
+- **Candidate entities / actors** — the business objects and roles the idea implies.
+- **Target spec bucket** — which `docs/specs/{Bucket}/` the new spec would most likely live in (per the project's module mapping; resolve from `docs/project-reference/feature-spec-reference.md` / `spec-system-reference.md`).
 
-### Step 0.5.4: Execute Update Tasks
+State the framed scope in one line before continuing (e.g. `Discovering for: "bulk order export" — keywords [order, export, batch], bucket Orders`).
 
-Execute per-task deep investigation for each impacted task (same READ → TRACE → EXTRACT → WRITE → VERIFY protocol as init mode).
+### Step 1: Spec-Corpus Discovery
 
-### Step 0.5.5: Append to SPEC-CHANGELOG.md
+```bash
+# Enumerate every canonical Feature Spec
+ls docs/specs/**/README.*.md 2>/dev/null   # or: Glob docs/specs/**/README.*.md
+```
 
-After all update tasks complete:
+If NONE → record `No existing specs` and skip to Step 2.
+
+Else, for each candidate spec the keywords touch, read the high-signal sections only (do NOT read whole specs — landscape, not deep-dive):
+
+- **§1 Overview** — what the spec covers (scope boundary).
+- **§4 Business-Rule headers** — the BR-{FC}-NN IDs and their [HARD]/[SOFT] tags (feeds invariant landscape).
+- **§5 Domain Model** — entities + ERD (overlap detection by shared entities).
+- **§8 Test-Case summary** — the TC count + summary table (coverage baseline; missing-TC detection).
+
+Use the bucket `INDEX.md` (produced by `$spec-index`) as a fast navigation map when present — it lists the specs and their entities so you read fewer full files.
+
+**Classify each candidate spec's relationship to the idea** (one label per spec, with `file:line` evidence):
+
+| Relationship            | Meaning                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| **EXTENDS**             | The idea is a natural addition to this spec's capability — likely an UPDATE, not NEW. |
+| **OVERLAPS (dup risk)** | The idea re-states behavior this spec already owns — authoring NEW would duplicate.   |
+| **DEPENDS-ON**          | The idea needs this spec's entities/rules to function — cross-reference required.     |
+| **AFFECTED**            | The idea would change behavior this spec documents — forward-impact, may need amend.  |
+| **UNRELATED**           | Shares a keyword but no real relationship — record to show it was checked.            |
+
+### Step 2: Code-Logic Discovery (only if code exists)
+
+Bridge the idea to the implementation so the spec reflects what actually exists (or what the idea will touch).
+
+1. **Delegate to `$scout {keywords}`** — fast parallel file discovery of the code the idea relates to. Use scout's numbered, prioritized list as targets; do NOT re-grep what scout already mapped.
+2. **MANDATORY graph expansion** — when `.code-graph/graph.db` exists, run graph commands YOURSELF (sub-agents cannot) on 2–3 key files scout surfaced:
+    ```bash
+    python .claude/scripts/code_graph trace <key-entity-or-command> --direction both --json
+    python .claude/scripts/code_graph connections <key-file> --json
+    ```
+    Graph reveals callers, consumers, event chains, and tests grep cannot find — exactly the downstream the new spec must account for.
+3. **Delegate ambiguous areas to `$investigate`** — when scout + graph surface a flow whose behavior is unclear (the idea hinges on how it works), hand that narrow slice to `investigate` rather than guessing.
+4. **Bridge code → spec** — for each key code file, find its governing spec via the §8 `[Source: namespace/service/id]` anchors / Related Files. A code area with NO governing spec is a gap (record in Step 3); a code area WITH a governing spec strengthens the Step 1 relationship classification.
+
+### Step 3: Gap & Invariant Analysis
+
+From Steps 1–2, synthesize four lists (every item `file:line`-cited or marked "inferred"):
+
+- **Missing features** — behavior the idea implies that NO existing spec or code covers. These are the net-new surface the spec must define.
+- **Missing test cases / user stories** — in the specs the idea touches (EXTENDS/AFFECTED), the AC / TC the idea's behavior would require but that are absent today.
+- **System unknowns** — anything the discovery could not resolve to >80% confidence (unverified flows, ambiguous ownership, unread cross-service consumers). Name each explicitly — an unknown surfaced is cheaper than a wrong spec.
+- **Invariant landscape** — the existing [HARD] business rules (§4) and §5 entity invariants the idea must respect or might violate. This is the single most load-bearing output: a new spec that contradicts a [HARD] rule of a DEPENDS-ON spec ships a defect. List each invariant as "for ALL {inputs}, {invariant} holds — owned by {spec/BR-id}".
+
+### Step 4: Report
+
+Write `plans/{plan-dir}/research/spec-discovery-{slug}.md` (resolve `{plan-dir}` from the active plan; fall back to `plans/reports/spec-discovery-{YYMMDD}-{HHmm}-{slug}.md` when no plan dir exists). Persist **incrementally** — append each section as it is produced, never hold the whole report in memory:
 
 ```markdown
-## [{date}] — Update
+# Spec-Discovery: {idea}
 
-- Scope: {list of re-extracted modules}
-- Phases re-extracted: {list of phases}
-- Triggered by: git diff {git_ref} OR workflow-spec-driven-dev update mode
-- Source files changed: {list of changed files}
-- Spec files updated: {list of updated spec files}
-```
+## Framed Scope
 
----
+{keywords, candidate entities/actors, target bucket}
 
-## Step 0.6 — Audit Mode Protocol (skip for init/update)
+## Related Specs
 
-When mode = `audit`:
+| Spec | Relationship | Overlap evidence | Action implied |
+| ---- | ------------ | ---------------- | -------------- |
 
-### Step 0.6.1: Load Spec Inventory
+## Related Code
 
-For each module in `docs/specs/{app-bucket}/{system-name}/`:
+{scout's prioritized files + graph evidence — callers/consumers/tests}
 
-1. Read `{module}/README.md` frontmatter → `last_extracted` date
-2. For each spec file (A/B/C/D/E), read frontmatter → `last_extracted` date
+## Affected Specs (forward-impact)
 
-### Step 0.6.2: Compare Against Source
+{specs whose documented behavior the idea would change}
 
-For each module:
+## Gaps
 
-1. Run `git log --since="{last_extracted}" --name-only -- {source_path}`
-2. Record changed files since last extraction
+- Missing features: ...
+- Missing TCs / user stories: ...
 
-### Step 0.6.3: Impact Classification
+## Invariant Landscape
 
-| Changed Files Found     | Classification | Action                 |
-| ----------------------- | -------------- | ---------------------- |
-| Entity files            | Phase A stale  | Flag for re-extraction |
-| Validator/command files | Phase B stale  | Flag for re-extraction |
-| Controller files        | Phase C stale  | Flag for re-extraction |
-| Event/bus files         | Phase D stale  | Flag for re-extraction |
-| Frontend files          | Phase E stale  | Flag for re-extraction |
-
-### Step 0.6.4: Write SPEC-AUDIT-{date}.md
-
-Output: `docs/specs/{app-bucket}/{system-name}/SPEC-AUDIT-{date}.md`:
-
-```markdown
-# Spec Audit Report — {date}
-
-**System:** {system-name}
-**Audit Run:** {date}
-
-## Module Staleness Summary
-
-| Module              | Last Extracted | Source Changes Since                 | Stale Phases | Action             |
-| ------------------- | -------------- | ------------------------------------ | ------------ | ------------------ |
-| M01 OrderManagement | 2026-04-19     | ValidateOrderService.cs (2026-04-20) | Phase B      | Re-extract Phase B |
-| M04 ProductCatalog  | 2026-04-19     | None                                 | —            | ✅ Current         |
-
-## Recommended Update Scope
-
-Estimated update effort: {N} modules × {M} phases = {X} re-extraction tasks
-
-Run: `workflow-spec-driven-dev update` scoped to: {list of stale modules}
-```
-
----
-
-## Step 1 — Holistic Scout (MANDATORY BEFORE ANY EXTRACTION)
-
-**Goal:** Build complete codebase picture at highest level BEFORE reading any module — foundation for plan.
-
-> **HARD GATE:** No extraction until Module Registry produced. Missing registry → plan misses modules → incomplete spec.
-
-### What to Scout
-
-1. **Directory structure** — Map top-level tree: business logic, API entry points, data access, shared utilities
-2. **Entry point files** — App bootstrap (config, DI container, router, composition root) — reveals full module surface
-3. **Module/service boundaries** — Per module: name, responsibility (1 sentence), file count, layers (presentation/application/domain/infrastructure)
-4. **Cross-cutting concerns** — Auth, logging, error handling, caching — which files implement, which modules consume
-5. **Data store access points** — Where each store accessed; which modules own which stores
-6. **Integration points** — Message bus subscribers/publishers, external HTTP clients, webhook handlers, scheduled jobs
-
-### Output: Module Registry
-
-Create `docs/specs/{app-bucket}/{system-name}/00-module-registry.md`:
-
-```markdown
----
-system_name: { system-name }
-extracted: { date }
-last_updated: { date }
----
-
-# Module Registry
-
-Generated: {date} | Scope: {full-system / module-scoped}
-
-## System Summary
-
-[2-3 sentences: what this system does, who uses it, approximate scale]
-
-## Module Catalog
-
-| #   | Module Name | Responsibility | Layer Structure | File Count (est.) | Data Store | Integration Points |
-| --- | ----------- | -------------- | --------------- | ----------------- | ---------- | ------------------ |
-| 1   | ...         | ...            | ...             | ...               | ...        | ...                |
-
-## Cross-Cutting Concerns
-
-| Concern | Implementation Location | Consumed By |
-| ------- | ----------------------- | ----------- |
-
-## Integration Boundary Map
-
-[Which modules communicate, via what mechanism, in what direction]
-
-## Data Store Ownership
-
-| Store Type | Owner Module(s) | Access Pattern |
-| ---------- | --------------- | -------------- |
-```
-
----
-
-## Step 1.5 — Use Case Enumeration + Actor Discovery (MANDATORY — runs after Step 1, before Step 2)
-
-**Goal:** Count ALL operations BEFORE plan. Task count MUST derive from inventory — not module count alone.
-
-> **HARD GATE:** Do NOT proceed Step 2 until Use Case Inventory written for every module. Plan based only on `module_count × phase_count` systematically misses operations in large modules.
-
-### Use Case Enumeration Protocol
-
-For each module discovered in Step 1, run the following grep commands — use ALL patterns that apply to this codebase's architecture:
-
-**Write-side entry points (operations that change data state):**
-
-```
-# CQRS command handlers
-grep -r "ICommandHandler\|CommandHandler\|ICommand\b" {module_path}/ --include="*.cs" -l
-
-# REST/MVC mutating endpoints
-grep -r "\[HttpPost\]\|\[HttpPut\]\|\[HttpPatch\]\|\[HttpDelete\]" {module_path}/ --include="*.cs" -l
-
-# GraphQL mutations
-grep -r "Mutation\|[Mm]utation[Rr]esolver" {module_path}/ -l
-
-# Event consumers (event-driven operations)
-grep -r "IConsumer\|EventHandler\|MessageHandler\|@KafkaListener\|IMessageConsumer" {module_path}/ -l
-
-# Generic fallback (class-based handlers)
-grep -r "class.*Handler\|class.*Command\|class.*Processor" {module_path}/ -l
-```
-
-**Read-side entry points (operations that query data):**
-
-```
-# CQRS query handlers
-grep -r "IQueryHandler\|QueryHandler\|IQuery\b" {module_path}/ --include="*.cs" -l
-
-# REST GET endpoints
-grep -r "\[HttpGet\]" {module_path}/ --include="*.cs" -l
-
-# GraphQL query resolvers
-grep -r "class.*Query\b\|[Qq]uery[Rr]esolver" {module_path}/ -l
-
-# Generic fallback
-grep -r "class.*Query\|class.*Reader\|class.*Finder" {module_path}/ -l
-```
-
-**Background + scheduled operations:**
-
-```
-grep -r "BackgroundJob\|IJob\b\|ScheduledTask\|ICronJob\|BackgroundService\|IHostedService" {module_path}/ -l
-```
-
-### Actor/Role Discovery (feeds Phase E)
-
-Before writing any user stories in Phase E, you MUST know WHO the actors are. Run for each module:
-
-```
-# Authorization attributes and policies
-grep -r "\[Authorize\]\|\[Permission\]\|RequirePermission\|HasPermission\|IsInRole\|RequireRole" {module_path}/ -l
-
-# Role/permission enums and constants
-grep -r "enum.*Role\|enum.*Permission\|RoleEnum\|PermissionEnum\|.*Roles\s*=" {module_path}/ -l
-
-# Policy definitions
-grep -r "AddPolicy\|AddAuthorization\|PolicyBuilder" {module_path}/ -l
-```
-
-Build actor catalog: list each unique role/actor type found, permission scope, operations they can perform.
-
-### Use Case Inventory Output Format
-
-Append to `docs/specs/{app-bucket}/{system-name}/00-module-registry.md` (add after the Module Catalog table):
-
-```markdown
-## Use Case Inventory
-
-| Module    | Write Ops (N) | Read Ops (M) | Event-Driven (K) | Background (J) | Total (N+M+K+J) | Actor Roles       |
-| --------- | ------------- | ------------ | ---------------- | -------------- | --------------- | ----------------- |
-| Orders    | 12            | 8            | 3                | 2              | 25              | Customer, Admin   |
-| Users     | 6             | 4            | 1                | 0              | 11              | Admin, HR Manager |
-| **Total** |               |              |                  |                | **36**          |                   |
-
-## Actor Catalog
-
-| Actor / Role | Permission Scope   | Source              |
-| ------------ | ------------------ | ------------------- |
-| {role-name}  | {what they can do} | [Source: file:line] |
-```
-
-**[GATE — BLOCKING before Step 2]:**
-
-- Grand Total (N+M+K+J across all modules) = minimum Phase C spec entry count
-- Plan MUST produce enough tasks to cover ALL operations in the inventory
-- Any module with Total > 20 MUST be split into operation groups (see Rule 1 below)
-
-### Operation Group Definition
-
-An **operation group** is a batch of ≤20 related operations from the Use Case Inventory for a single module. Group by functional area (e.g., "Order CRUD", "Order Fulfillment", "Order Reporting"). If no clear functional grouping exists, batch alphabetically in groups of ≤20.
-
-A module with 80 operations → ≥4 operation groups → ≥4 Phase C tasks for that module.
-
----
-
-## Step 2 — Extraction Plan (MANDATORY — MUST BREAK BIG INTO SMALL)
-
-**Goal:** Ordered task list decomposing extraction into smallest independent units. Prevents context overrun.
-
-> **HARD GATE:** task tracking MUST be called for EVERY task BEFORE extraction begins. No extraction without complete task list.
-
-### Planning Rules
-
-**Rule 1: One task per operation group per phase.**
-Operation groups from Use Case Inventory (Step 1.5). Module with 80 ops → 4 groups × 4 phases = 16 tasks.
-
-**Minimum task count formula:** `sum(operation_groups_per_module) × phase_count`. **NEVER** `module_count × phase_count` — undercounts large modules → #1 cause of <10% coverage.
-
-Task format: `"Extract [Phase Name] for [Module Name] — [Group Name] ([N] ops)"`.
-
-**Rule 2: Scope each task ≤50 files / ≤20 operations.**
-
-> 20 ops in one group → split: `"Extract API Contracts for Order Module (Part 1: Fulfillment)"`, `"Part 2: Reporting"`.
-
-**Rule 3: Dependency-order tasks.** Phase A (Domain Model) MUST complete before Phase B (Business Rules) for same module.
-
-**Rule 4: Prioritize by value.** Core business domain first — infrastructure/utility last.
-
-**Rule 5: Each task = focused investigation.** NEVER extract all phases for module in single context pass.
-
-### Plan Output
-
-The plan produces:
-
-1. A task list (created via task tracking) — one task per operation group × phase combination
-2. A `docs/specs/{app-bucket}/{system-name}/extraction-plan.md` file tracking which tasks cover which modules
-
-```markdown
-# Extraction Plan
-
-## Task Breakdown
-
-Phase 1 (Domain Model) — {N} tasks
-
-- [ ] Extract Domain Model: Module A
-- [ ] Extract Domain Model: Module B
-      ...
-
-Phase 2 (Business Rules) — {N} tasks
-
-- [ ] Extract Business Rules: Module A (Part 1: Validation)
-- [ ] Extract Business Rules: Module A (Part 2: State Machines)
-      ...
-
-## Dependency Map
-
-[Which tasks must complete before others can start]
-
-## Completion Tracker
-
-| Task | Status | Output File | Evidence Lines |
-| ---- | ------ | ----------- | -------------- |
-```
-
-### Task Count Verification Gate
-
-> **[BLOCKING GATE]** Before proceeding to `$plan-review`:
->
-> 1. Run the current task list — count all created extraction tasks
-> 2. Compute expected minimum using BOTH checks:
->     - **Check A:** `sum(operation_groups_per_module) × phase_count` — derived from Use Case Inventory (Step 1.5)
->     - **Check B:** Phase C task count ≥ Grand Total (N+M+K+J) from Use Case Inventory — every counted operation must map to a Phase C task
-> 3. If the current task list count < Check A result: plan is **INCOMPLETE** — create missing operation-group tasks
-> 4. If Phase C tasks cover fewer operations than Check B: plan is **INCOMPLETE** — create missing tasks
-> 5. If both checks pass: proceed to `$plan-review`
->
-> **NEVER use `module_count × phase_count` as the minimum** — this undercounts large modules.
-> An incomplete task list is not a plan — it is a guarantee of <10% coverage on large modules.
-
----
-
-## Step 3 — Per-Task Deep Investigation + Extraction
-
-**Goal:** Execute each task as focused, depth-first investigation. Read ALL relevant files before writing any spec line.
-
-> **HARD GATE:** Read target files BEFORE writing. NEVER write spec content from memory or assumption.
-
-### Per-Task Protocol
-
-For each extraction task, follow this sequence:
-
-```
-1. READ   — Read all source files in this task's scope (grep → read → understand)
-2. TRACE  — Trace code paths: what calls what, what triggers what, what validates what
-3. EXTRACT — Extract the relevant spec content (only what this task covers)
-4. WRITE  — Write the extracted content to the spec file with [Source: file:line] on every claim
-5. VERIFY — Re-read the written spec against the source. Any claim without a source → mark [UNVERIFIED]
-6. COMPLETE — Mark the task completed. Move to next task.
-```
-
-### Investigation Depth Requirements
-
-| Task Type            | What to Read                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Domain Model         | Entity/model files, value object files, aggregate roots, enum definitions, foreign key / navigation property / association fields (for relationship mapping)                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Business Rules       | Validator files, guard clauses in command handlers, entity invariant methods, policy files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| API Contracts        | **All application-layer entry points — read in this priority order:**<br>1. **CQRS** (if present): command handler files (`UseCaseCommands/`) + query handler files (`UseCaseQueries/`) + event consumer files (`UseCaseEvents/`) + background job files<br>2. **REST/MVC**: controller files + request/response DTO files<br>3. **GraphQL**: resolver files (mutations = write operations, queries = read operations)<br>4. **Scheduled**: job/scheduler/cron files<br>Every operation in the Use Case Inventory (Step 1.5) MUST produce exactly one Phase C spec entry. Missing entries = incomplete spec.                           |
-| Integration & Events | Message publisher files, message consumer files, scheduler files, external client files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| User Journeys        | **Three source types — all required:**<br>1. **Backend operations** (from Phase C completed spec): every write operation → one "I want to perform action" story; every read/GET operation with filter params → one "I want to search/view/filter" story.<br>2. **UI routes** (if frontend exists): route files → component files → templates. Each screen/route = one story about what the user can see or do there.<br>3. **Auth/permission attributes** (actor catalog from Step 1.5): confirm every actor has ≥1 story.<br>**Format required for every story:** "As a [actor from catalog], I want to [action], so that [outcome]." |
-
-### Context Window Management
-
-> **Critical:** 1000+ files — strict per-task discipline prevents context overrun.
-
-- **[BLOCKING] Write output immediately** after each task — NEVER accumulate. Context cutoff loses in-memory; disk writes survive.
-- **NEVER load more files than needed** — resist reading adjacent modules
-- **Scope too large?** Split further (one file per sub-task)
-- **Grep first** to narrow file set — read only matching files
-- **Each task = fresh investigation** — NEVER rely on memory from previous task
-
-### Context Compaction / Session Resume Guard
-
-> **[BLOCKING — MANDATORY at every session start or after context compaction]**
->
-> 1. the current task list BEFORE any other action — find `in_progress`/`pending` tasks; NEVER create duplicates
-> 2. Read `docs/specs/{app-bucket}/{system-name}/README.md` completeness table — identify ✅ modules
-> 3. Skip re-extraction for ✅ modules — append only to incomplete sections
-> 4. Continue from first non-completed task
-> 5. NEVER re-run Step 1 (Scout) or Step 2 (Plan) in resumed session — Registry + task list already exist
-
----
-
-## Phase Extraction Standards (Per-Task Content Requirements)
-
-### Phase A — Domain Model
-
-For each entity/aggregate in scope:
-
-```markdown
-### {EntityName}
-
-- **Purpose:** [one sentence — what business concept this represents]
-- **Identity:** [auto-generated / natural key: field name]
-- **Attributes:**
-  | Name | Type | Required | Constraint | Business Meaning |
-  |------|------|----------|------------|-----------------|
-- **Lifecycle:** [created-modified-deleted / append-only / state machine: list states]
-- **Invariants:** [list of rules the entity always enforces — plain language]
-- **Domain Events:** [what significant things happen when this entity changes state]
-  [Source: path/to/entity-file.ext:line_range]
-```
-
-For each value object:
-
-```markdown
-### {ValueObjectName}
-
-- **Represents:** [what real-world concept]
-- **Attributes:** [name | type | constraint]
-- **Immutable:** yes/no
-- **Validation:** [what makes an instance valid]
-  [Source: path/to/file.ext:line_range]
-```
-
-For each aggregate:
-
-```markdown
-### {AggregateName} Aggregate
-
-- **Root:** {EntityName}
-- **Members:** [list]
-- **Consistency Boundary:** [what changes must happen atomically]
-- **Invariants Enforced:** [cross-entity rules the aggregate protects]
-  [Source: path/to/file.ext:line_range]
-```
-
-### Phase A.ERD — Domain Entity Relationship Diagram (Mandatory — run after all entities extracted)
-
-**Why:** ERD is foundation of entire spec bundle — all phases (business rules, API contracts, events) reference entity relationships. Generate once per module group, after Phase A entity extraction, before Phase B.
-
-**Output file:** `docs/specs/{app-bucket}/{system-name}/01-domain-erd.md` (append when multiple modules contribute)
-
-Add the following YAML frontmatter at the top of every spec output file (A/B/C/D/E and ERD):
-
-```yaml
----
-module: { module-name }
-phase: { A|B|C|D|E }
-last_extracted: { date }
-extraction_mode: init|update
----
-```
-
-**ERD generation protocol:**
-
-```
-1. Collect all entities extracted in Phase A for this module
-2. For each entity: identify its relationships by reading foreign-key fields,
-   navigation/association properties, and collection fields
-3. Determine cardinality for each relationship (read source — do NOT assume)
-4. Generate Mermaid erDiagram block
-5. Append to 01-domain-erd.md with [Source] citations
-```
-
-**Mermaid ERD template:**
-
-````markdown
-## {ModuleName} Domain ERD
-
-%% [AGGREGATE: {AggregateName}] — root entity listed first
-
-```mermaid
-erDiagram
- EntityA {
- string id PK
- string name
- string status
- }
- EntityB {
- string id PK
- string entityAId FK
- number quantity
- }
- EntityA ||--o{ EntityB: "contains"
- EntityA }o--|| EntityC: "belongs to"
-```
-
-[Source: path/to/entity-files.ext:line_range]
-````
-
-**ERD rules (tech-agnostic contract):**
-
-| ❌ Forbidden                                     | ✅ Use Instead                                       |
-| ------------------------------------------------ | ---------------------------------------------------- |
-| ORM/language types (`Guid`, `List<T>`, `int?`)   | `string`, `number`, `boolean`, `date`, `list`, `map` |
-| Class name suffixes (`OrderEntity`, `UserModel`) | Business name only (`Order`, `User`)                 |
-| Framework annotations (`[Required]`, `@Column`)  | Omit — captured in Phase A attribute constraints     |
-| Module name prefixes (`App_Orders`)              | Business name only (`Orders`)                        |
-
-**Cardinality notation:**
-
-| Notation     | Meaning                      |
-| ------------ | ---------------------------- |
-| `\|\|--\|\|` | Exactly one to exactly one   |
-| `\|\|--o{`   | Exactly one to zero-or-many  |
-| `}o--o{`     | Zero-or-many to zero-or-many |
-| `\|\|--\|{`  | Exactly one to one-or-many   |
-
-**Cross-module references:** If an entity references an entity from another module (not in current scope), add a stub entity with a comment:
-
-```mermaid
-    ExternalEntity {
-        string id PK
-    }
-    %% [CROSS-REF: {source-module-name} — not extracted in this scope]
-    LocalEntity }o--|| ExternalEntity : "references"
-```
-
-**ERD completeness gate (before marking Phase A.ERD task complete):**
-
-- [ ] Every entity extracted in Phase A appears in the ERD
-- [ ] Every relationship has a cardinality — no floating entities without at least one relationship (or documented reason)
-- [ ] All aggregate roots are marked with `%% [AGGREGATE: ...]` comment
-- [ ] `[Source: file:line]` present for relationship evidence
-- [ ] No tech-specific types or class names
-
-**Circular Dependency Handling (ERD):**
-
-When entity A has a FK → entity B AND entity B has a FK → entity A (mutual reference), do NOT omit one side. Represent both directions with directionality comments:
-
-````markdown
-```mermaid
-erDiagram
- EntityA {
- string id PK
- string entityBId FK
- }
- EntityB {
- string id PK
- string entityAId FK
- }
- EntityA }o--|| EntityB: "primary owner"
- EntityB }o--o| EntityA: "back-reference (optional)"
- %% [CIRCULAR: EntityA ↔ EntityB — primary ownership in EntityB]
-```
-````
-
-> Identify ownership direction (FK created first / "owns" relationship) vs navigational back-reference. Document with `%% [CIRCULAR: ...]` comment.
-
----
-
-### Phase B — Business Rules
-
-```markdown
-## {ModuleName} — Business Rules
-
-### Validation Rules: {OperationName}
-
-| Field | Rule | Error Condition | Error Message |
-| ----- | ---- | --------------- | ------------- |
-
-[Source: path/to/validator.ext:line_range]
-
-### Authorization Rules
-
-| Operation | Who Can Perform | Condition |
-| --------- | --------------- | --------- |
-
-[Source: path/to/policy.ext:line_range]
-
-### Invariants
-
-| #   | Invariant | Always True Because | Enforcement |
-| --- | --------- | ------------------- | ----------- |
-
-[Source: path/to/entity.ext:line_range]
-
-### Calculations
-
-| Name | Inputs | Formula / Description | Output |
-| ---- | ------ | --------------------- | ------ |
-
-[Source: path/to/file.ext:line_range]
-
-### State Machine: {EntityName} Lifecycle
-
-States: [list with descriptions]
-Transitions:
-| From State | Event/Trigger | Guard Condition | To State |
-|-----------|---------------|-----------------|----------|
-[Source: path/to/file.ext:line_range]
-```
-
-### Phase C — API Contracts
-
-```markdown
-## {ModuleName} — Operations
-
-### {OperationName}
-
-- **Purpose:** [one sentence]
-- **Transport:** [HTTP method + path / scheduled / message consumer / CLI]
-- **Auth Required:** yes/no | Role: [role] | Permission: [permission]
-- **Idempotent:** yes/no — [why]
-- **Input:**
-  | Field | Type | Required | Constraint | Description |
-  |-------|------|----------|------------|-------------|
-- **Output (success):**
-  | Field | Type | Description |
-  |-------|------|-------------|
-- **Errors:**
-  | Code | Condition | Retryable |
-  |------|-----------|-----------|
-  [Source: path/to/controller.ext:line_range]
-```
-
-### Phase D — Integration & Events
-
-```markdown
-## Published Events
-
-### {EventName}
-
-- **Trigger:** [what causes this to be published]
-- **Payload:**
-  | Field | Type | Description |
-  |-------|------|-------------|
-- **Ordering:** guaranteed / best-effort
-  [Source: path/to/publisher.ext:line_range]
-
-## Consumed Events
-
-### {EventName}
-
-- **Producer:** [system or module name]
-- **Processing:** [what this system does when received]
-- **Idempotency:** [how duplicate delivery is handled]
-- **Failure handling:** [retry? dead-letter? discard?]
-  [Source: path/to/consumer.ext:line_range]
-
-## Scheduled Jobs
-
-| Job | Schedule | Purpose | Side Effects | Abort Condition |
-| --- | -------- | ------- | ------------ | --------------- |
-
-[Source: path/to/job.ext:line_range]
-```
-
-### Phase E — User Journeys
-
-Phase E MUST produce one entry per discovered operation (from Phase C) plus one entry per UI screen. **Minimum output = Phase C operation count for this module.**
-
-Use **actor catalog from Step 1.5** — every story MUST reference a real actor from that catalog, not assumed role.
-
-**User story template (use for each backend operation and each UI screen):**
-
-```markdown
-## Journey: {JourneyName}
-
-- **User Story:** As a {actor from actor catalog}, I want to {action verb + object}, so that {business outcome}.
-- **Actor:** {exact role name from actor catalog}
-- **Operation Type:** write | read | event-driven | background | ui-screen
-- **Trigger:** {what starts this journey — user click, API call, system event, schedule, or message}
-- **Preconditions:** {what must already exist or be true before this journey begins}
-- **Happy Path:**
-    1. {Step 1 — observable user or system action}
-    2. {Step 2}
-       ...
-- **Alternative Paths:**
-    - {Condition A} → {what happens instead of happy path}
-    - {Error/invalid input} → {error message or fallback behavior}
-- **Outcome:** {what the actor achieves or what system state changes}
-- **Acceptance Criteria:**
-    - GIVEN {precondition} WHEN {action} THEN {observable outcome}
-    - GIVEN {precondition} WHEN {invalid action} THEN {error outcome}
-      [Source: path/to/handler-or-component.ext:line_range]
-```
-
-**Per-task Phase E completeness checklist (check BEFORE marking task complete):**
-
-- [ ] Journey count for this task's scope ≥ Phase C operation count in the same scope
-- [ ] Every actor in the actor catalog (Step 1.5) has ≥1 journey in Phase E output
-- [ ] Every UI route (if frontend exists) has ≥1 screen-story with Operation Type: ui-screen
-- [ ] Every GET/query operation with filter parameters has a "search/list/view" story
-- [ ] Every journey has `[Source: file:line]` — no journeys from memory or assumption
-- [ ] All User Story fields use "As a / I want / So that" format — no free-form narratives
-
-### Phase F — Spec Bundle Assembly
-
-After all per-module tasks complete:
-
-### Step F.4 — Cross-Phase Completeness Gate (BLOCKING before bundle assembly)
-
-> **[BLOCKING]** Do NOT write Phase F bundle files until all 4 gates pass. A bundle assembled over coverage gaps is misleading — it implies completeness that doesn't exist.
-
-| Gate            | Check                                    | Pass Condition                                   | Failure Action                                                                |
-| --------------- | ---------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------- |
-| **C-gate**      | Phase C total entries across all modules | ≥ Grand Total from Use Case Inventory (Step 1.5) | Create fix task: `"Fill Phase C gap: {module} missing {N} operation entries"` |
-| **E-gate**      | Phase E journey count across all modules | ≥ Phase C total entry count                      | Create fix task: `"Fill Phase E gap: {module} missing {N} user stories"`      |
-| **Actor-gate**  | Every actor in actor catalog             | Has ≥1 Phase E journey                           | Create fix task: `"Add stories for actor: {role} — currently 0 journeys"`     |
-| **Source-gate** | Every Phase C + Phase E entry            | Has `[Source: file:line]`                        | Mark `[UNVERIFIED]` — do NOT silently pass                                    |
-
-If any gate fails: create fix tasks, execute them, then re-check ALL 4 gates before proceeding.
-Re-checking runs in the main session — spawn fresh sub-agent only if re-check still fails after one fix cycle.
-
-1. Verify `docs/specs/{app-bucket}/{system-name}/01-domain-erd.md` exists and covers all modules — the ERD is the foundational artifact; missing ERD = incomplete spec bundle
-2. Write `docs/specs/{app-bucket}/{system-name}/06-reimplementation-guide.md` — system overview, build order, architecture constraints, data migration notes
-3. Write `docs/specs/{app-bucket}/{system-name}/README.md` — index with completeness status table
-
-> **[REQUIRED] Doc Network Links in README.md (index):**
->
-> Every spec bundle README.md MUST include a `## Related Documentation` section:
->
-> ```markdown
-> ## Related Documentation
->
-> **Business Feature Doc:** `docs/business-features/{Module}/README.md`
-> _(primary stakeholder view; Sections 1-14 business context, Section 15 test cases)_
-> **QA Spec Dashboard:** `docs/specs/README.md` + `docs/specs/PRIORITY-INDEX.md`
-> _(TC execution status, integration test traceability)_
-> **Integration Tests:** `src/Services/{ServiceName}/{ServiceName}.IntegrationTests/`
-> _(subcutaneous tests; each test annotated with [Trait("TestSpec", "TC-{MODULE}-{NNN}")])_
-> ```
->
-> If the business feature doc or QA dashboard doesn't exist yet, write the path with `(not yet created)`.
-> The path is the navigational intent — it guides the next person to create it.
-
-4. Cross-check: every module in the registry has a spec section AND an ERD contribution. Missing modules → `[NOT EXTRACTED — scope excluded]`
-
-### Step F.5: Write SPEC-CHANGELOG.md
-
-Create `docs/specs/{app-bucket}/{system-name}/SPEC-CHANGELOG.md` after first init run:
-
-```markdown
-# Spec Changelog: {system-name}
-
-> Change history for the spec bundle at `docs/specs/{app-bucket}/{system-name}/`.
-> Each entry records what was extracted, when, and why.
-
-## [{date}] — Initial Extraction (init)
-
-- **Scope:** {full system / module-scoped}
-- **Modules:** {N} modules
-- **Phases:** {list of phases extracted}
-- **Triggered by:** Initial spec-discovery init run
-- **Spec files created:** {count}
-- **Total lines:** {approx}
-- **Open questions:** {count} (see README.md)
-```
-
-Append after every subsequent update/audit run per Step 0.5.5 format.
-
----
-
-## Phase F.5 — Per-Module README Generation
-
-After Phase F bundle assembly, generate a `README.md` for each module folder:
-
-**Output:** `docs/specs/{app-bucket}/{system-name}/{module-id}-{module-name}/README.md`
-
-**Purpose:** Bridge between engineering spec and stakeholder-facing feature docs. Provides navigable summary in 17-section format, linking to detailed A/B/C/D/E files for depth.
-
-### Per-Module README Format
-
-```markdown
----
-module: { module-name }
-system: { system-name }
-last_extracted: { date }
-phases_covered: [A, B, C, D, E] # list only completed phases
----
-
-# {Module Name} — Spec Summary
-
-> Tech-agnostic spec. All entity/operation names are business names only.
-> Full details: [A-domain-model.md](./A-domain-model.md), [B-business-rules.md](./B-business-rules.md), etc.
-
-## Quick Navigation
-
-| Section                   | Content                   | Detail File                                  |
-| ------------------------- | ------------------------- | -------------------------------------------- |
-| 1. Domain Model Summary   | Key entities and ERD      | [A-domain-model.md](./A-domain-model.md)     |
-| 2. Business Rules Summary | Top validation rules      | [B-business-rules.md](./B-business-rules.md) |
-| 3. Operations Summary     | Key API operations        | [C-api-contracts.md](./C-api-contracts.md)   |
-| 4. Events Summary         | Published/consumed events | [D-events.md](./D-events.md)                 |
-| 5. User Journeys Summary  | Key user flows            | [E-user-journeys.md](./E-user-journeys.md)   |
-
-## Domain Model (Summary)
-
-{Top 3-5 entities with 1-sentence purpose each}
-
-{Mermaid erDiagram — same as in A-domain-model.md, abbreviated to core entities only}
-
-## Business Rules (Top 5)
-
-{Top 5 most important rules, each 1 line, linking to full rule in B-business-rules.md}
-
-## Key Operations (Top 5)
-
-{Top 5 operations — purpose, method+path, auth required — linking to C-api-contracts.md}
-
-## Events (Summary)
-
-{Published events count, consumed events count — link to D-events.md}
+- for ALL {inputs}, {invariant} — owned by {spec/BR-id} — idea must {respect/extend}
 
 ## Open Questions
 
-{Any [UNVERIFIED] items or OQ-XX items relevant to this module}
+- {system unknowns, <80% confidence items}
 ```
 
-**Scope:** Generate README.md only for modules that have at least Phase A or Phase B complete. Skip modules with only Phase E (UI journeys only).
+### Step 5: Scope-Decision Gate (BLOCKING a direct user question)
+
+> **MANDATORY MUST ATTENTION — NO EXCEPTIONS:** before any spec is authored, MUST ATTENTION use a direct user question to present the recommended scope. NEVER auto-pick — OVERLAPS detection is the whole reason this skill exists; assuming NEW silently ships duplicates.
+
+Recommend ONE option (with the evidence behind it) and confirm the cross-references:
+
+- **(a) NEW standalone spec** — no EXTENDS/OVERLAPS match; the idea is genuinely net-new. Hand off to `spec [mode=draft]`.
+- **(b) EXTEND existing spec X** — an EXTENDS/OVERLAPS match means the idea belongs inside X. **Reroute to `$spec [mode=update]`** against X instead of drafting a new file.
+- **(c) SPLIT into N specs** — the idea spans N distinct capabilities (or would breach the size caps); author N specs, each with its own bucket.
+
+Also confirm WHICH existing specs (the DEPENDS-ON / AFFECTED set) the author must cross-reference, so the new/updated spec links them and respects their invariants.
+
+### Step 6: Handoff
+
+Feed the discovery forward:
+
+- **→ `domain-analysis`** — the related entities + invariant landscape (so the domain model is consistent with existing specs).
+- **→ `spec [mode=draft]`** (or `spec [mode=update]` if Step 5 chose EXTEND) — the framed scope, the missing features/TCs, the cross-references to link, and the [HARD] rules to respect.
 
 ---
 
-## Sub-Agent Pattern (Required for 4+ Modules)
+## Results Format
 
-4+ modules → use sub-agents for parallel module extraction:
+```markdown
+## Spec-Discovery Results: {idea}
 
-1. Complete Step 1 (Scout) + Step 2 (Plan) in main context
-2. Spawn one sub-agent per module (or group of small modules)
-3. Each sub-agent receives: Module Registry, extraction task list, spec output path
-4. Sub-agents run parallel, each writing to their module's spec file
-5. Main context assembles final bundle from all sub-agent outputs
+### Recommended Scope
 
-> **[BLOCKING — PARALLEL SPAWN PROTOCOL]** Spawn ALL module sub-agents in a **SINGLE response** with multiple `spawn_agent` tool calls. Never spawn module sub-agents one at a time sequentially — that eliminates the parallelism benefit and extends wall-clock time by N× for an N-module system.
->
-> ```
-> spawn_agent(module=Orders, ...)   ← all in ONE message
-> spawn_agent(module=Users, ...)    ← same response
-> spawn_agent(module=Billing, ...)  ← same response
-> ```
->
-> Each sub-agent is independent — no shared mutable state, no ordering dependency between modules.
+**{NEW | EXTEND spec X | SPLIT into N}** — because {evidence-backed reason}
 
-**Sub-Agent Prompt Template:**
+### Related Specs
 
+| Spec                                | Relationship | Evidence                       | Implied action             |
+| ----------------------------------- | ------------ | ------------------------------ | -------------------------- |
+| `docs/specs/{Bucket}/README.{X}.md` | OVERLAPS     | §4 BR-X-03 already states this | route to $spec mode=update |
+
+### Related Code
+
+1. `{file}` — {role} — graph: {callers/consumers found}
+
+### Affected Specs (forward-impact)
+
+- `{spec}` — {documented behavior the idea changes}
+
+### Gaps
+
+- Missing features: {list}
+- Missing TCs / user stories: {list}
+
+### Invariant Landscape (must respect)
+
+- for ALL {inputs}, {invariant} — owned by {spec/BR-id}
+
+### Open Questions
+
+- {system unknowns, <80% confidence}
+
+**Full report:** plans/{plan-dir}/research/spec-discovery-{slug}.md
 ```
-You are extracting the spec for module: {ModuleName}.
-
-Module Registry: docs/specs/{app-bucket}/{system-name}/00-module-registry.md — read this FIRST to understand your module's boundaries and the full system context.
-Your assigned tasks: {list of TaskUpdate IDs for this module — call the current task list to confirm}
-Output path: docs/specs/{app-bucket}/{system-name}/{module-id}-{module-name}/
-
----
-
-MANDATORY PROTOCOLS — apply throughout your entire execution:
-
-> Critical Thinking & Anti-Hallucination — every claim needs traced proof. Confidence >80% → write with [Source]. 60-80% → mark [NEEDS-VERIFY]. <60% → mark [UNVERIFIED]. Never present a guess as fact. Never invent field names, method signatures, or business rules.
-
-> Evidence-Based Reasoning — BLOCKED until: source file read AND file:line citation exists. Forbidden words without proof: "obviously", "I think", "should be", "probably". If you cannot find evidence: write "Insufficient evidence. Verified: [...]. Not verified: [...]."
-
-> Incremental Persistence — MANDATORY: after EACH task completes, append findings to your output file immediately. Never hold content in memory across tasks. Context cutoff loses all in-memory work — disk writes survive.
-
-> Cross-Scope Boundary — HARD GATE: Do NOT read files outside your assigned module's scope. If you discover a dependency on an unlisted module, note it as [CROSS-REF: {module-name} — not in scope] in the spec output and stop — do not follow the reference into that module.
-
-> Tech-Agnostic Output — FORBIDDEN in all spec output: framework names (e.g., Entity Framework, Django), ORM types, language generics (List<T>), nullable annotations (string?), file paths or class names from source, architectural pattern names (CQRS, middleware). Use business-meaning descriptions only. **This applies equally to the README / INDEX / 00-module-registry overview surfaces you emit — not only the A-E narrative — per `docs/project-reference/spec-principles.md` §3.1.** Tech names remain correct ONLY in evidence carriers (`[Source:]`, `**Evidence**`, frontmatter, Mermaid).
-
----
-
-**Use Case Inventory for your module** (from Step 1.5 — read from 00-module-registry.md):
-> Your module has: Write Ops (N) = {N}, Read Ops (M) = {M}, Event-Driven (K) = {K}, Background (J) = {J}, **Total = {N+M+K+J}**.
-> Phase C MUST produce exactly {N+M+K+J} spec entries for your module.
-> Phase E MUST produce ≥ {N+M+K+J} user stories for your module.
-> If your assigned tasks cover fewer than {N+M+K+J} operations: your task list is incomplete — STOP and report the gap to the main agent before proceeding.
-
-Per-task execution protocol — follow in order for EACH assigned task:
-
-1. READ   — grep to narrow file set to this task's scope; read only matching files
-2. TRACE  — trace code paths: what calls what, what validates what, what triggers what
-3. EXTRACT — extract spec content for this phase/module only
-4. WRITE  — append to output file immediately with [Source: file:line] on every claim
-5. VERIFY — re-read written spec vs source; mark [UNVERIFIED] for any claim without traceable source
-6. COMPLETE — call TaskUpdate to mark task completed; move to next task
-
-**Phase A.ERD is mandatory after all Phase A entity extraction tasks complete:**
-After writing all entity/aggregate descriptions, generate a Mermaid `erDiagram` and append it to `docs/specs/{app-bucket}/{system-name}/01-domain-erd.md`. The ERD captures all entities in your assigned module, their key attributes (using only `string`/`number`/`boolean`/`date`/`list`/`map` types), relationships with cardinality, and aggregate boundaries (`%% [AGGREGATE: ...]`). Mark any cross-module entity references as `%% [CROSS-REF: {module-name} — not in scope]`. The ERD is the foundational artifact — without it, Phase B and beyond lack a shared entity reference.
-
-Never skip ahead. Never accumulate across tasks. Each task is a fresh investigation.
-```
-
----
-
-## Spec Quality Review (After All Tasks Complete)
-
-Before Phase F bundle assembly, quality-review all generated spec files:
-
-### Review Checklist
-
-For each spec file:
-
-- [ ] Every entity/operation/rule has ≥1 `[Source: file:line]` citation
-- [ ] No technology-specific terms (no framework names, ORM types, language constructs)
-- [ ] All state machines have complete transitions (no dead-end states without explanation)
-- [ ] All operations have ≥1 error case documented
-- [ ] All modules from registry covered (none skipped silently)
-- [ ] Unverifiable items marked `[UNVERIFIED]` — not left blank
-- [ ] **[C-gate]** Phase C entry count ≥ Grand Total from Use Case Inventory (Step 1.5) — no operations silently omitted
-- [ ] **[E-gate]** Phase E journey count ≥ Phase C total entry count — every operation has ≥1 user story
-- [ ] **[Actor-gate]** Every actor in actor catalog (Step 1.5) appears in ≥1 Phase E journey — no role silently omitted
-
-### Fix Loop
-
-If any check fails:
-
-1. Create fix task: `"Fix spec quality gap: [specific issue] in [spec file]"`
-2. Re-investigate relevant source file
-3. Add citation or mark `[UNVERIFIED]`
-4. Re-run checklist for fixed section
-
-### Fresh Sub-Agent Re-Review Gate (After Any Fix)
-
-> **[BLOCKING]** After any fix loop iteration, the main agent has rationalization bias toward its own output. Do NOT re-review inline.
->
-> **Spawn a NEW `spawn_agent` tool call** (`agent_type: "code-reviewer"`) with:
->
-> - Target: all generated spec files in `docs/specs/{app-bucket}/{system-name}/`
-> - Protocol: re-read ALL spec files from scratch; check every `[UNVERIFIED]` item; flag any tech-specific term; verify every entity/operation has at least one `[Source: file:line]`
-> - Report path: `plans/reports/spec-discovery-review-round{N}-{date}.md`
->
-> **Rules:**
->
-> - Max 2 fresh sub-agent rounds — if still failing after round 2, escalate via a direct user question with:
->     - Explicit list of all remaining `[UNVERIFIED]` items with the file/section where each occurs
->     - Three options: `(1) Accept with gaps — mark all remaining [UNVERIFIED] items explicitly and ship; (2) Narrow scope — re-run extraction only on the 1-2 files still failing (new task); (3) Manual review — hand off gap list to human reviewer`
->     - Do NOT silently loop beyond round 2 — escalation to user is mandatory
-> - PASS = fresh sub-agent finds zero `[UNVERIFIED]` items without an explicit exclusion reason AND zero tech-specific terms
-> - NEVER reuse a sub-agent across rounds — every iteration spawns a NEW `spawn_agent` call
-
----
-
-## Tech-Agnostic Output Contract
-
-Every spec bundle document MUST be free of:
-
-| ❌ Forbidden                                           | ✅ Use Instead                                       |
-| ------------------------------------------------------ | ---------------------------------------------------- |
-| Framework names (Express, Django, etc.)                | "HTTP router", "request handler", "middleware"       |
-| ORM/database type names                                | "string", "number", "boolean", "date", "list", "map" |
-| Language generics (`List<T>`, `Optional<>`)            | "list of X", "optional X"                            |
-| Nullable annotations (`string?`)                       | "X (optional)"                                       |
-| Architectural pattern names (CQRS handler, middleware) | "command processor", "request interceptor"           |
-| File paths or class names from source                  | Business-name descriptions only                      |
-| Stack-specific patterns (IoC container, DI)            | "dependency injection", "service registry"           |
-
----
-
-## Evidence Standards
-
-Every spec claim MUST have source reference:
-
-```
-[Source: path/to/file.ext:line_number]
-```
-
-- Attribute types → entity/model layer files
-- Validation rules → validator/command layer files
-- State transitions → handler/service layer files
-- API contracts → controller/router/resolver layer files
-- Events → publisher/consumer layer files
-
-**BLOCKED:** Any spec section without source evidence MUST be marked `[UNVERIFIED — needs manual review]`. NEVER invent or assume.
-
----
-
-## Selective Phase Mode
-
-When the user requests only specific phases:
-
-| User Goal                                | Phases to Run                                                 |
-| ---------------------------------------- | ------------------------------------------------------------- |
-| "I need the data model only"             | Scout + Plan + Phase A + Phase A.ERD (always included with A) |
-| "Extract the API contracts"              | Scout + Plan + Phase A + Phase A.ERD + Phase C                |
-| "Document the business rules"            | Scout + Plan + Phase A + Phase A.ERD + Phase B                |
-| "Generate acceptance criteria from code" | Scout + Plan + Phase A + Phase A.ERD + Phase E                |
-| "Extract the event flow"                 | Scout + Plan + Phase A + Phase A.ERD + Phase D                |
-| "Full reimplementation spec"             | Scout + Plan + All phases (A.ERD always runs after A)         |
-
-> **Phase A.ERD is always mandatory when Phase A runs** — the ERD is the foundational artifact every downstream phase references. Never skip it, even in selective mode.
->
-> **Selective Phase exception:** Phase A may be omitted ONLY if `A-domain-model.md` already exists for this module from a prior init run — in which case Phase A.ERD also already exists; do NOT re-generate it. Reference the existing ERD file instead. If Phase A IS being run now (new or re-extraction), Phase A.ERD MUST run immediately after.
-
-Scout and Plan ALWAYS mandatory — regardless of phase selection.
-
----
-
-## Incremental Coverage for Large Systems
-
-For systems too large for single session (>10 modules):
-
-1. **Session 1:** Scout + Plan full system — prioritize by business value
-2. **Sessions 2–N:** Extract one module-group per session, update completeness tracker
-3. **Final session:** Assemble spec bundle from all module specs
-
-Track completeness in `docs/specs/{app-bucket}/{system-name}/README.md`. Each session appends — NEVER overwrites.
-
----
-
-## Next Steps
-
-**[BLOCKING]** After completing, use a direct user question — DO NOT skip:
-
-- **"$docs-update (Recommended)"** — Sync extracted spec with feature docs + specs dashboard
-- **"$watzup"** — Wrap up if extraction is final step
-- **"Skip, continue manually"** — user decides
 
 ---
 
 ## Related Skills
 
-| Skill                        | Relationship                                                                                                      | When to Call                                                              |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `$feature-docs`              | **Consumer** — ingests spec bundle to produce 17-section business doc                                             | After spec-discovery init/update, to create the stakeholder layer         |
-| `$tdd-spec`                  | **Indirect consumer** — feature-docs Section 15 feeds tdd-spec                                                    | After feature-docs, to generate test cases from the spec                  |
-| `$integration-test`          | **End consumer** — TCs from tdd-spec become integration tests                                                     | After tdd-spec, to generate actual test code                              |
-| `$docs-update`               | **Orchestrator** — runs spec-discovery update as Phase 2.5                                                        | When code changes need full doc sync (calls spec-discovery automatically) |
-| `$review-changes`            | **Trigger** — detects code changes and surfaces doc staleness                                                     | Run after code changes; it will suggest $docs-update if stale             |
-| `$tdd-spec [direction=sync]` | **Dashboard sync** — syncs QA spec dashboard indexes at `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md` | After tdd-spec update, to keep dashboard current                          |
-
-## Standalone Chain
-
-> Outside workflow: follow chain to keep spec layers in sync. Skip steps already current (check file timestamps vs git diff).
-
-```
-spec-discovery (you are here)
-  │
-  ├─ [REQUIRED] → $feature-docs [update mode]
-  │     Updates business docs (docs/business-features/) from the new spec bundle.
-  │     Skip if: feature docs were updated in same session or no business doc exists yet for this module.
-  │
-  ├─ [REQUIRED] → $tdd-spec [update mode]
-  │     Updates test cases in feature doc Section 15 to reflect changed domain model or rules.
-  │     Skip if: spec update was structural only (paths, formatting) with no behavior change.
-  │
-  ├─ [REQUIRED] → $tdd-spec [direction=sync]
-  │     Syncs QA dashboard indexes (docs/specs/README.md and docs/specs/PRIORITY-INDEX.md) with updated Section 15 TCs.
-  │
-  ├─ [RECOMMENDED] → $integration-test [from-changes mode]
-  │     Generates/updates integration test files for TCs that changed.
-  │     Skip if: integration tests are maintained separately or not applicable for this service.
-  │
-  └─ [RECOMMENDED] → $docs-update
-        Final orchestration pass to catch any remaining staleness.
-        Calls: $feature-docs (Phase 2) → $spec-discovery (Phase 2.5 — already done, fast-exit) → $tdd-spec (Phase 3) → $tdd-spec sync (Phase 4).
-```
-
-### Init vs Update Mode Chain
-
-| Mode                        | Chain                                                                                                                    |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **init** (first time)       | spec-discovery init → $feature-docs init → $tdd-spec CREATE → $tdd-spec sync → $integration-test                         |
-| **update** (code changed)   | spec-discovery update → $feature-docs update → $tdd-spec UPDATE → $tdd-spec sync → $integration-test verify-traceability |
-| **audit** (staleness check) | spec-discovery audit → if stale: run update chain → else: done                                                           |
-
-### Doc Network: What This Skill Creates
-
-Every spec bundle MUST include `## Related Documentation` in `README.md`:
-
-```markdown
-## Related Documentation
-
-- **Business Feature Doc:** [docs/business-features/{Module}/README.md](../../../docs/business-features/{Module}/README.md)
-- **QA Spec Dashboard:** [docs/specs/README.md](../../../docs/specs/README.md) + [docs/specs/PRIORITY-INDEX.md](../../../docs/specs/PRIORITY-INDEX.md)
-- **Integration Tests:** `src/Services/{Service}/{Service}.IntegrationTests/`
-```
-
-On update: verify links present and correct.
-
-> **[BLOCKING]** Each phase MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+`scout` (code file discovery — Step 2) | `investigate` (deep-dive ambiguous flows — Step 2) | `spec [mode=draft]` (authors §1–7 from the idea — Step 6 handoff) | `spec [mode=update]` (the EXTEND reroute — Step 5) | `domain-analysis` (entity/invariant modeling — Step 6) | `spec-index` (derived bucket INDEX.md used in Step 1)
 
 ---
 
-## What Is Spec Discovery?
+> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including a task per candidate spec read. This prevents context loss from long specs. For trivial single-spec scopes, AI MUST ATTENTION ask user whether to skip.
 
-Reverse of product discovery — existing codebase → reimplementation-grade spec bundle. Docs describe **what system does and why** — stripped of tech choices, implementation details, language constructs. Any team reads bundle, rebuilds on different stack.
+- `docs/project-reference/feature-spec-reference.md` — Feature Spec conventions, bucket/module mapping (read before reading any spec).
+- `docs/project-reference/spec-system-reference.md` — canonical vs derived spec artifacts, TC format, spec paths.
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when the idea involves business entities/models).
 
-**Use Cases:** AI replatforming, stack migration, compliance docs, knowledge capture, spec-driven bootstrap.
+> **External Memory:** Complex/lengthy discovery → write findings incrementally to the research report. Prevents context loss.
 
-**Scale Reality:** Thousands of files, dozens of modules. Scout-first → plan-decompose → investigate-deeply prevents context overrun, ensures complete coverage.
+> **Evidence Gate:** MANDATORY MUST ATTENTION — every relationship classification, gap, and invariant requires `file:line` proof with confidence % (>80% act, <80% verify first).
 
----
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:subagent-return-contract -->
+
+> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
+>
+> ```markdown
+> ## Sub-Agent Result: [skill-name]
+>
+> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
+> Confidence: [0-100]%
+>
+> ### Findings (Critical/High only — max 10 bullets)
+>
+> - [severity] [file:line] [finding]
+>
+> ### Actions Taken
+>
+> - [file changed] [what changed]
+>
+> ### Blockers (if any)
+>
+> - [blocker description]
+>
+> Full report: plans/reports/[skill-name]-[date]-[slug].md
+> ```
+>
+> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
+> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+>
+> **Context budget** — the return payload is a SUMMARY, not a transcript: ≤10 finding bullets, no raw file contents / full diffs / verbatim logs inline, no re-pasted source. Everything beyond the summary lives in the `Full report` on disk. A sub-agent that would exceed the summary shape MUST write the detail to its report and return only the pointer — the orchestrator's context is the scarce resource the whole map-reduce protects.
+
+<!-- /SYNC:subagent-return-contract -->
+
+<!-- SYNC:nested-task-creation -->
+
+> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
+>
+> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
+> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
+> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
+> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
+> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
+> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
+>
+> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+
+<!-- /SYNC:nested-task-creation -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+>
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
 
 <!-- SYNC:cross-service-check -->
 
@@ -1194,41 +441,88 @@ Reverse of product discovery — existing codebase → reimplementation-grade sp
 
 <!-- /SYNC:cross-service-check -->
 
+<!-- SYNC:rationalization-prevention -->
+
+> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
+>
+> | Evasion                      | Rebuttal                                                      |
+> | ---------------------------- | ------------------------------------------------------------- |
+> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
+> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
+> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
+> | "Just do it"                 | Still need task tracking. Skip depth, never skip tracking.    |
+> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
+> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
+> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
+
+<!-- /SYNC:rationalization-prevention -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-<!-- SYNC:critical-thinking-mindset -->
+<!-- SYNC:evidence-based-reasoning:reminder -->
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+**MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
 
-<!-- /SYNC:critical-thinking-mindset -->
+<!-- /SYNC:evidence-based-reasoning:reminder -->
+
+<!-- SYNC:rationalization-prevention:reminder -->
+
+**MUST ATTENTION** never skip steps via evasions. Plan anyway. Test first. Show grep evidence with `file:line`.
+
+<!-- /SYNC:rationalization-prevention:reminder -->
+
+<!-- SYNC:graph-assisted-investigation:reminder -->
+
+**MUST ATTENTION** run at least ONE graph command on key files before concluding when `.code-graph/graph.db` exists.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:nested-task-creation:reminder -->
+
+- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
+- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+
+<!-- /SYNC:nested-task-creation:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
@@ -1243,60 +537,94 @@ Reverse of product discovery — existing codebase → reimplementation-grade sp
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Run Step 1.5 (Use Case Enumeration) BEFORE plan — enumerate ALL operations, build actor catalog, write Use Case Inventory to 00-module-registry.md
-- **IMPORTANT MUST ATTENTION [BLOCKING]** task tracking one task per **operation group** per phase (not per module per phase) — verify the current task list count ≥ `sum(operation_groups × phase_count)` before `$plan-review`
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Phase A.ERD mandatory — generate Mermaid erDiagram in `01-domain-erd.md` after all entities extracted; foundational artifact all other phases reference
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Scout FULL codebase holistically BEFORE plan — plan requires complete module registry
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Write spec output after EACH task — NEVER accumulate; large codebases overflow context
-- **IMPORTANT MUST ATTENTION [BLOCKING]** 4+ modules → spawn ALL sub-agents in ONE message; inline extraction with 4+ modules is a violation
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Confirm scope via a direct user question BEFORE Step 1 — NEVER auto-start
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Context compaction/session resume → the current task list FIRST, read completeness tracker, NEVER re-run scout or plan
-- **IMPORTANT MUST ATTENTION [BLOCKING]** After any fix in quality review → spawn fresh `code-reviewer` sub-agent (max 2 rounds) — NEVER inline re-review
-- **IMPORTANT MUST ATTENTION [REQUIRED]** All output tech-agnostic — no framework names, no language constructs
-- **IMPORTANT MUST ATTENTION [REQUIRED]** Every claim cites `[Source: file:line]` — mark `[UNVERIFIED]` rather than guessing
+**IMPORTANT MUST ATTENTION Goal:** Before a new Feature Spec is authored, deliver the pre-spec landscape — related/overlapping/affected specs, related code, missing features + missing TCs/user stories, system unknowns, and the invariant landscape the new spec must respect — so the author never ships a duplicate, contradicts a [HARD] rule, or specs into a blind spot.
+
+**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries; each is a signpost to its canonical body above):**
+
+- **Graph-Assisted Investigation:** Run one graph command on key code files before concluding the code-discovery step.
+- **Incremental Persistence:** Append findings to the research report, never hold the landscape in memory.
+- **Subagent Return Contract:** Parallel-spec-read sub-agents return summary only, full findings on disk.
+- **Nested Task Creation:** Expand child phases and link parent when nested under a workflow row.
+- **Project Reference Docs:** Read `feature-spec-reference.md` + `spec-system-reference.md` + `lessons.md` before reading specs.
+- **Task Tracking External Report:** Bootstrap task tracking, persist discovery findings incrementally.
+- **Critical Thinking:** Traced proof per relationship/gap/invariant, confidence >80% to act.
+- **Evidence:** Cite `file:line`; speculation forbidden, <60% do not recommend.
+- **Cross-Service Check:** Scan producers, consumers, sagas, contracts — a missed consumer the idea touches is a silent gap.
+- **Rationalization Prevention:** Reject step-skipping evasions; show grep evidence.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**MUST ATTENTION** every protocol above is in force for this spec-discovery — honor its canonical body, not just the digest line.
+
+**IMPORTANT MUST ATTENTION** be BOTH spec-aware AND code-aware — read `docs/specs/**` (§1/§4/§5/§8 of related specs) AND delegate to `$scout` + code-graph; spec-only or code-only discovery misses half the landscape — why: overlap lives in the spec corpus, downstream impact lives in the code.
+**IMPORTANT MUST ATTENTION** run INLINE — the step 5 scope-decision gate is a BLOCKING a direct user question that only works inline; spawn sub-agents only for parallel spec reads, NEVER delegate the whole skill — why: a delegated user gate cannot block, so the author would proceed before the user decides scope.
+**IMPORTANT MUST ATTENTION** NEVER auto-pick NEW — classify every candidate spec EXTENDS/OVERLAPS/DEPENDS-ON/AFFECTED/UNRELATED with `file:line` evidence, then recommend and let the user decide via the BLOCKING gate — why: OVERLAPS detection is the entire reason this skill runs before the author; silently picking NEW ships a duplicate spec.
+**MUST ATTENTION** stay in the LANDSCAPE lane — surface related/overlapping/affected specs + the invariant landscape fast; do NOT author the spec (that is `spec [mode=draft]`) and do NOT deep-dive every flow (that is `investigate`) — why: scope creep into authoring/analysis duplicates the next steps and burns the budget.
+**MUST ATTENTION** graph expand is MANDATORY when `.code-graph/graph.db` exists — run at least ONE graph command on 2–3 key files scout surfaced; when absent, grep + read still bridge code→spec via `[Source:]` anchors — why: structural callers/consumers/event chains the new spec must account for are invisible to grep.
+**MUST ATTENTION** capture the invariant landscape explicitly — list every existing [HARD] rule (§4) and §5 invariant the idea must respect, as "for ALL {inputs}, {invariant} — owned by {spec/BR-id}" — why: a new spec that contradicts a DEPENDS-ON spec's [HARD] rule ships a defect.
+**MUST ATTENTION** apply the greenfield short-circuit — when no specs AND no code, record the reason with `Glob`/grep evidence, skip heavy discovery, hand off a minimal landscape; run the scope gate only if there is something to decide — why: grinding through empty discovery wastes the budget and produces nothing.
+**MUST ATTENTION** persist the report incrementally (per-section) to the research file — never hold the whole landscape in memory — why: context cutoff mid-discovery loses every finding; disk writes survive compaction.
+**MUST ATTENTION** read required project docs first (always `lessons.md`; `feature-spec-reference.md` + `spec-system-reference.md` for spec conventions) BEFORE reading any spec — project conventions override generic assumptions.
 
 **Anti-Rationalization:**
 
-| Evasion                                              | Rebuttal                                                                                                 |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| "Only 2–3 modules, skip sub-agents"                  | BLOCKING SCALE GATE applies at 4+. Count modules first, then decide.                                     |
-| "Already scouted, skip Step 1.5"                     | Step 1.5 MANDATORY after Step 1. Show Use Case Inventory as proof before proceeding.                     |
-| "module_count × phase_count is the plan formula"     | NEVER — use `sum(operation_groups × phase_count)`. Module formula undercounts large modules.             |
-| "Context compacted, re-run scout to rebuild context" | the current task list FIRST. Registry + task list survive compaction. NEVER re-scout in resumed session. |
-| "Wrote spec file, marking complete"                  | VERIFY — re-read written spec against source. Mark `[UNVERIFIED]`, not blank.                            |
-| "Fresh sub-agent overkill for small fix"             | Mandatory after ANY fix loop. Main agent rationalizes its own output. Max 2 rounds.                      |
-| "Scope is clear, skip Step 0 ask the user directly"  | BLOCKING — NEVER auto-start. Scope, mode, and system name MUST be confirmed first.                       |
+| Evasion                                           | Rebuttal                                                                               |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| "The idea is obviously new, skip the spec scan"   | OVERLAPS is exactly what the scan catches. Classify every candidate spec first.        |
+| "No graph available, skip code discovery"         | Grep + read still bridge code→spec via `[Source:]` anchors. Discovery is required.     |
+| "I'll just guess the right scope"                 | Step 5 is a BLOCKING user gate. NEVER auto-pick NEW — recommend, then let user decide. |
+| "Spec corpus is huge, read just one spec"         | Glob ALL candidates the keywords touch; reading one hides the overlap in another.      |
+| "I'll author the draft while I'm here"            | Landscape only. Authoring is `spec [mode=draft]`; deep flow analysis is `investigate`. |
+| "Invariants are the author's problem"             | A spec contradicting a [HARD] rule ships a defect. List the invariant landscape now.   |
+| "Delegate the whole skill to a sub-agent, faster" | The step 5 gate is BLOCKING and inline-only. Spawn sub-agents only for spec reads.     |
 
-**[TASK-PLANNING]** MUST ATTENTION analyze task scope and break into small todo tasks/sub-tasks via task tracking before acting.
+**IMPORTANT MUST ATTENTION** spec-aware AND code-aware · INLINE (step 5 gate is BLOCKING) · NEVER auto-pick NEW — cite `file:line` with confidence >80% — these survive any long context, anchored top and bottom.
 
-> **[IMPORTANT]** Break into many small todo tasks systematically before starting — this is critical.
-
----
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
 
 ## Hookless Prompt Protocol Mirror (Auto-Synced)
 
-Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
+Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:full` blocks) + `.claude/scripts/lib/hookless-prompt-protocol.cjs`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
-   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
-   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
+
+## Shared AI-SDD Protocol Markers
+
+Source: `.claude/skills/shared/sync-inline-versions.md`
+
+## SYNC:ai-sdd-artifact-contract
+
+> **AI-SDD Artifact Contract** — Shared spec-driven development rules stay portable and source-owned.
+>
+> 1. Keep reusable AI-SDD principles in `.claude`; put repository-specific paths, commands, owners, products, and formats in project config/reference docs.
+> 2. Preserve cycle: `spec -> plan -> tasks -> implement -> verify -> update spec/docs`.
+> 3. Trace every requirement or invariant through decision, task, TC/test, source evidence, and docs/spec update.
+> 4. Treat code-to-spec extraction as reference-only until accepted by the canonical spec owner.
+> 5. Any supported AI tool may plan, implement, review, or verify with synced context; using multiple tools is optional.
+> 6. Update `.claude` source first, then sync generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`. — why: mirrors are generated artifacts; hand-edits are overwritten on the next sync
+> 7. If `docs/project-config.json`, root instruction files, or a required project-reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
+>
+> **Active reference:** `shared/sdd-artifact-contract.md` in the active skills root.
+
+---
+
+## SYNC:ai-sdd-artifact-contract:reminder
+
+- **MANDATORY** Apply `shared/sdd-artifact-contract.md`; keep reusable AI-SDD in `.claude` and local rules in project docs.
+- **MANDATORY** Code-to-spec extraction is reference-only until canonical acceptance; any supported AI tool may execute with synced context.
+- **MANDATORY** Update `.claude` source before syncing generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`.
+- **MANDATORY** Missing or stale project config, root instruction files, or required reference docs route project-specific work through `$project-init` or the narrow setup route automatically.
+  **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 
@@ -1309,8 +637,42 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
-   **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
+   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
+
+## Common AI Mistake Prevention (System Lessons)
+
+- **Re-read files after context compaction.** Edit requires prior Read in same context; compaction wipes read state. Re-read before editing.
+- **Grep for old terms after bulk replacements.** AI over-trusts find/replace completeness. Grep full repo after bulk edits for missed refs in docs/configs/catalogs.
+- **Check downstream references before deleting.** Deletions cascade doc/code staleness. Map referencing files before removal.
+- **After memory loss, check existing state before creating new.** Compaction wipes prior-work memory. Query current state to resume — never blindly duplicate.
+- **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, method signatures. Grep to confirm existence before documenting/referencing.
+- **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Trace the full chain.
+- **When renaming, grep ALL consumer file types.** Some file types silently ignore missing refs (no compile error). Search code, templates, configs, generated files.
+- **Trace ALL code paths when verifying correctness.** Code existing ≠ code executing. Trace early exits, error branches, conditional skips — not just happy path.
+- **Update docs that embed canonical data when source changes.** Docs inlining derived data (workflows, schemas, configs) go stale silently. Update all embedding docs alongside source.
+- **Verify sub-agent results after context recovery.** Background agents may finish while parent compacted — grep-verify output, don't trust assumed completion.
+- **Cross-check full target list against sub-agent assignments.** Parallel sub-agents by category miss boundary items. Reconcile union of assignments against target list before proceeding.
+- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
+- **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
+- **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
+- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
+- **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
+- **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
+- **Surgical changes — apply the diff test (context-aware).** Two modes: (1) Bug fix → every line traces to the bug; no restyling; orphan cleanup only for imports YOUR changes made unused. (2) Review/enhancement → implement improvements AND announce as "Enhancement beyond main request: [what]". Never silently scope-creep. Diff test: "Would this line exist if I wasn't asked to do X?" — if no, delete or announce.
+- **Surface ambiguity before coding — don't pick silently.** Multiple valid interpretations → present each with effort: "[Request] could mean (1) [N h], (2) [N h]. Which matters?" List scope/format/volume/constraints assumptions first. If simpler path exists, say so. Never silently pick.
+- **[MANDATORY FIRST ACTION] ALWAYS activate a suitable skill or workflow BEFORE responding.** Match task against workflow catalog + skill list; invoke via skill invocation or `$start-workflow <workflowId>`. NEVER answer or write code before checking. Skip = protocol violation.
+- **Why-Review adversarial mindset — apply when reviewing any plan, decision, or design.** Default SKEPTIC not VALIDATOR: steel-man a rejected alternative, invert each stated reason ("what does it sacrifice?"), stress-test top 2-3 assumptions, run pre-mortem ("ships, fails in 3 months — what breaks?"), surface 1-2 alternatives author missed. Section presence ≠ quality; quality = causal reasoning + concrete mitigations + evidence, not "it's better" or "monitor closely".
+- **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
+- **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
+- **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

@@ -1,8 +1,10 @@
-<!-- Last scanned: 2026-04-03 -->
+<!-- Last scanned: 2026-06-12 -->
 
 # E2E Test Reference
 
-**CRITICAL RULES (read first):** MUST extend `BasePage` for all page objects. MUST use `createTestTask()`/`createTestSnippet()` for test data (never hardcode). MUST clean up test data in `afterEach` via `ApiHelpers`. MUST import `test`/`expect` from `utils/test-helpers` (not `@playwright/test` directly). MUST use TC-{MODULE}-{AREA}-{NNN} format for test IDs.
+**Purpose:** Author and maintain resilient Playwright E2E tests for the `playground-text-snippet` Angular app — Page Object Model on `BasePage`, Angular-aware waits, API-level arrange/cleanup, priority-tagged specs.
+
+**CRITICAL RULES (read first):** MUST extend `BasePage` for all page objects. MUST use `createTestTask()`/`createTestSnippet()` for test data (never hardcode). MUST clean up test data in `afterEach` via `ApiHelpers`. MUST import `test`/`expect` from `utils/test-helpers` (not `@playwright/test` directly). MUST tag every `test.describe`/`test` with a priority tag (`@P0`–`@P3`). NEVER use `networkidle` — use `domcontentloaded` + delay. NEVER put raw selectors in spec files — all selectors live in page objects.
 
 ## Architecture Overview
 
@@ -16,7 +18,9 @@ Playwright (TypeScript) E2E tests for the `playground-text-snippet` Angular app.
 | Fixtures     | `src/Frontend/e2e/fixtures/test-data.ts` | Test data factories and constants       |
 | Utils        | `src/Frontend/e2e/utils/`                | API helpers, console error tracking     |
 
-**Ports:** Frontend `localhost:4001`, Backend API `localhost:5001`
+Self-contained Playwright project (own `package.json`, `tsconfig.json`, `playwright.config.ts`). `recordings/` exists but is empty (`.gitkeep`/`.gitignore` only).
+
+**Ports:** Frontend `localhost:4001` (auto-started by `webServer`), Backend API `localhost:5001` (NOT auto-started — must be running independently, e.g. via `start-dev-platform-example-app*.cmd`; `API_BASE_URL` is hardcoded in `utils/api-helpers.ts:3`).
 
 ## Key Dependencies
 
@@ -39,20 +43,26 @@ export class BasePage {
 }
 ```
 
-**Key methods provided by BasePage:**
+**Key methods provided by BasePage** (`base.page.ts`):
 
-| Method                       | Purpose                                                        |
-| ---------------------------- | -------------------------------------------------------------- |
-| `navigateTo(path)`           | Navigate + wait for load                                       |
-| `waitForPageLoad()`          | `domcontentloaded` + 300ms Angular bootstrap delay             |
-| `waitUntil(condition, opts)` | Polling wait with configurable interval/timeout                |
-| `waitForLoading()`           | Wait for `mat-spinner` / `.loading-spinner` to disappear (30s) |
-| `waitUntilVisible(selector)` | Wait until element visible                                     |
-| `waitForElement(selector)`   | Playwright `waitFor` with timeout                              |
-| `fillField(selector, value)` | Clear + fill                                                   |
-| `clickAndWait(selector)`     | Click + waitForLoading                                         |
-| `waitForSnackbar(timeout)`   | Wait for Angular Material snackbar                             |
-| `getErrorMessage()`          | Get first visible error message                                |
+| Method                                                        | Line | Purpose                                                                                  |
+| ------------------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------- |
+| `navigateTo(path = '/')`                                      | 16   | `goto` + `waitForPageLoad`                                                               |
+| `waitForPageLoad()`                                           | 26   | `domcontentloaded` + 300ms Angular bootstrap delay (deliberately NOT `networkidle`)      |
+| `waitUntil(condition, {maxWaitMs, intervalMs, errorMessage})` | 43   | Generic poll-with-interval primitive (reusability backbone); throws on timeout           |
+| `waitUntilVisible(selector, maxWaitMs)`                       | 73   | Poll until visible (delegates to `waitUntil`)                                            |
+| `waitUntilHidden(selector, maxWaitMs)`                        | 81   | Poll until hidden                                                                        |
+| `waitUntilTextContains(selector, text, maxWaitMs)`            | 88   | Poll until text contains                                                                 |
+| `waitForLoading()`                                            | 102  | Poll up to 30s for `mat-spinner` / `.platform-mat-mdc-spinner` / `.loading-spinner` gone |
+| `getErrorMessage()`                                           | 118  | Read `.error-message, mat-error, [class*="error"]`                                       |
+| `isElementVisible(selector)`                                  | 129  | Visibility check                                                                         |
+| `waitForElement(selector, timeout)`                           | 136  | Native `waitFor({ state: 'visible' })`                                                   |
+| `clickAndWait(selector)`                                      | 145  | Click + `waitForLoading`                                                                 |
+| `fillField(selector, value)`                                  | 153  | Clear + fill                                                                             |
+| `getText(selector)`                                           | 162  | `textContent`                                                                            |
+| `getSnackbarMessage()`                                        | 169  | Read `mat-snack-bar-container`                                                           |
+| `waitForSnackbar(timeout)`                                    | 180  | `waitFor` snackbar + return text                                                         |
+| `takeScreenshot(name)`                                        | 189  | Full-page screenshot to relative `screenshots/{name}.png` (cwd-dependent)                |
 
 ### Page Object Hierarchy
 
@@ -236,16 +246,20 @@ export class ApiHelpers {
 }
 ```
 
-| Method                    | Purpose                                    |
-| ------------------------- | ------------------------------------------ |
-| `isApiHealthy()`          | GET `/api/TextSnippet/search` health check |
-| `createTextSnippet(data)` | POST `/api/TextSnippet/save`               |
-| `deleteTextSnippet(id)`   | DELETE `/api/TextSnippet/{id}`             |
-| `createTask(data)`        | POST `/api/TaskItem/save`                  |
-| `deleteTask(id)`          | POST `/api/TaskItem/delete` (permanent)    |
-| `restoreTask(id, data)`   | POST `/api/TaskItem/restore`               |
-| `getTasks(params)`        | GET `/api/TaskItem/list` with filters      |
-| `cleanupTestData(prefix)` | Delete all test data matching prefix       |
+| Method (line)                                   | Purpose                                                              |
+| ----------------------------------------------- | -------------------------------------------------------------------- |
+| `isApiHealthy()` (18)                           | GET `/api/TextSnippet/search` health probe                           |
+| `getTextSnippets(searchText?, skip, take)` (30) | GET `/api/TextSnippet/search` with paging                            |
+| `createTextSnippet(data)` (46)                  | POST `/api/TextSnippet/save` (throws on `!ok`)                       |
+| `deleteTextSnippet(id)` (68)                    | DELETE `/api/TextSnippet/{id}`                                       |
+| `getTasks(params)` (76)                         | GET `/api/TaskItem/list` with status/priority/search/deleted filters |
+| `createTask(data)` (103)                        | POST `/api/TaskItem/save` (defaults Todo/Medium)                     |
+| `deleteTask(id)` (121)                          | POST `/api/TaskItem/delete` `{ permanentDelete: true }`              |
+| `restoreTask(id, data)` (131)                   | POST `/api/TaskItem/restore`                                         |
+| `getTaskStatistics()` (141)                     | GET `/api/TaskItem/stats`                                            |
+| `cleanupTestData(prefix = 'TEST-')` (149)       | Search + delete all snippets & tasks matching prefix                 |
+
+Module function `waitForApi(request, maxWaitMs = 30000)` (`api-helpers.ts:171`) polls `isApiHealthy` every 1s — used in smoke tests to gate on backend readiness. `ApiHelpers` is the fast API-level arrange/cleanup path (API arrange, UI act/assert).
 
 **MUST clean up test data in `afterEach`:**
 
@@ -315,9 +329,11 @@ npx playwright codegen http://localhost:4001
 | `@P2` | Important         | Edge cases, unicode, multiple operations   |
 | `@P3` | Nice-to-have      | Debouncing, whitespace validation          |
 
-**Feature tags:** `@Smoke`, `@API`, `@TextSnippet`, `@Task`, `@CRUD`, `@Search`, `@Filter`, `@SubTask`, `@SoftDelete`, `@Completion`, `@Validation`, `@EdgeCase`
+Every `test.describe` and `test` is priority-tagged — enumerate with `grep -roE "@P[0-3]" tests/`. Selective runs depend on this.
 
-**Test ID format:** `TC-{MODULE}-{AREA}-{NNN}` -- e.g., `TC-TSK-CRT-001`, `TC-SNP-SRC-001`, `TC-TSK-CMP-001`
+**Feature tags** (observed in describe titles / JSDoc `@tags`): `@Smoke`, `@API`, `@TextSnippet`, `@Task`, `@CRUD`, `@Search`, `@Filter`, `@SubTask`, `@SoftDelete`, `@Completion`, `@Validation`, `@EdgeCase`. Enumerate current set with `grep -rhoE "@[A-Z][A-Za-z]+" tests/`.
+
+**Test ID format — UNSTANDARDIZED (known gap):** two styles coexist, sometimes in the same file (`tests/task/crud.spec.ts:36` `TC-TSK-CRT-001` vs `:68` `TS-TASK-P1-001`). The dominant style is `TS-{MODULE}-{Pn}-{NNN}` (priority-encoded), NOT the `TC-{MODULE}-{AREA}-{NNN}` form in `project-config.json`. There is no enforced traceability scheme — locate IDs with `grep -rnoE "T[CS]-[A-Z]+-[A-Z0-9]+-[0-9]+" tests/`. New tests SHOULD standardize on one format; the suite currently relies on `@Pn` priority tags + descriptive titles for selection, not on TC IDs.
 
 **Test areas by directory:**
 
@@ -341,4 +357,15 @@ npx playwright codegen http://localhost:4001
 - **Response interception** -- `page.waitForResponse()` before triggering actions to wait for API completion
 - **Test describe blocks** include priority + feature tags: `test.describe('@P1 @Task @CRUD - ...')`
 
-**CRITICAL RULES (closing anchor):** MUST extend `BasePage`. MUST use factory functions for test data. MUST clean up in `afterEach`. MUST import from `utils/test-helpers`. MUST use TC-{MODULE}-{AREA}-{NNN} IDs. NEVER use `networkidle`. NEVER hardcode selectors in test files.
+### Known Gaps & Brittleness (scan-observed)
+
+- **No `data-testid` anywhere** (`grep -rn data-testid` → 0) — selectors couple to BEM app-classes + Angular Material DOM internals (`.mat-mdc-*`) + `formcontrolname` + visible text. Highest maintainability risk; prefer stable hooks for new selectors.
+- **`consoleTracker` runs passively** — `assertNoConsoleErrors`/`withConsoleErrorCheck` (`utils/test-helpers.ts:237,195`) are built but no spec calls them (`grep -rn consoleTracker tests/` → 0). Tests can pass while the app logs uncaught exceptions; errors are only attached to failure reports.
+- **`STATUS_DISPLAY_MAP` DRY violation** — API-enum→UI-label map duplicated 3×: `task-list.page.ts:105`, `task-detail.page.ts:25`, inline in `selectStatus` `task-detail.page.ts:432`. Centralize when touched.
+- **Single browser** — chromium only (`playwright.config.ts` projects); no Firefox/WebKit/mobile coverage.
+- **Hardcoded ports** — `API_BASE_URL` (`api-helpers.ts:3`) and `baseURL` (`playwright.config.ts`) are not env-configurable; backend is NOT auto-started by `webServer`.
+- **tsconfig path aliases unused** — `@page-objects/*`, `@fixtures/*`, `@utils/*` declared (`tsconfig.json:15-17`) but specs use relative imports.
+- **Residual fixed sleeps** — `waitForTimeout` used alongside smarter waits (throttle-settle buffers); a residual flakiness source.
+- **`selectTaskByTitle`** (`task-list.page.ts`) is a large multi-strategy method (API verify + UI fallbacks) needed because backend sort pushes new tasks off page 1 — signals pagination/sync friction.
+
+**CRITICAL RULES (closing anchor):** MUST extend `BasePage`. MUST use factory functions for test data. MUST clean up in `afterEach`. MUST import `test`/`expect` from `utils/test-helpers`. MUST priority-tag (`@P0`–`@P3`) every describe/test. NEVER use `networkidle`. NEVER hardcode selectors in spec files. NEVER add `data-testid`-free fragile selectors without need — prefer `formcontrolname`/role over Material DOM internals.

@@ -1,6 +1,6 @@
-# Google Cloud Platform with gcloud CLI
+# Google Cloud with gcloud CLI
 
-Comprehensive guide for gcloud CLI - command-line interface for Google Cloud Platform.
+Comprehensive guide for gcloud CLI - command-line interface for Google Cloud.
 
 ## Installation
 

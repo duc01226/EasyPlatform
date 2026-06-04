@@ -89,7 +89,7 @@ Task({
 // Quick exploration
 Task({
     subagent_type: 'Explore',
-    prompt: 'quick: Find the main entry points for user authentication'
+    prompt: 'Find the main entry points for user authentication'
 });
 
 // Medium exploration
@@ -664,11 +664,27 @@ Task({ subagent_type: 'scout', prompt: 'Find B' });
 
 ---
 
+## Adding or changing an agent's quality protocol
+
+Agents carry the same role-specific quality SYNC blocks as their twin skills (see [README.md](./README.md) → _Quality-Parity with Skills_). The per-agent assignment lives in `.claude/scripts/agent_protocol_matrix.py` — that manifest is the single source of truth; never hand-edit the SYNC blocks in an agent `.md` directly.
+
+**Contributor loop (3 steps):**
+
+1. **Edit the matrix** — add/adjust the agent's row in `AGENT_QUALITY_BLOCKS` (or its `FAMILIES` membership) in `agent_protocol_matrix.py`. List only **additive** blocks (ones the agent doesn't already carry). Then `python .claude/scripts/agent_protocol_matrix.py --validate` → must print `OK` (canonical tags, no orchestration leak, partition clean, spawn-capability clear, tier policy clear).
+2. **Dry-run the injector** — `python .claude/scripts/inject_agent_protocol_blocks.py --all --dry-run` → review the planned adds (count must match the matrix delta).
+3. **Real run + idempotent re-run** — `python .claude/scripts/inject_agent_protocol_blocks.py --all`, then re-run `--dry-run` → must report **zero adds** (idempotent). Re-run the `agent-universal-rules` suite (`node .claude/hooks/tests/run-all-tests.cjs`) → `TC-UAR-003..007` green.
+
+**Tier rule (enforced — `TC-UAR-004`):** the four code-tier blocks (`understand-code-first`, `evidence-based-reasoning`, `cross-service-check`, `fix-layer-accountability`) go on code-touching agents ONLY. A core-only agent (business-analyst, docs-manager, git-manager, journal-writer, knowledge-worker, product-owner, project-manager, quality-gate-review) must carry NONE of them. `validate()` check (e) and the test suite both hard-fail on a leak.
+
+**Orchestration-exclusion rule:** main-loop orchestration blocks — `nested-task-creation`, `sub-agent-selection`, `subagent-return-contract`, `parallel-phase-advancement` — must NOT propagate to agents (they govern the orchestrator, not a worker). The **sole whitelist exception** is `framework-maintainer`, which legitimately spawns/curates sub-agents and so carries `sub-agent-selection`. Any new exception must be declared explicitly in the matrix, not added ad-hoc to an agent file.
+
+**Deferred-mirror convention:** source-side agent + doc edits under `.claude/` land first; the AI-harness mirrors (`.agents/`, `.codex/`, `AGENTS.md`) regenerate via `npm run sync:all` then `npm run verify:all` as a **separate, single-purpose commit** — never bundled with the hand-curated source change. See the Phase 09 handoff in [`plans/260616-agent-skill-quality-parity/phase-09-verify-and-handoff.md`](../../../plans/260616-agent-skill-quality-parity/phase-09-verify-and-handoff.md).
+
 ## Related Documentation
 
 - [README.md](./README.md) - Agent overview and catalog
 - [../skills/README.md](../skills/README.md) - Skills that enhance agents
-- [../hooks/README.md](../hooks/README.md) - SubagentStart hook
+- [../hooks/README.md](../hooks/README.md) - Hook lifecycle (sub-agent context is now static in `agents/*.md`, no `SubagentStart` hook)
 
 ---
 

@@ -1,13 +1,13 @@
 ---
 name: workflow-research
 version: 1.0.0
-description: '[Workflow] Use when activating the Research & Synthesis workflow for research a topic, gather web sources, synthesize into structured report.'
-disable-model-invocation: true
+description: '[Workflow] Use when activating the Research & Synthesis workflow — research a topic via web sources, then synthesize per --output={synthesis|business-eval|marketing|course} (knowledge report, business evaluation, marketing strategy, or course material).'
+disable-model-invocation: false
 ---
 
 ## Quick Summary
 
-**Goal:** [Workflow] Trigger Research & Synthesis workflow — research a topic, gather web sources, synthesize into structured report.
+**Goal:** [Workflow] Trigger Research & Synthesis workflow — gather web sources, then synthesize into the target artifact selected by `--output` (knowledge report, business evaluation, marketing strategy, or course material).
 
 **Workflow:**
 
@@ -23,21 +23,30 @@ disable-model-invocation: true
 - MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
 - NEVER skip mandatory workflow or skill gates.
 
+**IMPORTANT MANDATORY Steps:** /web-research -> /deep-research -> /knowledge-synthesis -> /knowledge-review -> /workflow-end
+
+> These steps are the default `--output=synthesis` sequence (identical to the catalog `workflow-research` workflow sequence). For `--output={business-eval|marketing|course}` the terminal synthesis skill(s) swap per the **Output Dispatch** table below — the research scaffold and `/knowledge-review -> /workflow-end` closure are invariant.
+
 ---
 
-**IMPORTANT MANDATORY Steps:** /web-research -> /deep-research -> /knowledge-synthesis -> /knowledge-review -> /workflow-end
+## Output Dispatch (--output)
+
+All modes share the research scaffold `/web-research → /deep-research → … → /knowledge-review → /workflow-end`; only the terminal synthesis skill(s) swap per `--output`:
+
+| `--output`              | Terminal synthesis skill(s)                 | Full sequence                                                                                                  |
+| ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **synthesis** (default) | `/knowledge-synthesis`                      | `/web-research → /deep-research → /knowledge-synthesis → /knowledge-review → /workflow-end`                    |
+| **business-eval**       | `/market-analysis` + `/business-evaluation` | `/web-research → /deep-research → /market-analysis → /business-evaluation → /knowledge-review → /workflow-end` |
+| **marketing**           | `/market-analysis` + `/strategy-builder`    | `/web-research → /deep-research → /market-analysis → /strategy-builder → /knowledge-review → /workflow-end`    |
+| **course**              | `/course-builder`                           | `/web-research → /deep-research → /course-builder → /knowledge-review → /workflow-end`                         |
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
-Activate the `research` workflow. Run `/workflow-start research` with the user's prompt as context.
-
-**Steps:** /web-research → /deep-research → /knowledge-synthesis → /knowledge-review → /workflow-end
+This skill IS the canonical Research & Synthesis entry point — invoke it directly with `--output=<mode>` (default `synthesis`) and execute the selected sequence from the dispatch table above: invoke each step skill in order via the `Skill` tool with the user's prompt as context. The workflow catalog also exposes a `workflow-research` id purely so the auto-router can detect research/business-eval/marketing/course intents; `/start-workflow workflow-research` is equally valid and injects the same OUTPUT DISPATCH table — either path executes the sequence for the selected `--output`.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-**IMPORTANT MANDATORY Steps:** /web-research -> /deep-research -> /knowledge-synthesis -> /knowledge-review -> /workflow-end
 
 <!-- SYNC:nested-task-creation -->
 
@@ -65,16 +74,14 @@ Activate the `research` workflow. Run `/workflow-start research` with the user's
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -120,6 +127,8 @@ Activate the `research` workflow. Run `/workflow-start research` with the user's
 >
 > Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
 > Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+>
+> **Context budget** — the return payload is a SUMMARY, not a transcript: ≤10 finding bullets, no raw file contents / full diffs / verbatim logs inline, no re-pasted source. Everything beyond the summary lives in the `Full report` on disk. A sub-agent that would exceed the summary shape MUST write the detail to its report and return only the pointer — the orchestrator's context is the scarce resource the whole map-reduce protects.
 
 <!-- /SYNC:subagent-return-contract -->
 
@@ -131,6 +140,14 @@ Activate the `research` workflow. Run `/workflow-start research` with the user's
 <!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION Protocols in force (concise digest of the SYNC/shared blocks this skill carries) — NEVER treat a digest line as the full rule; it signposts the canonical SYNC body above:**
+
+- **Nested Task Creation:** Expand child phases under the parent workflow row; link when nested.
+- **Critical Thinking:** Apply critical + sequential thinking; cite proof, confidence >80% to act.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Incremental Persistence:** Persist findings to `plans/reports/` per file; survive context cutoff.
+- **Subagent Return Contract:** Sub-agents return summary plus report pointer only, never inline transcript.
 
 **IMPORTANT MUST ATTENTION** apply Phase 1 compression before structural enhancement; preserve semantic meaning.
 **IMPORTANT MUST ATTENTION** NEVER alter YAML frontmatter, code blocks, tables, or SYNC-tag bodies during optimization.

@@ -14,7 +14,14 @@ description: '[Utilities] Use when the user wants to visualize workflows, archit
 
 ## Quick Summary
 
-**Goal:** [Utilities] Use when the user wants to visualize workflows, architectures, or concepts as Excalidraw diagram JSON files.
+**Goal:** Produce `.excalidraw` JSON diagrams that visualize workflows, architectures, or concepts and visually ARGUE a concept — where the structure itself carries the meaning and (for technical diagrams) concrete evidence artifacts teach — validated through the render-view-fix loop until the rendered image matches the conceptual design.
+
+**Summary:**
+
+- Diagrams must ARGUE not DISPLAY: pass the Isomorphism Test (structure alone communicates the concept) — map each major concept to a DIFFERENT visual pattern (fan-out, convergence, timeline, tree, cycle) and default text to free-floating (<30% inside containers).
+- Assess depth FIRST: simple/conceptual (abstract shapes) vs comprehensive/technical — technical diagrams MUST research real specs (actual event names, JSON formats, API/method names) and embed evidence artifacts across the three zoom levels (summary flow + section boundaries + concrete detail).
+- Build comprehensive JSON section-by-section, never in one pass (hard ~32k-token output limit) — use descriptive string IDs, namespace seeds per section (100xxx, 200xxx), and update cross-section `boundElements` as you go; pull all colors from `references/color-palette.md` and never invent new ones.
+- The Render & Validate loop is MANDATORY, not a final check: render to PNG via `render_excalidraw.py`, Read the image, audit against your planned vision plus visual defects (clipping, overlaps, arrows crossing shapes), fix, and re-render — typically 2-4 iterations until it matches the conceptual design.
 
 **Workflow:**
 
@@ -30,9 +37,9 @@ description: '[Utilities] Use when the user wants to visualize workflows, archit
 
 ## Customization
 
-**All colors and brand-specific styles live in one file:** `references/color-palette.md`. Read it before generating any diagram and use it as the single source of truth for all color choices — shape fills, strokes, text colors, evidence artifact backgrounds, everything.
+**All colors and brand-specific styles live in one file:** `references/color-palette.md`. Read it before generating any diagram; use it as single source of truth for all color choices — shape fills, strokes, text colors, evidence artifact backgrounds, everything.
 
-To make this skill produce diagrams in your own brand style, edit `color-palette.md`. Everything else in this file is universal design methodology and Excalidraw best practices.
+To produce diagrams in your own brand style, edit `color-palette.md`. Everything else in this file is universal design methodology and Excalidraw best practices.
 
 ---
 
@@ -40,7 +47,7 @@ To make this skill produce diagrams in your own brand style, edit `color-palette
 
 **Diagrams should ARGUE, not DISPLAY.**
 
-A diagram isn't formatted text. It's a visual argument that shows relationships, causality, and flow that words alone can't express. The shape should BE the meaning.
+A diagram isn't formatted text. It's a visual argument showing relationships, causality, and flow that words alone can't express. The shape should BE the meaning.
 
 **The Isomorphism Test**: If you removed all text, would the structure alone communicate the concept? If not, redesign.
 
@@ -674,17 +681,16 @@ Generate `.excalidraw` JSON files that **argue visually**, not just display info
 
 <!-- SYNC:ai-mistake-prevention -->
 
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -697,13 +703,13 @@ Generate `.excalidraw` JSON files that **argue visually**, not just display info
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -720,11 +726,35 @@ Generate `.excalidraw` JSON files that **argue visually**, not just display info
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-**IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-**IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+**IMPORTANT MUST ATTENTION Goal:** Produce `.excalidraw` JSON diagrams that visually ARGUE a concept — where the structure itself carries the meaning and (for technical diagrams) concrete evidence artifacts teach — validated through the render-view-fix loop until the rendered image matches the conceptual design.
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries) — MUST ATTENTION honor each canonical body:**
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** Apply critical + sequential thinking; every claim needs traced proof, confidence >80% to act.
+
+**IMPORTANT MUST ATTENTION** diagrams must ARGUE not DISPLAY — pass the Isomorphism Test (structure alone communicates the concept); NEVER ship a card grid or equal-box layout — map each concept to a DIFFERENT visual pattern (fan-out, convergence, timeline, tree, cycle) — why: uniform containers display labels, they do not argue meaning
+**IMPORTANT MUST ATTENTION** the Render & Validate loop is MANDATORY — NEVER ship JSON without rendering to PNG via `render_excalidraw.py`, Reading the image, and fixing visual defects (clipping, overlaps, arrows crossing shapes) across 2-4 iterations — why: you cannot judge a diagram from JSON alone
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim with confidence >80% to act (<60% DO NOT recommend) — why: speculation produces wrong diagrams that pass silent review
+**IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting, keep exactly one `in_progress`, mark `completed` immediately, add a final review todo — why: context loss without a task list silently drops findings
+**IMPORTANT MUST ATTENTION** assess depth FIRST (simple/conceptual vs comprehensive/technical) — technical diagrams MUST research real specs (actual event names, JSON formats, API/method names), search 3+ existing patterns before inventing, and embed evidence artifacts at all three zoom levels — why: closest example ≠ matching preconditions, and generic placeholders teach nothing
+**IMPORTANT MUST ATTENTION** build comprehensive JSON section-by-section, NEVER in one pass — pass it through the ~32k-token output limit, use descriptive string IDs, namespace seeds per section (100xxx, 200xxx), update cross-section `boundElements` as you go — why: a single pass produces truncated, broken JSON
+**IMPORTANT MUST ATTENTION** pull ALL colors from `references/color-palette.md` and NEVER invent new ones — use Primary/Neutral or Secondary when no semantic category fits — why: color encodes meaning, invented colors break the encoding
+**IMPORTANT MUST ATTENTION** default text to free-floating (<30% inside containers) — for each boxed element ask "Would this work as free-floating text?" and remove the container if yes — why: typography creates hierarchy without boxes
+
+**Anti-Rationalization:**
+
+| Evasion                                      | Rebuttal                                                                              |
+| -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| "JSON looks correct, skip rendering"         | You cannot judge a diagram from JSON — render to PNG, Read it, fix what you see.      |
+| "One render pass, no critical bugs, done"    | Vision check ≠ defect check. Keep cycling until composition is balanced (2-4 passes). |
+| "Generate the whole diagram in one response" | You will hit the ~32k output limit and produce broken JSON. Build section-by-section. |
+| "Generic labels are enough for this"         | Technical diagrams must show actual specs/formats/names — placeholders teach nothing. |
+| "This color looks better"                    | Pull only from `references/color-palette.md`; invented colors break the meaning code. |
+| "Box everything for consistency"             | Default to free-floating text (<30% boxed); typography is the hierarchy, not borders. |
+
+**IMPORTANT MUST ATTENTION** diagrams must ARGUE not DISPLAY — Render & Validate loop is MANDATORY (render → Read PNG → fix → repeat)
+**IMPORTANT MUST ATTENTION** assess depth FIRST, research real specs for technical diagrams, build comprehensive JSON section-by-section
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence (confidence >80% to act); break work into small `TaskCreate` todos before starting and add a final review todo
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.

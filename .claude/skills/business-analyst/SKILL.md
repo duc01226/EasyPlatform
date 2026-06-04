@@ -17,7 +17,7 @@ description: '[Project Management] Use when creating user stories, writing accep
 
 **Key Rules:**
 
-- Always reference existing business rules from `docs/business-features/` before creating new ones
+- Always reference existing business rules from `docs/specs/` before creating new ones
 - User stories must pass INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 - Include entity context and related domain model in every story
 - MUST ATTENTION include `story_points` and `complexity` in all PBI/story outputs
@@ -25,7 +25,7 @@ description: '[Project Management] Use when creating user stories, writing accep
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 # Business Analyst Assistant
 
@@ -41,8 +41,8 @@ When refining domain-related PBIs, automatically extract and reference existing 
 
 **Dynamic Discovery:**
 
-1. Run: `Glob("docs/business-features/{module}/detailed-features/*.md")` for feature docs
-2. Or: `Glob("docs/business-features/{module}/detailed-features/**/*.md")` for nested features
+1. Run: `Glob("docs/specs/{module}/*.md")` for feature docs
+2. Or: `Glob("docs/specs/{module}/**/*.md")` for nested features
 
 From PBI frontmatter or module detection:
 
@@ -96,7 +96,7 @@ When refining domain-related PBIs, investigate related entities using feature do
 ### Step 1: Load Feature Doc
 
 ```
-Glob("docs/business-features/{module}/detailed-features/*.md")
+Glob("docs/specs/{module}/*.md")
 ```
 
 Select file matching feature from PBI context.
@@ -185,14 +185,14 @@ Scenario: {Descriptive title}
 
 1. Reference existing test case patterns from feature docs
 2. Use TC-{FEATURE}-{NNN} format (e.g., TC-GM-001)
-3. Include Evidence field: `file:line` format
-4. Example from GoalManagement feature:
+3. Include Evidence field: `[Source: namespace/service/id]` abstract-anchor format — never physical code coordinates or repository-root paths (stack-portable; see `shared/tc-format.md`)
+4. Example from InvoiceManagement feature:
     ```
-    TC-GRO-GOAL-001: Create goal with valid data
-    GIVEN employee has permission to create goals
-    WHEN employee submits goal form with all required fields
-    THEN goal is created and appears in goal list
-    Evidence: goal.service.ts:87, goal.component.ts:142
+    TC-INV-001: Create invoice with valid data
+    GIVEN user has permission to create invoices
+    WHEN user submits invoice form with all required fields
+    THEN invoice is created and appears in invoice list
+    Evidence: [Source: operation/sales/CreateInvoice], [Source: component/sales/Invoice]
     ```
 
 ### 4. Business Rules Documentation
@@ -204,7 +204,7 @@ BR-{MOD}-{NNN}: {Rule name}
 IF {condition}
 THEN {action/result}
 ELSE {alternative}
-Evidence: {file}:{line}
+Evidence: [Source: rule/{service}/{RuleName}]
 ```
 
 ### 5. Gap Analysis
@@ -224,7 +224,7 @@ Before finalizing user story:
 - [ ] Business rules don't conflict with existing BR-{MOD}-XXX rules
 - [ ] Test case format matches existing TC-{FEATURE}-{NNN} patterns
 - [ ] Entity names match those in feature docs
-- [ ] Evidence format follows file:line convention
+- [ ] Evidence format follows the abstract-anchor convention (`[Source: namespace/service/id]`) — no physical code coordinates or repository-root paths
 
 ### Documentation Links
 
@@ -233,9 +233,9 @@ Add to user story:
 ```markdown
 ## Reference Documentation
 
-- Feature Doc: `docs/business-features/{module}/detailed-features/{feature}.md`
-- Related Entities: `docs/business-features/{module}/detailed-features/*.md`
-- Existing Test Cases: See feature doc Section 15 (Test Specifications)
+- Feature Doc: `docs/specs/{module}/{feature}.md`
+- Related Entities: `docs/specs/{module}/*.md`
+- Existing Test Cases: See feature doc Section 8 (Test Specifications)
 ```
 
 If conflicts found, note in "Unresolved Questions" section.
@@ -355,6 +355,15 @@ Then {error handling}
 
 ---
 
+## Role Context (path→role, canonical)
+
+> Applies to Writes under `team-artifacts/pbis/` and `team-artifacts/pbis/stories/`.
+
+- **Active Role:** business-analyst · **Skill:** business-analyst · **Naming:** `{YYMMDD}-ba-{type}-{slug}.md`
+- **Path `team-artifacts/pbis/`** → Template `.claude/docs/team-artifacts/templates/pbi-template.md` · Context: PBI CREATION — GIVEN/WHEN/THEN format required, INVEST criteria, numeric priority.
+- **Path `team-artifacts/pbis/stories/`** → Template `.claude/docs/team-artifacts/templates/user-story-template.md` · Context: USER STORY — As a... I want... So that... format, 3+ scenarios per story.
+- **Quality checklist:** `- [ ]` User story format correct · `- [ ]` 3+ scenarios (positive, negative, edge) · `- [ ]` GIVEN/WHEN/THEN format · `- [ ]` INVEST criteria met
+
 ## Output Conventions
 
 ### File Naming
@@ -460,16 +469,14 @@ Add to user story/PBI:
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -500,13 +507,13 @@ Add to user story/PBI:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
@@ -518,11 +525,17 @@ Add to user story/PBI:
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 ## Closing Reminders
+
+**MUST ATTENTION Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** traced `file:line` proof per claim, confidence >80% to act, never guess.
+- **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS markers and confidence closer.
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code

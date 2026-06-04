@@ -1,14 +1,14 @@
 ---
 title: 'Canonical TC Format'
-version: 1.0.0
-last_reviewed: 2026-04-21
-authority: tdd-spec
-consumers: [feature-docs, tdd-spec, tdd-spec (sync mode)]
+version: 1.3.0
+last_reviewed: 2026-06-17
+authority: spec [mode=tests]
+consumers: [spec, spec [mode=tests], spec [mode=sync], integration-test, integration-test-review, review-artifact]
 ---
 
 # Canonical TC Format
 
-> **Single source of truth** for TC entry format. Referenced by: `feature-docs`, `tdd-spec`, `tdd-spec (sync mode)`.
+> **Single source of truth** for TC entry format. Referenced by: `spec`, `spec [mode=tests]`, `spec [mode=sync]`.
 > To update TC format: edit THIS file only, then update all consumer skills to reflect the change.
 
 ## Quick Summary
@@ -26,8 +26,25 @@ consumers: [feature-docs, tdd-spec, tdd-spec (sync mode)]
 
 - MUST ATTENTION preserve `TC-{FEATURE}-{NNN}` identity and evidence fields.
 - MUST ATTENTION state business intent/invariant so generated tests fail when protected behavior breaks.
+- MUST ATTENTION derive **properties, not just examples** — for each [HARD] business rule and each entity invariant, probe the [Invariant Categories to Probe](#invariant-categories-to-probe) and write ≥1 universally-quantified property TC ("for ALL inputs in {domain}, {invariant} holds") plus ≥1 boundary counter-case, distinct from a single-point example TC.
 - MUST ATTENTION use preservation TCs for every healthy input that must remain unchanged after a bugfix.
+- MUST ATTENTION keep cardinality **one TC → many tests**: a single business TC may be covered by many integration/unit tests across components and services (join key = the shared **test-spec annotation** carrying the TC ID, expressed in the configured test framework's syntax). NEVER split or technicalize a TC to force a 1:1 map to one test method (see [TC ↔ Test Code Cardinality](#tc--test-code-cardinality-one-to-many)).
 - NEVER delete deprecated TCs; keep audit trail and version history.
+
+## Invariant Categories to Probe
+
+> **Discovery prompt — run BEFORE writing TCs.** An example TC asserts one GIVEN/WHEN/THEN point; a **property TC** asserts a rule that holds for ALL inputs in a domain. For each [HARD] business rule (§4) and each entity invariant (§5), walk these 6 classes and write a universally-quantified property TC ("for ALL inputs in {domain}, {invariant} holds") for every class that applies, plus ≥1 boundary counter-case. Most rules match at least one class — if none match, record why.
+
+| Class                    | Property (for ALL inputs)                                                 | Concrete example                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Idempotency**          | applying the same operation twice = applying it once                      | Re-delivering the same payment-confirmation event leaves the balance and order state identical      |
+| **Round-trip / inverse** | `decode(encode(x)) == x`; an operation followed by its inverse = identity | Export then re-import a record yields the same field values; deposit X then withdraw X = no change  |
+| **Commutativity**        | result is independent of operation order                                  | Applying discount A then B yields the same total as B then A                                        |
+| **Monotonicity**         | a value only moves in one direction across the operation                  | Aggregate/version/sequence number never decreases; an append-only ledger never shrinks              |
+| **Conservation**         | a tracked total stays constant across a transformation                    | Sum of split line-item amounts equals the original order total; transfer preserves combined balance |
+| **State-transition**     | only declared transitions are legal; illegal transitions are rejected     | Order may go Pending→Paid but never Shipped→Pending; rejected transition leaves state unchanged     |
+
+**Distinguish property TCs from example TCs:** an example TC fixes one input and checks one outcome; a property TC names the input **domain** ("any valid amount", "any two orderings", "any record") and asserts the invariant holds across it, then pairs it with a boundary counter-case (the input just outside the domain where the invariant must fail-closed). Both kinds belong in §8.
 
 ## TC Entry Format
 
@@ -60,6 +77,8 @@ And {additional verification}
 
 **Test Data:**
 
+_Example TC (single point) — one fixed input/output pair:_
+
 ```json
 {
     "field": "validValue",
@@ -67,25 +86,77 @@ And {additional verification}
 }
 ```
 
+_Property TC — a generator spec, not one example. MANDATORY for any TC guarding a [HARD] §4 rule or §5 invariant. Declare the input **domain** + the invariant that must hold across it + the boundary just outside the domain where it must fail-closed — three machine-readable fields, not prose:_
+
+```yaml
+inputDomain: 'any valid order with 1..N line items and any non-negative amounts' # the generated space, NOT one point
+invariant: 'sum(lineItem.amount) == order.total — for ALL inputs in the domain' # the universally-quantified rule
+boundaryCounterCase: 'amounts summing past the credit limit → order rejected, total unchanged' # fail-closed edge
+```
+
+> The three keys (`inputDomain`, `invariant`, `boundaryCounterCase`) are the canonical machine-readable property contract — a `[HARD]`/§5 TC's universality lives in these fields, never only in prose. `inputDomain` names a space (a generator), not a constant; `invariant` is "for ALL …"; `boundaryCounterCase` is the input just outside the domain that must be rejected. This block maps 1:1 to the Pattern 9 property test (`integration-test` → Required patterns per command type → invariant-owning branch).
+
 **Edge Cases:**
 
 - {Boundary: empty collection, max length, null values} → {expected behavior}
 - {Concurrency: simultaneous updates} → {expected behavior}
 - {Cross-service: message bus timing} → {expected behavior}
 
-**Evidence:** `[Source: {FilePath}:{LineRange}]` or `TBD (pre-implementation)`
+**Transition Invariants (when the entity has lifecycle states — §5):**
 
-**Related Files:**
-| Layer | Type | File |
-|----------|---------------|---------------------------------------------------------------------------------------|
-| API | Controller/Endpoint | `{configured-source-path}/{module}/{api-layer-path}/{FeatureEndpointFile}` |
-| App | Command/Query/Use Case | `{configured-source-path}/{module}/{application-layer-path}/{FeatureUseCaseFile}` |
-| Domain | Entity/Model | `{configured-source-path}/{module}/{domain-layer-path}/{FeatureEntityFile}` |
-| Test | Integration | `{configured-test-path}/{FeatureTestFile}` |
+- {Property domain — e.g. "for ALL legal transitions of {Entity}"} → assert the exact post-state field values (`Status = X`, `ExternalId = Y`) and that no orphan/side-effect is created downstream
+- {Boundary counter-case — e.g. "for ALL illegal transitions of {Entity}"} → assert the transition is rejected with the named failure and the pre-state field values are left unchanged
 
-**IntegrationTest:** `{IntegrationTests}/{TestFile}.cs::{MethodName}` (or `Untested`)
+**Evidence:** `[Source: {namespace}/{service}/{id}]` or `TBD (pre-implementation)`
+
+**Related Behaviors:**
+| Capability | Anchor |
+|------------|----------------------------------|
+| API surface | `operation/{service}/{Feature}` |
+| Use case (command/query) | `operation/{service}/{Feature}` |
+| Domain model | `component/{service}/{Feature}` |
+| Test | `test/{service}/{Feature}` |
+
+**IntegrationTest:** one or more covering tests for the configured test environment — `{configured-test-path}/{TestFile}::{MethodName}` (comma-separated **on one line** when several tests cover this TC), OR a test-filter expression that selects every test annotated with this TC (e.g. `TestSpec=TC-{FEATURE}-{NNN}`), OR `Untested`
 **Status:** Tested | Untested | Planned
 ````
+
+> **Stack-portable evidence (M2/M3/M5).** `Evidence` and `Related Behaviors` carriers use **abstract anchors**
+> `[Source: namespace/service/id]` — never donor physical code coordinates or repository-root paths. Namespace ∈
+> `operation | event | component | schema | requirement | rule | constraint | test`; service = the owning
+> module/service (lowercased); id = the artifact concept with code suffixes stripped. Physical coordinates
+> are recoverable only through the provenance sidecar. This section is the canonical anchor-taxonomy contract.
+>
+> **`IntegrationTest` is the one exception** — it is operational QA glue (a traceability link to the actual
+> executable test(s), consumed by the `integration-test` skill and surfaced in the §8 TC's `IntegrationTest` field). It stays a physical
+> test-file + test-method link (`{TestFile}::{MethodName}`, in the configured test layout), is exempt from the prose gate, and is
+> regenerated per-stack on rebuild. The field is
+> **representative, not exhaustive** — it may list several covering tests, but the authoritative complete set is whatever
+> carries the TC's test-spec annotation in code (see [TC ↔ Test Code Cardinality](#tc--test-code-cardinality-one-to-many)).
+>
+> **Configurable roots (never donor paths).** When physical coordinates are emitted on rebuild, root them at the
+> project-configured roots — `{configured-source-path}` for source/evidence and `{configured-test-path}` for
+> executable tests — resolved from `docs/project-config.json`. Never hardcode a donor repository's service-layout paths.
+
+## TC ↔ Test Code Cardinality (One-to-Many)
+
+> **A Section 8 TC is a business / user-story acceptance scenario — not a unit of code.** It is written tech-agnostic
+> (M1/M2/M5) and is verified by **one OR MANY** test methods. This section is the canonical cardinality contract; all
+> consumer skills (`spec [mode=tests]`, `spec`, `integration-test`, `integration-test-review`, `review-artifact`) defer to it.
+
+**The rule (authoritative):**
+
+- **One TC → many tests.** A single `TC-{FEATURE}-{NNN}` MAY be covered by many test methods — integration tests, unit tests, across multiple components / services / layers. Every covering test carries the **same test-spec annotation** — key `TestSpec`, value `TC-{FEATURE}-{NNN}` — expressed in the configured test framework's syntax. That annotation is the **join key**; the cardinality of the join is **1 TC : N tests**.
+- **Coverage = ≥1.** A TC is `Tested` when **at least one** test carrying its annotation exists and passes. A TC does NOT need a dedicated, name-matching, or single-purpose test method.
+- **`IntegrationTest` field is representative.** It lists one or more covering tests (or a test-filter expression). Never assume it enumerates every covering test — the complete set is whatever carries the test-spec annotation in code.
+- **Direction of mapping.** Each test method maps to **one primary** business TC it verifies. Each TC maps to **one or more** test methods. So: test -> primary TC is N:1; TC -> test is 1:N. A test MAY carry additional `TestSpec` annotations only for documented alias/deprecation bridges, where an old TC ID and canonical TC ID intentionally point to the same executable behavior; document the alias in specs and remove the extra tag when the bridge retires.
+
+**FORBIDDEN (these break M1/M5 — the spec stops being business-readable):**
+
+- ❌ Splitting, narrowing, or technicalizing a business TC so it maps 1:1 to a single test method or production class. A TC describes a user-observable promise, not a code unit.
+- ❌ Requiring (or auto-generating) a test method whose name equals the TC ID, or enforcing "one test per TC".
+- ❌ Flagging "multiple tests reference the same TC" as a duplicate, redundancy, or defect — that is the expected one-to-many shape.
+- ❌ Creating a new TC solely to mirror a newly added test method when an existing business TC already covers that behavior — extend coverage under the existing TC instead (add another test carrying the same annotation).
 
 ## TC Priority Classification
 
@@ -109,17 +180,18 @@ Group TCs by category using decade blocks to prevent collisions:
 | 041–049   | Cross-service / Integration (P1-P2)  |
 | 051–059   | Edge cases / Error scenarios (P2-P3) |
 | 061–069   | UI / User journey flows (P2-P3)      |
-| 071–099   | Reserved for feature-specific groups |
+| 071–079   | Invariant / Property TCs (P0-P2)     |
+| 081–099   | Reserved for feature-specific groups |
 
 **Collision prevention:**
 
-1. Check existing TC IDs in the feature doc's Section 15 first
+1. Check existing TC IDs in the feature doc's Section 8 (Test Specifications) first
 2. Find the next free decade for the category
 3. Mark deprecated TCs with a `[DEPRECATED]` suffix instead — never reuse a deprecated TC ID
 
 ## TC Category Sections
 
-Organize TCs into named category sections. Minimum 3 categories required (query-only features exempt — see tdd-spec for exception rules):
+Organize TCs into named category sections. Minimum 3 named sections required, and the **Invariant / Property** section is MANDATORY whenever the feature has a [HARD] §4 rule or §5 invariant (query-only / config-only features exempt — see spec [mode=tests] for exception rules):
 
 ```markdown
 ### CRUD Tests
@@ -141,6 +213,10 @@ Organize TCs into named category sections. Minimum 3 categories required (query-
 ### Edge Case Tests
 
 (Boundary conditions, concurrent operations, data migration scenarios)
+
+### Invariant / Property Tests
+
+(Universally-quantified properties + boundary counter-cases per [HARD] §4 rule / §5 invariant — see "Invariant Categories to Probe")
 
 ### Integration Tests
 
@@ -183,13 +259,12 @@ And {no orphan/side-effect created in downstream store}
 
 When a behavior is removed:
 
-1. Find the TC in feature doc Section 15
+1. Find the TC in feature doc Section 8 (Test Specifications)
 2. Add `[DEPRECATED: {date} — {reason}]` to the TC title
 3. Change `**Status:**` to `Deprecated`
 4. Do NOT delete — keep for audit trail
-5. Note in Section 17 (Version History): "TC-{ID} deprecated"
 
-## Section 15 Header Template
+## Section 8 (Test Specifications) Header Template
 
 ```markdown
 ## Test Specifications
@@ -210,5 +285,8 @@ When a behavior is removed:
 
 - MUST ATTENTION keep this file canonical; update consumer skills only after this format changes.
 - MUST ATTENTION every TC protects a named behavior, invariant, or regression path.
+- MUST ATTENTION derive properties not just examples — probe the 6 Invariant Categories (idempotency, round-trip/inverse, commutativity, monotonicity, conservation, state-transition) for every [HARD] rule and §5 invariant; pair each universally-quantified property TC with a boundary counter-case.
+- MUST ATTENTION enforce one-to-many TC ↔ test cardinality: a business TC is covered by ≥1 test (often many, across components); the shared test-spec annotation (key `TestSpec`) is the join key. NEVER split/technicalize a TC for a 1:1 test map; NEVER flag many-tests-per-TC as a duplicate.
 - MUST ATTENTION preserve evidence links and deprecated TC history for traceability.
+- MUST ATTENTION emit evidence as stack-portable abstract anchors `[Source: namespace/service/id]` — never physical code coordinates or repository-root paths (taxonomy: Stack-portable evidence section above).
 - NEVER replace specific assertions with smoke checks or existence-only checks.

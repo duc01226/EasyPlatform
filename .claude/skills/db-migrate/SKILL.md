@@ -16,19 +16,20 @@ disable-model-invocation: false
 
 ## Quick Summary
 
-**Goal:** Create or run database migrations (EF Core migrations, MongoDB data migrations) following platform patterns.
+**Goal:** Create or run database migrations following the repository's documented patterns.
 
 **Workflow:**
 
-1. **Identify** — Determine migration type (EF schema vs data migration)
-2. **Create** — Generate migration using `dotnet ef` or project data migration executor (see docs/project-reference/backend-patterns-reference.md)
+1. **Identify** — Determine migration type (schema migration vs data/document migration)
+2. **Create** — Generate migration using the configured migration tool or data migration executor (see docs/project-reference/backend-patterns-reference.md)
 3. **Verify** — Run migration and confirm schema/data changes
 
 **Key Rules:**
 
-- Follow platform migration patterns from CLAUDE.md
+- Follow the repository's migration patterns (see CLAUDE.md / project-reference docs)
+- For CREATE: present the migration design and wait for explicit user approval before creating migration files
 - Always backup data before destructive migrations
-- Use project data migration executor for MongoDB data migrations (see docs/project-reference/backend-patterns-reference.md)
+- Use the configured data migration executor for data/document migrations (see docs/project-reference/backend-patterns-reference.md)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -37,41 +38,39 @@ Database migration: $ARGUMENTS
 ## Instructions
 
 1. **Parse arguments**:
-    - `add <name>` → Create new EF Core migration
+    - `add <name>` → Create new schema/data migration with the configured tool
     - `update` → Apply pending migrations
     - `list` → List all migrations and status
     - `rollback` → Revert last migration
     - No argument → Show migration status
 
-2. **Identify database provider** from project:
-    - SQL Server: Search for `*.Persistence` projects
-    - PostgreSQL: Search for `*.Persistence.PostgreSql` projects
-    - MongoDB: Uses project Mongo migration executor (code-based, see docs/project-reference/backend-patterns-reference.md)
+2. **Identify database provider + migration tooling** from project config and project-reference docs:
+    - Relational stores: managed by the configured schema-migration tool.
+    - Document/key-value/event stores: may use code-based migrations or startup executors defined by the repository.
 
-3. **For EF Core (SQL Server/PostgreSQL)**:
+3. **For schema migrations**:
 
 Add migration:
 
     ```bash
-    cd src/{ExampleApp}/{ExampleApp}.TextSnippet.Persistence
-    dotnet ef migrations add <MigrationName> --startup-project ../{ExampleApp}.TextSnippet.Api
+    {configured-migration-add-command} <MigrationName>
     ```
 
 Update database:
 
     ```bash
-    dotnet ef database update --startup-project ../{ExampleApp}.TextSnippet.Api
+    {configured-migration-update-command}
     ```
 
 List migrations:
 
     ```bash
-    dotnet ef migrations list --startup-project ../{ExampleApp}.TextSnippet.Api
+    {configured-migration-list-command}
     ```
 
-4. **For MongoDB migrations**:
-    - MongoDB uses code-based migrations via project Mongo migration executor (see docs/project-reference/backend-patterns-reference.md)
-    - Location: `*.Persistence.Mongo/Migrations/`
+4. **For data/document migrations**:
+    - Often code-based migrations run by the configured migration executor (see docs/project-reference/backend-patterns-reference.md)
+    - Location: the repository's configured migration folder — discover from `docs/project-reference/backend-patterns-reference.md`
     - Migrations run automatically on application startup
     - To create: Generate new migration class following existing patterns
 
@@ -83,7 +82,7 @@ List migrations:
 6. **Migration Safety Review (MANDATORY for non-local environments)**:
     - Before applying to staging/production, spawn `database-admin` sub-agent (`subagent_type: "database-admin"`) for safety review
     - Review criteria: locking behavior on large tables, index creation impact under concurrent writes, rollback strategy, zero-downtime feasibility
-    - Present findings and get explicit user approval before running `dotnet ef database update` or applying MongoDB migrations on non-local environments
+    - Present findings and get explicit user approval before running the configured migration apply command on non-local environments
 
 ## Sub-Agent Type Override
 
@@ -96,27 +95,26 @@ List migrations:
 
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -147,11 +145,11 @@ List migrations:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -181,17 +179,22 @@ List migrations:
 <!-- SYNC:understand-code-first:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-    <!-- /SYNC:understand-code-first:reminder -->
+  <!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -199,6 +202,7 @@ List migrations:
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -221,6 +225,16 @@ List migrations:
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 ## Closing Reminders
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Source/Test Drift:** Source change → inspect affected tests; don't test migration code.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Sub-Agent Selection:** Route specialized domains to matching specialist agent; NEVER `code-reviewer`.
+- **Nested Task Creation:** Expand child phases, link parent when nested, one `in_progress`.
+- **Project Reference Docs:** Read required project docs (always `lessons.md`) before target work.
+- **Critical Thinking:** Traced `file:line` proof per claim; confidence >80% to act.
+- **Understand Code First:** Search 3+ patterns and read code before any modification.
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code

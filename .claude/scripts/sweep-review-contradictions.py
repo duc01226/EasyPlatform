@@ -71,7 +71,7 @@ REPLACEMENTS = [
     (
         r"\*\*MANDATORY IMPORTANT MUST ATTENTION\*\* NEVER declare PASS after Round 1 alone — Round 2 MUST spawn fresh sub-agent with zero prior context",
         "**MANDATORY IMPORTANT MUST ATTENTION** when issues found, Round 2 MUST spawn fresh sub-agent with zero prior context. Clean Round 1 ENDS the review.",
-        "NEVER declare PASS — sre-review",
+        "NEVER declare PASS — production-readiness-review",
     ),
     (
         r"\*\*MANDATORY MUST ATTENTION\*\* NEVER declare PASS after Round 1 — always spawn fresh sub-agent for Round 2\.",
@@ -84,11 +84,11 @@ REPLACEMENTS = [
         "5. **Clean Round 1 ENDS the review.** When issues are found, fix and spawn a fresh sub-agent for Round 2 — main agent rationalizes own work, fresh eyes catch what was dismissed.",
         "list-item NEVER declare PASS",
     ),
-    # 7. "NEVER declare PASS after Round 1 alone." (period; sre-review.md:416 / seed-test-data:228)
+    # 7. "NEVER declare PASS after Round 1 alone." (period; production-readiness-review.md:416 / seed-test-data:228)
     (
         r"NEVER declare PASS after Round 1 alone\. Round 2 MUST spawn a fresh sub-agent with ZERO Round 1 memory — NEVER re-review in the same session\.",
         "When Round 1 finds issues, Round 2 MUST spawn a fresh sub-agent with ZERO Round 1 memory after fixing — NEVER re-review in the same session. A clean Round 1 ENDS the review.",
-        "sre-review:416",
+        "production-readiness-review:416",
     ),
     (
         r"NEVER reuse sub-agent across rounds\. NEVER declare PASS after Round 1 alone\.",
@@ -194,7 +194,7 @@ REPLACEMENTS = [
     (
         r'\| "Round 2 not needed for documentation scan" \| Main agent rationalizes own section extractions\. Fresh-eyes mandatory\.\s+\|',
         '| "Skip Round 2 even when Round 1 found issues" | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — main agent rationalizes own section extractions. |',
-        "scan-feature-docs row",
+        "scan-feature-spec row",
     ),
     (
         r'\| "Examples look right, skip Round 2"\s+\| NEVER declare PASS after Round 1\. Main agent rationalizes fabricated examples\. \|',

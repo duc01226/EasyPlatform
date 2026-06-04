@@ -1,6 +1,6 @@
 ---
 name: linter-setup
-version: 1.0.0
+version: 1.0.1
 description: '[Quality] Use when you need to research and configure code quality tooling for any tech stack — linters, formatters, static analysis, pre-commit hooks, and CI gates.'
 ---
 
@@ -15,7 +15,14 @@ description: '[Quality] Use when you need to research and configure code quality
 
 ## Quick Summary
 
-**Goal:** Install the full computational feedback sensor layer for any tech stack — linters, formatters, type checkers, static analyzers, pre-commit hooks, and CI quality gates.
+**Goal:** Ensure every code change is caught by an automated quality sensor — both locally (fast feedback) AND in CI (enforcement gate) — before it reaches main, with zero divergence between the two, by installing the full computational feedback sensor layer for the tech stack (linters, formatters, type checkers, static analyzers, pre-commit hooks, and CI quality gates).
+
+**Summary:**
+
+- Detect the stack first (from `plan.md` / architecture report), then research each tool category (linter, formatter, type checker, static analyzer, dependency scanner, architecture fitness) via QUERY TEMPLATES — NEVER hardcode tool names; present top 2-3 options per category through `AskUserQuestion` and let the user pick.
+- Configure with the STRICTEST reasonable defaults (loosen ONLY with explicit user approval), always emit a stack-agnostic `.editorconfig`, and add tool cache dirs to `.gitignore`.
+- Wire BOTH a pre-commit hook (formatter→linter→type-check, staged-files-only, <30s) AND a matching CI quality gate — the local and CI checks MUST NOT diverge.
+- Prove it works: fire the pre-commit hook with an intentional violation and confirm it blocks the commit before declaring complete.
 
 **Output:** Config files at project root + pre-commit hook config + CI quality gate step + `.editorconfig`.
 
@@ -39,7 +46,7 @@ Read from (in priority order):
 2. Architecture-design report — look for tech stack comparison table
 3. Tech-stack-comparison report — look for chosen stack
 
-Extract: primary language(s), framework(s), CI platform, test framework, package manager.
+Extract: primary language(s), framework(s), CI provider/tooling, test framework, package manager.
 
 Write detected profile to `.ai/workspace/linter-setup/stack-profile.md`:
 
@@ -49,7 +56,7 @@ Write detected profile to `.ai/workspace/linter-setup/stack-profile.md`:
 Language: {language}
 Framework: {framework}
 Package Manager: {npm/pip/dotnet/go/cargo/etc}
-CI Platform: {github-actions/gitlab-ci/azure-pipelines/etc}
+CI Provider/Tooling: {github-actions/gitlab-ci/azure-pipelines/etc}
 Test Framework: {framework}
 ```
 
@@ -74,22 +81,22 @@ For each tech stack layer detected, research these TOOL CATEGORIES using the que
 
 **Research process per category:**
 
-1. Search with the query template (WebSearch if available, otherwise apply knowledge with explicit confidence %)
+1. Search with query template (WebSearch if available, otherwise apply knowledge with explicit confidence %)
 2. Score top 3 candidates: community adoption, last release date, CI integration ease, config complexity
-3. Present to user via `AskUserQuestion`: "For {category} in {language}, which tool?" with top 2-3 as options + brief pros/cons
+3. Present via `AskUserQuestion`: "For {category} in {language}, which tool?" — top 2-3 as options + brief pros/cons
 
-**IMPORTANT:** If confidence in current ecosystem is <80% (e.g., fast-moving ecosystem, unfamiliar stack) → use WebSearch to verify before presenting options.
+**IMPORTANT:** Confidence in current ecosystem <80% (fast-moving ecosystem, unfamiliar stack) → use WebSearch to verify before presenting options. — why: tool ecosystems churn fast; stale recommendations cargo-cult dead tools.
 
 ---
 
 ## Installation & Configuration Protocol
 
-After user selects tools for each category:
+After user selects tools per category:
 
-1. Generate install command for the detected package manager
+1. Generate install command for detected package manager
 2. Generate config file with STRICTEST reasonable defaults
     - Rationale: starting strict is easier to loosen than starting loose is to tighten
-    - Loosen only with explicit user approval via `AskUserQuestion`
+    - Loosen ONLY with explicit user approval via `AskUserQuestion`
 3. Document what each enabled rule catches and why (one line per rule group)
 4. Generate sample config file: `.{tool}rc`, `{tool}.config.{ext}`, `pyproject.toml` section, etc.
 5. Add tool cache directories to `.gitignore`
@@ -120,7 +127,7 @@ Detect pre-commit framework for the stack:
 
 - Node.js / JavaScript / TypeScript → Husky + lint-staged OR lefthook (research current community preference)
 - Python → pre-commit framework (`pre-commit` package)
-- .NET / C# → dotnet tool restore + custom `.git/hooks/pre-commit` shell script
+- Configured backend/runtime stack → restore/install analyzer tools + custom `.git/hooks/pre-commit` shell script
 - Go → pre-commit framework or custom Makefile target
 - Rust → cargo-husky OR pre-commit framework
 - Java / Kotlin → pre-commit framework or Maven/Gradle Git hooks plugin
@@ -146,7 +153,7 @@ Generate:
 
 ## CI Quality Gate Configuration
 
-Detect CI platform from project files:
+Detect CI provider/tooling from repository files:
 
 - `.github/workflows/` → GitHub Actions
 - `.gitlab-ci.yml` → GitLab CI
@@ -154,7 +161,7 @@ Detect CI platform from project files:
 - `Jenkinsfile` → Jenkins
 - `bitbucket-pipelines.yml` → Bitbucket Pipelines
 
-If not detected → `AskUserQuestion`: "Which CI platform does this project use?"
+If not detected → `AskUserQuestion`: "Which CI provider/tooling does this repository use?"
 
 Generate CI job/step that:
 
@@ -164,7 +171,7 @@ Generate CI job/step that:
 4. Runs type checker (fail on any error)
 5. Runs static analyzer (fail on threshold: configurable complexity and duplication)
 6. Runs dependency vulnerability scanner (fail on HIGH/CRITICAL CVEs)
-7. Reports test coverage (fail if below threshold — `AskUserQuestion` to confirm threshold, recommended: 80%)
+7. Reports line-coverage as a DIAGNOSTIC only — NEVER fail the build on a coverage %. Low coverage is a useful untested-area signal; high coverage is not evidence of quality. If a test-strength gate is wanted, `AskUserQuestion`: "Configure a mutation-testing tool (e.g. Stryker / PITest / mutmut, per stack) as the CI test-quality gate?" — gate on mutation score (surviving mutant = missing/weak assertion), with line-coverage reported but ungated. Keep behavior/change-coverage (each behavior-changing file has a test asserting the changed outcome) as the meaningful coverage notion.
 
 **MANDATORY:** CI gate must match pre-commit hooks. If a check runs locally, it runs in CI. No divergence.
 
@@ -188,7 +195,7 @@ After all config files generated, verify MUST ATTENTION each item:
 `AskUserQuestion`:
 
 - **"/harness-setup continues (Recommended)"** — Set up feedforward guides + inferential sensors to complete the outer harness
-- **"/cook"** — Skip harness inventory and begin implementation
+- **"/feature-implement"** — Skip harness inventory and begin implementation
 - **"Skip"** — Continue manually
 
 ---
@@ -206,16 +213,14 @@ After all config files generated, verify MUST ATTENTION each item:
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -232,10 +237,43 @@ After all config files generated, verify MUST ATTENTION each item:
 
 ## Closing Reminders
 
-**MUST ATTENTION** use QUERY TEMPLATES in Tool Research — never hardcode tool names in the research phase
-**MUST ATTENTION** present top 2-3 options per category via `AskUserQuestion` — never auto-select
-**MUST ATTENTION** verify pre-commit hook fires with an intentional violation before marking complete
-**MUST ATTENTION** CI gate must match pre-commit hooks — no divergence between local and CI checks
-**MUST ATTENTION** loosen strict defaults ONLY with explicit user approval
+**IMPORTANT MUST ATTENTION Goal:** Every code change is caught by an automated quality sensor — both locally (fast feedback) AND in CI (enforcement gate) — before it reaches main, with ZERO divergence between the two, by installing the full sensor layer (linter, formatter, type checker, static analyzer, dependency scanner, architecture fitness, pre-commit hook, CI gate) for the detected stack.
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** MUST ATTENTION apply critical/sequential thinking; cite proof, NEVER present guess as fact.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**IMPORTANT MUST ATTENTION** use QUERY TEMPLATES in Tool Research — NEVER hardcode tool names in the research phase; research the detected stack's current ecosystem and present options — why: tool ecosystems churn fast, hardcoded names cargo-cult dead tools.
+**IMPORTANT MUST ATTENTION** present top 2-3 options per category via `AskUserQuestion` — let the user pick; NEVER auto-select — why: tool choice is a team-owned decision, not the skill's.
+**IMPORTANT MUST ATTENTION** verify the pre-commit hook fires with an INTENTIONAL violation (add a lint error, attempt commit, confirm it blocks) before marking complete — why: an unproven gate is no gate.
+**IMPORTANT MUST ATTENTION** CI gate MUST match pre-commit hooks — if a check runs locally it runs in CI, no divergence — why: divergent local/CI checks let violations slip through one path.
+
+**MUST ATTENTION** detect the stack FIRST (`plan.md` → architecture report → tech-stack report); if a critical field is undetectable, `AskUserQuestion` before research — why: every downstream tool choice depends on the stack profile.
+**MUST ATTENTION** configure with the STRICTEST reasonable defaults; loosen ONLY with explicit user approval via `AskUserQuestion` — why: starting strict is easier to loosen than starting loose is to tighten.
+**MUST ATTENTION** ALWAYS emit a stack-agnostic `.editorconfig` and add tool cache dirs to `.gitignore` — why: editorconfig is the one truly portable cross-tool baseline; cached artifacts must never be committed.
+**MUST ATTENTION** order hooks formatter→linter→type-check, staged-files-only, <30s; defer slow checks (static analysis, full type-check) to CI — why: a slow hook gets bypassed, killing local feedback.
+**MUST ATTENTION** report line-coverage as a DIAGNOSTIC only — NEVER fail the build on a coverage %; gate on mutation score if a test-strength gate is wanted — why: high coverage is not evidence of assertion quality.
+**MUST ATTENTION** pre-commit hook framework names ARE allowed (ecosystem glue, not research choices) — the quality tools invoked inside them are the research-driven selections — why: keep the generic/research boundary clear.
+
+**MUST ATTENTION** when confidence in the current ecosystem is <80% (fast-moving or unfamiliar stack), use WebSearch to verify before presenting options — cite confidence % for every recommendation; <60% DO NOT recommend — why: stale tool advice fails silently.
+**MUST ATTENTION** grep/glob the repo for 3+ existing config/CI patterns before generating new ones — match the project's existing layout, don't impose a foreign convention — why: a config that fights local convention gets reverted.
+**MUST ATTENTION** evaluate fit before copying a nearby config — verify the new stack shares the same package manager, CI provider, and conventions as the source — why: closest example ≠ matching preconditions.
+**MUST ATTENTION** bootstrap a `TaskCreate` breakdown (one task per category/config file + a final verification task) BEFORE acting; keep exactly one task `in_progress` — why: long research/config work loses context without external tracking.
+
+**Anti-Rationalization:**
+
+| Evasion                                          | Rebuttal                                                                                            |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| "I know the best linter for this stack"          | Ecosystems churn — research current options, present 2-3 via `AskUserQuestion`. Hardcoding = stale. |
+| "Strict defaults are too aggressive, loosen now" | Start strict; loosen ONLY with explicit user approval. Easier to loosen than to tighten later.      |
+| "Hook works, no need to test it"                 | Fire an INTENTIONAL violation and confirm it blocks. Unproven gate = no gate.                       |
+| "Local checks are enough, skip CI"               | CI gate MUST mirror pre-commit. No divergence — a local-only check is bypassable.                   |
+| "Coverage % is high, gate on it"                 | Coverage is diagnostic only. Gate on mutation score; high coverage ≠ strong assertions.             |
+| "Simple stack, skip task tracking"               | Still bootstrap `TaskCreate`. Skip depth, never skip tracking.                                      |
+
+**IMPORTANT MUST ATTENTION** use QUERY TEMPLATES — NEVER hardcode tool names; present top 2-3 via `AskUserQuestion`.
+**IMPORTANT MUST ATTENTION** prove the pre-commit hook blocks an intentional violation before declaring complete.
+**IMPORTANT MUST ATTENTION** CI gate must match pre-commit hooks — zero divergence between local and CI checks.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and break it into small todo tasks using `TaskCreate`.

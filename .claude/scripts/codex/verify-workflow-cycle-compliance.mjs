@@ -4,63 +4,204 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Prose-only semantic anchor for the advancement+barrier rule, shared (case-insensitively) by
+// every wording across static carriers (Codex context note):
+// "advance only after ALL/EVERY member(s) return". Deliberately
+// NOT a substring of the rendered barrier token "[parallel ⇉ all-return barrier: …]" — so this
+// clause-presence check (W5(c)) proves the rule PROSE reached the carrier independently of the
+// token-parity check below. (Earlier "all-return barrier" was a token substring, making the check
+// near-vacuous for the two token-bearing mirrors; this semantic phrase closes that blind spot.)
+const ADVANCEMENT_CLAUSE_PATTERN = /advance only after (?:all|every) member/i;
+const ADVANCEMENT_CLAUSE_LABEL = 'advance only after ALL/EVERY member(s) return';
+
+// Optional generated mirror surfaces that carry the rendered barrier token. Absent file ⇒
+// that tool's mirror is not enabled in this project (skip, do not fail) — keeps the verifier
+// portable across single-tool checkouts of the framework.
+const CODEX_CARRIER = "AGENTS.md";
+
 const TARGET_WORKFLOW_IDS = [
-  "batch-operation",
-  "big-feature",
-  "bugfix",
-  "feature",
-  "full-feature-lifecycle",
-  "tdd-feature",
-  "test-spec-update",
-  "test-to-integration",
-  "test-verify",
-  "verification",
+  "workflow-big-feature",
+  "workflow-bugfix",
+  "workflow-feature",
+  "workflow-spec-sync",
 ];
 
-const WORKFLOW_SKILL_NAME_OVERRIDES = new Map([
-  ["design-workflow", "workflow-design"],
-  ["spec-discovery", "spec-discovery"],
-  ["workflow-seed-test-data", "workflow-seed-test-data"],
-]);
+// Workflow IDs are all `workflow-`-prefixed and their activation skill dir is identity
+// (`workflow-bugfix` → `.claude/skills/workflow-bugfix/`). No id currently needs a
+// non-identity mapping, so getWorkflowSkillName() returns identity for every id. The empty
+// override map is kept as the extension point if a divergent skill dir is ever introduced.
+const WORKFLOW_SKILL_NAME_OVERRIDES = new Map([]);
 
 const TDD_WORKFLOW_IDS = new Set([
-  "batch-operation",
-  "big-feature",
-  "bugfix",
-  "feature",
-  "full-feature-lifecycle",
-  "tdd-feature",
-  "test-spec-update",
-  "verification",
+  "workflow-big-feature",
+  "workflow-bugfix",
+  "workflow-feature",
+  "workflow-spec-sync",
 ]);
 
 const REVIEW_GATE_WORKFLOW_IDS = new Set([
-  "batch-operation",
-  "big-feature",
-  "bugfix",
-  "feature",
-  "full-feature-lifecycle",
-  "tdd-feature",
-  "test-spec-update",
-  "verification",
+  "workflow-big-feature",
+  "workflow-bugfix",
+  "workflow-feature",
+  "workflow-spec-sync",
 ]);
 
 const IMPLEMENTATION_WORKFLOW_IDS = new Set([
-  "batch-operation",
-  "big-feature",
-  "bugfix",
-  "feature",
-  "full-feature-lifecycle",
-  "tdd-feature",
-  "verification",
+  "workflow-big-feature",
+  "workflow-bugfix",
+  "workflow-feature",
 ]);
 
-const IMPLEMENTATION_STEPS = new Set(["cook", "fix", "code"]);
+const IMPLEMENTATION_STEPS = new Set(["feature-implement", "fix", "plan-execute"]);
+const CANONICAL_SPEC_BEFORE_FIRST_PLAN_WORKFLOW_IDS = new Set([
+  "workflow-bugfix",
+  "workflow-feature",
+]);
+const CANONICAL_SPEC_BEFORE_IMPLEMENTATION_WORKFLOW_IDS = new Set([
+  "workflow-big-feature",
+  "workflow-bugfix",
+  "workflow-feature",
+]);
+const DEBUGGER_TRACE_WORKFLOW_IDS = new Set(["workflow-bugfix"]);
+const DEBUGGER_TRACE_WORKFLOW_TERMS = [
+  "end-to-start",
+  "observed final",
+  "feeder",
+  "hypothesis matrix",
+  "owning fix layer",
+  "forward convergence",
+];
 
 const STEP_ALIASES = new Map([
-  ["feature-investigation", "investigate"],
   ["test-initial", "test"],
 ]);
+
+// --- Goal Contract Satisfaction Loop coverage (FR-GOAL-060..064) ---------------------------------
+// Targeted skills must carry the goal-contract lifecycle: resolve the active goal before work,
+// append iteration evidence after execution, and (for review/workflow surfaces) emit a Goal
+// Satisfaction matrix before reporting PASS. These checks scan the `.claude/skills` root ONLY:
+// `.agents/**` is a generated mirror refreshed by `npm run codex:sync`, so it is legitimately
+// stale between a source edit and the next sync — gating on it would make source-first edits
+// unverifiable. Mirror parity is owned by the sync tooling, not this verifier.
+const GOAL_CONTRACT_MARKER = "SYNC:goal-contract-satisfaction-loop";
+const GOAL_CONTRACT_ACTIVE_GOAL_PATTERN = /active goal|goal contract/i;
+const GOAL_CONTRACT_SATISFACTION_PATTERN = /goal satisfaction/i;
+
+// Entry/implementation/fix skills: must resolve + read the active goal before work.
+const GOAL_CONTRACT_SKILL_IDS = [
+  "plan", // creates {plan-dir}/goal.md during plan bootstrap
+  "start-workflow", // resolves the active goal before child task creation
+  "feature-implement", // reads the goal contract before implementation
+  "plan-execute", // reads the goal during analysis/task extraction
+  "feature", // maps success validation to saved criteria
+  "fix", // active-goal read before root-cause work (ci/issue/logs/test/ui are --target branches)
+  "prove-fix", // goal satisfaction update after fix verdict
+];
+
+// Review gates: must additionally emit Goal Satisfaction status before PASS.
+const GOAL_CONTRACT_REVIEW_SKILL_IDS = [
+  "review-changes",
+  "why-review",
+  "plan-review",
+  "code-review",
+];
+
+// Workflow wrappers + verification/audit surfaces (Phases 05-06). The planned
+// workflow-verification / workflow-quality-audit / workflow-tdd-feature / workflow-test-verify
+// wrappers do not exist as files; their intent maps to: test (verification evidence),
+// quality-gate (audit goal status), workflow-feature (covers TDD/test-first), and
+// integration-test-verify (test verification evidence).
+const GOAL_CONTRACT_WORKFLOW_SKILL_IDS = [
+  "workflow-feature",
+  "workflow-bugfix",
+  "workflow-review-changes",
+  "workflow-write-integration-test",
+  "workflow-code-to-spec",
+  "test",
+  "quality-gate",
+  "integration-test-verify",
+];
+
+// Required structure of a Goal Contract file (see .claude/templates/goal-contract-template.md).
+const GOAL_CONTRACT_FILE_REQUIRED_SECTIONS = [
+  "Original Request",
+  "Purpose",
+  "Success Criteria",
+  "Constraints",
+  "Evidence Required",
+  "Iteration Log",
+  "Goal Satisfaction",
+];
+
+export function checkGoalContractSkillCompliance(skillId, content, { requireSatisfaction = false } = {}) {
+  const failures = [];
+  const hasMarker = content.includes(GOAL_CONTRACT_MARKER);
+  const hasActiveGoalWording = GOAL_CONTRACT_ACTIVE_GOAL_PATTERN.test(content);
+  if (!hasMarker && !hasActiveGoalWording) {
+    failures.push(
+      `Goal-contract violation (${skillId}): missing active-goal lifecycle marker (expected '${GOAL_CONTRACT_MARKER}' wording or active-goal resolution wording)`
+    );
+  }
+  if (requireSatisfaction && !GOAL_CONTRACT_SATISFACTION_PATTERN.test(content)) {
+    failures.push(
+      `Goal-contract violation (${skillId}): missing 'Goal Satisfaction' wording (review/workflow surfaces must emit the Goal Satisfaction matrix before PASS)`
+    );
+  }
+  return failures;
+}
+
+// Validates a concrete Goal Contract file (e.g. a plan's goal.md) end-to-end: all required
+// sections present, a Goal Satisfaction matrix with PASS/FAIL/BLOCKED status, and an escalation
+// reason whenever any criterion is BLOCKED. Exercised by the verifier test suite via a sample
+// lifecycle; exported for reuse by future gates.
+export function checkGoalContractFileLifecycle(content) {
+  const failures = [];
+  for (const section of GOAL_CONTRACT_FILE_REQUIRED_SECTIONS) {
+    const sectionPattern = new RegExp(`^#{1,6}\\s+${section}\\s*$`, "im");
+    if (!sectionPattern.test(content)) {
+      failures.push(`Goal file violation: missing required section '${section}'`);
+    }
+  }
+  if (!/\|\s*Success Criterion\s*\|\s*Evidence\s*\|\s*Status\s*\|/i.test(content)) {
+    failures.push(
+      "Goal file violation: missing Goal Satisfaction matrix header '| Success Criterion | Evidence | Status |'"
+    );
+  }
+  if (!/\b(PASS|FAIL|BLOCKED)\b/.test(content)) {
+    failures.push("Goal file violation: no PASS/FAIL/BLOCKED status recorded");
+  }
+  if (/\bBLOCKED\b/.test(content) && !/escalat/i.test(content)) {
+    failures.push(
+      "Goal file violation: BLOCKED status requires a user-facing escalation reason (escalation wording missing)"
+    );
+  }
+  return failures;
+}
+
+async function checkGoalContractSkillCoverage(rootDir, failures) {
+  const claudeSkillsRoot = path.join(rootDir, ".claude", "skills");
+  const targets = [
+    ...GOAL_CONTRACT_SKILL_IDS.map((id) => ({ id, requireSatisfaction: false })),
+    ...GOAL_CONTRACT_REVIEW_SKILL_IDS.map((id) => ({ id, requireSatisfaction: true })),
+    ...GOAL_CONTRACT_WORKFLOW_SKILL_IDS.map((id) => ({ id, requireSatisfaction: true })),
+  ];
+  let checkedCount = 0;
+  for (const target of targets) {
+    const skillPath = path.join(claudeSkillsRoot, target.id, "SKILL.md");
+    // Absent skill ⇒ this framework checkout does not ship that skill (skip, do not fail) —
+    // same portability rule as the optional mirror carriers above. In the canonical repo all
+    // targeted skills exist, so removals surface through the normal review/diff path.
+    if (!(await exists(skillPath))) continue;
+    const content = await fs.readFile(skillPath, "utf8");
+    failures.push(
+      ...checkGoalContractSkillCompliance(target.id, content, {
+        requireSatisfaction: target.requireSatisfaction,
+      })
+    );
+    checkedCount += 1;
+  }
+  return checkedCount;
+}
 
 function normalizePath(targetPath, rootDir) {
   return path.relative(rootDir, targetPath).replaceAll("\\", "/");
@@ -115,6 +256,16 @@ function parseTaskTableStepsFromSkill(content) {
   return steps;
 }
 
+function parseDisplayStepsFromSkill(content) {
+  const match = content.match(/^\*\*Steps:\*\*\s*(.+)$/m);
+  if (!match) return [];
+
+  return match[1]
+    .split(/\s*(?:->|→)\s*/)
+    .map((token) => normalizeSkillStepToken(token))
+    .filter(Boolean);
+}
+
 function parseClosingTaskCount(content) {
   const match = content.match(/create ALL\s+(\d+)\s+tasks/im);
   return match ? Number.parseInt(match[1], 10) : null;
@@ -145,7 +296,32 @@ function hasOrderedSubsequence(sequence, expectedSubsequence) {
   return false;
 }
 
-function ensureWorkflowPolicy(workflowId, sequence, failures) {
+function findFirstIndex(sequence, predicate) {
+  for (let index = 0; index < sequence.length; index += 1) {
+    if (predicate(sequence[index])) return index;
+  }
+  return -1;
+}
+
+function isCanonicalSpecStep(step) {
+  return step === "spec" || step.startsWith("spec ");
+}
+
+export function checkWorkflowDebuggerTracePolicy(workflowId, workflow) {
+  if (!DEBUGGER_TRACE_WORKFLOW_IDS.has(workflowId)) return null;
+  const haystack = normalizeWhitespace(
+    [
+      workflow?.description ?? "",
+      workflow?.whenToUse ?? "",
+      workflow?.preActions?.injectContext ?? "",
+    ].join(" ")
+  ).toLowerCase();
+  const missing = DEBUGGER_TRACE_WORKFLOW_TERMS.filter((term) => !haystack.includes(term));
+  if (missing.length === 0) return null;
+  return `Workflow policy violation (${workflowId}): missing end-to-start debugger trace metadata term(s): ${missing.join(", ")}`;
+}
+
+function ensureWorkflowPolicy(workflowId, workflow, sequence, failures) {
   if (
     !hasOrderedSubsequence(sequence, [
       "integration-test",
@@ -165,14 +341,14 @@ function ensureWorkflowPolicy(workflowId, sequence, failures) {
   }
 
   if (TDD_WORKFLOW_IDS.has(workflowId)) {
-    if (!hasOrderedSubsequence(sequence, ["tdd-spec", "tdd-spec-review"])) {
+    if (!hasOrderedSubsequence(sequence, ["spec [mode=tests]", "review-artifact --type=spec-tests"])) {
       failures.push(
-        `Workflow policy violation (${workflowId}): missing ordered tdd-spec -> tdd-spec-review`
+        `Workflow policy violation (${workflowId}): missing ordered spec [mode=tests] -> review-artifact --type=spec-tests`
       );
     }
-    if (!sequence.includes("tdd-spec [direction=sync]")) {
+    if (!sequence.includes("spec [mode=sync]")) {
       failures.push(
-        `Workflow policy violation (${workflowId}): missing tdd-spec [direction=sync]`
+        `Workflow policy violation (${workflowId}): missing spec [mode=sync]`
       );
     }
   }
@@ -187,9 +363,75 @@ function ensureWorkflowPolicy(workflowId, sequence, failures) {
     const hasImplementationStep = sequence.some((step) => IMPLEMENTATION_STEPS.has(step));
     if (!hasImplementationStep) {
       failures.push(
-        `Workflow policy violation (${workflowId}): missing implementation step (cook|fix|code)`
+        `Workflow policy violation (${workflowId}): missing implementation step (feature-implement|fix|plan-execute)`
       );
     }
+  }
+
+  const debuggerTraceFailure = checkWorkflowDebuggerTracePolicy(workflowId, workflow);
+  if (debuggerTraceFailure) failures.push(debuggerTraceFailure);
+
+  ensureSddWorkflowPolicy(workflowId, sequence, failures);
+}
+
+function ensureSddWorkflowPolicy(workflowId, sequence, failures) {
+  if (!CANONICAL_SPEC_BEFORE_IMPLEMENTATION_WORKFLOW_IDS.has(workflowId)) return;
+
+  const specIndex = findFirstIndex(sequence, isCanonicalSpecStep);
+  const implementationIndex = findFirstIndex(sequence, (step) => IMPLEMENTATION_STEPS.has(step));
+
+  if (specIndex === -1) {
+    failures.push(
+      `Workflow policy violation (${workflowId}): missing canonical Feature Spec step before implementation planning`
+    );
+    return;
+  }
+
+  if (
+    CANONICAL_SPEC_BEFORE_FIRST_PLAN_WORKFLOW_IDS.has(workflowId) &&
+    sequence.includes("plan")
+  ) {
+    const firstPlanIndex = sequence.indexOf("plan");
+    if (firstPlanIndex >= 0 && specIndex > firstPlanIndex) {
+      failures.push(
+        `Workflow policy violation (${workflowId}): canonical Feature Spec step must run before the first implementation plan`
+      );
+    }
+  }
+
+  if (implementationIndex === -1) return;
+
+  if (specIndex > implementationIndex) {
+    failures.push(
+      `Workflow policy violation (${workflowId}): canonical Feature Spec step must run before implementation step '${sequence[implementationIndex]}'`
+    );
+  }
+
+  const implementationTail = sequence.slice(implementationIndex);
+  const implementationStep = sequence[implementationIndex];
+  if (
+    !hasOrderedSubsequence(implementationTail, [
+      implementationStep,
+      "integration-test",
+      "integration-test-review",
+      "integration-test-verify",
+    ])
+  ) {
+    failures.push(
+      `Workflow policy violation (${workflowId}): implementation must be verified by integration-test -> integration-test-review -> integration-test-verify after '${implementationStep}'`
+    );
+  }
+
+  if (
+    !hasOrderedSubsequence(implementationTail, [
+      implementationStep,
+      "spec [mode=sync]",
+      "docs-update",
+    ])
+  ) {
+    failures.push(
+      `Workflow policy violation (${workflowId}): implementation must be followed by spec [mode=sync] before docs-update`
+    );
   }
 }
 
@@ -205,7 +447,113 @@ function formatSequenceDiff(expected, actual) {
 }
 
 function getWorkflowSkillName(workflowId) {
-  return WORKFLOW_SKILL_NAME_OVERRIDES.get(workflowId) ?? `workflow-${workflowId}`;
+  // Workflow ids are already `workflow-`-prefixed (Object.keys(workflows)); the activation
+  // skill dir is identity for every id (WORKFLOW_SKILL_NAME_OVERRIDES is currently empty).
+  return WORKFLOW_SKILL_NAME_OVERRIDES.get(workflowId) ?? workflowId;
+}
+
+// Inline twin of renderBarrierToken in sync-context-workflows.mjs.
+// MUST stay byte-identical to that renderer — this is the oracle the cross-mirror parity asserts
+// against, so any future format change to the renderer without updating this fails the verifier.
+function renderExpectedBarrierToken(group) {
+  const members = Array.isArray(group?.members) ? group.members : [];
+  const conditional = new Set(Array.isArray(group?.conditionalMembers) ? group.conditionalMembers : []);
+  const rendered = members.map((m) => (conditional.has(m) ? `${m}*` : m)).join(", ");
+  return `[parallel ⇉ all-return barrier: ${rendered}]`;
+}
+
+// W5(a) — structural integrity of every declared parallelGroup (config-only, no mirror dependency):
+// >=2 members, barrier===true, conditionalMembers⊆members, every member ∈ sequence, and no member
+// claimed by two groups in the same workflow. Runs for ALL workflows (no-op when none declared).
+function checkParallelGroupsStructure(workflowId, workflow, rawSequence, failures) {
+  // A present-but-non-array parallelGroups is a misconfiguration, not "no groups" — fail loudly
+  // rather than silently skip (silent skip of a malformed barrier declaration is exactly the
+  // false-pass class this verifier exists to catch).
+  if (workflow?.parallelGroups !== undefined && !Array.isArray(workflow.parallelGroups)) {
+    failures.push(`parallelGroups violation (${workflowId}): parallelGroups must be an array when present`);
+    return;
+  }
+  const groups = Array.isArray(workflow?.parallelGroups) ? workflow.parallelGroups : [];
+  if (groups.length === 0) return;
+  const sequenceSet = new Set(Array.isArray(rawSequence) ? rawSequence : []);
+  const memberOwner = new Map();
+  const seenGroupIds = new Set();
+  for (const group of groups) {
+    const groupId = group?.id ?? "(unnamed)";
+    // id is structurally load-bearing: the Codex mirror renderer dedups groups by id, so a
+    // missing or duplicate id silently drops a group's barrier token from the rendered mirror. Require
+    // a non-empty, unique string id so the validator rejects what the renderer would mis-emit.
+    if (typeof group?.id !== "string" || group.id.trim() === "") {
+      failures.push(`parallelGroups violation (${workflowId}/${groupId}): group must have a non-empty string id`);
+    } else if (seenGroupIds.has(group.id)) {
+      failures.push(`parallelGroups violation (${workflowId}/${group.id}): duplicate group id (each parallel group needs a unique id)`);
+    } else {
+      seenGroupIds.add(group.id);
+    }
+    const members = Array.isArray(group?.members) ? group.members : [];
+    if (members.length < 2) {
+      failures.push(`parallelGroups violation (${workflowId}/${groupId}): a parallel group needs >=2 members`);
+    }
+    if (group?.barrier !== true) {
+      failures.push(`parallelGroups violation (${workflowId}/${groupId}): barrier must be true`);
+    }
+    for (const member of members) {
+      if (!sequenceSet.has(member)) {
+        failures.push(`parallelGroups violation (${workflowId}/${groupId}): member '${member}' is not in the workflow sequence`);
+      }
+      if (memberOwner.has(member)) {
+        failures.push(`parallelGroups violation (${workflowId}/${groupId}): member '${member}' already belongs to group '${memberOwner.get(member)}' (a member must not appear in two groups)`);
+      } else {
+        memberOwner.set(member, groupId);
+      }
+    }
+    const conditional = Array.isArray(group?.conditionalMembers) ? group.conditionalMembers : [];
+    for (const cm of conditional) {
+      if (!members.includes(cm)) {
+        failures.push(`parallelGroups violation (${workflowId}/${groupId}): conditionalMember '${cm}' is not in members`);
+      }
+    }
+  }
+}
+
+// W5(b)+(c) — cross-mirror proof. (b) the expected barrier token is present in the rendered Codex
+// mirror; (c) the advancement clause reached the enabled static carrier. Reads the carrier once.
+// Mirror file is optional (portability).
+async function checkParallelGroupsMirrorParity(workflows, rootDir, failures) {
+  const grouped = Object.entries(workflows).filter(
+    ([, wf]) => Array.isArray(wf?.parallelGroups) && wf.parallelGroups.length > 0
+  );
+  if (grouped.length === 0) return;
+
+  const codexPath = path.join(rootDir, CODEX_CARRIER);
+  const codexText = (await exists(codexPath)) ? await fs.readFile(codexPath, "utf8") : null;
+
+  const clauseCarriers = [
+    { label: `Codex context (${CODEX_CARRIER})`, text: codexText },
+  ];
+  for (const carrier of clauseCarriers) {
+    if (carrier.text === null) continue;
+    if (!ADVANCEMENT_CLAUSE_PATTERN.test(carrier.text)) {
+      failures.push(`parallelGroups carrier check: advancement clause "${ADVANCEMENT_CLAUSE_LABEL}" missing from ${carrier.label}`);
+    }
+  }
+
+  const tokenMirrors = [
+    { label: `Codex (${CODEX_CARRIER})`, text: codexText },
+  ];
+  for (const [workflowId, workflow] of grouped) {
+    for (const group of workflow.parallelGroups) {
+      const expected = renderExpectedBarrierToken(group);
+      for (const mirror of tokenMirrors) {
+        if (mirror.text === null) continue;
+        if (!mirror.text.includes(expected)) {
+          failures.push(
+            `parallelGroups parity (${workflowId}/${group?.id ?? "(unnamed)"}): expected barrier token absent from ${mirror.label} — regenerate mirrors (npm run codex:sync). Expected: ${expected}`
+          );
+        }
+      }
+    }
+  }
 }
 
 async function main() {
@@ -243,8 +591,10 @@ async function main() {
 
     const expectedSteps = normalizeSequence(workflowSequence, stepAliases);
     if (TARGET_WORKFLOW_IDS.includes(workflowId)) {
-      ensureWorkflowPolicy(workflowId, expectedSteps, failures);
+      ensureWorkflowPolicy(workflowId, workflow, expectedSteps, failures);
     }
+
+    checkParallelGroupsStructure(workflowId, workflow, workflowSequence, failures);
 
     const workflowSkillName = getWorkflowSkillName(workflowId);
     for (const skillRoot of skillRoots) {
@@ -297,6 +647,23 @@ async function main() {
         }
       }
 
+      const rawDisplaySteps = parseDisplayStepsFromSkill(skillContent);
+      if (rawDisplaySteps.length > 0 && TARGET_WORKFLOW_IDS.includes(workflowId)) {
+        const displaySteps = normalizeSequence(rawDisplaySteps, stepAliases);
+        if (!arraysEqual(expectedSteps, displaySteps)) {
+          const diff = formatSequenceDiff(expectedSteps, displaySteps);
+          failures.push(
+            [
+              `Display-steps drift detected for workflow '${workflowId}' in ${normalizePath(skillPath, rootDir)}`,
+              `  missing: [${diff.missing.join(", ")}]`,
+              `  extra:   [${diff.extra.join(", ")}]`,
+              `  expected: ${diff.expected.join(" -> ")}`,
+              `  actual:   ${diff.actual.join(" -> ")}`,
+            ].join("\n")
+          );
+        }
+      }
+
       const closingTaskCount = parseClosingTaskCount(skillContent);
       if (closingTaskCount !== null && closingTaskCount !== expectedSteps.length) {
         failures.push(
@@ -305,6 +672,10 @@ async function main() {
       }
     }
   }
+
+  await checkParallelGroupsMirrorParity(workflows, rootDir, failures);
+
+  const goalContractCheckedCount = await checkGoalContractSkillCoverage(rootDir, failures);
 
   if (failures.length > 0) {
     console.error("[codex-verify-workflow-cycle] FAIL");
@@ -315,8 +686,11 @@ async function main() {
     return;
   }
 
+  const groupedCount = workflowIds.filter(
+    (id) => Array.isArray(workflows[id]?.parallelGroups) && workflows[id].parallelGroups.length > 0
+  ).length;
   console.log(
-    `[codex-verify-workflow-cycle] PASS (${workflowIds.length} workflow(s) across .claude/.agents skills; ${TARGET_WORKFLOW_IDS.length} policy-checked)`
+    `[codex-verify-workflow-cycle] PASS (${workflowIds.length} workflow(s) across .claude/.agents skills; ${TARGET_WORKFLOW_IDS.length} policy-checked; ${groupedCount} parallelGroups workflow(s) parity-checked; ${goalContractCheckedCount} goal-contract skill(s) checked)`
   );
 }
 
@@ -333,6 +707,8 @@ export {
   REVIEW_GATE_WORKFLOW_IDS,
   IMPLEMENTATION_WORKFLOW_IDS,
   IMPLEMENTATION_STEPS,
+  CANONICAL_SPEC_BEFORE_FIRST_PLAN_WORKFLOW_IDS,
+  CANONICAL_SPEC_BEFORE_IMPLEMENTATION_WORKFLOW_IDS,
   STEP_ALIASES,
   WORKFLOW_SKILL_NAME_OVERRIDES,
   getWorkflowSkillName,
@@ -340,7 +716,16 @@ export {
   ensureWorkflowPolicy,
   normalizeSequence,
   parseStepsFromSkill,
+  parseDisplayStepsFromSkill,
   parseTaskTableStepsFromSkill,
   parseClosingTaskCount,
   formatSequenceDiff,
+  renderExpectedBarrierToken,
+  checkParallelGroupsStructure,
+  checkParallelGroupsMirrorParity,
+  GOAL_CONTRACT_MARKER,
+  GOAL_CONTRACT_SKILL_IDS,
+  GOAL_CONTRACT_REVIEW_SKILL_IDS,
+  GOAL_CONTRACT_WORKFLOW_SKILL_IDS,
+  GOAL_CONTRACT_FILE_REQUIRED_SECTIONS,
 };

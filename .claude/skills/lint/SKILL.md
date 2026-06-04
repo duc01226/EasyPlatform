@@ -7,12 +7,12 @@ disable-model-invocation: false
 
 ## Quick Summary
 
-**Goal:** Run linters (.NET analyzers and/or ESLint/Prettier) and report or auto-fix code quality issues.
+**Goal:** Run the project's configured linters/analyzers (resolve the commands from `docs/project-config.json` / project-reference docs) and report or auto-fix code quality issues. Commands shown below are illustrative examples — substitute your stack's tooling.
 
 **Workflow:**
 
 1. **Parse** — Determine scope from arguments: backend, frontend, or both; fix mode or report-only
-2. **Execute** — Run `dotnet build` for .NET analyzers or `nx lint` / `prettier` for Angular
+2. **Execute** — Run the repository's configured lint/analyzer commands from project config and package/build manifests
 3. **Report** — Group issues by severity (error/warning/info) with file paths and line numbers
 
 **Key Rules:**
@@ -28,12 +28,12 @@ Run linting: $ARGUMENTS
 ## Instructions
 
 1. **Parse arguments**:
-    - `backend` or `be` → Run .NET analyzers
-    - `frontend` or `fe` → Run ESLint/Prettier
+    - `backend` or `be` → Run the backend analyzers/linters
+    - `frontend` or `fe` → Run the frontend linters/formatters
     - `fix` → Auto-fix issues where possible
     - No argument → Run both, report only
 
-2. **For Backend (.NET)**:
+2. **For Backend** — run the configured backend analyzer/build command:
 
     ```bash
     dotnet build {SolutionName}.sln /p:TreatWarningsAsErrors=false
@@ -42,18 +42,18 @@ Run linting: $ARGUMENTS
     - Check for analyzer warnings (CA*, IDE*, etc.)
     - Report code style violations
 
-3. **For Frontend (Angular/Nx)**:
+3. **For Frontend** — run the configured frontend lint/format command:
 
     ```bash
-    cd src/{ExampleAppWeb}
-    nx lint playground-text-snippet
+    cd {frontend-workspace-path}
+    nx lint <app-name>
     nx lint {lib-name}
     ```
 
 With auto-fix:
 
     ```bash
-    nx lint playground-text-snippet --fix
+    nx lint <app-name> --fix
     npx prettier --write "apps/**/*.{ts,html,scss}" "libs/**/*.{ts,html,scss}"
     ```
 
@@ -99,16 +99,14 @@ With auto-fix:
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -118,19 +116,30 @@ With auto-fix:
 
 <!-- /SYNC:understand-code-first:reminder -->
 
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** apply critical + sequential thinking; traced `file:line` proof, confidence >80%.
+- **Understand Code First:** search 3+ patterns and read code before any modification.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
 **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code

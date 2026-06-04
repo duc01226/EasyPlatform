@@ -48,7 +48,6 @@
         "cssMethodology": "",
         "stateManagement": "",
         "crossModuleValidation": "",
-        "featureDocPath": "docs/business-features/",
         "featureDocTemplate": "",
         "reviewRulesDoc": ""
     },

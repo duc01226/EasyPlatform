@@ -1,6 +1,6 @@
 ---
 name: prove-fix
-description: '[Code Quality] Use when you need prove fix correctness with code proof traces, confidence scoring, and stack-trace-style evidence chains.'
+description: '[Code Quality] Use when you need to prove fix correctness with code proof traces, confidence scoring, and stack-trace-style evidence chains.'
 ---
 
 > Codex compatibility note:
@@ -19,7 +19,7 @@ description: '[Code Quality] Use when you need prove fix correctness with code p
 
 ## Codex Project-Reference Loading (No Hooks)
 
-Codex does not receive Claude hook-based doc injection.
+Codex uses static project-reference loading instead of runtime-injected project docs.
 When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.
 
 **Always read:**
@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,7 +56,14 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Prove (or disprove) that each fix change is correct by building a code proof trace — like a debugger stack trace — with confidence percentages per change.
+**Goal:** Block shipping an unproven fix — build a code proof trace (like a debugger stack trace) for each fix change with confidence percentages, so every code change carries a `file:line` evidence chain and confidence score and a fix ships only when its correctness is proven (≥80%), not assumed.
+
+**Summary:**
+
+- Runs AFTER `$fix` (never before) as the non-negotiable verification gate between `$fix` and `$code-simplifier`; build a stack-trace-style proof chain (symptom → trigger path → root cause → fix mechanism → why-correct → edge cases → side effects) per change, every arrow carrying `file:line`.
+- Score each change with the points rubric (root cause +25, fix mechanism +20, pattern precedent +15, framework +10, edge cases +5 each, side effects +10, no regressions +5) → ≥80% ship, 60-79% flag, <60% BLOCK; pattern precedent (1+ working example) and edge cases (error/null/concurrent) are required, not optional.
+- Map every fix part to a primary/contributing/latent root cause from the hypothesis matrix and prove ALL feeder paths are closed; finish with cross-change checks (interaction, completeness, regression, dependency, performance incl. paging/index DB protocol) and a final verdict.
+- After the verdict, resolve the active Goal Contract: map each proof trace to its success criterion, update the Goal Satisfaction matrix — a SHIP verdict does NOT close work while any required criterion remains FAIL.
 
 **Workflow:**
 
@@ -81,7 +92,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 # Prove Fix
 
-Post-fix verification skill that builds evidence-based proof chains for every code change. Think of it as a code debugger's stack trace, but for proving WHY a fix is correct.
+Post-fix verification skill building evidence-based proof chains for every code change. A code debugger's stack trace, but for proving WHY a fix is correct.
 
 ---
 
@@ -89,13 +100,13 @@ Post-fix verification skill that builds evidence-based proof chains for every co
 
 - **After `$fix`** in bugfix, hotfix, or any fix workflow
 - After applying code changes that fix a reported bug
-- When you need to verify fix correctness before review/commit
+- Verify fix correctness before review/commit
 
 ## When NOT to Use
 
-- Before the fix is applied (use `$debug-investigate` instead)
-- For new feature verification (use `$test` instead)
-- For code quality review (use `$code-review` instead)
+- Before fix applied (use `$debug-investigate` instead)
+- New feature verification (use `$test` instead)
+- Code quality review (use `$code-review` instead)
 
 ---
 
@@ -123,7 +134,7 @@ CHANGE #N: [short description]
 
 ## Step 2: Proof Trace (per change)
 
-For EACH change, build a **stack-trace-style proof chain**. This is the core of the skill.
+For EACH change, build a **stack-trace-style proof chain** — the core of the skill.
 
 ### Proof Trace Format
 
@@ -144,16 +155,20 @@ TRIGGER PATH (how the symptom occurs):
 ROOT CAUSE (proven):
   → [One sentence: what exactly is wrong and why]
   → Evidence: [file:line] shows [specific code proving the bug]
+  → Hypothesis matrix mapping: RC-[N] status [primary/contributing/latent] from [report path/section]
+  → Feeder paths closed: [path names or "single path verified"]; unresolved paths: [none/list]
 
 FIX MECHANISM (how the change fixes it):
   → [One sentence: what the fix does differently]
   → Before: [broken code path with file:line]
   → After:  [fixed code path with file:line]
+  → Owning fix layer: [layer/component] — why this is the lowest shared owner
 
 WHY THIS FIX IS CORRECT:
   → [Reasoning backed by code evidence]
   → Pattern precedent: [file:line] shows same pattern working elsewhere
   → Framework behavior: [file:line or doc reference] confirms expected behavior
+  → Forward convergence: [origin/trigger] -> [corrected transformations] -> [observed final output no longer stale/wrong]
 
 EDGE CASES CHECKED:
   → [edge case 1]: [verified/not-verified] — [evidence]
@@ -171,9 +186,12 @@ CONFIDENCE: [X%]
 
 1. **Every arrow (→) MUST ATTENTION have a `file:line` reference** — no exceptions
 2. **TRIGGER PATH must be traceable** — someone should be able to follow it step-by-step in the code
-3. **Pattern precedent is REQUIRED** — find at least 1 working example of the same pattern elsewhere in the codebase
-4. **Edge cases MUST ATTENTION be enumerated** — at minimum: error path, null/empty input, concurrent access
-5. **Side effects MUST ATTENTION be assessed** — what else could this change affect?
+3. **Hypothesis matrix mapping is REQUIRED for bugfixes** — every fix part maps to a primary/contributing/latent root cause or is flagged as unrelated scope
+4. **Feeder paths must be accounted for** — prove the fix closes every path that can write the final observed state, or explicitly list remaining unverified paths
+5. **Pattern precedent is REQUIRED** — find at least 1 working example of the same pattern elsewhere in the codebase
+6. **Edge cases MUST ATTENTION be enumerated** — at minimum: error path, null/empty input, concurrent access
+7. **Side effects MUST ATTENTION be assessed** — what else could this change affect?
+8. **Spec-loop evidence is REQUIRED for a complete proof** (canonical: `SYNC:spec-loop-discipline`) — the proof MUST carry, with `file:line`: (a) the **regression property TC** guarding the fixed invariant — a universally-quantified property ("for ALL inputs in {domain}, {invariant} holds") + boundary counter-case, not just the reproduction example; (b) **mutation-kill evidence** for the fixed core-logic line — show a surviving mutant on that line is now killed (MUTATION-SCORE bar, not line-coverage %); (c) a **Dual-Feedback entry** — the spec rule restored/added AND the guarding test that feeds it back. A proof trace missing any of (a)/(b)/(c) is INCOMPLETE — cap its confidence below the 80% ship threshold until the spec-loop evidence is supplied.
 
 ---
 
@@ -251,6 +269,8 @@ Verification Method:
 
 Recommendation: [SHIP / SHIP WITH CAVEATS / INVESTIGATE FURTHER / BLOCK]
 ```
+
+**Goal Satisfaction update (MANDATORY after verdict):** resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` and map each proof trace to the saved success criterion it satisfies. Append proof evidence and remaining gaps to the goal file's Iteration Log and update its Goal Satisfaction matrix (PASS/FAIL/BLOCKED per criterion). A SHIP recommendation does NOT close the work while any required goal criterion remains FAIL — route the validated gap into another bounded fix loop or escalate a blocker.
 
 ---
 
@@ -345,7 +365,7 @@ This skill is the **mandatory verification gate** between `$fix` and `$code-simp
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → fix → prove-fix → review → test
+> 1. **Activate `workflow-bugfix` workflow** (Recommended) — scout → investigate → debug → plan → fix → prove-fix → review → test
 > 2. **Execute `$prove-fix` directly** — run this skill standalone
 
 ---
@@ -363,11 +383,28 @@ This skill is the **mandatory verification gate** between `$fix` and `$code-simp
 
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+<!-- SYNC:end-to-start-debugger-trace -->
+
+> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
+>
+> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
+> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
+> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
+> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
+> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
+> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
+>
+> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
+>
+> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+
+<!-- /SYNC:end-to-start-debugger-trace -->
 
 <!-- SYNC:ui-system-context -->
 
@@ -451,22 +488,22 @@ This skill is the **mandatory verification gate** between `$fix` and `$code-simp
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -475,6 +512,11 @@ This skill is the **mandatory verification gate** between `$fix` and `$code-simp
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
 
 <!-- /SYNC:understand-code-first:reminder -->
+
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:ui-system-context:reminder -->
 
@@ -496,15 +538,28 @@ This skill is the **mandatory verification gate** between `$fix` and `$code-simp
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:end-to-start-debugger-trace:reminder -->
+
+**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+
+<!-- /SYNC:end-to-start-debugger-trace:reminder -->
+
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
@@ -519,39 +574,94 @@ This skill is the **mandatory verification gate** between `$fix` and `$code-simp
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via a direct user question — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+**IMPORTANT MUST ATTENTION Goal:** block shipping an unproven fix — build a `file:line` proof trace (debugger-style: symptom → root cause → fix mechanism → why-correct → edge cases → side effects) and confidence score per change, so a fix ships only when correctness is PROVEN (≥80%), never assumed.
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+- **End-to-Start Trace:** start at observed output, trace backward, hypothesis matrix before fixing.
+- **UI System Context:** read frontend-patterns, scss-styling, design-system before any UI change.
+- **Graph Investigation:** run ≥1 graph command on key files when graph.db exists.
+- **Critical Thinking:** traced `file:line` proof per claim; confidence >80% to act.
+- **Understand Code First:** grep 3+ patterns and read code before any modification.
+- **Fix-Layer Accountability:** trace full data flow, fix at owning layer not crash site.
+- **Source/Test Drift:** when source behavior changes, reconcile affected unit/integration/E2E tests from evidence.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**IMPORTANT MUST ATTENTION** every arrow (→) in every proof trace MUST ATTENTION carry a `file:line` reference — no exceptions; a claim without traced evidence is speculation and BLOCKS the ship. — why: a proof chain with an unproven link proves nothing.
+**IMPORTANT MUST ATTENTION** score each change with the points rubric (root cause +25, fix mechanism +20, pattern precedent +15, framework +10, edge cases +5 each, side effects +10, no regressions +5) → ≥80% ship · 60-79% flag to user · <60% BLOCK; NEVER ship a <80% change — route it back to `$debug-investigate` or `$fix`. — why: the threshold is the gate; bypassing it defeats the skill.
+**IMPORTANT MUST ATTENTION** run AFTER `$fix`, never before — this is the non-negotiable verification gate between `$fix` and `$code-simplifier`; NEVER skip it because the fix "looks obviously right". — why: obviousness is the exact illusion this gate exists to break.
+
+**Domain protocols this proof MUST NOT skip:**
+
+**IMPORTANT MUST ATTENTION** pattern precedent is REQUIRED, not optional — cite at least 1 working example of the same pattern at `file:line` elsewhere in the codebase; "no precedent found" caps confidence below 80%. — why: a fix with no precedent is an unproven invention.
+**IMPORTANT MUST ATTENTION** edge cases are REQUIRED — enumerate at minimum error path, null/empty input, concurrent access, each verified with evidence; assess side effects (what else this change touches). — why: the happy path passing is not the change being correct.
+**IMPORTANT MUST ATTENTION** spec-loop evidence is REQUIRED for a complete proof (`SYNC:spec-loop-discipline`) — (a) a regression PROPERTY TC (∀ inputs in {domain}, invariant holds) + boundary counter-case, (b) mutation-kill evidence on the fixed line (MUTATION-SCORE, not line-coverage %), (c) a Dual-Feedback entry (spec rule restored + guarding test); missing any one caps confidence below 80%. — why: line coverage and a single reproduction example let the original defect class survive.
+**IMPORTANT MUST ATTENTION** map every fix part to a primary/contributing/latent root cause from the hypothesis matrix and prove ALL feeder paths are closed; fix at the LOWEST shared owning layer, NEVER patch the crash/symptom site. — why: a symptom-site patch leaves the real cause writing bad state through other paths.
+**IMPORTANT MUST ATTENTION** for non-trivial bug/fix work, start at the observed final output and trace BACKWARD (reader → storage/projection → writer → consumer/job → producer/trigger) before proposing a fix; build the hypothesis matrix first. — why: starting at the first suspicious line fixes a symptom, not the cause.
+**IMPORTANT MUST ATTENTION** run the Database Performance Protocol in cross-verification — ALL list/collection queries paginated (no unbounded `GetAll/ToList/Find`), ALL filter/FK/sort columns indexed. — why: a correct fix that degrades query performance ships a new regression.
+**IMPORTANT MUST ATTENTION** when `.code-graph/graph.db` exists, run a `trace --direction downstream` on the fixed file to prove no downstream consumer breaks; include trace output as proof evidence. — why: a green local change can silently break a distant caller.
+**IMPORTANT MUST ATTENTION** resolve the active Goal Contract AFTER the verdict (`SYNC:goal-contract-satisfaction-loop`) — map each proof trace to its success criterion, emit the PASS/FAIL/BLOCKED matrix; a SHIP verdict does NOT close work while any required criterion remains FAIL. — why: a verified change is not a satisfied goal.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small task tracking todos BEFORE starting (one task per change/proof), keep exactly one `in_progress`, add a final review todo; on context loss the current task list first — resume, never duplicate.
+
+**Anti-Rationalization:**
+
+| Evasion                                    | Rebuttal                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| "Fix is obviously correct, skip the proof" | Obviousness is the illusion this gate breaks. Build the trace anyway — every arrow `file:line`.  |
+| "No precedent, but it's clearly right"     | No precedent caps confidence <80%. Find a working example or mark the change unproven.           |
+| "Reproduction test passes, that's enough"  | A single example ≠ a property. Add the universally-quantified regression TC + boundary case.     |
+| "Line coverage is green"                   | Coverage ≠ kill. Show the surviving mutant on the fixed line is now killed (mutation score).     |
+| "I'll just patch where it crashes"         | Crash site ≠ cause site. Trace backward, fix the lowest invariant owner that protects all paths. |
+| "Score is 75%, close enough to ship"       | <80% BLOCKS. Flag to user or return to `$debug-investigate` — never round a confidence up.       |
+
+**IMPORTANT MUST ATTENTION** run AFTER `$fix` only; every arrow carries `file:line`; score ≥80% to ship, <60% BLOCK — these three are the gate. (primacy-recency echo of the top three)
+
+**[TASK-PLANNING]** Before acting, analyze task scope and break it into small task tracking todos systematically before starting — this is very important.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
 
 ## Hookless Prompt Protocol Mirror (Auto-Synced)
 
-Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
+Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:full` blocks) + `.claude/scripts/lib/hookless-prompt-protocol.cjs`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
-   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
-   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
+
+## Shared AI-SDD Protocol Markers
+
+Source: `.claude/skills/shared/sync-inline-versions.md`
+
+## SYNC:ai-sdd-artifact-contract
+
+> **AI-SDD Artifact Contract** — Shared spec-driven development rules stay portable and source-owned.
+>
+> 1. Keep reusable AI-SDD principles in `.claude`; put repository-specific paths, commands, owners, products, and formats in project config/reference docs.
+> 2. Preserve cycle: `spec -> plan -> tasks -> implement -> verify -> update spec/docs`.
+> 3. Trace every requirement or invariant through decision, task, TC/test, source evidence, and docs/spec update.
+> 4. Treat code-to-spec extraction as reference-only until accepted by the canonical spec owner.
+> 5. Any supported AI tool may plan, implement, review, or verify with synced context; using multiple tools is optional.
+> 6. Update `.claude` source first, then sync generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`. — why: mirrors are generated artifacts; hand-edits are overwritten on the next sync
+> 7. If `docs/project-config.json`, root instruction files, or a required project-reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
+>
+> **Active reference:** `shared/sdd-artifact-contract.md` in the active skills root.
+
+---
+
+## SYNC:ai-sdd-artifact-contract:reminder
+
+- **MANDATORY** Apply `shared/sdd-artifact-contract.md`; keep reusable AI-SDD in `.claude` and local rules in project docs.
+- **MANDATORY** Code-to-spec extraction is reference-only until canonical acceptance; any supported AI tool may execute with synced context.
+- **MANDATORY** Update `.claude` source before syncing generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`.
+- **MANDATORY** Missing or stale project config, root instruction files, or required reference docs route project-specific work through `$project-init` or the narrow setup route automatically.
+  **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 
@@ -564,8 +674,42 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
-   **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
+   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
+
+## Common AI Mistake Prevention (System Lessons)
+
+- **Re-read files after context compaction.** Edit requires prior Read in same context; compaction wipes read state. Re-read before editing.
+- **Grep for old terms after bulk replacements.** AI over-trusts find/replace completeness. Grep full repo after bulk edits for missed refs in docs/configs/catalogs.
+- **Check downstream references before deleting.** Deletions cascade doc/code staleness. Map referencing files before removal.
+- **After memory loss, check existing state before creating new.** Compaction wipes prior-work memory. Query current state to resume — never blindly duplicate.
+- **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, method signatures. Grep to confirm existence before documenting/referencing.
+- **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Trace the full chain.
+- **When renaming, grep ALL consumer file types.** Some file types silently ignore missing refs (no compile error). Search code, templates, configs, generated files.
+- **Trace ALL code paths when verifying correctness.** Code existing ≠ code executing. Trace early exits, error branches, conditional skips — not just happy path.
+- **Update docs that embed canonical data when source changes.** Docs inlining derived data (workflows, schemas, configs) go stale silently. Update all embedding docs alongside source.
+- **Verify sub-agent results after context recovery.** Background agents may finish while parent compacted — grep-verify output, don't trust assumed completion.
+- **Cross-check full target list against sub-agent assignments.** Parallel sub-agents by category miss boundary items. Reconcile union of assignments against target list before proceeding.
+- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
+- **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
+- **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
+- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
+- **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
+- **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
+- **Surgical changes — apply the diff test (context-aware).** Two modes: (1) Bug fix → every line traces to the bug; no restyling; orphan cleanup only for imports YOUR changes made unused. (2) Review/enhancement → implement improvements AND announce as "Enhancement beyond main request: [what]". Never silently scope-creep. Diff test: "Would this line exist if I wasn't asked to do X?" — if no, delete or announce.
+- **Surface ambiguity before coding — don't pick silently.** Multiple valid interpretations → present each with effort: "[Request] could mean (1) [N h], (2) [N h]. Which matters?" List scope/format/volume/constraints assumptions first. If simpler path exists, say so. Never silently pick.
+- **[MANDATORY FIRST ACTION] ALWAYS activate a suitable skill or workflow BEFORE responding.** Match task against workflow catalog + skill list; invoke via skill invocation or `$start-workflow <workflowId>`. NEVER answer or write code before checking. Skip = protocol violation.
+- **Why-Review adversarial mindset — apply when reviewing any plan, decision, or design.** Default SKEPTIC not VALIDATOR: steel-man a rejected alternative, invert each stated reason ("what does it sacrifice?"), stress-test top 2-3 assumptions, run pre-mortem ("ships, fails in 3 months — what breaks?"), surface 1-2 alternatives author missed. Section presence ≠ quality; quality = causal reasoning + concrete mitigations + evidence, not "it's better" or "monitor closely".
+- **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
+- **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
+- **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

@@ -65,7 +65,10 @@ const unitTests = [
         }
     },
     {
-        name: '[init-reference-docs] getReferenceDocs reads from project-config.json',
+        // Canonical-floor merge (root-cause fix): config extras are APPENDED to the
+        // canonical set, never used to REPLACE it. Previously a non-empty config
+        // fully overrode DEFAULT_REFERENCE_DOCS — that silent suppression was the bug.
+        name: '[init-reference-docs] getReferenceDocs merges project-config extras onto canonical floor',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
@@ -89,11 +92,18 @@ const unitTests = [
                 const origDir = process.env.CLAUDE_PROJECT_DIR;
                 process.env.CLAUDE_PROJECT_DIR = tmpDir;
                 try {
-                    const { getReferenceDocs } = require(modulePath);
+                    const { getReferenceDocs, DEFAULT_REFERENCE_DOCS } = require(modulePath);
                     const docs = getReferenceDocs();
-                    assertEqual(docs.length, 2, 'Should return 2 custom docs');
-                    assertEqual(docs[0].filename, 'custom-guide.md', 'First custom doc');
-                    assertEqual(docs[1].filename, 'api-docs.md', 'Second custom doc');
+                    const names = docs.map(d => d.filename);
+                    assertEqual(docs.length, DEFAULT_REFERENCE_DOCS.length + 2, 'Canonical floor + 2 extras');
+                    assertEqual(docs[0].filename, 'project-structure-reference.md', 'Canonical docs come first, in canonical order');
+                    // Every canonical doc is still present — config can never suppress the floor.
+                    for (const canon of DEFAULT_REFERENCE_DOCS) {
+                        assertTrue(names.includes(canon.filename), `Canonical doc preserved: ${canon.filename}`);
+                    }
+                    // Project-specific extras are appended after the canonical block.
+                    assertEqual(names[names.length - 2], 'custom-guide.md', 'First extra appended after canonical block');
+                    assertEqual(names[names.length - 1], 'api-docs.md', 'Second extra appended after canonical block');
                 } finally {
                     if (origDir === undefined) { delete process.env.CLAUDE_PROJECT_DIR; } else { process.env.CLAUDE_PROJECT_DIR = origDir; }
                     delete require.cache[modulePath];
@@ -103,6 +113,138 @@ const unitTests = [
             } finally {
                 cleanupTempDir(tmpDir);
             }
+        }
+    },
+    {
+        // Defense-in-depth: a partial/legacy config (the exact drift shape) must NOT
+        // suppress canonical docs, and a legacy filename must collapse onto its
+        // canonical target without producing a duplicate.
+        name: '[init-reference-docs] mergeReferenceDocs enforces canonical floor and absorbs legacy aliases',
+        fn: async () => {
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[helpersPath];
+            const { mergeReferenceDocs, DEFAULT_REFERENCE_DOCS } = require(helpersPath);
+
+            // Drifted config: only 2 canonical entries, one of them the LEGACY name.
+            const merged = mergeReferenceDocs([
+                { filename: 'feature-docs-reference.md', purpose: 'Legacy feature docs', sections: [] },
+                { filename: 'backend-patterns-reference.md', purpose: 'Project backend', sections: ['X'] }
+            ]);
+            const names = merged.map(d => d.filename);
+
+            assertEqual(merged.length, DEFAULT_REFERENCE_DOCS.length, 'No suppression and no duplicate — exactly the canonical floor');
+            assertTrue(!names.includes('feature-docs-reference.md'), 'Legacy filename absorbed, not emitted');
+            assertTrue(names.includes('feature-spec-reference.md'), 'Legacy resolved to canonical target');
+            assertEqual(names.filter(n => n === 'feature-spec-reference.md').length, 1, 'Canonical target appears exactly once');
+
+            // Config override applies to purpose/sections of the matched canonical doc...
+            const backend = merged.find(d => d.filename === 'backend-patterns-reference.md');
+            assertEqual(backend.purpose, 'Project backend', 'Config purpose override honored');
+            assertEqual(JSON.stringify(backend.sections), JSON.stringify(['X']), 'Config sections override honored');
+
+            // ...but the canonical templatePath stays authoritative (config cannot repoint it).
+            const featureSpec = merged.find(d => d.filename === 'feature-spec-reference.md');
+            assertEqual(featureSpec.templatePath, '.claude/templates/reference-docs/feature-spec-reference.md', 'Canonical templatePath preserved');
+
+            delete require.cache[helpersPath];
+        }
+    },
+    {
+        name: '[init-reference-docs] normalizeReferenceDocs reports renames, additions, and removed legacy entries',
+        fn: async () => {
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[helpersPath];
+            const { normalizeReferenceDocs, DEFAULT_REFERENCE_DOCS } = require(helpersPath);
+
+            const result = normalizeReferenceDocs([
+                { filename: 'feature-docs-reference.md', purpose: 'Legacy', sections: [] },
+                { filename: 'project-structure-reference.md', purpose: 'Struct', sections: [] }
+            ]);
+
+            assertEqual(result.changed, true, 'Drifted config flagged as changed');
+            assertEqual(JSON.stringify(result.renames), JSON.stringify([{ from: 'feature-docs-reference.md', to: 'feature-spec-reference.md' }]), 'Legacy rename reported');
+            assertEqual(JSON.stringify(result.removedLegacy), JSON.stringify(['feature-docs-reference.md']), 'Legacy entry flagged for removal');
+            assertEqual(result.normalized.length, DEFAULT_REFERENCE_DOCS.length, 'Normalized to canonical floor');
+            assertTrue(result.added.includes('seed-test-data-reference.md'), 'Missing canonical doc reported as added');
+            assertTrue(!result.added.includes('feature-spec-reference.md'), 'Alias target already satisfied — not double-counted as added');
+
+            // Idempotency: normalizing the canonical set reports no change.
+            const stable = normalizeReferenceDocs(DEFAULT_REFERENCE_DOCS);
+            assertEqual(stable.changed, false, 'Canonical config is stable (idempotent)');
+            assertEqual(stable.renames.length, 0, 'No renames on canonical config');
+            assertEqual(stable.added.length, 0, 'No additions on canonical config');
+
+            delete require.cache[helpersPath];
+        }
+    },
+    {
+        // Alias-collision: a config carrying BOTH the legacy name AND its canonical target must
+        // collapse to exactly one canonical doc regardless of entry order, and the canonical-named
+        // entry's overrides must win over the legacy alias (the legacy entry never wins or duplicates).
+        name: '[init-reference-docs] mergeReferenceDocs collapses legacy+canonical collision to one canonical doc (both orderings)',
+        fn: async () => {
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[helpersPath];
+            const { mergeReferenceDocs, DEFAULT_REFERENCE_DOCS } = require(helpersPath);
+
+            const legacy = { filename: 'feature-docs-reference.md', purpose: 'LEGACY purpose', sections: ['legacy'] };
+            const canonical = { filename: 'feature-spec-reference.md', purpose: 'CANONICAL purpose', sections: ['canonical'] };
+
+            for (const [order, docs] of [['legacy-first', [legacy, canonical]], ['canonical-first', [canonical, legacy]]]) {
+                const merged = mergeReferenceDocs(docs);
+                const names = merged.map(d => d.filename);
+                assertEqual(merged.length, DEFAULT_REFERENCE_DOCS.length, `${order}: no duplicate — exactly the canonical floor`);
+                assertEqual(names.filter(n => n === 'feature-spec-reference.md').length, 1, `${order}: canonical target appears exactly once`);
+                assertTrue(!names.includes('feature-docs-reference.md'), `${order}: legacy filename never emitted`);
+                const doc = merged.find(d => d.filename === 'feature-spec-reference.md');
+                assertEqual(doc.purpose, 'CANONICAL purpose', `${order}: canonical-named entry wins over legacy alias`);
+                assertEqual(JSON.stringify(doc.sections), JSON.stringify(['canonical']), `${order}: canonical sections win`);
+            }
+
+            delete require.cache[helpersPath];
+        }
+    },
+    {
+        // Whitespace defense (MED-1/LOW-1 regression): a human-edited legacy entry with trailing
+        // whitespace must still resolve to its canonical target — never leak to `extras` as a bogus
+        // project doc — and normalizeReferenceDocs must report it as a rename for config repair.
+        name: '[init-reference-docs] trailing-whitespace legacy filename resolves to canonical (no bogus extra)',
+        fn: async () => {
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[helpersPath];
+            const { mergeReferenceDocs, normalizeReferenceDocs, DEFAULT_REFERENCE_DOCS } = require(helpersPath);
+
+            const merged = mergeReferenceDocs([{ filename: 'feature-docs-reference.md ', purpose: 'Legacy', sections: [] }]);
+            const names = merged.map(d => d.filename);
+            assertEqual(merged.length, DEFAULT_REFERENCE_DOCS.length, 'No bogus extra — exactly the canonical floor');
+            assertTrue(names.includes('feature-spec-reference.md'), 'Whitespace legacy resolved to canonical target');
+            assertTrue(!names.some(n => n.trim() === 'feature-docs-reference.md'), 'Legacy name (spaced or not) never emitted');
+
+            const result = normalizeReferenceDocs([{ filename: 'feature-docs-reference.md ', purpose: 'Legacy', sections: [] }]);
+            assertEqual(JSON.stringify(result.renames), JSON.stringify([{ from: 'feature-docs-reference.md', to: 'feature-spec-reference.md' }]), 'Whitespace legacy reported as rename (trimmed)');
+            assertEqual(JSON.stringify(result.removedLegacy), JSON.stringify(['feature-docs-reference.md']), 'Whitespace legacy flagged for removal (trimmed)');
+
+            delete require.cache[helpersPath];
+        }
+    },
+    {
+        // LOW-1 dedup: a duplicate legacy entry must NOT produce duplicate rename/removal
+        // instructions to the repair skill (parity with mergeReferenceDocs' seenExtra dedup).
+        name: '[init-reference-docs] normalizeReferenceDocs dedups duplicate legacy entries',
+        fn: async () => {
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[helpersPath];
+            const { normalizeReferenceDocs } = require(helpersPath);
+
+            const result = normalizeReferenceDocs([
+                { filename: 'feature-docs-reference.md', purpose: 'Legacy A', sections: [] },
+                { filename: 'feature-docs-reference.md', purpose: 'Legacy B', sections: [] }
+            ]);
+            assertEqual(result.renames.length, 1, 'Duplicate legacy entry yields a single rename');
+            assertEqual(result.removedLegacy.length, 1, 'Duplicate legacy entry yields a single removal');
+            assertEqual(JSON.stringify(result.renames[0]), JSON.stringify({ from: 'feature-docs-reference.md', to: 'feature-spec-reference.md' }), 'Single rename is the canonical mapping');
+
+            delete require.cache[helpersPath];
         }
     },
     {
@@ -308,11 +450,11 @@ const unitTests = [
 
             const { SCAN_SKILL_MAP } = require(modulePath);
 
-            assertEqual(SCAN_SKILL_MAP['design-system/README.md'], 'scan-design-system', 'README still routes (no regression)');
-            assertEqual(SCAN_SKILL_MAP['design-system/design-system-canonical.md'], 'scan-design-system', 'Canonical doc routes');
-            assertEqual(SCAN_SKILL_MAP['design-system/design-tokens.scss'], 'scan-design-system', 'SCSS tokens route');
-            assertEqual(SCAN_SKILL_MAP['design-system/design-tokens.css'], 'scan-design-system', 'CSS tokens route');
-            assertEqual(SCAN_SKILL_MAP['seed-test-data-reference.md'], 'scan-seed-test-data', 'Seed test data reference routes');
+            assertEqual(SCAN_SKILL_MAP['design-system/README.md'], 'scan --target=design-system', 'README still routes (no regression)');
+            assertEqual(SCAN_SKILL_MAP['design-system/design-system-canonical.md'], 'scan --target=design-system', 'Canonical doc routes');
+            assertEqual(SCAN_SKILL_MAP['design-system/design-tokens.scss'], 'scan --target=design-system', 'SCSS tokens route');
+            assertEqual(SCAN_SKILL_MAP['design-system/design-tokens.css'], 'scan --target=design-system', 'CSS tokens route');
+            assertEqual(SCAN_SKILL_MAP['seed-test-data-reference.md'], 'scan --target=seed-test-data', 'Seed test data reference routes');
 
             delete require.cache[modulePath];
             delete require.cache[helpersPath];

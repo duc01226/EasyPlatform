@@ -5,7 +5,7 @@
  *
  * Usage:
  *   node run-all-tests.cjs              # Run all tests
- *   node run-all-tests.cjs --filter=X   # Run tests matching X
+ *   node run-all-tests.cjs --filter=X   # Run suites whose name matches X (in full)
  *   node run-all-tests.cjs --verbose    # Show detailed output
  *   node run-all-tests.cjs --help       # Show help
  */
@@ -71,7 +71,7 @@ ${COLORS.cyan}Usage:${COLORS.reset}
 ${COLORS.cyan}Options:${COLORS.reset}
   --help, -h      Show this help message
   --verbose, -v   Show detailed test output
-  --filter=X      Only run suites/tests matching X
+  --filter=X      Only run suites whose name matches X (each runs in full)
   --parallel      Run test suites in parallel
   --bail          Stop on first test failure
   --list          List available test suites without running
@@ -155,10 +155,11 @@ async function runSuite(suite, flags) {
       continue;
     }
 
-    // Check filter
-    if (flags.filter && !test.name.toLowerCase().includes(flags.filter.toLowerCase())) {
-      continue;
-    }
+    // NOTE: `--filter` is a SUITE selector — main() already narrowed `suites` to those whose
+    // NAME matches the filter, so any suite reaching here was selected on purpose and must run
+    // in FULL. A per-test name filter here would silently skip every test whose name uses a
+    // different prefix than the suite (e.g. suite `protocol-text-parity` with `TC-CTXP-*`
+    // tests → 0 tests run → false green). Run the whole selected suite.
 
     const result = await runTest(test, flags.verbose);
     results.tests.push(result);

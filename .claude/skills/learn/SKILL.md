@@ -20,6 +20,7 @@ disable-model-invocation: false
 
 **Key Rules:**
 
+- **GENERALIZE FIRST (the #1 protocol):** Extract the GENERIC lesson that applies to many cases — NEVER save the specific case as-is. The user's words describe one incident; your job is to climb from that incident to the reusable rule. Strip every project/file/tool/domain name. If the saved text only helps on this exact ticket, you failed — abstract it up a level. (Enforced by the Lesson Quality Gate below.)
 - Triggers on "remember this", "always do X", "never do Y"
 - **Triage first:** pass Recurrence gate + Auto-fix gate BEFORE routing or saving
 - Smart-route to the most relevant file, NOT always `docs/project-reference/lessons.md`
@@ -58,25 +59,25 @@ disable-model-invocation: false
 
 ## Reference Doc Catalog (READ before routing)
 
-Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cjs` hook and populated by `/scan-*` skills. Understanding their roles is **critical** for correct routing.
+Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cjs` hook and populated by `/scan-*` skills. Understanding their roles is **critical** for correct routing: routing is static — read the doc whose **Read Trigger** matches your task.
 
-| File                             | Role & Content                                                                                   | Injected By                                          | Injection Trigger                   | Scan Skill                |
-| -------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------- | ------------------------- |
-| `project-structure-reference.md` | Architecture, directory tree, tech stack, module registry, service map                           | `subagent-init-*.cjs` (8 hooks)                      | Agent spawn                         | `/scan-project-structure` |
-| `backend-patterns-reference.md`  | Backend/hook patterns: CJS modules, CQRS, repositories, validation, message bus, background jobs | `code-patterns-injector.cjs`, `backend-context.cjs`  | Edit/Write backend files            | `/scan-backend-patterns`  |
-| `seed-test-data-reference.md`    | Seed/dev-data patterns: environment gate, idempotency loop, DI scope safety, command-dispatch    | Referenced in config + seed workflows                | Seeder/DataSeeder file edits        | `/scan-seed-test-data`    |
-| `frontend-patterns-reference.md` | Frontend patterns: components, state mgmt, API services, styling conventions, directives         | `code-patterns-injector.cjs`, `frontend-context.cjs` | Edit/Write frontend files           | `/scan-frontend-patterns` |
-| `integration-test-reference.md`  | Test architecture: base classes, fixtures, helpers, service-specific setup, test runners         | Referenced in config                                 | Test file edits                     | `/scan-integration-tests` |
-| `feature-docs-reference.md`      | Feature doc templates, app-to-service mapping, doc structure conventions                         | On-demand (skill reads)                              | Skill activation                    | `/scan-feature-docs`      |
-| `code-review-rules.md`           | Review rules, conventions, anti-patterns, decision trees, checklists                             | `code-review-rules-injector.cjs`                     | Review skill activation             | `/scan-code-review-rules` |
-| `lessons.md`                     | General lessons — fallback catch-all. **Injected on EVERY prompt** (budget-controlled)           | `prompt-injections.cjs`                              | Every UserPromptSubmit + Edit/Write | Managed by `/learn`       |
-| `scss-styling-guide.md`          | SCSS/CSS: BEM methodology, mixins, variables, theming, responsive patterns                       | `design-system-context.cjs`                          | Styling file edits                  | `/scan-scss-styling`      |
-| `design-system/README.md`        | Design system: tokens overview, component inventory, app-to-doc mapping                          | `design-system-context.cjs`                          | Design file edits                   | `/scan-design-system`     |
-| `e2e-test-reference.md`          | E2E test patterns: framework, page objects, config, best practices                               | `code-patterns-injector.cjs`                         | E2E file edits                      | `/scan-e2e-tests`         |
-| `domain-entities-reference.md`   | Domain entities, data models, DTOs, aggregate boundaries, ER diagrams, cross-service sync        | `backend-context.cjs`, `frontend-context.cjs`        | Backend/frontend file edits         | `/scan-domain-entities`   |
-| `docs-index-reference.md`        | Documentation tree, file counts, doc relationships, keyword-to-doc lookup                        | On-demand (manual)                                   | Manual reference                    | `/scan-docs-index`        |
+| File                             | Role & Content                                                                                   | Read Trigger (static)              | Scan Skill                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------- | ---------------------------------- |
+| `project-structure-reference.md` | Architecture, directory tree, tech stack, module registry, service map                           | New area / architecture work       | `/scan --target=project-structure` |
+| `backend-patterns-reference.md`  | Backend/hook patterns: CJS modules, CQRS, repositories, validation, message bus, background jobs | Editing backend / CQRS / API files | `/scan --target=backend-patterns`  |
+| `seed-test-data-reference.md`    | Seed/dev-data patterns: environment gate, idempotency loop, DI scope safety, command-dispatch    | Seeder / DataSeeder file edits     | `/scan --target=seed-test-data`    |
+| `frontend-patterns-reference.md` | Frontend patterns: components, state mgmt, API services, styling conventions, directives         | Editing frontend / UI files        | `/scan --target=frontend-patterns` |
+| `integration-test-reference.md`  | Test architecture: base classes, fixtures, helpers, service-specific setup, test runners         | Integration test file edits        | `/scan --target=integration-tests` |
+| `feature-spec-reference.md`      | Feature doc templates, app-to-service mapping, doc structure conventions                         | Authoring / reading feature specs  | `/scan --target=feature-spec`      |
+| `code-review-rules.md`           | Review rules, conventions, anti-patterns, decision trees, checklists                             | Any review skill activation        | `/scan --target=code-review-rules` |
+| `lessons.md`                     | General lessons — fallback catch-all. Read on EVERY task (per project-reference-docs gate)       | Every task                         | Managed by `/learn`                |
+| `scss-styling-guide.md`          | SCSS/CSS: BEM methodology, mixins, variables, theming, responsive patterns                       | Styling / SCSS file edits          | `/scan --target=scss-styling`      |
+| `design-system/README.md`        | Design system: tokens overview, component inventory, app-to-doc mapping                          | Design / UI file edits             | `/scan --target=design-system`     |
+| `e2e-test-reference.md`          | E2E test patterns: framework, page objects, config, best practices                               | E2E file edits                     | `/scan --target=e2e-tests`         |
+| `domain-entities-reference.md`   | Domain entities, data models, DTOs, aggregate boundaries, ER diagrams, cross-service sync        | Backend / frontend domain work     | `/scan --target=domain-entities`   |
+| `docs-index-reference.md`        | Documentation tree, file counts, doc relationships, keyword-to-doc lookup                        | Doc lookup / navigation            | `/scan --target=docs-index`        |
 
-**Key insight:** Files injected automatically by hooks have higher visibility — lessons placed enforced during edits. Files injected on-demand are only seen when skills explicitly read them. Prefer auto-injected files for high-recurrence lessons.
+**Key insight:** `lessons.md` and `code-review-rules.md` are the highest-recurrence routing targets — read them on every relevant task. Place high-recurrence lessons where the matching **Read Trigger** guarantees a future session opens them.
 
 ---
 
@@ -84,10 +85,10 @@ Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cj
 
 ### Lesson Triage Gate (MANDATORY — run FIRST, before routing or saving)
 
-| Gate           | Question                                                                               | Pass           | Fail → Action                                        |
-| -------------- | -------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------- |
-| **Recurrence** | "Would this mistake recur in a future session WITHOUT this reminder?"                  | Yes → continue | No → skip `/learn`; mistake is situational           |
-| **Auto-fix**   | "Could `/code-review`, `/simplify`, `/security`, or `/lint` catch this automatically?" | No → continue  | Yes → skip `/learn`; update the review skill instead |
+| Gate           | Question                                                                                      | Pass           | Fail → Action                                        |
+| -------------- | --------------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------- |
+| **Recurrence** | "Would this mistake recur in a future session WITHOUT this reminder?"                         | Yes → continue | No → skip `/learn`; mistake is situational           |
+| **Auto-fix**   | "Could `/code-review`, `/simplify`, `/security-review`, or `/lint` catch this automatically?" | No → continue  | Yes → skip `/learn`; update the review skill instead |
 
 **Both gates must pass.** A lesson review skills already catch adds noise without value. A one-off situational mistake won't be prevented by a persisted rule.
 
@@ -97,20 +98,20 @@ Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cj
 
 Route to the **most relevant file** based on lesson content:
 
-| If lesson is about...                                                                                                                    | Route to                                                | Section hint                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- |
-| Code review rules, anti-patterns, review checklists, YAGNI/KISS/DRY, naming conventions, review process                                  | `docs/project-reference/code-review-rules.md`           | Add to most relevant section (anti-patterns, rules, checklists) |
-| Backend/hook patterns: CJS modules, CQRS, repositories, entities, validation, message bus, background jobs, migrations, EF Core, MongoDB | `docs/project-reference/backend-patterns-reference.md`  | Add to relevant section or Anti-Patterns section                |
-| Frontend Angular/TS patterns: components, stores, forms, API services, BEM, RxJS, directives, pipes                                      | `docs/project-reference/frontend-patterns-reference.md` | Add to relevant section or Anti-Patterns section                |
-| Integration/unit tests: test base classes, fixtures, test helpers, test patterns, assertions, test runners                               | `docs/project-reference/integration-test-reference.md`  | Add to relevant section                                         |
-| E2E tests: Playwright, Cypress, Selenium, page objects, E2E config, browser automation, visual regression                                | `docs/project-reference/e2e-test-reference.md`          | Add to relevant section                                         |
-| Domain entities, data models, DTOs, aggregates, entity relationships, cross-service data sync, ER diagrams                               | `docs/project-reference/domain-entities-reference.md`   | Add to Entity Catalog or Relationships section                  |
-| Project structure, directory organization, module boundaries, tech stack choices, service architecture                                   | `docs/project-reference/project-structure-reference.md` | Add to relevant architecture section                            |
-| SCSS/CSS styling, BEM methodology, mixins, variables, theming, responsive design, CSS conventions                                        | `docs/project-reference/scss-styling-guide.md`          | Add to relevant styling section                                 |
-| Design system, design tokens, component library, UI kit conventions, Figma-to-code patterns                                              | `docs/project-reference/design-system/README.md`        | Add to relevant design section                                  |
-| Feature documentation, doc templates, doc structure conventions, app-to-service doc mapping                                              | `docs/project-reference/feature-docs-reference.md`      | Add to relevant conventions section                             |
-| Documentation indexing, doc organization, doc-to-code relationships, doc lookup patterns                                                 | `docs/project-reference/docs-index-reference.md`        | Add to relevant section                                         |
-| General lessons, workflow tips, tooling, AI behavior, project conventions, anything not matching above                                   | `docs/project-reference/lessons.md`                     | Append as dated list entry                                      |
+| If lesson is about...                                                                                                                      | Route to                                                | Section hint                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | --------------------------------------------------------------- |
+| Code review rules, anti-patterns, review checklists, YAGNI/KISS/DRY, naming conventions, review process                                    | `docs/project-reference/code-review-rules.md`           | Add to most relevant section (anti-patterns, rules, checklists) |
+| Backend/hook patterns: modules, CQRS, repositories, entities, validation, message bus, background jobs, migrations, configured persistence | `docs/project-reference/backend-patterns-reference.md`  | Add to relevant section or Anti-Patterns section                |
+| Frontend patterns: components, state stores, forms, API services, styling conventions, directives, pipes                                   | `docs/project-reference/frontend-patterns-reference.md` | Add to relevant section or Anti-Patterns section                |
+| Integration/unit tests: test base classes, fixtures, test helpers, test patterns, assertions, test runners                                 | `docs/project-reference/integration-test-reference.md`  | Add to relevant section                                         |
+| E2E tests: Playwright, Cypress, Selenium, page objects, E2E config, browser automation, visual regression                                  | `docs/project-reference/e2e-test-reference.md`          | Add to relevant section                                         |
+| Domain entities, data models, DTOs, aggregates, entity relationships, cross-service data sync, ER diagrams                                 | `docs/project-reference/domain-entities-reference.md`   | Add to Entity Catalog or Relationships section                  |
+| Project structure, directory organization, module boundaries, tech stack choices, service architecture                                     | `docs/project-reference/project-structure-reference.md` | Add to relevant architecture section                            |
+| SCSS/CSS styling, BEM methodology, mixins, variables, theming, responsive design, CSS conventions                                          | `docs/project-reference/scss-styling-guide.md`          | Add to relevant styling section                                 |
+| Design system, design tokens, component library, UI kit conventions, Figma-to-code patterns                                                | `docs/project-reference/design-system/README.md`        | Add to relevant design section                                  |
+| Feature documentation, doc templates, doc structure conventions, app-to-service doc mapping                                                | `docs/project-reference/feature-spec-reference.md`      | Add to relevant conventions section                             |
+| Documentation indexing, doc organization, doc-to-code relationships, doc lookup patterns                                                   | `docs/project-reference/docs-index-reference.md`        | Add to relevant section                                         |
+| General lessons, workflow tips, tooling, AI behavior, project conventions, anything not matching above                                     | `docs/project-reference/lessons.md`                     | Append as dated list entry                                      |
 
 ---
 
@@ -118,47 +119,49 @@ Route to the **most relevant file** based on lesson content:
 
 Before saving any lesson, critically evaluate whether a doc update alone is sufficient or a deeper prevention mechanism is needed:
 
-| Prevention Layer                            | When to use                                                                   | Example                                                                                     |
-| ------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **Doc update only**                         | One-off awareness, rare edge case, team convention                            | "Always use fluent validation API" → `docs/project-reference/backend-patterns-reference.md` |
-| **Prompt rule** (`development-rules.md`)    | Rule that ALL agents must follow on every task (injected on UserPromptSubmit) | "Grep after bulk edits" → `.claude/docs/development-rules.md`                               |
-| **System Lesson** (`prompt-injections.cjs`) | Universal AI mistake, high recurrence, silent failure, any project            | "Re-read files after context compaction" → `.claude/hooks/lib/prompt-injections.cjs`        |
-| **Hook** (`.claude/hooks/`)                 | Automated enforcement, must never be forgotten                                | "Dedup markers must match" → `lib/dedup-constants.cjs` + consistency test                   |
-| **Test** (`.claude/hooks/tests/`)           | Regression prevention, verifiable invariant                                   | "All hooks import from shared module" → test in `test-all-hooks.cjs`                        |
-| **Skill update** (`.claude/skills/`)        | Workflow step that should always include this check                           | "Review changes must check doc staleness" → skill SKILL.md update                           |
+| Prevention Layer                                       | When to use                                                        | Example                                                                                     |
+| ------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| **Doc update only**                                    | One-off awareness, rare edge case, team convention                 | "Always use fluent validation API" → `docs/project-reference/backend-patterns-reference.md` |
+| **Prompt rule** (`development-rules.md`)               | Rule that ALL agents must follow on every task                     | "Grep after bulk edits" → `.claude/docs/development-rules.md`                               |
+| **Static protocol lesson** (`sync-inline-versions.md`) | Universal AI mistake, high recurrence, silent failure, any project | "Re-read files after context compaction" → `.claude/skills/shared/sync-inline-versions.md`  |
+| **Hook** (`.claude/hooks/`)                            | Automated enforcement, must never be forgotten                     | "Dedup markers must match" → `lib/dedup-constants.cjs` + consistency test                   |
+| **Test** (`.claude/hooks/tests/`)                      | Regression prevention, verifiable invariant                        | "All hooks import from shared module" → test in `test-all-hooks.cjs`                        |
+| **Skill update** (`.claude/skills/`)                   | Workflow step that should always include this check                | "Review changes must check doc staleness" → skill SKILL.md update                           |
 
 **Decision flow:**
 
 1. **Capture** the lesson
 2. **Ask:** "Could this mistake recur if the AI forgets this lesson?" If yes → needs more than a doc update
 3. **Ask:** "Can this be caught automatically by a test or hook?" If yes → recommend hook/test
-4. **Evaluate System Lesson promotion** (see below)
+4. **Evaluate Static Protocol Lesson promotion** (see below)
 5. **Present options to user** with `AskUserQuestion`:
     - "Doc update only" — save to the best-fit reference file (default for most lessons)
     - "Doc + prompt rule" — also add to `development-rules.md` so all agents see it
-    - "Doc + System Lesson" — also add to `prompt-injections.cjs` System Lessons (see criteria below)
+    - "Doc + Static Protocol Lesson" — also add to shared protocol lessons (see criteria below)
     - "Full prevention" — plan a hook, test, or shared module to enforce it automatically
 6. **Execute** the chosen option. For "Full prevention", create a plan via `/plan` instead of just saving.
 
-### System Lesson Promotion (MANDATORY evaluation)
+### Static Protocol Lesson Promotion (MANDATORY evaluation)
 
-After generalizing a lesson, evaluate whether it qualifies as a **System Lesson** in `.claude/hooks/lib/prompt-injections.cjs`. System Lessons are injected into EVERY prompt — they are the highest-visibility prevention layer.
+After generalizing a lesson, evaluate whether it qualifies as a **Static Protocol Lesson** in `.claude/skills/shared/sync-inline-versions.md`. Static protocol lessons are baked into `CLAUDE.md`, mirrored into `AGENTS.md`, and synced to Codex carriers through project-init/sync tooling.
 
 **Qualification criteria (ALL must be true):**
 
 1. **Universal** — Applies to ANY AI coding project, not just this codebase
 2. **High recurrence** — AI agents make this mistake repeatedly across sessions without the reminder
 3. **Silent failure** — The mistake produces no error/warning; it silently degrades output quality
-4. **Not already covered** — No existing System Lesson addresses the same root cause
+4. **Not already covered** — No existing Static Protocol Lesson addresses the same root cause
 
-> **System Lessons** — Universal AI mistake prevention rules injected into EVERY prompt. Stored in `injectAiMistakePrevention()` → "Common AI Mistake Prevention" array. Each must be universal, high-recurrence, and silent-failure.
-> READ `.claude/hooks/lib/prompt-injections.cjs` to check for duplicates before adding.
+> **Static Protocol Lessons** — Universal AI mistake prevention rules baked into static carriers. Stored in `.claude/skills/shared/sync-inline-versions.md` under the `ai-mistake-prevention` and `ai-mistake-prevention:full` SYNC blocks. Each must be universal, high-recurrence, and silent-failure.
+> READ `.claude/skills/shared/sync-inline-versions.md` to check for duplicates before adding.
 
-**If qualified:** Recommend "Doc + System Lesson" option. On user approval, append the lesson as a new bullet to the System Lessons array in `prompt-injections.cjs` following the existing format: `` `- **Bold title.** Explanation sentence.` ``
+**If qualified:** Recommend "Doc + Static Protocol Lesson" option. On user approval, append the lesson as a new bullet to the relevant shared SYNC blocks, then run the project-init / sync pipeline so `CLAUDE.md`, `AGENTS.md`, and Codex carriers regenerate from the shared source.
 
-**If NOT qualified:** Explain why (e.g., "Too project-specific", "Already covered by existing System Lesson about X", "Low recurrence — only happens in rare edge cases"). Proceed with doc-only or prompt-rule option.
+**If NOT qualified:** Explain why (e.g., "Too project-specific", "Already covered by existing Static Protocol Lesson about X", "Low recurrence — only happens in rare edge cases"). Proceed with doc-only or prompt-rule option.
 
-### Lesson Quality Gate (MANDATORY before saving)
+### Lesson Quality Gate (BLOCKING — generalize before you save)
+
+> **CORE PROTOCOL — do not skip:** A `/learn` request always arrives as a SPECIFIC case ("don't migrate via the bus and spam Elasticsearch"). Saving it verbatim is the default failure mode. You MUST transform specific → generic BEFORE writing: name the underlying class of mistake, drop the incident's nouns, and write a rule that fires across many future cases ("migrations write the DB directly, never via message bus — applies to all migrations"). If you cannot state the lesson without naming this ticket's files/services/tools, it is NOT generic yet — climb one more abstraction level. When in doubt, save the MORE generic version; a too-specific lesson is dead weight injected on every prompt.
 
 Every lesson MUST be **root-cause level and generic across any codebase**. Apply this 3-step extraction before saving:
 
@@ -216,7 +219,7 @@ Run these 2 tasks at the end of every `/learn` operation:
 - Verify:
     - Why this lesson prevents repeated mistakes,
     - Why this should be a lesson instead of a one-time note,
-    - Why auto-checks (`/code-review`, `/simplify`, `/security`, `/lint`, hook/test) are insufficient.
+    - Why auto-checks (`/code-review`, `/simplify`, `/security-review`, `/lint`, hook/test) are insufficient.
 - If rationale is weak, rewrite at higher abstraction or skip `/learn`.
 
 ### Routing Decision Process
@@ -247,7 +250,7 @@ Run these 2 tasks at the end of every `/learn` operation:
 
 ## Budget Enforcement (MANDATORY for `docs/project-reference/lessons.md`)
 
-`docs/project-reference/lessons.md` is injected into EVERY prompt and EVERY file edit. Token budget must be controlled.
+`docs/project-reference/lessons.md` is a static project-reference carrier read during project work. Token budget must be controlled.
 
 **Hard limit:** 10000 characters (~3333 tokens). Check BEFORE saving any new lesson.
 
@@ -289,13 +292,14 @@ Run these 2 tasks at the end of every `/learn` operation:
 
 When Claude detects correction phrases in conversation (e.g., "always use X", "remember this", "never do Y", "from now on"), this skill auto-activates. When auto-inferred (not explicit `/learn`), **confirm with the user before saving**: "Save this as a lesson? [Y/n]"
 
-## Injection
+## How Lessons Reach the AI
 
-Lessons are injected by `lessons-injector.cjs` hook on:
+Lessons and pattern references are read statically, per the project-reference-docs gate in `CLAUDE.md`:
 
-- **UserPromptSubmit** — `docs/project-reference/lessons.md` content (with dedup)
-- **PreToolUse(Edit|Write|MultiEdit)** — `docs/project-reference/lessons.md` content (always)
-- Pattern reference files are injected by their respective hooks (`code-patterns-injector.cjs`, `code-review-rules-injector.cjs`, etc.)
+- `docs/project-reference/lessons.md` — read on **every** task (the gate always includes it).
+- Pattern/rule references (`backend-patterns-reference.md`, `code-review-rules.md`, etc.) — read by their matching trigger (see the Reference Doc Catalog table above).
+
+Because the routing is static prose, hookless harnesses (Codex) load the same lessons and patterns as Claude Code.
 
 ## Prompt Enhancement (MANDATORY final step)
 
@@ -339,16 +343,14 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -361,17 +363,24 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION** GENERALIZE FIRST — extract the generic, many-cases rule; NEVER persist the specific incident as written. Strip all ticket/file/service/tool names before saving.
+
+**MUST ATTENTION Protocols in force (concise digest of the SYNC/shared blocks this skill carries — full bodies above are canonical):**
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** critical + sequential thinking, traced proof, confidence >80%, NEVER guess as fact.
 
 **IMPORTANT MUST ATTENTION** run Triage Gate FIRST — if recurrence is low OR review skills can catch it, skip `/learn` entirely
 **IMPORTANT MUST ATTENTION** check Reference Doc Catalog to find the best target file — NOT always `lessons.md`

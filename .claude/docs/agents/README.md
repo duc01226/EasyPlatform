@@ -1,6 +1,6 @@
 # Agents Reference
 
-> 28 specialized subagents for autonomous task execution
+> 29 specialized subagents for autonomous task execution
 
 ## Overview
 
@@ -24,21 +24,22 @@ Main Claude Session
 
 ### Exploration & Research
 
-| Agent            | Purpose                                   | Tools            |
-| ---------------- | ----------------------------------------- | ---------------- |
-| `scout`          | Locate relevant files across codebase     | Glob, Grep, Read |
-| `scout-external` | External agentic tools (Gemini, OpenCode) | All + Bash, MCP  |
-| `Explore`        | Fast codebase exploration                 | All tools        |
-| `researcher`     | Comprehensive technical research          | All tools        |
+| Agent              | Purpose                                               | Tools                                  |
+| ------------------ | ----------------------------------------------------- | -------------------------------------- |
+| `scout`            | Locate relevant files across codebase                 | All tools (no frontmatter restriction) |
+| `scout-external`   | External agentic tools (Gemini, OpenCode)             | All tools (no frontmatter restriction) |
+| `Explore`          | Fast codebase exploration                             | Built-in read-only toolset             |
+| `researcher`       | Comprehensive technical research                      | All tools (no frontmatter restriction) |
+| `knowledge-worker` | Web research, knowledge synthesis, structured reports | All tools (no frontmatter restriction) |
 
 ### Planning & Design
 
-| Agent                | Purpose                                                          | Tools                     |
-| -------------------- | ---------------------------------------------------------------- | ------------------------- |
-| `architect`          | System design decisions, ADR creation                            | All tools                 |
-| `solution-architect` | Greenfield project inception: tech stack, DDD, project structure | All + WebSearch, WebFetch |
-| `planner`            | Create comprehensive implementation plans                        | All tools                 |
-| `Plan`               | Software architect for implementation strategy                   | All tools                 |
+| Agent                | Purpose                                                          | Tools                                  |
+| -------------------- | ---------------------------------------------------------------- | -------------------------------------- |
+| `architect`          | System design decisions, ADR creation                            | All tools (no frontmatter restriction) |
+| `solution-architect` | Greenfield project inception: tech stack, DDD, project structure | All tools (no frontmatter restriction) |
+| `planner`            | Create comprehensive implementation plans                        | All tools (no frontmatter restriction) |
+| `Plan`               | Software architect for implementation strategy                   | Built-in read-only toolset             |
 
 ### Development & Implementation
 
@@ -51,21 +52,22 @@ Main Claude Session
 
 ### Quality & Review
 
-| Agent                      | Purpose                                                 | Tools                                     |
-| -------------------------- | ------------------------------------------------------- | ----------------------------------------- |
-| `code-reviewer`            | Comprehensive code review and quality assessment        | All tools                                 |
-| `spec-compliance-reviewer` | Verify implementation matches spec (before code review) | Read, Grep, Glob, Bash, Write, TaskCreate |
-| `tester`                   | Validate code through testing                           | All tools                                 |
-| `debugger`                 | Investigate issues and analyze system behavior          | All tools                                 |
-| `e2e-runner`               | E2E testing docs, Playwright patterns (Sonnet)          | All tools                                 |
+| Agent                      | Purpose                                                 | Tools                                  |
+| -------------------------- | ------------------------------------------------------- | -------------------------------------- |
+| `code-reviewer`            | Comprehensive code review and quality assessment        | All tools (no frontmatter restriction) |
+| `spec-compliance-reviewer` | Verify implementation matches spec (before code review) | All tools (no frontmatter restriction) |
+| `tester`                   | Validate code through testing                           | All tools                              |
+| `debugger`                 | Investigate issues and analyze system behavior          | All tools                              |
+| `e2e-runner`               | E2E testing docs, Playwright patterns (Sonnet)          | All tools                              |
+| `quality-gate-review`      | Quality gates, compliance audits, metrics, checklists   | All tools                              |
 
 ### Operations & Management
 
-| Agent             | Purpose                                           | Tools                  |
-| ----------------- | ------------------------------------------------- | ---------------------- |
-| `git-manager`     | Stage, commit, and push with conventional commits | Glob, Grep, Read, Bash |
-| `project-manager` | Track progress, consolidate reports               | All except Bash        |
-| `docs-manager`    | Manage technical documentation                    | All tools              |
+| Agent             | Purpose                                           | Tools                                  |
+| ----------------- | ------------------------------------------------- | -------------------------------------- |
+| `git-manager`     | Stage, commit, and push with conventional commits | All tools (no frontmatter restriction) |
+| `project-manager` | Track progress, consolidate reports               | All tools (no frontmatter restriction) |
+| `docs-manager`    | Manage technical documentation                    | All tools                              |
 
 ### Team Collaboration
 
@@ -73,18 +75,18 @@ Main Claude Session
 | ------------------ | --------------------------------------------------------------------- | --------- |
 | `business-analyst` | Requirements refinement, user story creation, BDD acceptance criteria | All tools |
 | `product-owner`    | Backlog management, feature prioritization, stakeholder communication | All tools |
-| `qc-specialist`    | Quality checkpoints, compliance audits, standards enforcement         | All tools |
 | `ui-ux-designer`   | Design specifications, wireframes, user flow documentation            | All tools |
 
 ### Specialized
 
-| Agent                   | Purpose                                       | Tools     |
-| ----------------------- | --------------------------------------------- | --------- |
-| `journal-writer`        | Document technical difficulties               | All tools |
-| `database-admin`        | Database systems management                   | All tools |
-| `frontend-developer`    | Angular frontend specialist (stores, BEM)     | All tools |
-| `security-auditor`      | Read-only security analysis, OWASP compliance | All tools |
-| `performance-optimizer` | Performance analysis (N+1, bundle, indexes)   | All tools |
+| Agent                   | Purpose                                                                               | Tools                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `journal-writer`        | Document technical difficulties                                                       | All tools                                                                               |
+| `database-admin`        | Database systems management                                                           | All tools                                                                               |
+| `frontend-developer`    | Angular frontend specialist (stores, BEM)                                             | All tools                                                                               |
+| `security-auditor`      | Read-only security analysis, OWASP compliance                                         | All tools                                                                               |
+| `performance-optimizer` | Performance analysis (N+1, bundle, indexes)                                           | All tools                                                                               |
+| `framework-maintainer`  | Maintain the portable .claude AI-harness (skills, agents, hooks, SYNC, Codex mirrors) | Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate, TaskUpdate, AskUserQuestion |
 
 ---
 
@@ -148,30 +150,30 @@ Task({
 
 ### When to Use Each Agent
 
-| Scenario                      | Agent                 | Why                                               |
-| ----------------------------- | --------------------- | ------------------------------------------------- |
-| Find files by pattern         | `scout`               | Fast file discovery with pattern matching         |
-| Understand codebase structure | `Explore`             | Comprehensive exploration with context            |
-| Research new technology       | `researcher`          | Web search + documentation synthesis              |
-| Plan feature implementation   | `planner`             | Creates structured implementation plans           |
-| Evaluate architecture options | `planner`             | Creates structured plans with trade-off analysis  |
-| Design system architecture    | `architect`           | ADR creation, cross-service analysis              |
-| Greenfield project inception  | `solution-architect`  | Tech stack, DDD, project structure                |
-| Plan E2E test structure       | `e2e-runner`          | Playwright patterns, BEM selectors                |
-| Implement from plan           | `fullstack-developer` | Executes implementation phases                    |
-| Debug failing tests           | `debugger`            | Systematic issue investigation                    |
-| Run and analyze tests         | `tester`              | Test execution and coverage analysis              |
-| Review code quality           | `code-reviewer`       | Security, performance, best practices             |
-| Clean up code                 | `code-simplifier`     | Refactor for clarity and maintainability          |
-| Commit changes                | `git-manager`         | Conventional commits with proper messages         |
-| Update documentation          | `docs-manager`        | Technical docs maintenance                        |
-| Track project status          | `project-manager`     | Progress reports and task consolidation           |
-| Refine requirements           | `business-analyst`    | GIVEN/WHEN/THEN format, BDD patterns              |
-| Prioritize backlog            | `product-owner`       | MoSCoW, effort/value matrix                       |
-| Create test plan              | `tester`              | Test coverage, case generation                    |
-| Synthesize knowledge          | `knowledge-worker`    | Web research, structured reports, course material |
-| Quality checkpoint            | `qc-specialist`       | Audit trails, compliance checks                   |
-| Design specification          | `ui-ux-designer`      | Figma integration, design tokens                  |
+| Scenario                      | Agent                  | Why                                               |
+| ----------------------------- | ---------------------- | ------------------------------------------------- |
+| Find files by pattern         | `scout`                | Fast file discovery with pattern matching         |
+| Understand codebase structure | `Explore`              | Comprehensive exploration with context            |
+| Research new technology       | `researcher`           | Web search + documentation synthesis              |
+| Plan feature implementation   | `planner`              | Creates structured implementation plans           |
+| Evaluate architecture options | `planner`              | Creates structured plans with trade-off analysis  |
+| Design system architecture    | `architect`            | ADR creation, cross-service analysis              |
+| Greenfield project inception  | `solution-architect`   | Tech stack, DDD, project structure                |
+| Plan E2E test structure       | `e2e-runner`           | Playwright patterns, BEM selectors                |
+| Implement from plan           | `fullstack-developer`  | Executes implementation phases                    |
+| Debug failing tests           | `debugger`             | Systematic issue investigation                    |
+| Run and analyze tests         | `tester`               | Test execution and coverage analysis              |
+| Review code quality           | `code-reviewer`        | Security, performance, best practices             |
+| Clean up code                 | `code-simplifier`      | Refactor for clarity and maintainability          |
+| Commit changes                | `git-manager`          | Conventional commits with proper messages         |
+| Update documentation          | `docs-manager`         | Technical docs maintenance                        |
+| Track project status          | `project-manager`      | Progress reports and task consolidation           |
+| Refine requirements           | `business-analyst`     | GIVEN/WHEN/THEN format, BDD patterns              |
+| Prioritize backlog            | `product-owner`        | MoSCoW, effort/value matrix                       |
+| Create test plan              | `tester`               | Test coverage, case generation                    |
+| Synthesize knowledge          | `knowledge-worker`     | Web research, structured reports, course material |
+| Design specification          | `ui-ux-designer`       | Figma integration, design tokens                  |
+| Edit the .claude framework    | `framework-maintainer` | Skills, agents, hooks, SYNC blocks, Codex mirrors |
 
 ### When NOT to Use Agents
 
@@ -187,14 +189,15 @@ Task({
 
 ## Agent Configuration
 
-### SubagentStart Hook
+### Subagent Context (no SubagentStart hook)
 
-The 18 `subagent-init-*.cjs` hooks inject context into all spawned agents:
+> There is **no** `SubagentStart` hook. Each agent's context contract — project rules,
+> reports path, naming, and the development-rules / lessons read contract — is baked
+> statically into the agent's `.md` system prompt and the shared SYNC blocks it inlines,
+> so a hookless tool (Codex) gets identical guidance. Each agent's `.md`
+> carries, in effect:
 
 ```
-## Subagent: [agent_type]
-ID: [agent_id] | CWD: [working_directory]
-
 ## Context
 - Plan: [active_plan_path or none]
 - Reports: [reports_path]
@@ -351,13 +354,42 @@ Task({
 
 ---
 
+## Authoring Rule — No Meta-Log
+
+> An agent `.md` is read as live instruction. Write only the CURRENT actionable truth. Do NOT add change-history, migration rationale, or provenance — "formerly", "removed in the … refactor", "now baked statically", "used to be hook-injected". It carries zero instruction value and dilutes the directive the agent acts on. Change history belongs in git / `CHANGELOG.md` / `docs/adr/**` / `plans/reports/**`. State what IS, not what changed.
+
+## Quality-Parity with Skills
+
+Every agent carries the **same role-specific quality protocol** as its twin skill(s). Skills are heavily enhanced (severity rubrics, evidence gates, adversarial review, incremental persistence); agents that do equivalent work inherit those same SYNC blocks so a `code-reviewer` _agent_ reviews with the rigor of the `review-changes` _skill_. Agents do NOT inherit main-loop **orchestration** blocks (`nested-task-creation`, `sub-agent-selection`, `subagent-return-contract`, `parallel-phase-advancement`) — those govern the orchestrator, not a spawned worker.
+
+**Source of truth (do not re-describe per-agent block lists here — they drift):**
+
+| Concern                                   | File                                                                                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-agent block assignment (the manifest) | `.claude/scripts/agent_protocol_matrix.py` (`AGENT_QUALITY_BLOCKS`)                                                                                           |
+| Injector / idempotent maintenance tool    | `.claude/scripts/inject_agent_protocol_blocks.py`                                                                                                             |
+| Canonical block bodies                    | `.claude/skills/shared/sync-inline-versions.md`                                                                                                               |
+| Full agent↔skill map + evaluation         | [`plans/260616-agent-skill-quality-parity/research/agent-skill-mapping.md`](../../../plans/260616-agent-skill-quality-parity/research/agent-skill-mapping.md) |
+
+**Tier model** (enforced by `agent_protocol_matrix.py` `validate()` and the `agent-universal-rules` test suite — `TC-UAR-003..007`):
+
+- **Core-6** universal blocks → all 29 agents.
+- **Code-10** blocks (`understand-code-first`, `evidence-based-reasoning`, `cross-service-check`, `fix-layer-accountability`) → only the 17 code-touching/fixing agents; NEVER a core-only agent (business-analyst, docs-manager, git-manager, journal-writer, knowledge-worker, product-owner, project-manager, quality-gate-review).
+- **Readonly-Code-8** blocks (`understand-code-first`, `evidence-based-reasoning` only) → the 4 read-only/design agents (`researcher`, `scout`, `scout-external`, `ui-ux-designer`) that locate/read/design code but never fix a layer or cross a service boundary; the two mutation-oriented blocks (`cross-service-check`, `fix-layer-accountability`) are deliberately excluded to save tokens.
+- **Code-standards** (`agent-code-standards`) → the 17 agents that author/review code (a separate axis — `researcher`/`scout`/`scout-external`/`ui-ux-designer` read code but don't author it, so they're excluded).
+- **Additive quality blocks** → per the matrix manifest; 26 agents carry a quality-block row, 3 (git-manager, journal-writer, project-manager) intentionally carry only Core-6.
+
+Partition: 17 Code-10 + 4 Readonly-Code-8 + 8 Core-6 = 29 agents (pairwise disjoint).
+
+> See [agent-patterns.md](./agent-patterns.md) → _Adding or changing an agent's quality protocol_ for the contributor loop and the `framework-maintainer` orchestration whitelist. Source-side edits land first; mirrors (`.agents/`, `.codex/`, `AGENTS.md`) regenerate via `npm run sync:all` + `npm run verify:all` as a tracked follow-up.
+
 ## Related Documentation
 
 - [agent-patterns.md](./agent-patterns.md) - Detailed agent usage patterns
 - [../skills/README.md](../skills/README.md) - Skills that enhance agent capabilities
-- [../hooks/README.md](../hooks/README.md) - SubagentStart hook details
+- [../hooks/README.md](../hooks/README.md) - Hook lifecycle (no `SubagentStart` hook; sub-agent context is static in `agents/*.md`)
 - [../configuration/README.md](../configuration/README.md) - Agent configuration options
 
 ---
 
-_Source: Task tool system prompt | 28 specialized agent types_
+_Source: Task tool system prompt | 29 specialized agent types_

@@ -161,55 +161,55 @@ claude-review:
 
 ```yaml
 variables:
-    CLAUDE_MODEL: 'sonnet'
+  CLAUDE_MODEL: "sonnet"
 
 stages:
-    - lint
-    - test
-    - review
-    - deploy
+  - lint
+  - test
+  - review
+  - deploy
 
 before_script:
-    - npm install -g @anthropic-ai/claude-code
-    - claude login --api-key $ANTHROPIC_API_KEY
+  - npm install -g @anthropic-ai/claude-code
+  - claude login --api-key $ANTHROPIC_API_KEY
 
 lint:
-    stage: lint
-    script:
-        - claude '$fix:types'
-    artifacts:
-        paths:
-            - src/
-        expire_in: 1 hour
+  stage: lint
+  script:
+    - claude '$fix:types'
+  artifacts:
+    paths:
+      - {source-root}/
+    expire_in: 1 hour
 
 test:
-    stage: test
-    script:
-        - npm test || claude '$fix:test analyze failures and fix'
-    coverage: '/Coverage: \d+\.\d+%/'
+  stage: test
+  script:
+    - npm test || claude '$fix:test analyze failures and fix'
+  coverage: '/Coverage: \d+\.\d+%/'
 
 review:
-    stage: review
-    script:
-        - |
-            claude "Review this merge request:
-            - Check code quality
-            - Verify tests
-            - Review security
-            - Assess performance" > review.md
-    artifacts:
-        reports:
-            codequality: review.md
-    only:
-        - merge_requests
+  stage: review
+  script:
+    - |
+      claude "Review this merge request:
+      - Check code quality
+      - Verify tests
+      - Review security
+      - Assess performance" > review.md
+  artifacts:
+    reports:
+      codequality: review.md
+  only:
+    - merge_requests
 
 deploy:
-    stage: deploy
-    script:
-        - claude '/deploy-check'
-        - ./deploy.sh
-    only:
-        - main
+  stage: deploy
+  script:
+    - claude '/deploy-check'
+    - ./deploy.sh
+  only:
+    - main
 ```
 
 ### Automated Fixes

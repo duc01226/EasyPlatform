@@ -19,7 +19,7 @@ description: '[Architecture] Use when designing solution architecture across bac
 
 ## Codex Project-Reference Loading (No Hooks)
 
-Codex does not receive Claude hook-based doc injection.
+Codex uses static project-reference loading instead of runtime-injected project docs.
 When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.
 
 **Always read:**
@@ -28,11 +28,15 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 - `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
 - `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
 
+**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+
 **Situation-based docs:**
 
 - Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec/test-case planning or TC mapping: `feature-docs-reference.md`
+- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
+- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
+- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
 - Integration test implementation/review: `integration-test-reference.md`
 - E2E test implementation/review: `e2e-test-reference.md`
 - Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
@@ -52,7 +56,14 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Act as a solution architect — research, critically analyze, and recommend the complete technical architecture for a project or feature. Cover ALL architecture concerns: backend, frontend, design patterns, library ecosystem, testing strategy, CI/CD, deployment, monitoring, code quality, and dependency management. Produce a comprehensive comparison report with actionable recommendations.
+**Goal:** Act as solution architect to deliver a complete, evidence-backed, user-validated architecture decision report covering ALL concerns (backend, frontend, design patterns, library ecosystem, testing strategy, CI/CD, deployment, monitoring, code quality, dependency management) — every concern researched with 3+ options, every recommendation carrying confidence % + cited evidence, every decision confirmed by the user — so implementation proceeds on sound, owned architectural choices.
+
+**Summary:**
+
+- Decide mode FIRST (Step 1): greenfield researches every concern from scratch; brownfield reads reference docs + accepted ADRs and constrains research to the existing stack — NEVER re-litigate a settled ADR-recorded decision without a superseding-ADR rationale.
+- Drive the style choice with NUMBERS, not adjectives: quantify Step-2 quality-attribute scenarios (latency p95/p99, throughput, SLO, RPO/RTO, data growth, concurrency); any unknown target becomes an explicit `Unresolved question`, never a silent guess.
+- Every concern needs 3+ researched options with cited evidence (stars, last release, downloads, CVE scan) + a confidence % — familiarity alone is never sufficient grounds for a recommendation.
+- Produce the two binding downstream contracts and you're done; skip either and the chain breaks: emit an ADR per hard-to-reverse decision (`review-architecture` Cat 9 enforces it) and the Scaffold Handoff tool-choices table (`scaffold`/`harness-setup` consume it), then run the MANDATORY Step-12 user-validation interview before confirming.
 
 **Workflow (12 steps):**
 
@@ -82,9 +93,26 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ---
 
+## Inputs & Handoffs (consume vs produce)
+
+Skill sits mid-workflow — consumes settled upstream decisions, produces artifacts downstream steps build on. Do NOT re-derive what upstream step already owns; do NOT leave downstream consumer without its needed artifact. — why: re-deriving settled decisions wastes effort and risks divergence from the recorded choice.
+
+| Consumes (read, don't re-derive)                 | From                          | Produces (named deliverable)                                 | Consumed by                         |
+| ------------------------------------------------ | ----------------------------- | ------------------------------------------------------------ | ----------------------------------- |
+| Bounded contexts, aggregates, domain events, ERD | `domain-analysis`             | Architecture decision report (`{plan-dir}/research/...`)     | `plan`, `plan-execute`              |
+| Confirmed languages/frameworks/databases         | `tech-stack-research`         | Confirmed decisions (`{plan-dir}/phase-02b-architecture.md`) | `plan`, `scaffold`                  |
+| Expected scale, compliance, budget constraints   | `business-evaluation`         | Scaffold Handoff table (tooling + fitness rules)             | `scaffold`, `harness-setup`         |
+| Existing stack/patterns/ADRs (brownfield)        | reference docs, `docs/adr/**` | ADRs for hard-to-reverse decisions (`docs/adr/`)             | `review-architecture` (conformance) |
+
+If upstream artifact missing, capture minimum needed here and note gap — NEVER silently re-run full upstream analysis. — why: a silent re-run hides the missing-input gap that the owning step should resolve.
+
+---
+
 ## Step 1: Load Context
 
-Read artifacts from prior workflow steps (search in `plans/` and `team-artifacts/`):
+> **Mode (decide first):** **Greenfield** (new project, e.g. via `workflow-greenfield-init`) → research every concern from scratch, full 3-options-per-concern. **Brownfield** (large feature in existing codebase, e.g. `workflow-big-feature`) → FIRST read project reference docs + accepted ADRs, constrain research to existing stack/patterns, propose changes only where new requirement genuinely outgrows them — NEVER re-litigate settled ADR-recorded decision without superseding-ADR rationale. — why: re-deciding a recorded choice churns the codebase and breaks downstream conformance checks.
+
+Read artifacts from prior workflow steps (search `plans/` and `team-artifacts/`):
 
 - Domain model / ERD (complexity, bounded contexts, aggregate count)
 - Tech stack decisions (confirmed languages, frameworks, databases)
@@ -92,7 +120,7 @@ Read artifacts from prior workflow steps (search in `plans/` and `team-artifacts
 - Refined PBI (scope, acceptance criteria)
 - Discovery interview (team skills, experience level)
 
-Extract and summarize:
+Extract, summarize:
 
 | Signal                  | Value        | Source           |
 | ----------------------- | ------------ | ---------------- |
@@ -123,6 +151,23 @@ Map signals to architecture constraints:
 | Compliance                  | Audit trail, immutable events, access control layers      | Must     |
 | Real-time                   | Event sourcing or pub/sub, WebSocket/SSE support          | Should   |
 | High integration complexity | Anti-corruption layers, adapter pattern, API gateway      | Should   |
+
+### Quality-Attribute Scenarios (quantify — these drive the style choice)
+
+Qualitative "Must/Should" cannot decide between, e.g., modular monolith vs microservices. Capture **measurable** targets; ask user for any unknown via a direct user question (guess acceptable only when labelled an assumption with confidence %). These targets become ADR-recorded budgets `review-architecture` Category 9 later checks changes against. — why: a style chosen without numbers is a guess, not an enforceable decision.
+
+| Quality attribute     | Scenario (stimulus → measurable response)                      | Target (fill in)   |
+| --------------------- | -------------------------------------------------------------- | ------------------ |
+| Latency               | p95 / p99 response time for the hottest read and write paths   | e.g. p99 < 300ms   |
+| Throughput            | Sustained req/s and peak burst the system must absorb          | e.g. 500 rps peak  |
+| Availability / SLO    | Target uptime and error budget                                 | e.g. 99.9%         |
+| Data durability (RPO) | Max acceptable data loss on failure                            | e.g. ≤ 5 min       |
+| Recovery (RTO)        | Max acceptable time to restore service                         | e.g. ≤ 30 min      |
+| Data-volume growth    | Row/document/event growth → storage, index, partition strategy | e.g. 10M rows/yr   |
+| Concurrency           | Concurrent users/sessions and contention hot spots             | e.g. 2k concurrent |
+| Compliance/retention  | Regulated data, retention window, residency, audit             | e.g. GDPR, 7yr     |
+
+**Rule:** any target left unknown is explicit `Unresolved question` (Step 11), NEVER a silent omission — an architecture chosen without scale numbers is a guess, not a decision.
 
 **MANDATORY IMPORTANT MUST ATTENTION** validate derived requirements with user via a direct user question before proceeding.
 
@@ -164,7 +209,7 @@ Evaluate applicability per layer:
 | **Outbox**          | Messaging      | Reliable event publishing with DB transactions    |
 | **Circuit Breaker** | Infrastructure | External service resilience                       |
 
-For each recommended pattern, document: **Apply to**, **Why**, **Example**, **Risk if skipped**.
+Per recommended pattern document: **Apply to**, **Why**, **Example**, **Risk if skipped**.
 
 ---
 
@@ -174,16 +219,16 @@ For each recommended pattern, document: **Apply to**, **Why**, **Example**, **Ri
 
 WebSearch top 3 frontend architecture styles. Candidates:
 
-| Style                       | Best For                                    | Research Focus                            |
-| --------------------------- | ------------------------------------------- | ----------------------------------------- |
-| **MVVM**                    | Data-binding heavy, forms-over-data apps    | ViewModel responsibility, two-way binding |
-| **MVC**                     | Server-rendered, traditional web apps       | Controller routing, view separation       |
-| **Component Architecture**  | Modern SPA (React, Angular, Vue)            | Component isolation, props/events, reuse  |
-| **Reactive Store (Redux)**  | Complex state, multi-component sync         | Single source of truth, immutable state   |
-| **Signal-based Reactivity** | Fine-grained reactivity (Angular 19, Solid) | Granular updates, no zone.js overhead     |
-| **Micro Frontends**         | Multiple teams, independent deployment      | Module federation, routing, shared state  |
-| **Feature-based Modules**   | Large monolith SPA, lazy loading            | Feature boundaries, route-level splitting |
-| **Server Components (RSC)** | SEO, initial load performance               | Server/client boundary, streaming         |
+| Style                       | Best For                                                   | Research Focus                                  |
+| --------------------------- | ---------------------------------------------------------- | ----------------------------------------------- |
+| **MVVM**                    | Data-binding heavy, forms-over-data apps                   | ViewModel responsibility, two-way binding       |
+| **MVC**                     | Server-rendered, traditional web apps                      | Controller routing, view separation             |
+| **Component Architecture**  | Configured SPA/component framework                         | Component isolation, props/events, reuse        |
+| **Reactive Store (Redux)**  | Complex state, multi-component sync                        | Single source of truth, immutable state         |
+| **Signal-based Reactivity** | Fine-grained reactivity in frameworks that support signals | Granular updates without broad change detection |
+| **Micro Frontends**         | Multiple teams, independent deployment                     | Module federation, routing, shared state        |
+| **Feature-based Modules**   | Large monolith SPA, lazy loading                           | Feature boundaries, route-level splitting       |
+| **Server Components (RSC)** | SEO, initial load performance                              | Server/client boundary, streaming               |
 
 ### 4B: Frontend Design Patterns
 
@@ -206,11 +251,11 @@ WebSearch top 3 frontend architecture styles. Candidates:
 
 > **Skip if:** Backend-only project, no frontend component.
 
-Research and recommend the project's design system architecture. Use a direct user question for each decision.
+Research, recommend project design system architecture. Use a direct user question for each decision.
 
 ### 4B-1: Styling Approach
 
-WebSearch top 3 styling approaches for the confirmed frontend framework:
+WebSearch top 3 styling approaches for confirmed frontend framework:
 
 | Approach                         | Best For                                 | Research Focus                     |
 | -------------------------------- | ---------------------------------------- | ---------------------------------- |
@@ -251,7 +296,9 @@ WebSearch top 3 styling approaches for the confirmed frontend framework:
 
 ## Step 5: Library Ecosystem Research
 
-For EACH concern below, WebSearch top 3 library options for the confirmed tech stack. Evaluate: maturity, community, bundle size, maintenance activity, license, learning curve.
+Per concern below, WebSearch top 3 library options for confirmed tech stack. Evaluate: maturity, community, bundle size, maintenance activity, license, learning curve.
+
+> **MUST ATTENTION** never recommend a library from familiarity alone — every pick needs cited evidence (stars, release date, downloads, CVE scan). — why: familiarity bias ships unmaintained or insecure dependencies.
 
 ### Library Concerns Checklist
 
@@ -292,11 +339,11 @@ For EACH concern below, WebSearch top 3 library options for the confirmed tech s
 
 ## Step 6: Testing Architecture
 
-Research best testing tools and strategy for the confirmed tech stack:
+Research best testing tools, strategy for confirmed tech stack:
 
 | Testing Layer           | What to Research                                  | Top Candidates to Compare                    |
 | ----------------------- | ------------------------------------------------- | -------------------------------------------- |
-| **Unit Testing**        | Test runner, assertion library, mocking framework | Jest/Vitest/xUnit/NUnit, mocking             |
+| **Unit Testing**        | Test runner, assertion library, mocking framework | Repository's configured unit-test stack      |
 | **Integration Testing** | API testing, DB testing, service testing          | Supertest, TestContainers, WebAppFactory     |
 | **E2E Testing**         | Browser automation, BDD, visual regression        | Playwright/Cypress/Selenium, SpecFlow        |
 | **Performance Testing** | Load testing, stress testing, benchmarking        | k6/Artillery/JMeter/NBomber, BenchmarkDotNet |
@@ -314,28 +361,28 @@ Research best testing tools and strategy for the confirmed tech stack:
 - **Integration (20%):** {framework} — {what to test}
 - **E2E (10%):** {framework} — {what to test}
 
-### Coverage Targets
+### Test-Strength Targets
 
-- Unit: {X}% | Integration: {X}% | E2E: critical paths only
-- Enforcement: {tool} in CI pipeline, fail build below threshold
+- Line coverage (diagnostic only — NEVER fail the build on a coverage %): Unit: {X}% | Integration: {X}% | E2E: critical paths only
+- Gate: mutation score ({tool}) in CI pipeline — fail build on surviving mutants / mutation-score regression, not on a line-coverage %
 ```
 
 ---
 
 ## Step 7: CI/CD & Deployment
 
-Research deployment architecture and CI/CD tooling:
+Research deployment architecture, CI/CD tooling:
 
-| Concern                 | What to Research                                     | Top Candidates to Compare                     |
-| ----------------------- | ---------------------------------------------------- | --------------------------------------------- |
-| **CI/CD Platform**      | Pipeline orchestration, parallelism, caching         | GitHub Actions/Azure DevOps/GitLab CI/Jenkins |
-| **Containerization**    | Container runtime, image building, registry          | Docker/Podman, BuildKit, ACR/ECR/GHCR         |
-| **Orchestration**       | Container orchestration, service mesh, scaling       | Kubernetes/Docker Compose/ECS/Nomad           |
-| **IaC (Infra as Code)** | Infrastructure provisioning, drift detection         | Terraform/Pulumi/Bicep/CDK                    |
-| **Artifact Management** | Package registry, versioning, vulnerability scanning | NuGet/npm/Artifactory/GitHub Packages         |
-| **Feature Flags**       | Progressive rollout, A/B testing, kill switches      | LaunchDarkly/Unleash/Flagsmith                |
-| **Secret Management**   | Vault, key rotation, environment variables           | Azure KeyVault/HashiCorp Vault/SOPS           |
-| **Database Migration**  | Schema versioning, rollback, seed data               | EF Migrations/Flyway/Liquibase/dbmate         |
+| Concern                 | What to Research                                     | Top Candidates to Compare             |
+| ----------------------- | ---------------------------------------------------- | ------------------------------------- |
+| **CI/CD Provider**      | Pipeline orchestration, parallelism, caching         | Repository's configured CI/CD tooling |
+| **Containerization**    | Container runtime, image building, registry          | Docker/Podman, BuildKit, ACR/ECR/GHCR |
+| **Orchestration**       | Container orchestration, service mesh, scaling       | Kubernetes/Docker Compose/ECS/Nomad   |
+| **IaC (Infra as Code)** | Infrastructure provisioning, drift detection         | Terraform/Pulumi/Bicep/CDK            |
+| **Artifact Management** | Package registry, versioning, vulnerability scanning | NuGet/npm/Artifactory/GitHub Packages |
+| **Feature Flags**       | Progressive rollout, A/B testing, kill switches      | LaunchDarkly/Unleash/Flagsmith        |
+| **Secret Management**   | Vault, key rotation, environment variables           | Azure KeyVault/HashiCorp Vault/SOPS   |
+| **Database Migration**  | Schema versioning, rollback, seed data               | EF Migrations/Flyway/Liquibase/dbmate |
 
 ### Deployment Strategy Comparison
 
@@ -379,7 +426,7 @@ Research deployment architecture and CI/CD tooling:
 
 ## Step 9: Code Quality & Clean Code Enforcement
 
-Research and recommend tooling for automated code quality:
+Research, recommend tooling for automated code quality:
 
 | Concern                    | What to Research                                   | Top Candidates to Compare                     |
 | -------------------------- | -------------------------------------------------- | --------------------------------------------- |
@@ -399,39 +446,40 @@ Research and recommend tooling for automated code quality:
 ```markdown
 ### Code Quality Gates
 
-| Gate        | Tool   | Trigger        | Fail Criteria         |
-| ----------- | ------ | -------------- | --------------------- |
-| Pre-commit  | {tool} | git commit     | Lint errors, format   |
-| PR Check    | {tool} | Pull request   | Coverage < X%, issues |
-| CI Pipeline | {tool} | Push to branch | Build fail, test fail |
-| Scheduled   | {tool} | Weekly/nightly | Security vulns, debt  |
+| Gate        | Tool   | Trigger        | Fail Criteria                                                                         |
+| ----------- | ------ | -------------- | ------------------------------------------------------------------------------------- |
+| Pre-commit  | {tool} | git commit     | Lint errors, format                                                                   |
+| PR Check    | {tool} | Pull request   | Surviving mutants / mutation-score regression, issues (line-coverage diagnostic only) |
+| CI Pipeline | {tool} | Push to branch | Build fail, test fail                                                                 |
+| Scheduled   | {tool} | Weekly/nightly | Security vulns, debt                                                                  |
 ```
 
 ### Scaffold Handoff (MANDATORY — consumed by `$scaffold`)
 
-After completing code quality research, produce this handoff table in the architecture report. The `$scaffold` skill reads this table to generate actual config files — without it, scaffold cannot auto-configure quality tooling.
+After code quality research, produce this handoff table in architecture report. `$scaffold` reads this table to generate actual config files — without it, scaffold cannot auto-configure quality tooling. — why: the handoff table is the only contract scaffold has for tool choices.
 
 ```markdown
 ### Scaffold Handoff — Tool Choices
 
-| Concern        | Chosen Tool       | Config File | Rationale |
-| -------------- | ----------------- | ----------- | --------- |
-| Linter (FE)    | {tool}            | {filename}  | {why}     |
-| Linter (BE)    | {tool}            | {filename}  | {why}     |
-| Formatter      | {tool}            | {filename}  | {why}     |
-| Pre-commit     | {tool}            | {filename}  | {why}     |
-| Error handling | {pattern}         | {files}     | {why}     |
-| Loading state  | {pattern}         | {files}     | {why}     |
-| Docker         | {compose pattern} | {files}     | {why}     |
+| Concern              | Chosen Tool                                         | Config File | Rationale                                                    |
+| -------------------- | --------------------------------------------------- | ----------- | ------------------------------------------------------------ |
+| Linter (FE)          | {tool}                                              | {filename}  | {why}                                                        |
+| Linter (BE)          | {tool}                                              | {filename}  | {why}                                                        |
+| Formatter            | {tool}                                              | {filename}  | {why}                                                        |
+| Pre-commit           | {tool}                                              | {filename}  | {why}                                                        |
+| Arch rules / fitness | {tool: ArchUnit / NetArchTest / Dependency-Cruiser} | {filename}  | {layer + dependency rules and Step-2 NFR budgets to enforce} |
+| Error handling       | {pattern}                                           | {files}     | {why}                                                        |
+| Loading state        | {pattern}                                           | {files}     | {why}                                                        |
+| Docker               | {compose pattern}                                   | {files}     | {why}                                                        |
 ```
 
-**Also include:** Error handling strategy (4-layer pattern), loading state approach (global vs per-component), and Docker profile structure. Specific tool choices → `docs/project-reference/` or `project-config.json`.
+**Also include:** Error handling strategy (4-layer pattern), loading state approach (global vs per-component), Docker profile structure. Specific tool choices → `docs/project-reference/` or `project-config.json`. The **Arch rules / fitness** row MUST encode Step-2 quality-attribute budgets and layer/dependency rules as executable checks — `harness-setup` wires these into CI so recorded ADR decisions stay enforced, not merely documented. — why: documented-but-unenforced budgets erode silently as code changes.
 
 ---
 
 ## Step 10: Dependency Risk Assessment
 
-For EVERY recommended library/package, evaluate maintenance and obsolescence risk:
+Per recommended library/package, evaluate maintenance, obsolescence risk:
 
 ### Package Health Scorecard
 
@@ -489,6 +537,10 @@ Write report to `{plan-dir}/research/architecture-design.md` with sections:
 12. Risk assessment for overall architecture
 13. Unresolved questions
 
+### Emit ADRs for hard-to-reverse decisions (MANDATORY)
+
+For each decision significant AND costly to reverse — backend/frontend style, persistence/consistency model, messaging approach, a Step-2 quality-attribute budget, a rejected-with-reason alternative — write one ADR to `docs/adr/{NNNN}-{slug}.md` following the repo's existing ADR format (Status, Date, Context, Decision, Consequences [Positive/Negative/Neutral], Alternatives Considered, Related; see `docs/adr/0001-skill-lifecycle.md` for canonical shape). Start `Status: Proposed`; promote to `Accepted` after Step-12 user validation confirms it. These ADRs are the binding record `review-architecture` Category 9 checks changed code against — **a decision not written as an ADR cannot be enforced downstream.** Route ADR authoring through the `architect` sub-agent for cross-service/security/performance impact analysis.
+
 ### Architecture Diagram Template
 
 ````markdown
@@ -536,7 +588,7 @@ graph TB
 
 ## Step 12: User Validation Interview
 
-**MANDATORY IMPORTANT MUST ATTENTION** present findings and ask 8-12 questions via a direct user question:
+**MANDATORY IMPORTANT MUST ATTENTION** present findings, ask 8-12 questions via a direct user question:
 
 ### Required Questions
 
@@ -556,17 +608,17 @@ graph TB
 - "Should we use event sourcing or traditional state-based persistence?"
 - "Monolith-first or start with service boundaries?"
 - "Micro frontends or monolith SPA?"
-- "How important is framework independence for this project?"
+- "How important is framework independence for this repository or system?"
 - "Self-hosted observability or managed SaaS?"
 - "Strict lint rules from day 1 or gradual adoption?"
 
-After user confirms, update report with final decisions and mark as `status: confirmed`.
+After user confirms, update report with final decisions, mark `status: confirmed`.
 
 ---
 
 ## Best Practices Audit (applied across all steps)
 
-Validate architecture against these principles — flag violations in report:
+Validate architecture against these principles — flag violations in report. — why: an unflagged SOLID/DRY violation compounds into rework once code lands on the flaw.
 
 | Principle                      | Check                                                      | Status |
 | ------------------------------ | ---------------------------------------------------------- | ------ |
@@ -592,6 +644,7 @@ Validate architecture against these principles — flag violations in report:
 ```
 {plan-dir}/research/architecture-design.md     # Full architecture analysis report
 {plan-dir}/phase-02b-architecture.md           # Confirmed architecture decisions
+docs/adr/{NNNN}-{slug}.md                       # One ADR per hard-to-reverse decision (see Step 11)
 ```
 
 ---
@@ -605,7 +658,7 @@ Validate architecture against these principles — flag violations in report:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. NEVER skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"$plan (Recommended)"** — Create implementation plan from architecture design
 - **"$refine"** — If need to create PBIs first
@@ -613,7 +666,7 @@ Validate architecture against these principles — flag violations in report:
 
 ### Council escalation (always-offer, second prompt)
 
-After the existing `## Next Steps` prompt above resolves, present a **second**, independent a direct user question call (do NOT merge into the first):
+After the existing `## Next Steps` prompt above resolves, present a **second**, independent a direct user question call (NEVER merge into the first):
 
 - **"Skip council — proceed (Recommended)"** — Continue with the architecture decision as-is. Recommended default.
 - **"Escalate to $llm-council"** — Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Use when this architecture pick is hard to reverse and you need adversarial framing. Cheaper alternatives: `$why-review`, `$plan-validate` (run these first if you haven't).
@@ -629,16 +682,52 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+## Anti-Rationalization (reject these excuses)
+
+| Excuse the model tells itself                        | Reality                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| "I know this stack — skip the 3-options research"    | Familiarity ≠ evidence. Research 3+ options with cited proof per concern, every time.             |
+| "The architecture is obvious — skip user validation" | Step 12 is MANDATORY. The user owns hard-to-reverse decisions; never auto-decide.                 |
+| "No scale numbers given, I'll just pick a style"     | Missing target = explicit `Unresolved question`, never a silent guess. Quantify via Step-2 first. |
+| "It's a small feature — skip the ADR"                | If a decision is significant AND costly to reverse, it needs an ADR or it cannot be enforced.     |
+| "Brownfield, but my preferred style is better"       | NEVER re-litigate a settled ADR-recorded decision without a superseding-ADR rationale.            |
+| "I'll document the budget, enforcement is optional"  | Documented-but-unenforced budgets erode. Encode them as executable fitness checks for CI.         |
+
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via a direct user question — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**IMPORTANT MUST ATTENTION Goal:** Deliver a complete, evidence-backed, user-validated architecture decision report — every concern researched with 3+ options, every recommendation carrying confidence % + cited evidence, every decision confirmed by the user — so implementation proceeds on sound, owned architectural choices.
+
+**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** traced `file:line` proof per claim, confidence >80% to act.
+- **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS, confidence closer.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**MANDATORY IMPORTANT MUST ATTENTION** research min 3 options per architecture concern with cited web evidence (stars, last release, downloads, CVE scan) — NEVER recommend from familiarity alone — why: familiarity bias ships unmaintained or insecure dependencies.
+**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via a direct user question (Step 12) — NEVER auto-decide a hard-to-reverse choice — why: the user owns hard-to-reverse decisions; the architect proposes, the user confirms.
+**MANDATORY IMPORTANT MUST ATTENTION** quantify Step-2 quality-attribute scenarios (latency p95/p99, throughput, SLO, RPO/RTO, growth, concurrency) — any unknown target becomes an explicit `Unresolved question`, NEVER a silent guess — why: a style chosen without numbers is a guess, not an enforceable decision.
+**MANDATORY IMPORTANT MUST ATTENTION** brownfield: FIRST read project reference docs + accepted ADRs, constrain research to the existing stack, and NEVER re-litigate a settled ADR-recorded decision without a superseding-ADR rationale — why: re-deciding a recorded choice churns the codebase and breaks downstream conformance checks.
+**MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns/ADRs before proposing any new style or pattern; cite `file:line` (or URL/benchmark) evidence and a confidence % for EVERY claim — confidence >80% to recommend, <60% DO NOT recommend — why: speculation without proof is forbidden output.
+**MANDATORY IMPORTANT MUST ATTENTION** evaluate fit before copying a nearby pattern — closest example ≠ matching preconditions; verify the new context shares the same scale, constraints, and boundaries — why: a pattern lifted into a mismatched context fails silently.
+**MANDATORY IMPORTANT MUST ATTENTION** produce the two binding downstream contracts — one ADR per hard-to-reverse decision (`review-architecture` Cat 9 enforces) AND the Scaffold Handoff tool-choices table (`scaffold`/`harness-setup` consume) — a decision not written as an ADR or encoded as an executable fitness check cannot be enforced downstream — why: documented-but-unenforced budgets erode silently as code changes.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; mark one `in_progress`, mark `completed` immediately after evidence lands; add a final review todo — why: external task state survives context compaction; memory does not.
+
+**Anti-Rationalization (Closing — reject these excuses):**
+
+| Excuse the model tells itself                        | Reality                                                                                               |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| "I know this stack — skip the 3-options research"    | Familiarity ≠ evidence. Research 3+ options with cited proof per concern, every time.                 |
+| "The architecture is obvious — skip user validation" | Step 12 is MANDATORY. The user owns hard-to-reverse decisions; never auto-decide.                     |
+| "No scale numbers given, I'll just pick a style"     | Missing target = explicit `Unresolved question`, never a silent guess. Quantify via Step-2 first.     |
+| "Small feature — skip the ADR / fitness check"       | Significant AND costly-to-reverse → needs an ADR + executable fitness rule, or it cannot be enforced. |
+| "Brownfield, but my preferred style is better"       | NEVER re-litigate a settled ADR-recorded decision without a superseding-ADR rationale.                |
+| "Found a nearby pattern, just copy it"               | Evaluate fit first — same scale/constraints/boundaries? Closest ≠ matching. Verify before reusing.    |
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -667,7 +756,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -675,16 +764,14 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -704,8 +791,9 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-    <!-- /SYNC:ai-mistake-prevention:reminder -->
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
@@ -715,26 +803,46 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 ## Hookless Prompt Protocol Mirror (Auto-Synced)
 
-Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`
+Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:full` blocks) + `.claude/scripts/lib/hookless-prompt-protocol.cjs`
 
 ## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
 
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. Any supported AI tool may execute when this shared context and local docs are available.
+**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
 
-1. **DETECT:** Match prompt against workflow catalog
-2. **ANALYZE:** Find best-match workflow AND evaluate if a custom step combination would fit better
-3. **ASK (REQUIRED FORMAT):** Use a direct user question with this structure unless the user explicitly invoked a workflow/skill and the local protocol treats explicit invocation as confirmation:
-    - Question: "Which workflow do you want to activate?"
-    - Option 1: "Activate **[BestMatch Workflow]** (Recommended)"
-    - Option 2: "Activate custom workflow: **[step1 → step2 → ...]**" (include one-line rationale)
-4. **ACTIVATE (if confirmed):** Call `$workflow-start <workflowId>` for standard; sequence custom steps manually
-5. **CREATE TASKS:** task tracking for ALL workflow steps
-6. **EXECUTE:** Follow each step in sequence
-   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
-   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
+1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
+2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
+3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
+4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
+5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
+6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
+
+## Shared AI-SDD Protocol Markers
+
+Source: `.claude/skills/shared/sync-inline-versions.md`
+
+## SYNC:ai-sdd-artifact-contract
+
+> **AI-SDD Artifact Contract** — Shared spec-driven development rules stay portable and source-owned.
+>
+> 1. Keep reusable AI-SDD principles in `.claude`; put repository-specific paths, commands, owners, products, and formats in project config/reference docs.
+> 2. Preserve cycle: `spec -> plan -> tasks -> implement -> verify -> update spec/docs`.
+> 3. Trace every requirement or invariant through decision, task, TC/test, source evidence, and docs/spec update.
+> 4. Treat code-to-spec extraction as reference-only until accepted by the canonical spec owner.
+> 5. Any supported AI tool may plan, implement, review, or verify with synced context; using multiple tools is optional.
+> 6. Update `.claude` source first, then sync generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`. — why: mirrors are generated artifacts; hand-edits are overwritten on the next sync
+> 7. If `docs/project-config.json`, root instruction files, or a required project-reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
+>
+> **Active reference:** `shared/sdd-artifact-contract.md` in the active skills root.
+
+---
+
+## SYNC:ai-sdd-artifact-contract:reminder
+
+- **MANDATORY** Apply `shared/sdd-artifact-contract.md`; keep reusable AI-SDD in `.claude` and local rules in project docs.
+- **MANDATORY** Code-to-spec extraction is reference-only until canonical acceptance; any supported AI tool may execute with synced context.
+- **MANDATORY** Update `.claude` source before syncing generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`.
+- **MANDATORY** Missing or stale project config, root instruction files, or required reference docs route project-specific work through `$project-init` or the narrow setup route automatically.
+  **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
 
 ## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
 
@@ -747,8 +855,42 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
 4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
 5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security`/`$lint` catch this?" — Yes → improve review skill instead.
+6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
 7. BOTH gates pass → ask user to run `$learn`.
-   **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
+   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
+   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
+   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
+
+## Common AI Mistake Prevention (System Lessons)
+
+- **Re-read files after context compaction.** Edit requires prior Read in same context; compaction wipes read state. Re-read before editing.
+- **Grep for old terms after bulk replacements.** AI over-trusts find/replace completeness. Grep full repo after bulk edits for missed refs in docs/configs/catalogs.
+- **Check downstream references before deleting.** Deletions cascade doc/code staleness. Map referencing files before removal.
+- **After memory loss, check existing state before creating new.** Compaction wipes prior-work memory. Query current state to resume — never blindly duplicate.
+- **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, method signatures. Grep to confirm existence before documenting/referencing.
+- **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Trace the full chain.
+- **When renaming, grep ALL consumer file types.** Some file types silently ignore missing refs (no compile error). Search code, templates, configs, generated files.
+- **Trace ALL code paths when verifying correctness.** Code existing ≠ code executing. Trace early exits, error branches, conditional skips — not just happy path.
+- **Update docs that embed canonical data when source changes.** Docs inlining derived data (workflows, schemas, configs) go stale silently. Update all embedding docs alongside source.
+- **Verify sub-agent results after context recovery.** Background agents may finish while parent compacted — grep-verify output, don't trust assumed completion.
+- **Cross-check full target list against sub-agent assignments.** Parallel sub-agents by category miss boundary items. Reconcile union of assignments against target list before proceeding.
+- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
+- **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
+- **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
+- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
+- **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
+- **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
+- **Surgical changes — apply the diff test (context-aware).** Two modes: (1) Bug fix → every line traces to the bug; no restyling; orphan cleanup only for imports YOUR changes made unused. (2) Review/enhancement → implement improvements AND announce as "Enhancement beyond main request: [what]". Never silently scope-creep. Diff test: "Would this line exist if I wasn't asked to do X?" — if no, delete or announce.
+- **Surface ambiguity before coding — don't pick silently.** Multiple valid interpretations → present each with effort: "[Request] could mean (1) [N h], (2) [N h]. Which matters?" List scope/format/volume/constraints assumptions first. If simpler path exists, say so. Never silently pick.
+- **[MANDATORY FIRST ACTION] ALWAYS activate a suitable skill or workflow BEFORE responding.** Match task against workflow catalog + skill list; invoke via skill invocation or `$start-workflow <workflowId>`. NEVER answer or write code before checking. Skip = protocol violation.
+- **Why-Review adversarial mindset — apply when reviewing any plan, decision, or design.** Default SKEPTIC not VALIDATOR: steel-man a rejected alternative, invert each stated reason ("what does it sacrifice?"), stress-test top 2-3 assumptions, run pre-mortem ("ships, fails in 3 months — what breaks?"), surface 1-2 alternatives author missed. Section presence ≠ quality; quality = causal reasoning + concrete mitigations + evidence, not "it's better" or "monitor closely".
+- **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
+- **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
+- **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

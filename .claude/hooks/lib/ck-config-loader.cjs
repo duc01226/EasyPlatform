@@ -56,14 +56,6 @@ const DEFAULT_CONFIG = {
     packageManager: "auto",
     framework: "auto",
   },
-  // Workflow behavior settings (user-configurable in .ck.json)
-  workflow: {
-    // Controls whether workflow detection requires user confirmation via AskUserQuestion.
-    // "always" — always ask before activating (default, collaborative)
-    // "never"  — auto-execute without asking (power user, quickMode forced globally)
-    // "off"    — disable workflow detection entirely (plain Claude, no injection)
-    confirmationMode: "always",
-  },
   // Reference docs staleness enforcement (configurable threshold)
   referenceDocs: {
     staleDays: 60,
@@ -81,8 +73,8 @@ const DEFAULT_CONFIG = {
 };
 
 // Canonical default portability paths — single source of truth.
-// Consumers (project-config-loader, prompt-injections, prompt-context-assembler-project-config)
-// reference this instead of re-hardcoding the literals, so a default change is one edit.
+// Consumers (project-config-loader, prompt-injections) reference this instead of
+// re-hardcoding the literals, so a default change is one edit.
 // Safe to use in catch/fallback paths: it is a require-time constant, not a runtime call
 // that can throw — referencing it never re-triggers the loadConfig() failure those paths guard.
 const DEFAULT_PORTABILITY = DEFAULT_CONFIG.portability;

@@ -27,7 +27,7 @@ Based on [keepachangelog.com](https://keepachangelog.com/).
 ```markdown
 # Changelog
 
-All notable changes to this project are documented in this file.
+All notable changes to this repository are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 

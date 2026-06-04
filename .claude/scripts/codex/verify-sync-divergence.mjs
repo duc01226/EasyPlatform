@@ -2,16 +2,24 @@
 
 // Codex sync-divergence oracle gate.
 //
-// Re-runs the REAL mirror transform (migrate-claude-to-codex.mjs > materializeSkillMirror)
-// into a throwaway staging dir, then diffs that fresh output against the committed
-// .agents/skills mirror. Any difference means the mirror is stale (someone edited
-// .claude/skills without running `npm run codex:sync`) or was hand-edited directly.
+// Guards TWO committed-mirror surfaces against a fresh regeneration:
+//   (1) the .agents/skills mirror (materializeSkillMirror), and
+//   (2) the CONTEXT mirror — AGENTS.md + .codex/CODEX_CONTEXT.md (runContextSync).
+// Each re-runs the REAL writer into a throwaway staging dir, then diffs that fresh output
+// against the committed copy. Any difference means the mirror is stale (someone edited
+// .claude/** without running `npm run codex:sync`) or was hand-edited directly.
 //
-// Oracle design (vs re-implementing the Codex dialect transform): the checker and the
-// writer call the SAME materializeSkillMirror, so the "expected" output cannot drift
-// from real sync behavior. The intentional dialect rewrites (/skill -> $skill, TaskCreate
-// -> task tracking, version: strip, compat-note prepend, project-reference block, etc.)
-// are reproduced for free because they ARE the real transform.
+// Oracle design (vs re-implementing the transforms): the checker and the writer call the
+// SAME functions (materializeSkillMirror / runContextSync), so the "expected" output cannot
+// drift from real sync behavior. The intentional dialect rewrites (/skill -> $skill,
+// TaskCreate -> task tracking, version: strip, compat-note prepend, project-reference block,
+// etc.) are reproduced for free because they ARE the real transform.
+//
+// Why the CONTEXT check lives HERE rather than in a new standalone file: a new pipeline
+// script would itself have to be git-tracked to ship in the portable export (export-claude
+// ships `git ls-files .claude`) — adding a fresh untracked-until-staged portability gap to
+// close the very gap it fixes. Folding it into this already-tracked, already-wired oracle
+// keeps the framework export self-contained with zero new pipeline files.
 //
 // Failure policy:
 //   - Genuine divergence  -> exit 1 (blocks commit; remediation: npm run codex:sync).
@@ -24,6 +32,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSkillReferenceMap } from './compat-rewrite.mjs';
 import { materializeSkillMirror, claudeSkillsDir, agentsSkillsDir } from './migrate-claude-to-codex.mjs';
+import { runContextSync, contextPath, agentsPath } from './sync-context-workflows.mjs';
 
 // Files present in the committed mirror but NOT produced by materializeSkillMirror.
 // The sentinel is written separately by the writer (writeAgentsSkillsMirrorSentinel);
@@ -85,14 +94,108 @@ export function diffTrees(expected, actual) {
     return diffs.sort((a, b) => a.relPath.localeCompare(b.relPath) || a.kind.localeCompare(b.kind));
 }
 
-async function main() {
+// STRUCTURAL guard the content-equality diff above is blind to: a malformed SYNC
+// fence (e.g. an indented or dropped close) present IDENTICALLY in source and
+// mirror is "in sync" by equality yet still broken — exactly the symmetric defect
+// class that slips past an oracle which only compares bytes. Count ONLY column-0
+// fences (`^<!-- /?SYNC:`, line-anchored) — same invariant as the hook suite's
+// TC-UAR-006/008; backtick-wrapped fence examples in prose sit mid-line and are
+// correctly ignored. Returns one entry per file whose open/close counts differ.
+export function findFenceImbalances(files) {
+    const problems = [];
+    for (const [rel, content] of files) {
+        const opens = (content.match(/^<!-- SYNC:/gm) || []).length;
+        const closes = (content.match(/^<!-- \/SYNC:/gm) || []).length;
+        if (opens !== closes) problems.push({ relPath: rel, opens, closes });
+    }
+    return problems.sort((a, b) => a.relPath.localeCompare(b.relPath));
+}
+
+// CRLF-normalized read; a missing file returns null (surfaced as a divergence by the caller's
+// diff, never a crash). The real sync emits LF, so normalization keeps a line-ending-only
+// difference from registering as drift — same policy as readTreeFiles.
+async function readNormalized(target) {
+    try {
+        const raw = await fs.readFile(target, 'utf8');
+        return raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    } catch {
+        return null;
+    }
+}
+
+// CONTEXT-mirror idempotency check. Re-renders the two context outputs via the SAME
+// runContextSync the writer uses, redirected to a throwaway dir via { outRootDir }, then
+// diffs the fresh AGENTS.md + .codex/CODEX_CONTEXT.md against the committed copies. Returns a
+// diffTrees-shaped list (keyed by repo-relative POSIX path) so reporting is uniform with the
+// skills check. Inputs/baselines are always read from the real repo by runContextSync; only
+// the two writes are redirected. Throws on a failed render so the caller's fail-open catch
+// handles an internal fault rather than reporting it as divergence.
+async function checkContextMirror(rootDir) {
+    if (!(await pathExists(path.join(rootDir, 'CLAUDE.md')))) return [];
+    if (!(await pathExists(agentsPath)) && !(await pathExists(contextPath))) return [];
+
+    const staging = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-context-check-'));
+    try {
+        await runContextSync({ outRootDir: staging });
+        const agentsRel = path.relative(rootDir, agentsPath).replaceAll('\\', '/');
+        const contextRel = path.relative(rootDir, contextPath).replaceAll('\\', '/');
+
+        const freshAgents = await readNormalized(path.join(staging, 'AGENTS.md'));
+        const freshContext = await readNormalized(path.join(staging, '.codex', 'CODEX_CONTEXT.md'));
+        if (freshAgents === null || freshContext === null) {
+            throw new Error('fresh context render did not produce AGENTS.md + CODEX_CONTEXT.md');
+        }
+        const expected = new Map([[agentsRel, freshAgents], [contextRel, freshContext]]);
+
+        const actual = new Map();
+        const committedAgents = await readNormalized(agentsPath);
+        const committedContext = await readNormalized(contextPath);
+        if (committedAgents !== null) actual.set(agentsRel, committedAgents);
+        if (committedContext !== null) actual.set(contextRel, committedContext);
+
+        return diffTrees(expected, actual);
+    } finally {
+        await fs.rm(staging, { recursive: true, force: true });
+    }
+}
+
+// Reports the .agents/skills mirror diff/fence results. Returns true on any failure.
+function reportSkillsResult(diffs, fenceProblems) {
+    if (diffs.length === 0 && fenceProblems.length === 0) return false;
+
+    if (diffs.length > 0) {
+        console.error('[codex-verify-sync-divergence] FAIL — .agents/skills is out of sync with .claude/skills');
+        console.error('Remediation: run `npm run codex:sync` — or, without npm/package.json, the standalone');
+        console.error('orchestrator it delegates to: `node .claude/skills/sync-codex/scripts/run-codex-sync.mjs`');
+        console.error('(never hand-edit the .agents/.codex mirror).');
+        for (const diff of diffs.slice(0, MAX_REPORTED_DIFFS)) {
+            console.error(`- [${diff.kind}] .agents/skills/${diff.relPath}`);
+        }
+        if (diffs.length > MAX_REPORTED_DIFFS) {
+            console.error(`- ... and ${diffs.length - MAX_REPORTED_DIFFS} more`);
+        }
+    }
+
+    if (fenceProblems.length > 0) {
+        console.error('[codex-verify-sync-divergence] FAIL — malformed SYNC fences in .agents/skills (structural; equality-blind)');
+        console.error('Remediation: fix the column-0 SYNC fence balance in the SOURCE .claude/skills SKILL.md');
+        console.error('(an indented/dropped `<!-- /SYNC:tag -->` close), then re-run `npm run codex:sync`.');
+        for (const problem of fenceProblems.slice(0, MAX_REPORTED_DIFFS)) {
+            console.error(`- [fence-imbalance] .agents/skills/${problem.relPath}: ${problem.opens} open / ${problem.closes} close`);
+        }
+        if (fenceProblems.length > MAX_REPORTED_DIFFS) {
+            console.error(`- ... and ${fenceProblems.length - MAX_REPORTED_DIFFS} more`);
+        }
+    }
+    return true;
+}
+
+async function checkSkillsMirror() {
     if (!(await pathExists(claudeSkillsDir))) {
-        console.log('[codex-verify-sync-divergence] PASS (no .claude/skills source to mirror)');
-        return;
+        return { skip: 'no .claude/skills source to mirror' };
     }
     if (!(await pathExists(agentsSkillsDir))) {
-        console.log('[codex-verify-sync-divergence] PASS (no .agents/skills mirror yet — run npm run codex:sync to create it)');
-        return;
+        return { skip: 'no .agents/skills mirror yet — run npm run codex:sync to create it' };
     }
 
     const skillDirNames = (await fs.readdir(claudeSkillsDir, { withFileTypes: true }))
@@ -105,25 +208,41 @@ async function main() {
         await materializeSkillMirror(staging, skillReferenceMap);
         const expected = await readTreeFiles(staging);
         const actual = await readTreeFiles(agentsSkillsDir);
-        const diffs = diffTrees(expected, actual);
-
-        if (diffs.length === 0) {
-            console.log(`[codex-verify-sync-divergence] PASS (${expected.size} mirror file(s) in sync)`);
-            return;
-        }
-
-        console.error('[codex-verify-sync-divergence] FAIL — .agents/skills is out of sync with .claude/skills');
-        console.error('Remediation: run `npm run codex:sync` (never hand-edit the .agents/.codex mirror).');
-        for (const diff of diffs.slice(0, MAX_REPORTED_DIFFS)) {
-            console.error(`- [${diff.kind}] .agents/skills/${diff.relPath}`);
-        }
-        if (diffs.length > MAX_REPORTED_DIFFS) {
-            console.error(`- ... and ${diffs.length - MAX_REPORTED_DIFFS} more`);
-        }
-        process.exitCode = 1;
+        // Validate the committed mirror's fence structure too. Equality cannot vouch for
+        // structure: a symmetric malformed fence passes the diff but fails here.
+        return { diffs: diffTrees(expected, actual), fenceProblems: findFenceImbalances(actual), count: expected.size };
     } finally {
         await fs.rm(staging, { recursive: true, force: true });
     }
+}
+
+async function main() {
+    const rootDir = process.cwd();
+    let failed = false;
+
+    const skills = await checkSkillsMirror();
+    if (skills.skip) {
+        console.log(`[codex-verify-sync-divergence] skills: PASS (${skills.skip})`);
+    } else if (reportSkillsResult(skills.diffs, skills.fenceProblems)) {
+        failed = true;
+    } else {
+        console.log(`[codex-verify-sync-divergence] skills: PASS (${skills.count} mirror file(s) in sync)`);
+    }
+
+    const contextDiffs = await checkContextMirror(rootDir);
+    if (contextDiffs.length === 0) {
+        console.log('[codex-verify-sync-divergence] context: PASS (AGENTS.md + .codex/CODEX_CONTEXT.md in sync)');
+    } else {
+        failed = true;
+        console.error('[codex-verify-sync-divergence] FAIL — context mirror (AGENTS.md / .codex/CODEX_CONTEXT.md) is out of sync');
+        console.error('Remediation: run `npm run codex:sync` — or the standalone orchestrator:');
+        console.error('`node .claude/skills/sync-codex/scripts/run-codex-sync.mjs` (never hand-edit the managed blocks).');
+        for (const diff of contextDiffs.slice(0, MAX_REPORTED_DIFFS)) {
+            console.error(`- [${diff.kind}] ${diff.relPath}`);
+        }
+    }
+
+    if (failed) process.exitCode = 1;
 }
 
 const invokedAsScript = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

@@ -3,23 +3,6 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
-        "CommandMappingEntry": {
-            "additionalProperties": false,
-            "description": "Maps a logical command key to a Claude Code slash command invocation.",
-            "properties": {
-                "claude": {
-                    "description": "Claude Code slash command (must start with /).",
-                    "examples": ["/plan", "/cook", "/fix", "/code-review"],
-                    "minLength": 2,
-                    "pattern": "^/",
-                    "title": "Claude Code Command",
-                    "type": "string"
-                }
-            },
-            "required": ["claude"],
-            "title": "Command Mapping Entry",
-            "type": "object"
-        },
         "PreActions": {
             "additionalProperties": false,
             "description": "Actions to perform before starting the workflow sequence. Used to inject context or pre-read files.",
@@ -46,32 +29,13 @@
         },
         "Settings": {
             "additionalProperties": false,
-            "description": "Global configuration for workflow detection and overrides.",
+            "description": "Global configuration for workflow detection.",
             "properties": {
-                "allowOverride": {
-                    "default": true,
-                    "description": "Whether users can bypass workflow detection using the override prefix.",
-                    "title": "Allow Override",
-                    "type": "boolean"
-                },
-                "confirmHighImpact": {
-                    "default": true,
-                    "description": "Whether to prompt for user confirmation before executing workflows marked with confirmFirst: true.",
-                    "title": "Confirm High Impact",
-                    "type": "boolean"
-                },
                 "enabled": {
                     "default": true,
                     "description": "Master toggle to enable or disable all workflow detection and automation.",
                     "title": "Enable Workflows",
                     "type": "boolean"
-                },
-                "overridePrefix": {
-                    "description": "Prefix string that users type to bypass automatic workflow detection (e.g., 'quick:').",
-                    "examples": ["quick:"],
-                    "minLength": 1,
-                    "title": "Override Prefix",
-                    "type": "string"
                 },
                 "showDetection": {
                     "default": true,
@@ -80,13 +44,13 @@
                     "type": "boolean"
                 }
             },
-            "required": ["enabled", "allowOverride", "overridePrefix", "confirmHighImpact", "showDetection"],
+            "required": ["enabled", "showDetection"],
             "title": "Global Settings",
             "type": "object"
         },
         "StepMeta": {
             "additionalProperties": false,
-            "description": "Optional runtime hints for a specific workflow step. Read by workflow-step-tracker.cjs to decide sub-agent vs inline execution. Overrides values in the skill's SKILL.md front matter.",
+            "description": "Optional runtime hints for a specific workflow step. Read by the model (per the model-driven advancement rule) to decide sub-agent vs inline execution. Overrides values in the skill's SKILL.md front matter.",
             "properties": {
                 "contextBudget": {
                     "description": "Expected context consumption of this step. 'critical' = always run as sub-agent. 'high' = recommend sub-agent. 'medium' = optional sub-agent. 'low' = inline safe.",
@@ -108,11 +72,6 @@
             "additionalProperties": false,
             "description": "Defines a workflow selected by AI-native intent detection. Contains natural language descriptions for when to use/not use, an ordered sequence of commands, and optional pre-actions.",
             "properties": {
-                "confirmFirst": {
-                    "description": "Whether to ask for user confirmation before starting this workflow. Recommended for high-impact workflows (feature, refactor, release).",
-                    "title": "Confirm Before Execution",
-                    "type": "boolean"
-                },
                 "description": {
                     "description": "Detailed description of what this workflow does and when it is triggered.",
                     "minLength": 1,
@@ -126,11 +85,55 @@
                     "title": "Workflow Name",
                     "type": "string"
                 },
+                "parallelGroups": {
+                    "description": "Optional declaration of parallel-phase barrier groups within `sequence`. Each group's members run concurrently as ONE all-return barrier: spawn ALL members together (one message), then advance past the group ONLY after EVERY member returns (a skipped conditional member counts as returned). This is the portable, machine-visible complement to the prose advancement rule — the sync renderer collapses a group's members into a single `[parallel ⇉ all-return barrier: ...]` token in the Codex context mirrors, so the barrier is visible to hookless tools that read only the rendered sequence. Every member MUST be a value present in this workflow's `sequence`, members SHOULD be contiguous in `sequence`, and a member MUST NOT appear in more than one group.",
+                    "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "barrier": {
+                                "const": true,
+                                "description": "Always true — the group is an all-return barrier: the workflow advances past the group only after every member has returned. Declared explicitly so the structure self-documents the barrier semantics.",
+                                "title": "All-Return Barrier",
+                                "type": "boolean"
+                            },
+                            "conditionalMembers": {
+                                "description": "Subset of `members` that are conditionally included (spawned only when their trigger is present). A skipped conditional member still counts as 'returned' for the barrier. Rendered with a `*` suffix in the mirror barrier token. Each value MUST also appear in `members`.",
+                                "items": {
+                                    "minLength": 1,
+                                    "type": "string"
+                                },
+                                "title": "Conditional Members",
+                                "type": "array"
+                            },
+                            "id": {
+                                "description": "Stable identifier for this parallel group (e.g. 'reviewers').",
+                                "minLength": 1,
+                                "title": "Group Id",
+                                "type": "string"
+                            },
+                            "members": {
+                                "description": "Command keys that form the barrier. Each MUST exist in this workflow's `sequence`. Order is not significant for execution — all members are spawned together — but determines left-to-right order inside the rendered barrier token.",
+                                "items": {
+                                    "minLength": 1,
+                                    "type": "string"
+                                },
+                                "minItems": 2,
+                                "title": "Group Members",
+                                "type": "array"
+                            }
+                        },
+                        "required": ["id", "members", "barrier"],
+                        "title": "Parallel Group",
+                        "type": "object"
+                    },
+                    "title": "Parallel Phase Groups",
+                    "type": "array"
+                },
                 "preActions": {
                     "$ref": "#/definitions/PreActions"
                 },
                 "sequence": {
-                    "description": "Ordered list of command keys (referencing commandMapping) to execute. Commands run in sequence from first to last.",
+                    "description": "Ordered list of step-skill names to execute. Each step resolves to the slash command /<step>. Steps run in sequence from first to last.",
                     "items": {
                         "minLength": 1,
                         "type": "string"
@@ -143,15 +146,9 @@
                     "additionalProperties": {
                         "$ref": "#/definitions/StepMeta"
                     },
-                    "description": "Optional per-step metadata overrides keyed by command key (must match a value in sequence). Overrides execution-mode or context-budget from the skill's SKILL.md front matter. workflow-step-tracker.cjs reads this at runtime.",
+                    "description": "Optional per-step metadata overrides keyed by command key (must match a value in sequence). Overrides execution-mode or context-budget from the skill's SKILL.md front matter. The model reads this when advancing workflow steps.",
                     "title": "Step Metadata Overrides",
                     "type": "object"
-                },
-                "whenNotToUse": {
-                    "description": "Natural language description of when NOT to select this workflow. Used for disambiguation when multiple workflows could match.",
-                    "minLength": 1,
-                    "title": "When Not To Use",
-                    "type": "string"
                 },
                 "whenToUse": {
                     "description": "Natural language description of when the AI should select this workflow. The AI model reads this to decide which workflow matches the user's intent.",
@@ -164,26 +161,17 @@
                     "type": "string"
                 }
             },
-            "required": ["name", "description", "confirmFirst", "sequence", "whenToUse"],
+            "required": ["name", "description", "sequence", "whenToUse"],
             "title": "Workflow Definition",
             "type": "object"
         }
     },
-    "description": "Schema for Claude Code workflow automation configuration. Defines AI-native intent detection, command mapping, and workflow sequences for AI agent orchestration.",
+    "description": "Schema for Claude Code workflow automation configuration. Defines AI-native intent detection and workflow sequences for AI agent orchestration.",
     "properties": {
         "$schema": {
             "description": "Path or URL to the JSON Schema file for IDE validation and autocompletion.",
             "title": "Schema Reference",
             "type": "string"
-        },
-        "commandMapping": {
-            "additionalProperties": {
-                "$ref": "#/definitions/CommandMappingEntry"
-            },
-            "description": "Maps logical command keys to Claude Code slash commands. Each key is referenced by workflow sequences.",
-            "minProperties": 1,
-            "title": "Command Mapping",
-            "type": "object"
         },
         "description": {
             "description": "Human-readable description of this workflow configuration file.",
@@ -205,13 +193,13 @@
             "additionalProperties": {
                 "$ref": "#/definitions/WorkflowEntry"
             },
-            "description": "Named workflow definitions selected by AI-native intent detection. Each workflow has natural language whenToUse/whenNotToUse descriptions that the AI reads to determine which workflow matches the user's intent.",
+            "description": "Named workflow definitions selected by AI-native intent detection. Each workflow has a natural language whenToUse description that the AI reads to determine which workflow matches the user's intent.",
             "minProperties": 1,
             "title": "Workflow Definitions",
             "type": "object"
         }
     },
-    "required": ["version", "description", "settings", "commandMapping", "workflows"],
+    "required": ["version", "description", "settings", "workflows"],
     "title": "Workflow Configuration",
     "type": "object"
 }

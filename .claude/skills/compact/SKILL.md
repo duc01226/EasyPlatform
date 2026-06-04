@@ -1,7 +1,7 @@
 ---
 name: compact
-version: 1.0.0
-description: '[Utilities] Use when you need to compress context to optimize token usage.'
+version: 2.0.0
+description: '[Utilities] Use when you need to compress context to optimize token usage (user-facing alias for context-optimization Strategy #3 Compress).'
 disable-model-invocation: false
 ---
 
@@ -11,75 +11,42 @@ disable-model-invocation: false
 
 **Workflow:**
 
-1. **Analyze** -- Identify essential vs. expendable context
-2. **Compress** -- Remove redundant information, summarize findings
-3. **Verify** -- Ensure critical decisions and progress are preserved
+1. **Analyze** — Identify essential vs. expendable context
+2. **Compress** — Remove redundant tool outputs / repeated searches / verbose logs; summarize findings
+3. **Verify** — Ensure critical decisions, files modified, and current task state are preserved
 
 **Key Rules:**
 
-- Preserve: decisions made, files modified, current task state
-- Remove: redundant tool outputs, repeated searches, verbose logs
-- Use when context window approaches limits
+- Canonical compress protocol + the full 4-strategy framework (write/select/compress/isolate) + token thresholds live in `context-optimization` — this skill is the command surface only
+- Preserve: decisions made, files modified, current task state, error/stack traces, todos
+- Use `/compact` at natural breakpoints (after commits, PR), not mid-task
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Compact Context
 
-Proactively compress the current conversation context to optimize token usage.
+Proactively compress the current conversation context to optimize token usage. This is the user-invocable alias for `context-optimization`'s Compress strategy.
 
 ## When to Use
 
 - Before starting a new task in a long session
 - When working on multiple unrelated features
 - At natural workflow checkpoints (after commits, PR creation)
-- When context indicator shows high usage
+- When the context indicator shows high usage (≥100K tokens → required; ≥150K → critical)
 
-## Actions
+## Instructions
 
-1. **Summarize completed work** - What was done, key decisions made
-2. **Preserve essential context** - Active file paths, current task, blockers
-3. **Clear redundant history** - Old exploration, superseded plans
-4. **Update memory** - Save important patterns to `.claude/memory/`
+1. **Run the Pre-Compaction Preservation Checklist** — canonical in `.claude/skills/context-optimization/SKILL.md` (Strategy #3 → "Pre-Compaction Preservation Checklist"): branch + uncommitted-changes status, active file paths, error messages / stack traces, key decisions + rationale, pending todos.
+2. **Compress** — summarize completed work + key decisions; clear redundant history (old exploration, superseded plans); keep active file paths, current task, blockers.
+3. **Restate objective** — after compacting, briefly restate the current objective and confirm critical file paths are still accessible.
 
-## Best Practices
+For the full context-management framework (Write / Select / Compress / Isolate strategies, context-anchor protocol, memory commands, token-efficient patterns), see `context-optimization`.
 
-- Use `/compact` at natural breakpoints, not mid-task
-- After compacting, briefly restate the current objective
-- Check that critical file paths are still accessible
-- If working on a bug, preserve error messages and stack traces
+## Related Commands
 
-## Context Preservation Checklist
-
-Before compacting, ensure you've saved:
-
-- [ ] Current branch and uncommitted changes status
-- [ ] Active file paths being modified
-- [ ] Any error messages or stack traces
-- [ ] Key decisions and their rationale
-- [ ] Pending items from todo list
-
-## Example Usage
-
-```
-User: /compact
-Claude: Compacting context...
-
-## Session Summary
-- Implemented employee export feature
-- Fixed validation bug in SaveEmployeeCommand
-- Created unit tests for EmployeeHelper
-
-## Active Context
-- Branch: feature/employee-export
-- Files: Employee.Application/Commands/ExportEmployees/
-- Current task: Add pagination to export
-
-## Cleared
-- Exploration of unrelated notification code
-- Superseded implementation approaches
-
-Ready to continue with pagination implementation.
-```
+- `context-optimization` — full 4-strategy context-management framework (canonical owner)
+- `/checkpoint` — save analysis context to an external file before compaction
+- `/recover` — restore workflow context from the latest checkpoint
 
 ---
 
@@ -89,16 +56,14 @@ Ready to continue with pagination implementation.
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -111,17 +76,22 @@ Ready to continue with pagination implementation.
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 ## Closing Reminders
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** MUST ATTENTION sequential thinking, traced `file:line` proof, confidence >80% to act.
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code

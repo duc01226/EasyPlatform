@@ -84,15 +84,17 @@ node -e "console.log(JSON.parse(require('fs').readFileSync('.claude/.ck.json')))
 
 // Checklist:
 // 1. Check workflows.json settings.enabled = true
-// 2. Verify trigger patterns match your prompt
-// 3. Check pattern priority (lower = higher priority)
+// 2. Detection is semantic + model-driven: the model matches your prompt
+//    against each workflow's whenToUse description and
+//    auto-selects the best fit (no regex triggers, no priority numbers)
+// 3. If the wrong workflow activates, sharpen the workflow's whenToUse
+//    text in workflows.json
 
-// Example: "add dark mode" should trigger feature workflow
-// Pattern: "\\b(implement|add|create)\\b.*\\b(feature)\\b"
+// Example: "add dark mode" matches the feature workflow's whenToUse
+// ("implement a well-defined feature, add a component, ...")
 
-// Override: Use quick: prefix or explicit /command
-// quick: add dark mode  // Skips confirmation, runs workflow
-// /plan                 // Explicit command
+// Explicit command:
+// /plan add dark mode
 ```
 
 ### Privacy Block Preventing Edits
@@ -133,18 +135,20 @@ npx -y @modelcontextprotocol/server-github --help
 ```javascript
 // Problem: Spawned agents don't have correct context
 
-// Solution: subagent-init-*.cjs hooks (18) inject context
-// Verify hook is registered for SubagentStart event
+// Note: there is NO SubagentStart hook. Agent context is static in each
+// agent's .md system prompt (project rules, reports path, naming, read contracts).
 
-// Check agent receives:
-// - Active plan path
-// - Reports directory
-// - Development rules path
-// - Naming patterns
+// Check the agent .md (.claude/agents/<name>.md) actually carries:
+// - Active plan / reports path conventions
+// - Development rules read contract
+// - The shared SYNC behavior blocks every agent inlines
 
-// If context lost, check:
-// 1. SubagentStart hook registration in settings.json
-// 2. subagent-init-*.cjs hook files exist and have no errors
+// If context seems lost, check:
+// 1. The agent .md file exists and includes the standard SYNC blocks
+// 2. CLAUDE.md / AGENTS.md are present (the catalog/route guidance is static
+//    in them; regenerate via /claude-md-init or /sync-codex when missing)
+// 3. Re-read CLAUDE.md / SKILL.md to re-anchor rules and lessons after any
+//    compaction (recovery is static, not hook-driven)
 ```
 
 ---

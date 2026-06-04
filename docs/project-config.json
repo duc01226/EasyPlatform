@@ -376,7 +376,7 @@
         "fixturesPath": "src/Frontend/e2e/fixtures/",
         "guideDoc": "docs/project-reference/e2e-test-reference.md",
         "testSpecsDocs": [],
-        "searchPatterns": ["test\\(['\"]TC-", "\\.spec\\.ts$"],
+        "searchPatterns": ["test\\(['\"]", "\\.spec\\.ts$"],
         "runCommands": {
             "all": "cd src/Frontend/e2e && npx playwright test",
             "headed": "cd src/Frontend/e2e && npx playwright test --headed",
@@ -384,7 +384,20 @@
             "smoke": "cd src/Frontend/e2e && npx playwright test --grep @P0",
             "debug": "cd src/Frontend/e2e && npx playwright test --debug"
         },
-        "tcCodeFormat": "TC-{MODULE}-{AREA}-{NNN}",
+        "tcCodeFormat": "UNSTANDARDIZED: TS-{MODULE}-{Pn}-{NNN} (dominant) and TC-{MODULE}-{AREA}-{NNN} coexist",
+        "stats": {
+            "specFilesGrepExpr": "find src/Frontend/e2e/tests -name '*.spec.ts'",
+            "testBlocksGrepExpr": "grep -rE \"\\btest\\(['\\\"]\" src/Frontend/e2e/tests",
+            "describeBlocksGrepExpr": "grep -rE \"test\\.describe\\(\" src/Frontend/e2e/tests",
+            "pageObjectsGrepExpr": "grep -rE 'extends BasePage' src/Frontend/e2e/page-objects",
+            "priorityTagsGrepExpr": "grep -roE '@P[0-3]' src/Frontend/e2e/tests",
+            "tcIdsGrepExpr": "grep -rnoE 'T[CS]-[A-Z]+-[A-Z0-9]+-[0-9]+' src/Frontend/e2e/tests"
+        },
+        "architecture": {
+            "summary": "Self-contained Playwright project; single chromium project; POM root BasePage; custom test/expect fixture (utils/test-helpers.ts) with passive ConsoleErrorTracker; ApiHelpers for API arrange/cleanup.",
+            "webServer": "auto-starts frontend (4001) only; backend (5001) must run independently",
+            "bddFramework": null
+        },
         "bestPractices": [],
         "entryPoints": ["src/Frontend/e2e/playwright.config.ts", "src/Frontend/e2e/fixtures/test-data.ts", "src/Frontend/e2e/page-objects/base.page.ts"]
     },
@@ -423,9 +436,44 @@
             "sections": ["cqrs", "entities", "validation", "repositories", "event-handlers"]
         },
         {
+            "filename": "seed-test-data-reference.md",
+            "purpose": "Seed test data patterns: idempotent seeder architecture, DI scope safety, command dispatch, and config-driven counts.",
+            "sections": [],
+            "templatePath": ".claude/templates/reference-docs/seed-test-data-reference.md"
+        },
+        {
             "filename": "frontend-patterns-reference.md",
             "purpose": "Angular patterns, stores, components, API services",
             "sections": ["components", "stores", "api-services", "forms"]
+        },
+        {
+            "filename": "integration-test-reference.md",
+            "purpose": "Integration testing patterns and base classes",
+            "sections": ["test-setup", "assertions", "fixtures"]
+        },
+        {
+            "filename": "feature-spec-reference.md",
+            "purpose": "Feature documentation patterns: app-to-service mapping, doc structure, templates, and conventions.",
+            "sections": ["App-to-Service Mapping", "Feature Doc Structure", "Templates", "Conventions"],
+            "templatePath": ".claude/templates/reference-docs/feature-spec-reference.md"
+        },
+        {
+            "filename": "spec-system-reference.md",
+            "purpose": "Spec system routing: fixed spec root, canonical Feature Spec ownership, TC registry location, and derived index/ERD rules.",
+            "sections": [],
+            "templatePath": ".claude/templates/reference-docs/spec-system-reference.md"
+        },
+        {
+            "filename": "spec-principles.md",
+            "purpose": "Spec quality principles: completeness criteria, AI-implementability, test coverage mapping, and tech-agnostic standards.",
+            "sections": [],
+            "templatePath": ".claude/templates/reference-docs/spec-principles.md"
+        },
+        {
+            "filename": "workflow-spec-test-code-cycle-reference.md",
+            "purpose": "Workflow spec-test-code cycle: local workflow sequence, artifact ownership, verification gates, and generated mirror sync.",
+            "sections": [],
+            "templatePath": ".claude/templates/reference-docs/workflow-spec-test-code-cycle-reference.md"
         },
         {
             "filename": "code-review-rules.md",
@@ -433,9 +481,19 @@
             "sections": ["review-checklist", "quality-gates"]
         },
         {
-            "filename": "integration-test-reference.md",
-            "purpose": "Integration testing patterns and base classes",
-            "sections": ["test-setup", "assertions", "fixtures"]
+            "filename": "lessons.md",
+            "purpose": "Learned lessons and anti-patterns from past incidents",
+            "sections": ["lessons", "anti-patterns"]
+        },
+        {
+            "filename": "scss-styling-guide.md",
+            "purpose": "SCSS styling conventions, BEM naming, theming",
+            "sections": ["bem", "theming", "responsive"]
+        },
+        {
+            "filename": "design-system/README.md",
+            "purpose": "Design system index: app-to-doc mapping, design tokens overview, component inventory.",
+            "sections": ["Design System Overview", "App Documentation Map", "Design Tokens", "Component Inventory"]
         },
         {
             "filename": "e2e-test-reference.md",
@@ -446,21 +504,6 @@
             "filename": "domain-entities-reference.md",
             "purpose": "Domain entity catalog and relationships",
             "sections": ["entities", "aggregates", "repositories"]
-        },
-        {
-            "filename": "scss-styling-guide.md",
-            "purpose": "SCSS styling conventions, BEM naming, theming",
-            "sections": ["bem", "theming", "responsive"]
-        },
-        {
-            "filename": "feature-docs-reference.md",
-            "purpose": "Business feature documentation index and app-to-service mapping",
-            "sections": ["feature-docs", "app-mapping", "coverage"]
-        },
-        {
-            "filename": "lessons.md",
-            "purpose": "Learned lessons and anti-patterns from past incidents",
-            "sections": ["lessons", "anti-patterns"]
         },
         {
             "filename": "docs-index-reference.md",

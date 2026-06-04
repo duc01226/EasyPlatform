@@ -112,7 +112,6 @@ def scan_skills(base_path: Path) -> List[Dict]:
                 'deprecated_by': frontmatter.get('deprecated_by'),
                 'deprecated_since': normalize_date(frontmatter.get('deprecated_since')),
                 'removal_after': normalize_date(frontmatter.get('removal_after')),
-                'last_reviewed': normalize_date(frontmatter.get('last_reviewed')),
             })
         except Exception as e:
             print(f"Error processing {skill_file}: {e}")
@@ -168,7 +167,7 @@ def categorize_skill(name: str, description: str, content: str) -> str:
         return 'frameworks'
 
     # Utilities
-    if any(x in lower_name for x in ['debug', 'problem', 'code-review', 'planning', 'research', 'sequential']):
+    if any(x in lower_name for x in ['debug', 'problem', 'code-review', 'plan', 'research', 'sequential']):
         return 'utilities'
 
     return 'other'

@@ -21,7 +21,7 @@ description: '[Decision Support] Use when pressure-testing irreversible, high-st
 - MUST ATTENTION graph-trace code/architecture questions when `.code-graph/graph.db` exists.
 - NEVER let earlier advisor responses bleed into later advisors; parallel spawn required.
 - ALWAYS mark verdict degraded if fewer than 5 usable advisor responses return.
-- ALWAYS sync edits to `.agents/skills/llm-council/SKILL.md`.
+- ALWAYS regenerate mirrors with `/sync-codex` after editing this skill — NEVER hand-edit `.agents/` or `.codex/` (they are generated artifacts).
 
 ---
 
@@ -210,16 +210,15 @@ First action: [single next step]
 
 ## Workflow Integration
 
-Opt-in escalation hook from host skills. NEVER wire into `bugfix`, `refactor`, `migration`, `package-upgrade`, `performance`, `verification`, or `test-*` workflows. Blacklist is enforced at the `why-review` gate (Step A — workflow context check) before the 8-OR frontmatter gate evaluates.
+Opt-in escalation hook from host skills. NEVER wire into `workflow-bugfix`, `workflow-refactor`, or `test-*` workflows. Blacklist is enforced at the `why-review` gate (Step A — workflow context check) before the 8-OR frontmatter gate evaluates.
 
-| Host skill                       | Mode                                       | Default                  | Gate                                                             |
-| -------------------------------- | ------------------------------------------ | ------------------------ | ---------------------------------------------------------------- |
-| `architecture-design`            | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
-| `tech-stack-research`            | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
-| `domain-analysis`                | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
-| `arch-cross-service-integration` | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
-| `why-review`                     | Conditional on active plan/PBI frontmatter | Escalate when gate fires | Step A workflow blacklist suppression THEN 8-OR frontmatter gate |
-| `prioritize`                     | Conditional on ranking output              | Escalate when gate fires | RICE top-2 within 15%, MoSCoW tie, or stakeholder disagreement   |
+| Host skill            | Mode                                       | Default                  | Gate                                                             |
+| --------------------- | ------------------------------------------ | ------------------------ | ---------------------------------------------------------------- |
+| `architecture-design` | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
+| `tech-stack-research` | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
+| `domain-analysis`     | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
+| `why-review`          | Conditional on active plan/PBI frontmatter | Escalate when gate fires | Step A workflow blacklist suppression THEN 8-OR frontmatter gate |
+| `prioritize`          | Conditional on ranking output              | Escalate when gate fires | RICE top-2 within 15%, MoSCoW tie, or stakeholder disagreement   |
 
 ### `why-review` Gate Schema
 
@@ -240,14 +239,42 @@ Host prompt copy MUST cite cheaper rungs: `/why-review`, `/plan-validate`, `/llm
 
 ---
 
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION** use council only for multi-option, hard-to-reverse, high-stakes decisions.
+
+**Protocols in force — MUST ATTENTION (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** apply critical + sequential thinking; traced `file:line` proof, confidence >80% to act.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
 **IMPORTANT MUST ATTENTION** spawn 5 advisors in parallel, then 5 fresh peer reviewers in parallel, then chairman synthesis.
 **IMPORTANT MUST ATTENTION** require evidence for code/architecture claims: `file:line`, graph trace, or explicit "insufficient evidence."
 **IMPORTANT MUST ATTENTION** mark verdict degraded if fewer than 5 usable advisor responses return.
 **IMPORTANT MUST ATTENTION** write paired HTML + Markdown artifacts under `plans/reports/` and open HTML.
-**IMPORTANT MUST ATTENTION** sync every canonical edit to `.agents/skills/llm-council/SKILL.md`.
+**IMPORTANT MUST ATTENTION** after editing this skill, run `/sync-codex` to regenerate mirrors — NEVER hand-edit `.agents/` or `.codex/` (generated).
 
 **Anti-Rationalization:**
 
@@ -258,3 +285,14 @@ Host prompt copy MUST cite cheaper rungs: `/why-review`, `/plan-validate`, `/llm
 | "Sequential spawn is simpler"   | Sequential spawn contaminates independence. Parallel spawn required.                                     |
 | "Four advisors is close enough" | Missing angle changes verdict quality. Mark degraded.                                                    |
 | "Evidence would slow us down"   | Unsupported code/architecture claims are speculation. Use graph/file proof or say insufficient evidence. |
+
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->

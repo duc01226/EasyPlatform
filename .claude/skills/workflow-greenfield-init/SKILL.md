@@ -2,7 +2,7 @@
 name: workflow-greenfield-init
 version: 1.0.0
 description: '[Workflow] Use when activating the Greenfield Project Init workflow for full waterfall project inception from idea through implementation with integration testing.'
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 ## Quick Summary
@@ -27,55 +27,57 @@ disable-model-invocation: true
 
 This workflow has steps that appear multiple times. When creating tasks, use these descriptions to distinguish them:
 
-| Step                      | Occurrence   | Task Description                                                                          |
-| ------------------------- | ------------ | ----------------------------------------------------------------------------------------- |
-| `/plan`                   | 1st (pos 8)  | PLAN₁: High-level architecture plan (after architecture-design)                           |
-| `/plan`                   | 2nd (pos 22) | PLAN₂: Sprint-ready implementation plan (after tdd-spec-review)                           |
-| `/plan`                   | 3rd (pos 32) | PLAN₃: Integration test architecture plan (post-implementation)                           |
-| `/plan-review`            | 1st (pos 11) | Review PLAN₁ architecture                                                                 |
-| `/plan-review`            | 2nd (pos 23) | Review PLAN₂ implementation                                                               |
-| `/plan-review`            | 3rd (pos 33) | Review PLAN₃ integration tests                                                            |
-| `/security`               | 1st (pos 9)  | Architecture security review                                                              |
-| `/security`               | 2nd (pos 40) | Production readiness security review                                                      |
-| `/tdd-spec`               | 1st (pos 20) | TDD-SPEC₁: Feature test specs (before implementation)                                     |
-| `/tdd-spec`               | 2nd (pos 30) | TDD-SPEC₂: Post-implementation test spec update                                           |
-| `/tdd-spec-review`        | 1st (pos 21) | Review TDD-SPEC₁                                                                          |
-| `/tdd-spec-review`        | 2nd (pos 31) | Review TDD-SPEC₂                                                                          |
-| `/test`                   | 1st (pos 37) | Test after integration tests                                                              |
-| `/test`                   | 2nd (pos 42) | Final test verification                                                                   |
-| `/review-domain-entities` | 1st (pos 29) | DDD quality review — conditional: skip if no domain entity files in changeset             |
-| `/linter-setup`           | (new)        | LINTER-SETUP: Install and configure computational feedback sensors                        |
-| `/harness-setup`          | (new)        | HARNESS-SETUP: Full outer agent harness (feedforward guides + feedback sensors inventory) |
+| Step                                 | Occurrence   | Task Description                                                                          |
+| ------------------------------------ | ------------ | ----------------------------------------------------------------------------------------- |
+| `/plan`                              | 1st (pos 11) | PLAN₁: High-level architecture plan (after architecture-design)                           |
+| `/plan`                              | 2nd (pos 31) | PLAN₂: Sprint-ready implementation plan (after review-artifact --type=spec-tests)         |
+| `/plan`                              | 3rd (pos 42) | PLAN₃: Integration test architecture plan (post-implementation)                           |
+| `/plan-review`                       | 1st (pos 12) | Review PLAN₁ architecture (immediate gate; replaces former rationale why-review)          |
+| `/plan-review`                       | 2nd (pos 15) | Re-review PLAN₁ after architecture-security + performance analysis                        |
+| `/plan-review`                       | 3rd (pos 32) | Review PLAN₂ implementation                                                               |
+| `/plan-review`                       | 4th (pos 43) | Review PLAN₃ integration tests                                                            |
+| `/security-review`                   | 1st (pos 13) | Architecture security review                                                              |
+| `/security-review`                   | 2nd (pos 50) | Production readiness security review                                                      |
+| `/spec [mode=tests]`                 | 1st (pos 27) | TDD-SPEC₁: Feature test specs (before implementation)                                     |
+| `/spec [mode=tests]`                 | 2nd (pos 39) | TDD-SPEC₂: Post-implementation test spec update                                           |
+| `/review-artifact --type=spec-tests` | 1st (pos 29) | Review TDD-SPEC₁                                                                          |
+| `/review-artifact --type=spec-tests` | 2nd (pos 41) | Review TDD-SPEC₂                                                                          |
+| `/test`                              | 1st (pos 47) | Test after integration tests                                                              |
+| `/test`                              | 2nd (pos 52) | Final test verification                                                                   |
+| `/review-domain-entities`            | 1st (pos 38) | DDD quality review — conditional: skip if no domain entity files in changeset             |
+| `/linter-setup`                      | (new)        | LINTER-SETUP: Install and configure computational feedback sensors                        |
+| `/harness-setup`                     | (new)        | HARNESS-SETUP: Full outer agent harness (feedforward guides + feedback sensors inventory) |
 
 **NEVER deduplicate** — each occurrence is a distinct task with a different purpose.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /why-review -> /security -> /performance -> /plan-review -> /why-review -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /spec-discovery -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /plan-review -> /security-review -> /performance-review -> /plan-review -> /refine -> /why-review -> /review-artifact --type=pbi -> /story -> /why-review -> /review-artifact --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /plan-validate -> /why-review -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec-clarify -> /plan -> /plan-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /plan-execute -> /review-domain-entities -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /plan -> /plan-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /workflow-review-changes -> /production-readiness-review -> /security-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
 
-**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /why-review -> /security -> /performance -> /plan-review -> /why-review -> /refine -> /why-review -> /refine-review -> /story -> /why-review -> /story-review -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /plan-validate -> /why-review -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /cook -> /review-domain-entities -> /tdd-spec -> /why-review -> /tdd-spec-review -> /plan -> /why-review -> /plan-review -> /why-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /workflow-review-changes -> /sre-review -> /security -> /changelog -> /test -> /docs-update -> /watzup -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /spec-discovery -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /plan-review -> /security-review -> /performance-review -> /plan-review -> /refine -> /why-review -> /review-artifact --type=pbi -> /story -> /why-review -> /review-artifact --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /plan-validate -> /why-review -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec-clarify -> /plan -> /plan-review -> /scaffold -> /linter-setup -> /harness-setup -> /why-review -> /plan-execute -> /review-domain-entities -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /plan -> /plan-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /workflow-review-changes -> /production-readiness-review -> /security-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
-Activate the `greenfield-init` workflow. Run `/workflow-start greenfield-init` with the user's prompt as context.
+Activate the `workflow-greenfield-init` workflow. Run `/start-workflow workflow-greenfield-init` with the user's prompt as context.
 
-**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /domain-analysis → /why-review → /tech-stack-research → /architecture-design → /why-review → /plan → /why-review → /security → /performance → /plan-review → /why-review → /refine → /why-review → /refine-review → /story → /why-review → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /plan-validate → /why-review → /tdd-spec → /why-review → /tdd-spec-review → /plan → /why-review → /plan-review → /why-review → /scaffold → /linter-setup → /harness-setup → /why-review → /cook → /review-domain-entities → /tdd-spec → /why-review → /tdd-spec-review → /plan → /why-review → /plan-review → /why-review → /integration-test → /integration-test-review → /integration-test-verify → /test → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /spec-discovery → /domain-analysis → /why-review → /tech-stack-research → /architecture-design → /why-review → /plan → /plan-review → /security-review → /performance-review → /plan-review → /refine → /why-review → /review-artifact --type=pbi → /story → /why-review → /review-artifact --type=story → /pbi-challenge → /dor-gate → /pbi-mockup → /plan-validate → /why-review → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /spec-clarify → /plan → /plan-review → /scaffold → /linter-setup → /harness-setup → /why-review → /plan-execute → /review-domain-entities → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /plan → /plan-review → /integration-test → /integration-test-review → /integration-test-verify → /test → /workflow-review-changes → /production-readiness-review → /security-review → /changelog → /test → /docs-update → /workflow-end → /watzup
+
+> **Lean variant (`mode=lean`)** — for low-risk or solo greenfield inception, a trimmed path is available (formerly a separate lean greenfield wrapper, now merged here). It keeps the same backbone but drops the per-step `/why-review` rationale gates (retaining only the single pre-`/plan-execute` `/why-review`), `/pbi-challenge`, `/dor-gate`, and the `/integration-test-review` + `/integration-test-verify` gates. Use ONLY when inception risk is low; default to the full rigorous sequence above. The authoritative sequence is the `workflow-greenfield-init` entry in `workflows.json` — the lean path is a documented gate-skip option, not a separate workflow.
 
 ---
 
 <!-- SYNC:ai-mistake-prevention -->
 
-**AI Mistake Prevention** — Failure modes to avoid on every task:
-**Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-**Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-**Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-**Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-**When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-**Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-**Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-**Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-**Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-**Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -143,18 +145,20 @@ Activate the `greenfield-init` workflow. Run `/workflow-start greenfield-init` w
 >
 > Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
 > Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+>
+> **Context budget** — the return payload is a SUMMARY, not a transcript: ≤10 finding bullets, no raw file contents / full diffs / verbatim logs inline, no re-pasted source. Everything beyond the summary lives in the `Full report` on disk. A sub-agent that would exceed the summary shape MUST write the detail to its report and return only the pointer — the orchestrator's context is the scarce resource the whole map-reduce protects.
 
 <!-- /SYNC:subagent-return-contract -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -166,6 +170,14 @@ Activate the `greenfield-init` workflow. Run `/workflow-start greenfield-init` w
 <!-- /SYNC:nested-task-creation:reminder -->
 
 ## Closing Reminders
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Nested Task Creation:** expand child phases, link parent when nested, one task `in_progress`.
+- **Critical Thinking:** traced `file:line` proof per claim, confidence >80% to act.
+- **Incremental Persistence:** append findings to `plans/reports/` per file, never hold in memory.
+- **Sub-Agent Return Contract:** return summary only (≤10 bullets), full detail to disk.
 
 **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code

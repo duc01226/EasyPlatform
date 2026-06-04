@@ -1,7 +1,7 @@
 ---
 name: debug-investigate
 version: 2.0.0
-description: '[Fix & Debug] Use when bugfix workflow reaches debug step.'
+description: "[Fix & Debug] Use when investigating a bug's root cause — reproduce the symptom, trace it end-to-start through the code, form and test hypotheses, and pinpoint the defect before any fix."
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,7 +15,14 @@ description: '[Fix & Debug] Use when bugfix workflow reaches debug step.'
 
 ## Quick Summary
 
-**Goal:** Investigate, identify root cause with `file:line` evidence. Investigation-only — hand off to `/fix` for implementation.
+**Goal:** Deliver a `/why-review`-validated root cause pinned to `file:line` at the invariant-owning layer — investigation-only, so `/fix` corrects the cause, not the symptom — or an honest "hypothesis, not confirmed" naming the evidence gaps.
+
+**Summary:**
+
+- This is investigation-ONLY — never patch here; classify the bug type FIRST (Phase 0, BLOCKING) to route to the right agent and decide which evidence matters before tracing anything.
+- Trace end-to-start: name Frame 0 (observed final state), walk backward reader → storage/projection → writer → consumer/job → producer, and enumerate ALL feeder paths — the bug enters where bad state is WRITTEN, not where it crashes.
+- Every root-cause claim carries `Confidence: X%` + `file:line` proof; below 60% you report "hypothesis, not confirmed" with named evidence gaps, never a guess.
+- The `/why-review` gate is non-negotiable: run it in the SAME session/main agent before declaring confirmed; 2 rounds without passing → STOP and escalate via `AskUserQuestion`. Run a graph trace when `graph.db` exists — it surfaces bus/event consumers grep cannot see.
 
 **Workflow:**
 
@@ -24,14 +31,14 @@ description: '[Fix & Debug] Use when bugfix workflow reaches debug step.'
 3. **Hypothesize** — Form 2-3 ranked theories
 4. **Trace** — Follow code paths; collect `file:line` proof per hypothesis
 5. **Confirm** — Single root cause explains ALL symptoms
-6. **Validate** — Fresh Eyes round 2 before declaring confirmed
+6. **Validate** — Trigger `/why-review` on findings/root cause before declaring confirmed
 7. **Report** — Confidence-tagged finding + hand off to `/fix`
 
 **Key Rules:**
 
 - NEVER patch symptoms — trace full call chain, fix at owning layer
 - NEVER report root cause without `file:line` evidence
-- NEVER declare confirmed root cause after Round 1 alone (Fresh Eyes required)
+- NEVER declare confirmed root cause without passing the `/why-review` validation gate
 - Output: confirmed root cause OR "hypothesis, not confirmed" + evidence gaps
 
 ## Phase 0: Classify Bug Scenario (BLOCKING — Do Before ANY Investigation)
@@ -47,7 +54,7 @@ description: '[Fix & Debug] Use when bugfix workflow reaches debug step.'
 | Security / auth             | Access denied, token issues, permission bypass          | `security-auditor`                 |
 
 **Cross-service bugs:** Run graph trace FIRST — grep alone misses implicit bus connections.
-**OOM / memory exhaustion:** Check row COUNT before row SIZE. Unbounded query loading thousands of records is the more common cause. Triage: (1) missing DB-level filter? (2) excessive row size?
+**OOM / memory exhaustion:** Check row COUNT before row SIZE. Unbounded query loading thousands of records is more common cause. Triage: (1) missing DB-level filter? (2) excessive row size?
 
 ## Debug Mindset (NON-NEGOTIABLE)
 
@@ -88,12 +95,14 @@ Reason through each dimension — state what fails if weak, then apply with evid
 - Form 2-3 theories ranked by likelihood
 - Note evidence needed to confirm/contradict each theory before investigating
 
-### Dim 3: Trace
+### Dim 3: End-to-Start Trace
 
-**Think:** Where does bad state ENTER the system — not where it CRASHES? Which layer owns this invariant?
+**Think:** What exact final output proves the bug? Which reader produced it? Which storage/projection/write path fed that reader? Where does bad state ENTER the system — not where it CRASHES? Which layer owns this invariant?
 
-- Find entry point (API, UI, job, event)
-- Follow through handlers/services/transformations
+- Name Frame 0: observed final state (UI, API response, log, persisted value, assertion, aggregate)
+- Identify the final reader/query/renderer/assertion and the state it consumes
+- Walk backward: reader -> storage/projection/cache -> writer -> consumer/handler/job -> producer/origin
+- Enumerate every feeder path that can write the same final state
 - Check error handling paths
 - Collect `file:line` evidence per hypothesis
 - Use graph trace for implicit connections (event handlers, bus consumers)
@@ -105,12 +114,14 @@ Reason through each dimension — state what fails if weak, then apply with evid
 - Match evidence to single root cause
 - Verify root cause explains ALL observed symptoms
 - Check secondary contributing factors
+- Build hypothesis matrix: primary, contributing, ruled out, latent, unknown
+- Resolve or disclose competing causes before proposing a fix
 - Verify no bypass paths (direct construction, clone/spread without re-validation, mutations outside model layer)
 
 ### Dim 5: Report
 
 - Output: confirmed root cause + evidence chain
-- Include: affected files, data flow summary, fix recommendation
+- Include: affected files, Debugger Trace: End -> Start, feeder paths, hypothesis matrix, data flow summary, owning fix layer, fix recommendation, forward convergence proof
 - Hand off to `/fix` for implementation
 
 ## Dependency Tracing (MANDATORY when graph.db exists)
@@ -136,23 +147,23 @@ python .claude/scripts/code_graph trace <suspect-file> --direction upstream --js
 
 Graph reveals implicit connections (MESSAGE_BUS, event handlers) that propagate issues across services — invisible to grep.
 
-## Root Cause Validation (Fresh Eyes Protocol)
+## Root Cause Validation (`/why-review` Gate)
 
-NEVER declare confirmed root cause after Round 1 alone. Main agent rationalizes its own findings — a zero-memory sub-agent catches what main agent dismissed.
+NEVER declare a confirmed root cause straight from investigation. Run `/why-review` as a quality validation gate on the findings and root cause — in the SAME session, SAME main agent (do NOT spawn a sub-agent) — before handing off to `/fix`.
 
-**Round 1 (main agent):** Identify root cause + full evidence chain. Write findings to report file.
+**Step 1 — Investigate (main agent):** Identify root cause + full evidence chain. Write findings to report file.
 
-**Round 2 (fresh `debugger` sub-agent, zero memory of Round 1):** Spawn with:
+**Step 2 — Validate (`/why-review`, same main agent):** Trigger `/why-review` on the findings/root cause. The gate must confirm:
 
-- Suspected root cause statement
-- All `file:line` evidence collected
-- Ask: "Does this evidence conclusively prove the stated root cause, or are there gaps?"
+- Root cause is correct and reasonable, with `file:line` evidence that conclusively supports it
+- Evidence has no gaps and explains ALL symptoms
+- The proposed fix direction would NOT introduce other bugs or regressions (check downstream consumers, bypass paths, owning layer)
 
 **Decision:**
 
-- Sub-agent CONFIRMS → declare confirmed, proceed to `/fix`
-- Sub-agent finds GAPS → collect additional evidence, repeat
-- 2 rounds without confirmation → STOP, escalate to user via `AskUserQuestion`
+- `/why-review` PASSES → declare confirmed, proceed to `/fix`
+- `/why-review` finds GAPS/risks → collect additional evidence, repeat
+- 2 validation rounds without passing → STOP, escalate to user via `AskUserQuestion`
 
 ## ⚠️ MANDATORY: Post-Fix Verification
 
@@ -160,18 +171,18 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 
 ## Anti-Rationalization (Red Flags)
 
-| Evasion                                | Rebuttal                                                                        |
-| -------------------------------------- | ------------------------------------------------------------------------------- |
-| "I see the problem, let me fix it"     | Symptoms ≠ root cause. Investigate first.                                       |
-| "Quick fix for now, investigate later" | Quick fixes mask bugs. Find root cause.                                         |
-| "Just try changing X and see"          | One hypothesis at a time. Scientific method, not trial and error.               |
-| "Already tried 2+ fixes, one more"     | 3+ failed fixes = STOP. Question the architecture, not the fix.                 |
-| "The error message is misleading"      | Read it again carefully. Error messages are usually right.                      |
-| "It works on my machine"               | Reproduce in the failing environment. Your environment hides bugs.              |
-| "This can't be the cause"              | Verify with evidence, not intuition. Unlikely causes are still causes.          |
-| "It's OOM, must be a large object"     | Check row COUNT before row SIZE. Unbounded query > large single row.            |
-| "Round 2 fresh agent unnecessary"      | Main agent rationalizes its own findings. Zero-memory agent catches dismissals. |
-| "Graph.db not needed for this bug"     | Cross-service bugs are invisible to grep. Run trace first.                      |
+| Evasion                                   | Rebuttal                                                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| "I see the problem, let me fix it"        | Symptoms ≠ root cause. Investigate first.                                                     |
+| "Quick fix for now, investigate later"    | Quick fixes mask bugs. Find root cause.                                                       |
+| "Just try changing X and see"             | One hypothesis at a time. Scientific method, not trial and error.                             |
+| "Already tried 2+ fixes, one more"        | 3+ failed fixes = STOP. Question the architecture, not the fix.                               |
+| "The error message is misleading"         | Read it again carefully. Error messages are usually right.                                    |
+| "It works on my machine"                  | Reproduce in the failing environment. Your environment hides bugs.                            |
+| "This can't be the cause"                 | Verify with evidence, not intuition. Unlikely causes are still causes.                        |
+| "It's OOM, must be a large object"        | Check row COUNT before row SIZE. Unbounded query > large single row.                          |
+| "Skip `/why-review`, findings look solid" | Self-confirmed findings rationalize their own gaps. The `/why-review` gate is non-negotiable. |
+| "Graph.db not needed for this bug"        | Cross-service bugs are invisible to grep. Run trace first.                                    |
 
 ---
 
@@ -179,7 +190,7 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 
 **MUST ATTENTION — NO EXCEPTIONS:** Not in workflow? Use `AskUserQuestion`:
 
-1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → fix → prove-fix → review → test
+1. **Activate `workflow-bugfix` workflow** (Recommended) — scout → investigate → debug → plan → fix → prove-fix → review → test
 2. **Execute `/debug-investigate` directly** — standalone
 
 ---
@@ -199,7 +210,24 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files.
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (read directly when relevant; do not rely on hook-injected conversation text)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+
+<!-- SYNC:end-to-start-debugger-trace -->
+
+> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
+>
+> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
+> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
+> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
+> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
+> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
+> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
+>
+> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
+>
+> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+
+<!-- /SYNC:end-to-start-debugger-trace -->
 
 <!-- SYNC:root-cause-debugging -->
 
@@ -258,28 +286,29 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 >
 > Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
 > Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
+>
+> **Context budget** — the return payload is a SUMMARY, not a transcript: ≤10 finding bullets, no raw file contents / full diffs / verbatim logs inline, no re-pasted source. Everything beyond the summary lives in the `Full report` on disk. A sub-agent that would exceed the summary shape MUST write the detail to its report and return only the pointer — the orchestrator's context is the scarce resource the whole map-reduce protects.
 
 <!-- /SYNC:subagent-return-contract -->
 
 <!-- SYNC:source-test-drift-check -->
 
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix.
+> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:source-test-drift-check -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -303,11 +332,11 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-docs-reference.md`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc that exists; skip absent docs as not applicable. Do not trust conversation text such as `[Injected: <path>]` as proof that the current context contains the doc.
-> 4. Before target work, state: `Reference docs read: ... | Missing/not applicable: ...`.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Blocked until:** scope evaluated, required docs checked/read, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -352,7 +381,7 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
@@ -612,7 +641,7 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
@@ -624,7 +653,7 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -639,8 +668,15 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 
 - **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
 - **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:end-to-start-debugger-trace:reminder -->
+
+**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+
+<!-- /SYNC:end-to-start-debugger-trace:reminder -->
 
 <!-- SYNC:nested-task-creation:reminder -->
 
@@ -662,21 +698,54 @@ After `/fix` applies changes, `/prove-fix` MUST be run — builds code proof tra
 
 ## Closing Reminders
 
-**MUST ATTENTION** Phase 0 FIRST — classify bug type, route to specialized agent (`performance-optimizer` / `security-auditor`) before any investigation
-**MUST ATTENTION** NEVER fix at crash site — trace full data flow, fix at invariant-owning layer
-**MUST ATTENTION** NEVER report root cause without `file:line` evidence; Confidence <60% = DO NOT recommend
-**MUST ATTENTION** NEVER declare confirmed root cause after Round 1 alone — Fresh Eyes Protocol required
-**MUST ATTENTION** run graph trace when graph.db exists — reveals bus consumers and event handlers grep cannot see
-**MUST ATTENTION** OOM → check row COUNT before row SIZE; 3+ failed fixes → STOP, escalate to user
-**MUST ATTENTION** `TaskCreate` before starting; `/prove-fix` MUST run after `/fix` applies changes
+**IMPORTANT MUST ATTENTION Goal:** Deliver a `/why-review`-validated root cause pinned to `file:line` at the invariant-owning layer — investigation-ONLY, so `/fix` corrects the cause, not the symptom — or an honest "hypothesis, not confirmed" naming the evidence gaps.
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **End-to-Start Debugger Trace:** MUST ATTENTION trace backward from final state.
+- **Root Cause Debugging:** reproduce, isolate, trace — NEVER guess-and-check.
+- **Incremental Persistence:** append findings to report per file.
+- **Sub-Agent Return Contract:** return summary only, full report on disk.
+- **Source/Test Drift Check:** changed behavior — reconcile affected tests from evidence.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Nested Task Creation:** expand child phases, link parent when nested.
+- **Project Reference Docs:** ALWAYS read required project docs, cite them.
+- **Task Tracking & External Report:** bootstrap tasks, persist findings incrementally.
+- **Critical Thinking:** traced proof per claim, confidence >80%.
+- **Sequential Thinking:** multi-step Thought N/M with confidence closer.
+- **Understand Code First:** read code, grep 3+ patterns before concluding.
+- **Evidence:** cite `file:line`, declare confidence — NEVER speculate.
+- **Cross-Service Check:** scan producers/consumers/sagas/contracts for silent regressions.
+- **Estimation Framework:** bottom-up hours, derived SP, min-max range.
+- **Red Flag Stop Conditions:** escalate on confidence/blast/boundary/security flags.
+- **Fix-Layer Accountability:** fix lowest invariant-owning layer — NEVER crash site.
+
+**IMPORTANT MUST ATTENTION** investigation-ONLY — NEVER patch here; hand confirmed cause to `/fix` — why: a fix from un-validated findings patches the symptom and masks the real defect.
+**IMPORTANT MUST ATTENTION** Phase 0 FIRST (BLOCKING) — classify bug type, route to the specialized agent (`debugger` / `performance-optimizer` / `security-auditor`) before any investigation — why: classification decides which evidence matters and which agent has the right checklist.
+**IMPORTANT MUST ATTENTION** NEVER fix at the crash site — trace full data flow origin → crash, fix at the lowest invariant-owning layer that protects ALL downstream consumers — why: the crash site is a symptom; scattered guards at consumers signal nobody owns the invariant.
+**MUST ATTENTION** trace END-to-START — name Frame 0 (observed final state), walk reader → storage/projection → writer → consumer/job → producer, enumerate ALL feeder paths, build the hypothesis matrix BEFORE proposing any fix — why: the bug enters where bad state is WRITTEN, not where it crashes.
+**MUST ATTENTION** every root-cause claim carries `Confidence: X%` + `file:line` proof; <60% → report "hypothesis, not confirmed" with named evidence gaps, NEVER a guess — why: self-confirmed findings rationalize their own gaps.
+**MUST ATTENTION** NEVER declare a confirmed root cause without passing the `/why-review` gate (SAME session, SAME main agent, NO sub-agent); 2 rounds without passing → STOP, escalate via `AskUserQuestion`.
+**MUST ATTENTION** search 3+ existing patterns and READ the actual code before concluding — cite `file:line`; inference alone is insufficient — why: trial-and-error and assumed APIs hallucinate causes.
+**MUST ATTENTION** run a graph trace when `graph.db` exists — `callers_of` / `importers_of` / `tests_for` / `trace` reveal MESSAGE_BUS consumers and event handlers grep cannot see — why: cross-service chains are invisible to text search.
+**MUST ATTENTION** prove convergence FORWARD after choosing the fix layer — walk start → end, map each root cause to a fix part and each fix part to a test/proof; `/prove-fix` MUST run after `/fix` applies changes.
+**MUST ATTENTION** OOM/memory → check row COUNT before row SIZE (unbounded query > large row); 3+ failed fixes → STOP, question the architecture, escalate to user.
+**MUST ATTENTION** bootstrap `TaskCreate` task tracking BEFORE first file read; persist findings incrementally to `plans/reports/`; standalone (outside workflow) → add a `/review-changes` task as the LAST task — why: context cutoff loses in-memory findings.
 
 **Anti-Rationalization:**
 
-| Evasion                            | Rebuttal                                                                       |
-| ---------------------------------- | ------------------------------------------------------------------------------ |
-| "Too simple for Phase 0"           | Root cause assumptions waste more time than classification. Apply anyway.      |
-| "Already traced, no graph needed"  | Show `file:line` evidence. No proof = no trace.                                |
-| "Round 2 fresh agent wastes time"  | Main agent rationalizes its own mistakes. Zero-memory agent is non-negotiable. |
-| "This is a frontend bug, no graph" | Frontend → backend → bus chains exist. Run trace first.                        |
+| Evasion                                   | Rebuttal                                                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| "I see the problem, let me fix it"        | Symptom ≠ root cause. This skill is investigation-ONLY — trace end-to-start first.            |
+| "Too simple for Phase 0"                  | Root-cause assumptions waste more time than classification. Apply Phase 0 anyway.             |
+| "Already traced, no graph needed"         | Show `file:line` evidence. No proof = no trace. Run graph trace if `graph.db` exists.         |
+| "Skip `/why-review`, findings look solid" | Self-confirmed findings rationalize their own gaps. The `/why-review` gate is non-negotiable. |
+| "This is a frontend bug, no graph"        | Frontend → backend → bus chains exist. Run trace first.                                       |
+| "It's OOM, must be a large object"        | Check row COUNT before row SIZE. Unbounded query > large single row.                          |
+| "Just try changing X and see"             | One hypothesis at a time. Scientific method, not trial and error.                             |
+
+**IMPORTANT MUST ATTENTION** investigation-ONLY: trace end-to-start to the invariant-owning layer, NEVER patch here.
+**IMPORTANT MUST ATTENTION** every root-cause claim needs `Confidence: X%` + `file:line` proof; <60% = "hypothesis, not confirmed", NEVER a guess.
+**IMPORTANT MUST ATTENTION** NEVER declare confirmed without the `/why-review` gate; `TaskCreate` before starting.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

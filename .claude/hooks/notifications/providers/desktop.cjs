@@ -20,6 +20,7 @@ const TITLES = {
     Stop: 'Claude Code Complete',
     SubagentStop: 'Subagent Complete',
     AskUserPrompt: 'Claude Needs Input',
+    AskUserQuestion: 'Claude Has a Question',
     idle_prompt: 'Claude Waiting for Input',
     permission_prompt: 'Claude Needs Permission',
     default: 'Claude Code'
@@ -30,6 +31,7 @@ const MESSAGES = {
     Stop: 'Session completed successfully',
     SubagentStop: 'Specialized agent finished',
     AskUserPrompt: 'Waiting for your input',
+    AskUserQuestion: 'Claude is asking a question — please check and answer',
     idle_prompt: 'Claude is waiting for your input',
     permission_prompt: 'Claude is asking for tool permission',
     default: 'Event triggered'
@@ -151,6 +153,13 @@ function notifyLinux(title, message, showDialog) {
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 async function sendNotification(title, message, showDialog) {
+    // Test mode: skip the real OS call. The router (notify.cjs) still exercises event
+    // normalization, whitelist routing, and provider selection; only the blocking dialog /
+    // toast exec is suppressed so the test runner cannot hang on a modal dialog.
+    if (process.env.CLAUDE_HOOK_TEST_MODE === '1') {
+        return { success: true, skipped: true };
+    }
+
     const platform = os.platform();
 
     switch (platform) {
@@ -197,9 +206,13 @@ module.exports = {
         const hookType = input.hook_event_name || 'default';
         const notificationType = input.notification_type;
 
-        // Stop/idle_prompt/AskUserPrompt/permission_prompt: show blocking dialog so user won't miss it
+        // Stop/AskUserQuestion/idle_prompt/AskUserPrompt/permission_prompt: show blocking dialog so user won't miss it
         const showDialog =
-            hookType === 'Stop' || notificationType === 'idle_prompt' || notificationType === 'AskUserPrompt' || notificationType === 'permission_prompt';
+            hookType === 'Stop' ||
+            hookType === 'AskUserQuestion' ||
+            notificationType === 'idle_prompt' ||
+            notificationType === 'AskUserPrompt' ||
+            notificationType === 'permission_prompt';
 
         return sendNotification(title, message, showDialog);
     }

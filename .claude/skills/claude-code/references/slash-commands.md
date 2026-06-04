@@ -6,7 +6,7 @@ Comprehensive catalog of Claude Code slash commands for development workflows.
 
 Slash commands are user-defined operations that:
 
-- Start with `/` (e.g., `/cook`, `/test`)
+- Start with `/` (e.g., `/feature-implement`, `/test`)
 - Expand to full prompts when executed
 - Accept arguments
 - Located in `.claude/skills/` (previously `.claude/commands/`)
@@ -14,13 +14,13 @@ Slash commands are user-defined operations that:
 
 ## Development Commands
 
-### /cook [task]
+### /feature-implement [task]
 
 Implement features step by step.
 
 ```bash
-/cook implement user authentication with JWT
-/cook add payment integration with Stripe
+/feature-implement implement user authentication with JWT
+/feature-implement add payment integration with Stripe
 ```
 
 **When to use**: Feature implementation with iterative development
@@ -31,7 +31,7 @@ Research, analyze, and create implementation plans.
 
 ```bash
 /plan implement OAuth2 authentication
-/plan migrate from SQLite to PostgreSQL
+/plan migrate from one database engine to another
 ```
 
 **When to use**: Before starting complex implementations
@@ -505,7 +505,7 @@ Include:
 ### Single Argument
 
 ```bash
-/cook implement user auth
+/feature-implement implement user auth
 # Argument: "implement user auth"
 ```
 

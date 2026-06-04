@@ -34,11 +34,11 @@ const PROJECT_TMP_DIR = path.join(PROJECT_DIR, 'tmp', 'claude-temp');
 
 // Project-scoped runtime file paths (dismiss flags, markers, warnings)
 const INIT_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.init-dismissed');
+const AGENT_FILES_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.agent-files-dismissed');
 const SCAN_STALE_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.scan-stale-dismissed');
 const GRAPH_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.graph-dismissed');
 const SCAN_STALE_PATH = path.join(PROJECT_TMP_DIR, '.scan-stale');
 const COMMIT_SKILL_MARKER_PATH = path.join(PROJECT_TMP_DIR, '.commit-skill-active');
-const PENDING_TASKS_PATH = path.join(PROJECT_TMP_DIR, 'pending-tasks-warning.json');
 
 // Session-specific marker files (per-session, no race conditions)
 const MARKERS_DIR = path.join(CK_TMP_DIR, 'markers');
@@ -179,11 +179,11 @@ module.exports = {
 
     // Files (project-scoped runtime)
     INIT_DISMISSED_PATH,
+    AGENT_FILES_DISMISSED_PATH,
     SCAN_STALE_DISMISSED_PATH,
     GRAPH_DISMISSED_PATH,
     SCAN_STALE_PATH,
     COMMIT_SKILL_MARKER_PATH,
-    PENDING_TASKS_PATH,
 
     // Helpers
     ensureDir,

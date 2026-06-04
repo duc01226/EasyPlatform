@@ -68,7 +68,7 @@ Add polish:
 
 ### 6. Asset Generation
 
-Use `ai-multimodal` skill:
+Use `visual analysis tooling` skill:
 
 - Generate high-quality visuals
 - Create unique imagery

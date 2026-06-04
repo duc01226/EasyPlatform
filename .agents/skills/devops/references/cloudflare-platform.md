@@ -1,6 +1,6 @@
-# Cloudflare Platform Overview
+# Cloudflare Developer Stack Overview
 
-Cloudflare Developer Platform: comprehensive edge computing ecosystem for full-stack applications on global network across 300+ cities.
+Cloudflare Developer ecosystem: comprehensive edge computing services for full-stack applications on a global network across 300+ cities.
 
 ## Core Concepts
 
@@ -193,7 +193,7 @@ wrangler r2 object put my-bucket/file.txt --file=./file.txt
 
 ```toml
 name = "my-worker"
-main = "src/index.ts"
+main = "{source-dir}/index.ts"
 compatibility_date = "2024-01-01"
 
 # Environment variables

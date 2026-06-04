@@ -15,7 +15,14 @@ description: '[Project Management] Use when capturing new ideas, feature request
 
 ## Quick Summary
 
-**Goal:** Capture raw product ideas as structured backlog artifacts with project module context.
+**Goal:** Turn a vague product idea into a validated, tech-agnostic, module-anchored backlog artifact ready for `/refine` to convert into a PBI — preserving problem intent without leaking solution or stack choices.
+
+**Summary:**
+
+- Two interview gates are NON-NEGOTIABLE: Discovery Interview (Step 6.5, 3-5 `AskUserQuestion` items incl. the always-on testability question) AND Validation (Step 7, 2-3 items) — never skip either even for "simple" ideas.
+- Keep the problem statement strictly tech-agnostic (M1): name no framework/product/language/pattern, and do NOT assign logical IDs — the downstream PBI inherits the clean narrative and owns `FR-`/`BR-` assignment.
+- Auto-detect the project module silently via `Glob("docs/specs/*/README.md")` and load feature context (8-12K token budget); prompt only when ambiguous. Greenfield (no real code dirs) → skip module detection and NEVER ask about tech stack.
+- Persist to `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md` with `t_shirt_size`, then hand off to `/refine` for PBI conversion.
 
 > **MANDATORY IMPORTANT MUST ATTENTION** TaskCreate task to READ project-specific reference doc:
 > `project-structure-reference.md` — project patterns and structure. Not found → search: project documentation, coding standards, architecture docs.
@@ -35,11 +42,12 @@ description: '[Project Management] Use when capturing new ideas, feature request
 - Validation NEVER optional — MANDATORY step
 - Auto-detect module silently; prompt only when ambiguous
 - MUST ATTENTION include `t_shirt_size` (XS/S/M/L/XL) in artifact for early sizing
-- **[BLOCKING] Tech-agnostic output:** the problem statement stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 (all modes, not only greenfield) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase.
+- **[BLOCKING] Tech-agnostic output (M1):** the problem statement stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 (all modes, not only greenfield) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase.
+- **M3 Logical-ID Assignment (forward to PBI):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. An idea is a tech-agnostic business-intent definition only — do NOT assign logical IDs yet. When the idea advances to a PBI (via `/refine`), the PBI assigns logical IDs (`FR-`/`BR-`) as the PRIMARY citation spine and tracks `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths) in a SEPARATE carrier from the business-intent prose. Keep the idea's problem/value narrative free of source identifiers so the PBI can inherit it cleanly.
 
 ## Greenfield Mode
 
-> **Auto-detected:** No codebase found (no `src/`, `app/`, `lib/`, `server/`, `packages/` dirs; no `package.json`/`*.sln`/`go.mod`; no `project-config.json`) → greenfield mode. Planning artifacts (`docs/`, `plans/`, `.claude/`) don't count — project must have actual code dirs with content.
+> **Auto-detected:** No codebase found (no discovered source directories, no manifest files, no populated `project-config.json`) → greenfield mode. Planning artifacts (`docs/`, `plans/`, `.claude/`) don't count — repository must have actual code directories with content.
 
 **When greenfield detected:**
 
@@ -74,7 +82,7 @@ description: '[Project Management] Use when capturing new ideas, feature request
 
 **Dynamic Discovery:**
 
-1. Run: `Glob("docs/business-features/*/README.md")`
+1. Run: `Glob("docs/specs/*/README.md")`
 2. Extract module names from paths
 3. Match idea keywords against module keywords
 
@@ -86,7 +94,7 @@ description: '[Project Management] Use when capturing new ideas, feature request
 
 **If module detected:**
 
-1. Read `docs/business-features/{module}/README.md` (first 200 lines)
+1. Read `docs/specs/{module}/README.md` (first 200 lines)
 2. Extract feature list from Quick Navigation section
 3. Add to frontmatter: `module: {detected_module}`, `related_features: [Feature1, Feature2]`
 
@@ -104,6 +112,8 @@ description: '[Project Management] Use when capturing new ideas, feature request
 - Path: `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`
 - Role: infer from context or ask
 - Include domain context if detected
+
+> **Artifact Path (canonical convention)** — Command `/idea` → base path `team-artifacts/ideas/`, role token `po`, type `idea`. Filename pattern: `{YYMMDD}-{role}-{type}-{slug}.md` → e.g. `260119-po-idea-dark-mode-toggle.md`. Slug = lowercased basename, non-alphanumeric → `-`, trimmed, max 50 chars.
 
 ### Step 6.5: Discovery Interview (MANDATORY)
 
@@ -160,7 +170,7 @@ Document under `## Validation Summary`. Update artifact based on answers.
 `AskUserQuestion` after capture:
 
 1. `/refine` — Refine into PBI (Recommended)
-2. `/tdd-spec` — Jump straight to test spec
+2. `/spec [mode=tests]` — Jump straight to test spec
 3. `/plan` — Start implementation planning
 
 Output: "Idea captured! To refine into a PBI, run: `/refine {filename}`"
@@ -225,7 +235,7 @@ Module detected: "Module context from {module} will be used during refinement."
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** Not already in workflow → MUST ATTENTION use `AskUserQuestion`:
 >
-> 1. **Activate `idea-to-pbi` workflow** (Recommended) — idea → refine → refine-review → story → story-review → prioritize
+> 1. **Activate `workflow-idea-to-pbi` workflow** (Recommended) — idea → refine → review-artifact --type=pbi → story → review-artifact --type=story → prioritize
 > 2. **Execute `/idea` directly** — run standalone
 
 ---
@@ -256,16 +266,14 @@ Module detected: "Module context from {module} will be used during refinement."
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -296,13 +304,13 @@ Module detected: "Module context from {module} will be used during refinement."
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
@@ -314,7 +322,7 @@ Module detected: "Module context from {module} will be used during refinement."
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -331,20 +339,40 @@ Module detected: "Module context from {module} will be used during refinement."
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION** `TaskCreate` break ALL work into small tasks BEFORE starting
-**IMPORTANT MUST ATTENTION** validate all decisions with user via `AskUserQuestion` — NEVER auto-decide
-**IMPORTANT MUST ATTENTION** Discovery Interview + Validation NEVER optional — MANDATORY steps
-**IMPORTANT MUST ATTENTION** NEVER ask about tech stack in greenfield mode — defer to business-evaluation phase
-**IMPORTANT MUST ATTENTION** auto-detect module silently — prompt only when ambiguous
-**IMPORTANT MUST ATTENTION** add final review task to verify work quality
+**IMPORTANT MUST ATTENTION Goal:** Turn a vague product idea into a validated, tech-agnostic, module-anchored backlog artifact ready for `/refine` to convert into a PBI — preserving problem intent without leaking solution or stack choices.
+
+**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **UI Wireframe:** classify each component into ONE tier; search libs first, reuse ≥80% match.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** traced proof per claim; confidence >80% to act; never present guess as fact.
+- **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS markers and confidence closer.
+
+**IMPORTANT MUST ATTENTION** Discovery Interview (Step 6.5) + Validation (Step 7) NEVER optional — run BOTH `AskUserQuestion` gates even for "simple" ideas — why: discovery uncovers hidden constraints, validation confirms problem framing; different question categories
+**IMPORTANT MUST ATTENTION** ALWAYS keep problem statement tech-agnostic (M1, `spec-principles.md` §3, all modes) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase — why: PBI inherits the narrative cleanly downstream
+**IMPORTANT MUST ATTENTION** in greenfield mode NEVER ask about tech stack — acknowledge a volunteered preference, then defer to the business-evaluation phase — why: stack is a research-driven decision after business analysis, not a capture-time guess
+**IMPORTANT MUST ATTENTION** `TaskCreate` break ALL work into small tasks BEFORE starting — including a task to READ `project-structure-reference.md` (skip in greenfield — it won't exist)
+**IMPORTANT MUST ATTENTION** validate all decisions with user via `AskUserQuestion` — NEVER auto-decide — and NEVER show confidence levels on an auto-detected module match
+**IMPORTANT MUST ATTENTION** auto-detect module silently via `Glob("docs/specs/*/README.md")` — prompt only when ambiguous or no match; greenfield → skip module detection — why: confirm with `Glob()` evidence, not assumption
+**IMPORTANT MUST ATTENTION** assign NO logical IDs (M3) — an idea is tech-agnostic business intent only; the downstream PBI owns `FR-`/`BR-` assignment and `[Source: namespace/service/id]` anchors — why: keep the problem/value narrative free of source identifiers so the PBI inherits it cleanly
+**IMPORTANT MUST ATTENTION** include `t_shirt_size` (XS/S/M/L/XL) in the artifact and keep the feature-context load within the 8-12K token budget — why: early sizing feeds prioritization; over-budget reads dilute attention
+**IMPORTANT MUST ATTENTION** persist to `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`, then hand off to `/refine` for PBI conversion — why: canonical path keeps downstream tooling aligned
+**IMPORTANT MUST ATTENTION** search existing component libraries before proposing any new UI component (≥80% match = reuse); classify each into exactly ONE tier — why: duplicate UI code = wrong tier
+**IMPORTANT MUST ATTENTION** cite `file:line` proof or traced evidence for every claim/recommendation, confidence >80% to act, <80% verify first — why: certainty without evidence is the root of hallucination
+**IMPORTANT MUST ATTENTION** add a final review task to verify work quality
 
 **Anti-Rationalization:**
 
-| Evasion                                   | Rebuttal                                                  |
-| ----------------------------------------- | --------------------------------------------------------- |
-| "Idea is simple, skip interview"          | NEVER skip — discovery uncovers hidden constraints        |
-| "Module is obvious, skip detection"       | Still run `Glob()` — confirm with evidence not assumption |
-| "Validation is redundant after interview" | ALWAYS run both — different question categories           |
-| "Greenfield check is optional"            | Auto-detect is MANDATORY — no manual override             |
+| Evasion                                      | Rebuttal                                                                |
+| -------------------------------------------- | ----------------------------------------------------------------------- |
+| "Idea is simple, skip interview"             | NEVER skip — discovery uncovers hidden constraints                      |
+| "Module is obvious, skip detection"          | Still run `Glob()` — confirm with evidence not assumption               |
+| "Validation is redundant after interview"    | ALWAYS run both — different question categories                         |
+| "Greenfield check is optional"               | Auto-detect is MANDATORY — no manual override                           |
+| "User mentioned a framework, capture it"     | Stay tech-agnostic — acknowledge, defer to tech-research phase          |
+| "I'll assign FR-/BR- IDs now"                | NO logical IDs at idea stage — the PBI assigns them downstream          |
+| "Reuse an existing component? new is faster" | Search libs first — ≥80% match = reuse; new without search = wrong tier |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+**IMPORTANT MUST ATTENTION** the 3 rules to never skip: (1) run BOTH Discovery + Validation `AskUserQuestion` gates; (2) keep the problem statement tech-agnostic (no stack/IDs); (3) cite `file:line` evidence, confidence >80% to act.

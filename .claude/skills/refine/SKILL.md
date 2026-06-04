@@ -1,6 +1,6 @@
 ---
 name: refine
-version: 2.3.0
+version: 2.3.1
 description: '[Project Management] Use when converting ideas to PBIs, validating problem hypotheses, adding acceptance criteria, or refining requirements.'
 ---
 
@@ -15,7 +15,14 @@ description: '[Project Management] Use when converting ideas to PBIs, validating
 
 ## Quick Summary
 
-**Goal:** Transform raw ideas into actionable PBIs using BA best practices, hypothesis validation, domain research.
+**Goal:** Transform raw ideas into a Definition-of-Ready PBI using BA best practices, hypothesis validation, and domain research — problem-validated, tech-agnostic, with testable acceptance criteria, estimates, and a Dependencies table — so a team can build it without re-asking what or why.
+
+**Summary:**
+
+- Two gates are NON-OPTIONAL: validate the problem hypothesis (Phase 3) before building, and run the 3-5 question validation interview (Phase 7) before writing the PBI — the user decides assumptions, scope, and dependencies, never the AI.
+- Acceptance criteria are BDD GIVEN/WHEN/THEN (min 3: happy/edge/error) and MUST satisfy the AI-SDD M1-M5 gate (Phase 5.1): tech-agnostic Business Intent, logical FR-/BR- IDs first, observable single-interpretation ACs, rebuild-from-scratch validity.
+- Estimate twice: Phase 6 drafts story points/man-days against draft scope, then Phase 7.5 RE-DERIVES them against the locked post-interview scope (per SYNC:estimation-framework) — shipping stale Phase 6 numbers is the cardinal failure.
+- The PBI frontmatter MUST carry `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, and every PBI MUST include a complete Dependencies table (`must-before`/`can-parallel`/`blocked-by`/`independent`).
 
 **Workflow:**
 
@@ -44,7 +51,7 @@ description: '[Project Management] Use when converting ideas to PBIs, validating
 
 ## Frontend/UI Context (if applicable)
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (read directly when relevant; do not rely on hook-injected conversation text)
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
@@ -52,7 +59,7 @@ description: '[Project Management] Use when converting ideas to PBIs, validating
 
 ## Greenfield Mode
 
-> **Auto-detected:** No code directories (`src/`, `app/`, `lib/`, `server/`, `packages/`, etc.) and no manifest files (`package.json`/`*.sln`/`go.mod`) found. Planning artifacts (docs/, plans/, .claude/) don't count.
+> **Auto-detected:** No discovered source directories and no manifest files found. Planning artifacts (docs/, plans/, .claude/) don't count.
 
 **When greenfield detected:**
 
@@ -76,7 +83,7 @@ If running in workflow (big-feature, greenfield-init, etc.):
 2. Read `plan.md` — project scope, goals, architecture decisions, domain model
 3. Read existing research — `{plan-dir}/research/*.md` for business evaluation, domain analysis
 4. Read `docs/project-reference/domain-entities-reference.md` (if exists) — existing domain entities
-5. Use plan context — don't re-ask questions already answered in prior steps
+5. Use plan context — don't re-ask questions answered in prior steps
 
 ## Phase 1: Idea Intake & Context Loading
 
@@ -97,7 +104,7 @@ Use WebSearch with domain terms. Summarize in max 3 bullets (market context, com
 
 ## Phase 3: Problem Hypothesis Validation
 
-Validate hypothesis with user via AskUserQuestion. 42% of startups fail due to no market need — validate before building.
+Validate hypothesis with user via AskUserQuestion. 42% of startups fail from no market need — validate before building.
 
 **Skip:** `--skip-hypothesis`, validated hypothesis exists, bug fix/tech debt.
 
@@ -176,31 +183,42 @@ Scenario: {Descriptive title}
 ### Example Scenarios
 
 ```gherkin
-Scenario: Employee creates goal with valid data
-  Given employee has permission to create goals
-    And employee is on the goal creation page
-  When employee submits goal form with all required fields
-  Then goal is created with status "Draft"
-    And goal appears in employee's goal list
+Scenario: User creates invoice with valid data
+  Given user has permission to create invoices
+    And user is on the invoice creation page
+  When user submits invoice form with all required fields
+  Then invoice is created with status "Draft"
+    And invoice appears in user's invoice list
 
-Scenario: Goal creation fails with missing required field
-  Given employee is on the goal creation page
-  When employee submits form without title
+Scenario: Invoice creation fails with missing required field
+  Given user is on the invoice creation page
+  When user submits form without title
   Then validation error "Title is required" is displayed
-    And goal is not created
+    And invoice is not created
 
-Scenario: Manager reviews subordinate goal
-  Given manager has direct reports
-    And subordinate has submitted goal for review
-  When manager opens goal review page
-  Then subordinate's goal is visible with "Pending Review" status
+Scenario: Approver reviews a submitted invoice
+  Given approver has invoices awaiting approval
+    And an invoice has been submitted for approval
+  When approver opens the invoice review page
+  Then the invoice is visible with "Pending Review" status
 ```
 
 ### Project Test Case Format
 
 - **Format:** `TC-{FEATURE}-{NNN}` (e.g., TC-GM-001)
-- **Evidence:** `file:line` format
+- **Evidence:** `[Source: namespace/service/id]` abstract-anchor format (never `file:line`)
 - See `business-analyst` skill for detailed patterns
+
+---
+
+### Phase 5.1: AI-SDD Mandate Gate (M1-M5) — BLOCKING
+
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. The generated PBI MUST satisfy M1-M5 or be reworked before Phase 8 writes it:
+
+- **Separate intent from implementation (M1/M2):** Keep a tech-agnostic **Business Intent** narrative (Description, Business Value, Acceptance Criteria) free of framework/product/language/design-pattern names and source identifiers. Put any optional implementation hints in a clearly separated **Implementation Notes** block, and put source references only in evidence carriers (`[Source: namespace/service/id]`, `**Evidence**`). Prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3.
+- **Logical Requirement ID first (M3):** Assign each requirement a logical ID (`FR-`/`BR-`) as the PRIMARY citation spine; keep `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths — those live only in the provenance sidecar) as a SECONDARY carrier in a separate evidence column/section — KEEP it, never remove it.
+- **Testable, observable acceptance criteria (M4):** Every acceptance criterion has ONE valid interpretation, observable completion states, named failure modes, and NO implementation details. Reject vague phrasing ("handle appropriately", "fast", "user-friendly").
+- **Rebuild-from-scratch validation (M5):** Before emitting, confirm a competent team with zero codebase knowledge could re-implement identical business behavior on ANY stack from the PBI alone. If a reader would have to guess a rule, limit, role, or failure mode, add it as a clarification — never guess.
 
 ---
 
@@ -220,12 +238,12 @@ Use `AskUserQuestion` with 2-3 questions:
 
 For EACH acceptance criterion, generate corresponding test case outline:
 
-| AC   | Test Outline                                            | Priority |
-| ---- | ------------------------------------------------------- | -------- |
-| AC-1 | TC: Create goal with valid data → verify persisted      | P0       |
-| AC-2 | TC: Create goal without title → verify validation error | P1       |
+| AC   | Test Outline                                               | Priority |
+| ---- | ---------------------------------------------------------- | -------- |
+| AC-1 | TC: Create invoice with valid data → verify persisted      | P0       |
+| AC-2 | TC: Create invoice without title → verify validation error | P1       |
 
-Seed for `/tdd-spec` if user chooses TDD-first. Document in PBI under `## Testability Assessment`.
+Seed for `/spec [mode=tests]` if user chooses TDD-first. Document in PBI under `## Testability Assessment`.
 
 ---
 
@@ -349,6 +367,8 @@ Compute `delta_pct = (new_likely_days - draft_likely_days) / draft_likely_days �
 
 **Path:** `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md` | **ID Pattern:** `PBI-{YYMMDD}-{NNN}`
 
+> **Artifact Path (canonical convention)** — Command `/refine` → base path `team-artifacts/pbis/`, role token `ba`, type `pbi`. General filename pattern: `{YYMMDD}-{role}-{type}-{slug}.md` → e.g. `260119-ba-pbi-invoice-approval.md`. Slug = lowercased basename, non-alphanumeric → `-`, trimmed, max 50 chars.
+
 ### PBI Template
 
 ```markdown
@@ -368,6 +388,15 @@ source_idea: '{idea artifact path or ID}'
 ---
 
 # {PBI Title}
+
+> **Business Intent (tech-agnostic — M1/M2):** Description, Business Value, Business Rules, and Acceptance Criteria below describe observable business behavior only — no framework/product/language/design-pattern names, no source identifiers. Keep implementation hints in `## Implementation Notes` and source references in evidence carriers.
+
+## Requirement IDs (M3 — logical-IDs-first)
+
+| Logical ID   | Statement (tech-agnostic) | Evidence (secondary, re-anchorable)       |
+| ------------ | ------------------------- | ----------------------------------------- |
+| FR-{MOD}-XXX | {functional requirement}  | `[Source: path:line]` or `TBD (pre-impl)` |
+| BR-{MOD}-XXX | {business rule}           | `[Source: path:line]` or `TBD (pre-impl)` |
 
 ## Description
 
@@ -437,14 +466,14 @@ Then error "{message}"
 
 ## Production Readiness Concerns
 
-| Concern                | Required        | Notes                                   |
-| ---------------------- | --------------- | --------------------------------------- |
-| Code linting/analyzers | Yes/No/Existing | {tool preference or "scaffold default"} |
-| Error handling setup   | Yes/No/Existing | {pattern: toast/inline/error-page}      |
-| Loading indicators     | Yes/No/Existing | {pattern: spinner/skeleton/progress}    |
-| Docker integration     | Yes/No/Existing | {scope: infra-only/full/none}           |
-| CI/CD quality gates    | Yes/No/Existing | {coverage threshold, lint enforcement}  |
-| Security scanning      | Yes/No/Existing | {dependency audit, SAST}                |
+| Concern                | Required        | Notes                                                                   |
+| ---------------------- | --------------- | ----------------------------------------------------------------------- |
+| Code linting/analyzers | Yes/No/Existing | {tool preference or "scaffold default"}                                 |
+| Error handling setup   | Yes/No/Existing | {pattern: toast/inline/error-page}                                      |
+| Loading indicators     | Yes/No/Existing | {pattern: spinner/skeleton/progress}                                    |
+| Docker integration     | Yes/No/Existing | {scope: infra-only/full/none}                                           |
+| CI/CD quality gates    | Yes/No/Existing | {mutation-score gate (line-coverage diagnostic only), lint enforcement} |
+| Security scanning      | Yes/No/Existing | {dependency audit, SAST}                                                |
 
 ## Authorization & Access Control
 
@@ -478,6 +507,10 @@ Then error "{message}"
 
 **Entities:** {Entity1}, {Entity2}
 **Related Features:** {feature doc paths}
+
+## Implementation Notes
+
+> Optional, clearly separated from Business Intent. Implementation hints / source identifiers may appear here and in evidence carriers only — never in the tech-agnostic sections above. If none: `N/A — no implementation hints; rebuild from Business Intent + Requirement IDs.`
 
 ## UI Layout
 
@@ -543,6 +576,32 @@ Then error "{message}"
 - **Every PBI MUST ATTENTION include Dependencies table** — types: `must-before`, `can-parallel`, `blocked-by`, `independent`. Enables `/prioritize` and `/plan` to respect ordering.
 - **No vague dependency descriptions** — Each dependency must specify concrete PBI, service, or feature and WHY relationship exists.
 
+## BA Team Refinement Context (canonical)
+
+> Applies to Writes/Edits under `team-artifacts/pbis/`, `.../stories/`, `team-artifacts/ideas/`. Mirrored for Codex via `SYNC:ba-team-decision-model` / `SYNC:refinement-dor-checklist` in AGENTS.md (do not hand-edit the mirror).
+
+**Decision Model:** 2/3 majority vote (UX BA + Designer BA + Dev BA PIC). Dev BA PIC has technical veto.
+**Disagree-and-Commit:** Once decided, everyone commits. No re-litigating.
+**Grooming Override:** BA team decision changes only if >75% remaining team votes to override.
+
+**Role Scopes:**
+
+- **UX BA:** UI/UX flows, wireframes, interaction AC, user research
+- **Designer BA:** Design feasibility, product thinking, visual design, equal vote
+- **Dev BA PIC:** Technical feasibility review, AI pre-review, DoR gate, grooming presentation
+
+**DoR Gate (ALL must pass before grooming):**
+
+- [ ] User story template (As a... I want... So that...)
+- [ ] AC testable (GIVEN/WHEN/THEN, no vague language)
+- [ ] Wireframes attached (UX BA) + UI design ready (Designer BA)
+- [ ] AI pre-review passed (`/review-artifact --type=pbi` or `/pbi-challenge`)
+- [ ] Story points estimated by AI
+- [ ] Dependencies table complete
+
+**Refinement Cadence:** Always one sprint ahead. Weekly meeting (60 min + ~3h async).
+**Skills:** Use `/pbi-challenge` for collaborative review, `/dor-gate` before grooming.
+
 ## Definition of Ready (INVEST)
 
 | Criterion           | Check                        |
@@ -562,7 +621,7 @@ Then error "{message}"
 
 ## Project Integration
 
-For domain PBIs: detect module from `docs/business-features/` directory names, extract business rules from `docs/business-features/{module}/`, load entity context from feature doc. Target 8-12K tokens for feature context.
+For domain PBIs: detect module from `docs/specs/` directory names, extract business rules from `docs/specs/{module}/`, load entity context from feature doc. Target 8-12K tokens for feature context.
 
 ---
 
@@ -570,7 +629,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 - **Role Skill:** `business-analyst` (detailed patterns)
 - **Input:** `/idea` output
-- **Next Step:** `/story`, `/tdd-spec` (Recommended for TDD), `/design-spec`
+- **Next Step:** `/story`, `/spec [mode=tests]` (Recommended for TDD), `/design-spec`
 - **Prioritization:** `/prioritize`
 
 ---
@@ -583,7 +642,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 - **"/domain-analysis"** — If PBI creates/modifies domain entities, model bounded contexts before writing stories
 - **"/story"** — Break PBI into implementable user stories
 - **"/pbi-mockup"** — Generate HTML mockup from PBI
-- **"/tdd-spec"** — If using TDD approach
+- **"/spec [mode=tests]"** — If using TDD approach
 - **"Skip, continue manually"** — user decides
 
 ---
@@ -598,16 +657,14 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -789,35 +846,9 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 <!-- /SYNC:estimation-framework -->
 
-<!-- SYNC:scaffold-production-readiness -->
-
-> **Scaffold Production Readiness** — Every scaffolded project MUST ATTENTION include 5 foundations:
->
-> 1. **Code Quality Tooling** — linting, formatting, pre-commit hooks, CI gates. Specific tool choices → `docs/project-reference/` or `project-config.json`.
-> 2. **Error Handling Foundation** — HTTP interceptor, error classification (4xx/5xx taxonomy), user notification, global uncaught handler.
-> 3. **Loading State Management** — counter-based tracker (not boolean toggle), skip-token for background requests, 300ms flicker guard.
-> 4. **Docker Development Environment** — compose profiles (`dev`/`test`/`infra`), multi-stage Dockerfile, health checks on all services, non-root production user.
-> 5. **Integration Points** — document each outbound boundary; configure retry + circuit breaker + timeout; integration tests for happy path and failure path.
->
-> **BLOCK `/cook` if any foundation is unchecked.** Present 2-3 options per concern via `AskUserQuestion` before implementing.
-
-<!-- /SYNC:scaffold-production-readiness -->
-
-<!-- SYNC:cross-cutting-quality -->
-
-> **Cross-Cutting Quality** — Check across all changed files:
->
-> 1. **Error handling consistency** — same error patterns across related files
-> 2. **Logging** — structured logging with correlation IDs for traceability
-> 3. **Security** — no hardcoded secrets, input validation at boundaries, auth checks present
-> 4. **Performance** — no N+1 queries, unnecessary allocations, or blocking calls in async paths
-> 5. **Observability** — health checks, metrics, tracing spans for new endpoints
-
-<!-- /SYNC:cross-cutting-quality -->
-
 <!-- SYNC:ui-wireframe -->
 
-> **UI Wireframe** — For UI artifacts: include ASCII wireframe (box-drawing chars), component tree with EXISTING/NEW classification and tier (common | domain-shared | page/app), interaction flow (user action → system response → UI update), states table (default/loading/empty/error), and responsive breakpoint behavior. Process Figma URLs or screenshots BEFORE wireframing. Search existing component libs before proposing new components. Backend-only changes: `N/A — Backend-only change. No UI affected.`
+> **UI Wireframe** — Process visual design input (Figma URLs, screenshots, wireframes) via appropriate tool BEFORE creating wireframes. Use box-drawing ASCII characters for spatial layout. Classify every component into exactly ONE tier: Common (cross-app reusable) / Domain-Shared (cross-domain) / Page (single-page). Duplicate UI code = wrong tier. Search existing component libraries before creating new (>=80% match = reuse). Detail level varies by skill (idea=rough, story=full decomposition).
 
 <!-- /SYNC:ui-wireframe -->
 
@@ -848,14 +879,14 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-      <!-- /SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:ui-system-context:reminder -->
 
@@ -863,21 +894,9 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 <!-- /SYNC:ui-system-context:reminder -->
 
-<!-- SYNC:scaffold-production-readiness:reminder -->
-
-**IMPORTANT MUST ATTENTION** verify 5 production-readiness foundations (code quality, error handling, loading state, Docker, integration points) for scaffold PBIs.
-
-<!-- /SYNC:scaffold-production-readiness:reminder -->
-
-<!-- SYNC:cross-cutting-quality:reminder -->
-
-**IMPORTANT MUST ATTENTION** check error handling, logging, security, performance, and observability across changed files.
-
-<!-- /SYNC:cross-cutting-quality:reminder -->
-
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
@@ -889,7 +908,7 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -906,20 +925,46 @@ For domain PBIs: detect module from `docs/business-features/` directory names, e
 
 ## Closing Reminders
 
-- **MANDATORY IMPORTANT MUST ATTENTION** break work into small tasks via `TaskCreate` BEFORE starting
+- **IMPORTANT MUST ATTENTION Goal:** emit a Definition-of-Ready PBI — problem-validated, tech-agnostic, with testable acceptance criteria, estimates, and a Dependencies table — so a team can build it without re-asking what or why
+
+**Protocols in force — MUST ATTENTION (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **UI System Context:** ALWAYS read frontend-patterns, scss-styling-guide, design-system before any UI change.
+- **Estimation Framework:** bottom-up hours drive man-days; SP derived; UI cost usually dominates.
+- **UI Wireframe:** ASCII layout, classify every component into ONE tier, reuse before creating.
+- **Critical Thinking:** traced proof per claim, confidence >80% to act, NEVER guess.
+- **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS markers, confidence-% closer.
+
+- **IMPORTANT MUST ATTENTION** Phase 3 problem-hypothesis validation + Phase 7 validation interview (3-5 questions) are NON-OPTIONAL for new features — user decides assumptions/scope/dependencies, AI NEVER auto-decides — why: 42% of products fail from no market need; a silent AI assumption ships an unvalidated build
+- **IMPORTANT MUST ATTENTION** Phase 7.5 RE-DERIVES `story_points`/`complexity`/`man_days_traditional`/`man_days_ai` against the LOCKED post-interview scope (per `SYNC:estimation-framework`) — NEVER ship stale Phase 6 draft numbers — why: pre-validation guesses are the #1 source of unreliable velocity data
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small tasks via `TaskCreate` BEFORE starting; mark one `in_progress`, complete it before the next; on context loss `TaskList` first — why: compaction wipes prior-work memory, resume don't duplicate
 - **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — NEVER auto-decide
+- **IMPORTANT MUST ATTENTION** acceptance criteria are BDD GIVEN/WHEN/THEN (min 3: happy/edge/error) and MUST satisfy the Phase 5.1 AI-SDD M1-M5 gate — tech-agnostic Business Intent, logical `FR-`/`BR-` IDs first, observable single-interpretation ACs, rebuild-from-scratch validity — why: a reader who must guess a rule/limit/role re-implements the wrong behavior
+- **IMPORTANT MUST ATTENTION** every PBI MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` frontmatter AND a complete Dependencies table (`must-before`/`can-parallel`/`blocked-by`/`independent`) — fill even when `independent`
+- **IMPORTANT MUST ATTENTION** keep PBI Business Intent prose tech-agnostic — NO framework/product/language/design-pattern names; implementation hints go ONLY in `## Implementation Notes`, source refs ONLY in `[Source: namespace/service/id]` evidence carriers — why: a tech-leaked spec is not rebuildable on another stack (M1/M2)
+- **IMPORTANT MUST ATTENTION** greenfield mode: NEVER ask about tech stack during refinement — capture team skills/scale as signals only; tech decided after business analysis
+- **MANDATORY IMPORTANT MUST ATTENTION** before refining domain PBIs, read existing TCs in `docs/specs/` and `docs/project-reference/domain-entities-reference.md`; grep 3+ existing PBIs/specs for local conventions before authoring — why: project vocabulary and patterns override generic BABOK/INVEST defaults
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` (or `[Source: ...]`) evidence for every claim, confidence >80% to act, <60% DO NOT recommend — NEVER present a guess as fact
+- **IMPORTANT MUST ATTENTION** complex/lengthy work → persist findings to `plans/reports/` incrementally — why: prevents silent loss of all findings on context exhaustion
 - **MANDATORY IMPORTANT MUST ATTENTION** add final review task to verify work quality
-- **MANDATORY IMPORTANT MUST ATTENTION** add task: run `/why-review` — validate PBI design rationale before `/story` or `/tdd-spec`
+- **MANDATORY IMPORTANT MUST ATTENTION** add task: run `/why-review` — validate PBI design rationale before `/story` or `/spec [mode=tests]`
 - **MANDATORY IMPORTANT MUST ATTENTION** add task: run `/pbi-challenge` — Dev BA PIC review before `/dor-gate` or `/story`
 
 **Anti-Rationalization:**
 
-| Evasion                                   | Rebuttal                                                                       |
-| ----------------------------------------- | ------------------------------------------------------------------------------ |
-| "Simple PBI, skip hypothesis validation"  | Wrong assumption wastes more time than validation check. Apply always.         |
-| "Validation interview is optional here"   | NEVER optional — user decides assumptions, AI doesn't                          |
-| "Skip Dependencies table, no blockers"    | Unknown blockers exist. Always fill table — even if `independent`              |
-| "Skip story points, just write ACs"       | `story_points`, `man_days_traditional`, `man_days_ai` mandatory in frontmatter |
-| "Domain context not needed for small PBI" | Small PBIs touch entities. Read domain-entities-reference first                |
+| Evasion                                    | Rebuttal                                                                                 |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| "Simple PBI, skip hypothesis validation"   | Wrong assumption wastes more time than validation check. Apply Phase 3 always.           |
+| "Validation interview is optional here"    | NEVER optional — Phase 7 user decides assumptions, AI doesn't                            |
+| "Phase 6 estimate is fine, skip re-derive" | Phase 7.5 is MANDATORY — interview changed scope; stale numbers corrupt velocity         |
+| "Skip Dependencies table, no blockers"     | Unknown blockers exist. Always fill table — even if `independent`                        |
+| "Skip story points, just write ACs"        | `story_points`, `man_days_traditional`, `man_days_ai` mandatory in frontmatter           |
+| "Add a stack hint, it clarifies the AC"    | Business Intent stays tech-agnostic (M1/M2) — hints go to `## Implementation Notes` only |
+| "Domain context not needed for small PBI"  | Small PBIs touch entities. Read domain-entities-reference first                          |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+**IMPORTANT MUST ATTENTION** Phase 3 hypothesis + Phase 7 interview are NON-OPTIONAL — user decides, AI never auto-decides.
+**IMPORTANT MUST ATTENTION** Phase 7.5 re-derives estimates against locked scope — never ship stale Phase 6 numbers.
+**IMPORTANT MUST ATTENTION** keep Business Intent tech-agnostic; cite `file:line`/`[Source:]` evidence, confidence >80% to act.

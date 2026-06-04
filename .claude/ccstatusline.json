@@ -3,9 +3,34 @@
     "lines": [
         [
             {
+                "id": "14",
+                "type": "custom-command",
+                "color": "brightWhite",
+                "commandPath": "node .claude/scripts/statusline-project.cjs",
+                "timeout": 3000,
+                "maxWidth": 32
+            },
+            {
+                "id": "15",
+                "type": "separator"
+            },
+            {
                 "id": "1",
                 "type": "model",
-                "color": "cyan"
+                "color": "cyan",
+                "rawValue": true
+            },
+            {
+                "id": "16",
+                "type": "custom-text",
+                "color": "brightBlack",
+                "customText": " - "
+            },
+            {
+                "id": "17",
+                "type": "thinking-effort",
+                "color": "magenta",
+                "rawValue": true
             },
             {
                 "id": "2",

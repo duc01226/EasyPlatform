@@ -9,8 +9,11 @@ const codexDir = path.join(rootDir, ".codex");
 const codexHooksPath = path.join(codexDir, "hooks.json");
 const reportPath = path.join(codexDir, "hooks.sync.report.json");
 
+const disabledCodexEvents = new Map([
+  ["SessionStart", "disabled-for-codex-hookless-startup-context"],
+]);
+
 const supportedEvents = new Set([
-  "SessionStart",
   "PreToolUse",
   "PermissionRequest",
   "PostToolUse",
@@ -39,23 +42,6 @@ function normalizeCommand(command) {
   return normalized;
 }
 
-function getCommandSkipReason(command) {
-  if (command.includes("npm-auto-install.cjs")) {
-    return "disabled-for-codex-startup-auto-install";
-  }
-  return null;
-}
-
-function normalizeSessionStartMatcher(matcher) {
-  if (!matcher || matcher === "*" || matcher.trim() === "") {
-    return "startup|resume";
-  }
-  if (/\b(startup|resume)\b/.test(matcher)) {
-    return "startup|resume";
-  }
-  return null;
-}
-
 function pushSkip(report, eventName, groupIndex, reason, matcher) {
   report.skipped_groups.push({
     event: eventName,
@@ -79,7 +65,7 @@ async function main() {
       "Codex hooks are currently disabled on Windows runtimes.",
       "Tool matcher capabilities may vary by Codex runtime; source matchers are preserved when possible.",
       "UserPromptSubmit and Stop now preserve source matcher filters when present.",
-      "Claude startup auto-install hooks are intentionally omitted from Codex hooks.",
+      "Claude SessionStart hooks are intentionally omitted; Codex startup context comes from AGENTS.md and generated static context files.",
     ],
     converted_events: [],
     skipped_events: [],
@@ -88,6 +74,15 @@ async function main() {
   };
 
   for (const [eventName, groups] of Object.entries(claudeHooks)) {
+    const disabledReason = disabledCodexEvents.get(eventName);
+    if (disabledReason) {
+      report.skipped_events.push({
+        event: eventName,
+        reason: disabledReason,
+      });
+      continue;
+    }
+
     if (!supportedEvents.has(eventName)) {
       report.skipped_events.push({
         event: eventName,
@@ -111,17 +106,10 @@ async function main() {
       const matcher = typeof group.matcher === "string" ? group.matcher : undefined;
       const hooks = Array.isArray(group.hooks) ? group.hooks : [];
 
-      const skippedCommandReasons = [];
       const mappedHooks = [];
       for (const hook of hooks) {
         const command = normalizeCommand(hook?.command);
         if (!command) continue;
-
-        const skipReason = getCommandSkipReason(command);
-        if (skipReason) {
-          skippedCommandReasons.push(skipReason);
-          continue;
-        }
 
         mappedHooks.push({
           type: "command",
@@ -130,26 +118,13 @@ async function main() {
       }
 
       if (mappedHooks.length === 0) {
-        const reason = skippedCommandReasons.length > 0
-          ? [...new Set(skippedCommandReasons)].join(",")
-          : "no-command-hooks";
-        pushSkip(report, eventName, i, reason, matcher);
+        pushSkip(report, eventName, i, "no-command-hooks", matcher);
         continue;
       }
 
-      let mappedMatcher = matcher;
-
-      if (eventName === "SessionStart") {
-        mappedMatcher = normalizeSessionStartMatcher(matcher);
-        if (!mappedMatcher) {
-          pushSkip(report, eventName, i, "matcher-does-not-include-startup-or-resume", matcher);
-          continue;
-        }
-      }
-
       const mappedGroup = { hooks: mappedHooks };
-      if (mappedMatcher && mappedMatcher !== "*") {
-        mappedGroup.matcher = mappedMatcher;
+      if (matcher && matcher !== "*") {
+        mappedGroup.matcher = matcher;
       }
       mappedGroups.push(mappedGroup);
     }
@@ -170,7 +145,7 @@ async function main() {
   }
 
   await fs.mkdir(codexDir, { recursive: true });
-  await fs.writeFile(codexHooksPath, `${JSON.stringify(codexHooks, null, 2)}\n`, "utf8");
+  await fs.writeFile(codexHooksPath, `${JSON.stringify({ hooks: codexHooks }, null, 2)}\n`, "utf8");
   await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
   console.log(

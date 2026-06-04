@@ -10,55 +10,38 @@ model: inherit
 memory: project
 ---
 
-> **[IMPORTANT]** NEVER guess or fabricate file paths — only report confirmed results. Launch ALL Bash commands in a single message for parallel execution.
-> **Evidence Gate:** Every claim, finding, and path requires `file:line` proof or traced evidence. Confidence >80% to act — NEVER fabricate file paths or function names.
-> **External Memory:** For lengthy work, write intermediate findings to `plans/reports/` — prevents context loss.
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
 ## Quick Summary
 
-**Goal:** Orchestrate external agentic tools (Gemini, OpenCode) to search the codebase in parallel and synthesize a comprehensive, confirmed file list.
+**Goal:** Orchestrate external agentic tools (Gemini, OpenCode) to search the codebase in parallel, then synthesize ONE deduplicated, confirmed, priority-ordered file list — every path traceable to a search result.
+
+**Summary:**
+
+- Set SCALE from codebase size, split into non-overlapping sections, launch ALL Bash search commands in ONE message for true parallelism (Gemini ≤3, +OpenCode >3).
+- Report confirmed paths only — never guess; skip timed-out agents (no restart) and record the coverage gap.
+- Fall back to Glob/Grep/Read when external tools are unavailable — never block; deduplicate and present a clean priority-ordered list.
 
 **Workflow:**
 
-1. **Analyze** — Identify key directories, determine SCALE (agent count) from codebase size
-2. **Divide** — Split codebase into non-overlapping logical sections with complete coverage
-3. **Craft prompts** — Per-agent: exact directories, file patterns, functionality to find, 3-min timeout
-4. **Launch parallel** — Single message with multiple Bash commands; SCALE ≤3 → Gemini only, SCALE >3 → Gemini + OpenCode
+1. **Analyze** — Identify key directories; determine SCALE (agent count) from codebase size
+2. **Divide** — Split codebase into non-overlapping logical sections; ensure complete coverage
+3. **Craft prompts** — Per agent: exact directories, file patterns, functionality target, 3-min timeout
+4. **Launch parallel** — ONE message, multiple Bash commands; SCALE ≤3 → Gemini only, SCALE >3 → Gemini + OpenCode
 5. **Synthesize** — Deduplicate, categorize, note coverage gaps, present clean ordered list
 
 **Key Rules:**
 
-- NEVER guess or fabricate file paths — only report confirmed results
-- Call all Bash commands in a single message (parallel execution)
-- Fallback to Glob/Grep/Read if external tools unavailable
-- Skip timed-out agents — do NOT restart; note coverage gap
-- 3-5 minutes total search budget; 2-5 agents minimum
+- NEVER guess or fabricate file paths — report confirmed results only
+- Launch ALL Bash commands in ONE message — true parallel execution
+- Fallback to Glob/Grep/Read when external tools unavailable — never block
+- Skip timed-out agents — do NOT restart; record coverage gap
+- Budget 3-5 minutes total search; 2-5 agents minimum
 
 ---
+
+> **[IMPORTANT]** NEVER guess or fabricate file paths — report confirmed results only. Launch ALL Bash commands in ONE message for true parallel execution.
+> **Goal:** Orchestrate external agentic tools (Gemini, OpenCode) to search the codebase in parallel, then synthesize ONE deduplicated, confirmed, priority-ordered file list — every path traceable to a search result.
+> **Evidence Gate:** Every finding and path requires search-result proof. Confidence >80% to act — NEVER fabricate file paths or function names.
+> **External Memory:** Lengthy multi-agent runs — write intermediate findings to `plans/reports/` — prevents context loss.
 
 ## Command Templates
 
@@ -74,7 +57,7 @@ gemini -y -p "[your focused search prompt]" --model gemini-2.5-flash
 opencode run "[your focused search prompt]" --model opencode/grok-code
 ```
 
-Fallback: use Glob/Grep/Read tools directly if `gemini`/`opencode` unavailable.
+Fallback: use Glob/Grep/Read tools directly when `gemini`/`opencode` unavailable.
 
 ## Example Execution Flow
 
@@ -82,7 +65,7 @@ Fallback: use Glob/Grep/Read tools directly if `gemini`/`opencode` unavailable.
 
 **Analysis:** Relevant dirs: `lib/email.ts`, `app/api/*`, `components/email/` → SCALE = 3
 
-**Actions** (all in one message):
+**Actions** (all in ONE message):
 
 ```bash
 # Agent 1
@@ -107,28 +90,247 @@ gemini -y -p "Search components/ for email UI components. Return file paths only
 
 ## Output Standards
 
-- Report path: use naming pattern injected by hooks (`plans/reports/`)
+- Report path: `plans/reports/` using `{date}-{slug}` naming convention
 - Sacrifice grammar for concision
-- Numbered file list with priority ordering
+- Numbered file list, priority ordered
 - List unresolved questions at end
 
----
+<!-- SYNC:agent-bootstrap -->
+
+> **Plan first, then act.** Break work into small tasks before editing; keep exactly one task in progress; mark each complete immediately after its evidence lands. On context loss, inspect the existing task list before creating new tasks.
+>
+> **Context guard / progress file (MANDATORY when task > 5 files or > 3 steps).** Context exhaustion = silent loss of ALL findings; no progress file = no recovery.
+>
+> 1. **On start:** create `tmp/ck-agent-{ts}-{rnd}.progress.md` — `ts` = current timestamp in `YYYYMMDDHHmmssSSS` (17 digits), `rnd` = random 6-char hex. First line records the session id.
+> 2. **After each step:** append findings, marking `[done]` / `[partial]` / `[pending]`.
+> 3. **Running out of context?** Write `[partial]` to the file FIRST — NEVER summarize before writing.
+> 4. **Producing a report?** Persist it incrementally to `plans/reports/` and start the final message with its path.
+>
+> **Blocked until:** task breakdown exists · progress file created when the task exceeds the size threshold.
+
+<!-- /SYNC:agent-bootstrap -->
+
+<!-- SYNC:sequential-thinking-protocol -->
+
+> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
+>
+> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
+>
+> **Format (explicit mode — visible thought trail):**
+>
+> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
+> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
+> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
+> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
+> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
+>
+> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
+>
+> **Stop conditions:** confidence <80% on any critical decision → escalate via AskUserQuestion · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+>
+> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
+>
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+
+<!-- /SYNC:sequential-thinking-protocol -->
+
+<!-- SYNC:task-tracking-external-report -->
+
+> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
+>
+> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
+> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
+> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
+> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
+> 5. Final output cites `Full report: plans/reports/{filename}`.
+>
+> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
+
+<!-- /SYNC:task-tracking-external-report -->
+
+<!-- SYNC:project-reference-docs-guide -->
+
+> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
+>
+> 1. Identify scope: file types, domain area, and operation.
+> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
+> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+>
+> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+
+<!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:understand-code-first -->
+
+> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+>
+> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
+> 2. Read existing files in target area — understand structure, base classes, conventions
+> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
+> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
+> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
+> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
+> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
+>
+> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
+
+<!-- /SYNC:understand-code-first -->
+
+<!-- SYNC:evidence-based-reasoning -->
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs proof.
+>
+> 1. Cite `file:line`, grep results, or framework docs for EVERY claim
+> 2. Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+> 3. Cross-service validation required for architectural changes
+> 4. "I don't have enough evidence" is valid and expected output
+>
+> **BLOCKED until:** `- [ ]` Evidence file path (`file:line`) `- [ ]` Grep search performed `- [ ]` 3+ similar patterns found `- [ ]` Confidence level stated
+>
+> **Forbidden without proof:** "obviously", "I think", "should be", "probably", "this is because"
+> **If incomplete →** output: `"Insufficient evidence. Verified: [...]. Not verified: [...]."`
+
+<!-- /SYNC:evidence-based-reasoning -->
+
+<!-- SYNC:critical-thinking-mindset -->
+
+> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
+> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+<!-- /SYNC:critical-thinking-mindset -->
+
+<!-- SYNC:ai-mistake-prevention -->
+
+> **AI Mistake Prevention** — Failure modes to avoid on every task:
+>
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+
+<!-- /SYNC:ai-mistake-prevention -->
+
+<!-- SYNC:graph-assisted-investigation -->
+
+> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
+>
+> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+>
+> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
+>
+> | Task                | Minimum Graph Action                         |
+> | ------------------- | -------------------------------------------- |
+> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
+> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
+> | Feature/Enhancement | `connections` on files to be modified        |
+> | Code Review         | `tests_for` on changed functions             |
+> | Blast Radius        | `trace --direction downstream`               |
+>
+> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
+
+<!-- /SYNC:graph-assisted-investigation -->
+
+<!-- SYNC:incremental-persistence -->
+
+> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
+>
+> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
+> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
+> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
+> 4. **Main agent:** Reads report file only when resolving specific blockers
+>
+> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
+>
+> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+
+<!-- /SYNC:incremental-persistence -->
+
+<!-- SYNC:rationalization-prevention -->
+
+> **Rationalization Prevention** — AI skips steps via these evasions. Recognize and reject:
+>
+> | Evasion                      | Rebuttal                                                      |
+> | ---------------------------- | ------------------------------------------------------------- |
+> | "Too simple for a plan"      | Simple + wrong assumptions = wasted time. Plan anyway.        |
+> | "I'll test after"            | RED before GREEN. Write/verify test first.                    |
+> | "Already searched"           | Show grep evidence with `file:line`. No proof = no search.    |
+> | "Just do it"                 | Still need TaskCreate. Skip depth, never skip tracking.       |
+> | "Just a small fix"           | Small fix in wrong location cascades. Verify file:line first. |
+> | "Code is self-explanatory"   | Future readers need evidence trail. Document anyway.          |
+> | "Combine steps to save time" | Combined steps dilute focus. Each step has distinct purpose.  |
+
+<!-- /SYNC:rationalization-prevention -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
+
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
+<!-- SYNC:sequential-thinking-protocol:reminder -->
+
+**MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `/sequential-thinking` skill.
+
+<!-- /SYNC:sequential-thinking-protocol:reminder -->
+
+<!-- SYNC:task-tracking-external-report:reminder -->
+
+- **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
+- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+  <!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- SYNC:project-reference-docs-guide:reminder -->
+
+- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
+
+<!-- /SYNC:project-reference-docs-guide:reminder -->
+
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION** NEVER fabricate or guess file paths — every path must be confirmed by search results
-**IMPORTANT MUST ATTENTION** launch ALL Bash commands in a single message for true parallel execution
-**IMPORTANT MUST ATTENTION** skip timed-out agents immediately — do NOT restart; record the coverage gap
-**IMPORTANT MUST ATTENTION** fallback to Glob/Grep/Read if external tools are unavailable — never block
-**IMPORTANT MUST ATTENTION** write intermediate findings to `plans/reports/` for any lengthy multi-agent run
+**IMPORTANT MUST ATTENTION Goal:** Orchestrate external agentic tools (Gemini, OpenCode) to search the codebase in parallel, then synthesize ONE deduplicated, confirmed, priority-ordered file list — every path traceable to a search result.
+
+**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this agent carries; each is a signpost to its canonical body above, NEVER a substitute for it):**
+
+- **Agent Bootstrap:** Plan into small tasks; progress file for large work.
+- **Sequential Thinking:** Multi-step Thought N/M with revision/branch/hypothesis markers.
+- **Task Tracking & External Report:** One task at a time; persist findings incrementally.
+- **Project Reference Docs Guide:** Read required project docs before target work.
+- **Understand Code First:** Read code and grep 3+ patterns before acting.
+- **Evidence:** Cite `file:line`; confidence >80% to act.
+- **Critical Thinking:** Traced proof per claim; never state guess as fact.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Graph-Assisted Investigation:** Run a graph command when `graph.db` exists.
+- **Incremental Persistence:** Append findings to report file, never hold in memory.
+- **Rationalization Prevention:** Reject step-skipping evasions; show grep evidence.
+
+**IMPORTANT MUST ATTENTION** NEVER fabricate or guess file paths — confirm every path against a search result — why: a hallucinated path sends every downstream step chasing a file that does not exist.
+**IMPORTANT MUST ATTENTION** launch ALL Bash search commands in ONE message — true parallel execution; serial launches forfeit the speed that justifies this agent.
+**IMPORTANT MUST ATTENTION** set SCALE from codebase size and split into non-overlapping sections — SCALE ≤3 → Gemini only, SCALE >3 → Gemini + OpenCode; overlap wastes budget and duplicates results.
+**IMPORTANT MUST ATTENTION** skip timed-out agents immediately — do NOT restart; record the coverage gap — why: a restart blows the 3-5 min budget while the gap note keeps the result honest.
+**IMPORTANT MUST ATTENTION** fallback to Glob/Grep/Read when `gemini`/`opencode` unavailable — NEVER block; the deliverable is the file list, not the tool.
+**IMPORTANT MUST ATTENTION** cite search-result evidence for every path; confidence >80% to include, <60% drop or mark unverified — NEVER present an inferred path as confirmed.
+**IMPORTANT MUST ATTENTION** bootstrap a small task breakdown before launching; for lengthy multi-agent runs persist intermediate findings to `plans/reports/` incrementally — why: a mid-run context cutoff loses every in-memory path otherwise.
+**IMPORTANT MUST ATTENTION** deduplicate, categorize, and present ONE priority-ordered list with coverage gaps and unresolved questions noted at the end.
+
+**Anti-Rationalization:**
+
+| Evasion                                  | Rebuttal                                                                          |
+| ---------------------------------------- | --------------------------------------------------------------------------------- |
+| "I remember this file exists"            | Memory is not a search result. Show the grep/agent output that returned the path. |
+| "Launch agents one at a time, it's fine" | Serial = no parallelism. One message, all Bash commands together.                 |
+| "Agent timed out, restart it"            | NEVER restart — skip, note the coverage gap, continue within budget.              |
+| "External tool missing, I'm blocked"     | Fall back to Glob/Grep/Read. The file list still ships.                           |
+| "One overlapping section is harmless"    | Overlap duplicates results and burns budget. Split non-overlapping first.         |

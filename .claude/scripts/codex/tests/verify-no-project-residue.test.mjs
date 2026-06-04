@@ -5,9 +5,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const verifierPath = path.resolve(thisDir, '..', 'verify-no-project-residue.mjs');
-const { findProjectSymbolViolations, projectSymbolDenylist, projectSymbolAllowlist } = await import(
-    pathToFileURL(verifierPath).href
-);
+const { findProjectSymbolViolations, genericSourceRoots, managedBlockRanges, projectSymbolDenylist, projectSymbolAllowlist, projectSymbolScanRoots } =
+    await import(pathToFileURL(verifierPath).href);
 
 // TC-SKILLFIX-010 — a denylisted project symbol in a NON-allowlisted generic skill is flagged.
 test('TC-SKILLFIX-010: flags a denylisted project symbol in a non-allowlisted file', () => {
@@ -64,4 +63,26 @@ test('TC-SKILLFIX-013b: every allowlisted symbol is a member of the denylist', (
 test('TC-SKILLFIX-013c: default scan does NOT skip managed blocks', () => {
     const content = '`AppBaseComponent` sits in plain prose.';
     assert.equal(findProjectSymbolViolations(content, '.claude/skills/some-generic/SKILL.md').length, 1);
+});
+
+// TC-SKILLFIX-013d — the project-symbol scan MUST cover source templates and generated mirrors.
+// Guards against portable outputs passing residue checks while carrying source-project symbols.
+test('TC-SKILLFIX-013d: project-symbol scan covers source templates and generated mirrors', () => {
+    assert.ok(projectSymbolScanRoots.includes('.claude/skills'), 'skills must be a symbol-scan root');
+    assert.ok(projectSymbolScanRoots.includes('.claude/hooks'), 'hooks must be a symbol-scan root');
+    assert.ok(projectSymbolScanRoots.includes('.claude/agents'), 'agent source templates must be a symbol-scan root');
+    assert.ok(projectSymbolScanRoots.includes('.codex'), 'generated Codex output must be a symbol-scan root');
+    assert.ok(projectSymbolScanRoots.includes('.agents'), 'generated agent skill output must be a symbol-scan root');
+});
+
+test('TC-SKILLFIX-013e: forbidden-term scan covers portable hook config', () => {
+    assert.ok(genericSourceRoots.includes('.claude/hooks/config'), 'generic hook config must be scanned for project residue');
+});
+
+test('TC-SKILLFIX-013f: prompt protocol mirrors are not exempt from project-term residue checks', () => {
+    assert.equal(
+        managedBlockRanges.some(range => range.start === '<!-- PROMPT-PROTOCOLS:START -->'),
+        false,
+        'PROMPT-PROTOCOLS is generated portable context and must not hide project-specific lesson bodies'
+    );
 });

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """
 sync-update-blocks.py
-Operation A from sync-protocols: replace SYNC: block contents in all SKILL.md / agent .md
+Operation A from sync-skills-shared-protocols: replace SYNC: block contents in all SKILL.md / agent .md
 files using canonical content from .claude/skills/shared/sync-inline-versions.md.
 
 Usage:
     python sync-update-blocks.py <tag> [<tag> ...]
     python sync-update-blocks.py --dry-run <tag> [<tag> ...]
 
-Touches ONLY content between <!-- SYNC:tag --> and <!-- /SYNC:tag -->.
-Does NOT touch :reminder blocks.
+Touches ONLY content between the exact requested fence pair:
+    <!-- SYNC:tag --> ... <!-- /SYNC:tag -->
+or:
+    <!-- SYNC:tag:reminder --> ... <!-- /SYNC:tag:reminder -->
 """
 import os
 import re
@@ -45,22 +47,18 @@ def find_target_files():
 
 
 def replace_block_in_file(path, tag, body, dry_run=False):
-    """Replace content between <!-- SYNC:tag --> and <!-- /SYNC:tag --> with body.
-    Skip the :reminder variant. Returns (changed, error_msg_or_None)."""
+    """Replace content between the exact requested SYNC fence pair with body.
+    Returns (changed, error_msg_or_None)."""
     with open(path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # Match open/close tags but NOT the :reminder variant
-    # Open: <!-- SYNC:tag -->   (must NOT be followed by ":reminder")
-    # Close: <!-- /SYNC:tag -->
+    # Match the exact open/close tags. A plain tag does not match its :reminder
+    # variant because the regex requires whitespace before the closing marker.
     open_re = re.compile(rf"<!--\s*SYNC:{re.escape(tag)}\s*-->")
     close_re = re.compile(rf"<!--\s*/SYNC:{re.escape(tag)}\s*-->")
 
     open_matches = [m for m in open_re.finditer(content)]
     close_matches = [m for m in close_re.finditer(content)]
-
-    # Filter out :reminder occurrences (those are SYNC:tag:reminder which won't match the strict regex above
-    # because of the trailing :reminder before the -->. Our regex requires \s*--> so :reminder is excluded.)
 
     if not open_matches and not close_matches:
         return False, None  # tag not present in this file

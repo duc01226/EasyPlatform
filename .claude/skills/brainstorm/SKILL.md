@@ -16,7 +16,14 @@ disable-model-invocation: false
 
 ## Quick Summary
 
-**Goal:** Facilitate a structured PO/BA brainstorming session using the Double Diamond process — diverge to discover problems and opportunities, then converge to validate and prioritize ideas before committing to implementation.
+**Goal:** Facilitate a structured PO/BA brainstorming session via the Double Diamond process (diverge to discover problems and opportunities, then converge to validate and prioritize) to deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list.
+
+**Summary:**
+
+- Run `AskUserQuestion` Phase 0 FIRST to detect scenario (Problem-Solving / New Product / Enhancement), role (PO / BA / Mixed), and how-much-is-known — each scenario routes a different technique sequence (see Scenario Cheat Sheets), so misclassifying here derails everything downstream.
+- Strictly separate diverge (Phases 1 & 3 — generate, "Yes, and…", zero judgment) from converge (Phases 2 & 4 — narrow, RICE/Kano/MoSCoW scoring); mixing the two modes is the Golden Rule violation that kills idea output.
+- Never stop at a raw or flat idea list: every top-3 candidate MUST carry a problem + value hypothesis card, an identified riskiest assumption (RAT), and the single cheapest validation test designed before any build commitment.
+- Close with an opinionated decision (Phase 6 — recommend ONE option with trade-offs, not a menu), every claim evidence-backed at >80% confidence, then offer handoff via `AskUserQuestion` to `/idea`, `/refine`, `/plan`, etc.
 
 **Three Scenarios:**
 
@@ -75,7 +82,7 @@ Ask:
 
 ### 0.2 — Context Loading
 
-- If project codebase exists: read `docs/business-features/` to understand domain
+- If project codebase exists: read `docs/specs/` to understand domain
 - If greenfield: skip codebase reading; rely on user input and web research
 - Load `docs/project-reference/domain-entities-reference.md` if entity context needed
 - Use `WebSearch` for market/competitor context when scenario = New Product or Enhancement
@@ -84,7 +91,7 @@ Ask:
 
 ## Phase 1: Problem Framing — Diamond 1 Diverge
 
-**Goal:** Fully understand the problem space before jumping to solutions. The #1 failure in brainstorming: solving the wrong problem.
+**Goal:** Fully understand problem space before jumping to solutions. #1 brainstorming failure: solving the wrong problem.
 
 **Time-box:** 20–45 minutes of session time.
 
@@ -101,9 +108,9 @@ but [current barrier/friction/failure].
 **Example:**
 
 ```
-HR Managers need to quickly identify top performers for promotion
-because quarterly reviews create promotion backlogs,
-but the current system shows raw scores with no ranking or comparison.
+Operators need to quickly identify high-priority orders for action
+because peak-season backlogs delay fulfillment,
+but the current system shows raw order data with no ranking or comparison.
 ```
 
 Use `AskUserQuestion` to validate:
@@ -137,9 +144,9 @@ Spine = problem statement. Bones = 6 cause categories:
 
 Replace user stories with job stories to expose real motivation:
 
-**User Story (what):** As a manager, I want to see employee scores, so that I can make decisions.
+**User Story (what):** As an operator, I want to see order totals, so that I can make decisions.
 
-**Job Story (why + context):** When I'm preparing for quarterly reviews with limited time, I want to instantly see who deserves promotion without reading every profile, so I can make fair, defensible decisions before the deadline.
+**Job Story (why + context):** When I'm clearing a peak-season backlog with limited time, I want to instantly see which orders need action without opening every record, so I can make fast, defensible decisions before the cutoff.
 
 **Job Story Formula:**
 
@@ -181,7 +188,7 @@ From the POV statement:
 
 ## Phase 2: Opportunity Framing — Diamond 1 Converge
 
-**Goal:** Narrow problem space to the highest-opportunity focus areas before ideating solutions.
+**Goal:** Narrow problem space to highest-opportunity focus areas before ideating solutions.
 
 ### 2.1 — Opportunity Solution Tree (OST) — for Enhancement
 
@@ -262,7 +269,7 @@ Connects customer profile to product value:
 
 ## Phase 3: Ideation — Diamond 2 Diverge
 
-**Goal:** Generate maximum quantity of solution ideas without judgment. Quality comes in Phase 4.
+**Goal:** Generate maximum quantity of solution ideas without judgment. Quality comes Phase 4.
 
 **Critical rule:** NO evaluation in this phase. Every idea is valid. "Yes, and..." not "Yes, but..."
 
@@ -270,15 +277,15 @@ Connects customer profile to product value:
 
 Apply each lens to the problem/existing product to generate solution directions:
 
-| Letter               | Prompt                     | Example for HR review feature                             |
-| -------------------- | -------------------------- | --------------------------------------------------------- |
-| **S**ubstitute       | What can be replaced?      | Replace manual scoring with AI-assisted ranking           |
-| **C**ombine          | What can be merged?        | Combine performance + feedback + OKR in one view          |
-| **A**dapt            | What can be borrowed?      | Adapt Netflix recommendation to suggest top performers    |
-| **M**odify           | What can be scaled/shrunk? | Minimize review to a weekly pulse check                   |
-| **P**ut to other use | Different context?         | Use review data for learning path recommendations         |
-| **E**liminate        | What can be removed?       | Eliminate annual review — replace with continuous signals |
-| **R**everse          | Flip the process?          | Let employees score managers instead                      |
+| Letter               | Prompt                     | Example for order-prioritization feature                      |
+| -------------------- | -------------------------- | ------------------------------------------------------------- |
+| **S**ubstitute       | What can be replaced?      | Replace manual sorting with AI-assisted ranking               |
+| **C**ombine          | What can be merged?        | Combine status + history + SLA risk in one view               |
+| **A**dapt            | What can be borrowed?      | Adapt Netflix recommendation to surface priority orders       |
+| **M**odify           | What can be scaled/shrunk? | Shrink the review queue to a daily priority check             |
+| **P**ut to other use | Different context?         | Use order history for restocking recommendations              |
+| **E**liminate        | What can be removed?       | Eliminate the nightly batch — replace with continuous signals |
+| **R**everse          | Flip the process?          | Let downstream stages pull orders instead of pushing          |
 
 Generate at least 2 ideas per SCAMPER letter = minimum 14 ideas.
 
@@ -432,7 +439,7 @@ For each idea in the shortlist, assign release priority:
 
 ## Phase 5: Hypothesis Validation
 
-**Goal:** Before committing to build, test your riskiest assumptions. 42% of startups fail because no market need — validate before building.
+**Goal:** Before committing to build, test riskiest assumptions. 42% of startups fail from no market need — validate before building.
 
 ### 5.1 — Problem Hypothesis
 
@@ -446,10 +453,10 @@ For each idea in the shortlist, assign release priority:
 **Example:**
 
 ```
-We believe HR Managers
-Experience frustration identifying top performers during review cycles
-Because scoring data is fragmented across 3 systems with no unified ranking
-We'll know this is true when 3+ managers confirm they spend >2hrs per cycle on manual data aggregation
+We believe Operators
+Experience frustration identifying high-priority orders during peak backlogs
+Because order data is fragmented across 3 systems with no unified ranking
+We'll know this is true when 3+ operators confirm they spend >2hrs per shift on manual data aggregation
 ```
 
 ### 5.2 — Value Hypothesis
@@ -664,7 +671,7 @@ Create markdown summary report:
 - `docs-manager` agent — understand existing feature constraints and domain context
 - `WebSearch` — market/competitor context for new product scenarios
 - `docs-seeker` skill — latest documentation for external plugins/APIs
-- `ai-multimodal` skill — analyze visual mockups, screenshots, competitor UIs
+- `visual analysis tooling` skill — analyze visual mockups, screenshots, competitor UIs
 - `sequential-thinking` skill — complex problem decomposition requiring structured causal chains
 - `web-research` skill — deep market research for greenfield or competitive analysis
 
@@ -750,16 +757,14 @@ After brainstorm session concludes, use `AskUserQuestion` to present next steps:
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -790,13 +795,13 @@ After brainstorm session concludes, use `AskUserQuestion` to present next steps:
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
-> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (api-design, debug, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
+> **Deep-dive:** see `/sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
 
 <!-- /SYNC:sequential-thinking-protocol -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
@@ -808,7 +813,7 @@ After brainstorm session concludes, use `AskUserQuestion` to present next steps:
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
@@ -825,15 +830,32 @@ After brainstorm session concludes, use `AskUserQuestion` to present next steps:
 
 ## Closing Reminders
 
-- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MANDATORY IMPORTANT MUST ATTENTION** detect scenario type FIRST — different scenarios use different technique sequences
-- **MANDATORY IMPORTANT MUST ATTENTION** separate diverge (generate) and converge (evaluate) — NEVER mix them
-- **MANDATORY IMPORTANT MUST ATTENTION** write a hypothesis card for every top-3 recommendation
-- **MANDATORY IMPORTANT MUST ATTENTION** design cheapest validation test before recommending full implementation
-- **MANDATORY IMPORTANT MUST ATTENTION** cite evidence for every claim — confidence >80% to recommend
-- **MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` for all user decisions — never auto-decide
-- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **IMPORTANT MUST ATTENTION Goal:** Deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list.
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** traced `file:line` proof; confidence >80% to act; never guess.
+- **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS markers, confidence closer.
+
+- **MANDATORY IMPORTANT MUST ATTENTION** detect scenario + role + how-much-known via `AskUserQuestion` Phase 0 FIRST — each scenario routes a different technique sequence — why: misclassifying scenario derails every downstream phase.
+- **MANDATORY IMPORTANT MUST ATTENTION** separate diverge (Phases 1 & 3, generate, "Yes, and…", zero judgment) from converge (Phases 2 & 4, narrow + score) — NEVER evaluate ideas while generating them — why: mixing the two modes is the Golden Rule violation that kills creative output.
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER stop at a raw or flat idea list — every top-3 candidate carries a problem + value hypothesis card, an identified riskiest assumption (RAT), and the single cheapest validation test designed before any build commitment — why: 42% of features fail from no market need; validate before building.
+- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; mark each `completed` immediately, add a final review todo — why: long brainstorm sessions lose context without external task tracking.
+- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns first — read `docs/specs/` for domain (codebase) or `WebSearch` for market/competitor context (greenfield) before ideating — why: ideas ungrounded in domain or market evidence score on gut feel, not fit.
+- **MANDATORY IMPORTANT MUST ATTENTION** cite evidence for every claim, confidence >80% to recommend; RICE Confidence is a multiplier, not optional — why: low-evidence ideas without a Confidence score get over-ranked.
+- **MANDATORY IMPORTANT MUST ATTENTION** close with ONE opinionated recommendation + trade-offs (Phase 6) — never a flat menu of options — why: a menu pushes the decision back on the team and invites HiPPO bias.
+- **MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` for all user decisions and handoff routing (`/idea`, `/refine`, `/plan`) — never auto-decide — why: the user owns scenario, prioritization, and next-step choices.
+
+**Anti-Rationalization:**
+
+| Evasion                                         | Rebuttal                                                                                 |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| "Scenario is obvious, skip Phase 0 detection"   | Misclassified scenario routes the wrong technique sequence. Run `AskUserQuestion` first. |
+| "Just list the ideas, evaluation can wait"      | A flat idea list is the deliverable failure. Score, rank, and hypothesis-test the top 3. |
+| "Skip the RAT — the idea is clearly good"       | "Clearly good" is HiPPO bias. Design the cheapest test before any build commitment.      |
+| "Diverge and converge together to save time"    | Mixing modes kills creative output — the Golden Rule violation. Keep phases separate.    |
+| "RICE without Confidence is close enough"       | No Confidence multiplier over-ranks low-evidence ideas. Always score Confidence.         |
+| "Already know the domain, skip context loading" | Show `docs/specs/` read or `WebSearch` evidence. No proof = ungrounded ideation.         |
+
+**MUST ATTENTION** Phase 0 scenario detection FIRST · diverge/converge strictly separated · every top-3 idea carries a hypothesis + RAT + cheapest test — these three survive long sessions; re-anchor to them before recommending.

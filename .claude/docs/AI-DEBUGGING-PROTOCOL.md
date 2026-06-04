@@ -14,6 +14,57 @@
 
 ## Core Principles
 
+### End-to-Start Debugger Trace
+
+For any non-trivial bug, failed verification, regression fix, or behavior-changing investigation, do not begin at the first suspicious handler. Begin at the final observed effect and walk backward like a debugger.
+
+**Required trace shape:**
+
+1. **Frame 0 - observed end state:** Name the exact failing output: UI state, API response, persisted value, log line, failed assertion, dashboard aggregate, or user-visible symptom.
+2. **Final reader:** Identify the renderer/query/assertion/aggregator that produced that output.
+3. **Read model/storage:** Identify the field, row, document, cache entry, index, or projection the reader consumes.
+4. **Writer/projection path:** Identify who writes that read model and whether writes replace, merge, append, cache, dedupe, retry, or race.
+5. **Consumer/handler/job path:** Identify every handler, job, event consumer, command, or subscription that can reach the writer.
+6. **Producer/origin path:** Identify every UI/API/job/message/source trigger that can create the input.
+7. **Forward proof:** After the fix is chosen, replay origin -> final output and show why the observed symptom can no longer persist.
+
+**Required artifact:**
+
+```markdown
+## Debugger Trace: End -> Start
+
+Frame 0 - Observed final state:
+
+- Symptom:
+- Reader/query/renderer:
+- Evidence:
+
+Frame N..1 - Backward hops:
+| Hop | From | To | Transformation | Owner | Evidence | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+
+Feeder paths:
+| Path | Producer/origin | Can write final state? | Evidence | Status |
+| --- | --- | --- | --- | --- |
+
+Hypothesis matrix:
+| RC | Hypothesis | Evidence for | Evidence against | Status | Verification |
+| --- | --- | --- | --- | --- | --- |
+
+Fix mapping:
+| Fix part | Root cause killed | Owning layer | Why this layer | Test/proof |
+| --- | --- | --- | --- | --- |
+
+Forward convergence proof:
+
+- Start trigger:
+- Corrected transformations:
+- Final state:
+- Why stale/bad state cannot persist:
+```
+
+**BLOCKED until:** final state named, backward trace complete, all feeder paths listed, hypothesis matrix written, owning fix layer justified, and forward proof mapped to verification.
+
 ### ❌ NEVER
 
 | Rule                                         | Reason                                                                              |
@@ -23,6 +74,7 @@
 | Remove code without comprehensive search     | Must verify: static + dynamic + string literals + templates + framework integration |
 | Propose solutions without file:line evidence | Show actual code, not summaries                                                     |
 | Proceed when confidence < 90%                | Request user confirmation instead                                                   |
+| Fix from the first suspicious code path      | The bug may originate upstream or through a different producer path                 |
 
 ### ✅ ALWAYS
 
@@ -34,6 +86,7 @@
 | Document evidence                | File paths with line numbers, search commands, explicit "NONE FOUND" |
 | Declare confidence level         | High (90-100%), Medium (70-89%), Low (<70%)                          |
 | Request confirmation when unsure | If confidence < 90%: STOP and ask user                               |
+| Trace end-to-start before fixing | Symptom -> reader -> storage/projection -> writer -> producer/origin |
 
 ---
 
@@ -82,13 +135,22 @@ grep -r "extends.*Base" --include="*.ts" --include="*.cs"
 
 ## Investigation Protocol
 
-### Phase 1: Evidence Collection
+### Phase 1: Frame the Observed End State
+
+- Name the final symptom in concrete terms
+- Identify the reader/query/renderer/assertion that produced it
+- Identify the exact storage/projection/cache/index/field consumed by that reader
+- Record `file:line` evidence before forming root-cause theories
+
+### Phase 2: Backward Trace
 
 - Run ALL search patterns above
 - Read actual implementations (not just interfaces)
 - Document findings with `file:line` references
+- Walk backward from final reader to storage/projection, writer, handler/job/consumer, producer, and origin trigger
+- Enumerate all alternate feeder paths that can write into the same final state
 
-### Phase 2: Multi-Perspective Analysis
+### Phase 3: Multi-Perspective Analysis
 
 | Question                | What to Check                                       |
 | ----------------------- | --------------------------------------------------- |
@@ -98,7 +160,19 @@ grep -r "extends.*Base" --include="*.ts" --include="*.cs"
 | **When** is it invoked? | Lifecycle hooks, event handlers, background jobs    |
 | **How** is it invoked?  | Direct calls, DI, events, dynamic property access   |
 
-### Phase 3: Self-Doubt Questions (CRITICAL)
+### Phase 4: Hypothesis Matrix
+
+Do not carry only one favorite theory. Enumerate plausible root causes and explicitly classify them.
+
+| Status           | Meaning                                                        |
+| ---------------- | -------------------------------------------------------------- |
+| **Primary**      | Necessary root cause; fix must address it                      |
+| **Contributing** | Makes the bug visible or worse but is not sufficient alone     |
+| **Ruled out**    | Evidence proves it is not the current cause                    |
+| **Latent**       | Real risk but not required for the reported failure            |
+| **Unknown**      | Not enough evidence; must verify or disclose before proceeding |
+
+### Phase 5: Self-Doubt Questions (CRITICAL)
 
 Ask BEFORE concluding:
 
@@ -107,8 +181,11 @@ Ask BEFORE concluding:
 3. Could this provide invisible functionality (hooks, global side effects)?
 4. **What breaks if I'm wrong?**
 5. Why might someone disagree with my analysis?
+6. What final-state reader proves the symptom is a read artifact vs a write artifact?
+7. Which other producer could write the same final state?
+8. If this fix is correct, what exact forward path makes the symptom disappear?
 
-### Phase 4: Risk Assessment
+### Phase 6: Risk Assessment
 
 | Risk       | Criteria                              | Action                            |
 | ---------- | ------------------------------------- | --------------------------------- |

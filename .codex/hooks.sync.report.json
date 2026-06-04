@@ -1,24 +1,20 @@
 {
-  "generated_at": "2026-05-31T14:18:23.574Z",
+  "generated_at": "2026-06-18T23:21:33.249Z",
   "source": ".claude/settings.json",
   "target": ".codex/hooks.json",
   "notes": [
     "Codex hooks are currently disabled on Windows runtimes.",
     "Tool matcher capabilities may vary by Codex runtime; source matchers are preserved when possible.",
     "UserPromptSubmit and Stop now preserve source matcher filters when present.",
-    "Claude startup auto-install hooks are intentionally omitted from Codex hooks."
+    "Claude SessionStart hooks are intentionally omitted; Codex startup context comes from AGENTS.md and generated static context files."
   ],
   "converted_events": [
     {
       "event": "PostToolUse",
-      "groups": 8
+      "groups": 2
     },
     {
       "event": "PreToolUse",
-      "groups": 19
-    },
-    {
-      "event": "SessionStart",
       "groups": 6
     },
     {
@@ -27,7 +23,7 @@
     },
     {
       "event": "UserPromptSubmit",
-      "groups": 2
+      "groups": 1
     }
   ],
   "skipped_events": [
@@ -36,25 +32,14 @@
       "reason": "unsupported-by-codex"
     },
     {
-      "event": "PreCompact",
-      "reason": "unsupported-by-codex"
-    },
-    {
       "event": "SessionEnd",
       "reason": "unsupported-by-codex"
     },
     {
-      "event": "SubagentStart",
-      "reason": "unsupported-by-codex"
+      "event": "SessionStart",
+      "reason": "disabled-for-codex-hookless-startup-context"
     }
   ],
-  "converted_groups_total": 36,
-  "skipped_groups": [
-    {
-      "event": "SessionStart",
-      "group_index": 3,
-      "matcher": "startup",
-      "reason": "disabled-for-codex-startup-auto-install"
-    }
-  ]
+  "converted_groups_total": 10,
+  "skipped_groups": []
 }

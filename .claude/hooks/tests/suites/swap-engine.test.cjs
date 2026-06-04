@@ -3,8 +3,6 @@
  *
  * Tests for:
  * - swap-engine.cjs: Core swap functionality
- * - tool-output-swap.cjs: PostToolUse hook for externalization
- * - session-resume.cjs: Swap inventory injection
  * - session-end.cjs: Swap cleanup
  */
 
@@ -36,8 +34,6 @@ const swapEngine = require('../../lib/swap-engine.cjs');
 const ckPaths = require('../../lib/ck-paths.cjs');
 
 // Hook paths
-const TOOL_OUTPUT_SWAP = getHookPath('tool-output-swap.cjs');
-const SESSION_RESUME = getHookPath('session-resume.cjs');
 const SESSION_END = getHookPath('session-end.cjs');
 
 // Generate unique session ID for test isolation
@@ -398,216 +394,6 @@ const swapEngineIntegrationTests = [
 ];
 
 // ============================================================================
-// tool-output-swap.cjs Hook Tests
-// ============================================================================
-
-const toolOutputSwapHookTests = [
-  {
-    name: '[tool-output-swap] exits 0 for empty input',
-    fn: async () => {
-      const result = await runHook(TOOL_OUTPUT_SWAP, {});
-      assertAllowed(result.code, 'Should exit 0 for empty input');
-    }
-  },
-  {
-    name: '[tool-output-swap] exits 0 for unsupported tool',
-    fn: async () => {
-      const input = createPostToolUseInput('Task', {}, 'some result');
-      const result = await runHook(TOOL_OUTPUT_SWAP, input);
-      assertAllowed(result.code, 'Should exit 0 for unsupported tool');
-    }
-  },
-  {
-    name: '[tool-output-swap] exits 0 for small content',
-    fn: async () => {
-      const input = createPostToolUseInput('Read', { file_path: 'test.txt' }, 'small content');
-      const result = await runHook(TOOL_OUTPUT_SWAP, input);
-      assertAllowed(result.code, 'Should exit 0 for small content');
-      assertEqual(result.stdout.trim(), '', 'Should not output pointer for small content');
-    }
-  },
-  {
-    name: '[tool-output-swap] outputs pointer for large content',
-    fn: async () => {
-      const config = swapEngine.loadConfig();
-      if (!config.enabled) {
-        assertTrue(true, 'Config disabled, skipping');
-        return;
-      }
-
-      const sessionId = generateTestSessionId();
-      const largeContent = 'x'.repeat(15000);
-      const input = {
-        ...createPostToolUseInput('Read', { file_path: 'test.txt' }, largeContent),
-        session_id: sessionId
-      };
-
-      try {
-        const result = await runHook(TOOL_OUTPUT_SWAP, input);
-        assertAllowed(result.code, 'Should exit 0');
-
-        if (result.stdout.trim()) {
-          assertContains(result.stdout, 'External Memory Reference', 'Should output pointer');
-        }
-      } finally {
-        swapEngine.deleteSessionSwap(sessionId);
-      }
-    }
-  },
-  {
-    name: '[tool-output-swap] handles Read tool',
-    fn: async () => {
-      const config = swapEngine.loadConfig();
-      if (!config.enabled) {
-        assertTrue(true, 'Config disabled, skipping');
-        return;
-      }
-
-      const sessionId = generateTestSessionId();
-      const input = {
-        tool_name: 'Read',
-        tool_input: { file_path: 'test.txt' },
-        tool_result: 'x'.repeat(15000),
-        session_id: sessionId
-      };
-
-      try {
-        const result = await runHook(TOOL_OUTPUT_SWAP, input);
-        assertAllowed(result.code, 'Should handle Read tool');
-      } finally {
-        swapEngine.deleteSessionSwap(sessionId);
-      }
-    }
-  },
-  {
-    name: '[tool-output-swap] handles Grep tool',
-    fn: async () => {
-      const config = swapEngine.loadConfig();
-      if (!config.enabled) {
-        assertTrue(true, 'Config disabled, skipping');
-        return;
-      }
-
-      const sessionId = generateTestSessionId();
-      const input = {
-        tool_name: 'Grep',
-        tool_input: { pattern: 'test' },
-        tool_result: 'x'.repeat(8000),
-        session_id: sessionId
-      };
-
-      try {
-        const result = await runHook(TOOL_OUTPUT_SWAP, input);
-        assertAllowed(result.code, 'Should handle Grep tool');
-      } finally {
-        swapEngine.deleteSessionSwap(sessionId);
-      }
-    }
-  },
-  {
-    name: '[tool-output-swap] handles Glob tool',
-    fn: async () => {
-      const config = swapEngine.loadConfig();
-      if (!config.enabled) {
-        assertTrue(true, 'Config disabled, skipping');
-        return;
-      }
-
-      const sessionId = generateTestSessionId();
-      const input = {
-        tool_name: 'Glob',
-        tool_input: { pattern: '**/*.ts' },
-        tool_result: 'x'.repeat(5000),
-        session_id: sessionId
-      };
-
-      try {
-        const result = await runHook(TOOL_OUTPUT_SWAP, input);
-        assertAllowed(result.code, 'Should handle Glob tool');
-      } finally {
-        swapEngine.deleteSessionSwap(sessionId);
-      }
-    }
-  },
-  {
-    name: '[tool-output-swap] handles Bash tool',
-    fn: async () => {
-      const config = swapEngine.loadConfig();
-      if (!config.enabled) {
-        assertTrue(true, 'Config disabled, skipping');
-        return;
-      }
-
-      const sessionId = generateTestSessionId();
-      const input = {
-        tool_name: 'Bash',
-        tool_input: { command: 'ls -la' },
-        tool_result: 'x'.repeat(10000),
-        session_id: sessionId
-      };
-
-      try {
-        const result = await runHook(TOOL_OUTPUT_SWAP, input);
-        assertAllowed(result.code, 'Should handle Bash tool');
-      } finally {
-        swapEngine.deleteSessionSwap(sessionId);
-      }
-    }
-  }
-];
-
-// ============================================================================
-// session-resume.cjs Swap Inventory Tests
-// ============================================================================
-
-const sessionResumeSwapTests = [
-  {
-    name: '[session-resume] exits 0 with empty input',
-    fn: async () => {
-      const result = await runHook(SESSION_RESUME, {});
-      assertAllowed(result.code, 'Should exit 0');
-    }
-  },
-  {
-    name: '[session-resume] exits 0 on clear trigger',
-    fn: async () => {
-      const input = { trigger: 'clear', session_id: 'test-123' };
-      const result = await runHook(SESSION_RESUME, input);
-      assertAllowed(result.code, 'Should exit 0 on clear');
-    }
-  },
-  {
-    name: '[session-resume] injects swap inventory when entries exist',
-    fn: async () => {
-      const config = swapEngine.loadConfig();
-      if (!config.enabled) {
-        assertTrue(true, 'Config disabled, skipping');
-        return;
-      }
-
-      const sessionId = generateTestSessionId();
-      const content = 'x'.repeat(15000);
-
-      try {
-        // Create swap entries first
-        await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
-
-        // Now test session resume
-        const input = { trigger: 'compact', session_id: sessionId };
-        const result = await runHook(SESSION_RESUME, input);
-        assertAllowed(result.code, 'Should exit 0');
-
-        if (result.stdout.includes('Externalized Content')) {
-          assertContains(result.stdout, 'Recoverable', 'Should mention recoverable');
-        }
-      } finally {
-        swapEngine.deleteSessionSwap(sessionId);
-      }
-    }
-  }
-];
-
-// ============================================================================
 // session-end.cjs Swap Cleanup Tests
 // ============================================================================
 
@@ -780,10 +566,9 @@ const edgeCaseTests = [
 
         const entries = swapEngine.getSwapEntries(sessionId);
         if (entries.length > 0) {
-          // Summary should have escaped pipes
-          const hasUnescapedPipe = entries[0].summary.includes('|') && !entries[0].summary.includes('\\|');
-          // Note: The escaping happens in buildSwapInventory in session-resume, not in getSwapEntries
-          assertTrue(true, 'Summary retrieved successfully');
+          // getSwapEntries returns the raw summary; markdown pipe-escaping is the
+          // caller's concern at render time, not stored in the entry itself.
+          assertTrue(typeof entries[0].summary === 'string', 'Summary retrieved successfully');
         }
       } finally {
         swapEngine.deleteSessionSwap(sessionId);
@@ -798,8 +583,6 @@ module.exports = {
   tests: [
     ...swapEngineUnitTests,
     ...swapEngineIntegrationTests,
-    ...toolOutputSwapHookTests,
-    ...sessionResumeSwapTests,
     ...sessionEndSwapTests,
     ...edgeCaseTests
   ]

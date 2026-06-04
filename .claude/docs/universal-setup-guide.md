@@ -7,7 +7,7 @@
 
 This `.claude` framework is project-agnostic. All project-specific knowledge lives in `docs/project-config.json`. The skills, hooks, agents, and workflows work with any tech stack — .NET, Node.js, Python, Go, Java, Ruby, or mixed.
 
-## 5-Step Adoption Path
+## Recommended Adoption Path
 
 ### Step 1: Copy the .claude Directory
 
@@ -17,62 +17,62 @@ cp -r .claude/ /path/to/your-project/.claude/
 
 Copy the entire `.claude/` directory to your target project. This includes:
 
-- `skills/` — 256 skills for planning, implementation, review, testing, etc.
-- `agents/` — 28 specialized agents (code-reviewer, debugger, architect, etc.)
-- `hooks/` — 64 top-level hook files plus 29 hook libraries with context injection, workflow routing, enforcement
-- `workflows/` — 37 workflow definitions (feature, bugfix, refactor, etc.)
+- `skills/` — planning, implementation, review, testing, setup, and sync skills
+- `agents/` — specialized agents (code-reviewer, debugger, architect, etc.)
+- `hooks/` — context injection, workflow routing, enforcement, and setup gates
+- `workflows/` + `workflows.json` — 17 workflow definitions (feature, bugfix, refactor, etc.)
 - `scripts/` — Catalog generators, audit scripts, Codex sync/verification tooling
 - `docs/` — Framework documentation
 
-### Step 2: Initialize Project Configuration
+### Step 2: Run Project Init
 
-Run the `/project-config` skill to populate `docs/project-config.json`:
-
-```
-/project-config
-```
-
-This scans your project and generates:
-
-- Tech stack detection (languages, frameworks, package managers)
-- Service/module discovery
-- Directory structure mapping
-- Build and test commands
-
-### Step 3: Scan Project Patterns
-
-Run scan skills to generate reference documentation from your codebase:
+Run the `/project-init` skill as the canonical setup and re-evaluation entry point:
 
 ```
-/scan-project-structure    # Directory tree, ports, module codes
-/scan-backend-patterns     # Backend patterns, CQRS, validation, repos
-/scan-frontend-patterns    # Frontend components, stores, forms, routing
-/scan-code-review-rules    # Code review standards from codebase conventions
+/project-init
+```
+
+This assesses the folder state and routes the required lower-level setup steps:
+
+- `/project-config` for `docs/project-config.json`
+- `/docs-init`, `/scan-all`, or targeted `/scan --target=<key>` for project-reference docs
+- `/claude-md-init` for `CLAUDE.md`
+- `/sync-codex` for `AGENTS.md`, `.agents`, and `.codex` mirrors
+- `/graph-build` after config/docs are populated
+
+`/project-init` is idempotent. Run it again after pulling changes, changing project structure, or noticing missing/stale setup files.
+
+### Step 3: Review Generated Context
+
+Review the generated project-specific files:
+
+- `docs/project-config.json`
+- `docs/project-reference/`
+- `CLAUDE.md`
+- `AGENTS.md`
+
+For existing projects, `/project-init` can populate reference documentation from scan skills such as:
+
+```
+/scan --target=project-structure    # Directory tree, ports, module codes
+/scan --target=backend-patterns     # Backend patterns, CQRS, validation, repos
+/scan --target=frontend-patterns    # Frontend components, stores, forms, routing
+/scan --target=code-review-rules    # Code review standards from codebase conventions
 ```
 
 Optional scans (run if applicable):
 
 ```
-/scan-design-system        # UI design tokens, BEM conventions
-/scan-domain-entities      # Domain entity catalog, relationships
-/scan-integration-tests    # Integration test patterns
-/scan-e2e-tests            # E2E test patterns, page objects
-/scan-seed-test-data       # Seeder/dev-data patterns, idempotency, DI scope
-/scan-scss-styling         # SCSS/CSS methodology
-/scan-feature-docs         # Business feature documentation index
+/scan --target=design-system        # UI design tokens, BEM conventions
+/scan --target=domain-entities      # Domain entity catalog, relationships
+/scan --target=integration-tests    # Integration test patterns
+/scan --target=e2e-tests            # E2E test patterns, page objects
+/scan --target=seed-test-data       # Seeder/dev-data patterns, idempotency, DI scope
+/scan --target=scss-styling         # SCSS/CSS methodology
+/scan --target=feature-spec         # Business feature documentation index
 ```
 
-These generate files in `docs/project-reference/` that hooks auto-inject into context.
-
-### Step 4: Generate CLAUDE.md
-
-Run the `/claude-md-init` skill to generate CLAUDE.md from your project configuration:
-
-```
-/claude-md-init
-```
-
-This reads `docs/project-config.json` and generates a CLAUDE.md with:
+`/claude-md-init`, when routed by `/project-init`, reads project config and generates a `CLAUDE.md` with:
 
 - Project description and architecture overview (from config)
 - Golden rules (from contextGroups[].rules)
@@ -83,18 +83,18 @@ This reads `docs/project-config.json` and generates a CLAUDE.md with:
 
 **Modes:** `init` (first-time), `update` (sync marked sections), `refactor` (optimize token efficiency).
 
-After generation, review and customize the AI-filled sections (project description, golden rules) to match your team's conventions.
+After generation, review and customize AI-filled sections such as project description and golden rules to match your team's conventions.
 
-### Step 5: Start Working
+### Step 4: Start Working
 
 The framework is ready. Use workflows:
 
-- `/cook` — Implement features step-by-step
+- `/feature-implement` — Implement features step-by-step
 - `/fix` — Debug and fix issues
 - `/plan` — Create implementation plans
 - `/code-review` — Review code changes
 
-The workflow router automatically detects intent and suggests the right workflow.
+The workflow router injects the catalog; the model auto-selects and activates the best-matching workflow (no confirmation step).
 
 ## What's Project-Agnostic vs Project-Specific
 
@@ -105,9 +105,9 @@ The workflow router automatically detects intent and suggests the right workflow
 | Hooks (`.claude/hooks/`)         | Yes       | Context injection reads from `project-config.json` |
 | Workflows (`.claude/workflows/`) | Yes       | Process definitions, not implementation            |
 | `CLAUDE.md`                      | **No**    | Must customize per project                         |
-| `docs/project-config.json`       | **No**    | Generated per project via `/project-config`        |
-| `docs/project-reference/`        | **No**    | Generated per project via `/scan-*` skills         |
-| `docs/business-features/`        | **No**    | Project-specific feature documentation             |
+| `docs/project-config.json`       | **No**    | Generated per project via `/project-init`          |
+| `docs/project-reference/`        | **No**    | Generated per project via `/project-init`          |
+| `docs/specs/`                    | **No**    | Project-specific tech-free Feature Specs           |
 
 ## Greenfield Projects
 
@@ -125,5 +125,5 @@ This activates the greenfield workflow: idea → research → architecture → p
 | ----------------------- | ------------------------------------------------------------- |
 | Skills not discovered   | Run `python .claude/scripts/generate_catalogs.py --skills`    |
 | Hooks failing           | Run `node .claude/hooks/tests/test-all-hooks.cjs` to diagnose |
-| Wrong patterns injected | Re-run `/scan-*` skills to regenerate reference docs          |
-| Workflow not detected   | Check `docs/project-config.json` is populated                 |
+| Wrong patterns injected | Re-run `/project-init` or targeted `/scan --target=<key>`     |
+| Workflow not detected   | Run `/project-init` and verify `docs/project-config.json`     |

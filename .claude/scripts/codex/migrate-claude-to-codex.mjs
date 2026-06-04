@@ -10,6 +10,24 @@ const args = new Set(process.argv.slice(2));
 const rootDir = process.cwd();
 const require = createRequire(import.meta.url);
 
+function loadHooklessPromptProtocol() {
+    const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+    const candidates = [
+        path.join(rootDir, '.claude', 'scripts', 'lib', 'hookless-prompt-protocol.cjs'),
+        path.join(scriptDir, '..', 'lib', 'hookless-prompt-protocol.cjs')
+    ];
+    for (const candidate of candidates) {
+        try {
+            return require(candidate);
+        } catch {}
+    }
+    throw new Error('hookless prompt protocol builder is missing');
+}
+
+const {
+    buildCodexPromptProtocolBlock
+} = loadHooklessPromptProtocol();
+
 const claudeAgentsDir = path.join(rootDir, '.claude', 'agents');
 export const claudeSkillsDir = path.join(rootDir, '.claude', 'skills');
 const codexAgentsDir = path.join(rootDir, '.codex', 'agents');
@@ -276,7 +294,7 @@ function buildCodexProjectReferenceBlock() {
         CODEX_PROJECT_REFERENCE_START,
         '## Codex Project-Reference Loading (No Hooks)',
         '',
-        'Codex does not receive Claude hook-based doc injection.',
+        'Codex uses static project-reference loading instead of runtime-injected project docs.',
         'When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.',
         '',
         '**Always read:**',
@@ -284,10 +302,14 @@ function buildCodexProjectReferenceBlock() {
         '- `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)',
         '- `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)',
         '',
+        '**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.',
+        '',
         '**Situation-based docs:**',
         '- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`',
         '- Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`',
-        '- Spec/test-case planning or TC mapping: `feature-docs-reference.md`',
+        '- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`',
+        '- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above',
+        '- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`',
         '- Integration test implementation/review: `integration-test-reference.md`',
         '- E2E test implementation/review: `e2e-test-reference.md`',
         '- Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files',
@@ -389,41 +411,10 @@ async function loadCkConfig() {
 }
 
 async function buildAlwaysInjectedPromptProtocolBlock() {
-    const promptInjectionsPath = path.join(rootDir, '.claude', 'hooks', 'lib', 'prompt-injections.cjs');
-    if (!(await pathExists(promptInjectionsPath))) return '';
-
-    try {
-        const promptInjections = require(promptInjectionsPath);
-        const ckConfig = await loadCkConfig();
-        const mode = ckConfig?.workflow?.confirmationMode;
-        const confirmationMode = mode === 'never' ? 'never' : 'always';
-        const portability = ckConfig?.portability ?? {};
-        // Per-skill mirrors must not inline learned-lessons content. The
-        // project-reference loading block points Codex to docs/project-reference/lessons.md.
-        const sections = [
-            normalizePromptProtocolText(promptInjections.injectWorkflowProtocol?.('', confirmationMode, portability)),
-            normalizePromptProtocolText(promptInjections.injectCriticalContext?.('', true)),
-            normalizePromptProtocolText(promptInjections.injectLessonReminder?.('')),
-            normalizePromptProtocolText(
-                '**[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.'
-            )
-        ].filter(Boolean);
-
-        if (sections.length === 0) return '';
-
-        return [
-            CODEX_PROTOCOLS_START,
-            '## Hookless Prompt Protocol Mirror (Auto-Synced)',
-            '',
-            'Source: `.claude/hooks/lib/prompt-injections.cjs` + `.claude/.ck.json`',
-            '',
-            ...sections,
-            '',
-            CODEX_PROTOCOLS_END
-        ].join('\n');
-    } catch {
-        return '';
-    }
+    return buildCodexPromptProtocolBlock(rootDir, {
+        startMarker: CODEX_PROTOCOLS_START,
+        endMarker: CODEX_PROTOCOLS_END
+    });
 }
 
 async function collectSkillFiles(dirPath) {

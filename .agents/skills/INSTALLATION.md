@@ -93,7 +93,7 @@ python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install all skill dependencies
-pip install -r .claude/skills/ai-multimodal/scripts/requirements.txt
+pip install -r .claude/skills/visual analysis tooling/scripts/requirements.txt
 
 # Install test dependencies for development
 pip install pytest pytest-cov pytest-mock
@@ -104,7 +104,7 @@ pip install pytest pytest-cov pytest-mock
 Navigate to specific skill and install:
 
 ```bash
-cd .claude/skills/ai-multimodal/scripts
+cd .claude/skills/visual analysis tooling/scripts
 pip install -r requirements.txt
 ```
 
@@ -112,9 +112,9 @@ pip install -r requirements.txt
 
 ### Python Package Dependencies
 
-Most skills use only Python standard library. Only **ai-multimodal** requires external packages:
+Most skills use only Python standard library. Only **visual analysis tooling** requires external packages:
 
-**ai-multimodal** (`.claude/skills/ai-multimodal/scripts/requirements.txt`):
+**visual analysis tooling** (`.claude/skills/visual analysis tooling/scripts/requirements.txt`):
 
 - `google-genai>=0.1.0` - Google Gemini API
 - `pypdf>=4.0.0` - PDF processing
@@ -128,7 +128,7 @@ Most skills use only Python standard library. Only **ai-multimodal** requires ex
 
 Several skills require external CLI tools:
 
-#### media-processing
+#### media processing tooling
 
 - **FFmpeg**: Video/audio processing
     - Ubuntu/Debian: `sudo apt-get install ffmpeg`
@@ -156,9 +156,7 @@ Several skills require external CLI tools:
 
 #### databases
 
-- **PostgreSQL client**: `sudo apt-get install postgresql-client` (Linux)
-- **MongoDB Shell**: https://www.mongodb.com/try/download/shell
-- **MongoDB Tools**: https://www.mongodb.com/try/download/database-tools
+- **Database client(s)**: install the clients required by the configured repository databases
 
 #### web-frameworks, shadcn-tailwind
 
@@ -166,7 +164,7 @@ Several skills require external CLI tools:
 - **pnpm**: `npm install -g pnpm`
 - **yarn**: `npm install -g yarn`
 
-## Installation by Platform
+## Installation by OS
 
 ### Linux (Ubuntu/Debian)
 
@@ -175,13 +173,13 @@ Several skills require external CLI tools:
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Python packages (ai-multimodal only)
-cd .claude/skills/ai-multimodal/scripts
+# Python packages (visual analysis tooling only)
+cd .claude/skills/visual analysis tooling/scripts
 pip install -r requirements.txt
 
 # System tools
 sudo apt-get update
-sudo apt-get install -y ffmpeg imagemagick postgresql-client
+sudo apt-get install -y ffmpeg imagemagick {configured-database-client}
 
 # Node.js and tools
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -196,12 +194,12 @@ npm install -g pnpm wrangler repomix rmbg-cli @shopify/cli
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Python packages (ai-multimodal only)
-cd .claude/skills/ai-multimodal/scripts
+# Python packages (visual analysis tooling only)
+cd .claude/skills/visual analysis tooling/scripts
 pip install -r requirements.txt
 
 # System tools via Homebrew
-brew install ffmpeg imagemagick postgresql
+brew install ffmpeg imagemagick {configured-database-client}
 
 # Node.js and tools
 brew install node
@@ -215,8 +213,8 @@ npm install -g pnpm wrangler repomix rmbg-cli @shopify/cli
 python -m venv .venv
 .venv\Scripts\activate
 
-# Python packages (ai-multimodal only)
-cd .claude\skills\ai-multimodal\scripts
+# Python packages (visual analysis tooling only)
+cd .claude\skills\visual analysis tooling\scripts
 pip install -r requirements.txt
 
 # System tools via Chocolatey
@@ -298,13 +296,13 @@ chmod +x .claude/skills/*/scripts/*.py
 
 If you only want to use specific skills:
 
-**For ai-multimodal only:**
+**For visual analysis tooling only:**
 
 ```bash
 pip install google-genai pypdf python-docx markdown Pillow python-dotenv
 ```
 
-**For media-processing only:**
+**For media processing tooling only:**
 
 ```bash
 # macOS
@@ -343,13 +341,13 @@ pytest .claude/skills/*/scripts/tests/ --cov=.claude/skills --cov-report=html
 
 ## Skill-Specific Notes
 
-### ai-multimodal
+### visual analysis tooling
 
 - Requires `GEMINI_API_KEY` in environment
 - Get API key: https://aistudio.google.com/app/apikey
 - Windows users: `docx2pdf` requires Microsoft Word installed
 
-### media-processing
+### media processing tooling
 
 - FFmpeg must be in PATH
 - ImageMagick must be in PATH

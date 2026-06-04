@@ -8,34 +8,36 @@
 
 ## Sub-Agent Decision Table
 
-| Domain                        | Sub-agent type             | Key specialization                                            |
-| ----------------------------- | -------------------------- | ------------------------------------------------------------- |
-| Code review (general quality) | `code-reviewer`            | Patterns, conventions, code smells, SOLID                     |
-| Architecture review           | `architect`                | Cross-service, ADR creation, system-level security/perf       |
-| Security audit                | `security-auditor`         | OWASP, auth flows, injection, CVE, microservices boundaries   |
-| Performance analysis          | `performance-optimizer`    | N+1, query plans, bundle size, memory, RxJS, change detection |
-| Database / migrations         | `database-admin`           | Schema, index impact, locking, replication, backup/restore    |
-| E2E tests                     | `e2e-runner`               | Test generation, visual baselines, TC spec traceability       |
-| Integration tests             | `integration-tester`       | Microservice test gen, TC traceability, CQRS test patterns    |
-| Frontend UI/UX                | `ui-ux-designer`           | Component design, accessibility, responsive, design tokens    |
-| Backend feature               | `backend-developer`        | .NET/backend implementation (CQRS, repos, events)             |
-| Frontend feature              | `frontend-developer`       | Angular/React/Vue implementation                              |
-| Parallel fullstack            | `fullstack-developer`      | Multi-file parallel phases with file ownership boundaries     |
-| Git operations                | `git-manager`              | Commit, push, PR — conventional commits, hook enforcement     |
-| Research                      | `researcher`               | Web research, library docs, technology evaluation             |
-| Planning                      | `planner`                  | Implementation plans, trade-off analysis                      |
-| Test running                  | `tester`                   | Test execution, failure analysis, coverage reports            |
-| Debugging                     | `debugger`                 | Root cause investigation, log analysis, CI/CD failures        |
-| Documentation                 | `docs-manager`             | Doc updates, doc-code sync, staleness detection               |
-| Journal/retro                 | `journal-writer`           | Lessons, retrospectives, post-mortem logging                  |
-| Product/backlog               | `product-owner`            | PBI, prioritization, sprint planning                          |
-| Project status                | `project-manager`          | Progress tracking, cross-agent consolidation                  |
-| QC/compliance                 | `qc-specialist`            | Quality gates, audit trails, compliance checklists            |
-| Spec compliance               | `spec-compliance-reviewer` | Verify implementation matches spec (before code-reviewer)     |
-| Codebase exploration          | `Explore`                  | Fast file/symbol search across large codebases                |
-| Business analysis             | `business-analyst`         | Requirements, user stories, acceptance criteria               |
-| Greenfield / inception        | `solution-architect`       | New project DDD modeling, tech stack selection                |
-| Knowledge synthesis           | `knowledge-worker`         | Research synthesis, structured reports, market analysis       |
+| Domain                          | Sub-agent type             | Key specialization                                                            |
+| ------------------------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| Code review (general quality)   | `code-reviewer`            | Patterns, conventions, code smells, SOLID                                     |
+| Architecture review             | `architect`                | Cross-service, ADR creation, system-level security/perf                       |
+| Security audit                  | `security-auditor`         | OWASP, auth flows, injection, CVE, microservices boundaries                   |
+| Performance analysis            | `performance-optimizer`    | N+1, query plans, bundle size, memory, RxJS, change detection                 |
+| Database / migrations           | `database-admin`           | Schema, index impact, locking, replication, backup/restore                    |
+| E2E tests                       | `e2e-runner`               | Test generation, visual baselines, TC spec traceability                       |
+| Integration tests               | `integration-tester`       | Microservice test gen, TC traceability, CQRS test patterns                    |
+| Frontend UI/UX                  | `ui-ux-designer`           | Component design, accessibility, responsive, design tokens                    |
+| Backend feature †               | `backend-developer`        | Configured backend implementation (CQRS, repos, events)                       |
+| Frontend feature †              | `frontend-developer`       | Configured frontend implementation                                            |
+| Parallel fullstack              | `fullstack-developer`      | Multi-file parallel phases with file ownership boundaries                     |
+| Git operations                  | `git-manager`              | Commit, push, PR — conventional commits, hook enforcement                     |
+| Research                        | `researcher`               | Web research, library docs, technology evaluation                             |
+| Planning                        | `planner`                  | Implementation plans, trade-off analysis                                      |
+| Test running                    | `tester`                   | Test execution, failure analysis, coverage reports                            |
+| Debugging                       | `debugger`                 | Root cause investigation, log analysis, CI/CD failures                        |
+| Documentation                   | `docs-manager`             | Doc updates, doc-code sync, staleness detection                               |
+| Journal/retro                   | `journal-writer`           | Lessons, retrospectives, post-mortem logging                                  |
+| Product/backlog †               | `product-owner`            | PBI, prioritization, sprint planning                                          |
+| Project status                  | `project-manager`          | Progress tracking, cross-agent consolidation                                  |
+| Spec compliance                 | `spec-compliance-reviewer` | Verify implementation matches spec (before code-reviewer)                     |
+| Codebase exploration (internal) | `scout`                    | Parallel file/symbol search WITH graph CLI + Bash (`.claude/agents/scout.md`) |
+| Codebase exploration (external) | `scout-external`           | Same, via external CLIs (Gemini, OpenCode) — `--ext` / `--engine=external`    |
+| Business analysis †             | `business-analyst`         | Requirements, user stories, acceptance criteria                               |
+| Greenfield / inception          | `solution-architect`       | New project DDD modeling, tech stack selection                                |
+| Knowledge synthesis †           | `knowledge-worker`         | Research synthesis, structured reports, market analysis                       |
+
+> **† Dormant routing target** — agent is defined under `.claude/agents/` but **no skill currently hard-dispatches it** (grep-verified 2026-06-16: these names appear only here, or in prose, never as a spawned `subagent_type`). Until a skill wires them, route the work via the role's same-name `/`-skill, or the listed generalist — `fullstack-developer` (backend/frontend feature) · `researcher` (knowledge synthesis). Rows are retained as available targets (not deleted) so the routing contract stays complete; consolidation may remove them once their roles are confirmed skill-only.
 
 ---
 
@@ -83,8 +85,7 @@
 
 ## Generic / Cross-Project Applicability
 
-This guide is project-agnostic. All agent types are built into the Claude Code harness.
-No project-specific configuration is needed — reference the correct `subagent_type` in `Agent` tool calls.
+This guide is project-agnostic in structure. **Most agent types are project-defined custom agents shipped with this framework under `.claude/agents/`** — only `Explore`, `Plan`, and `general-purpose` are built into the Claude Code harness. Reference the correct `subagent_type` in `Agent` tool calls; the custom agents must be present in `.claude/agents/` for their `subagent_type` to resolve.
 
 The skills harness enforces specialization via `## Sub-Agent Type Override` blocks in each SKILL.md.
 Update those blocks — not this guide — when project-specific routing decisions differ.

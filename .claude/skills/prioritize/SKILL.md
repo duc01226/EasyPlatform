@@ -15,7 +15,14 @@ description: '[Project Management] Use when you need to prioritize backlog items
 
 ## Quick Summary
 
-**Goal:** Order 3+ backlog items using RICE, MoSCoW, or Value-Effort frameworks with scores and rationale.
+**Goal:** Produce a defensible ranked ordering of 3+ backlog items using RICE, MoSCoW, or Value-Effort frameworks so the team works highest-value items first — every rank backed by a score and tech-agnostic rationale (value/effort/risk/impact).
+
+**Summary:**
+
+- Require 3+ items first; pick the framework by the decision tree — RICE when quantitative data exists, MoSCoW for stakeholder must/should/could alignment, Value-Effort 2x2 for a quick call — default RICE when unsure.
+- Score with the exact framework formula (RICE = Reach×Impact×Confidence ÷ Effort using the fixed Impact/Confidence scales and story-point Effort), then rank descending (RICE), by band (MoSCoW), or by quadrant (V-E).
+- Keep every rationale tech-agnostic per M1: justify by value/effort/risk/business impact, never by named stack, framework, or design pattern.
+- On a near-tie (top-2 RICE within 15%, same-band MoSCoW overlap, or flagged stakeholder disagreement), the gate fires — use `AskUserQuestion` to offer `/llm-council` escalation vs. accepting the ranking; otherwise end without prompting.
 
 **Workflow:**
 
@@ -29,32 +36,33 @@ description: '[Project Management] Use when you need to prioritize backlog items
 - Minimum 3 items required; fewer than 3 should be discussed directly
 - Default to RICE if unsure; ask user if ambiguous
 - Optionally update PBI file priority fields after ranking
+- **Tech-agnostic rationale (M1):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Justify every ranking by value, effort, risk, and business impact — NOT by implementation technology. Rationale prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3: no framework/product/language/design-pattern names; effort may cite story points and relative complexity, never a named stack.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Backlog Prioritization
 
-Order backlog items using data-driven prioritization frameworks to produce a ranked list with scores and rationale.
+Order backlog items using data-driven frameworks → ranked list with scores and rationale.
 
 ## When to Use
 
-- Sprint planning needs an ordered backlog (3+ items to rank)
-- Stakeholders need a priority ranking with justification
+- Sprint planning needs ordered backlog (3+ items to rank)
+- Stakeholders need priority ranking with justification
 - Feature roadmap ordering with objective criteria
 - Comparing competing features or initiatives
 
 ## When NOT to Use
 
-- Fewer than 3 items (just discuss directly)
+- Fewer than 3 items (discuss directly)
 - Creating PBIs or writing stories -- use `product-owner` or `story`
 - Full product strategy -- use `product-owner`
 - Project status tracking -- use `project-manager`
 
 ## Prerequisites
 
-- A list of 3+ backlog items (PBIs, features, or user stories)
+- List of 3+ backlog items (PBIs, features, user stories)
 - IF items exist as files: read from `team-artifacts/pbis/` or user-provided path
-- IF items provided inline: use the provided descriptions
+- IF items provided inline: use provided descriptions
 
 ## Workflow
 
@@ -163,7 +171,7 @@ Order backlog items using data-driven prioritization frameworks to produce a ran
 
 ## Optional Escalation: /llm-council on Ties
 
-**Gate evaluation:** After producing the prioritized backlog (per `## Workflow` step output), inspect the ranking output:
+**Gate evaluation:** After producing prioritized backlog (per `## Workflow` step output), inspect ranking output:
 
 - Top-2 RICE scores within 15% of each other → gate fires
 - Explicit MoSCoW tie (≥2 items in same Must/Should/Could band with material scope overlap) → gate fires
@@ -201,16 +209,43 @@ If gate does NOT fire, the prioritization decision stands; do NOT prompt.
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
+- **IMPORTANT MUST ATTENTION Goal:** produce a defensible ranked ordering of 3+ backlog items via RICE/MoSCoW/Value-Effort so the team works highest-value items first — every rank backed by a score and tech-agnostic rationale (value/effort/risk/impact)
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** ALWAYS trace `file:line` proof for every claim, confidence >80% to act, NEVER present guess as fact.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+- **IMPORTANT MUST ATTENTION** require 3+ items BEFORE ranking; fewer than 3 → discuss directly, NEVER force a framework — why: ranking 1-2 items adds ceremony without signal
+- **IMPORTANT MUST ATTENTION** keep every rationale tech-agnostic per M1 — justify by value/effort/risk/business impact, NEVER by named stack/framework/product/language/design-pattern; effort may cite story points + relative complexity only — why: spec-principles §3 BLOCKING, a tech-named rationale leaks implementation into a priority call
+- **IMPORTANT MUST ATTENTION** score with the EXACT framework formula (RICE = Reach×Impact×Confidence ÷ Effort, fixed Impact/Confidence scales, story-point Effort), then rank descending (RICE) / by band (MoSCoW) / by quadrant (V-E) — NEVER invent ad-hoc scores — why: a defensible rank needs a reproducible number
+- **IMPORTANT MUST ATTENTION** on a near-tie (top-2 RICE within 15%, same-band MoSCoW overlap, flagged stakeholder disagreement) the gate FIRES — use `AskUserQuestion` to offer `/llm-council` escalation vs. accepting the ranking; if the gate does NOT fire, end WITHOUT prompting — why: tie-breaking is a judgment call the user owns, but a clear winner needs no interruption
+- **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; mark one `in_progress`, `completed` immediately after evidence
+- **IMPORTANT MUST ATTENTION** search codebase/artifacts for 3+ similar patterns before creating new structure; evaluate pattern FIT (same constraints/scope) before copying a nearby example — why: closest example ≠ matching preconditions
+- **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act, <60% DO NOT recommend); NEVER present a guess as fact
+- **IMPORTANT MUST ATTENTION** optionally update PBI file priority fields (numeric 1-999) ONLY after ranking; grep downstream consumers before changing any priority field — why: stale priority refs cascade silently
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-  <!-- SYNC:critical-thinking-mindset:reminder -->
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-    <!-- /SYNC:critical-thinking-mindset:reminder -->
-    <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-  <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+**Anti-Rationalization:**
+
+| Evasion                                    | Rebuttal                                                                             |
+| ------------------------------------------ | ------------------------------------------------------------------------------------ |
+| "Only 2 items, just rank them"             | Below the 3-item floor → discuss directly; a framework adds ceremony, not signal     |
+| "I'll cite the framework in the rationale" | Tech-agnostic per M1 — justify by value/effort/risk only, never by named stack       |
+| "Scores are close enough, I'll pick"       | Near-tie fires the gate → `AskUserQuestion` for `/llm-council`, never silently break |
+| "RICE feels right, skip the formula"       | Apply the EXACT formula with fixed scales — a defensible rank needs a number         |
+| "Already know the patterns"                | Show `file:line` evidence — no proof = no search                                     |
+
+<!-- SYNC:critical-thinking-mindset:reminder -->
+
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
@@ -229,15 +264,13 @@ If gate does NOT fire, the prioritization decision stands; do NOT prompt.
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

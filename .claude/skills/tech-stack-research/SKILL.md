@@ -1,7 +1,7 @@
 ---
 name: tech-stack-research
 version: 1.0.0
-description: '[Architecture] Use when you need research, analyze, and compare tech stack options as a solution architect.'
+description: '[Architecture] Use when you need to research, analyze, and compare tech stack options as a solution architect.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -15,7 +15,14 @@ description: '[Architecture] Use when you need research, analyze, and compare te
 
 ## Quick Summary
 
-**Goal:** Research, analyze, and compare tech stack options for each layer of the system. Act as a solution architect — derive technical requirements from business analysis, research current market, produce detailed comparison report, and present options to user for decision.
+**Goal:** Deliver a user-confirmed, per-layer tech stack — each choice backed by 3+ researched options, weighted scoring, cited evidence, and a confidence % — by acting as a solution architect who derives technical requirements from business analysis, researches the current market, and produces a detailed comparison report, so the team commits to a stack fit for scale, budget, skills, and timeline, not familiarity.
+
+**Summary:**
+
+- Requirements come BEFORE research: load prior business/domain/PBI artifacts, map business signals to technical requirements, and gate on user confirmation (`AskUserQuestion`) before any WebSearch.
+- Evaluate every stack layer (backend, frontend, database, messaging, infra, auth) independently — minimum 3 WebSearched options per layer, each with cited evidence (URL, benchmark, case study), never familiarity.
+- Score with the weighted 8-criteria matrix (High=3x / Medium=2x / Low=1x), then rank each layer with a confidence %; capped <=200-line report goes to `{plan-dir}/research/tech-stack-comparison.md`.
+- The end-of-skill user validation interview (5-8 questions) is mandatory and never skipped — only confirmed decisions get written to `phase-02-tech-stack.md` as `status: confirmed`.
 
 **Workflow:**
 
@@ -80,14 +87,14 @@ For EACH layer, research top 3 options using WebSearch (minimum 5 queries total)
 
 ### Stack Layers to Evaluate
 
-| Layer                  | Example Options                 | Research Focus                        |
-| ---------------------- | ------------------------------- | ------------------------------------- |
-| **Backend Framework**  | .NET, Node.js, Python, Go, Java | Performance, type safety, ecosystem   |
-| **Frontend Framework** | Angular, React, Vue, Svelte     | DX, ecosystem, hiring, enterprise fit |
-| **Database**           | PostgreSQL, MongoDB, SQL Server | Scale, query complexity, cost         |
-| **Messaging/Events**   | RabbitMQ, Kafka, Redis Streams  | Throughput, reliability, complexity   |
-| **Infrastructure**     | Docker+K8s, Serverless, PaaS    | Cost, ops overhead, scaling           |
-| **Auth**               | Keycloak, Auth0, custom         | Cost, compliance, flexibility         |
+| Layer                  | Example Options                       | Research Focus                        |
+| ---------------------- | ------------------------------------- | ------------------------------------- |
+| **Backend Framework**  | Candidate backend runtimes/frameworks | Performance, type safety, ecosystem   |
+| **Frontend Framework** | Candidate frontend frameworks         | DX, ecosystem, hiring, enterprise fit |
+| **Database**           | Candidate database engines/stores     | Scale, query complexity, cost         |
+| **Messaging/Events**   | Candidate messaging/event systems     | Throughput, reliability, complexity   |
+| **Infrastructure**     | Docker+K8s, Serverless, PaaS          | Cost, ops overhead, scaling           |
+| **Auth**               | Keycloak, Auth0, custom               | Cost, compliance, flexibility         |
 
 ### WebSearch Queries (minimum 5 per layer)
 
@@ -235,17 +242,27 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 ## Closing Reminders
 
-**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via `AskUserQuestion` — never auto-decide.
-**MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
+**IMPORTANT MUST ATTENTION Goal:** deliver user-confirmed, per-layer tech stack — each choice backed by 3+ researched options, weighted 8-criteria scoring, cited evidence, confidence % — so team commits to a stack fit for scale, budget, skills, timeline, NOT familiarity.
+
+**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+
+- **Critical Thinking:** MUST ATTENTION apply critical + sequential thinking; traced proof, confidence >80% to act, NEVER guess as fact.
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**IMPORTANT MUST ATTENTION** research minimum 3 WebSearched options per stack layer (backend, frontend, database, messaging, infra, auth); every recommendation carries confidence % + cited evidence (URL, benchmark, case study) — NEVER recommend on familiarity alone — why: familiarity bias commits the team to the wrong stack that surfaces only at scale.
+**IMPORTANT MUST ATTENTION** gate on user via `AskUserQuestion` at EVERY decision point — confirm derived requirements before research (Step 2), confirm each layer recommendation in the end interview (Step 7) — NEVER auto-decide — why: the team owns the stack, not the AI.
+**MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; mark one `in_progress`, `completed` immediately after evidence; add a final review todo.
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-- **MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
-  <!-- /SYNC:critical-thinking-mindset:reminder -->
-  <!-- SYNC:ai-mistake-prevention:reminder -->
-- **MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
-      <!-- /SYNC:ai-mistake-prevention:reminder -->
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
+
+<!-- /SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:ai-mistake-prevention:reminder -->
+
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
+
+<!-- /SYNC:ai-mistake-prevention:reminder -->
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
@@ -262,23 +279,33 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> - **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> - **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> - **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> - **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> - **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> - **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> - **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> - **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> - **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> - **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
-**MANDATORY IMPORTANT MUST ATTENTION** use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** use `AskUserQuestion` at EVERY decision point — never assume user preferences.
-**MANDATORY IMPORTANT MUST ATTENTION** research top 3 options per stack layer, compare with evidence, present report with recommendation + confidence %.
+**IMPORTANT MUST ATTENTION** requirements come BEFORE research — load prior business/domain/PBI artifacts (Step 1), map business signals to technical requirements (Step 2), user-confirm them, THEN WebSearch (Step 3) — NEVER research before requirements are derived and confirmed — why: researching first picks tech then back-fits the problem, the reverse of architecture.
+**IMPORTANT MUST ATTENTION** score every layer with the weighted 8-criteria matrix (High=3x / Medium=2x / Low=1x), rank with confidence %, cap the `{plan-dir}/research/tech-stack-comparison.md` report at <=200 lines using tables over prose — why: an unscored or unbounded report hides the trade-off the decision turns on.
+**IMPORTANT MUST ATTENTION** only user-confirmed decisions get written to `phase-02-tech-stack.md` as `status: confirmed` — the end interview (5-8 `AskUserQuestion` questions) is mandatory and never skipped even when the choice seems "obvious" — why: an unconfirmed stack is a guess the team will pay for.
+**IMPORTANT MUST ATTENTION** every claim, finding, and recommendation requires `file:line`/URL proof or traced evidence + confidence % (>80% act, 60-80% verify first, <60% DO NOT recommend) — NEVER present a guess as fact — why: a stack chosen on speculation fails silently until production.
+**IMPORTANT MUST ATTENTION** evaluate fit before copying a reference stack from another project — verify the new context shares the same scale, budget, team skills, compliance, and timeline constraints — why: the closest example rarely matches preconditions, and a mismatched copy compiles but fails the real requirements.
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+**Anti-Rationalization:**
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+| Evasion                                          | Rebuttal                                                                                   |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| "Stack is obvious — skip the research"           | 3+ WebSearched options per layer with cited evidence anyway — familiarity is not evidence. |
+| "I already know this is the best framework"      | Show the weighted 8-criteria score + confidence %. No matrix = no recommendation.          |
+| "Skip the user interview, the choice is clear"   | The end interview is MANDATORY — only `status: confirmed` decisions get written.           |
+| "Just research the stack, requirements are fine" | Derive + user-confirm technical requirements FIRST (Steps 1-2), then research.             |
+| "One source is enough for this layer"            | Cite URL + benchmark + case study; a single anecdote is not benchmarked evidence.          |
+
+> **External Memory:** For research/analysis work, write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, recommendation requires `file:line`/URL proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).

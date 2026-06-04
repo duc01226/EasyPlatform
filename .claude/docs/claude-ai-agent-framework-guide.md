@@ -5,6 +5,8 @@
 **Audience:** AI engineers, tech leads, and teams wanting to build reliable AI-assisted development systems.
 **Scope:** What each layer does, why it exists, how the pieces compose, the design principles behind every decision, and which AI agent best practices each addresses.
 
+> **Document Sync Status** — Current local verification (2026-06-15): **15 hook files · 156 skills · 17 workflows · 29 agents** using the ADR-0002 filesystem metrics. Codex mirrors are committed under `.agents/`, `.codex/`, and `AGENTS.md`. Notable mechanisms documented here include multi-AI-tool portability (§13), behavioral-principle injection (§8.21), self-validating review (§8.20), and embedded sequential-thinking.
+
 ---
 
 ## Table of Contents
@@ -29,18 +31,23 @@
     - 8.17 [Code Review Graph — Structural Intelligence](#817-code-graph--structural-intelligence)
     - 8.18 [Surface-Aware Code Review — Phase 0.7 Detection](#818-surface-aware-code-review--phase-07-detection)
     - 8.19 [Spec-Driven Development Loop — Closed Feedback Chain](#819-spec-driven-development-loop--closed-feedback-chain)
+    - 8.20 [Self-Validating Review — Findings Validation Gate](#820-self-validating-review--findings-validation-gate)
+    - 8.21 [Behavioral Principle Injection — The Mindset Layer](#821-behavioral-principle-injection--the-mindset-layer)
 9. [State Management & Recovery](#9-state-management--recovery)
 10. [Testing Infrastructure](#10-testing-infrastructure)
 11. [Quick Reference](#11-quick-reference)
 12. [The Agent System](#12-the-agent-system--specialized-subagents)
     - 12.3 [Agent Behavioral Rules](#123-agent-behavioral-rules-new)
-13. [Summary — Philosophy & Principles](#summary--philosophy--principles)
+13. [Multi-AI-Tool Portability — One Source, Every Harness](#13-multi-ai-tool-portability--one-source-every-harness)
+14. [Summary — Philosophy & Principles](#summary--philosophy--principles)
 
 ---
 
 ## 1. Executive Summary
 
-This framework wraps Claude Code in a **3-layer framework** — **64 top-level hook files**, **256 skills**, **37 registered workflows**, and **28 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
+This framework wraps Claude Code in a three-pillar execution framework — **15 top-level hook files**, **156 skills**, **17 registered workflows**, and **29 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
+
+It is also **harness- and project-agnostic**: the `.claude/` source compiles to verified OpenAI Codex mirrors (`AGENTS.md`, `.agents/`, `.codex/`), while all project-specific knowledge is factored into `project-config.json` + reference docs — so the same behavior runs on any supported AI tool and ports to any codebase (Section 13).
 
 **Core insight:** LLMs forget, hallucinate, and drift. Instead of hoping the AI "just gets it right," this framework uses **programmatic guardrails** (hooks) and **prompt-engineered protocols** (skills/workflows) to enforce correctness at every stage.
 
@@ -54,18 +61,21 @@ This framework wraps Claude Code in a **3-layer framework** — **64 top-level h
 │  AI hallucinates code  │  Skills/Protocols   │  Evidence gates  │
 │  AI skips steps        │  Workflows          │  Step enforcement│
 │  AI ignores patterns   │  project-config     │  Dynamic context │
-│  AI loses state        │  Swap engine        │  External memory │
-│  AI drifts from plan   │  Edit enforcement   │  Task gating     │
+│  AI loses state        │  External files     │  Disk-backed mem │
+│  AI drifts from plan   │  CLAUDE.md task rule│  Model-driven gate│
 │  AI injects duplicates │  Hooks (dedup)      │  File-based dedup│
 │  AI skips test specs   │  TDD skills/flows   │  Unified TC IDs  │
-│  AI misses lifecycle   │  37 workflows       │  Full SDLC cover │
+│  AI misses lifecycle   │  17 workflows       │  Full SDLC cover │
 │  AI skips research   │  big-feature wf      │  Step-select gate  │
 │  AI skips E2E tests    │  E2E skills/flows   │  Recording→test  │
-│  AI ignores doc format │  feature-docs-ctx   │  17-section inject │
+│  AI ignores doc format │  buildSpecContext   │  8-section inject  │
 │  AI reviews wrong surface│ Phase 0.7 detect  │  BE/FE/SCSS buckets│
 │  AI writes stale docs  │  DOC SYNC DEFERRAL  │  Review=read-only  │
 │  Docs phases skipped   │  docs-update BLOCK  │  8-task audit trail│
-│  Spec bundle stale     │  spec-discovery upd │  Incremental diffs │
+│  Spec bundle stale     │  spec-index upd     │  Incremental diffs │
+│  AI trusts own review  │  Findings-val gate  │  Self re-review    │
+│  AI tool lock-in       │  Mirror sync        │  Codex             │
+│  Project lock-in       │  Residue verifier   │  Build-gate fail   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -81,51 +91,50 @@ graph TB
         U[Developer Prompt]
     end
 
-    subgraph "Routing Layer"
-        WR[Workflow Router<br/>workflow-router.cjs]
-        AUQ[AskUserQuestion<br/>Confirm Workflow]
+    subgraph "Routing Layer — model-driven"
+        WR[Static Workflow Catalog<br/>baked into CLAUDE.md]
+        AUQ[Model Auto-Select<br/>start-workflow]
     end
 
-    subgraph "Enforcement Layer — 64 Top-Level Hook Files"
+    subgraph "Enforcement Layer — 15 Top-Level Hook Files"
         subgraph "Safety Hooks"
             PB[Path Boundary Block]
             PR[Privacy Block]
             SB[Scout Block]
         end
-        subgraph "Quality Hooks"
-            EE[Edit Enforcement]
-            SE[Skill Enforcement]
-            SBC[Search Before Code]
+        subgraph "Gate Hooks"
+            IPG[Init Prompt Gate]
+            DSG[Doc Sync Gate]
+            GCB[Git Commit Block]
         end
-        subgraph "Context Injection Hooks"
-            BC[Backend Context]
-            FC[Frontend Context]
-            DC[Design System Context]
-            CP[Code Patterns Injector]
-            LI[Lessons Injector]
-            GR[Graph Context Injector]
+        subgraph "Static Guidance — model-driven"
+            BC[Backend patterns guidance]
+            FC[Frontend patterns guidance]
+            DC[Design system guidance]
+            CP[Code patterns guidance]
+            LI[Lessons read contract]
+            GR[Graph status — session-init]
         end
     end
 
-    subgraph "Intelligence Layer — 202 Skills"
-        SP[Shared Protocols<br/>25 modules]
-        IS[Implementation Skills<br/>cook, fix, refactor]
+    subgraph "Intelligence Layer — 156 Skills"
+        SP[Shared Protocols<br/>5 files]
+        IS[Implementation Skills<br/>feature-implement, fix, refactor]
         QS[Quality Skills<br/>code-review, prove-fix]
         PS[Planning Skills<br/>plan, investigate, scout]
     end
 
-    subgraph "Orchestration Layer — 37 Workflows"
+    subgraph "Orchestration Layer — 17 Workflows"
         FW[Feature Workflow]
         BW[Bugfix Workflow]
         RW[Refactor Workflow]
         IW[Investigation Workflow]
     end
 
-    subgraph "State Layer"
-        TS[Todo State]
+    subgraph "State Layer — disk-backed external memory"
+        TS[Task list / TaskList]
         WS[Workflow State]
-        ES[Edit State]
-        SW[Swap Engine<br/>External Memory]
+        PF[plans/ + report files]
     end
 
     subgraph "Configuration Layer"
@@ -141,9 +150,9 @@ graph TB
     IS & QS & PS --> SP
     SP --> BC & FC & DC & CP
     BC & FC --> PC
-    EE & SE --> TS
-    SW --> ES
-    PB & PR & SB --> ST
+    IS & QS & PS --> TS
+    TS --> PF
+    PB & PR & SB & IPG & DSG & GCB --> ST
 ```
 
 ### Component Interaction Flow
@@ -151,33 +160,27 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant User
-    participant Router as Workflow Router
     participant Hook as Hook System
     participant Skill as Skill Engine
     participant State as State Manager
     participant LLM as Claude LLM
 
-    User->>Router: Submit prompt
-    Router->>Router: Detect workflow match
-    Router->>User: AskUserQuestion (confirm workflow)
-    User->>Router: Confirm activation
-
-    Router->>Skill: Activate workflow step 1 (/scout)
+    Note over LLM: Workflow catalog + task/edit rules are static in<br/>CLAUDE.md / SKILL.md (always in context, re-read every prompt)
+    User->>LLM: Submit prompt
+    LLM->>LLM: Auto-select best-matching workflow (model-driven)
+    LLM->>Skill: Activate via start-workflow <workflowId> (step 1 /scout)
     Skill->>Hook: PreToolUse (Grep/Glob)
-    Hook->>Hook: Safety check (path boundary, privacy)
-    Hook->>LLM: Inject context (backend patterns, lessons)
-    LLM->>LLM: Execute tool with injected context
-    Hook->>State: PostToolUse (track tool count, swap large output)
+    Hook->>Hook: Safety check (path boundary, privacy, scout)
+    LLM->>LLM: Apply static path→patterns guidance, execute tool
+    Hook->>LLM: PostToolUse (graph auto-update on edits)
 
     Skill->>Hook: PreToolUse (Edit/Write)
-    Hook->>Hook: Edit enforcement (task exists?)
-    Hook->>Hook: Search-before-code check
-    Hook->>LLM: Inject code patterns + review rules
-    LLM->>LLM: Make edit
-    Hook->>State: Track edit count, run formatter
+    Hook->>Hook: Safety check (path boundary, privacy)
+    LLM->>LLM: Apply static task-exists + search-before-code rules<br/>(model-driven, per CLAUDE.md), then make edit
+    Hook->>LLM: PostToolUse (post-edit-prettier formats file)
 
-    State->>State: Persist todo state to disk
-    Skill->>Router: Step complete → next step
+    LLM->>State: Update task list (TaskList) — disk-backed
+    LLM->>LLM: Step complete → advance to next step (model-driven)
 ```
 
 ---
@@ -194,8 +197,8 @@ sequenceDiagram
 │  ├──────────────────┤  ├──────────────────┤  ├──────────────────┤      │
 │  │ • Run as shell    │  │ • Markdown prompts│  │ • JSON sequences │      │
 │  │   processes       │  │   with YAML front │  │   of skill steps │      │
-│  │ • Trigger on      │  │   matter          │  │ • Routed via     │      │
-│  │   lifecycle events│  │ • Define AI       │  │   keyword detect │      │
+│  │ • Trigger on      │  │   matter          │  │ • Model-driven   │      │
+│  │   lifecycle events│  │ • Define AI       │  │   routing        │      │
 │  │ • Block/allow/    │  │   behavior &      │  │ • User confirms  │      │
 │  │   inject context  │  │   protocols       │  │   before activate│      │
 │  │ • Persist state   │  │ • Enforce evidence│  │ • Steps tracked  │      │
@@ -230,10 +233,10 @@ sequenceDiagram
 
 ### 4.1 What Hooks Are
 
-Hooks are **Node.js scripts** that execute as child processes at specific lifecycle events. They receive JSON input on stdin and produce output on stdout. Exit codes control behavior:
+Hooks are **Node.js scripts** that execute as child processes at specific lifecycle events. They receive JSON input on stdin and use event-specific stdout contracts plus exit codes. Static prompt/context guidance is carried by `CLAUDE.md`, `AGENTS.md`, agent files, and skill files, not SessionStart stdout.
 
 ```
-Exit 0  →  Allow (inject context via stdout)
+Exit 0  →  Allow (stdout only when the event contract requires it)
 Exit 1  →  Block (user can override with APPROVED: prefix)
 Exit 2  →  Block (security — no override possible)
 ```
@@ -248,19 +251,19 @@ graph LR
         PTU --> TOOL[Tool Executes]
         TOOL --> POTU[PostToolUse]
         POTU --> PTU
-        PTU --> PC[PreCompact]
+        PTU --> PC["PreCompact<br/>(CC event · no hook registered)"]
         PC --> SS
         POTU --> SE[SessionEnd]
-    end
-
-    subgraph "Subagent Events"
-        SAS[SubagentStart]
     end
 
     subgraph "Notification Events"
         N[Notification]
         STOP[Stop]
     end
+
+    %% No SubagentStart hook — sub-agent context is static in agents/*.md
+    %% PreCompact is an available Claude Code event but this framework registers NO PreCompact
+    %% hook — compaction recovery is static re-anchoring (re-read CLAUDE.md / SKILL.md, TaskList).
 
     style SS fill:#4CAF50,color:white
     style SE fill:#f44336,color:white
@@ -271,94 +274,81 @@ graph LR
 
 ### 4.3 Hook Files — Organized by Purpose
 
+> **Static guidance layer (current architecture).** This harness has no runtime
+> per-context PreToolUse "inject" layer. Path-scoped guidance, mindset principles, and
+> sub-agent context live **statically** in `CLAUDE.md`, agent `.md` files, and skill
+> `SKILL.md` files, so a hookless harness (Codex) reads identical instructions.
+> The tree below lists only hooks that map to a real registration in
+> `.claude/settings.json`.
+
 ```
-HOOK SYSTEM (64 top-level hook files)
+HOOK SYSTEM (15 top-level .cjs hooks + 1 .js notification helper)
 │
-├── SESSION LIFECYCLE (7 hooks)
-│   ├── session-init.cjs ─────────── Load config, set 25 env vars
+├── SESSION LIFECYCLE (6 hooks)
+│   ├── verify-install.cjs ────────── Install-integrity preflight (runs first)
+│   ├── session-init.cjs ─────────── Load config, set env vars
 │   ├── session-init-docs.cjs ────── Initialize reference docs from project-config
-│   ├── post-compact-recovery.cjs ── Restore state after context compaction
-│   ├── session-resume.cjs ────────── Restore todos from checkpoints
 │   ├── npm-auto-install.cjs ──────── Install missing npm packages
-│   ├── session-end.cjs ──────────── Cleanup swap files, save state
-│   └── subagent-init-*.cjs ──────── Inject context into subagents (18+ part-hooks)
+│   ├── graph-session-init.cjs ───── Check Python/tree-sitter/graph.db, sync silently
+│   └── session-end.cjs ──────────── Cleanup temp/swap files, save state
 │
-├── PROMPT PROCESSING (3 hooks)
-│   ├── init-prompt-gate.cjs ──────── Block until project-config exists
-│   ├── workflow-router.cjs ───────── Detect & inject workflow catalog
-│   └── prompt-context-assembler.cjs ─ Assemble dev rules + lessons + reminders
+├── PROMPT PROCESSING (1 hook)
+│   └── init-prompt-gate.cjs ──────── Block until project-config exists; routes
+│   │                                  /project-init when CLAUDE.md/AGENTS.md missing
 │
-├── SAFETY & BLOCKING (4 hooks)
+├── SAFETY & BLOCKING (5 hooks)
 │   ├── path-boundary-block.cjs ──── Block access outside project root
 │   ├── privacy-block.cjs ─────────── Block .env, credentials, keys
-│   ├── scout-block.cjs ──────────── Block node_modules, dist, obj
-│   └── windows-command-detector ──── Block Windows CMD in Git Bash
+│   ├── scout-block.cjs ──────────── Block bulk reads outside approved scope
+│   ├── windows-command-detector ──── Block Windows CMD in Git Bash
+│   └── git-commit-block.cjs ──────── Block git commit/push unless /commit is active
 │
-├── QUALITY ENFORCEMENT (2 hooks)
-│   ├── edit-enforcement.cjs ──────── Require tasks before edits
-│   └── skill-enforcement.cjs ─────── Require tasks before skills
+├── DOC SYNC (1 hook)
+│   └── doc-sync-gate.cjs ─────────── WARN (exit 0, advisory — never blocks) when a
+│                                      commit ships behavioral code in an enforced
+│                                      area without its Feature Spec update
 │
-├── CONTEXT INJECTION (12 hooks)
-│   ├── backend-context.cjs ───────── Backend patterns for server files
-│   ├── frontend-context.cjs ──────── Frontend patterns for client files
-│   ├── design-system-context.cjs ── Design tokens for UI components
-│   ├── scss-styling-context.cjs ─── Styling patterns for style files
-│   ├── code-patterns-injector.cjs ── Project-specific code patterns
-│   ├── knowledge-context.cjs ──────── Framework/domain knowledge
-│   ├── lessons-injector.cjs ──────── Past mistakes from lessons.md
-│   ├── role-context-injector.cjs ── Role-based guidance (PO/BA/QA/Dev)
-│   ├── figma-context-extractor ──── Figma design context
-│   ├── code-review-rules-injector ── Code review standards
-│   ├── feature-docs-context.cjs ─── 17-section format reminder for docs/business-features/**
-│   └── test-specs-context.cjs ───── TC naming + Section 15 rules for test-specs writes
-│
-├── MINDSET INJECTION (2 hooks)
-│   ├── mindset-injector.cjs ──────── Critical thinking + AI mistake prevention on Edit|Write|Skill|Agent|Task
-│   └── mindset-compact-injector.cjs ─ Lightweight critical-thinking re-anchor on Read|Grep|Glob|Bash
-│
-├── POST-PROCESSING (7 hooks)
-│   ├── tool-output-swap.cjs ──────── Externalize large outputs (>50KB)
+├── POST-PROCESSING (2 hooks)
 │   ├── post-edit-prettier.cjs ────── Auto-format after edits
-│   ├── artifact-path-resolver.cjs ── Resolve artifact paths in outputs
-│   ├── bash-cleanup.cjs ─────────── Clean temp files
-│   ├── todo-tracker.cjs ─────────── Persist todo state to disk
-│   ├── workflow-step-tracker.cjs ── Track workflow step completion
-│   └── write-compact-marker.cjs ─── Save recovery state pre-compact
+│   └── graph-auto-update.cjs ─────── Incremental graph update after edits (debounced)
 │
-└── SUPPORT INFRASTRUCTURE (27+ lib modules)
-    ├── State: ck-session-state, workflow-state, todo-state, edit-state
-    ├── Context: context-injector-base, prompt-injections, context-tracker
-    ├── Memory: swap-engine (externalize large outputs)
-    ├── Config: ck-paths, ck-config-loader, project-config-loader, ck-config-utils
+└── SUPPORT INFRASTRUCTURE (25 lib modules)
+    ├── State: ck-session-state, workflow-state, todo-state, agent-files-state
+    ├── Context: prompt-injections
+    ├── Memory: swap-engine (externalize large outputs), temp-file-cleanup
+    ├── Config: ck-paths, ck-config-loader, project-config-loader, project-config-schema, ck-config-utils, ck-config-schema
     ├── Session: session-init-helpers, test-fixture-generator
-    └── Utils: debug-log, hook-runner, stdin-parser, dedup-constants, ck-env-utils, ck-git-utils, ck-plan-resolver
+    ├── Doc/graph: doc-sync-classify, graph-utils
+    └── Utils: debug-log, hook-runner, stdin-parser, dedup-constants, ck-env-utils, ck-git-utils, ck-path-utils, ck-plan-resolver
 ```
 
-### 4.3.5 Hook Part-File Architecture
+> **Enforcement now static, not hook-gated.** Task-before-edit (`edit-enforcement`),
+> task-before-skill (`skill-enforcement`), workflow-task completion (`workflow-task-guard`),
+> and the CLAUDE.md/AGENTS.md generator routing (`agent-files-skill-gate`) were runtime hooks
+> in an earlier architecture; they are now model-driven rules carried statically in `CLAUDE.md`
+> / `SKILL.md`. Compaction recovery (`pre-compact-snapshot` / `write-compact-marker` /
+> `post-compact-recovery` / `session-resume`), todo persistence (`todo-tracker`), large-output
+> externalization (`tool-output-swap`), temp-file cleanup (`bash-cleanup`), and truncated-
+> subagent detection (`post-agent-validator`) were likewise retired in favor of static
+> re-anchoring in `CLAUDE.md`, disk-backed task state re-read via `TaskList`, and model
+> judgment. See the file-based deduplication note in §4.3.5.
 
-Large hooks are split into chained **part-files** (`-p2.cjs`, `-p3.cjs`) to stay within single-file maintainability limits. The Claude Code harness chains them sequentially at runtime — each part-file reads stdin, appends its output, and passes through to the next.
+### 4.3.5 Hook File Organization
 
-```
-prompt-context-assembler.cjs      ← Main: dev rules + workflow catalog
-prompt-context-assembler-closers.cjs   ← Closers: project config summary + CLAUDE.md re-injection
-prompt-context-assembler-claude.cjs   ← Claude-specific: model/session context
-prompt-context-assembler-docs.cjs ← Docs: read-guidance pointer for project-structure-reference.md
+No active hook ships chained part-files; each registered hook is a single standalone `.cjs` file — a single hook file may still register on more than one lifecycle event. Single-responsibility is met by keeping each hook focused on one concern and inlining guidance content statically into `CLAUDE.md`, agent `.md`, and skill `SKILL.md` files rather than chaining runtime injectors.
 
-workflow-router.cjs               ← Main: detect workflow intent
-workflow-router-p2.cjs            ← Part 2: inject workflow catalog
-workflow-router-p3.cjs            ← Part 3: lesson-learned reminder
-
-mindset-injector.cjs              ← Full: critical thinking + AI mistakes + golden rules (Edit|Write|Skill|Agent|Task)
-mindset-compact-injector.cjs      ← Lightweight: critical-thinking only (Read|Grep|Glob|Bash) — cheap re-anchor
-```
-
-**Why this matters:** Previously, accumulating logic in a single hook file made it hard to reason about, test, and maintain. Part-file splitting applies single-responsibility at the file level — each part handles one concern.
-
-**File-based deduplication:** `dedup-constants.cjs` holds shared dedup keys. Every injection point checks whether its key has already fired in the current session, preventing the same rules from appearing multiple times in a long prompt context.
+**File-based deduplication:** `dedup-constants.cjs` holds shared dedup keys and window helpers. Earlier architectures ran runtime context-injection hooks (including a `post-compact-recovery` emitter) that used these keys to avoid emitting the same content twice in a long prompt; those emitters were retired in the de-hooking pass. Path-scoped guidance and recovery anchoring are now carried statically in `CLAUDE.md` / `SKILL.md`, so no runtime hook re-emits context — the dedup keys remain available for any future marker-based emitter but have no active per-edit injector to dedup.
 
 ### 4.4 How Context Injection Works
 
-This is the **most important pattern** in the framework. Every time the AI edits a file, relevant knowledge is automatically injected:
+This is the **most important pattern** in the framework: relevant knowledge reaches the
+AI before it edits a file.
+
+> **Delivered statically.** The path → patterns routing lives **statically** in
+> `CLAUDE.md`, agent `.md`, and skill `SKILL.md` guidance, re-read by the model every
+> prompt (and re-anchored after compaction by re-reading those same static files). The
+> diagram below shows the conceptual routing; there is no runtime injection or task-gate
+> hook in this path — the task-before-edit rule is a model-driven CLAUDE.md rule.
 
 ```mermaid
 graph TB
@@ -366,18 +356,18 @@ graph TB
         E[Edit src/Services/Orders/CreateOrderCommand.ts]
     end
 
-    subgraph "PreToolUse Hook Pipeline"
-        BC[backend-context.cjs]
-        CP[code-patterns-injector.cjs]
-        LI[lessons-injector.cjs]
-        EE[edit-enforcement.cjs]
+    subgraph "Context Sources (static guidance)"
+        BC[CLAUDE.md / SKILL.md<br/>backend patterns guidance]
+        CP[CLAUDE.md / SKILL.md<br/>code-patterns guidance]
+        LI[lessons.md read contract<br/>static, re-read every prompt]
+        EE[CLAUDE.md task rule<br/>model-driven, not hook-gated]
     end
 
     subgraph "Context Loaded"
         P1[backend-patterns-reference.md<br/>Architecture patterns, repository rules]
         P2[Code patterns from similar files]
         P3[docs/project-reference/lessons.md<br/>Past mistakes to avoid]
-        P5[Task existence verification]
+        P5[Task existence self-check]
     end
 
     subgraph "project-config.json"
@@ -391,33 +381,27 @@ graph TB
     LI --> P3
     EE --> P5
 
-    P1 & P2 & P3 --> INJ[Injected into LLM context<br/>before edit executes]
-    P5 -->|No task?| BLOCK2[❌ Block: Create task first]
+    P1 & P2 & P3 --> INJ[Read into LLM context<br/>via the static guidance / read contract]
+    P5 -->|No task?| BLOCK2[⚠️ Model-driven: create task first<br/>per CLAUDE.md rule]
 ```
 
-**Why this matters:** The AI receives ~50-100KB of project-specific context **automatically**, without the developer needing to remember to ask for it.
+**Why this matters:** The path → patterns routing reaches the AI through static `CLAUDE.md` / `SKILL.md` guidance and the project-reference-docs read gate — read identically by Claude Code and Codex, with no hook required.
 
 ### 4.5 Deduplication — Preventing Context Bloat
 
-Hooks check the last N lines of the conversation transcript for dedup markers before re-injecting:
+Path-scoped guidance and recovery anchoring now live statically, so there is no per-edit or post-compaction runtime injection to dedup. No registered hook re-emits context, so the marker-based dedup discipline is dormant — the keys and window helpers in `dedup-constants.cjs` survive only as reusable infrastructure for any future emitter. Historically, the marker-based discipline worked like this (now superseded by static delivery):
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  DEDUP MECHANISM                                     │
-│                                                      │
-│  Hook                    │ Marker           │ Lines  │
-│──────────────────────────│──────────────────│────────│
-│  backend-context.cjs     │ ## Backend Context│  300  │
-│  frontend-context.cjs    │ ## Frontend Context│ 300  │
-│  code-patterns-injector  │ ## Code Patterns  │  300  │
-│  lessons-injector (prompt)│ ## Learned Lessons│   50  │
+│  DEDUP MECHANISM (former marker-based emitters)     │
 │                                                      │
 │  IF marker found in last N lines → SKIP injection    │
 │  IF not found → INJECT (context was compacted away)  │
+│                                                      │
+│  Retired: runtime context emitters were removed;     │
+│  guidance is now read statically every prompt.       │
 └─────────────────────────────────────────────────────┘
 ```
-
-**Why:** Without dedup, the same 50KB backend patterns doc would be injected on every single edit, consuming the context window. With dedup, it's injected once per compaction cycle.
 
 ### 4.6 Blocking Hierarchy
 
@@ -428,13 +412,24 @@ SECURITY BLOCKS (Exit 2) — Cannot override
 
 FEATURE BLOCKS (Exit 1) — User can override
 ├── privacy-block: .env, credentials (override: APPROVED: prefix)
-├── edit-enforcement: No active task (override: create task first)
-├── skill-enforcement: No active task for implementation skills
+├── init-prompt-gate: project-config missing (routes /project-init)
+├── git-commit-block: git commit/push unless /commit is active
 
-ADVISORY (Exit 0) — Context injection, no blocking
-├── All context injection hooks
-├── Lessons injection
-└── Role context injection
+MODEL-DRIVEN GATES (not hook-enforced — static CLAUDE.md rules)
+├── task-before-edit: create a TaskCreate item before editing
+└── task-before-skill: active task before implementation skills
+
+DOC-SYNC GATE (WARN-only — exit 0, never blocks)
+└── doc-sync-gate: Behavioral code staged in an ENFORCED area (config-driven)
+    without touching its Feature Spec — commit PROCEEDS with an advisory WARN
+    that routes the model to /spec, /spec [mode=tests], or /docs-update
+    (DOC_SYNC_OVERRIDE only suppresses the warn); per-edit spec-drift check
+    on src/** also only WARNs (exit 0, never blocks iteration)
+
+ADVISORY (Exit 0) — Session/post-edit, no blocking
+├── session-init / session-init-docs / graph-session-init
+├── post-edit-prettier / graph-auto-update
+└── npm-auto-install
 ```
 
 ---
@@ -459,22 +454,21 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate
 2. Declare confidence level...
 ```
 
-### 5.2 Skill Categories (256 skills)
+### 5.2 Skill Categories (156 skills)
 
 ```mermaid
 mindmap
-  root((256 Skills))
+  root((156 Skills))
     Quality & Verification
       code-review
       prove-fix
-      quality-gate
+      quality-gate-review
       review-changes
-      review-post-task
       code-simplifier
-      sre-review
-      refine-review
-      story-review
-      tdd-spec-review
+      production-readiness-review
+      review-artifact --type=pbi
+      review-artifact --type=story
+      review-artifact --type=spec-tests
     Planning & Research
       plan
       plan-review
@@ -483,18 +477,16 @@ mindmap
       scout
       research
     Implementation
-      cook
+      feature-implement
       fix
-      fix-types
       refactoring
-      api-design
     Testing & TDD
-      tdd-spec
+      spec [mode=tests]
       integration-test
       integration-test-review
       integration-test-verify
       e2e-test
-      tdd-spec [direction=sync]
+      spec [mode=sync]
       test
       webapp-testing
     Requirements & Ideas
@@ -506,32 +498,27 @@ mindmap
       product-owner
       design-spec
     Debug & Diagnosis
-      debug
-      fix-issue
-      fix-ci
-      fix-test
-      fix-logs
-      performance
+      debug-investigate
+      fix
+      performance-review
     Documentation
-      feature-docs
+      spec
       docs-update
       changelog
       release-notes
       docs-seeker
     Architecture
-      arch-cross-service-integration
-      arch-performance-optimization
-      arch-security-review
+      security-review
       architecture-design
       domain-analysis
       scaffold
       tech-stack-research
     Process & Collaboration
-      workflow-start
+      start-workflow
       workflow-end
-      handoff
-      acceptance
-      retro
+      project-init
+      project-manager
+      dependency
     Frontend & Design
       frontend-design
       ui-ux-pro-max
@@ -541,20 +528,21 @@ mindmap
       graph-blast-radius
       graph-query
       graph-export
-      graph-export-mermaid
       graph-connect-api
     AI & Tools
       sequential-thinking
-      ai-multimodal
+      visual analysis tooling
       custom-agent
-      mcp-management
-    Workflow Triggers (18)
+      MCP management guidance
+      skill-creator
+      dual-ai
+    Workflow Triggers (17)
       workflow-feature
       workflow-big-feature
       workflow-bugfix
-      workflow-greenfield
+      workflow-greenfield-init
       workflow-refactor
-      ... 13 more
+      ... 16 more
 ```
 
 ### 5.3 Shared Protocols — The Foundation
@@ -568,7 +556,7 @@ mindmap
 └── sync-inline-versions.md             ← CANONICAL source for all SYNC blocks
 ```
 
-> **Note:** Standalone protocol files have been deleted. All protocol content is inlined into consuming skills via `<!-- SYNC:tag -->` blocks. Only `sync-inline-versions.md` remains as the canonical source.
+> **Note:** Protocol content is inlined into consuming skills via `<!-- SYNC:tag -->` blocks. `sync-inline-versions.md` is the canonical source for shared inline protocol text; adjacent shared files hold related reusable contracts and reference guidance.
 
 **Why inline instead of file-read?** AI compliance drops significantly when protocols are behind `MUST ATTENTION READ file.md` indirection. AI agents skip the file-read step ~40% of the time. Inline SYNC blocks are always present in the skill's context window.
 
@@ -704,13 +692,13 @@ Skills that participate in long workflows (big-feature, greenfield-init) now inc
 
 Three new review skills create quality checkpoints between artifact-producing steps:
 
-| Review Skill      | Reviews Output From | Checks                                                  |
-| ----------------- | ------------------- | ------------------------------------------------------- |
-| `refine-review`   | `/refine` (PBI)     | INVEST criteria, acceptance criteria completeness, gaps |
-| `story-review`    | `/story` (stories)  | Vertical slicing quality, dependency tables, SPIDR      |
-| `tdd-spec-review` | `/tdd-spec` (specs) | TC coverage, traceability to ACs, boundary cases        |
+| Review Skill                        | Reviews Output From          | Checks                                                  |
+| ----------------------------------- | ---------------------------- | ------------------------------------------------------- |
+| `review-artifact --type=pbi`        | `/refine` (PBI)              | INVEST criteria, acceptance criteria completeness, gaps |
+| `review-artifact --type=story`      | `/story` (stories)           | Vertical slicing quality, dependency tables, SPIDR      |
+| `review-artifact --type=spec-tests` | `/spec [mode=tests]` (specs) | TC coverage, traceability to ACs, boundary cases        |
 
-**Added to workflows:** idea-to-pbi, full-feature-lifecycle, pbi-to-tests, big-feature, greenfield-init
+**Added to workflows:** workflow-idea-to-pbi, workflow-big-feature, workflow-greenfield-init
 
 **Why this matters:** Without review gates, artifacts flow through workflows unchecked. A vague PBI becomes vague stories which become vague tests. Review gates catch quality issues early when they're cheapest to fix.
 
@@ -755,12 +743,10 @@ Workflows are **JSON-defined sequences of skills** stored in `.claude/workflows.
 {
     "bugfix": {
         "name": "Bug Fix",
-        "confirmFirst": false,
         "whenToUse": "User reports a bug, error, crash, failure",
-        "whenNotToUse": "New feature implementation, refactoring",
         "sequence": [
             "scout",
-            "feature-investigation",
+            "investigate",
             "debug",
             "plan",
             "plan-review",
@@ -774,8 +760,8 @@ Workflows are **JSON-defined sequences of skills** stored in `.claude/workflows.
             "changelog",
             "test",
             "docs-update",
-            "watzup",
-            "workflow-end"
+            "workflow-end",
+            "watzup"
         ],
         "preActions": {
             "readFiles": ["docs/project-reference/backend-patterns-reference.md"],
@@ -785,99 +771,73 @@ Workflows are **JSON-defined sequences of skills** stored in `.claude/workflows.
 }
 ```
 
-### 6.2 Workflow Catalog (37 Workflows)
+### 6.2 Workflow Catalog (17 Workflows)
 
 ```
 WORKFLOW CATALOG
 │
-├── DEVELOPMENT (16) ★ includes TDD, E2E, and big-feature workflows
-│   ├── feature ─────────── scout→investigate→plan→tdd-spec→plan→cook→tdd-spec→tdd-spec [direction=sync]→test→docs
-│   ├── feature-with-integration-test ── feature + tdd-spec→plan→integration-test→test ★
-│   ├── big-feature ─────── idea→research→domain→techstack→plan→refine→story→plan2→scaffold→cook→test ★
-│   ├── tdd-feature ─────── scout→investigate→tdd-spec→plan→cook→integration-test→test→docs ★ TDD
-│   ├── bugfix ──────────── scout→investigate→debug→plan→fix→prove-fix→tdd-spec→tdd-spec [direction=sync]→test
-│   ├── hotfix ──────────── scout→plan→fix→prove-fix→tdd-spec→tdd-spec [direction=sync]→test (fast path)
-│   ├── refactor ────────── scout→investigate→plan→code→tdd-spec→tdd-spec [direction=sync]→test→docs
-│   ├── batch-operation ─── plan→code→tdd-spec→tdd-spec [direction=sync]→review→test
-│   ├── migration ───────── scout→investigate→plan→code→test→docs
-│   ├── package-upgrade ─── scout→investigate→plan→code→test
-│   ├── idea-to-pbi ─────── idea→refine→story→tdd-spec→DoR ★ PBI + TDD pipeline
-│   ├── test-spec-update ── review-changes→tdd-spec→tdd-spec [direction=sync]→integration-test→test
-│   ├── test-to-integration scout→integration-test→test→watzup
-│   ├── e2e-from-recording ─ scout→e2e-test→test→watzup ★ E2E from Chrome recording
-│   ├── e2e-update-ui ────── scout→e2e-test→test→watzup ★ Update screenshot baselines
-│   └── e2e-from-changes ─── scout→e2e-test→test→watzup ★ Sync E2E with code changes
+├── DEVELOPMENT (3)
+│   ├── workflow-big-feature
+│   ├── workflow-bugfix
+│   └── workflow-feature
 │
-├── QUALITY & TESTING (8)
-│   ├── quality-audit ───── code-review→plan→code→tdd-spec→review→test
-│   ├── security-audit ──── scout→security→watzup (read-only)
-│   ├── performance ─────── scout→investigate→plan→code→tdd-spec→tdd-spec [direction=sync]→test→sre-review
-│   ├── review-changes ──── review-changes→[arch+domain+perf+int-test+security]→simplifier→code-review→plan→cook→docs-update→watzup (17 steps)
-│   ├── review ────────────── code-review→watzup
-│   ├── testing ───────────── test→workflow-end
-│   ├── test-verify ─────── scout→integration-test→test→integration-test→watzup
-│   └── verification ────── scout→investigate→test→fix→prove-fix→tdd-spec→tdd-spec [direction=sync]→test
+├── REFACTORING (1)
+│   └── workflow-refactor
 │
-├── PLANNING & INCEPTION (5)
-│   ├── greenfield-init ─── idea→research→domain→techstack→plan→scaffold→cook→integration-test→review (40 steps)
-│   ├── pre-development ─── quality-gate→plan→plan-review→plan-validate
-│   ├── investigation ───── scout→investigate (read-only)
-│   ├── design-workflow ─── design-spec→interface-design|frontend-design→code-review
-│   └── release-prep ────── sre-review→quality-gate→status
+├── TESTING (4)
+│   ├── workflow-e2e (--source=changes|recording|update-ui)
+│   ├── workflow-spec-sync
+│   ├── workflow-seed-test-data
+│   └── workflow-write-integration-test
 │
-├── RESEARCH & CONTENT (4)
-│   ├── research ──────────── web-research→deep-research→synthesis→review
-│   ├── business-evaluation ── web-research→deep-research→market→evaluate→review
-│   ├── marketing-strategy ── web-research→deep-research→market→strategy→review
-│   └── course-building ───── web-research→deep-research→course→review
+├── DISCOVERY & PLANNING (6)
+│   ├── workflow-greenfield-init
+│   ├── workflow-idea-to-pbi
+│   ├── workflow-idea-to-spec
+│   ├── workflow-research
+│   ├── workflow-spec-to-pbi
+│   └── workflow-code-to-spec
 │
-├── DOCUMENTATION (3)
-│   ├── documentation ───── scout→investigate→plan→docs-update→review
-│   ├── feature-docs ────── scout→investigate→plan→docs-update→review
-│   └── visualize ─────────── scout→investigate→excalidraw-diagram
+├── DOCUMENTATION & SPEC (1)
+│   └── workflow-feature-spec
 │
-├── REQUIREMENTS & PM (5)
-│   ├── idea-to-pbi ─────── idea→refine→story→prioritize
-│   ├── pbi-to-tests ────── tdd-spec→tdd-spec-review→quality-gate
-│   ├── sprint-planning ─── prioritize→dependency→team-sync
-│   ├── sprint-retro ────── status→retro
-│   └── pm-reporting ────── status→dependency
+├── REVIEW (1)
+│   └── workflow-review-changes
 │
-├── PROCESS & HANDOFFS (6)
-│   ├── full-feature-lifecycle ── idea→refine→design→plan→cook→test→accept (21 steps)
-│   ├── ba-dev-handoff ── review→quality-gate→handoff→plan
-│   ├── design-dev-handoff ── design→review→handoff→plan
-│   ├── dev-qa-handoff \u2500\u2500 handoff\u2192tdd-spec
-│   ├── qa-po-acceptance ── quality-gate→handoff→acceptance
-│   └── deployment ──────── scout→investigate→plan→code→review→test
+└── DESIGN & VISUALIZATION (1)
+    └── workflow-visualize
 │
 ```
 
-### 6.3 Workflow Detection & Confirmation
+> Removed in the 2026-06 catalog prune (use the equivalent skill directly instead of a workflow):
+> tdd-feature → `feature` (spec-driven with tests by default) · test-to-integration / test-verify → `write-integration-test` ·
+> pbi-to-tests → `/spec [mode=tests]` · quality-audit → `review-changes` · security-audit → `/security-review` ·
+> performance → `/performance-review` · investigation → `/investigate` · migration → `/db-migrate` ·
+> package-upgrade → `/package-upgrade` skill · release-prep → `/production-readiness-review` + `/quality-gate-review` ·
+> batch-operation / verification / deployment → direct execution with `/plan` + `/review-changes`.
+>
+> Removed in the 2026-06-13 prune: full-feature-lifecycle → `workflow-idea-to-pbi` (now idea→spec→pbi) then `workflow-feature` ·
+> documentation → `/docs-update` skill (or the docs-update step in `workflow-feature`) · spec-index → `/spec-index` skill (still a step in `workflow-spec-to-pbi`) ·
+> design-workflow → `/design-spec` → `/interface-design` (product UIs) or `/frontend-design` (marketing/creative).
+
+### 6.3 Workflow Detection & Auto-Selection
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Router as workflow-router.cjs<br/>(UserPromptSubmit hook)
-    participant Ask as AskUserQuestion
+    participant Model as Model<br/>(reads static catalog in CLAUDE.md)
     participant Skill as Skill Engine
     participant Todo as Task System
 
-    User->>Router: "There's a bug in employee validation"
+    User->>Model: "There's a bug in employee validation"
 
-    Note over Router: Keyword analysis:<br/>"bug" → bugfix workflow<br/>Confidence: HIGH
+    Note over Model: Keyword analysis:<br/>"bug" → bugfix workflow<br/>Confidence: HIGH
 
-    Router->>Router: Inject workflow catalog<br/>into LLM context
+    Model->>Model: Read the static workflow catalog<br/>already present in context
 
-    Note over Router: LLM reads catalog,<br/>detects "bugfix" match
+    Note over Model: Model matches "bugfix",<br/>auto-selects best path
 
-    Router->>Ask: Present options:<br/>1. Activate Bugfix (Recommended)<br/>2. Execute directly
-
-    Ask->>User: "Detected: Bugfix workflow.<br/>Activate? (scout→debug→fix→prove-fix→test)"
-
-    User->>Ask: Confirms: Activate Bugfix
-
-    Ask->>Skill: /workflow-start bugfix
+    Model->>Skill: /start-workflow workflow-bugfix
 
     Skill->>Todo: Create tasks for ALL steps:<br/>1. [Bugfix] /scout<br/>2. [Bugfix] /investigate<br/>3. [Bugfix] /debug-investigate<br/>4. [Bugfix] /plan<br/>...17 steps total
 
@@ -888,10 +848,7 @@ sequenceDiagram
     end
 ```
 
-**Why confirm first?** Two reasons:
-
-1. **Prevents misrouting** — "fix this test" could be `bugfix` or `test` workflow
-2. **User agency** — Developer may want to skip investigation for a known issue
+**Auto-select, never confirm-first.** The AI evaluates direct execution vs skill vs workflow fit and activates the best match itself — no workflow-selection confirmation prompt. The explicit-invocation exception still applies: when the user names a workflow/skill, that exact one runs.
 
 ### 6.4 Pre-Actions — Context Loading Before Execution
 
@@ -919,9 +876,9 @@ The hook and skill system is **project-agnostic**. All project-specific knowledg
 ```mermaid
 graph LR
     subgraph "Generic Framework (reusable)"
-        H[64 Hook Files]
-        S[256 Skills]
-        W[37 Workflows]
+        H[15 Hook Files]
+        S[156 Skills]
+        W[17 Workflows]
     end
 
     subgraph "Project-Specific (swappable)"
@@ -1009,13 +966,13 @@ Beyond `project-config.json`, `settings.json` governs Claude Code's runtime beha
 | `enabledMcpjsonServers`           | `["context7","github"]`                                                           | Only context7 (library docs) and github MCP active; memory/sequential-thinking disabled (framework handles these natively) |
 | `disabledMcpjsonServers`          | `["chrome-devtools","mongodb","postgres","figma","memory","sequential-thinking"]` | Explicit disable list prevents accidental re-enable                                                                        |
 
-**Why disable built-in memory?** The framework's external state persistence (swap engine, todo-tracker, lessons.md, workflow-state) is more controlled and transparent than Claude Code's automatic memory. Disabling built-in memory prevents the two systems from conflicting.
+**Why disable built-in memory?** The framework's external state persistence (disk-backed task state re-read via `TaskList`, `plans/` files, `lessons.md`, workflow-state) is more controlled and transparent than Claude Code's automatic memory. Disabling built-in memory prevents the two systems from conflicting.
 
 ### 7.3 How Hooks Consume Config
 
 ```mermaid
 flowchart TB
-    A["AI edits: src/services/orders/create-order.ts"] --> B["backend-context.cjs triggers"]
+    A["AI edits: src/services/orders/create-order.ts"] --> B["Path → patternsDoc routing (now via static CLAUDE.md / SKILL.md guidance)"]
     B --> C["Load project-config.json"]
     C --> D{"Match pathRegexes"}
     D -->|"src/services/ matches Backend Services"| E["Read backend-patterns-reference.md"]
@@ -1049,7 +1006,6 @@ This section maps each framework mechanism to the **AI agent best practice** it 
 │                                                                   │
 │  Event                │ Injected Context              │ Hook     │
 │───────────────────────│───────────────────────────────│──────────│
-│  Every user prompt    │ Workflow catalog               │ router  │
 │  Every user prompt    │ Development rules              │ rules   │
 │  Every user prompt    │ Learned lessons                │ lessons │
 │  Edit backend file    │ Backend patterns (up to 60KB)  │ backend │
@@ -1061,8 +1017,7 @@ This section maps each framework mechanism to the **AI agent best practice** it 
 │  Subagent spawned     │ Project context + lessons      │ sub-init│
 │  Edit|Write Agent|Skill│ Critical thinking + AI guardrails│ mindset│
 │  Read|Grep|Glob|Bash  │ Lightweight critical-thinking  │ mindset-compact│
-│  Write docs/business-features/**│ 17-section format + TC rules│ feature-docs-ctx│
-│  Write docs/specs/**│ TC naming + Section 15 rules │ test-specs-ctx│
+│  Write docs/specs/**  │ 8-section format + TC rules   │ buildSpecContext│
 │                                                                   │
 │  DEDUP: Each injection checks for its marker in last 300 lines  │
 │  of transcript. Skips if already present. Re-injects after      │
@@ -1082,8 +1037,8 @@ graph TB
     end
 
     subgraph "The Reminder Solution"
-        R1[prompt-context-assembler.cjs<br/>Re-injects rules + lessons EVERY prompt]
-        R2[lessons-injector.cjs<br/>Re-injects lessons on edit context]
+        R1[Static rules + workflow catalog in CLAUDE.md + SKILL.md;<br/>re-read by the model EVERY prompt]
+        R2[After compaction the model re-reads<br/>CLAUDE.md / SKILL.md → rules + lessons restored]
     end
 
     F1 --> F2 --> F3
@@ -1097,41 +1052,42 @@ graph TB
     style R2 fill:#4CAF50,color:white
 ```
 
-**Key insight:** Rules in CLAUDE.md are read once at session start. Rules injected via hooks are re-read on every prompt. The hooks turn one-time instructions into persistent reminders.
+**Key insight:** The critical rules and workflow catalog are carried statically in `CLAUDE.md` / `SKILL.md` (with primacy-recency bookending) and re-read by the model every prompt. Static placement, not a runtime injection hook, turns one-time instructions into persistent reminders — and the same files are re-read after compaction to restore them.
 
-### 8.3 Workflow Confirmation — Preventing AI Autopilot
+### 8.3 Workflow Auto-Selection — Preventing AI Misrouting
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  BEST PRACTICE: Always Confirm Before Acting                     │
+│  BEST PRACTICE: Auto-Select the Best Route, Never Confirm-First  │
 │                                                                   │
 │  PROBLEM: AI detects "feature" keyword and immediately starts    │
-│  implementing without confirming scope or approach.              │
+│  implementing without evaluating whether a workflow, a single    │
+│  skill, or direct execution fits the task best.                  │
 │                                                                   │
-│  SOLUTION: Mandatory AskUserQuestion before workflow activation  │
+│  SOLUTION: Per-prompt routing evaluation — AI scores candidates  │
+│  (direct / skill / workflow) against intent and activates the    │
+│  best match itself. No confirmation prompt.                       │
 │                                                                   │
 │  FLOW:                                                            │
 │                                                                   │
 │  User: "Add a delete button to user profile"                     │
 │                    ↓                                              │
-│  AI detects: "feature" workflow                                   │
+│  AI evaluates: direct edit? single skill? feature workflow?      │
 │                    ↓                                              │
-│  AI MUST ATTENTION ask:                                                     │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Detected: Feature Implementation workflow.                 │  │
-│  │  Steps: scout→investigate→plan→cook→test→docs              │  │
-│  │                                                              │  │
-│  │  ○ Activate Feature Workflow (Recommended)                  │  │
-│  │  ○ Execute directly without workflow                        │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                    ↓                                              │
-│  User confirms → Workflow activates                               │
-│  User declines → Direct execution (no step enforcement)          │
+│  Best match: feature workflow → activates immediately            │
+│  (steps: scout→investigate→spec [mode=tests]→plan→feature-implement→test→docs)│
 │                                                                   │
-│  WHY: Prevents misrouting. "Fix this test" could be:             │
+│  EXCEPTION: explicit invocation — when the user names a          │
+│  workflow or skill (start-workflow X, slash-skill), that exact   │
+│  one runs without re-evaluation.                                  │
+│                                                                   │
+│  WHY: Prevents misrouting without blocking. "Fix this test"      │
+│  could be:                                                        │
 │  - bugfix workflow (if test reveals a bug)                       │
-│  - test workflow (if test code needs fixing)                     │
-│  - investigation workflow (if user wants to understand test)     │
+│  - write-integration-test workflow (if test code needs fixing)   │
+│  - direct investigate skill (to understand the test)             │
+│  Intent analysis picks one; the user can always interrupt and    │
+│  redirect — cheaper than confirming every routine task.          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1150,7 +1106,7 @@ flowchart TB
     I -->|"Clarification needed"| H
     I -->|"Plan approved"| J["Implementation begins"]
 
-    J --> K["edit-enforcement.cjs: warns at 4 files, re-warns at 8"]
+    J --> K["CLAUDE.md task rule: one TaskCreate per change,<br/>final review todo (model-driven)"]
 
     style H fill:#FF9800,color:white
     style K fill:#f44336,color:white
@@ -1270,9 +1226,9 @@ flowchart TB
     end
 
     subgraph "Lesson Persisted"
-        P1[lessons-injector.cjs<br/>Injects on EVERY prompt]
-        P2[lessons-injector.cjs<br/>Injects on EVERY edit]
-        P3[subagent-init-*.cjs (18 part-hooks)<br/>Injects into subagents]
+        P1[Static read-lessons contract in<br/>CLAUDE.md / SKILL.md (every prompt)]
+        P2[After compaction the model re-reads<br/>the static contract → lessons restored]
+        P3[Agent .md files carry the<br/>lessons read contract into subagents]
     end
 
     subgraph "Mistake Prevented"
@@ -1290,10 +1246,10 @@ flowchart TB
 **Properties:**
 
 - Max 50 lessons (FIFO trim — oldest removed when full)
-- Injected with dedup on prompt (checks last 50 transcript lines)
-- Injected WITHOUT dedup on edit (performance: avoids I/O per edit)
+- Read-lessons contract delivered statically via `CLAUDE.md` / `SKILL.md` (no runtime inject hook)
+- Restored after compaction by the model re-reading the static read-lessons contract
 - Persists across sessions (stored in `docs/project-reference/lessons.md`)
-- Shared with subagents (via 18 `subagent-init-*.cjs` part-hooks)
+- Shared with subagents via the lessons read contract baked into the agent `.md` files
 
 ### 8.9 TDD Workflow & Unified Test Specification System
 
@@ -1311,14 +1267,14 @@ All test-related skills use a **single TC ID format** across the entire project,
 │  Example: TC-GM-001 (Goal Management, test case 1)               │
 │  Example: TC-CI-025 (Check-In, test case 25)                     │
 │                                                                   │
-��  Feature Codes (from feature-docs-reference.md):                 │
+��  Feature Codes (from feature-spec-reference.md):                 │
 │  Define 2-3 letter codes per domain feature.                    │
 │  Examples: GM (Goal Mgmt), CI (Check-In), AUTH (Auth),          │
 │            CAN (Candidate), JOB (Job), EMP (Employee)           │
-│  Source: docs/project-reference/feature-docs-reference.md       │
+│  Source: docs/project-reference/feature-spec-reference.md       │
 │                                                                   │
-│  SOURCE OF TRUTH: Feature docs Section 15 (canonical registry)  │
-│  DASHBOARD: docs/specs/ (aggregated cross-module views)    │
+│  SOURCE OF TRUTH: Feature docs Section 8 (canonical registry)   │
+│  DERIVED INDEX: docs/specs/{Bucket}/INDEX.md (regenerable nav)  │
 │  CODE LINK: Test annotation linking test to TC ID               │
 │             e.g., tag/trait/decorator in test files               │
 └─────────────────────────────────────────────────────────────────┘
@@ -1331,12 +1287,12 @@ Four skills form a connected test specification pipeline:
 ```mermaid
 flowchart LR
     subgraph "Spec Generation"
-        TS["/tdd-spec<br/>Unified TC Writer"]
+        TS["/spec [mode=tests]<br/>Unified TC Writer"]
     end
 
     subgraph "Persistence"
-        FD["Feature Doc<br/>Section 15<br/>(Source of Truth)"]
-        TSD["/tdd-spec [direction=sync]<br/>Dashboard Sync"]
+        FD["Feature Doc<br/>Section 8<br/>(Source of Truth)"]
+        TSD["/spec [mode=sync]<br/>Dashboard Sync"]
         DASH["docs/specs/<br/>(Cross-Module Dashboard)"]
     end
 
@@ -1357,51 +1313,47 @@ flowchart LR
     style CODE fill:#FF9800,color:white
 ```
 
-#### `/tdd-spec` — The Core Skill (3 Modes)
+#### `/spec [mode=tests]` — The Core Skill (3 Modes)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  /tdd-spec — UNIFIED TC WRITER                                    │
+│  /spec [mode=tests] — UNIFIED TC WRITER                           │
 │                                                                   │
 │  Mode 1: TDD-FIRST                                               │
 │  Input: PBI / user story (no code yet)                           │
 │  Action: Generate TC specs from requirements                     │
 │  Evidence: "TBD (pre-implementation)"                            │
-│  Next: /integration-test → /plan → /cook                        │
+│  Next: /integration-test → /plan → /feature-implement                        │
 │                                                                   │
 │  Mode 2: IMPLEMENT-FIRST                                         │
 │  Input: Existing codebase (code already written)                 │
 │  Action: Analyze code paths → generate TC specs                  │
-│  Evidence: file:line references to actual code                   │
+│  Evidence: [Source: namespace/service/id] abstract anchor        │
 │  Next: /integration-test → /test                                 │
 │                                                                   │
 │  Mode 3: UPDATE                                                   │
 │  Input: Existing TCs + code changes                              │
 │  Action: Diff TCs against current code → find gaps               │
-│  Evidence: Updated file:line references                          │
+│  Evidence: updated [Source: namespace/service/id] anchors        │
 │  Next: /test → /review-changes                                   │
 │                                                                   │
 │  ALL MODES:                                                       │
-│  • Write TCs to feature doc Section 15 (canonical)              │
+│  • Write TCs to feature doc Section 8 (canonical)               │
 │  • Use AskUserQuestion for TC review with user                  │
-│  • Optionally sync to docs/specs/ dashboard                │
+│  • Sync each §8 TC's IntegrationTest field to test code         │
 │  • Unified format: TC-{FEATURE}-{NNN}                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 #### TDD Workflows
 
-Dedicated workflows support test-driven development:
+Dedicated registered workflows and workflow trigger skills support test-driven development:
 
-| Workflow                          | Sequence                                                                                                    | Use Case                                                                                                  |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **idea-to-pbi**                   | `/idea` → `/refine` → `/story` → `/tdd-spec` → `/dor-gate`                                                  | Go from raw idea to grooming-ready PBI, stories, and reviewed test specifications                         |
-| **tdd-feature**                   | `/scout` → `/investigate` → `/tdd-spec` → `/plan` → `/cook` → `/integration-test` → `/test` → ...           | Full TDD cycle: write test specs FIRST, then implement, then generate tests and verify                    |
-| **feature-with-integration-test** | `/scout` → `/investigate` → `/plan` → `/tdd-spec` → `/plan` → `/cook` → `/integration-test` → `/test` → ... | Feature workflow with spec-first integration testing: write specs, refine plan, then implement and verify |
-| **pbi-to-tests**                  | `/tdd-spec` → `/quality-gate`                                                                               | Quick path from existing PBI to test specifications using unified TC format                               |
-| **e2e-from-recording**            | `/scout` → `/e2e-test` → `/test` → `/watzup`                                                                | Generate Playwright E2E tests from Chrome DevTools recordings                                             |
-| **e2e-update-ui**                 | `/scout` → `/e2e-test` → `/test` → `/watzup`                                                                | Update E2E screenshot baselines after UI changes                                                          |
-| **e2e-from-changes**              | `/scout` → `/e2e-test` → `/test` → `/watzup`                                                                | Sync E2E tests when test specs or source code changes                                                     |
+| Workflow                                           | Sequence                                                                                                                | Use Case                                                                                         |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **idea-to-pbi**                                    | `/idea` → `/refine` → `/story` → `/spec [mode=tests]` → `/dor-gate`                                                     | Go from raw idea to grooming-ready PBI, stories, and reviewed test specifications                |
+| **feature**                                        | `/scout` → `/investigate` → `/spec` → `/spec [mode=tests]` → `/plan` → `/feature-implement` → `/integration-test` → ... | Spec-driven with tests by default: test specs written and reviewed FIRST, then implement         |
+| **e2e** (`--source=recording\|update-ui\|changes`) | `/scout` → `/e2e-test` → `/test` → `/docs-update` → `/workflow-end` → `/watzup`                                         | Generate from a recording, update screenshot baselines, or sync E2E tests to spec/source changes |
 
 #### Interactive Idea & Requirement Capture
 
@@ -1419,7 +1371,7 @@ The `/idea` and `/refine` skills include interactive discovery to improve test-d
 /refine — Phase 5.5: Testability Assessment
 ├── Testing approach: TDD-first vs Implement-first vs Parallel
 ├── Test levels: Integration only, Integration + E2E, Unit + Integration + E2E
-└── AC-to-TC mapping table (seed for /tdd-spec)
+└── AC-to-TC mapping table (seed for /spec [mode=tests])
 ```
 
 ### 8.10 Full Development Lifecycle Coverage
@@ -1451,7 +1403,7 @@ The framework supports AI-assisted development across **every phase** of the sof
 │                     │ /story, /prioritize    │ acceptance criteria│
 │                     │ /design-spec           │ with TC seeds      │
 │─────────────────────│────────────────────────│────────────────────│
-│  3. TEST SPECS      │ /tdd-spec (unified)    │ TDD-first or      │
+│  3. TEST SPECS      │ /spec [mode=tests]     │ TDD-first or      │
 │                     │ idea-to-pbi workflow   │ implement-first    │
 │                     │                        │ test case gen      │
 │─────────────────────│────────────────────────│────────────────────│
@@ -1459,7 +1411,7 @@ The framework supports AI-assisted development across **every phase** of the sof
 │                     │ /plan-validate         │ plans with user    │
 │                     │ /why-review            │ Q&A validation     │
 │─────────────────────│────────────────────────│────────────────────│
-│  5. IMPLEMENTATION  │ /cook                  │ Pattern-enforced   │
+│  5. IMPLEMENTATION  │ /feature-implement                  │ Pattern-enforced   │
 │                     │ /fix, /refactoring     │ coding with auto   │
 │                     │ feature workflow        │ context injection  │
 │─────────────────────│────────────────────────│────────────────────│
@@ -1467,23 +1419,22 @@ The framework supports AI-assisted development across **every phase** of the sof
 │                     │ /integration-test-review│ TDD specs; review │
 │                     │ /integration-test-verify│ quality; verify   │
 │                     │ /test, /webapp-testing │ spec traceability  │
-│                     │ tdd-feature workflow   │ build verification │
+│                     │ feature workflow       │ build verification │
 │─────────────────────│────────────────────────│────────────────────│
 │  7. CODE REVIEW     │ /code-review           │ Automated quality  │
 │                     │ /review-changes        │ checks, pattern    │
-│                     │ /prove-fix, /sre-review│ compliance, proofs │
+│                     │ /prove-fix, /production-readiness-review│ compliance, proofs │
 │─────────────────────│────────────────────────│────────────────────│
 │  8. DOCUMENTATION   │ /docs-update           │ Auto-detect stale  │
-│                     │ /feature-docs          │ docs, generate     │
+│                     │ /spec                  │ docs, generate     │
 │                     │ /changelog             │ changelogs, sync   │
 │─────────────────────│────────────────────────│────────────────────│
-│  9. HANDOFF         │ /handoff, /acceptance  │ Structured role    │
-│                     │ /qc-specialist         │ transitions with   │
-│                     │ po-ba/ba-dev workflows │ quality gates      │
+│  9. SIGN-OFF        │ /quality-gate-review         │ Quality gates,     │
+│                     │ /review-artifact       │ artifact review    │
 │─────────────────────│────────────────────────│────────────────────│
-│  10. OPERATIONS     │ /devops, /deployment   │ Infrastructure     │
-│                     │ /sre-review            │ automation and     │
-│                     │ deployment workflow    │ readiness checks   │
+│  10. OPERATIONS     │ /devops                │ Infrastructure     │
+│                     │ /production-readiness-review            │ automation and     │
+│                     │                        │ readiness checks   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1491,7 +1442,7 @@ The framework supports AI-assisted development across **every phase** of the sof
 
 #### Integration Testing — 3-Step Sequence
 
-Testing is not a single step. The framework breaks it into three discrete skills enforced across all major development workflows (feature, bugfix, refactor, hotfix, big-feature, tdd-feature, and 14 others):
+Testing is not a single step. The framework breaks it into discrete skills enforced across major development workflows such as `feature`, `bugfix`, `refactor`, `big-feature`, and `write-integration-test`:
 
 | Step         | Skill                      | Purpose                                                                              |
 | ------------ | -------------------------- | ------------------------------------------------------------------------------------ |
@@ -1508,25 +1459,19 @@ This section provides concrete prompts and expected flows for every test generat
 #### Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  TEST SPECIFICATION ARCHITECTURE                                │
-│                                                                 │
-│  SOURCE OF TRUTH           DASHBOARD              CODE LINK     │
-│  ┌───────────────┐    ┌──────────────────┐   ┌──────────────┐  │
-│  │ Feature Docs   │───→│ docs/specs/  │   │ Test Code    │  │
-│  │ Section 15     │    │ {Module}/README   │   │ (annotated   │  │
-│  │ TC-{FEATURE}-{NNN} │←│ (cross-module     │   │  with TC ID  │  │
-│  │                │    │  dashboard)       │   │  per test)   │  │
-│  └───────┬───────┘    └──────────────────┘   └──────┬───────┘  │
-│          │                                           │          │
-│          └───────── TRACEABILITY ────────────────────┘          │
-│                                                                 │
-│  Skills:  /tdd-spec (write TCs) → /integration-test (test code) │
-│           /tdd-spec [direction=sync] (sync dashboard)                     │
-│                                                                 │
-│  Workflows: pbi-to-tests, tdd-feature, test-spec-update,       │
-│             test-to-integration                                 │
-└─────────────────────────────────────────────────────────────────┘
+TEST SPECIFICATION ARCHITECTURE
+
+  SOURCE OF TRUTH (canonical)            CODE LINK (test impl)
+  ┌─────────────────────────┐         ┌─────────────────────────┐
+  │ Feature Spec Section 8   │ ──────→ │ Integration Test Code    │
+  │ TC-{FEATURE}-{NNN}       │ ←────── │ (annotated with TC ID,   │
+  │ — the canonical registry │         │  one per test method)    │
+  └─────────────────────────┘         └─────────────────────────┘
+              └──────────── TRACEABILITY ───────────┘
+
+  Skills:    /spec [mode=tests] (write §8 TCs) → /integration-test (test code)
+             /spec [mode=sync]  (forward-sync §8 ↔ test code)
+  Workflows: workflow-feature (spec-driven), workflow-spec-sync, workflow-write-integration-test
 ```
 
 #### Case 1: Existing Code → Generate Test Specs
@@ -1537,31 +1482,30 @@ This section provides concrete prompts and expected flows for every test generat
 
 ```
 # Direct skill invocation
-/tdd-spec generate test specs for Orders feature from existing code
+/spec [mode=tests] generate test specs for Orders feature from existing code
 
 # With specific command
-/tdd-spec implement-first mode for CreateOrderCommand
-
-# Workflow (if starting fresh on a module)
-/workflow-start pbi-to-tests
+/spec [mode=tests] implement-first mode for CreateOrderCommand
 ```
+
+> No dedicated workflow — invoke `/spec [mode=tests]` directly (the former `pbi-to-tests` workflow was removed).
 
 **What happens:**
 
-1. `/tdd-spec` detects **implement-first mode** (code exists, no/incomplete TCs)
+1. `/spec [mode=tests]` detects **implement-first mode** (code exists, no/incomplete TCs)
 2. Greps for commands, queries, entities in target service
 3. Traces code paths: Controller → Command → Handler → Entity → Event Handler
-4. Generates TC outlines with `Evidence: {file}:{line}` references
+4. Generates TC outlines with `Evidence: [Source: namespace/service/id]` abstract anchors
 5. Presents TC list via `AskUserQuestion` for interactive review
-6. Writes approved TCs to feature doc Section 15 (canonical)
-7. Optionally updates `docs/specs/` dashboard
+6. Writes approved TCs to feature doc Section 8 (canonical TC registry)
+7. Records each TC's `IntegrationTest` field (test path or `Untested`)
 
 **Output locations:**
 
-| Artifact                     | Path                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------ |
-| TCs (canonical)              | `docs/business-features/{App}/detailed-features/{feature}.md` Section 15 |
-| Dashboard indexes (optional) | `docs/specs/README.md` + `docs/specs/PRIORITY-INDEX.md`                  |
+| Artifact                        | Path                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| TCs (canonical)                 | `docs/specs/{Bucket}/README.{Feature}.md` Section 8                                     |
+| Derived system index (optional) | `docs/specs/{Bucket}/INDEX.md` — regenerate via `/spec-index` (never a source of truth) |
 
 ---
 
@@ -1573,102 +1517,95 @@ This section provides concrete prompts and expected flows for every test generat
 
 ```
 # Direct skill invocation
-/tdd-spec create test specs from PBI for order processing feature
+/spec [mode=tests] create test specs from PBI for order processing feature
 
-# Full TDD workflow (recommended)
-/workflow-start tdd-feature
+# Full spec-driven workflow (recommended — specs + tests before code by default)
+/start-workflow workflow-feature
 
 # Idea-to-PBI pipeline with test specs
-/workflow-start idea-to-pbi
+/start-workflow workflow-idea-to-pbi
 ```
 
 **What happens:**
 
-1. `/tdd-spec` detects **TDD-first mode** (PBI exists, no implementation yet)
+1. `/spec [mode=tests]` detects **TDD-first mode** (PBI exists, no implementation yet)
 2. Reads PBI from `team-artifacts/pbis/` or user-provided document
 3. Extracts acceptance criteria, identifies test categories (CRUD, validation, permissions, workflows, edge cases)
 4. Generates TC outlines with `Evidence: TBD (pre-implementation)`
 5. Interactive review via `AskUserQuestion`
-6. Writes TCs to feature doc Section 15
+6. Writes TCs to feature doc Section 8
 7. Suggests: `/integration-test` to generate test stubs, or `/plan` to start implementation
 
-**TDD workflow sequence:**
-
-```
-tdd-feature: scout → investigate → tdd-spec → plan → plan-review →
-             plan-validate → why-review → cook → integration-test →
-             test → code-simplifier → review-changes → code-review →
-             sre-review → changelog → docs-update → watzup → workflow-end
-```
+**Workflow sequence:** the `feature` workflow is spec-driven with tests by default — see the full sequence under Case 2b below (former `tdd-feature` workflow was merged into it).
 
 #### Case 2b: Feature Implementation WITH Integration Tests
 
 **Scenario:** You want to implement a feature AND ensure integration test coverage — write specs first, refine the plan with test strategy, then implement and generate tests.
 
-**Key difference from tdd-feature:** Both write specs before implementation. This workflow includes a dedicated re-planning step after specs to refine the implementation plan with test infrastructure needs.
+> **Merged into `feature` (2026-06).** The former standalone `feature-with-integration-test` workflow was a ~85% subset of `feature`; it has been merged. The `feature` workflow now natively carries the spec-first integration-test path (`/integration-test → /integration-test-review → /integration-test-verify`) plus the entity-conditional `/domain-analysis` + `/review-domain-entities` steps. Use the `feature` workflow for this scenario.
+
+**Key points:** `feature` writes and reviews test specs before implementation (spec-driven with tests by default, covering the former `tdd-feature` use case), includes a dedicated re-planning step after specs to refine the implementation plan with test infrastructure needs, and a `/spec [mode=sync]` step that keeps spec §8 TCs and integration-test code aligned.
 
 ```bash
-/workflow-start feature-with-integration-test
+/start-workflow workflow-feature
 ```
 
 ```
-feature-with-integration-test:
-  scout → investigate → plan → plan-review → plan-validate → why-review →
-  tdd-spec → tdd-spec-review → plan → plan-review →
-  cook → integration-test → test → code-simplifier → review-changes →
-  code-review → sre-review → security → performance → changelog →
-  test → docs-update → watzup → workflow-end
+feature:
+  scout → investigate → domain-analysis → why-review → spec →
+  plan → plan-review → plan-validate → why-review →
+  spec [mode=tests] → why-review → review-artifact --type=spec-tests → plan → plan-review →
+  feature-implement → review-domain-entities → spec [mode=tests] → why-review → review-artifact --type=spec-tests →
+  spec [mode=sync] → integration-test → integration-test-review →
+  integration-test-verify → workflow-review-changes → production-readiness-review →
+  security-review → changelog → test → docs-update → workflow-end → watzup
 ```
 
-**Note:** This workflow includes a second planning round (`plan → plan-review`) that refines the implementation plan with test strategy after specs are written, and two `/test` runs — one after integration test generation and one final regression check.
+**Note:** `feature` includes a second planning round (`plan → plan-review`) that refines the implementation plan with test strategy after specs are written, and two verification points after implementation — `/integration-test-verify` following integration-test generation and the final `/test` regression check before docs.
 
 ---
 
-#### Case 3: Sync Test Specs ↔ Feature Docs (Bidirectional)
+#### Case 3: Sync §8 TCs ↔ Integration Test Code (Bidirectional)
 
-**Scenario:** Test specs exist in `docs/specs/` but not in feature docs Section 15, or vice versa. Need to reconcile.
+**Scenario:** Section 8 TCs and the integration test code have drifted — TCs exist with no covering test, or tests exist with no canonical §8 TC. Need to reconcile. Section 8 is canonical; test code implements it.
 
 **Prompt examples:**
 
 ```
-# Forward sync: feature docs → specs/ dashboard
-/tdd-spec [direction=sync] sync test specs for Orders module
+# Forward sync: §8 TCs → flag uncovered tests (default, safe direction)
+/spec [mode=sync] sync test specs for Orders module
 
-# Reverse sync: specs/ → feature docs
-/tdd-spec [direction=sync] reverse sync to feature docs for Orders
+# Reverse sync: test code → §8 (emergency recovery only, needs confirmation)
+/spec [mode=sync] reverse sync to feature docs for Orders
 
 # Full bidirectional reconciliation
-/tdd-spec sync test specs for Orders feature
-
-# Bidirectional with dashboard update
-/tdd-spec [direction=sync] full sync for Orders module
+/spec [mode=sync] sync test specs for Orders feature
 ```
 
-**What happens (bidirectional via /tdd-spec sync mode):**
+**What happens (bidirectional via /spec [mode=sync]):**
 
-1. Reads feature doc Section 15 TCs
-2. Reads `docs/specs/README.md` and `docs/specs/PRIORITY-INDEX.md` TCs
-3. Greps for TC annotations (e.g., test tags/traits) in test files
-4. Builds 3-way comparison:
+1. Reads feature doc Section 8 TCs (the canonical registry)
+2. Greps for TC annotations (e.g., test tags/traits) in the integration test code
+3. Builds a 2-way comparison:
 
 ```
-| TC ID     | Feature Doc? | specs/? | Test Code? | Action           |
-| --------- | ------------ | ------- | ---------- | ---------------- |
-| TC-GM-001 | ✅            | ✅       | ✅          | None             |
-| TC-GM-025 | ✅            | ❌       | ✅          | Add to dashboard |
-| TC-GM-030 | ❌            | ✅       | ❌          | Add to feat doc  |
+| TC ID     | §8 (canonical)? | Test Code? | Action                             |
+| --------- | --------------- | ---------- | ---------------------------------- |
+| TC-GM-001 | ✅              | ✅         | None — synced                      |
+| TC-GM-025 | ✅              | ❌         | Flag uncovered → /integration-test |
+| TC-GM-030 | ❌              | ✅         | Back-fill §8 (emergency only)      |
 ```
 
-5. Reconciles: writes missing TCs to whichever system lacks them
-6. **Feature docs remain source of truth** — conflicts use feature doc version
+4. Forward (default): §8 is the source — flag every TC with no covering test; update each TC's `IntegrationTest` field once a test exists.
+5. Reverse (**emergency recovery only**): back-fill §8 for tests that exist without a canonical TC, with explicit user confirmation and a recovery report. §8 always wins conflicts.
 
 **Direction detection keywords:**
 
-| User says                              | Direction                       | Skill                        |
-| -------------------------------------- | ------------------------------- | ---------------------------- |
-| "sync test specs", "update dashboard"  | Forward (feature docs → specs/) | `/tdd-spec [direction=sync]` |
-| "sync to feature docs", "reverse sync" | Reverse (specs/ → feature docs) | `/tdd-spec [direction=sync]` |
-| "full sync", "bidirectional"           | Both directions                 | `/tdd-spec` sync mode        |
+| User says                              | Direction                           | Skill               |
+| -------------------------------------- | ----------------------------------- | ------------------- |
+| "sync test specs", "sync to tests"     | Forward (§8 → flag uncovered tests) | `/spec [mode=sync]` |
+| "reverse sync", "back-fill from tests" | Reverse (test code → §8, emergency) | `/spec [mode=sync]` |
+| "full sync", "bidirectional"           | Both directions                     | `/spec [mode=sync]` |
 
 ---
 
@@ -1680,33 +1617,33 @@ feature-with-integration-test:
 
 ```
 # After a bug fix (detects git changes automatically)
-/tdd-spec update test specs after bugfix
+/spec [mode=tests] update test specs after bugfix
 
 # After code changes
-/tdd-spec update test specs based on current changes
+/spec [mode=tests] update test specs based on current changes
 
 # After a PR
-/tdd-spec update test specs from PR #123
+/spec [mode=tests] update test specs from PR #123
 
 # Full workflow (recommended for significant changes)
-/workflow-start test-spec-update
+/start-workflow workflow-spec-sync
 ```
 
 **What happens:**
 
-1. `/tdd-spec` detects **update mode** (existing TCs + code changes/bugfix/PR)
-2. Reads existing Section 15 TCs
+1. `/spec [mode=tests]` detects **update mode** (existing TCs + code changes/bugfix/PR)
+2. Reads existing Section 8 TCs
 3. Runs `git diff` (or `git diff main...HEAD` for PRs) to find code changes
 4. Identifies: new commands/queries not covered, changed behaviors, removed features
 5. For bugfixes: adds a **regression TC** (e.g., `TC-GM-040: Regression — goal title validation bypass`)
 6. Generates gap analysis
-7. Updates **both** feature docs Section 15 AND `docs/specs/` dashboard
+7. Updates feature docs Section 8 (canonical) and each affected TC's `IntegrationTest` field
 8. Suggests: `/integration-test` to generate/update tests for changed TCs
 
-**test-spec-update workflow sequence:**
+**spec-sync workflow sequence:**
 
 ```
-test-spec-update: review-changes → tdd-spec → tdd-spec [direction=sync] →
+spec-sync: review-changes → spec [mode=tests] → spec [mode=sync] →
                   integration-test → test → workflow-end
 ```
 
@@ -1716,7 +1653,7 @@ test-spec-update: review-changes → tdd-spec → tdd-spec [direction=sync] →
 
 #### Case 5: Test Specs → Generate Integration Tests
 
-**Scenario:** Test specifications exist in feature docs Section 15 (or `docs/specs/`). Now generate integration test code.
+**Scenario:** Test specifications exist in feature docs Section 8 (or `docs/specs/`). Now generate integration test code.
 
 **Prompt examples:**
 
@@ -1728,15 +1665,15 @@ test-spec-update: review-changes → tdd-spec → tdd-spec [direction=sync] →
 /integration-test
 
 # Full workflow
-/workflow-start test-to-integration
+/start-workflow workflow-write-integration-test
 
-# After /tdd-spec created specs
-/tdd-spec → /integration-test
+# After /spec [mode=tests] created specs
+/spec [mode=tests] → /integration-test
 ```
 
 **What happens:**
 
-1. `/integration-test` reads feature doc Section 15 for TC codes matching target domain
+1. `/integration-test` reads feature doc Section 8 for TC codes matching target domain
 2. Builds mapping: TC code → test method name (e.g., `TC-ORD-001` → `CreateOrder_WhenValidData_ShouldCreateSuccessfully`)
 3. Reads existing integration tests in same service for conventions (namespace, base class, naming)
 4. Generates test file with:
@@ -1746,13 +1683,16 @@ test-spec-update: review-changes → tdd-spec → tdd-spec [direction=sync] →
 5. Runs build to verify compilation
 6. Verifies bidirectional traceability: every test ↔ doc TC
 
-**test-to-integration workflow sequence:**
+**write-integration-test workflow sequence** (absorbs the former `test-to-integration` use case):
 
 ```
-test-to-integration: scout → integration-test → test → watzup → workflow-end
+write-integration-test: scout → investigate → spec [mode=tests] → why-review →
+                        review-artifact --type=spec-tests → integration-test →
+                        integration-test-review → integration-test-verify →
+                        spec [mode=sync] → docs-update → workflow-end → watzup
 ```
 
-**If TCs are missing:** `/integration-test` auto-creates TC entries in Section 15 before generating tests. For comprehensive spec creation first, use `/tdd-spec` → `/integration-test`.
+**If TCs are missing:** `/integration-test` auto-creates TC entries in Section 8 before generating tests. For comprehensive spec creation first, use `/spec [mode=tests]` → `/integration-test`.
 
 ---
 
@@ -1766,8 +1706,8 @@ test-to-integration: scout → integration-test → test → watzup → workflow
 # Review test quality for a domain
 /integration-test review Orders
 
-# Full test verification workflow
-/workflow-start test-verify
+# Full workflow (write-integration-test absorbs the former test-verify use case)
+/start-workflow workflow-write-integration-test
 ```
 
 **What happens:**
@@ -1781,10 +1721,10 @@ test-to-integration: scout → integration-test → test → watzup → workflow
 3. Checks best practices: collection attributes, TC annotations, minimum test count, no mocks
 4. Generates quality report with severity levels (HIGH/MEDIUM/LOW)
 
-**test-verify workflow sequence:**
+**Manual sequence** (the former `test-verify` workflow was removed — its review/diagnose loop runs via `/integration-test` modes plus `/integration-test-verify` inside `write-integration-test`):
 
 ```
-test-verify: scout → integration-test (review) → test → integration-test (diagnose) → watzup → workflow-end
+/integration-test review → /test → /integration-test diagnose → /integration-test-verify
 ```
 
 ---
@@ -1826,16 +1766,16 @@ test-verify: scout → integration-test (review) → test → integration-test (
 # Verify traceability for a service
 /integration-test verify {Service}
 
-# Full verification workflow
-/workflow-start test-verify
+# Full workflow (includes the /integration-test-verify traceability gate)
+/start-workflow workflow-write-integration-test
 ```
 
 **What happens:**
 
 1. `/integration-test` enters VERIFY-TRACEABILITY mode
 2. Collects test methods with TC annotations from the test project
-3. Collects TC entries from feature doc Section 15
-4. Builds 3-way traceability matrix: test code ↔ feature doc ↔ specs dashboard
+3. Collects TC entries from feature doc Section 8
+4. Builds 2-way traceability matrix: test code ↔ feature doc Section 8 (canonical)
 5. Identifies:
     - Orphaned tests (have annotation but no matching TC in docs)
     - Orphaned TCs (documented but no matching test)
@@ -1854,14 +1794,14 @@ test-verify: scout → integration-test (review) → test → integration-test (
 **Prompt examples:**
 
 ```
-# Full test verification workflow (recommended)
-/workflow-start test-verify
+# Full workflow (recommended — absorbs the former test-verify use case)
+/start-workflow workflow-write-integration-test
 
 # Manual sequence
 /integration-test review Orders → /test → /integration-test diagnose {failures} → /integration-test verify {Service}
 ```
 
-**What happens (test-verify workflow):**
+**What happens (test health check):**
 
 1. **Scout** — finds all test files and related specs
 2. **Review** — audits quality, flags flaky patterns
@@ -1881,32 +1821,33 @@ test-verify: scout → integration-test (review) → test → integration-test (
 │                                                                 │
 │  CASE                    │ PRIMARY SKILL   │ WORKFLOW            │
 │─────────────────────────│────────────────│────────────────────│
-│  Code → test specs       │ /tdd-spec       │ pbi-to-tests       │
-│  PBI → test specs (TDD)  │ /tdd-spec       │ tdd-feature        │
-│  Sync specs ↔ docs       │ /tdd-spec or    │ —                  │
-│                          │ /tdd-spec [direction=sync]│                    │
-│  Bug/PR → update specs   │ /tdd-spec       │ test-spec-update   │
-│  Specs → test code       │ /integration-   │ test-to-integration│
-│                          │  test           │                    │
-│  Full TDD cycle          │ /tdd-spec then  │ tdd-feature        │
-│                          │ /integration-   │                    │
-│                          │  test           │                    │
-│  Feature + int. tests    │ /cook then      │ feature-with-      │
-│                          │ /tdd-spec then  │ integration-test   │
+│  Code → test specs       │ /spec [mode=tests] │ — (skill direct)   │
+│  PBI → test specs (TDD)  │ /spec [mode=tests] │ feature            │
+│  Sync specs ↔ docs       │ /spec [mode=sync]  │ —                  │
+│                          │ (sync mode)        │                    │
+│  Bug/PR → update specs   │ /spec [mode=tests] │ spec-sync          │
+│  Specs → test code       │ /integration-   │ write-integration- │
+│                          │  test           │ test               │
+│  Full TDD cycle          │ /spec [mode=tests] then│ feature            │
+│                          │ /integration-   │ (spec-driven       │
+│                          │  test           │  by default)       │
+│  Feature + int. tests    │ /feature-implement then      │ feature            │
+│                          │ /spec [mode=tests] then│                    │
 │                          │ /integration-   │                    │
 │                          │  test           │                    │
 │  Idea → specs            │ /idea → /refine │ idea-to-pbi        │
-│                          │ → /tdd-spec     │                    │
-│  Review test quality     │ /integration-   │ test-verify        │
-│                          │  test review    │                    │
-│  Diagnose test failures  │ /integration-   │ test-verify        │
-│                          │  test diagnose  │                    │
-│  Verify traceability     │ /integration-   │ test-verify        │
-│                          │  test verify    │                    │
-│  Full test health check  │ (all 3 modes)   │ test-verify        │
-│  Recording → E2E test    │ /e2e-test       │ e2e-from-recording │
-│  UI change → baseline    │ /e2e-test       │ e2e-update-ui      │
-│  Code change → E2E sync  │ /e2e-test       │ e2e-from-changes   │
+│                          │ → /spec [mode=tests]   │                    │
+│  Review test quality     │ /integration-   │ write-integration- │
+│                          │  test review    │ test               │
+│  Diagnose test failures  │ /integration-   │ write-integration- │
+│                          │  test diagnose  │ test               │
+│  Verify traceability     │ /integration-   │ write-integration- │
+│                          │  test verify    │ test               │
+│  Full test health check  │ (all 3 modes)   │ write-integration- │
+│                          │                 │ test               │
+│  Recording → E2E test    │ /e2e-test       │ e2e (recording)    │
+│  UI change → baseline    │ /e2e-test       │ e2e (update-ui)    │
+│  Code change → E2E sync  │ /e2e-test       │ e2e (changes)      │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1984,13 +1925,13 @@ This means the AI agent adapts to whatever E2E stack the project uses — no har
 
 #### E2E Workflows
 
-Three dedicated workflows support E2E testing scenarios:
+One parameterized workflow (`e2e --source=…`) covers all E2E testing scenarios:
 
-| Workflow               | Sequence                                     | Use Case                                             |
-| ---------------------- | -------------------------------------------- | ---------------------------------------------------- |
-| **e2e-from-recording** | `/scout` → `/e2e-test` → `/test` → `/watzup` | Browser recording → generate E2E test                |
-| **e2e-update-ui**      | `/scout` → `/e2e-test` → `/test` → `/watzup` | UI visual changes → update test baselines/assertions |
-| **e2e-from-changes**   | `/scout` → `/e2e-test` → `/test` → `/watzup` | Code/spec changes → sync E2E test implementations    |
+| `--source`    | Sequence                                                                        | Use Case                                             |
+| ------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **recording** | `/scout` → `/e2e-test` → `/test` → `/docs-update` → `/workflow-end` → `/watzup` | Browser recording → generate E2E test                |
+| **update-ui** | `/scout` → `/e2e-test` → `/test` → `/docs-update` → `/workflow-end` → `/watzup` | UI visual changes → update test baselines/assertions |
+| **changes**   | `/scout` → `/e2e-test` → `/test` → `/docs-update` → `/workflow-end` → `/watzup` | Code/spec changes → sync E2E test implementations    |
 
 #### Case 10: Recording → E2E Test
 
@@ -2006,7 +1947,7 @@ Three dedicated workflows support E2E testing scenarios:
 /e2e-test generate test from recording for Login feature
 
 # Full workflow (recommended)
-/workflow-start e2e-from-recording
+/workflow-e2e --source=recording
 ```
 
 **What happens:**
@@ -2032,7 +1973,7 @@ Three dedicated workflows support E2E testing scenarios:
 
 ```bash
 /e2e-test update tests after UI changes
-/workflow-start e2e-update-ui
+/workflow-e2e --source=update-ui
 ```
 
 **What happens:**
@@ -2053,7 +1994,7 @@ Three dedicated workflows support E2E testing scenarios:
 
 ```bash
 /e2e-test sync tests with spec changes
-/workflow-start e2e-from-changes
+/workflow-e2e --source=changes
 ```
 
 **What happens:**
@@ -2167,7 +2108,7 @@ flowchart TB
     D -->|Code exists| F[Normal Mode<br/>Standard hooks & skills]
 
     E --> G["greenfield workflow<br/>40-step inception + implementation"]
-    G --> H["idea - research - evaluate -<br/>domain - scaffold - cook -<br/>integration-test - review"]
+    G --> H["idea - research - evaluate -<br/>domain - scaffold - feature-implement -<br/>integration-test - review"]
 
     style C fill:#FF9800,color:white
     style E fill:#4CAF50,color:white
@@ -2228,31 +2169,31 @@ greenfield-init: FULL WATERFALL INCEPTION → IMPLEMENTATION → INTEGRATION TES
 │
 ├── FIRST PLAN + REVIEWS (4 steps)
 │   ├── /plan ──────────────── Architecture plan from research + domain analysis
-│   ├── /security ──────────── Security architecture review
-│   ├── /performance ───────── Performance architecture review
+│   ├── /security-review ──────────── Security architecture review
+│   ├── /performance-review ───────── Performance architecture review
 │   └── /plan-review ───────── Critical review
 │
 ├── REFINEMENT + REVIEW GATES (6 steps)
 │   ├── /refine ────────────── Refine to PBI with acceptance criteria
-│   ├── /refine-review ─────── PBI quality gate
+│   ├── /review-artifact --type=pbi ─────── PBI quality gate
 │   ├── /story ─────────────── Break into prioritized stories with dependencies
-│   ├── /story-review ──────── Story quality gate
+│   ├── /review-artifact --type=story ──────── Story quality gate
 │   ├── /plan-validate ─────── 3-8 questions: confirm all decisions with user
-│   └── /tdd-spec ──────────── Test strategy, spec generation
+│   └── /spec [mode=tests] ──── Test strategy, spec generation
 │
 ├── SECOND PLAN + SCAFFOLD (4 steps)
-│   ├── /tdd-spec-review ───── Test spec quality gate
+│   ├── /review-artifact --type=spec-tests ──── Test spec quality gate
 │   ├── /plan ──────────────── Sprint-ready plan from concrete stories
 │   ├── /plan-review ───────── Review sprint plan
 │   └── /scaffold ──────────── Architecture scaffolding (CONDITIONAL)
 │
 ├── IMPLEMENTATION (2 steps)
 │   ├── /why-review ────────── Validate design rationale before coding
-│   └── /cook ─────────────── Implement feature (backend + frontend)
+│   └── /feature-implement ─────────────── Implement feature (backend + frontend)
 │
 ├── INTEGRATION TESTING (6 steps)
-│   ├── /tdd-spec ──────────── Write test specs for implemented code
-│   ├── /tdd-spec-review ───── Review spec coverage and correctness
+│   ├── /spec [mode=tests] ──── Write test specs for implemented code
+│   ├── /review-artifact --type=spec-tests ──── Review spec coverage and correctness
 │   ├── /plan ──────────────── Plan integration test architecture (3rd round)
 │   ├── /plan-review ───────── Review integration test plan
 │   ├── /integration-test ──── Generate integration tests from specs
@@ -2262,17 +2203,18 @@ greenfield-init: FULL WATERFALL INCEPTION → IMPLEMENTATION → INTEGRATION TES
     ├── /code-simplifier ───── Simplify code for readability
     ├── /review-changes ────── Review all uncommitted changes
     ├── /code-review ───────── Code quality, patterns compliance
-    ├── /sre-review ────────── Production readiness
-    ├── /security ──────────── Security review
-    ├── /performance ───────── Performance review
+    ├── /production-readiness-review ────────── Production readiness
+    ├── /security-review ──────────── Security review
+    ├── /performance-review ───────── Performance review
     ├── /changelog ─────────── Update changelog
     ├── /test ──────────────── Final regression run
     ├── /docs-update ───────── Update documentation
-    └── /watzup ────────────── Summary report
+    ├── /workflow-end ──────── Close workflow state
+    └── /watzup ────────────── Summary report + understand handoff
 
 Every step saves artifacts to plans/{id}/ directory.
-Every step uses AskUserQuestion to validate with user.
-confirmFirst: true — user must confirm before activation.
+Every step validates genuine product or architecture decision points when needed.
+Workflow activation is auto-selected by default.
 Uses triple planning rounds and conditional scaffold.
 ```
 
@@ -2301,7 +2243,7 @@ Nine skills auto-detect greenfield and switch behavior:
 | `/domain-analysis`     | Analyze existing domain entities/events | Full DDD from scratch: bounded contexts, aggregates, ERD |
 | `/tech-stack-research` | Evaluate additions to existing stack    | Full stack comparison: top 3 per layer, confidence %     |
 | `/story`               | Feature stories from existing patterns  | Foundation PBIs: infra, scaffold, CI/CD, first feature   |
-| `/cook`                | Implement from plan                     | Scaffold project structure from approved plan            |
+| `/feature-implement`   | Implement from plan                     | Scaffold project structure from approved plan            |
 
 **Detection is per-skill-activation** (not cached from session start), so it stays accurate even as the project evolves during a session.
 
@@ -2360,9 +2302,9 @@ big-feature: RESEARCH-DRIVEN FEATURE DEVELOPMENT
 │
 ├── REFINEMENT PHASE (4 steps — with review gates)
 │   ├── /refine ────────────── Acceptance criteria, PBI
-│   ├── /refine-review ─────── PBI quality gate
+│   ├── /review-artifact --type=pbi ─────── PBI quality gate
 │   ├── /story ─────────────── User stories with dependencies
-│   └── /story-review ──────── Story quality gate
+│   └── /review-artifact --type=story ──────── Story quality gate
 │
 ├── SECOND PLANNING ROUND (5 steps — sprint-ready plan + scaffold)
 │   ├── /plan ──────────────── Sprint-ready plan from stories
@@ -2372,20 +2314,21 @@ big-feature: RESEARCH-DRIVEN FEATURE DEVELOPMENT
 │   └── /why-review ────────── Design rationale check
 │
 ├── IMPLEMENTATION PHASE (5 steps)
-│   ├── /cook ──────────────── Pattern-enforced coding
+│   ├── /feature-implement ──────────────── Pattern-enforced coding
 │   ├── /integration-test ──── Generate integration tests
 │   ├── /code-simplifier ───── YAGNI/KISS/DRY pass
 │   ├── /review-changes ────── Pre-commit review
 │   └── /code-review ──────── Quality audit
 │
-└── QUALITY & WRAP PHASE (7 steps)
-    ├── /sre-review ────────── Production readiness
-    ├── /security ──────────── Security review
-    ├── /performance ───────── Performance review
+└── QUALITY & WRAP PHASE (8 steps)
+    ├── /production-readiness-review ────────── Production readiness
+    ├── /security-review ──────────── Security review
+    ├── /performance-review ───────── Performance review
     ├── /changelog ─────────── Changelog entry
     ├── /test ──────────────── Test execution
     ├── /docs-update ───────── Documentation sync
-    └── /watzup ────────────── Summary & doc staleness
+    ├── /workflow-end ──────── Close workflow state
+    └── /watzup ────────────── Summary, doc staleness, understand handoff
 ```
 
 #### Step-Selection Gate Pattern
@@ -2396,7 +2339,7 @@ A key innovation: **long workflows let users deselect irrelevant steps** before 
 ┌─────────────────────────────────────────────────────────────────┐
 │  STEP-SELECTION GATE (big-feature + greenfield workflows)       │
 │                                                                  │
-│  After user confirms workflow activation, AI presents:          │
+│  After workflow activation, AI auto-selects applicable steps:   │
 │                                                                  │
 │  "Which research steps apply to this feature?"                  │
 │  [x] Discovery Interview (/idea)                                │
@@ -2434,7 +2377,7 @@ Round 1 (after architecture-design):
   Purpose: High-level architecture plan based on research + domain analysis
   Output: Architecture decisions, service boundaries, tech choices
 
-Round 2 (after story-review):
+Round 2 (after review-artifact --type=story):
   /plan → /plan-review → /scaffold
   Purpose: Sprint-ready implementation plan from concrete stories
   Output: Phased steps, file lists, dependency ordering
@@ -2506,8 +2449,8 @@ This section maps **established prompt engineering techniques** to specific fram
 │                                                                   │
 │  EFFECT: Each workflow step activates a different expert          │
 │  persona. The AI doesn't just generate code — it thinks          │
-│  like a Security Architect during /security, switches to         │
-│  SRE mindset during /sre-review, and becomes a Domain Expert     │
+│  like a Security Architect during /security-review, switches to         │
+│  SRE mindset during /production-readiness-review, and becomes a Domain Expert     │
 │  during /domain-analysis.                                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -2526,7 +2469,7 @@ This section maps **established prompt engineering techniques** to specific fram
 │  1. WORKFLOW SEQUENCES — The entire workflow system IS chain-    │
 │     of-thought at macro scale. Instead of "implement feature,"   │
 │     the AI is forced through:                                    │
-│     scout → investigate → plan → review → validate → cook       │
+│     scout → investigate → plan → review → validate → plan-execute │
 │     Each step produces an intermediate artifact that feeds       │
 │     the next step's reasoning.                                   │
 │                                                                   │
@@ -2564,8 +2507,9 @@ This section maps **established prompt engineering techniques** to specific fram
 │                                                                   │
 │  WHERE APPLIED:                                                   │
 │                                                                   │
-│  1. CONTEXT INJECTION HOOKS — When editing a backend file,       │
-│     backend-context.cjs injects backend-patterns-reference.md    │
+│  1. STATIC PATTERN GUIDANCE — When editing a backend file,       │
+│     CLAUDE.md / SKILL.md guidance points to                      │
+│     backend-patterns-reference.md                                │
 │     (~60KB of real code examples from the project). The AI       │
 │     sees actual repository patterns, validation patterns,        │
 │     event handler patterns — not generic instructions.           │
@@ -2576,9 +2520,9 @@ This section maps **established prompt engineering techniques** to specific fram
 │     project showing "this is how we do it."                      │
 │                                                                   │
 │  3. REFERENCE DOCS — Auto-initialized from project scans:        │
-│     • /scan-backend-patterns populates real CQRS examples       │
-│     • /scan-frontend-patterns populates real component examples  │
-│     • /scan-design-system populates real design tokens           │
+│     • /scan --target=backend-patterns → CQRS examples           │
+│     • /scan --target=frontend-patterns → component examples     │
+│     • /scan --target=design-system → design tokens              │
 │                                                                   │
 │  4. SKILL PROTOCOLS — Each skill includes concrete examples:     │
 │     "Example recommendation format: Evidence from file:42..."    │
@@ -2664,7 +2608,7 @@ This section maps **established prompt engineering techniques** to specific fram
 │                                                                   │
 │  Workflow steps that force self-correction:                      │
 │                                                                   │
-│  /cook ────────→ /code-simplifier ──→ /review-changes ──→       │
+│  /feature-implement ────────→ /code-simplifier ──→ /review-changes ──→       │
 │  (generate)      (simplify/clean)     (self-review)              │
 │                                                                   │
 │  /fix ─────────→ /prove-fix ────────→ /test                     │
@@ -2677,8 +2621,8 @@ This section maps **established prompt engineering techniques** to specific fram
 │  • /code-simplifier: "Is this the simplest correct solution?"   │
 │  • /review-changes: "Does this follow project conventions?"     │
 │  • /code-review: "Does this meet quality standards?"            │
-│  • /sre-review: "Is this production-ready?"                     │
-│  • /security: "Are there vulnerabilities?"                      │
+│  • /production-readiness-review: "Is this production-ready?"                     │
+│  • /security-review: "Are there vulnerabilities?"                      │
 │                                                                   │
 │  EFFECT: Single-pass generation catches ~70% of issues.          │
 │  Three review passes with different lenses catch ~95%.           │
@@ -2688,23 +2632,25 @@ This section maps **established prompt engineering techniques** to specific fram
 
 #### Summary: Prompt Engineering Techniques → Framework Mapping
 
-| Prompt Engineering Technique  | Framework Implementation                                                      |
-| ----------------------------- | ----------------------------------------------------------------------------- |
-| **Role prompting**            | Workflow preActions, agent definitions, hook-injected personas                |
-| **Chain-of-thought**          | Workflow step sequences, /sequential-thinking, /debug-investigate, /prove-fix |
-| **Few-shot examples**         | Context injection hooks, reference doc scans                                  |
-| **Structured output**         | Confidence declarations, risk matrices, TC format, plan templates             |
-| **Negative prompting**        | Forbidden phrases, anti-pattern lists, NEVER rules, lessons system            |
-| **Iterative refinement**      | Multi-pass review (cook→simplify→review→code-review→sre→security)             |
-| **Task decomposition**        | Workflows decompose "implement feature" into 15+ discrete steps               |
-| **Retrieval-augmented gen.**  | Context hooks inject project-specific docs at decision points                 |
-| **Self-consistency checking** | /prove-fix requires proof traces; /plan-validate asks critical questions      |
+| Prompt Engineering Technique  | Framework Implementation                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| **Role prompting**            | Workflow preActions, agent definitions, hook-injected personas                 |
+| **Chain-of-thought**          | Workflow step sequences, /sequential-thinking, /debug-investigate, /prove-fix  |
+| **Few-shot examples**         | Context injection hooks, reference doc scans                                   |
+| **Structured output**         | Confidence declarations, risk matrices, TC format, plan templates              |
+| **Negative prompting**        | Forbidden phrases, anti-pattern lists, NEVER rules, lessons system             |
+| **Iterative refinement**      | Multi-pass review (feature-implement→simplify→review→code-review→sre→security) |
+| **Task decomposition**        | Workflows decompose "implement feature" into 15+ discrete steps                |
+| **Retrieval-augmented gen.**  | Context hooks inject project-specific docs at decision points                  |
+| **Self-consistency checking** | /prove-fix requires proof traces; /plan-validate asks critical questions       |
 
 ---
 
 ### 8.16 Context Engineering Principles Applied
 
 Context engineering is the discipline of **managing what information reaches the LLM, when, and how** — treating the context window as a scarce computational resource. This framework implements context engineering as a first-class architectural concern.
+
+> **Note — delivery is static.** The principles below (just-in-time context, path-based routing, dedup) are authored statically in `CLAUDE.md`, agent `.md`, and skill `SKILL.md` content and read identically by Claude Code and Codex; no runtime hook emits context — recovery after compaction is the model re-reading those same static files. The principles below describe the design intent the static layout realizes; earlier architectures realized some of them with runtime injection/recovery hooks since retired.
 
 #### The Context Engineering Problem
 
@@ -2783,14 +2729,15 @@ Context engineering is the discipline of **managing what information reaches the
 │  Edit file 4 → check last 300 lines for marker → NOT FOUND →   │
 │  Re-inject 60KB (compaction removed the marker = context lost)   │
 │                                                                   │
-│  DEDUP CONFIG per hook:                                           │
-│  • backend-context: marker "## Backend Context", window 300      │
-│  • frontend-context: marker "## Frontend Context", window 300    │
-│  • lessons-injector (prompt): marker "## Learned Lessons", 50    │
+│  DEDUP CONFIG (no active runtime emitter):                       │
+│  • Runtime context emitters were retired in the de-hooking pass; │
+│    guidance + recovery anchoring are now read statically every   │
+│    prompt. The dedup keys/windows in dedup-constants.cjs remain  │
+│    as reusable infrastructure but gate no live injector.         │
 │                                                                   │
-│  WHY VARIABLE WINDOWS: Lessons (small, 50 lines) need frequent   │
-│  re-injection. Backend patterns (large, 300 lines) stay longer.  │
-│  The dedup window trades freshness against context budget.        │
+│  WHY A DEDUP WINDOW (design rationale, formerly applied to the   │
+│  recovery emitter): re-emit only once a marker drops from the    │
+│  transcript tail — trading freshness against context budget.     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -2800,27 +2747,15 @@ Context engineering is the discipline of **managing what information reaches the
 ┌─────────────────────────────────────────────────────────────────┐
 │  EXTERNAL MEMORY — Move large data OUT of the context window     │
 │                                                                   │
-│  Three external memory systems:                                   │
+│  Two external memory systems:                                     │
 │                                                                   │
-│  1. SWAP ENGINE (tool-output-swap.cjs)                           │
-│     • Trigger: Tool output >50KB                                 │
-│     • Action: Write to /tmp/ck/swap/, replace with summary       │
-│     • Effect: 500-line grep result → 10-line summary + pointer   │
-│     • Recovery: Swap files persist after compaction              │
-│                                                                   │
-│  2. TODO STATE (todo-tracker.cjs)                                │
+│  1. TASK STATE (disk-backed task list)                           │
 │     • Trigger: Every TaskCreate/TaskUpdate                       │
-│     • Action: Write to .claude/.ck-todo-state.json               │
+│     • Action: Persisted to disk by the task system               │
 │     • Effect: Task progress survives compaction                  │
-│     • Recovery: post-compact-recovery.cjs reads state back       │
+│     • Recovery: model re-reads via TaskList after compaction     │
 │                                                                   │
-│  3. WORKFLOW STATE (workflow-step-tracker.cjs)                   │
-│     • Trigger: Every workflow step completion                    │
-│     • Action: Write to .claude/.ck-workflow-state.json           │
-│     • Effect: "You were on step 5 of bugfix" survives compact   │
-│     • Recovery: post-compact-recovery.cjs restores progress     │
-│                                                                   │
-│  4. PLAN FILES (plans/ directory)                                │
+│  2. PLAN FILES (plans/ directory + plans/reports/)               │
 │     • Trigger: /plan skill                                       │
 │     • Action: Write implementation plan to disk                  │
 │     • Effect: Plan survives compaction, can be re-read           │
@@ -2844,7 +2779,7 @@ Context engineering is the discipline of **managing what information reaches the
 │───────────────────────────│─────────│─────────────│──────────────│
 │  CLAUDE.md (always loaded)│ ~5K     │ 2.5%        │ System       │
 │  Injected rules/lessons   │ ~3K     │ 1.5%        │ Hooks        │
-│  Workflow catalog         │ ~4K     │ 2%          │ Router hook  │
+│  Workflow catalog         │ ~4K     │ 2%          │ CLAUDE.md    │
 │  Pattern docs (JIT)       │ ~15K    │ 7.5%        │ Context hooks│
 │  Tool outputs (net)       │ ~100K   │ 50%         │ Swap engine  │
 │  AI reasoning/responses   │ ~60K    │ 30%         │ LLM          │
@@ -2873,27 +2808,28 @@ Context engineering is the discipline of **managing what information reaches the
 │                                                                   │
 │  COMPACTION EVENT:                                                │
 │  Context window full → system summarizes old messages →          │
-│  all injected context, tool results, and state are LOST          │
+│  prior static context, tool results, and transient state are LOST │
 │                                                                   │
-│  RECOVERY PIPELINE:                                               │
+│  RECOVERY PIPELINE (static, model-driven):                       │
 │                                                                   │
-│  1. PRE-COMPACT (write-compact-marker.cjs):                      │
-│     Save: current task ID, workflow step, edit count, timestamp  │
-│     → .claude/.ck-compact-marker.json                            │
+│  1. STATE ON DISK (continuous):                                  │
+│     Task list and workflow state are persisted to disk as work   │
+│     proceeds; plans/ and report files hold longer-lived findings.│
 │                                                                   │
-│  2. POST-COMPACT (post-compact-recovery.cjs):                    │
-│     Read: todo state, workflow state, compact marker              │
-│     Inject: "You were on step 5 of bugfix workflow.              │
-│              Task #3 (implement fix) is in_progress.             │
-│              You've edited 4 files so far."                      │
+│  2. POST-COMPACT (model re-reads):                               │
+│     The model re-reads the static CLAUDE.md / SKILL.md rules and │
+│     calls TaskList to recover which task/step was in progress —  │
+│     "audit git status + re-read modified files before continuing"│
+│     is itself a static CLAUDE.md rule.                           │
 │                                                                   │
-│  3. RE-INJECTION (automatic on next tool use):                   │
-│     Dedup markers are gone (compacted away) →                    │
-│     Context hooks re-inject: patterns, lessons, rules            │
-│     Net effect: full context restored within 1-2 tool calls      │
+│  3. RE-ANCHORING (next prompt):                                  │
+│     Static guidance (patterns routing, lessons contract, rules)  │
+│     is in-context again because it lives in files re-read every  │
+│     prompt — no runtime re-injection hook needed.                │
 │                                                                   │
-│  RESULT: The AI resumes exactly where it left off.                │
-│  From the user's perspective, compaction is invisible.            │
+│  RESULT: The AI resumes where it left off via disk-backed state  │
+│  and static re-reading. (Earlier architectures drove this with   │
+│  pre/post-compact and todo-tracker hooks, since retired.)        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -2916,8 +2852,8 @@ Context engineering is the discipline of **managing what information reaches the
 │  │ patterns             │           │ No: impl state      │        │
 │  └────────────────────┘           └────────────────────┘        │
 │                                                                   │
-│  28 agents × isolated contexts = no cross-contamination          │
-│  Each agent inherits: CLAUDE.md + lessons (via subagent-init-*) │
+│  29 agents × isolated contexts = no cross-contamination          │
+│  Each agent inherits: CLAUDE.md + lessons (baked into agent .md) │
 │  Each agent ignores: unrelated session state                     │
 │                                                                   │
 │  PARALLEL BENEFIT: 5 code-reviewer agents reviewing different    │
@@ -2936,7 +2872,7 @@ Context engineering is the discipline of **managing what information reaches the
 | **External memory**            | Swap engine, todo state, workflow state, plan files on disk                   |
 | **Context budget management**  | JIT loading + swap + dedup = 50+ tool call sessions vs 15 without             |
 | **Recovery after amnesia**     | Pre-compact save → post-compact restore → auto re-injection pipeline          |
-| **Context isolation**          | 28 specialized agents with independent context windows                        |
+| **Context isolation**          | 29 specialized agents with independent context windows                        |
 | **Path-based routing**         | project-config.json pathRegexes drive which docs load for which files         |
 | **Tiered injection frequency** | Lessons (every prompt) vs patterns (every edit) vs design tokens (UI only)    |
 | **Output compression**         | Swap engine replaces 500-line outputs with 10-line summaries + disk pointers  |
@@ -2980,8 +2916,8 @@ The graph integrates via 3 CJS hooks that fire automatically:
 graph TB
     subgraph "Hook 1: graph-session-init.cjs"
         SE["SessionStart"] --> CHK{"Python +<br/>tree-sitter<br/>installed?"}
-        CHK -->|Yes| STAT["Inject: Graph active<br/>94 files, 875 nodes"]
-        CHK -->|No| GUIDE["Inject: Install<br/>instructions"]
+        CHK -->|Yes| STAT["Silent graph sync<br/>when graph.db exists"]
+        CHK -->|No| GUIDE["Silent skip<br/>static setup guides remain authoritative"]
     end
 
     subgraph "Hook 2: graph-auto-update.cjs"
@@ -2989,9 +2925,9 @@ graph TB
         DEB --> INC["Incremental update:<br/>re-parse changed file<br/>+ dependents"]
     end
 
-    subgraph "Hook 3: graph-context-injector.cjs"
-        SKILL["PreToolUse(Skill)<br/>/code-review, /scout,<br/>/debug-investigate, /sre-review"] --> BR["Run graph-blast-radius"]
-        BR --> INJ["Inject into context:<br/>Risk level, impacted files,<br/>untested functions"]
+    subgraph "Static graph contract (in skills, no inject hook)"
+        SKILL["/code-review, /scout,<br/>/debug-investigate, /production-readiness-review<br/>skill instructions"] --> BR["Run graph-blast-radius"]
+        BR --> INJ["Surface in context:<br/>Risk level, impacted files,<br/>untested functions"]
     end
 
     style SE fill:#339af0,stroke:#1864ab,color:#fff
@@ -3007,17 +2943,17 @@ Every workflow that touches code benefits from the graph automatically:
 sequenceDiagram
     participant Dev as Developer
     participant WF as Workflow
-    participant GH as Graph Hooks
+    participant GH as Graph subsystem
     participant DB as graph.db
 
     Dev->>WF: Start bugfix workflow
 
     rect rgb(240, 248, 255)
         Note over WF,DB: /scout step
-        WF->>GH: context-injector fires
+        WF->>GH: /scout runs graph CLI
         GH->>DB: Structural overview query
         DB-->>GH: 94 files, 875 nodes
-        GH-->>WF: Inject codebase map
+        GH-->>WF: Return codebase map
     end
 
     rect rgb(255, 248, 240)
@@ -3029,29 +2965,28 @@ sequenceDiagram
 
     rect rgb(240, 255, 240)
         Note over WF,DB: /code-review step
-        WF->>GH: context-injector fires
+        WF->>GH: /code-review runs graph CLI
         GH->>DB: BFS blast radius
         DB-->>GH: MEDIUM risk, 5 impacted files
-        GH-->>WF: Inject review context
+        GH-->>WF: Return review context
         Note over WF: Claude flags untested<br/>functions + broken callers
     end
 ```
 
 #### Available Skills & Commands
 
-| Category    | Skill                   | Purpose                                                        |
-| ----------- | ----------------------- | -------------------------------------------------------------- |
-| **Build**   | `/graph-build`          | Build or incrementally update the knowledge graph              |
-| **Analyze** | `/graph-blast-radius`   | Show impacted files, functions, and test gaps                  |
-| **Query**   | `/graph-query`          | Natural language: "who calls login?", "tests for AuthService?" |
-| **Export**  | `/graph-export`         | Full graph to JSON for external tools                          |
-| **Export**  | `/graph-export-mermaid` | Single-file graph as Mermaid diagram                           |
-| **Connect** | `/graph-connect-api`    | Detect frontend-backend API connections                        |
-| **Connect** | `/connect-implicit`     | Detect implicit connections (events, message bus)              |
-| **Sync**    | `/graph-sync`           | Sync graph with git state after pull/checkout                  |
-| **Batch**   | `/graph-query batch`    | Multi-file deduplicated query                                  |
+| Category    | Skill                       | Purpose                                                                                  |
+| ----------- | --------------------------- | ---------------------------------------------------------------------------------------- |
+| **Build**   | `/graph-build`              | Build or incrementally update the knowledge graph                                        |
+| **Analyze** | `/graph-blast-radius`       | Show impacted files, functions, and test gaps                                            |
+| **Query**   | `/graph-query`              | Natural language: "who calls login?", "tests for AuthService?"                           |
+| **Export**  | `/graph-export`             | Full graph to JSON (`--format=json`) or single-file Mermaid diagram (`--format=mermaid`) |
+| **Connect** | `/graph-connect-api`        | Detect frontend-backend API connections                                                  |
+| **Connect** | `/connect-implicit`         | Detect implicit connections (events, message bus)                                        |
+| **Sync**    | `/graph-build --scope=sync` | Sync graph with git state after pull/checkout                                            |
+| **Batch**   | `/graph-query batch`        | Multi-file deduplicated query                                                            |
 
-Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/review-changes`, `/review-architecture`, `/scout`, `/debug-investigate`, `/sre-review`, `/investigate`, `/feature-investigation`, `/fix`, `/refactoring`, `/security`, `/performance`, `/code-simplifier`, `/prove-fix`.
+Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/review-changes`, `/review-architecture`, `/scout`, `/debug-investigate`, `/production-readiness-review`, `/investigate`, `/fix`, `/refactoring`, `/security-review`, `/performance-review`, `/code-simplifier`, `/prove-fix`.
 
 #### Auto-Maintenance
 
@@ -3128,7 +3063,7 @@ Two protocol blocks (`SYNC:be-focused-review-checklist` and `SYNC:fe-logic-focus
 
 1. Command/Query handler co-location (CQRS one-file rule)
 2. Repository usage — no generic interface, no direct DbContext
-3. Business validation — `PlatformValidationResult` fluent API, no `throw new`
+3. Business validation — project-specific fluent validation API, no direct exception throwing for business validation
 4. Side effect placement — entity event handlers only, not in handler bodies
 5. Cross-service communication — message bus only, no shared DB access
 6. DTO mapping ownership — DTOs own mapping, no mapping in `Handle()`
@@ -3148,7 +3083,7 @@ A subtle failure mode: review sub-agents would sometimes edit feature docs or sp
 - `/docs-update` step later found docs "already updated" but with wrong content
 - Double-write race conditions when multiple parallel reviewers touched the same doc file
 
-The `review-changes.injectContext` in `workflows.json` now includes a **DOC SYNC DEFERRAL** block injected into every review sub-agent:
+The `workflow-review-changes.injectContext` in `workflows.json` now includes a **DOC SYNC DEFERRAL** block injected into every review sub-agent:
 
 ```
 DOC SYNC DEFERRAL: DO NOT update feature docs, engineering specs, or test spec TCs
@@ -3169,10 +3104,10 @@ NEVER skip, batch-complete, or mark done without invoking the sub-skill.
 # Task  Subject                                               Conditional?
   1     Phase 0 — Triage                                      No — always
   2     Phase 1 — Project docs update                         Yes — arch changes only
-  3     Phase 2 — /feature-docs invocation                    Yes — service files changed
-  4     Phase 2.5 — /spec-discovery [mode=update]             Yes — docs/specs/ exists
-  5     Phase 3 — /tdd-spec update                            Yes — behavior changed
-  6     Phase 4 — /tdd-spec [direction=sync]                  Yes — Phase 3 ran
+  3     Phase 2 — /spec invocation                            Yes — service files changed
+  4     Phase 2.5 — /spec-index [mode=index]                  Yes — Feature Spec changed; bucket has derived index
+  5     Phase 3 — /spec [mode=tests] update                   Yes — behavior changed
+  6     Phase 4 — /spec [mode=sync]                           Yes — Phase 3 ran
   7     Phase 5 — Write summary report                        No — always
   8     Final review — verify all phases ran                  No — always
 ```
@@ -3180,7 +3115,7 @@ NEVER skip, batch-complete, or mark done without invoking the sub-skill.
 **Before:** The AI could "plan" docs-update in its head, run a few greps, write a note, and call it done with no audit trail.
 **After:** Every execution creates exactly 8 tasks. Skipped phases leave a `completed` task with an explicit reason — permanent audit record of why each phase was skipped.
 
-**Dedup module rule:** backend + frontend files for the same module = ONE `/feature-docs` invocation. Prevents duplicate section updates when a PR touches both `Employee.Application/*.cs` and `employee-list.component.ts`.
+**Dedup module rule:** backend + frontend files for the same module = ONE `/spec` invocation. Prevents duplicate section updates when a PR touches both `Employee.Application/*.cs` and `employee-list.component.ts`.
 
 ---
 
@@ -3189,26 +3124,23 @@ NEVER skip, batch-complete, or mark done without invoking the sub-skill.
 The spec-driven development loop ensures that every code fix propagates through all documentation artifacts in sequence:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  SPEC-DRIVEN FEEDBACK CHAIN                                       │
-│                                                                   │
-│  Code fix (service/handler/consumer)                              │
-│    → Engineering spec bundle updated                              │
-│        (A-domain-model.md, B-business-rules.md)                  │
-│    → Integration tests written with TC-{FEATURE}-{NNN} annotations │
-│    → Feature doc Section 15 updated (TC evidence)               │
-│    → QA dashboard synced (PRIORITY-INDEX.md)                     │
-│    → SPEC-CHANGELOG.md entry written                             │
-│                                                                   │
-│  Every artifact in the chain updated in a single branch.          │
-│  No orphaned specs, no stale dashboard entries, no               │
-│  undocumented tests.                                              │
-└─────────────────────────────────────────────────────────────────┘
+SPEC-DRIVEN FEEDBACK CHAIN
+
+  Code fix (service/handler/consumer)
+    → Feature Spec updated (canonical 8-section capability doc)
+    → Feature doc Section 8 TCs updated (canonical TC registry)
+    → Integration tests written with TC-{FEATURE}-{NNN} annotations
+    → §8 IntegrationTest field synced to the test method
+    → SPEC-CHANGELOG.md entry written
+
+  Every artifact updated in a single branch — no orphaned specs,
+  no undocumented tests, and no second registry to drift.
+  Section 8 is the one source of truth.
 ```
 
-#### Engineering Spec Bundle — AI Source of Truth
+#### Feature Spec — AI Source of Truth
 
-The engineering spec bundle (`docs/specs/{app-bucket}/{system-name}/`) is used by AI sessions as a **source of truth for domain modeling**. When a developer asks "what values does `EmployeeClassification` have?", the AI reads `A-domain-model.md`, not the source code.
+The canonical 8-section Feature Spec (`docs/specs/{Bucket}/README.{Feature}.md`) is used by AI sessions as a **source of truth for domain modeling**. When a developer asks "what values does `EmployeeClassification` have?", the AI reads the Feature Spec's domain section, not the source code. (The legacy per-module A–E engineering bundle was retired — `spec-index` no longer extracts it; it only re-derives a thin navigation index FROM the Feature Specs.)
 
 **Why accuracy matters:** A 2-value answer when the actual code has 3 values causes:
 
@@ -3216,20 +3148,119 @@ The engineering spec bundle (`docs/specs/{app-bucket}/{system-name}/`) is used b
 - Incorrect test assertions (only asserting 2 of 3 variants)
 - Documentation that contradicts the codebase
 
-The spec bundle includes `last_extracted` and `extraction_mode` frontmatter. Keeping these updated means future `/spec-discovery [mode=update]` runs treat it as a known-good baseline and perform incremental diffs rather than full re-extraction.
+Each Feature Spec carries `last_reviewed` frontmatter. Keeping it current lets `/spec [mode=update]` (canonical) and `/spec-index mode=index` (derived re-generation) treat the spec as a known-good baseline rather than re-deriving from scratch.
 
-#### QA Dashboard — Bidirectional Test Catalog
+#### Section 8 — Canonical Bidirectional Test Catalog
 
-`docs/specs/PRIORITY-INDEX.md` is the cross-referenceable test catalog. When integration tests exist but are NOT registered here, the `/integration-test-review` agent produces false-negative "no integration tests found" findings.
+The Feature Spec's **Section 8 is the cross-referenceable TC registry**. Each TC's `IntegrationTest` field links to the integration test method (`TestFile::MethodName`, or `Untested`). When integration tests exist but the corresponding §8 TC is not annotated, the `/integration-test-review` agent produces false-negative "no integration tests found" findings. (There is no separate QA dashboard — the retired `docs/specs/README.md` + `PRIORITY-INDEX.md` catalog was folded into §8.)
 
-**Registration format:** Each TC entry includes an `evidence` field linking to the integration test method name (`TestClass::MethodName`). This enables future AI sessions to find the test via a single grep — no manual file tree traversal required.
+**Registration format:** Each §8 TC's `IntegrationTest` field carries the test method name (`TestFile::MethodName`). This enables future AI sessions to find the test via a single grep — no manual file tree traversal required.
 
 The `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` annotation in test code provides the bidirectional link:
 
-- Feature doc Section 15 → spec bundle TC ID → test method (forward)
-- Test method `Trait` → TC ID → feature doc evidence section (reverse)
+- Feature doc Section 8 TC ID → test method (forward)
+- Test method `Trait` → TC ID → feature doc §8 entry (reverse)
 
 Both directions are queryable without reading source code, making the spec-driven chain **self-documenting for AI agents**.
+
+---
+
+### 8.20 Self-Validating Review — Findings Validation Gate
+
+The hardest hallucination to catch is the one inside the review itself. A review agent that fabricates a finding — wrong `file:line`, inflated severity, a "bug" that re-traces as correct — poisons everything downstream: the fix targets nothing, the human burns trust, the audit trail records noise. Evidence gates (Section 8.6) protect the _implementation_; this gate protects the _review_.
+
+The mechanism is a **recursion-guarded self-review loop**: after any review produces findings, the reviewer re-reviews its own output once more in a terminal mode, and a bounded re-do loop reconciles until the findings are clean. It ships in `/why-review`; standalone `/review-changes` runs it in Phase 6, while `$workflow-review-changes` runs the findings-validation gate as parent step 2 before parallel reviewers and later fix planning.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  FINDINGS VALIDATION GATE — the reviewer reviews itself          │
+│                                                                   │
+│  full mode (review)                                               │
+│    ├─ produce findings → write report                             │
+│    └─ CLOSING TASK: invoke /why-review --validate-findings ──┐    │
+│                                                              │    │
+│  validate-findings mode (TERMINAL)  ◄────────────────────────┘    │
+│    For EACH finding verify all four:                              │
+│      (a) file:line proof exists & re-traces to real code          │
+│      (b) the finding is correct (re-trace the cited code)         │
+│      (c) severity is reasonable, not inflated                     │
+│      (d) it reflects project conventions / best practice          │
+│    + sweep for finding issues or enhancements the review MISSED    │
+│    → emit CLEAN | HAS-ISSUES verdict, return to caller             │
+│    NEVER calls /why-review · NEVER spawns a sub-agent             │
+│    NEVER runs the gate  ── this is what stops infinite recursion  │
+│                                                                   │
+│  caller-owned re-do loop (bounded):                               │
+│    CLEAN     → append "## Findings Validation" line, gate PASSES   │
+│    HAS ISSUES→ reconcile (drop unproven, fix proof, add missed),  │
+│               re-derive verdict, re-validate the UPDATED report    │
+│    repeat → max 2 re-dos (3 validate passes total)                │
+│    still not clean → escalate via AskUserQuestion (no silent loop) │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Why the recursion guard is the whole design
+
+A naive "review your review" instruction recurses forever — the validation pass is itself a review, which triggers another validation, and so on. Three rules make it terminate deterministically:
+
+| Rule                                                                                                                                            | What it prevents                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `validate-findings` is **terminal** — never calls `/why-review`, never re-runs the gate, never spawns a sub-agent                               | Infinite self-recursion                                                        |
+| The re-do loop lives in the **caller** (standalone `/review-changes` Phase 6 or `$workflow-review-changes` parent step 2), not in validate mode | Diffuse, unbounded looping across agents                                       |
+| **Bounded at max 2 re-dos**, then `AskUserQuestion` escalation                                                                                  | A finding the AI can neither prove nor drop silently looping forever           |
+| All passes run in the **same main-agent session** (never a spawned sub-agent)                                                                   | Context loss between validation rounds; the validator sees the real cited code |
+
+#### Why this matters operationally
+
+- **Self-correction without a second human** — the reviewer demotes its own unprovable findings before they reach the report, so humans review a pre-filtered, proof-backed list instead of triaging noise.
+- **Bounded cost** — at most 3 validation passes per review, then it escalates rather than burning tokens. The cap is the budget guarantee.
+- **Auditable** — every outcome writes a record: `## Findings Validation` (clean), `## Findings Validation Notes` (what changed and why), or `## Findings Validation — Unresolved` (escalated). The reconciliation is never invisible.
+- **Symmetric with the rest of the framework** — it is the Section 8.6 evidence discipline turned back on the review layer: every finding must be correct, proof-backed, reasonable, and best-practice, or it gets dropped or escalated.
+
+This closes the last open loop in the quality chain: implementation is evidence-gated, the review is evidence-gated, and now the review's _own findings_ are evidence-gated — by the same standard, with a hard recursion stop and a bounded escape hatch.
+
+---
+
+### 8.21 Behavioral Principle Injection — The Mindset Layer
+
+Sections 8.1–8.2 cover injecting _project knowledge_ (patterns, reference docs). This section covers injecting _reasoning discipline_ — the small set of universal behavioral principles that must be in front of the model at every decision point regardless of project. These are the framework's encoding of AI-harness best practices, and they are delivered by their own dedicated injection path so they survive long context and compaction.
+
+#### The canonical principles
+
+| Principle                          | One-line rule                                                                                                                                    | Best-practice it encodes          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| **Anti-hallucination**             | Never present a guess as fact — cite sources, admit uncertainty, self-check, cross-reference, stay skeptical of own confidence                   | Grounding / calibrated confidence |
+| **AI Attention (Primacy-Recency)** | Put the 3 most critical rules at BOTH top and bottom of long prompts so adherence survives long context                                          | Attention engineering             |
+| **Goal-driven execution**          | Define success criteria first, loop until verified, stop only when observable checks pass; each task step carries `→ verify: [observable check]` | Closed-loop agency                |
+| **Tests verify intent**            | Tests must protect a business rule/invariant and fail when that intent breaks — not merely mirror current behavior                               | Specification-as-test             |
+| **Critical / sequential thinking** | Every claim needs traced proof, confidence >80% to act; complex problems use explicit thought markers, revisions, and stop conditions            | Structured reasoning              |
+| **Surgical changes**               | Diff test — every changed line must trace to the request; bug-fix mode adds no restyling; enhancements are announced, never silent scope-creep   | Minimal-diff discipline           |
+| **Surface ambiguity**              | Multiple valid interpretations → present each with an effort estimate and ask; never silently pick the broad/complex path                        | Clarify-before-assume             |
+| **Output quality**                 | Token efficiency without quality loss — no inventories/dir-trees/redundant examples; lead with the answer; unresolved questions at the end       | Signal density                    |
+
+The short principles are authored once as SYNC-tagged blocks in `.claude/skills/shared/sync-inline-versions.md` (the critical-thinking-mindset block + the AI-mistake-prevention block) and composed by `.claude/scripts/lib/hookless-prompt-protocol.cjs`; `.claude/hooks/lib/prompt-injections.cjs` is only a delegating compat wrapper that reads those canonical blocks (it holds no body copies). Their long-form canon lives in `.claude/docs/development-rules.md` and `.claude/docs/anti-hallucination-patterns.md`; and the SYNC-tagged blocks propagate into skill bodies and the cross-tool mirrors (Section 13.5).
+
+#### Static delivery — principle stays in the attention window
+
+> **Delivered statically.** The 5-principle and AI-mistake-prevention blocks live
+> **statically** as SYNC-tagged content in `CLAUDE.md`, agent `.md`, and skill `SKILL.md`
+> bodies (authored once in `sync-inline-versions.md`). After compaction the model re-reads
+> those static files, so the principles are restored without any runtime emitter. The
+> mechanism below is the design intent the static layout realizes.
+
+The principle is placed at both **bookends** of every turn — the **mechanical implementation
+of the Primacy-Recency principle**: critical rules sit near the top of the agent's standing
+instructions and the closing gates near the bottom, so the model sees them at both ends. The
+short principles are authored once and propagated by SYNC tags rather than chained across
+multiple hook part-files.
+
+#### Dual-window dedup — anchoring without bloat
+
+Re-injecting on every prompt would have flooded the context, so the historical runtime emitter used `wasMarkerRecentlyInjected` (in `prompt-injections.cjs`) for a **dual primacy + recency check**: it suppressed a re-injection when the marker already appeared in either the last N lines (recency window) _or_ the first ~50 lines (primacy window), with window sizes computed from actual content size in `dedup-constants.cjs`. **After the de-hooking refactor no hook emits protocol text at runtime, so this dedup path is dormant** — the principle now stays present at the conversation boundaries because it is authored statically into `CLAUDE.md` and the skill bodies (re-read after compaction) rather than re-injected. The helper survives only as a SYNC-verified compat surface, applying the same dedup discipline as Section 4.5.
+
+#### Embedded over external — the sequential-thinking migration
+
+A concrete portability/reliability win: sequential-thinking was originally a **runtime MCP server**. It was removed from `.mcp.json` and replaced with an embedded `SYNC:sequential-thinking-protocol` markdown block inlined into 28 planning/review/debug skill files (27 `SKILL.md` + the lowercase-named `why-review/skill.md`; introduced in commit `5f01f44f34e`). The rationale generalizes the framework's stance: a methodology that can be expressed as a protocol should not depend on an external server that might be unavailable — and inlining means **sub-agents and hookless tools inherit it automatically** rather than needing the MCP connection. The protocol defines explicit thought markers (`Thought N/M`, `[REVISION]`, `[HYPOTHESIS]`/`[VERIFICATION]`), mandatory closers (confidence %, assumptions, open questions), and stop conditions (confidence <80% → escalate; ≥3 revisions → re-frame). Fewer runtime dependencies, more portability — the same principle that drives the whole mirror architecture.
 
 ---
 
@@ -3247,15 +3278,15 @@ Both directions are queryable without reading source code, making the spec-drive
 │                                                                   │
 │  WHAT'S LOST after compaction:                                    │
 │  ❌ Read file state (Edit tool requires prior Read)              │
-│  ❌ Todo task context (which tasks were in progress)             │
+│  ❌ In-context task context (which tasks were in progress)       │
 │  ❌ Workflow step progress (which step we're on)                 │
-│  ❌ Injected context (patterns, rules, lessons)                  │
-│  ❌ Edit count tracking (how many files changed)                 │
+│  ❌ In-context guidance (patterns, rules, lessons)               │
 │                                                                   │
-│  WHAT'S PRESERVED:                                                │
+│  WHAT'S PRESERVED (re-read after compaction):                    │
 │  ✅ File system state (actual code changes)                      │
 │  ✅ Git state (commits, branches)                                │
-│  ✅ External state files (swap, todo, workflow)                  │
+│  ✅ Disk-backed state (task list, workflow, plans/ files)        │
+│  ✅ Static guidance files (CLAUDE.md / SKILL.md) re-read         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -3266,49 +3297,43 @@ sequenceDiagram
     participant Session as Active Session
     participant Compact as Compaction
     participant Disk as External State (Disk)
-    participant Recovery as Recovery Hooks
+    participant Model as Model (post-compact)
 
     Note over Session: Normal operation
 
-    Session->>Disk: todo-tracker.cjs writes todo state
-    Session->>Disk: workflow-step-tracker.cjs writes progress
-    Session->>Disk: tool-output-swap.cjs writes large outputs
-    Session->>Disk: edit-state tracks file edit counts
+    Session->>Disk: Task system persists task list to disk
+    Session->>Disk: Workflow state persisted to disk
+    Session->>Disk: plans/ + report files hold findings
 
     Note over Compact: Context window full → Compact
 
-    Compact->>Disk: write-compact-marker.cjs saves marker
+    Note over Model: Session resumes after compact
 
-    Note over Recovery: Session resumes after compact
+    Model->>Disk: TaskList re-reads task/step state
+    Model->>Disk: Reads workflow progress + plans/ files
+    Model->>Disk: Re-reads modified files + audits git status<br/>(static CLAUDE.md rule)
+    Model->>Session: Resumes:<br/>"step 5 of bugfix workflow, task 3 of 7"
 
-    Recovery->>Disk: post-compact-recovery.cjs reads todo state
-    Recovery->>Disk: Reads workflow progress
-    Recovery->>Disk: Reads edit state
-    Recovery->>Session: Injects recovery context:<br/>"You were on step 5 of bugfix workflow,<br/>task 3 of 7 in progress"
-
-    Note over Session: Context injection hooks<br/>re-inject patterns, rules, lessons<br/>(dedup markers gone → fresh injection)
+    Note over Session: Static CLAUDE.md / SKILL.md guidance<br/>(patterns routing, rules, lessons) is back<br/>in-context — it lives in files re-read every prompt
 ```
 
 ### 9.3 External Memory — Swap Engine
 
-For large tool outputs (>50KB grep results, file reads), the swap engine externalizes them:
+`swap-engine.cjs` (a lib module) can externalize large tool outputs to disk. The PostToolUse hook that auto-triggered it on >50KB output was retired in the de-hooking pass; the engine remains as reusable infrastructure (and `session-end.cjs` still cleans up its swap files), but large-output handling is now left to model judgment rather than an automatic runtime swap:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  SWAP ENGINE                                                      │
+│  SWAP ENGINE (lib module — no active auto-trigger hook)          │
 │                                                                   │
 │  PROBLEM: A Grep returning 500 matches fills the context window  │
-│  SOLUTION: Replace large output with a pointer to disk file      │
+│  CAPABILITY: Replace large output with a pointer to a disk file  │
 │                                                                   │
-│  Before Swap:                                                     │
-│  [500 lines of grep results consuming 30KB of context]           │
-│                                                                   │
-│  After Swap:                                                      │
+│  After Swap:                                                     │
 │  "Results externalized to /tmp/ck/swap/grep-abc123.txt           │
 │   Summary: 500 matches across 47 files                           │
 │   Top 10 matches shown inline..."                                │
 │                                                                   │
-│  THRESHOLD: >50KB output triggers swap                            │
+│  FORMER TRIGGER: a retired PostToolUse hook swapped on >50KB     │
 │  RECOVERY: swap files available for re-read after compaction     │
 │  CLEANUP: session-end.cjs removes swap files on exit             │
 └─────────────────────────────────────────────────────────────────┘
@@ -3320,44 +3345,25 @@ For large tool outputs (>50KB grep results, file reads), the swap engine externa
 
 ### 10.1 Test Coverage
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  HOOK TEST INFRASTRUCTURE: 527 Tests                             │
-│                                                                   │
-│  Suite                         │ Tests │ Coverage Area            │
-│────────────────────────────────│───────│──────────────────────────│
-│  test-all-hooks.cjs            │  300  │ All 34 hook behaviors    │
-│  test-lib-modules.cjs          │   10  │ Core lib modules         │
-│  test-lib-modules-extended.cjs │  122  │ Extended lib + greenfield│
-│  test-swap-engine.cjs          │   50  │ Swap engine edge cases   │
-│  test-context-tracker.cjs      │   23  │ Context tracker          │
-│  test-init-reference-docs.cjs  │    5  │ Init reference docs      │
-│  test-shared-utilities.cjs     │   17  │ Shared utilities         │
-│────────────────────────────────│───────│──────────────────────────│
-│  Total                         │  527  │                          │
-│                                                                   │
-│  Additional suites in tests/suites/:                              │
-│  • context.test.cjs — Context injection behavior                 │
-│  • integration.test.cjs — Cross-hook interactions                │
-│  • lifecycle.test.cjs — Session lifecycle events                 │
-│  • security.test.cjs — Safety/blocking hooks                     │
-│  • workflow.test.cjs — Workflow routing                          │
-│  • notification.test.cjs — Notification providers                │
-│  • bugfix-regression.test.cjs — Regression tests                 │
-│                                                                   │
-│  Run all: node .claude/hooks/tests/test-all-hooks.cjs            │
-│  See CLAUDE.md "Development Commands" for full test list         │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Runner                               | Tests   | Scope                                                                                      |
+| ------------------------------------ | ------- | ------------------------------------------------------------------------------------------ |
+| `test-all-hooks.cjs` (primary gate)  | **215** | All 15 hook behaviors + bridged suites + count-drift guard                                 |
+| `run-all-tests.cjs` (full aggregate) | **300** | Primary + extended lib, swap-engine, shared-utilities, and every `tests/suites/*.test.cjs` |
+
+> Counts are live-verified (`test-all-hooks.cjs` = 215, `run-all-tests.cjs` = 300; 2026-06-18). The former per-suite breakdown was hand-maintained and drifted — derive counts from a live run, not a static table.
+
+Suites under `tests/suites/` (15): agent-files-gate, agent-universal-rules, bugfix-regression, check-subagent-routing, content-presence, count-drift, doc-sync-gate, init-reference-docs, integration, lifecycle, notification, protocol-text-parity, security, swap-engine, workflow.
+
+Run the primary gate with `node .claude/hooks/tests/test-all-hooks.cjs`; the full aggregate with `node .claude/hooks/tests/run-all-tests.cjs`. See CLAUDE.md "Development Commands" for the full list.
 
 ### 10.2 Why Test Hooks?
 
 Hooks are the **safety net** for the entire system. A broken hook means:
 
-- Security blocks bypassed (path boundary, privacy)
-- Context injection fails (AI loses project knowledge)
-- Edit enforcement disabled (AI makes unchecked changes)
-- State persistence breaks (todo, workflow, edit tracking)
+- Security blocks bypassed (path boundary, privacy, scout)
+- Session/doc init fails (AI loses project knowledge)
+- Commit gate disabled (git commit/push escapes the /commit guard)
+- Doc-sync warning lost (behavioral code ships without a spec update)
 
 Testing ensures the framework remains reliable as hooks evolve.
 
@@ -3371,27 +3377,26 @@ Testing ensures the framework remains reliable as hooks evolve.
 flowchart TB
     A[User submits prompt] --> B[init-prompt-gate.cjs<br/>Config populated?]
     B -->|No| BLOCK1[❌ Block until config exists]
-    B -->|Yes| C[workflow-router.cjs<br/>Inject workflow catalog]
-    C --> D[prompt-context-assembler.cjs<br/>Inject dev rules + lessons + reminders]
+    B -->|Yes| C[Model reads static workflow catalog<br/>baked into CLAUDE.md]
+    C --> D[Static dev rules + lessons + reminders<br/>from CLAUDE.md / SKILL.md]
 
-    D --> H{LLM processes prompt<br/>with injected context}
+    D --> H{LLM processes prompt<br/>with static context}
 
     H -->|Tool: Edit| I[PreToolUse pipeline]
     I --> I1[windows-command-detector]
     I1 --> I2[scout-block]
     I2 --> I3[privacy-block]
     I3 --> I4[path-boundary-block]
-    I4 --> I5[edit-enforcement<br/>Task exists?]
-    I5 -->|No task| BLOCK2[❌ Block: Create task first]
-    I5 -->|Task exists| I7[Context injection:<br/>backend/frontend/design/patterns/lessons]
+    I4 --> I5[CLAUDE.md task rule<br/>Task exists? — model-driven]
+    I5 -->|No task| BLOCK2[⚠️ Model-driven: create task first]
+    I5 -->|Task exists| I7[Static pattern guidance applies:<br/>backend/frontend/design/patterns/lessons]
     I7 --> EXEC[Tool executes]
 
     EXEC --> J[PostToolUse pipeline]
-    J --> J1[tool-output-swap<br/>Large output?]
-    J1 --> J2[post-edit-prettier<br/>Format file]
-    J2 --> J3[todo-tracker<br/>Update state]
+    J --> J2[post-edit-prettier<br/>Format file]
+    J2 --> J4[graph-auto-update<br/>Incremental graph]
 
-    J3 --> H
+    J4 --> H
 
     style BLOCK1 fill:#f44336,color:white
     style BLOCK2 fill:#f44336,color:white
@@ -3401,73 +3406,70 @@ flowchart TB
 
 ### AI Best Practice → Framework Mapping
 
-| AI Agent Best Practice                         | Framework Mechanism                                           | Layer     |
-| ---------------------------------------------- | ------------------------------------------------------------- | --------- |
-| **Context injection at decision points**       | 10 context injector hooks, auto-triggered by file path        | Hooks     |
-| **Reminder rules prevent forgetting**          | 3 UserPromptSubmit hooks re-inject on every prompt            | Hooks     |
-| **Generic & configurable via config**          | project-config.json drives all context injection              | Config    |
-| **Prompt engineering quality**                 | 256 skills with YAML frontmatter + behavior protocols         | Skills    |
-| **Confirm workflow before acting**             | workflow-router.cjs → AskUserQuestion → confirm               | Workflows |
-| **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation       | Skills    |
-| **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill         | Skills    |
-| **Code proof tracing prevents hallucination**  | evidence-based-reasoning-protocol + /prove-fix                | Skills    |
-| **State survives context compaction**          | Swap engine + todo-tracker + compact-recovery                 | State     |
-| **Lessons persist across sessions**            | docs/project-reference/lessons.md + lessons-injector.cjs      | Hooks     |
-| **Subagents inherit project context**          | 18 subagent-init-\*.cjs part-hooks inject CLAUDE.md + lessons | Hooks     |
-| **Safety boundaries**                          | path-boundary, privacy, scout blocks (exit code 2)            | Hooks     |
-| **Task-gated edits**                           | edit-enforcement.cjs requires TaskCreate before edits         | Hooks     |
-| **Auto-formatting**                            | post-edit-prettier.cjs runs formatter after every edit        | Hooks     |
-| **Doc staleness detection**                    | /watzup skill cross-references changes vs. docs/              | Skills    |
-| **Unified test specification**                 | /tdd-spec writes TCs to feature doc Section 15                | Skills    |
-| **TDD-first workflow**                         | tdd-feature: spec→plan→implement→test→verify                  | Workflows |
-| **Interactive requirement capture**            | /idea discovery interview + /refine testability check         | Skills    |
-| **Test-to-code traceability**                  | TC-{FEATURE}-{NNN} → test annotation linking to TC ID         | Skills    |
-| **E2E from browser recordings**                | /e2e-test + Chrome DevTools Recorder → Playwright             | Skills    |
-| **Screenshot assertion baselines**             | e2e-update-ui workflow + toHaveScreenshot()                   | Workflows |
-| **Greenfield project inception**               | isGreenfieldProject() detection → solution-architect agent    | Hooks     |
-| **AI as solution architect**                   | /greenfield skill + greenfield-init workflow (waterfall)      | Workflows |
-| **Research-driven big features**               | big-feature workflow with step-selection gate                 | Workflows |
-| **DDD domain modeling**                        | /domain-analysis skill: bounded contexts, ERD, aggregates     | Skills    |
-| **Tech stack comparison with evidence**        | /tech-stack-research: top 3 per layer, confidence %           | Skills    |
-| **Step-selection gate for long workflows**     | big-feature + greenfield preActions let user deselect         | Workflows |
-| **Workflow trigger shortcuts**                 | 19 workflow-\* skills for instant activation via /command     | Skills    |
-| **Prompt engineering (role + CoT + evidence)** | Skills use role prompting, chain-of-thought, few-shot         | Skills    |
-| **Context engineering (JIT + dedup + budget)** | Hooks manage context window with precision injection          | Hooks     |
-| **Skill chain navigation (Next Steps)**        | AskUserQuestion recommends logical next skill per step        | Skills    |
-| **Plan-aware skills (Step 0)**                 | Skills read prior workflow outputs before starting work       | Skills    |
-| **Review gates between artifacts**             | refine-review, story-review, tdd-spec-review checkpoints      | Skills    |
-| **Agent negative-prompting guardrails**        | NEVER/ALWAYS rules per agent prevent role overstepping        | Agents    |
-| **Dual planning rounds**                       | High-level arch plan → sprint-ready plan after stories        | Workflows |
-| **Conditional architecture scaffolding**       | /scaffold auto-skips when existing abstractions found         | Skills    |
+| AI Agent Best Practice                         | Framework Mechanism                                                                                      | Layer         |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------- |
+| **Context injection at decision points**       | Static path→patternsDoc guidance in CLAUDE.md / SKILL.md (was hook-injected)                             | Skills/Config |
+| **Reminder rules prevent forgetting**          | Static SYNC rules + the workflow catalog baked into CLAUDE.md, re-read every prompt                      | Skills/Config |
+| **Generic & configurable via config**          | project-config.json drives path→patternsDoc routing                                                      | Config        |
+| **Prompt engineering quality**                 | 156 skills with YAML frontmatter + behavior protocols                                                    | Skills        |
+| **Auto-select workflow path before acting**    | Model reads the static catalog → direct/skill/workflow/custom path                                       | Workflows     |
+| **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation                                                  | Skills        |
+| **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill                                                    | Skills        |
+| **Code proof tracing prevents hallucination**  | evidence-based-reasoning-protocol + /prove-fix                                                           | Skills        |
+| **State survives context compaction**          | Disk-backed task list (TaskList) + workflow state + plans/ files                                         | State         |
+| **Lessons persist across sessions**            | docs/project-reference/lessons.md + static read contract; restored by the model re-reading that contract | Skills/Config |
+| **Subagents inherit project context**          | CLAUDE.md + lessons read contract baked into agent `.md` files                                           | Agents        |
+| **Safety boundaries**                          | path-boundary, privacy, scout blocks (exit code 2)                                                       | Hooks         |
+| **Task-gated edits**                           | Static CLAUDE.md rule: a TaskCreate item before edits (model-driven)                                     | Config        |
+| **Auto-formatting**                            | post-edit-prettier.cjs runs formatter after every edit                                                   | Hooks         |
+| **Doc staleness detection**                    | /watzup skill cross-references changes vs. docs/                                                         | Skills        |
+| **Unified test specification**                 | /spec [mode=tests] writes TCs to feature doc Section 8                                                   | Skills        |
+| **Spec-driven feature workflow**               | feature: specs + tests written and reviewed before implementation                                        | Workflows     |
+| **Interactive requirement capture**            | /idea discovery interview + /refine testability check                                                    | Skills        |
+| **Test-to-code traceability**                  | TC-{FEATURE}-{NNN} → test annotation linking to TC ID                                                    | Skills        |
+| **E2E from browser recordings**                | /e2e-test + Chrome DevTools Recorder → Playwright                                                        | Skills        |
+| **Screenshot assertion baselines**             | e2e --source=update-ui workflow + toHaveScreenshot()                                                     | Workflows     |
+| **Greenfield project inception**               | isGreenfieldProject() detection → solution-architect agent                                               | Hooks         |
+| **AI as solution architect**                   | /greenfield skill + greenfield-init workflow (waterfall)                                                 | Workflows     |
+| **Research-driven big features**               | big-feature workflow with step-selection gate                                                            | Workflows     |
+| **DDD domain modeling**                        | /domain-analysis skill: bounded contexts, ERD, aggregates                                                | Skills        |
+| **Tech stack comparison with evidence**        | /tech-stack-research: top 3 per layer, confidence %                                                      | Skills        |
+| **Step-selection gate for long workflows**     | big-feature + greenfield preActions let user deselect                                                    | Workflows     |
+| **Workflow trigger shortcuts**                 | 18 workflow-\* skills for workflow activation and lifecycle control                                      | Skills        |
+| **Prompt engineering (role + CoT + evidence)** | Skills use role prompting, chain-of-thought, few-shot                                                    | Skills        |
+| **Context engineering (JIT + dedup + budget)** | Hooks manage context window with precision injection                                                     | Hooks         |
+| **Skill chain navigation (Next Steps)**        | AskUserQuestion recommends logical next skill per step                                                   | Skills        |
+| **Plan-aware skills (Step 0)**                 | Skills read prior workflow outputs before starting work                                                  | Skills        |
+| **Review gates between artifacts**             | review-artifact (--type pbi/story/spec-tests) checkpoints                                                | Skills        |
+| **Agent negative-prompting guardrails**        | NEVER/ALWAYS rules per agent prevent role overstepping                                                   | Agents        |
+| **Dual planning rounds**                       | High-level arch plan → sprint-ready plan after stories                                                   | Workflows     |
+| **Conditional architecture scaffolding**       | /scaffold auto-skips when existing abstractions found                                                    | Skills        |
 
 ### File Structure
 
 ```
 .claude/
-├── settings.json ──────── Hook registration (9 events, ~47 hooks)
+├── settings.json ──────── Hook registration (7 events, 21 registrations)
 ├── ccstatusline.json ──── Status line display config (model, context, tokens, tok/s estimator)
 ├── .ck.json ──────────── Hook-specific config
 ├── .ckignore ─────────── Scout block patterns
-├── workflows.json ─────── 37 workflow definitions
+├── workflows.json ─────── 17 workflow definitions
 ├── workflows/ ──────────── Workflow definitions (primary-workflow.md, etc.)
-├── hooks/ ─────────────── 64 top-level hook files + 29 lib modules
+├── hooks/ ─────────────── 15 top-level .cjs hooks (+ 1 .js helper) + 25 lib modules
 │   ├── session-init.cjs
-│   ├── workflow-router.cjs
-│   ├── prompt-context-assembler.cjs
-│   ├── edit-enforcement.cjs
+│   ├── path-boundary-block.cjs
 │   ├── ...
 │   ├── lib/ ──────────── Shared modules
 │   │   ├── swap-engine.cjs
-│   │   ├── context-injector-base.cjs
 │   │   ├── prompt-injections.cjs
 │   │   ├── todo-state.cjs
 │   │   └── ...
 │   └── tests/ ────────── Test suites
-├── skills/ ────────────── 257 skill directories
+├── skills/ ────────────── 156 skill definitions
 │   ├── {skill-name}/SKILL.md
-│   ├── shared/ ───────── 5 shared reference/protocol files
+│   ├── shared/ ───────── 6 shared reference/protocol files
 │   └── _templates/ ───── Skill scaffolding
-├── agents/ ────────────── 28 agent definitions
+├── agents/ ────────────── 29 agent definitions
 ├── docs/ ─────────────── Framework documentation (co-located)
 └── patterns/ ──────────── Anti-hallucination patterns
 
@@ -3482,7 +3484,7 @@ docs/
 │   ├── lessons.md ──────────── Persistent learned lessons (max 50)
 │   ├── design-system/ ──────── Per-app design tokens
 │   └── ...
-└── business-features/ ──── Feature docs per service module
+└── specs/ ──────────────── Feature Specs per capability
 ```
 
 ---
@@ -3494,7 +3496,7 @@ docs/
 Agents are **Markdown files** (`.claude/agents/*.md`) that define specialized AI subprocesses. Each agent receives a focused system prompt, restricted tool set, and domain-specific instructions. They run as child processes of the main Claude Code session.
 
 ```
-AGENT SYSTEM (28 agents)
+AGENT SYSTEM (29 agents)
 │
 ├── IMPLEMENTATION AGENTS
 │   ├── backend-developer ──── .NET CQRS patterns, entities, events
@@ -3521,8 +3523,7 @@ AGENT SYSTEM (28 agents)
 ├── PROJECT MANAGEMENT AGENTS
 │   ├── project-manager ─────── Status tracking & reporting
 │   ├── product-owner ───────── PBI management & prioritization
-│   ├── business-analyst ────── Requirements & user stories
-│   └── qc-specialist ──────── Quality gates & compliance
+│   └── business-analyst ────── Requirements & user stories
 │
 ├── CONTENT & DOCS AGENTS
 │   ├── docs-manager ────────── Documentation synchronization
@@ -3534,7 +3535,8 @@ AGENT SYSTEM (28 agents)
     ├── database-admin ──────── DB optimization & migrations
     ├── debugger ────────────── Root cause analysis & diagnostics
     ├── performance-optimizer ── Query, bundle, lazy-load optimization (NEW)
-    └── security-auditor ──────── Auth, secrets, OWASP, dependency audit (NEW)
+    ├── security-auditor ──────── Auth, secrets, OWASP, dependency audit (NEW)
+    └── framework-maintainer ── .claude framework custodian: skills, hooks, SYNC, mirrors (NEW)
 ```
 
 ### 12.2 Why Agents Matter
@@ -3545,11 +3547,11 @@ Agents solve two critical problems:
 
 2. **Parallel execution** — Multiple agents can run simultaneously (e.g., 5 code-reviewer agents reviewing different file categories in parallel: architecture, domain-entities, performance, integration-test-review, and security), dramatically reducing time for large tasks.
 
-**Key design:** Agents inherit project context via 18 `subagent-init-*.cjs` part-hooks — they automatically receive CLAUDE.md instructions, learned lessons, and active workflow state.
+**Key design:** Agents inherit project context through their own `.md` system prompts, which bake in the CLAUDE.md instructions and the learned-lessons read contract. Active workflow state survives compaction on disk and is recovered by the model re-reading workflow state and the static `CLAUDE.md` / `SKILL.md` guidance.
 
 ### 12.3 Agent Behavioral Rules (NEW)
 
-All 28 agents include two layers of behavioral enforcement:
+All 29 agents include two layers of behavioral enforcement:
 
 **Layer 1 — Domain-specific NEVER/ALWAYS rules** appended to their system prompts:
 
@@ -3595,6 +3597,107 @@ Each agent definition now inlines two shared protocol blocks from `sync-inline-v
 
 ---
 
+## 13. Multi-AI-Tool Portability — One Source, Every Harness
+
+Everything documented above is engineered as **Claude Code hooks, skills, and workflows** — but the harness is not the product. The product is the **behavior**: evidence gates, workflow enforcement, pattern injection, quality protocols. Claude Code is one execution engine; OpenAI Codex is another. The framework treats the harness as a target, not a dependency — the same authored behavior **compiles** to each tool.
+
+This is the answer to two questions the rest of the guide raises: _"does this only work with Claude Code?"_ (no) and _"does this only work on this codebase?"_ (no). Both are answered by the same mechanism — a **single source of truth that generates verified mirrors** for every supported tool, with project-specific knowledge factored out into config.
+
+### 13.1 Source of Truth → Generated Mirrors
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  SOURCE OF TRUTH  (hand-authored, the ONLY place you edit)            │
+│  .claude/skills/**/SKILL.md · .claude/agents/*.md ·                   │
+│  .claude/workflows.json · CLAUDE.md (project instructions) ·          │
+│  .claude/skills/shared/sync-inline-versions.md                        │
+└──────────────────────────────────────────────────────────────────────┘
+            │  npm run codex:sync   (9-stage pipeline, fail-fast)
+            ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  GENERATED MIRRORS  (never hand-edited — sync overwrites them)        │
+│                                                                        │
+│  Codex ── .agents/skills/**/SKILL.md   1:1 sanitized skill mirror     │
+│       ├── .codex/CODEX_CONTEXT.md      prompt-protocols + workflow     │
+│       │                                 catalog + AI-SDD markers       │
+│       ├── .codex/agents/*.toml         agent mirror                    │
+│       ├── .codex/hooks.json            hookless-parity declaration     │
+│       └── AGENTS.md (root)             full CLAUDE.md mirror +         │
+│                                         managed Codex-context block    │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+Every generated file **self-declares** as a mirror. `AGENTS.md`: _"This block is auto-generated from `CLAUDE.md` by `npm run codex:sync:context`. Do not edit manually; update `CLAUDE.md` and re-sync."_ The authoring rule is absolute: **edit `.claude/` source, run sync, never touch a mirror** — because the next sync overwrites direct mirror edits.
+
+### 13.2 Why Mirrors at All? The Hookless-Parity Problem
+
+Claude Code's power in this framework comes substantially from **hooks** plus a large body of **static standing instructions** that re-anchor principles and gate routing inside the model's control loop. Path-scoped guidance and mindset principles are carried statically in `CLAUDE.md` / `SKILL.md` (see Section 4). Codex **has no hook system at all**. A naive port would lose every automatic injection that any remaining hook performs.
+
+The mirror compensates by **baking what hooks deliver (and what Claude carries statically) into the mirror artifacts**:
+
+| Behavior on Claude Code                                   | How the mirror delivers it to a hookless tool                                                                    |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| The workflow catalog is baked statically into `CLAUDE.md` | Catalog written into `.codex/CODEX_CONTEXT.md` as static text                                                    |
+| Static `lessons.md` read contract                         | Replaced by an explicit `CODEX:PROJECT-REFERENCE-LOADING` gate telling Codex to open the reference docs itself   |
+| Static project-config + reference-doc read contract       | A loading gate instructs the tool to read `docs/project-config.json` + `docs/project-reference/**` at task start |
+| `/skill` slash invocation                                 | Rewritten to Codex's `$skill` invocation syntax; `Agent(...)` → `spawn_agent`, `subagent_type` → `agent_type`    |
+
+So the mirror is not a copy — it is a **transform** that converts hook-dependent automation into self-service instructions the hookless tool can follow. Frontmatter is sanitized (Claude-only keys like `version` stripped; `disable-model-invocation` preserved) so each tool reads only what it understands.
+
+### 13.3 The Sync Skills
+
+| Skill            | Scope                      | Mechanics                                                                                                                                                 |
+| ---------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`sync-codex`** | Full Claude → Codex mirror | `npm run codex:sync` (or the skill without npm). `disable-model-invocation: true` — **user-invoked only, never auto-runs.** Sequential, fail-fast stages. |
+
+**`sync-codex`'s stages** (mutate first, verify-only after, any failure aborts): **migrate** (agents/skills/notifications) → **hooks** (`.codex/hooks.json`) → **context** (`CODEX_CONTEXT.md` + `AGENTS.md`) → **tests** → **wf-cycle** → **sk-proto** → **residue** → **sdd**. The sync is not "done" until all five verifiers pass (four run as dedicated stages — wf-cycle, sk-proto, residue, sdd; the `verify-sync-divergence` oracle runs via its unit test in the `tests` stage) — a stale or non-portable mirror **fails the pipeline** rather than shipping silently.
+
+Mirror parity also enables **multi-AI execution**, not just portability: the **`dual-ai`** skill fans a single prompt out to **two fresh parallel sessions** — Claude Code and Codex CLI — each launched at xhigh reasoning effort in full-permission mode, with an `--orchestrate` mode that supervises both runs and collects a result comparison. It also accepts a workflow id, so `dual-ai workflow-review-changes` gives Claude `/workflow-review-changes` and Codex `$workflow-review-changes`, producing two independent reviews of the same working tree — possible only because the verified mirrors guarantee both tools execute the same workflow. The skill is `disable-model-invocation: true` — strictly user-invoked, since it spawns external sessions that consume quota.
+
+### 13.4 Mirror Parity Is Mechanically Verified
+
+Five verifier scripts (`.claude/scripts/codex/verify-*.mjs`, each with a unit test) turn "keep the mirrors in sync" from a discipline into a **build gate**:
+
+| Verifier                           | Asserts                                                                                                                                                                                                                                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify-sync-divergence`           | **Oracle gate** — re-runs the real mirror transform into a throwaway dir and diffs against the committed `.agents/skills`. Any difference = someone edited source without re-syncing, or hand-edited a mirror.                                                                     |
+| `verify-skill-protocol-compliance` | Bidirectional set-diff parity (every source skill has a mirror and vice-versa); the 6 strict-execution-contract sentences present in every mirror; **no Claude-isms** (`Agent(`, `subagent_type`) leak into Codex output; AGENTS.md context block byte-matches `CODEX_CONTEXT.md`. |
+| `verify-workflow-cycle-compliance` | Workflow step-sequences in `workflows.json` match the skill files in **both** `.claude/skills` AND `.agents/skills` ("paired-drift" detection); ordered gates (integration → review → verify; docs-update → workflow-end) intact.                                                  |
+| `verify-no-project-residue`        | **Portability enforcement** — scans the generic surfaces for the origin project's literal name and a denylist of its framework symbols (configured per-project). A reusable skill that hardcodes a project-specific name **fails the build**.                                      |
+| `verify-sdd-semantic-compliance`   | ~30 semantic assertions on the spec-driven cycle; Codex mirrors reference the _local_ shared-contract path, not the `.claude` source path.                                                                                                                                         |
+
+`verify-no-project-residue` is the load-bearing one for "works for any project": it is impossible to merge a generic skill that leaked project-specific names, because the residue scan rejects it. Portability isn't a guideline — it's a gate.
+
+### 13.5 The SYNC-Tag Mechanism — One Protocol, Identical Everywhere
+
+The framework's protocols (evidence-based reasoning, critical-thinking mindset, AI-SDD contract, end-to-start debugger trace, …) must read **identically** across ~150 skills _and_ across both tools. They are kept identical by **inlining, not referencing**:
+
+1. Each shared protocol is authored **once** under a `## SYNC:{tag}` heading in `.claude/skills/shared/sync-inline-versions.md` (~67 tagged protocols).
+2. In every consuming skill the content is inlined **verbatim** between `<!-- SYNC:{tag} -->` … `<!-- /SYNC:{tag} -->` fences.
+3. The **`sync-skills-shared-protocols`** skill propagates a canonical edit: find every file carrying the tag, replace the text between its fences, verify fence balance. Bulk inserts across all ~183 skill/agent files go through `sync-hooks-to-skills.py`, never by hand.
+4. The Codex context stage re-emits the same SYNC blocks into `CODEX_CONTEXT.md` / `AGENTS.md`.
+
+**Why inline instead of reference?** The explicit policy (`SYNC:shared-protocol-duplication-policy`): _"Inline protocol content … is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection."_ This is a deliberate trade — storage/duplication cost for adherence. An LLM follows a rule in front of it far more reliably than a rule it must choose to go read. The verifiers (13.4) make the duplication safe by failing the build the moment copies diverge.
+
+### 13.6 The Portability Contract — How It Works on Any Project
+
+The boundary that makes the framework repo-agnostic is stated in `.claude/skills/shared/sdd-artifact-contract.md` and mirrored into every tool:
+
+> **Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from `docs/project-config.json` and `docs/project-reference/`. … Any supported AI tool may execute when this shared context and local docs are available.
+
+The rule that keeps it clean: _"If a rule can be reused unchanged by another repository, keep it out of project-reference docs and place it in `.claude`."_ Skills hold the **reusable** behavior; `project-config.json` + `project-reference/**` hold the **specific** knowledge (tech stack, paths, naming, patterns, evidence formats). Tool-specific adapters translate paths and invocation syntax but must preserve the shared contract — _"correctness comes from artifacts, evidence, tests, and review, not from requiring a named tool set."_
+
+**Adopting this framework on a new repo, concretely:**
+
+1. Copy `.claude/` (skills, hooks, workflows, agents) — the reusable behavior, unchanged.
+2. Replace `docs/project-config.json` and `docs/project-reference/**` with the new project's stack, paths, patterns, and conventions. (The `/project-config` and `scan-*` skills can generate these from a codebase scan.)
+3. Rewrite `CLAUDE.md` for the new project's golden rules.
+4. Run `npm run codex:sync` to regenerate the committed Codex mirrors.
+
+The harness, the protocols, and the quality gates carry over verbatim. Only the config and reference docs change. That is what "works for any project, on any supported AI harness" means in this framework — and it is enforced by the same verifier suite that keeps the mirrors honest.
+
+---
+
 ## Summary — Philosophy & Principles
 
 ### The Core Thesis
@@ -3615,18 +3718,18 @@ This framework answers that question with **defense in depth**: multiple indepen
 
 ### Design Principles
 
-| Principle                         | Implementation                                                                                                                                                                                                                                 |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Trust but verify**              | Every AI claim must cite `file:line` evidence. The `evidence-based-reasoning-protocol` makes speculation forbidden.                                                                                                                            |
-| **Fail closed, not open**         | Safety hooks use `exit 2` (non-overridable block). When in doubt, block and explain rather than allow and hope.                                                                                                                                |
-| **Convention over configuration** | `project-config.json` centralizes all project-specific knowledge. Hooks read it at runtime — no hardcoded assumptions.                                                                                                                         |
-| **Enforce at the boundary**       | Hooks run as separate processes at lifecycle boundaries. The AI can't bypass them because they execute outside the LLM's control loop.                                                                                                         |
-| **Learn from mistakes**           | The `/learn` skill captures AI errors into `lessons.md`. The `lessons-injector.cjs` hook re-injects them on every prompt and edit. Past mistakes become future guardrails.                                                                     |
-| **Plan before implement**         | `edit-enforcement.cjs` requires `TaskCreate` before any file edit. Combined with workflow step tracking, this ensures AI doesn't skip from question to code without a plan.                                                                    |
-| **State survives amnesia**        | External state files (todo, workflow progress, swap) persist to disk. After context compaction, `post-compact-recovery.cjs` restores progress — the AI resumes where it left off.                                                              |
-| **Stateless-per-turn invariants** | Rules are re-injected at every `UserPromptSubmit` via `mindset-injector` and `prompt-context-assembler`. The framework never trusts the AI to remember rules from prior turns — they are re-stated as invariants at each interaction boundary. |
-| **Self-contained skill units**    | Skills inline shared protocols via `<!-- SYNC:tag -->` blocks rather than referencing external files. Each skill is a complete, deployable prompt unit. The `sync-protocols` skill keeps copies synchronized from a canonical source.          |
-| **Structural intelligence first** | The code graph (`code_graph.py`) is a HARD-GATE before any investigation concludes. Grep finds files; graph traces reveal callers, events, bus consumers, and API contracts — relationships that textual search cannot find.                   |
+| Principle                         | Implementation                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Trust but verify**              | Every AI claim must cite `file:line` evidence. The `evidence-based-reasoning-protocol` makes speculation forbidden.                                                                                                                                                                                                                                                                           |
+| **Fail closed, not open**         | Safety hooks use `exit 2` (non-overridable block). When in doubt, block and explain rather than allow and hope.                                                                                                                                                                                                                                                                               |
+| **Convention over configuration** | `project-config.json` centralizes all project-specific knowledge. Hooks read it at runtime — no hardcoded assumptions.                                                                                                                                                                                                                                                                        |
+| **Enforce at the boundary**       | Hooks run as separate processes at lifecycle boundaries. The AI can't bypass them because they execute outside the LLM's control loop.                                                                                                                                                                                                                                                        |
+| **Learn from mistakes**           | The `/learn` skill captures AI errors into `lessons.md`. The static read-lessons contract in `CLAUDE.md` / `SKILL.md` keeps them in view and is re-read by the model after compaction. Past mistakes become future guardrails.                                                                                                                                                                |
+| **Plan before implement**         | A static `CLAUDE.md` rule requires a `TaskCreate` item before any file edit (model-driven, no longer hook-gated). Combined with model-driven workflow progression, this ensures AI doesn't skip from question to code without a plan.                                                                                                                                                         |
+| **State survives amnesia**        | External state files (disk-backed task list, workflow progress, `plans/` files) persist to disk. After context compaction, the model re-reads them via `TaskList` and audits git/filesystem — resuming where it left off.                                                                                                                                                                     |
+| **Stateless-per-turn invariants** | Critical rules are carried as static SYNC-tagged invariants in `CLAUDE.md` / agent `.md` / skill `SKILL.md` bodies (the workflow catalog among them, re-read every prompt), and are restored after compaction by the model re-reading those same files. The framework never trusts the AI to remember rules from prior turns — they are re-stated as invariants at each interaction boundary. |
+| **Self-contained skill units**    | Skills inline shared protocols via `<!-- SYNC:tag -->` blocks rather than referencing external files. Each skill is a complete, deployable prompt unit. The `sync-skills-shared-protocols` skill keeps copies synchronized from a canonical source.                                                                                                                                           |
+| **Structural intelligence first** | The code graph (`code_graph.py`) is a HARD-GATE before any investigation concludes. Grep finds files; graph traces reveal callers, events, bus consumers, and API contracts — relationships that textual search cannot find.                                                                                                                                                                  |
 
 ### What Makes This Framework Different
 
@@ -3640,20 +3743,21 @@ A 10x faster code generator that produces incorrect code 20% of the time is wors
 
 The framework elevates the AI from a code autocomplete tool to a **strategic development partner**:
 
-| Traditional AI Coding Tool   | This Framework                                                        |
-| ---------------------------- | --------------------------------------------------------------------- |
-| Generates code from prompts  | Investigates codebase, then generates code matching existing patterns |
-| No memory between sessions   | Learned lessons persist and prevent repeated mistakes                 |
-| Implements immediately       | Plans, validates with user, reviews plan, then implements             |
-| Uses generic patterns        | Reads project-specific patterns from reference docs                   |
-| Works on existing code only  | Guides greenfield inception AND big-feature research                  |
-| Single-shot responses        | Multi-step workflows with quality gates at each stage                 |
-| User must remember all rules | Hooks inject rules automatically — human memory not required          |
-| Loads all context upfront    | JIT context injection — right docs at right time (context eng.)       |
-| One-pass generation          | Multi-pass review: cook→simplify→review→code-review→sre (prompt eng.) |
-| Skills work in isolation     | Plan-aware skills (Step 0) read prior workflow outputs automatically  |
-| Manual workflow progression  | Skill chain navigation (Next Steps) auto-recommends next action       |
-| Artifacts flow unchecked     | Review gate skills validate PBIs, stories, and test specs mid-flow    |
+| Traditional AI Coding Tool   | This Framework                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------------- |
+| Generates code from prompts  | Investigates codebase, then generates code matching existing patterns              |
+| No memory between sessions   | Learned lessons persist and prevent repeated mistakes                              |
+| Implements immediately       | Plans, validates with user, reviews plan, then implements                          |
+| Uses generic patterns        | Reads project-specific patterns from reference docs                                |
+| Works on existing code only  | Guides greenfield inception AND big-feature research                               |
+| Single-shot responses        | Multi-step workflows with quality gates at each stage                              |
+| User must remember all rules | Hooks inject rules automatically — human memory not required                       |
+| Loads all context upfront    | JIT context injection — right docs at right time (context eng.)                    |
+| One-pass generation          | Multi-pass review: feature-implement→simplify→review→code-review→sre (prompt eng.) |
+| Skills work in isolation     | Plan-aware skills (Step 0) read prior workflow outputs automatically               |
+| Manual workflow progression  | Skill chain navigation (Next Steps) auto-recommends next action                    |
+| Artifacts flow unchecked     | Review gate skills validate PBIs, stories, and test specs mid-flow                 |
+| Locked to one tool & repo    | One source compiles to verified Codex mirrors; config-driven, any repo             |
 
 **For greenfield projects**, the AI becomes a full Solution Architect — conducting market research, evaluating tech stacks with confidence percentages, modeling domains with DDD, and collaborating with the user at every decision point. The AI earns trust through structured thinking, not just fast output.
 
@@ -3663,24 +3767,24 @@ The framework elevates the AI from a code autocomplete tool to a **strategic dev
 
 The framework succeeds because it aligns with how LLMs actually fail:
 
-| LLM Failure Mode               | Root Cause                                                  | Framework Counter                                                |
-| ------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------- |
-| **Pattern invention**          | Training data generalizes; your project is specific         | Context injection puts real patterns in every prompt             |
-| **Context amnesia**            | Long conversations exceed attention; compaction drops state | External state files + recovery hooks restore progress           |
-| **Skipped steps**              | LLMs optimize for shortest path to output                   | Workflow enforcement makes process non-negotiable                |
-| **Confident hallucination**    | LLMs can't distinguish recall from confabulation            | Evidence gates demand `file:line` proof for every claim          |
-| **Convention drift**           | Without reminders, AI reverts to generic patterns           | Hook injection re-injects project conventions on every edit      |
-| **Repeated mistakes**          | Each session starts fresh with no memory of past errors     | Lessons system persists errors and re-injects them as guardrails |
-| **Wrong-surface reviews**      | Reviewers check FE patterns on BE-only PRs                  | Phase 0.7 surface detection routes to correct sub-agent set      |
-| **Reviewer writes stale docs** | Review agents update docs with unverified content           | DOC SYNC DEFERRAL: review=read-only; writes deferred to step 15  |
-| **Silent doc phase skips**     | /docs-update phases run without audit trail                 | Mandatory 8-task table: every phase tracked, skips logged        |
-| **Stale spec bundle**          | AI sessions read outdated enum/model specs                  | spec-discovery update mode keeps last_extracted current          |
+| LLM Failure Mode               | Root Cause                                                  | Framework Counter                                                  |
+| ------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Pattern invention**          | Training data generalizes; your project is specific         | Context injection puts real patterns in every prompt               |
+| **Context amnesia**            | Long conversations exceed attention; compaction drops state | External state files + recovery hooks restore progress             |
+| **Skipped steps**              | LLMs optimize for shortest path to output                   | Workflow enforcement makes process non-negotiable                  |
+| **Confident hallucination**    | LLMs can't distinguish recall from confabulation            | Evidence gates demand `file:line` proof for every claim            |
+| **Convention drift**           | Without reminders, AI reverts to generic patterns           | Hook injection re-injects project conventions on every edit        |
+| **Repeated mistakes**          | Each session starts fresh with no memory of past errors     | Lessons system persists errors and re-injects them as guardrails   |
+| **Wrong-surface reviews**      | Reviewers check FE patterns on BE-only PRs                  | Phase 0.7 surface detection routes to correct sub-agent set        |
+| **Reviewer writes stale docs** | Review agents update docs with unverified content           | DOC SYNC DEFERRAL: review=read-only; writes deferred to step 15    |
+| **Silent doc phase skips**     | /docs-update phases run without audit trail                 | Mandatory 8-task table: every phase tracked, skips logged          |
+| **Stale Feature Spec**         | AI sessions read outdated enum/model specs                  | `/spec [mode=update]` + `docs-update` keep `last_reviewed` current |
 
 **The meta-principle:** Don't fight the LLM's nature — build infrastructure around it. Accept that it forgets, and build state persistence. Accept that it hallucinates, and build evidence gates. Accept that it drifts, and build convention injection. The framework doesn't make the AI smarter — it makes the AI's environment smarter.
 
 ### The Result
 
-**64 top-level hook files**, **256 skills**, **37 registered workflows**, and **28 specialized agents** working in concert to deliver:
+**15 top-level hook files**, **156 skills**, **17 registered workflows**, and **29 specialized agents** working in concert to deliver:
 
 - **Fewer hallucinations** — Evidence gates and proof traces catch AI fabrications before they reach files
 - **Better code quality** — Pattern injection ensures AI follows project conventions, not generic training data
@@ -3688,7 +3792,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 - **Consistent adherence** — Programmatic enforcement means quality doesn't degrade in long sessions or complex tasks
 - **Recovery from amnesia** — External state persistence means context compaction doesn't lose progress
 - **Persistent learning** — Mistakes captured once prevent recurrence across all future sessions
-- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 256 skills (Section 8.15)
+- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 156 skills (Section 8.15)
 - **Context engineering precision** — JIT injection, dedup, external memory, budget management, and recovery keep the AI informed without overwhelming its context window (Section 8.16)
 
 The framework is **generic and reusable**. Replace `project-config.json` with your project's specifics, and the entire system adapts — different tech stack, different patterns, different conventions, same quality enforcement.
@@ -3698,8 +3802,8 @@ The framework is **generic and reusable**. Replace `project-config.json` with yo
 If you want to apply this framework to your own project:
 
 1. **Copy `.claude/` directory** — hooks, skills, workflows, agents. These are project-agnostic.
-2. **Run `/project-config`** — Populate `docs/project-config.json` with your tech stack, services, file patterns.
-3. **Run scan skills** — `/scan-project-structure`, `/scan-backend-patterns`, `/scan-frontend-patterns` to populate reference docs from your codebase.
+2. **Run `/project-init`** — One idempotent bootstrap route that assesses, populates, and verifies `docs/project-config.json`, reference docs, `CLAUDE.md`, and the `AGENTS.md` Codex mirror (or run `/project-config` directly for config only).
+3. **Run scan skills** — `/scan --target=project-structure`, `/scan --target=backend-patterns`, `/scan --target=frontend-patterns` to populate reference docs from your codebase.
 4. **Start working** — Hooks auto-inject your patterns, workflows enforce your process, skills guide AI reasoning.
 5. **For greenfield projects** — Run `/greenfield` to start the waterfall inception workflow. The framework auto-detects empty projects and switches to Solution Architect mode.
 

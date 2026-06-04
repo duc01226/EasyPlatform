@@ -210,7 +210,7 @@ project/
 /help
 
 # Try common workflows
-$cook implement feature X
+$feature-implement implement feature X
 $fix:fast bug in Y
 $test
 ```

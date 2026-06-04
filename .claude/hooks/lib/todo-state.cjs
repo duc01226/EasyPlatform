@@ -2,17 +2,13 @@
 'use strict';
 
 /**
- * Todo State Management - Persistent todo tracking for workflow enforcement
+ * Todo State Management - Shared per-session todo state
  *
- * Provides functions to track whether TaskCreate has been called in the current session,
- * enabling enforcement of workflow compliance (no implementation without todo tracking).
+ * Atomic, Windows-safe read/write/clear primitives over the on-disk todo snapshot at
+ * /tmp/ck/todo-{sessionId}.json. Todo/workflow discipline is model-driven
+ * (CLAUDE.md "Task Planning Rules"); this lib is the persistence primitive, not a gate.
  *
- * Storage: /tmp/ck/todo-{sessionId}.json
- *
- * Used by:
- * - edit-enforcement.cjs (PreToolUse → Edit|Write|MultiEdit|NotebookEdit)
- * - skill-enforcement.cjs (PreToolUse → Skill)
- * - todo-tracker.cjs (PostToolUse → TaskCreate)
+ * Exercised by tests/suites/lifecycle.test.cjs (atomic-write invariants under concurrency).
  *
  * @module todo-state
  */
@@ -118,80 +114,6 @@ function setTodoState(sessionId, state) {
 }
 
 /**
- * Mark that TaskCreate has been called with counts
- * @param {string} sessionId - Session identifier
- * @param {Object} counts - Todo counts {pending, completed, inProgress}
- * @param {Array} todos - Optional: actual todo items for recovery
- * @returns {boolean} Success status
- */
-function markTodosCalled(sessionId, counts = {}, todos = null) {
-    const state = getTodoState(sessionId);
-
-    state.hasTodos = true;
-    state.pendingCount = counts.pending || 0;
-    state.completedCount = counts.completed || 0;
-    state.inProgressCount = counts.inProgress || 0;
-
-    // Store last 60 todos for recovery (non-completed ones prioritized)
-    if (todos && Array.isArray(todos)) {
-        const nonCompleted = todos.filter(t => t.status !== 'completed');
-        const completed = todos.filter(t => t.status === 'completed');
-        state.lastTodos = [...nonCompleted, ...completed].slice(0, 60).map(t => ({
-            content: t.content,
-            status: t.status,
-            activeForm: t.activeForm
-        }));
-    }
-
-    return setTodoState(sessionId, state);
-}
-
-/**
- * Get task subject by taskId from the taskSubjects map.
- * @param {string} sessionId - Session identifier
- * @param {string} taskId - Task ID
- * @returns {string|null} Task subject or null if not found
- */
-function getTaskSubject(sessionId, taskId) {
-    const state = getTodoState(sessionId);
-    return (state.taskSubjects && state.taskSubjects[taskId]) || null;
-}
-
-/**
- * Check if TaskCreate has been called
- * @param {string} sessionId - Session identifier
- * @returns {boolean} True if todos exist
- */
-function hasTodos(sessionId) {
-    const state = getTodoState(sessionId);
-    return state.hasTodos;
-}
-
-/**
- * Record an enforcement bypass
- * @param {string} sessionId - Session identifier
- * @param {Object} bypass - Bypass details
- * @param {string} bypass.skill - Skill that was allowed
- * @param {string} bypass.reason - Reason for bypass
- * @returns {boolean} Success status
- */
-function recordBypass(sessionId, bypass) {
-    const state = getTodoState(sessionId);
-
-    state.bypasses.push({
-        ...bypass,
-        timestamp: new Date().toISOString()
-    });
-
-    // Keep only last 20 bypasses
-    if (state.bypasses.length > 20) {
-        state.bypasses = state.bypasses.slice(-20);
-    }
-
-    return setTodoState(sessionId, state);
-}
-
-/**
  * Clear todo state for session
  * @param {string} sessionId - Session identifier
  * @returns {boolean} Success status
@@ -210,97 +132,6 @@ function clearTodoState(sessionId) {
     }
 }
 
-/**
- * Get state for checkpoint preservation
- * Returns state that can be saved/restored across compaction
- * @param {string} sessionId - Session identifier
- * @returns {Object} State for preservation
- */
-function getStateForCheckpoint(sessionId) {
-    const state = getTodoState(sessionId);
-    return {
-        hasTodos: state.hasTodos,
-        pendingCount: state.pendingCount,
-        completedCount: state.completedCount,
-        inProgressCount: state.inProgressCount,
-        lastTodos: state.lastTodos || []
-    };
-}
-
-/**
- * Restore state from checkpoint
- * @param {string} sessionId - Session identifier
- * @param {Object} checkpoint - Checkpoint state
- * @returns {boolean} Success status
- */
-function restoreFromCheckpoint(sessionId, checkpoint) {
-    const state = getTodoState(sessionId);
-
-    state.hasTodos = checkpoint.hasTodos || false;
-    state.pendingCount = checkpoint.pendingCount || 0;
-    state.completedCount = checkpoint.completedCount || 0;
-    state.inProgressCount = checkpoint.inProgressCount || 0;
-    state.lastTodos = checkpoint.lastTodos || [];
-
-    return setTodoState(sessionId, state);
-}
-
-/**
- * Inherit todo state for subagent
- * Copies parent state to child session
- * @param {string} parentSessionId - Parent session ID
- * @param {string} childSessionId - Child session ID
- * @returns {boolean} Success status
- */
-function inheritForSubagent(parentSessionId, childSessionId) {
-    const parentState = getTodoState(parentSessionId);
-
-    // Only inherit if parent has todos
-    if (!parentState.hasTodos) return false;
-
-    const childState = {
-        ...getDefaultState(),
-        hasTodos: parentState.hasTodos,
-        pendingCount: parentState.pendingCount,
-        completedCount: parentState.completedCount,
-        inProgressCount: parentState.inProgressCount,
-        metadata: {
-            inheritedFrom: parentSessionId,
-            inheritedAt: new Date().toISOString()
-        }
-    };
-
-    return setTodoState(childSessionId, childState);
-}
-
-/**
- * Get todo state summary for subagent context injection
- * Reads parent session state from env and returns formatted summary
- * @returns {Object|null} Summary with hasTodos, taskCount, pendingCount, summaryTodos
- */
-function getTodoStateForSubagent() {
-    const sessionId = process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID;
-    if (!sessionId) return null;
-
-    const state = getTodoState(sessionId);
-    if (!state.hasTodos) return null;
-
-    const taskCount = state.pendingCount + state.completedCount + state.inProgressCount;
-    const summaryTodos = (state.lastTodos || [])
-        .filter(t => t.status !== 'completed')
-        .map(t => {
-            const icon = t.status === 'in_progress' ? '[>>]' : '[ ]';
-            return `${icon} ${t.content}`;
-        });
-
-    return {
-        hasTodos: true,
-        taskCount,
-        pendingCount: state.pendingCount,
-        summaryTodos
-    };
-}
-
 module.exports = {
     // Directory
     TODO_DIR,
@@ -312,21 +143,5 @@ module.exports = {
     // State operations
     getTodoState,
     setTodoState,
-    markTodosCalled,
-    hasTodos,
-    clearTodoState,
-
-    // Bypass tracking
-    recordBypass,
-
-    // Checkpoint/restore
-    getStateForCheckpoint,
-    restoreFromCheckpoint,
-
-    // Task subject lookup
-    getTaskSubject,
-
-    // Subagent support
-    inheritForSubagent,
-    getTodoStateForSubagent
+    clearTodoState
 };

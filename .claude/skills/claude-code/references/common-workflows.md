@@ -7,14 +7,14 @@
 ```bash
 /plan implement payment integration with Stripe
 # Review plan, then proceed with implementation
-/cook implement payment integration with Stripe
+/feature-implement implement payment integration with Stripe
 ```
 
 **Direct implementation:**
 
 ```bash
-/cook implement user authentication with JWT
-/cook add dark mode toggle to settings
+/feature-implement implement user authentication with JWT
+/feature-implement add dark mode toggle to settings
 ```
 
 ## Bug Fixing
@@ -23,7 +23,7 @@
 
 ```bash
 /fix login button not working
-/fix-types  # Fix TypeScript errors
+/fix --target=types  # Fix TypeScript errors
 ```
 
 **Complex debugging:**
@@ -36,14 +36,14 @@
 **Test-driven fixes:**
 
 ```bash
-/fix-test user service tests failing
+/fix --target=test user service tests failing
 /test  # Run full test suite
 ```
 
 **CI/CD failures:**
 
 ```bash
-/fix-ci https://github.com/org/repo/actions/runs/12345
+/fix --target=ci https://github.com/org/repo/actions/runs/12345
 ```
 
 ## Code Review & Testing
@@ -55,7 +55,7 @@ claude "analyze the changes in PR #42"
 
 # Run tests
 /test
-/fix-test payment tests failing
+/fix --target=test payment tests failing
 ```
 
 ## Documentation Management
@@ -69,7 +69,7 @@ claude "analyze the changes in PR #42"
 ## Git Operations
 
 ```bash
-/git-cp                        # Stage and commit
+/commit --push                 # Stage, commit, and push
 /git:cp                        # Stage, commit, and push
 /git:pr feature-branch main    # Create pull request from feature-branch to main
 ```
@@ -105,7 +105,7 @@ claude "analyze the changes in PR #42"
 
 ```bash
 /code-review analyze authentication implementation
-/scout-ext find all payment-related files
+/scout --ext find all payment-related files
 ```
 
 **Strategic planning:**

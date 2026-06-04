@@ -23,30 +23,32 @@ SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
 
 SKILL_NAMES = [
     # Plan family
-    "plan", "plan-analysis", "plan-archive", "plan-ci", "plan-cro",
-    "plan-review", "plan-validate", "planning",
+    "plan", "plan-analysis",
+    "plan-review", "plan-validate",
     # Cook family
-    "cook",
+    "feature-implement",
     # Code family
-    "code", "code-auto", "code-no-test", "code-parallel",
-    # Fix family
-    "fix", "fix-ci", "fix-issue", "fix-logs",
-    "fix-test", "fix-types", "fix-ui",
-    # Feature family
-    "feature", "feature-implementation", "create-feature",
+    "plan-execute",
+    # Fix family (ci/issue/logs/test/ui folded into /fix --target=*)
+    "fix",
     # Investigate / scout family
-    "investigate", "debug-investigate", "feature-investigation",
-    "scout", "scout-ext",
+    "investigate", "debug-investigate",
+    "scout",
+    # Spec authoring quality family (idea → spec gates)
+    "spec-discovery", "spec-clarify",
     # Refactor / migration / scaffold
-    "refactoring", "migration", "db-migrate", "scaffold",
+    "refactoring", "db-migrate", "scaffold",
     # Review family
-    "arch-security-review", "code-review", "integration-test-review",
-    "knowledge-review", "refine-review", "review-architecture",
+    "security-review", "code-review", "integration-test-review",
+    "knowledge-review", "review-architecture",
     "review-artifact", "review-changes", "review-domain-entities",
-    "review-post-task", "sre-review", "story-review", "tdd-spec-review",
-    "why-review", "workflow-review", "workflow-review-changes",
+    "production-readiness-review",
+    "why-review", "workflow-review-changes",
     # Workflow step skills
-    "tdd-spec", "integration-test", "integration-test-verify",
+    # NOTE: `spec` (merged feature-spec router) is intentionally NOT a target —
+    # it reads docs/project-reference/spec-principles.md via an explicit
+    # [BLOCKING] gate; injecting the generic prefetch here would duplicate it.
+    "integration-test", "integration-test-verify",
     "docs-update", "watzup", "workflow-write-integration-test",
 ]
 

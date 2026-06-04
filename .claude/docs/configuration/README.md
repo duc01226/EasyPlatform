@@ -11,8 +11,8 @@ Claude Code uses multiple configuration files to customize behavior, permissions
 ├── settings.json        # Main settings (hooks, permissions, plugins)
 ├── .ck.json             # Claude Kit configuration (levels, assertions)
 ├── workflows.json       # Workflow automation definitions
-├── .mcp.json            # MCP server integrations
-└── CLAUDE.md            # Project instructions (read by Claude)
+└── .mcp.json            # MCP server integrations
+CLAUDE.md                # Project instructions at repo root (read by Claude)
 ```
 
 ---
@@ -93,15 +93,15 @@ Claude Code uses multiple configuration files to customize behavior, permissions
 
 #### Code Review Configuration
 
-The `codeReview` section configures automatic injection of project-specific review rules:
+The `codeReview` section records which project-specific review-rule doc the review skills/agents read (rules are read on demand via the project-reference-docs gate in `CLAUDE.md`):
 
 | Field            | Type     | Description                                                                          |
 | ---------------- | -------- | ------------------------------------------------------------------------------------ |
-| `enabled`        | boolean  | Enable/disable rule injection (default: `true`)                                      |
+| `enabled`        | boolean  | Whether review skills/agents consult the rules doc (default: `true`)                 |
 | `rulesPath`      | string   | Path to rules markdown file (default: `docs/project-reference/code-review-rules.md`) |
-| `injectOnSkills` | string[] | Skills that trigger injection                                                        |
+| `injectOnSkills` | string[] | Skills associated with the review-rules doc                                          |
 
-**To update code review rules:** Edit `docs/project-reference/code-review-rules.md` directly. Rules auto-inject next time a review skill is used.
+**To update code review rules:** Edit `docs/project-reference/code-review-rules.md` directly. Review skills/agents read it on demand via the project-reference-docs gate.
 
 **To add new trigger skills:** Edit `.claude/.ck.json`, add skill name to `injectOnSkills` array. Matching is case-insensitive and partial.
 
@@ -115,35 +115,27 @@ The `codeReview` section configures automatic injection of project-specific revi
 {
     "settings": {
         "enabled": true,
-        "showDetection": true,
-        "confirmHighImpact": true,
-        "overridePrefix": "quick:",
-        "supportedLanguages": ["en", "vi", "zh", "ja", "ko"]
+        "showDetection": true
     },
     "workflows": {
         "feature": {
-            "priority": 10,
-            "confirmFirst": true,
-            "sequence": ["plan", "cook", "test", "code-review", "docs-update"],
-            "triggerPatterns": ["\\b(implement|add|create)\\b.*\\b(feature)\\b"],
-            "excludePatterns": ["\\b(fix|bug|error)\\b"]
+            "sequence": ["plan", "feature-implement", "test", "code-review", "docs-update"],
+            "whenToUse": "User wants to implement new functionality"
         }
     }
 }
 ```
 
-| Workflow          | Priority | Sequence                                        | Triggers                             |
-| ----------------- | -------- | ----------------------------------------------- | ------------------------------------ |
-| `feature`         | 10       | plan → cook → test → review → docs              | "implement", "add feature", "create" |
-| `batch-operation` | 15       | plan → code → test                              | "all files", "batch update"          |
-| `bugfix`          | 20       | scout → investigate → debug → plan → fix → test | "bug", "fix", "not working"          |
-| `refactor`        | 25       | plan → code → simplify → review → test          | "refactor", "clean up", "improve"    |
-| `documentation`   | 30       | scout → investigate → docs-update               | "document", "readme", "update docs"  |
-| `review`          | 35       | code-review → watzup                            | "review code", "check PR"            |
-| `testing`         | 40       | test                                            | "add test", "run tests"              |
-| `investigation`   | 50       | scout → investigate                             | "how does", "where is", "explain"    |
+**Schema:** Each workflow entry supports `description`, `name`, `parallelGroups`, `preActions`, `sequence`, `stepMeta`, `whenToUse`. There are NO `priority` or `triggers` properties — detection is semantic: the model matches the prompt against each workflow's `whenToUse` description and auto-selects the best fit (works in any prompt language).
 
-**Multilingual Support:** Patterns include English, Vietnamese, Chinese, Japanese, Korean.
+**Live catalog (17 workflows):** `workflow-big-feature`, `workflow-bugfix`, `workflow-e2e`, `workflow-feature`, `workflow-feature-spec`, `workflow-greenfield-init`, `workflow-idea-to-pbi`, `workflow-idea-to-spec`, `workflow-refactor`, `workflow-research`, `workflow-review-changes`, `workflow-code-to-spec`, `workflow-spec-to-pbi`, `workflow-spec-sync`, `workflow-visualize`, `workflow-seed-test-data`, `workflow-write-integration-test`.
+
+| Workflow                  | Sequence (abridged, from `workflows.json`)                                                                | whenToUse (abridged)                              |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `workflow-feature`        | scout → investigate → … → plan → plan-review → … → plan-execute → … → integration-test → … → workflow-end | Well-defined feature implementation               |
+| `workflow-bugfix`         | scout → investigate → debug-investigate → … → fix → prove-fix → … → workflow-end                          | Bug, error, crash, regression; end-to-start trace |
+| `workflow-refactor`       | scout → investigate → plan → … → plan-execute → … → workflow-end                                          | Restructure code without behavior change          |
+| `workflow-review-changes` | review-changes → why-review → parallel reviewers → code-simplifier → … → workflow-end                     | Review uncommitted changes before committing      |
 
 ---
 
@@ -166,10 +158,6 @@ The `codeReview` section configures automatic injection of project-specific revi
         "sequential-thinking": {
             "command": "npx",
             "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-        },
-        "memory": {
-            "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-memory"]
         }
     }
 }
@@ -180,7 +168,6 @@ The `codeReview` section configures automatic injection of project-specific revi
 | `github`              | GitHub API integration (issues, PRs, repos) |
 | `context7`            | Documentation fetching from Context7        |
 | `sequential-thinking` | Step-by-step reasoning tool                 |
-| `memory`              | Knowledge graph persistence                 |
 | `figma`               | Figma design extraction (HTTP transport)    |
 
 **See:** [figma-setup.md](./figma-setup.md) for Figma MCP server setup.
@@ -313,8 +300,13 @@ Configuration is loaded in order with later files overriding earlier:
 | `UserPromptSubmit` | User sends message        |
 | `PreToolUse`       | Before tool execution     |
 | `PostToolUse`      | After tool execution      |
-| `Stop`             | Session/task ends         |
+| `Stop`             | Response complete         |
 | `PreCompact`       | Before context compaction |
+| `SessionEnd`       | Session ends              |
+| `SubagentStart`    | Subagent spawning         |
+| `Notification`     | Idle/waiting events       |
+
+> These are the Claude Code events available for hooks. This framework registers no `SubagentStart` hook (sub-agent context is static in `agents/*.md`).
 
 ### Hook Structure
 

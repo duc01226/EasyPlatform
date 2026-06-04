@@ -18,13 +18,13 @@ description: '[Planning] Use when you need to start a new project from scratch w
 6. **Tech Stack Research** (`/tech-stack-research`) — Derive technical requirements from business + domain analysis. Research top 3 options per stack layer (backend, frontend, database, messaging, infra). Detailed pros/cons matrix, team-fit scoring, market analysis. Present comparison report for user to decide.
 7. **Architecture Design** (`/architecture-design`) — Research and compare top 3 architecture styles (Clean, Hexagonal, Vertical Slice, etc.). Evaluate design patterns (CQRS, Repository, Mediator). Audit against SOLID, DRY, KISS, YAGNI. Validate scalability, maintainability, IoC, technical agnosticism. Present comparison with recommendation. **Harness output required:** produce a "Scaffold Handoff — Harness Plan" table in the architecture report: (a) feedforward guides to create (AGENTS.md sections, skill activation rules, pattern catalog), (b) computational feedback sensors to install (linter, formatter, pre-commit, CI), (c) inferential feedback sensors to configure (review skills, AI gates). This table feeds `/scaffold` → `/linter-setup` → `/harness-setup`.
 8. **Implementation Plan** (`/plan`) — Create phased plan using confirmed tech stack + architecture + domain model
-9. **Security Audit** (`/security`) — Review plan for OWASP Top 10, auth patterns, data protection concerns
-10. **Performance Audit** (`/performance`) — Review plan for performance bottlenecks, scalability, query optimization
+9. **Security Audit** (`/security-review`) — Review plan for OWASP Top 10, auth patterns, data protection concerns
+10. **Performance Audit** (`/performance-review`) — Review plan for performance bottlenecks, scalability, query optimization
 11. **Plan Review** (`/plan-review`) — Full plan review, risk assessment, approval
 12. **Refine to PBI** (`/refine`) — Transform idea + reviewed plan into actionable PBI with acceptance criteria
 13. **User Stories** (`/story`) — Break PBI into implementable user stories
 14. **Plan Validation** (`/plan-validate`) — Interview user with critical questions to validate plan + stories
-15. **Test Strategy** (`/tdd-spec`) — Test pyramid, frameworks, spec outline
+15. **Test Strategy** (`/spec [mode=tests]`) — Test pyramid, frameworks, spec outline
 16. **Workflow End** (`/workflow-end`) — Clean up, announce completion
 
 **Key Rules:**
@@ -39,11 +39,11 @@ description: '[Planning] Use when you need to start a new project from scratch w
 
 ## Entry Point
 
-This skill is the explicit entry point for the `greenfield-init` workflow.
+This skill is the explicit entry point for the `workflow-greenfield-init` workflow.
 
 **When invoked:**
 
-1. Activate the `greenfield-init` workflow via `/workflow-start greenfield-init`
+1. Activate the `workflow-greenfield-init` workflow via `/start-workflow workflow-greenfield-init`
 2. The workflow handles step sequencing, task creation, and progress tracking
 3. Each step delegates to the appropriate skill (idea, web-research, domain-analysis, tech-stack-research, etc.)
 4. The `solution-architect` agent provides architecture guidance throughout
@@ -57,9 +57,9 @@ This skill is the explicit entry point for the `greenfield-init` workflow.
 
 ## When NOT to Use
 
-- Existing codebase with code (use `/plan` or `/feature` instead)
+- Existing codebase with code (use `/plan` or `/start-workflow workflow-feature` instead)
 - Bug fixes, refactoring, or feature implementation
-- Quick prototyping (use `/cook` instead)
+- Quick prototyping (use `/feature-implement` instead)
 
 ## Output
 
@@ -84,7 +84,7 @@ plans/{id}/
   plan.md (master plan with YAML frontmatter)
 ```
 
-After completion, recommend next step: `/cook` to scaffold the project structure.
+After completion, recommend next step: `/feature-implement` to scaffold the project structure.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -104,16 +104,14 @@ After completion, recommend next step: `/cook` to scaffold the project structure
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-> **Check downstream references before deleting.** Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
-> **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
-> **Trace full dependency chain after edits.** Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
-> **Trace ALL code paths when verifying correctness.** Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
-> **When debugging, ask "whose responsibility?" before fixing.** Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
-> **Verify ALL affected outputs, not just the first.** Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
-> **Holistic-first debugging — resist nearest-attention trap.** When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
-> **Surgical changes — apply the diff test.** Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
-> **Surface ambiguity before coding — don't pick silently.** If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
@@ -126,17 +124,22 @@ After completion, recommend next step: `/cook` to scaffold the project structure
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
-**MUST ATTENTION** apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
 
 <!-- /SYNC:critical-thinking-mindset:reminder -->
 
 <!-- SYNC:ai-mistake-prevention:reminder -->
 
-**MUST ATTENTION** apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION** Protocols in force (concise digest of the SYNC/shared blocks this skill carries):
+
+- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Critical Thinking:** traced `file:line` proof per claim, confidence >80% to act, NEVER guess.
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code

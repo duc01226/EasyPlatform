@@ -1,5 +1,5 @@
 # Windows notification script for Claude Code
-# Called by notify-waiting.js with parameters: -Title "title" -Message "message" [-ShowDialog]
+# Called by notifications/providers/desktop.cjs with parameters: -Title "title" -Message "message" [-ShowDialog]
 param(
     [string]$Title = "Claude Code",
     [string]$Message = "Waiting for your input",

@@ -3,14 +3,20 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// Importing the gate transitively imports migrate-claude-to-codex.mjs. Both modules guard
-// their main() behind an invoked-as-script check, so this import must NOT trigger a real
-// (destructive) sync. If that guard regresses, these tests would wipe .agents/skills —
-// the assertions below stay purely on diffTrees/readTreeFiles over tmp dirs.
+const execFileAsync = promisify(execFile);
+
+// Importing the gate transitively imports migrate-claude-to-codex.mjs + sync-context-workflows.mjs.
+// All three guard their main()/script-entry behind an invoked-as-script check, so this import must
+// NOT trigger a real (destructive) sync. If that guard regresses, these tests would wipe
+// .agents/skills — the assertions below stay purely on diffTrees/readTreeFiles over tmp dirs (the
+// one live end-to-end case spawns the gate as a SUBPROCESS, which only writes to a tmp dir).
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const gatePath = path.resolve(thisDir, '..', 'verify-sync-divergence.mjs');
+const repoRoot = path.resolve(thisDir, '..', '..', '..', '..');
 const { diffTrees, readTreeFiles } = await import(pathToFileURL(gatePath).href);
 
 // TC-SKILLFIX-020 — identical trees → no divergence (the in-sync PASS case).
@@ -73,4 +79,33 @@ test('TC-SKILLFIX-024b: diff ordering is stable and sorted', () => {
     const diffs = diffTrees(expected, actual);
     assert.deepEqual(diffs.map(d => d.relPath), ['m/SKILL.md', 'z/SKILL.md']);
     assert.deepEqual(diffs.map(d => d.kind), ['content', 'missing-in-mirror']);
+});
+
+// ── CONTEXT-mirror idempotency (folded into this gate) ─────────────────────────────────────────────
+// checkContextMirror() compares a fresh render of AGENTS.md + .codex/CODEX_CONTEXT.md (keyed by
+// repo-relative path) against the committed copies using the SAME diffTrees. These cases lock the
+// two-file context surface; the diffTrees verdicts themselves are already covered above.
+
+// TC-CTXMIRROR-001 — an in-sync context mirror (both files identical) yields no divergence.
+test('TC-CTXMIRROR-001: identical context maps (AGENTS.md + CODEX_CONTEXT.md) → no diffs', () => {
+    const fresh = new Map([['AGENTS.md', 'a\n'], ['.codex/CODEX_CONTEXT.md', 'c\n']]);
+    const committed = new Map([['AGENTS.md', 'a\n'], ['.codex/CODEX_CONTEXT.md', 'c\n']]);
+    assert.deepEqual(diffTrees(fresh, committed), []);
+});
+
+// TC-CTXMIRROR-002 — a stale committed AGENTS.md (the Finding-1 failure mode) is flagged 'content'.
+test('TC-CTXMIRROR-002: a stale committed AGENTS.md is flagged as content drift', () => {
+    const fresh = new Map([['AGENTS.md', 'fresh\n'], ['.codex/CODEX_CONTEXT.md', 'c\n']]);
+    const committed = new Map([['AGENTS.md', 'stale\n'], ['.codex/CODEX_CONTEXT.md', 'c\n']]);
+    assert.deepEqual(diffTrees(fresh, committed), [{ relPath: 'AGENTS.md', kind: 'content' }]);
+});
+
+// TC-CTXMIRROR-003 — committed == fresh, live against this repo. Spawns the gate as a SUBPROCESS
+// (non-destructive: renders into a tmp dir) and asserts BOTH surfaces are in sync. This is the
+// idempotency assertion — if a context generator's text was edited without a full re-sync, the
+// committed AGENTS.md / CODEX_CONTEXT.md would diverge from a fresh render and this fails.
+test('TC-CTXMIRROR-003: gate passes against the committed repo (skills + context both in sync)', async () => {
+    const { stdout } = await execFileAsync(process.execPath, [gatePath], { cwd: repoRoot });
+    assert.match(stdout, /skills: PASS/, 'committed .agents/skills mirror must equal a fresh render');
+    assert.match(stdout, /context: PASS/, 'committed AGENTS.md + CODEX_CONTEXT.md must equal a fresh render');
 });

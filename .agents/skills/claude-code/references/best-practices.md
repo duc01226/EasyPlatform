@@ -416,7 +416,7 @@ claude $plan "implement user authentication"
 claude checkpoint create "before auth implementation"
 
 # 3. Implement
-claude $cook "implement user authentication"
+claude $feature-implement "implement user authentication"
 
 # 4. Test
 claude $test
@@ -425,7 +425,7 @@ claude $test
 claude "review authentication implementation"
 
 # 6. Commit
-claude $git-cp
+claude $commit --push
 ```
 
 ### Bug Fixing
@@ -441,7 +441,7 @@ claude $fix "fix login button issue"
 claude $test
 
 # 4. Commit
-claude $git-cp
+claude $commit --push
 ```
 
 ### Code Review
@@ -459,7 +459,7 @@ claude "check test coverage"
 
 ## See Also
 
-- Security guide: https://docs.claude.com/claude-code/security
+- Security guide: https://docs.claude.com/claude-code/security-review
 - Cost tracking: https://docs.claude.com/claude-code/costs
 - Team setup: https://docs.claude.com/claude-code/overview
 - API usage: `references/api-reference.md`

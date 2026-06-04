@@ -1,20 +1,19 @@
 #!/usr/bin/env node
 /**
- * init-prompt-gate.cjs - UserPromptSubmit blocking hook
+ * init-prompt-gate.cjs - UserPromptSubmit project-context router
  *
- * Blocks ALL user prompts (exit 2) until docs/project-config.json is populated
- * with real project values. This is the only hook that can truly enforce
- * initialization — text injection (exit 0) is advisory and easily ignored.
+ * Detects missing/stale portable project context and injects the next setup
+ * route while allowing the prompt through. The model should run /project-init,
+ * /scan-all, or /graph-build before ordinary project-specific work.
  *
- * Allowlist: Prompts containing init commands (/project-config, /scan-*, skip init)
+ * Allowlist: Prompts containing init commands (/project-config, /scan, /scan-*, skip init)
  * are always allowed through so the user can fix the init state.
  *
- * Dismiss: User can type "skip init" to create a 1-day dismiss flag.
- * After 1 day the gate re-activates.
+ * Dismiss: User can type "skip init" to create a 1-day init dismiss flag,
+ * or "skip scan" to create a 7-day reference-doc scan dismiss flag.
  *
  * Exit Codes:
- *   0 - Prompt allowed (config populated, or prompt is an init command, or dismissed)
- *   2 - Prompt blocked (config unpopulated, not an init command, not dismissed)
+ *   0 - Prompt allowed. Missing context is surfaced as guidance, not a stop.
  */
 'use strict';
 
@@ -22,6 +21,13 @@ const fs = require('fs');
 const path = require('path');
 const { isConfigPopulated: _isConfigPopulated, getConfiguredProjectConfigPath } = require('./lib/project-config-loader.cjs');
 const { hasProjectContent } = require('./lib/session-init-helpers.cjs');
+const {
+    getAgentFileIssues,
+    isAgentFilesDismissed,
+    writeAgentFilesDismissFlag,
+    isAgentFilesDismissRequest,
+    buildOfferMessage
+} = require('./lib/agent-files-state.cjs');
 
 const {
     INIT_DISMISSED_PATH: DISMISS_FLAG,
@@ -36,11 +42,29 @@ const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 // Must match where session-init creates the config, else a custom-path project blocks every prompt.
 const CONFIG_PATH = getConfiguredProjectConfigPath();
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
-const SCAN_DISMISS_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
+const SCAN_DISMISS_TTL_DAYS = 7;
+const SCAN_DISMISS_TTL_MS = SCAN_DISMISS_TTL_DAYS * 24 * 60 * 60 * 1000;
 
 // Graph gate constants
 const GRAPH_DB_PATH = path.join(PROJECT_DIR, '.code-graph', 'graph.db');
 const GRAPH_DISMISS_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
+
+/**
+ * Emit UserPromptSubmit guidance.
+ * Claude and Codex both accept plaintext stdout as prompt context for this event.
+ * Prefix JSON-looking text so Codex does not route it through its JSON parser.
+ * @param {string} message
+ */
+function emitPromptContext(message) {
+    const text = String(message || '');
+    if (!text) return;
+    const trimmedStart = text.trimStart();
+    if (trimmedStart.startsWith('{') || trimmedStart.startsWith('[')) {
+        console.log(`Hook context:\n${trimmedStart}`);
+        return;
+    }
+    console.log(text);
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PROMPT ALLOWLIST — patterns that bypass the gate (case-insensitive)
@@ -48,9 +72,13 @@ const GRAPH_DISMISS_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
 // ═══════════════════════════════════════════════════════════════════════════
 
 const ALLOWLIST_PATTERNS = [
+    /\/project-init/i, // Unified project bootstrap/re-evaluation route
+    /\/init-project/i, // Alias phrase for the unified bootstrap route
     /\/project-config/i, // The skill that populates config
-    /\/scan[-\w]*/i, // All /scan-* skills that populate reference docs
+    /\/scan[-\w]*/i, // The /scan host (incl. /scan --target=<key>) + /scan-* orchestrators that populate reference docs
     /\/graph-build/i, // The skill that builds the knowledge graph
+    /\/claude-md-init/i, // Generates CLAUDE.md (fixes missing-agent-file state)
+    /\/sync-codex/i, // Generates AGENTS.md mirror (fixes missing-agent-file state)
     /\/init/i, // Any init-related command
     /skip\s*init/i, // User wants to dismiss the gate
     /skip\s*setup/i, // Alternative dismiss phrase
@@ -132,6 +160,21 @@ function isDismissRequest(prompt) {
 function isScanDismissed() {
     try {
         if (!fs.existsSync(SCAN_DISMISS_FLAG)) return false;
+        const content = fs.readFileSync(SCAN_DISMISS_FLAG, 'utf-8').trim();
+        if (content) {
+            try {
+                const data = JSON.parse(content);
+                const dismissedAt = Date.parse(data.dismissedAt || '');
+                if (!Number.isNaN(dismissedAt)) {
+                    return Date.now() - dismissedAt < SCAN_DISMISS_TTL_MS;
+                }
+            } catch {
+                const dismissedAt = Date.parse(content);
+                if (!Number.isNaN(dismissedAt)) {
+                    return Date.now() - dismissedAt < SCAN_DISMISS_TTL_MS;
+                }
+            }
+        }
         const stat = fs.statSync(SCAN_DISMISS_FLAG);
         return Date.now() - stat.mtimeMs < SCAN_DISMISS_TTL_MS;
     } catch {
@@ -145,7 +188,17 @@ function isScanDismissed() {
 function writeScanDismissFlag() {
     try {
         ensureProjectTmpDir();
-        fs.writeFileSync(SCAN_DISMISS_FLAG, new Date().toISOString() + '\n', 'utf-8');
+        const dismissedAt = new Date();
+        const expiresAt = new Date(dismissedAt.getTime() + SCAN_DISMISS_TTL_MS);
+        fs.writeFileSync(
+            SCAN_DISMISS_FLAG,
+            JSON.stringify({
+                dismissedAt: dismissedAt.toISOString(),
+                expiresAt: expiresAt.toISOString(),
+                ttlDays: SCAN_DISMISS_TTL_DAYS
+            }, null, 2) + '\n',
+            'utf-8'
+        );
     } catch {
         /* non-critical */
     }
@@ -181,7 +234,7 @@ function checkScanStaleFlag() {
 /**
  * Check staleness gate when config is populated.
  * @param {string} userPrompt - The user's prompt text
- * @returns {void} Calls process.exit() if gate triggers; returns if no stale docs
+ * @returns {void} Emits guidance when stale docs exist; returns otherwise
  */
 function handleStalenessGate(userPrompt) {
     const staleState = checkScanStaleFlag();
@@ -192,32 +245,66 @@ function handleStalenessGate(userPrompt) {
 
     if (isScanDismissRequest(userPrompt)) {
         writeScanDismissFlag();
-        console.log('Reference doc scan skipped. Gate dismissed for 24 hours.');
+        emitPromptContext('Reference doc scan skipped. Gate dismissed for 7 days.');
         process.exit(0);
     }
 
     if (isAllowlistedPrompt(userPrompt)) return;
 
-    // BLOCK — stale docs, no escape hatch
+    // WARN — stale docs, no escape hatch. Allow the model to auto-route.
     const docList = staleState.docs.map(d => `  - ${d.filename} (${d.ageDays}d old) -> /${d.scanSkill}`).join('\n');
-    console.error(
+    emitPromptContext(
         [
             '',
-            'BLOCKED: Reference docs are stale.',
+            '[project-context] Reference docs are stale.',
             '',
             "The following reference docs haven't been scanned recently:",
             docList,
             '',
-            'Stale docs degrade code generation accuracy.',
+            'Auto-route before ordinary project-specific work:',
+            '  /scan-all             — Refresh all reference docs',
+            '  /scan-<name>          — Refresh a specific doc when scope is narrow',
             '',
-            'To fix, type one of:',
-            '  /scan-all             — Refresh all reference docs (recommended)',
-            '  /scan-<name>          — Refresh a specific doc',
-            '  skip scan             — Dismiss this gate for 24 hours',
+            'Continue after the relevant scan completes.',
             ''
         ].join('\n')
     );
-    process.exit(2);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AGENT-FILES ROUTER — guides when CLAUDE.md / AGENTS.md are missing
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Check the agent-files gate after config is populated.
+ *
+ * Runs only in the config-populated branch by design: /claude-md-init reads
+ * docs/project-config.json to generate CLAUDE.md, so offering it before config
+ * is populated would produce a meaningless file. Empty/uninitialized projects
+ * are already short-circuited by the hasProjectContent() guard in main().
+ *
+ * Missing CLAUDE.md → /claude-md-init (AI-runnable).
+ * Missing AGENTS.md → /sync-codex (AI-runnable mirror generator with script fallback).
+ *
+ * @param {string} userPrompt - The user's prompt text
+ * @returns {void} Emits guidance when files need attention; returns otherwise
+ */
+function handleAgentFilesGate(userPrompt) {
+    const issues = getAgentFileIssues();
+    if (issues.length === 0) return; // Both root agent files present + complete → pass through
+
+    if (isAgentFilesDismissed()) return;
+
+    if (isAgentFilesDismissRequest(userPrompt)) {
+        writeAgentFilesDismissFlag();
+        emitPromptContext('Agent-file init skipped. Gate dismissed for 24 hours.');
+        process.exit(0);
+    }
+
+    if (isAllowlistedPrompt(userPrompt)) return;
+
+    // WARN — root agent file(s) missing or incomplete. Allow the model to auto-route.
+    emitPromptContext(buildOfferMessage(issues));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -260,15 +347,15 @@ function isGraphDismissRequest(prompt) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GRAPH GATE — blocks when graph.db doesn't exist
+// GRAPH ROUTER — guides when graph.db doesn't exist
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
  * Check graph gate after config + staleness gates pass.
- * Blocks when graph.db doesn't exist. If Python is not available,
- * tells user to install Python first.
+ * Guides when graph.db doesn't exist. If Python is not available,
+ * tells the model which setup route or prerequisite remains.
  * @param {string} userPrompt - The user's prompt text
- * @returns {void} Calls process.exit() if gate triggers; returns if graph exists
+ * @returns {void} Emits guidance when graph is missing; returns otherwise
  */
 function handleGraphGate(userPrompt) {
     // Only block on graph when project config is properly initialized
@@ -282,7 +369,7 @@ function handleGraphGate(userPrompt) {
 
     if (isGraphDismissRequest(userPrompt)) {
         writeGraphDismissFlag();
-        console.log('Graph build skipped. Gate dismissed for 24 hours.');
+        emitPromptContext('Graph build skipped. Gate dismissed for 24 hours.');
         process.exit(0);
     }
 
@@ -299,32 +386,30 @@ function handleGraphGate(userPrompt) {
     }
 
     const instructions = hasPython
-        ? ['  /graph-build          — Build the knowledge graph (recommended)', '  skip graph            — Dismiss this gate for 24 hours']
+        ? ['  /graph-build          — Build the knowledge graph before structural investigation']
         : [
               'Python 3.10+ with tree-sitter is required. Install first:',
               '  pip install tree-sitter tree-sitter-language-pack networkx',
               '',
               'Then run:',
-              '  /graph-build          — Build the knowledge graph',
-              '  skip graph            — Dismiss this gate for 24 hours'
+              '  /graph-build          — Build the knowledge graph'
           ];
 
-    // BLOCK — graph not built
-    console.error(
+    // WARN — graph not built. Allow the model to continue or auto-route.
+    emitPromptContext(
         [
             '',
-            'BLOCKED: Knowledge graph not built.',
+            '[project-context] Knowledge graph not built.',
             '',
             'The code knowledge graph (.code-graph/graph.db) does not exist.',
             'Graph enables: frontend↔backend tracing, blast radius analysis,',
             'cross-service flow detection, and structural code intelligence.',
             '',
-            'To fix, type one of:',
+            'Auto-route before graph-dependent investigation:',
             ...instructions,
             ''
         ].join('\n')
     );
-    process.exit(2);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -351,14 +436,17 @@ function main() {
         // Guard: empty project (no content directories) → skip gate entirely
         if (!hasProjectContent()) process.exit(0);
 
-        // Fast path: config already populated → check staleness gate + graph gate
+        // Fast path: config already populated → check agent-files, staleness, graph gates.
+        // Agent-files first: CLAUDE.md/AGENTS.md are the most foundational artifacts and
+        // /claude-md-init depends on the (now-populated) config.
         if (isConfigPopulated()) {
+            handleAgentFilesGate(userPrompt);
             handleStalenessGate(userPrompt);
             handleGraphGate(userPrompt);
             process.exit(0);
         }
 
-        // Config NOT populated — check escape hatches
+        // Config NOT populated — inject setup guidance and allow the model to auto-route
 
         // 1. Dismiss flag still valid → allow
         if (isDismissed()) process.exit(0);
@@ -366,29 +454,29 @@ function main() {
         // 2. Dismiss request → write flag, allow
         if (isDismissRequest(userPrompt)) {
             writeDismissFlag();
-            console.log('Project init skipped. Gate dismissed for 24 hours.');
+            emitPromptContext('Project init skipped. Gate dismissed for 24 hours.');
             process.exit(0);
         }
 
         // 3. Allowlisted init command → allow (so user can fix the state)
         if (isAllowlistedPrompt(userPrompt)) process.exit(0);
 
-        // 4. BLOCK — config unpopulated, no escape hatch matched
-        console.error(
+        // 4. WARN — config unpopulated, no escape hatch matched
+        emitPromptContext(
             [
                 '',
-                'BLOCKED: Project configuration not initialized.',
+                '[project-context] Project configuration not initialized.',
                 '',
                 '`docs/project-config.json` is missing or still contains default skeleton values.',
-                'Many hooks depend on this file to provide project-aware context.',
+                'Project-aware context depends on this file.',
                 '',
-                'To fix, type one of:',
-                '  /project-config     — Auto-scan project and populate config (recommended)',
-                '  skip init           — Dismiss this gate for 24 hours',
+                'Auto-route before ordinary project-specific work:',
+                '  /project-init       — Initialize/re-evaluate config, docs, CLAUDE.md, AGENTS.md',
+                '  /project-config     — Populate config only when that is the only missing artifact',
                 ''
             ].join('\n')
         );
-        process.exit(2);
+        process.exit(0);
     } catch {
         // Fail-open on unexpected errors — never trap the user
         process.exit(0);
@@ -397,6 +485,7 @@ function main() {
 
 // Export for testing
 module.exports = {
+    emitPromptContext,
     isConfigPopulated,
     isDismissed,
     writeDismissFlag,
@@ -409,12 +498,15 @@ module.exports = {
     writeScanDismissFlag,
     isScanDismissRequest,
     checkScanStaleFlag,
+    SCAN_DISMISS_TTL_DAYS,
     SCAN_DISMISS_TTL_MS,
     // Graph gate
     isGraphDismissed,
     writeGraphDismissFlag,
     isGraphDismissRequest,
-    GRAPH_DISMISS_TTL_MS
+    GRAPH_DISMISS_TTL_MS,
+    // Agent-files gate
+    handleAgentFilesGate
 };
 
 if (require.main === module) {
